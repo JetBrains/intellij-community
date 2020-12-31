@@ -363,6 +363,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       if (serializer != null) {
         val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
         serializer.saveRoots(module, entities, writer, customDir, fileUrl, storage, virtualFileManager)
+        writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
       }
       else {
         LOG.warn("Classpath storage provider $customSerializerId not found")

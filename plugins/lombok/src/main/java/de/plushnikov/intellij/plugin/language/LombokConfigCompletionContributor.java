@@ -69,6 +69,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC,
       PsiJavaPatterns.psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE),
       new CompletionProvider<CompletionParameters>() {
+        @Override
         public void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet resultSet) {
           PsiElement psiElement = parameters.getPosition().getParent();
           if (psiElement instanceof LombokConfigProperty) {
@@ -95,6 +96,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC,
       PsiJavaPatterns.psiElement(LombokConfigTypes.KEY).withLanguage(LombokConfigLanguage.INSTANCE),
       new CompletionProvider<CompletionParameters>() {
+        @Override
         public void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet resultSet) {
           for (String contribution : allOptions) {
             resultSet.addElement(LookupElementBuilder.create(contribution));

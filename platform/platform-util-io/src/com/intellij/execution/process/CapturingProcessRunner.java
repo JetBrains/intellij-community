@@ -11,13 +11,22 @@ public class CapturingProcessRunner {
   @NotNull private static final Logger LOG = Logger.getInstance(CapturingProcessRunner.class);
 
   @NotNull private final ProcessOutput myOutput;
-  @NotNull private final BaseProcessHandler<?> myProcessHandler;
+  @NotNull private final ProcessHandler myProcessHandler;
 
   public CapturingProcessRunner(@NotNull BaseProcessHandler<?> processHandler) {
-    this(processHandler, processOutput -> new CapturingProcessAdapter(processOutput));
+    this((ProcessHandler)processHandler);
   }
 
   public CapturingProcessRunner(@NotNull BaseProcessHandler<?> processHandler,
+                                @NotNull Function<? super ProcessOutput, ? extends ProcessAdapter> processAdapterProducer) {
+    this((ProcessHandler)processHandler, processAdapterProducer);
+  }
+
+  public CapturingProcessRunner(@NotNull ProcessHandler processHandler) {
+    this(processHandler, processOutput -> new CapturingProcessAdapter(processOutput));
+  }
+
+  public CapturingProcessRunner(@NotNull ProcessHandler processHandler,
                                 @NotNull Function<? super ProcessOutput, ? extends ProcessAdapter> processAdapterProducer) {
     myOutput = new ProcessOutput();
     myProcessHandler = processHandler;
@@ -123,8 +132,8 @@ public class CapturingProcessRunner {
   private void setErrorCodeIfNotYetSet() {
     // if exit code was set on processTerminated, no need to rewrite it
     // WinPtyProcess returns -2 if pty is already closed
-    if (!myOutput.isExitCodeSet()) {
-      myOutput.setExitCode(myProcessHandler.getProcess().exitValue());
+    if (!myOutput.isExitCodeSet() && myProcessHandler instanceof BaseProcessHandler) {
+      myOutput.setExitCode(((BaseProcessHandler<?>)myProcessHandler).getProcess().exitValue());
     }
   }
 }

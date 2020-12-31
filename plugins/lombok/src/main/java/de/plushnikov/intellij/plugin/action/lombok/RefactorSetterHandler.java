@@ -11,6 +11,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.action.BaseRefactorHandler;
 
@@ -23,6 +24,7 @@ public class RefactorSetterHandler extends BaseRefactorHandler {
     super(dataContext, project);
   }
 
+  @Override
   protected String getChooserTitle() {
     return "Select Fields to replace Setter-Method With @Getter";
   }
@@ -41,7 +43,7 @@ public class RefactorSetterHandler extends BaseRefactorHandler {
   protected List<EncapsulatableClassMember> getEncapsulatableClassMembers(PsiClass psiClass) {
     final List<EncapsulatableClassMember> result = new ArrayList<>();
     for (PsiField field : psiClass.getFields()) {
-      if (null != PropertyUtil.findPropertySetter(psiClass, field.getName(), false, false)) {
+      if (null != PropertyUtilBase.findPropertySetter(psiClass, field.getName(), false, false)) {
         result.add(new PsiFieldMember(field));
       }
     }
@@ -54,7 +56,7 @@ public class RefactorSetterHandler extends BaseRefactorHandler {
       final PsiElementClassMember elementClassMember = (PsiElementClassMember) classMember;
 
       PsiField psiField = (PsiField) elementClassMember.getPsiElement();
-      PsiMethod psiMethod = PropertyUtil.findPropertySetter(psiField.getContainingClass(), psiField.getName(), false, false);
+      PsiMethod psiMethod = PropertyUtilBase.findPropertySetter(psiField.getContainingClass(), psiField.getName(), false, false);
       if (null != psiMethod) {
         PsiModifierList modifierList = psiField.getModifierList();
         if (null != modifierList) {

@@ -18,7 +18,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
   private static class PyDebuggerMultiprocessTask extends PyDebuggerTask {
 
-    public PyDebuggerMultiprocessTask(@Nullable String relativeTestDataPath, String scriptName) {
+    PyDebuggerMultiprocessTask(@Nullable String relativeTestDataPath, String scriptName) {
       super(relativeTestDataPath, scriptName);
     }
 

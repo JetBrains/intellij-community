@@ -43,10 +43,12 @@ private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layou
 
 abstract class NonModalCommitPanel(
   val project: Project,
-  val commitActionsPanel: CommitActionsPanel = CommitActionsPanel()
+  val commitActionsPanel: CommitActionsPanel = CommitActionsPanel(),
+  val commitAuthorComponent: CommitAuthorComponent = CommitAuthorComponent(project)
 ) : BorderLayoutPanel(),
     NonModalCommitWorkflowUi,
     CommitActionsUi by commitActionsPanel,
+    CommitAuthorTracker by commitAuthorComponent,
     ComponentContainer,
     EditorColorsListener {
 

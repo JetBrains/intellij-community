@@ -50,7 +50,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     ourStyleFileType = styleFileType;
   }
 
-  public FileType getStyleFileType() {
+  public @Nullable FileType getStyleFileType() {
     return ourStyleFileType;
   }
 
@@ -113,7 +113,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   @Override
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     if (embeddedLexer != null) {
       return embeddedLexer.getTokenType();
     }
@@ -178,8 +178,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     return state;
   }
 
-  @Nullable
-  protected Lexer getEmbeddedLexer() {
+  protected @Nullable Lexer getEmbeddedLexer() {
     return embeddedLexer;
   }
 

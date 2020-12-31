@@ -1006,6 +1006,11 @@
       "since": "2019.1"
     },
     {
+      "key": "VersionControl.Log.Commit.hoveredBackground",
+      "description": "Background color for the commit under the cursor in the Version Control | Log tab",
+      "since": "2020.3"
+    },
+    {
       "key": "VersionControl.RefLabel.backgroundBase",
       "description": "Reference label background base color",
       "since": "2019.1"

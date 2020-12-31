@@ -4,6 +4,7 @@ import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 public class WithTest extends AbstractLombokParsingTestCase {
 
+  @Override
   protected boolean shouldCompareCodeBlocks() {
     return false;
   }
@@ -57,6 +58,10 @@ public class WithTest extends AbstractLombokParsingTestCase {
   }
 
   public void testWith$WithWithTypeAnnos() {
+    doTest(true);
+  }
+
+  public void testWith$WithAndBuilderDefaultOnFieldAndValueOnClass() {
     doTest(true);
   }
 

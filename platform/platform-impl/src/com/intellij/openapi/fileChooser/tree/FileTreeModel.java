@@ -276,6 +276,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private VirtualFile[] getChildren(VirtualFile file) {
+      if (!isValid(file)) return null;
       if (file.isDirectory()) return file.getChildren();
       if (!descriptor.isChooseJarContents() || !FileElement.isArchive(file)) return null;
       String path = file.getPath() + JarFileSystem.JAR_SEPARATOR;

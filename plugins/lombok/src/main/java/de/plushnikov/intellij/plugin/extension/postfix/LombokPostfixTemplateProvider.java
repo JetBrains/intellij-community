@@ -58,7 +58,7 @@ public class LombokPostfixTemplateProvider implements PostfixTemplateProvider {
 
   private static boolean isSemicolonNeeded(@NotNull PsiFile file, @NotNull Editor editor) {
     int startOffset = CompletionInitializationContext.calcStartOffset(editor.getCaretModel().getCurrentCaret());
-    return JavaCompletionContributor.semicolonNeeded(editor, file, startOffset);
+    return JavaCompletionContributor.semicolonNeeded(file, startOffset);
   }
 
 }

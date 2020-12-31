@@ -52,6 +52,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
     return result;
   }
 
+  @Override
   @NotNull
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<>();

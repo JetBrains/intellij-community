@@ -291,7 +291,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     result.append(" class ").append(info.className).append(" {\n")
     if (info.customLoad) {
       append(result, "private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {", 1)
-      append(result, "return $iconLoaderCode.loadRasterizedIcon(path, ${info.className}.class, cacheKey, flags);", 2)
+      append(result, "return $iconLoaderCode.loadRasterizedIcon(path, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
       append(result, "}", 1)
 
       val customExternalLoad = images.any { it.deprecation?.replacementContextClazz != null }
@@ -468,8 +468,9 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
     val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
     val relativePath = rootPrefix + rootDir.relativize(imageFile).systemIndependentPath
+    assert(relativePath.startsWith("/"))
     append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
-                   "$method(\"$relativePath\", ${key}L, ${image.getFlags()});", level)
+                   "$method(\"${relativePath.removePrefix("/")}\", ${key}L, ${image.getFlags()});", level)
 
     val oldName = deprecatedIconFieldNameMap.get(iconName)
     if (oldName != null) {

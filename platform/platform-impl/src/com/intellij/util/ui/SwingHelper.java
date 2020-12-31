@@ -542,7 +542,7 @@ public class SwingHelper {
         }
       };
       textPane.setFont(myFont != null ? myFont : UIUtil.getLabelFont());
-      textPane.setContentType(UIUtil.HTML_MIME);
+      textPane.setEditorKit(UIUtil.getHTMLEditorKit());
       textPane.setEditable(false);
       if (myBackground != null) {
         textPane.setBackground(myBackground);
@@ -628,6 +628,9 @@ public class SwingHelper {
 
   @NotNull
   public static @Nls String buildHtml(@NotNull @Nls String headInnerHtml, @NotNull @Nls String bodyInnerHtml) {
+    if (bodyInnerHtml.contains("<html>")) {
+      bodyInnerHtml = UIUtil.getHtmlBody(bodyInnerHtml);
+    }
     return HtmlChunk.html().children(
       HtmlChunk.head().addRaw(headInnerHtml),
       HtmlChunk.body().addRaw(bodyInnerHtml)
@@ -746,23 +749,23 @@ public class SwingHelper {
     }
   }
 
-  public static JEditorPane createHtmlLabel(@NotNull @Nls final String innerHtml, @Nullable @Nls String disabledHtml,
-                                            @Nullable final Consumer<? super String> hyperlinkListener) {
-    disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
+  public static @NotNull JEditorPane createHtmlLabel(@NotNull @Nls String bodyInnerHtml,
+                                                     @Nullable @Nls String disabledBodyInnerHtml,
+                                                     @Nullable Consumer<? super String> hyperlinkListener) {
     final Font font = UIUtil.getLabelFont();
     String html = buildHtml(
       UIUtil.getCssFontDeclaration(font, UIUtil.getActiveTextColor(), null, null),
-      innerHtml
+      bodyInnerHtml
     );
-    String disabled = buildHtml(
+    String disabledHtml = buildHtml(
       UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
-      disabledHtml
+      ObjectUtils.notNull(disabledBodyInnerHtml, bodyInnerHtml)
     );
 
     final JEditorPane pane = new SwingHelper.HtmlViewerBuilder()
       .setCarryTextOver(false)
       .setFont(UIUtil.getLabelFont())
-      .setDisabledHtml(disabled)
+      .setDisabledHtml(disabledHtml)
       .create();
     pane.setText(html);
     pane.addHyperlinkListener(

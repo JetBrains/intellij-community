@@ -30,6 +30,9 @@ import com.jetbrains.python.packaging.PyPackageManagerImpl
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvFromFilePanel
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.VirtualEnvResult
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.nio.file.Paths
@@ -42,18 +45,18 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
   override fun isApplicable(module: Module): Boolean = getRequirementsTxtOrSetupPy(module) != null
 
-  override fun createAndAddSdkForConfigurator(module: Module) = createAndAddSdk(module)
+  override fun createAndAddSdkForConfigurator(module: Module) = createAndAddSdk(module, Source.CONFIGURATOR)
 
   override fun getIntentionName(module: Module): @IntentionName String {
     return PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", getRequirementsTxtOrSetupPy(module)?.name)
   }
 
-  override fun createAndAddSdkForInspection(module: Module) = createAndAddSdk(module)
+  override fun createAndAddSdkForInspection(module: Module) = createAndAddSdk(module, Source.INSPECTION)
 
-  private fun createAndAddSdk(module: Module): Sdk? {
+  private fun createAndAddSdk(module: Module, source: Source): Sdk? {
     val existingSdks = ProjectJdkTable.getInstance().allJdks.asList()
 
-    val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = askForEnvData(module, existingSdks) ?: return null
+    val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = askForEnvData(module, existingSdks, source) ?: return null
     val baseSdk = installSdkIfNeeded(chosenBaseSdk!!, module, existingSdks) ?: return null
     val systemIndependentLocation = FileUtil.toSystemIndependentName(location)
 
@@ -73,7 +76,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
   private fun getRequirementsTxtOrSetupPy(module: Module) =
     PyPackageUtil.findRequirementsTxt(module) ?: PyPackageUtil.findSetupPy(module)?.virtualFile
 
-  private fun askForEnvData(module: Module, existingSdks: List<Sdk>): PyAddNewVirtualEnvFromFilePanel.Data? {
+  private fun askForEnvData(module: Module, existingSdks: List<Sdk>, source: Source): PyAddNewVirtualEnvFromFilePanel.Data? {
     val requirementsTxtOrSetupPy = getRequirementsTxtOrSetupPy(module) ?: return null
 
     var permitted = false
@@ -87,6 +90,13 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
       LOGGER.debug("Dialog exit code: ${dialog.exitCode}, $permitted")
     }
+
+    PySdkConfigurationCollector.logVirtualEnvDialog(
+      module.project,
+      permitted,
+      source,
+      if (envData?.baseSdk == null) InputData.NOT_FILLED else InputData.SPECIFIED
+    )
 
     return if (permitted) envData else null
   }
@@ -103,6 +113,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       PyPackageManagerImpl.getInstance(baseSdk).createVirtualEnv(location, false)
     }
     catch (e: ExecutionException) {
+      PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.CREATION_FAILURE)
       LOGGER.warn("Exception during creating virtual environment", e)
       showSdkExecutionException(baseSdk, e, PySdkBundle.message("python.creating.venv.failed.title"))
       return null
@@ -121,6 +132,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
     val requirementsTxtOrSetupPyFile = VfsUtil.findFile(Paths.get(requirementsTxtOrSetupPy), false)
     if (requirementsTxtOrSetupPyFile == null) {
+      PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.DEPS_NOT_FOUND)
       LOGGER.warn("File with dependencies is not found: $requirementsTxtOrSetupPy")
     }
     else {
@@ -131,11 +143,13 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
         PyPackageManagerImpl.getInstance(sdk).install(emptyList(), getCommandForPipInstall(requirementsTxtOrSetupPyFile))
       }
       catch (e: ExecutionException) {
+        PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.INSTALLATION_FAILURE)
         LOGGER.warn("Exception during installing packages", e)
         showSdkExecutionException(sdk, e, PyBundle.message("python.packaging.failed.to.install.packages.title"))
       }
     }
 
+    PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.CREATED)
     return sdk
   }
 
@@ -163,6 +177,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     init {
       title = PySdkBundle.message("python.creating.venv.title")
       init()
+      Disposer.register(disposable) { if (isOK) panel.logData() }
     }
 
     override fun createCenterPanel(): JComponent {

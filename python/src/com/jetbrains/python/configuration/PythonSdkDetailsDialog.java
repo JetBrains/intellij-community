@@ -441,6 +441,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         if (pathEditor.isModified()) {
           pathEditor.apply(sdkModificator);
           myModifiedModificators.add(sdkModificator);
+          reloadSdk(sdk);
         }
       }
       updateOkButton();

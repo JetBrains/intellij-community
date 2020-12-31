@@ -11,6 +11,7 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -126,9 +127,9 @@ public final class ImageLoader {
   @ApiStatus.Internal
   public static @Nullable Image loadRasterized(@NotNull String path,
                                                @Nullable List<ImageFilter> filters,
-                                               @NotNull Class<?> resourceClass,
+                                               @NotNull ClassLoader classLoader,
                                                @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                               ScaleContext scaleContext,
+                                               @NotNull ScaleContext scaleContext,
                                                boolean isUpScaleNeeded,
                                                long rasterizedCacheKey,
                                                @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags) {
@@ -177,10 +178,10 @@ public final class ImageLoader {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       Image image;
       if (isSvg) {
-        image = SVGLoader.loadFromClassResource(resourceClass, null, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark, originalUserSize);
+        image = SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark, originalUserSize);
       }
       else {
-        image = loadPngFromClassResource(effectivePath, resourceClass, null, imageScale, originalUserSize);
+        image = loadPngFromClassResource(effectivePath, null, classLoader, imageScale, originalUserSize);
       }
 
       if (start != -1) {
@@ -272,7 +273,7 @@ public final class ImageLoader {
 
     Image image;
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    if (resourceClass == null) {
+    if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path))) {
       URLConnection connection = new URL(descriptor.path).openConnection();
       if (connection instanceof HttpURLConnection) {
         if (!descriptor.original) {

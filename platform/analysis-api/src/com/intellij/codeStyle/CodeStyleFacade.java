@@ -77,7 +77,6 @@ public abstract class CodeStyleFacade {
    *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
    * @return non-negative spacing between end- and start-line tokens after the join.
    */
-  @ApiStatus.Experimental
   public abstract int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit);
 
   /**

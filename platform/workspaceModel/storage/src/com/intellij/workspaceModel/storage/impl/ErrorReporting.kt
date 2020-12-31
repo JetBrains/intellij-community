@@ -11,7 +11,7 @@ internal inline fun createAttachment(path: String,
                                      displayText: String,
                                      howToSerialize: (EntityStorageSerializerImpl, OutputStream) -> Unit): Attachment {
   val stream = ByteArrayOutputStream()
-  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
   howToSerialize(serializer, stream)
   val bytes = stream.toByteArray()
   return createAttachment(path, bytes, displayText)

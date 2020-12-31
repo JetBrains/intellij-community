@@ -6,11 +6,13 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -35,6 +37,10 @@ object IndexDiagnosticDumper {
   val shouldDumpPathsOfIndexedFiles: Boolean get() =
     SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
 
+  @JvmStatic
+  @TestOnly
+  var shouldDumpInUnitTestMode: Boolean = false
+
   val indexingDiagnosticDir: Path by lazy {
     val logPath = PathManager.getLogPath()
     Paths.get(logPath).resolve("indexing-diagnostic")
@@ -53,7 +59,7 @@ object IndexDiagnosticDumper {
   private var lastTime: LocalDateTime = LocalDateTime.MIN
 
   fun dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory: ProjectIndexingHistory) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
       return
     }
     if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
@@ -65,7 +71,7 @@ object IndexDiagnosticDumper {
   @Synchronized
   private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
     try {
-      val indexDiagnosticDirectory = indexingDiagnosticDir
+      val indexDiagnosticDirectory = projectIndexingHistory.project.getProjectCachePath(indexingDiagnosticDir)
       indexDiagnosticDirectory.createDirectories()
 
       var nowTime = LocalDateTime.now()

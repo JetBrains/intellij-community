@@ -11,8 +11,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.CommitTabTitleUpdater
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
 import git4idea.index.ui.GitStagePanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -71,4 +74,22 @@ class GitStageContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
 
 class GitStageDisplayNameSupplier : Supplier<String> {
   override fun get(): @Nls String = VcsBundle.message("tab.title.commit")
+}
+
+@RequiresEdt
+fun showStagingArea(project: Project, commitMessage: String) {
+  showStagingArea(project) {
+    it.setCommitMessage(commitMessage)
+  }
+}
+
+private fun showStagingArea(project: Project, consumer: (GitStagePanel) -> Unit) {
+  val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return
+  toolWindow.activate({
+                        val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
+                        val content = contentManager.findContents { it.tabName == STAGING_AREA_TAB_NAME }.singleOrNull() ?: return@activate
+
+                        contentManager.setSelectedContent(content, true)
+                        (content.component as? GitStagePanel)?.let(consumer)
+                      }, true)
 }

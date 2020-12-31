@@ -67,6 +67,11 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
                 myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
                                                     and myScrollTabLayoutInEditorCheckBox.selected).component
             }
+            row {
+              checkBox(showPinnedTabsInASeparateRow).enableIf(
+                myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
+                                                    and myScrollTabLayoutInEditorCheckBox.selected.not()).component
+            }
           }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }
@@ -85,6 +90,14 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
       titledRow(message("group.tab.order")) {
         row { checkBox(sortTabsAlphabetically) }
         row { checkBox(openTabsAtTheEnd) }
+      }
+      titledRow(message("group.tab.opening.policy")) {
+        row {
+          checkBox(openInPreviewTabIfPossible)
+        }
+        row {
+          checkBox(reuseNotModifiedTabs)
+        }
       }
       titledRow(message("group.tab.closing.policy")) {
         row {
@@ -111,12 +124,6 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
             row { radioButton(message("radio.activate.right.neighbouring.tab"), ui::activeRightEditorOnClose) }
             row { radioButton(message("radio.activate.most.recently.opened.tab"), ui::activeMruEditorOnClose) }.largeGapAfter()
           }
-        }
-        row {
-          checkBox(reuseNotModifiedTabs)
-        }
-        row {
-          checkBox(openInPreviewTabIfPossible)
         }
       }
     }

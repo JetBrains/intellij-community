@@ -124,7 +124,7 @@ public final class JpsFileTargetContextUtils {
     int o1 = getTestsTargetOrdinal(d1);
     int o2 = getTestsTargetOrdinal(d2);
 
-    if (o1 > 0 && o2 > 0) {
+    if (o1 > 0 || o2 > 0) {
       return Integer.compare(o1, o2);
     }
 
@@ -135,7 +135,7 @@ public final class JpsFileTargetContextUtils {
     int o1 = getSourcesTargetOrdinal(d1);
     int o2 = getSourcesTargetOrdinal(d2);
 
-    if (o1 > 0 && o2 > 0) {
+    if (o1 > 0 || o2 > 0) {
       return Integer.compare(o1, o2);
     }
 

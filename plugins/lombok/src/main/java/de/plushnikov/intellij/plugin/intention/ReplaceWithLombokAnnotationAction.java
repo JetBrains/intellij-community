@@ -7,6 +7,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -199,6 +200,6 @@ public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAc
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace with annotations (Lombok)";
+    return LombokBundle.message("replace.with.annotations.lombok");
   }
 }

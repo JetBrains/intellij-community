@@ -57,10 +57,8 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManag
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
 import static com.intellij.util.ui.UIUtil.FontSize.SMALL;
 
-public class WelcomeScreenComponentFactory {
-
-  @NotNull
-  static JComponent createSmallLogo() {
+public final class WelcomeScreenComponentFactory {
+  @NotNull static JComponent createSmallLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -119,8 +117,7 @@ public class WelcomeScreenComponentFactory {
     return panel;
   }
 
-  @NotNull
-  static JComponent createLogo() {
+  @NotNull static JComponent createLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -188,7 +185,7 @@ public class WelcomeScreenComponentFactory {
   /**
    * Wraps an {@link ActionLink} component and delegates accessibility support to it.
    */
-  protected static class JActionLinkPanel extends JPanel {
+  protected static final class JActionLinkPanel extends JPanel {
     @NotNull private final ActionLink myActionLink;
 
     public JActionLinkPanel(@NotNull ActionLink actionLink) {

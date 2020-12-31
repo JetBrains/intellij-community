@@ -8,5 +8,6 @@
     <orderEntry type="module" module-name="intellij.python.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.reStructuredText" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.grazie" scope="RUNTIME" />
   </component>
 </module>

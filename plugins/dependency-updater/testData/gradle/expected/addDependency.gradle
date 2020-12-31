@@ -1,0 +1,5 @@
+apply plugin: 'java'
+
+dependencies {
+    implementation 'group:artifact:1.0'
+}

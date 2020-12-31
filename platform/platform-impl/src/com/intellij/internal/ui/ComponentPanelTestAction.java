@@ -20,7 +20,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
@@ -273,11 +272,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withHeader(GOT_IT_HEADER).
           withIcon(AllIcons.General.BalloonInformation).
           withBrowserLink("Learn more", new URL("https://www.jetbrains.com/"));
-        gotItTooltip.showDynamic(Balloon.Position.below, () -> new RelativePoint(button, new Point(button.getWidth() / 2, button.getHeight())));
+          gotItTooltip.showDynamic(Balloon.Position.below, button, component -> new Point(component.getWidth() / 2, component.getHeight()));
 
         new GotItTooltip("textfield", GOT_IT_TEXT2, project).
-          withShowCount(5).showAfter(gotItTooltip, Balloon.Position.below,
-                                     () -> new RelativePoint(text1, new Point(text1.getWidth()/2, text1.getHeight())));
+          withShowCount(5).showAfter(gotItTooltip, Balloon.Position.below, text1,
+                                     component -> new Point(component.getWidth()/2, component.getHeight()));
 
       } catch (MalformedURLException ex) {}
 

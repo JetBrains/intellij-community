@@ -46,8 +46,6 @@ abstract class RenameChooser {
       return;
     }
 
-
-
     JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(CODE_OCCURRENCES, ALL_OCCURRENCES))
       .setItemSelectedCallback(selectedValue -> {
         if (selectedValue == null) return;
@@ -65,8 +63,7 @@ abstract class RenameChooser {
         }
 
         for (PsiReference reference : refs) {
-          final PsiElement element = reference.getElement();
-          final TextRange textRange = element.getTextRange();
+          final TextRange textRange = reference.getAbsoluteRange();
           final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
             EditorColors.SEARCH_RESULT_ATTRIBUTES, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
             HighlighterTargetArea.EXACT_RANGE);

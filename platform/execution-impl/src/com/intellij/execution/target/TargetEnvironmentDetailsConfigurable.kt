@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NamedConfigurable
+import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBScrollPane
@@ -20,15 +22,19 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class TargetEnvironmentDetailsConfigurable(private val project: Project, private val config: TargetEnvironmentConfiguration)
-  : NamedConfigurable<TargetEnvironmentConfiguration>(true, null) {
+internal class TargetEnvironmentDetailsConfigurable(
+  private val project: Project,
+  private val config: TargetEnvironmentConfiguration,
+  defaultLanguage: LanguageRuntimeType<*>?,
+  treeUpdate: Runnable
+) : NamedConfigurable<TargetEnvironmentConfiguration>(true, treeUpdate) {
 
-  private val targetConfigurable: Configurable = config.getTargetType().createConfigurable(project, config)
+  private val targetConfigurable: Configurable = config.getTargetType().createConfigurable(project, config, defaultLanguage)
   private val runtimeConfigurables = mutableListOf<Configurable>()
 
   override fun getBannerSlogan(): String = config.displayName
 
-  override fun getIcon(expanded: Boolean): Icon? = config.getTargetType().icon
+  override fun getIcon(expanded: Boolean): Icon = config.getTargetType().icon
 
   override fun isModified(): Boolean = allConfigurables().any { it.isModified }
 
@@ -54,7 +60,7 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
     panel.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
 
     config.runtimes.resolvedConfigs().forEach {
-      panel.add(createRuntimePanel(it))
+      panel.add(createRuntimePanel(config, it))
     }
     panel.add(createAddRuntimeHyperlink())
     return JBScrollPane(panel).also {
@@ -62,12 +68,12 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
     }
   }
 
-  private fun createRuntimePanel(runtime: LanguageRuntimeConfiguration): JPanel {
+  private fun createRuntimePanel(target: TargetEnvironmentConfiguration, runtime: LanguageRuntimeConfiguration): JPanel {
     return panel {
       row {
         val separator = TitledSeparator(runtime.getRuntimeType().configurableDescription)
         separator(CCFlags.growX, CCFlags.pushX)
-        gearButton(DuplicateRuntimeAction(runtime), RemoveRuntimeAction(runtime))
+        gearButton(DuplicateRuntimeAction(runtime), RemoveRuntimeAction(target, runtime))
       }
       row {
         val languageUI = runtime.getRuntimeType().createConfigurable(project, runtime, config)
@@ -106,9 +112,11 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
     createComponent()?.revalidate()
   }
 
-  private abstract inner class ChangeRuntimeActionBase(protected val runtime: LanguageRuntimeConfiguration, text: String) : AnAction(text)
+  private abstract inner class ChangeRuntimeActionBase(protected val runtime: LanguageRuntimeConfiguration,
+                                                       @NlsActions.ActionText text: String) : AnAction(text)
 
-  private inner class DuplicateRuntimeAction(runtime: LanguageRuntimeConfiguration) : ChangeRuntimeActionBase(runtime, "Duplicate") {
+  private inner class DuplicateRuntimeAction(runtime: LanguageRuntimeConfiguration)
+    : ChangeRuntimeActionBase(runtime, ExecutionBundle.message("targets.details.action.duplicate.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       val copy = runtime.getRuntimeType().duplicateConfig(runtime)
       config.runtimes.addConfig(copy)
@@ -116,10 +124,16 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
     }
   }
 
-  private inner class RemoveRuntimeAction(runtime: LanguageRuntimeConfiguration) : ChangeRuntimeActionBase(runtime, "Remove") {
+  private inner class RemoveRuntimeAction(private val target: TargetEnvironmentConfiguration, runtime: LanguageRuntimeConfiguration)
+    : ChangeRuntimeActionBase(runtime, ExecutionBundle.message("targets.details.action.remove.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       config.runtimes.removeConfig(runtime)
       forceRefreshUI()
+    }
+
+    override fun update(e: AnActionEvent) {
+      val lastLanguage = target.runtimes.resolvedConfigs().filter { it != runtime }.isEmpty()
+      e.presentation.isEnabled = !lastLanguage
     }
   }
 }

@@ -6,14 +6,11 @@
 .idea/gradle_extensions.xml
 .idea/libraries/Gradle__*.xml
 .idea/shelf
-.idea/usage.statistics.xml
 .idea/workspace.xml
-/android
 /config
 /onestudio
 .idea/saveactions_settings.xml
 /out
-/python/helpers/.idea
 /system
 /test-config
 .jps-build-data
@@ -38,8 +35,10 @@ androidStudio
 /native/**/x64/
 
 /test-system
+/univocity-parsers
 build/dependencies/.gradle
 build/dependencies/build
 edu/dependencies/.gradle
 edu/dependencies/build
 stale_outputs_checked
+/android

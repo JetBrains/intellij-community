@@ -110,7 +110,7 @@ private fun createNewElementForFileOrSubProject(resultElement: GradlePropertiesD
 /**
  * Get the parent dsl element with a valid psi
  */
-internal fun getNextValidParent(element: GradleDslElement): GradleDslElement? {
+fun getNextValidParent(element: GradleDslElement): GradleDslElement? {
   var element : GradleDslElement? = element
   var psi = element?.psiElement
   while (element != null && (psi == null || !psi.isValid)) {
@@ -122,7 +122,7 @@ internal fun getNextValidParent(element: GradleDslElement): GradleDslElement? {
   return element
 }
 
-internal fun removePsiIfInvalid(element: GradleDslElement?) {
+fun removePsiIfInvalid(element: GradleDslElement?) {
   if (element == null) return
 
   if (element.psiElement != null && !element.psiElement!!.isValid) {
@@ -138,7 +138,7 @@ internal fun removePsiIfInvalid(element: GradleDslElement?) {
  * @param startElement starting element
  * @return the last non-null psi element in the tree starting at node startElement.
  */
-internal fun findLastPsiElementIn(startElement: GradleDslElement): PsiElement? {
+fun findLastPsiElementIn(startElement: GradleDslElement): PsiElement? {
   val psiElement = startElement.psiElement
   if (psiElement != null) {
     return psiElement
@@ -160,7 +160,7 @@ internal fun findLastPsiElementIn(startElement: GradleDslElement): PsiElement? {
  * returning a pair of the name and whether this is a method call an assignment or unknown (see
  * [GradleDslNameConverter.externalNameForParent])
  */
-internal fun maybeTrimForParent(name: GradleNameElement,
+fun maybeTrimForParent(name: GradleNameElement,
                                 parent: GradleDslElement?,
                                 converter: GradleDslNameConverter): Pair<String, Boolean?> {
   // FIXME(xof): this case needs fixing too

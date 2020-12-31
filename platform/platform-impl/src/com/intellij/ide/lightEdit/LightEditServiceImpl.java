@@ -46,10 +46,10 @@ import java.util.Objects;
 @SuppressWarnings("SameParameterValue")
 @State(name = "LightEdit", storages =  @Storage("lightEdit.xml"))
 public final class LightEditServiceImpl implements LightEditService,
-                                             Disposable,
-                                             LightEditorListener,
-                                             AppLifecycleListener,
-                                             PersistentStateComponent<LightEditConfiguration> {
+                                                   Disposable,
+                                                   LightEditorListener,
+                                                   AppLifecycleListener,
+                                                   PersistentStateComponent<LightEditConfiguration> {
   private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
 
   private LightEditFrameWrapper myFrameWrapper;
@@ -93,7 +93,7 @@ public final class LightEditServiceImpl implements LightEditService,
       }
       myFrameWrapper.setFrameTitle(getAppName());
       if (notify) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditService.TOPIC).lightEditWindowOpened(project);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowOpened(project);
       }
     });
   }
@@ -237,7 +237,7 @@ public final class LightEditServiceImpl implements LightEditService,
         myEditorWindowClosing = false;
       }
       LOG.info("Window closed");
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditService.TOPIC).lightEditWindowClosed(project);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowClosed(project);
       if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
         disposeFrameWrapper();
         LOG.info("No open projects or welcome frame, exiting");

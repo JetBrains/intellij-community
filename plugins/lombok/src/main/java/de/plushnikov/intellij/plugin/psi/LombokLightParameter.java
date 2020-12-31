@@ -51,6 +51,7 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
     return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
+  @Override
   public LombokLightParameter setModifiers(String... modifiers) {
     LombokLightModifierList modifierList = new LombokLightModifierList(getManager(), getLanguage(), Collections.emptySet(), modifiers);
     ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class, modifierList);

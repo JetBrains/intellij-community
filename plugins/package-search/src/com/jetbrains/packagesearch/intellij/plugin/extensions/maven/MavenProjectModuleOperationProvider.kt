@@ -7,103 +7,24 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
-import com.jetbrains.packagesearch.patchers.buildsystem.OperationFailure
-import com.jetbrains.packagesearch.patchers.buildsystem.OperationItem
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependency
-import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependencyRepository
+import com.intellij.buildsystem.model.OperationFailure
+import com.intellij.buildsystem.model.OperationItem
+import com.intellij.buildsystem.model.OperationType
+import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.intellij.externalSystem.DependencyModifierService
+import com.intellij.openapi.module.ModuleUtilCore
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProjectModuleOperationProvider
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenProjectModuleOperationProvider : ProjectModuleOperationProvider {
+class MavenProjectModuleOperationProvider : AbstractProjectModuleOperationProvider() {
     override fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean =
         projectModuleType is MavenProjectModuleType
 
     override fun hasSupportFor(project: Project, psiFile: PsiFile?) = MavenUtil.isPomFile(project, psiFile?.virtualFile)
-
-    override fun addDependenciesToProject(
-        operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
-    ): List<OperationFailure<out OperationItem>> {
-
-        //val dependenciesToAdd = setOf(
-        //    MavenDependency(
-        //        MavenCoordinates(
-        //            operationMetadata.groupId,
-        //            operationMetadata.artifactId,
-        //            operationMetadata.version
-        //        ),
-        //        MavenDependency.Scope.from(operationMetadata.scope)
-        //    )
-        //)
-        //
-        //return parseMavenPomFrom(project, virtualFile) { maven ->
-        //    maven.doBatch(removeDependencies = dependenciesToAdd, addDependencies = dependenciesToAdd)
-        //        .filter { it.operationType == OperationType.ADD }
-        //}
-        return emptyList()
-    }
-
-    override fun removeDependenciesFromProject(
-        operationMetadata: DependencyOperationMetadata,
-        project: Project,
-        virtualFile: VirtualFile
-    ): List<OperationFailure<out OperationItem>> {
-
-        //val dependenciesToRemove = setOf(
-        //    MavenDependency(
-        //        MavenCoordinates(
-        //            operationMetadata.groupId,
-        //            operationMetadata.artifactId,
-        //            operationMetadata.version
-        //        ),
-        //        MavenDependency.Scope.from(operationMetadata.scope)
-        //    )
-        //)
-        //
-        //return parseMavenPomFrom(project, virtualFile) { maven ->
-        //    maven.doBatch(removeDependencies = dependenciesToRemove)
-        //}
-        return emptyList()
-    }
-
-    override fun listDependenciesInProject(project: Project, virtualFile: VirtualFile): Collection<UnifiedDependency> =
-        //parseMavenPomFrom(project, virtualFile) { maven -> maven.listDependencies() }
-        //    .map { MavenUnifiedDependencyConverter.convert(it) }
-        emptyList()
-
-    override fun addRepositoriesToProject(
-        repository: UnifiedDependencyRepository,
-        project: Project,
-        virtualFile: VirtualFile
-    ): List<OperationFailure<out OperationItem>> {
-
-        //val mavenRepository = MavenRepository(
-        //    id = repository.id,
-        //    url = repository.url,
-        //    name = repository.name
-        //)
-        //
-        //return parseMavenPomFrom(project, virtualFile) { maven ->
-        //    if (!maven.listRepositories()
-        //            .andMavenCentralIfNotPresent()
-        //            .any { it.isEquivalentTo(mavenRepository) }) {
-        //
-        //        maven.doBatch(addRepositories = setOf(mavenRepository))
-        //    } else {
-        //        emptyList()
-        //    }
-        //}
-        return emptyList()
-    }
-
-    override fun listRepositoriesInProject(project: Project, virtualFile: VirtualFile): Collection<UnifiedDependencyRepository> =
-        //parseMavenPomFrom(project, virtualFile) { maven -> maven.listRepositories() }
-        //    .andMavenCentralIfNotPresent()
-        //    .map { MavenUnifiedDependencyRepositoryConverter.convert(it) }
-        emptyList()
 
     override fun refreshProject(project: Project, virtualFile: VirtualFile) {
         if (!PackageSearchGeneralConfiguration.getInstance(project).refreshProject) return
@@ -136,17 +57,3 @@ private object ProjectRefreshingListener : MavenProjectsManager.Listener {
         runOnNextChange.getAndSet(null)?.invoke()
     }
 }
-
-//private fun Collection<MavenRepository>.andMavenCentralIfNotPresent(): Collection<MavenRepository> {
-//    // In Maven modules, Maven Central should be there by default
-//    if (this.any { it.id == "central" || it.url == "https://repo.maven.apache.org/maven2/" }) {
-//        return this
-//    }
-//
-//    return this + listOf(
-//        MavenRepository(
-//            id = "central",
-//            name = "Maven Central",
-//            url = "https://repo.maven.apache.org/maven2/"
-//    ))
-//}

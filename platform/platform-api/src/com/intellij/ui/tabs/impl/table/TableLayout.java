@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.table;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -38,12 +39,13 @@ public class TableLayout extends TabLayout {
     final int maxX = data.toFitRec.x + data.toFitRec.width;
 
     int hGap = myTabs.getTabHGap();
+    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
     for (TabInfo eachInfo : data.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
       boolean pinned = eachLabel.isPinned();
       final Dimension size = eachLabel.getNotStrictPreferredSize();
       int width = size.width + hGap;
-      if (pinned) {
+      if (pinned && showPinnedTabsSeparately) {
         if (eachXPinned + width >= maxX) {
           requiredRowsPinned++;
           eachXPinned = data.toFitRec.x;
@@ -75,7 +77,7 @@ public class TableLayout extends TabLayout {
       final Dimension size = eachLabel.getNotStrictPreferredSize();
       boolean pinned = eachLabel.isPinned();
       int width = size.width + hGap;
-      if (pinned) {
+      if (pinned && showPinnedTabsSeparately) {
         if (eachXPinned + width <= maxX) {
           eachTableRow.add(eachInfo, width);
           eachXPinned += width;
@@ -86,7 +88,7 @@ public class TableLayout extends TabLayout {
           eachTableRow.add(eachInfo, width);
         }
       } else {
-        if (eachXUnpinned + size.width + hGap <= maxX && !eachLabel.isNextToLastPinned()) {
+        if (eachXUnpinned + size.width + hGap <= maxX && (!showPinnedTabsSeparately || !eachLabel.isNextToLastPinned())) {
           eachTableRow.add(eachInfo, width);
           eachXUnpinned += width;
         } else {
@@ -118,6 +120,7 @@ public class TableLayout extends TabLayout {
     Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
     TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
+    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
 
     if (!myTabs.isHideTabs()) {
       data = computeLayoutTable(visibleInfos);
@@ -142,7 +145,7 @@ public class TableLayout extends TabLayout {
           label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
 
           int width;
-          if (label.isPinned()) {
+          if (label.isPinned() && showPinnedTabsSeparately) {
             width = label.getNotStrictPreferredSize().width;
           }
           else if (i < eachRow.myColumns.size() - 1 || !toAjust) {

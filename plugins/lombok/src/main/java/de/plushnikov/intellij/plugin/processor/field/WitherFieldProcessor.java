@@ -81,7 +81,10 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   }
 
   private boolean validNonFinalInitialized(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
-    if (psiField.hasModifierProperty(PsiModifier.FINAL) && psiField.getInitializer() != null) {
+    final PsiClass psiClass = psiField.getContainingClass();
+    if (null != psiClass &&
+      psiField.hasModifierProperty(PsiModifier.FINAL) && !PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE) &&
+      psiField.hasInitializer() && !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.BUILDER_DEFAULT)) {
       builder.addWarning("Not generating wither for this field: Withers cannot be generated for final, initialized fields.",
         PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       return false;
@@ -107,7 +110,6 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     return true;
   }
 
-  @SuppressWarnings("unchecked")
   public boolean validConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR, LombokClassNames.VALUE, LombokClassNames.BUILDER)) {
       return true;
@@ -150,7 +152,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       if (classField.hasModifierProperty(PsiModifier.STATIC)) {
         continue;
       }
-      if (classField.hasModifierProperty(PsiModifier.FINAL) && null != classField.getInitializer()) {
+      if (classField.hasModifierProperty(PsiModifier.FINAL) && classField.hasInitializer()) {
         continue;
       }
 

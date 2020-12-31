@@ -5,6 +5,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.*;
 import org.jetbrains.annotations.NotNull;
 
 public class DelombokLoggerAction extends AbstractDelombokAction {
+  @Override
   @NotNull
   protected DelombokHandler createHandler() {
     return new DelombokHandler(

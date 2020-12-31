@@ -29,7 +29,7 @@ import kotlin.properties.Delegates.observable
 
 private val ENTER = getKeyStroke(VK_ENTER, 0)
 
-class CommitAuthorComponent(private val project: Project) : NonOpaquePanel(HorizontalLayout(0)) {
+class CommitAuthorComponent(private val project: Project) : NonOpaquePanel(HorizontalLayout(0)), CommitAuthorTracker {
   private val viewer = VcsUserViewer().apply {
     setListener(LinkListener { _, _ -> showEditorPopup(user) }, null)
   }
@@ -37,7 +37,7 @@ class CommitAuthorComponent(private val project: Project) : NonOpaquePanel(Horiz
 
   private val eventDispatcher = EventDispatcher.create(CommitAuthorListener::class.java)
 
-  var commitAuthor by observable<VcsUser?>(null) { _, oldValue, newValue ->
+  override var commitAuthor by observable<VcsUser?>(null) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
 
     isVisible = newValue != null
@@ -56,7 +56,7 @@ class CommitAuthorComponent(private val project: Project) : NonOpaquePanel(Horiz
     add(viewer)
   }
 
-  fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable) =
+  override fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable) =
     eventDispatcher.addListener(listener, parent)
 
   private fun showEditorPopup(userToEdit: VcsUser?) {

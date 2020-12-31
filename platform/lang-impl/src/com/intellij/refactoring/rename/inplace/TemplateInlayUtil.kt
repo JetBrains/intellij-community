@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.rename.RenameInplacePopupUsagesCollector
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameUsagesCollector
 import com.intellij.refactoring.util.TextOccurrencesUtil
@@ -208,8 +209,8 @@ object TemplateInlayUtil {
   private fun logStatisticsOnShow(editor: Editor, mouseEvent: MouseEvent? = null) {
     val showEvent = mouseEvent
                     ?: KeyEvent(editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_TAB, KeyEvent.VK_TAB.toChar())
-    RenameUsagesCollector.show.log(editor.project,
-                                   EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName)))
+    RenameInplacePopupUsagesCollector.show.log(editor.project,
+                                               EventFields.InputEvent.with(FusInputEvent(showEvent, javaClass.simpleName)))
   }
 
   private data class Settings (var inComments : Boolean, var inTextOccurrences : Boolean) 
@@ -219,9 +220,9 @@ object TemplateInlayUtil {
                                   toSearchInCommentsNew: Boolean,
                                   toSearchForTextOccurrences: Boolean,
                                   toSearchForTextOccurrencesNew: Boolean) {
-    RenameUsagesCollector.hide.log(editor.project, 
-                                   RenameUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
-    RenameUsagesCollector.settingsChanged.log(editor.project,
+    RenameInplacePopupUsagesCollector.hide.log(editor.project,
+                                               RenameInplacePopupUsagesCollector.changedOnHide.with(toSearchInComments != toSearchInCommentsNew || toSearchForTextOccurrences != toSearchForTextOccurrencesNew))
+    RenameInplacePopupUsagesCollector.settingsChanged.log(editor.project,
                                               RenameUsagesCollector.searchInComments.with(toSearchInCommentsNew),
                                               RenameUsagesCollector.searchInTextOccurrences.with(toSearchForTextOccurrencesNew))
   }
@@ -280,7 +281,7 @@ object TemplateInlayUtil {
   }
 
   private fun doRename(editor: Editor, renameAction: AnAction, anActionEvent: AnActionEvent?) {
-    RenameUsagesCollector.openRenameDialog.log(editor.project, RenameUsagesCollector.linkUsed.with(anActionEvent == null))
+    RenameInplacePopupUsagesCollector.openRenameDialog.log(editor.project, RenameInplacePopupUsagesCollector.linkUsed.with(anActionEvent == null))
     val event = AnActionEvent(null,
                               DataManager.getInstance().getDataContext(editor.component),
                               anActionEvent?.place ?: ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),

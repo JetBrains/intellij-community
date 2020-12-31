@@ -1,8 +1,11 @@
+intellij.codeWithMe.plugin
 intellij.completionMlRanking
 intellij.completionMlRankingModels
 intellij.configurationScript
 intellij.copyright
 intellij.editorconfig
+intellij.emojipicker
+intellij.grazie
 intellij.markdown
 intellij.platform.langInjection
 intellij.properties
@@ -12,7 +15,6 @@ intellij.sh
 intellij.statsCollector
 intellij.tasks.core
 intellij.terminal
-intellij.emojipicker
 intellij.textmate
 intellij.vcs.changeReminder
 intellij.vcs.git

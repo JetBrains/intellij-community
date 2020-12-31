@@ -94,11 +94,11 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     myHtmlEmbedmentInfo = null;
   }
 
-  protected TokenSet createTagEmbedmentStartTokenSet() {
+  protected @NotNull TokenSet createTagEmbedmentStartTokenSet() {
     return TAG_EMBEDMENT_START_TOKENS;
   }
 
-  protected TokenSet createAttributeEmbedmentTokenSet() {
+  protected @NotNull TokenSet createAttributeEmbedmentTokenSet() {
     return ATTRIBUTE_EMBEDMENT_TOKENS;
   }
 
@@ -129,7 +129,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return state;
   }
 
-  protected HtmlEmbedment acquireHtmlEmbedmentInfo() {
+  protected @Nullable HtmlEmbedment acquireHtmlEmbedmentInfo() {
     IElementType type = myDelegate.getTokenType();
     if (type != null) {
       for (HtmlEmbeddedContentProvider provider : myEmbeddedContentProviders) {
@@ -160,7 +160,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     myEmbeddedContentProviders.forEach(provider -> provider.restoreState(providersState.get(provider)));
   }
 
-  protected void skipEmbedment(HtmlEmbedment embedment) {
+  protected void skipEmbedment(@NotNull HtmlEmbedment embedment) {
     myHtmlEmbedmentInfo = embedment;
   }
 
@@ -172,15 +172,15 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return isWithinTag;
   }
 
-  protected boolean isAttributeEmbedmentToken(IElementType tokenType, CharSequence attributeName) {
+  protected boolean isAttributeEmbedmentToken(@NotNull IElementType tokenType, @NotNull CharSequence attributeName) {
     return myAttributeEmbedmentTokens.contains(tokenType);
   }
 
-  protected boolean isTagEmbedmentStartToken(IElementType tokenType, CharSequence tagName) {
+  protected boolean isTagEmbedmentStartToken(@NotNull IElementType tokenType, @NotNull CharSequence tagName) {
     return myTagEmbedmentStartTokens.contains(tokenType);
   }
 
-  protected List<HtmlEmbeddedContentSupport> getEmbeddedContentSupportList() {
+  protected @NotNull List<HtmlEmbeddedContentSupport> getEmbeddedContentSupportList() {
     List<HtmlEmbeddedContentSupport> supports = new ArrayList<>();
     try {
       HtmlEmbeddedContentSupport.Companion.getContentSupports()
@@ -194,7 +194,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return supports;
   }
 
-  protected boolean acceptEmbeddedContentProvider(HtmlEmbeddedContentProvider provider) {
+  protected boolean acceptEmbeddedContentProvider(@NotNull HtmlEmbeddedContentProvider provider) {
     return true;
   }
 

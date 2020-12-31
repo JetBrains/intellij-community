@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.WindowMoveListener;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.emojipicker.Emoji;
 import org.jetbrains.plugins.emojipicker.EmojiCategory;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
@@ -22,8 +23,6 @@ import java.util.function.Consumer;
 
 
 public class EmojiPicker extends JLayeredPane {
-
-
   private final List<EmojiCategory> myCategories;
   private final EmojiSearchField mySearchField;
   private final EmojiCategoryPanel myCategoryPanel;
@@ -32,7 +31,8 @@ public class EmojiPicker extends JLayeredPane {
   private final JPanel myEmojiSkinTonesModal;
   private final EmojiSkinTonesPanel myEmojiSkinTonesPanel;
   private final KeyboardManager myKeyboardManager;
-  private Consumer<String> myInputCallback = emoji -> {};
+  private Consumer<String> myInputCallback = emoji -> {
+  };
 
 
   private EmojiPicker() {
@@ -43,7 +43,7 @@ public class EmojiPicker extends JLayeredPane {
     gbc.fill = GridBagConstraints.BOTH;
     gbc.weightx = 1;
     gbc.gridx = 0;
-    GridBagConstraints fillerGbc = (GridBagConstraints) gbc.clone();
+    GridBagConstraints fillerGbc = (GridBagConstraints)gbc.clone();
     fillerGbc.weighty = 1;
 
     EmojiPickerStyle style = new EmojiPickerStyle();
@@ -78,6 +78,7 @@ public class EmojiPicker extends JLayeredPane {
     selectCategory(myCategories.get(0), true);
     selectSkinToneFromPanel();
   }
+
   private static void applyWindowMoveListener(Component c) {
     WindowMoveListener listener = new WindowMoveListener(c);
     c.addMouseListener(listener);
@@ -86,14 +87,14 @@ public class EmojiPicker extends JLayeredPane {
 
   void selectCategory(EmojiCategory category, boolean scrollToCategory) {
     myCategoryPanel.selectCategory(category);
-    if(scrollToCategory) {
-      if(!mySearchField.getText().isEmpty()) mySearchField.setText("");
+    if (scrollToCategory) {
+      if (!mySearchField.getText().isEmpty()) mySearchField.setText("");
       myEmojiListPanel.selectCategory(category);
       myKeyboardManager.resetFocus();
     }
   }
 
-  void search(String text) {
+  void search(@NonNls String text) {
     myEmojiListPanel.updateSearchFilter(text);
     myKeyboardManager.resetFocus();
     myKeyboardManager.emojiNavigationMode = false;
@@ -103,7 +104,7 @@ public class EmojiPicker extends JLayeredPane {
     myEmojiInfoPanel.showEmojiInfo(emoji, skinTone);
   }
 
-  void selectEmoji(String emoji) {
+  void selectEmoji(@NonNls String emoji) {
     myInputCallback.accept(emoji);
   }
 
@@ -149,17 +150,16 @@ public class EmojiPicker extends JLayeredPane {
       .setShowBorder(false)
       .createPopup();
     picker.myInputCallback = emoji -> {
-      if(emoji != null) {
+      if (emoji != null) {
         inputCallback.accept(emoji);
         popup.closeOk(null);
       }
-      else popup.cancel();
+      else {
+        popup.cancel();
+      }
     };
     return popup;
   }
-
-
-
 
 
   private class KeyboardManager {
@@ -175,7 +175,7 @@ public class EmojiPicker extends JLayeredPane {
     }
 
     private void resetFocus() {
-      if(currentFocusTarget != 0) {
+      if (currentFocusTarget != 0) {
         currentFocusTarget = 0;
         emojiNavigationMode = false;
         myCategoryPanel.repaint();
@@ -185,8 +185,8 @@ public class EmojiPicker extends JLayeredPane {
 
     private boolean handleKey(int k, int modifiers) {
       Object focus = focusTargets.get(currentFocusTarget);
-      if(focus == myEmojiSkinTonesPanel) {
-        if(myEmojiSkinTonesPanel.isVisible()) {
+      if (focus == myEmojiSkinTonesPanel) {
+        if (myEmojiSkinTonesPanel.isVisible()) {
           switch (k) {
             case KeyEvent.VK_UP:
             case KeyEvent.VK_DOWN:
@@ -201,7 +201,7 @@ public class EmojiPicker extends JLayeredPane {
               return true;
           }
         }
-        else if(k == KeyEvent.VK_ENTER || k == KeyEvent.VK_SPACE) {
+        else if (k == KeyEvent.VK_ENTER || k == KeyEvent.VK_SPACE) {
           openSkinToneSelectionPanel();
           myEmojiSkinTonesPanel.focusItem(1);
           return true;
@@ -222,29 +222,31 @@ public class EmojiPicker extends JLayeredPane {
         case KeyEvent.VK_LEFT:
         case KeyEvent.VK_RIGHT:
           resetFocus();
-          if(!emojiNavigationMode) {
+          if (!emojiNavigationMode) {
             emojiNavigationMode = k == KeyEvent.VK_UP || k == KeyEvent.VK_DOWN ||
                                   (k == KeyEvent.VK_LEFT && mySearchField.getCaretPosition() == 0) ||
                                   (k == KeyEvent.VK_RIGHT &&
                                    mySearchField.getCaretPosition() == mySearchField.getText().length());
           }
-          if(!myEmojiListPanel.hasCurrentItem()) emojiNavigationMode = false;
-          if(emojiNavigationMode) {
+          if (!myEmojiListPanel.hasCurrentItem()) emojiNavigationMode = false;
+          if (emojiNavigationMode) {
             myEmojiListPanel.navigate(
               keyToOffset(k, KeyEvent.VK_RIGHT, KeyEvent.VK_LEFT),
               keyToOffset(k, KeyEvent.VK_DOWN, KeyEvent.VK_UP)
             );
             return true;
           }
-          else return false;
+          else {
+            return false;
+          }
       }
-      if(focus instanceof EmojiCategory) {
-        if(k == KeyEvent.VK_ENTER || k == KeyEvent.VK_SPACE) {
-          selectCategory((EmojiCategory) focus, true);
+      if (focus instanceof EmojiCategory) {
+        if (k == KeyEvent.VK_ENTER || k == KeyEvent.VK_SPACE) {
+          selectCategory((EmojiCategory)focus, true);
           return true;
         }
       }
-      else if(focus == mySearchField && k == KeyEvent.VK_ENTER) {
+      else if (focus == mySearchField && k == KeyEvent.VK_ENTER) {
         myEmojiListPanel.selectCurrentEmoji();
         return true;
       }
@@ -252,50 +254,53 @@ public class EmojiPicker extends JLayeredPane {
     }
 
     private int keyToOffset(int key, int positive, int negative) {
-      if(key == positive) return 1;
-      if(key == negative) return -1;
+      if (key == positive) return 1;
+      if (key == negative) return -1;
       return 0;
     }
-
   }
-
-
-
 
 
   private static class JPanelFillLayout implements LayoutManager2 {
     @Override
     public void addLayoutComponent(Component comp, Object constraints) {}
+
     @Override
     public Dimension maximumLayoutSize(Container target) { return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE); }
+
     @Override
     public float getLayoutAlignmentX(Container target) { return 0.5f; }
+
     @Override
     public float getLayoutAlignmentY(Container target) { return 0.5f; }
+
     @Override
     public void invalidateLayout(Container target) {}
+
     @Override
     public void addLayoutComponent(String name, Component comp) {}
+
     @Override
     public void removeLayoutComponent(Component comp) {}
+
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       synchronized (parent.getTreeLock()) {
         return parent.getSize();
       }
     }
+
     @Override
     public Dimension minimumLayoutSize(Container parent) { return preferredLayoutSize(parent); }
+
     @Override
     public void layoutContainer(Container parent) {
       synchronized (parent.getTreeLock()) {
         Dimension size = parent.getSize();
         for (int i = 0; i < parent.getComponentCount(); i++) {
-          if(parent.getComponent(i).getClass() == JPanel.class) parent.getComponent(i).setBounds(0, 0, size.width, size.height);
+          if (parent.getComponent(i).getClass() == JPanel.class) parent.getComponent(i).setBounds(0, 0, size.width, size.height);
         }
       }
     }
   }
-
-
 }

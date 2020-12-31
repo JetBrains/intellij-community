@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -175,6 +176,42 @@ public class GitIndexUtil {
       LOG.warn(e);
       return null;
     }
+  }
+
+  @NotNull
+  public static Hash loadStagedSubmoduleHash(@NotNull GitRepository submodule,
+                                             @NotNull GitRepository parentRepo) throws VcsException {
+    GitLineHandler h = new GitLineHandler(parentRepo.getProject(), parentRepo.getRoot(), GitCommand.SUBMODULE);
+    h.addParameters("status", "--cached");
+    h.addRelativeFiles(Collections.singletonList(submodule.getRoot()));
+    String out = Git.getInstance().runCommand(h).getOutputOrThrow();
+
+    StringScanner s = new StringScanner(out);
+    s.skipChars(1); // status char
+    String hash = s.spaceToken();
+    return HashImpl.build(hash);
+  }
+
+  @Nullable
+  public static Hash loadSubmoduleHashAt(@NotNull GitRepository submodule,
+                                         @NotNull GitRepository parentRepo,
+                                         @NotNull VcsRevisionNumber revisionNumber) throws VcsException {
+    FilePath filePath = VcsUtil.getFilePath(submodule.getRoot());
+    List<StagedFileOrDirectory> lsTree = listTree(parentRepo, Collections.singletonList(filePath), revisionNumber);
+    if (lsTree.size() != 1) {
+      LOG.warn(String.format("Unexpected output of ls-tree command for submodule [%s] at [%s]: %s", filePath, revisionNumber, lsTree));
+      return null;
+    }
+    StagedSubrepo tree = ObjectUtils.tryCast(lsTree.get(0), GitIndexUtil.StagedSubrepo.class);
+    if (tree == null) {
+      LOG.warn(String.format("Unexpected type of ls-tree for submodule [%s] at [%s]: %s", filePath, revisionNumber, tree));
+      return null;
+    }
+    if (!filePath.equals(tree.getPath())) {
+      LOG.warn(String.format("Submodule path [%s] doesn't match the ls-tree output path [%s]", tree.getPath(), filePath));
+      return null;
+    }
+    return HashImpl.build(tree.getBlobHash());
   }
 
   @NotNull

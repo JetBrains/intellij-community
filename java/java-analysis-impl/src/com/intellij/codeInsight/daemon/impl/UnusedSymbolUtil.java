@@ -221,7 +221,7 @@ public final class UnusedSymbolUtil {
       log("* "+member.getName()+" no name; false");
       return false;
     }
-    SearchScope useScope = member.getUseScope();
+    SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
     if (useScope instanceof GlobalSearchScope) {
       // some classes may have references from within XML outside dependent modules, e.g. our actions

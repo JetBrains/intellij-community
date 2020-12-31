@@ -234,8 +234,8 @@ final class XmlReader {
       checkCycle(rootDescriptor, configFile, visitedFiles);
 
       IdeaPluginDescriptorImpl subDescriptor = new IdeaPluginDescriptorImpl(descriptor.path, descriptor.basePath, descriptor.isBundled());
-      subDescriptor.name = rootDescriptor.name;
       subDescriptor.id = rootDescriptor.id;
+      subDescriptor.name = rootDescriptor.name;
       visitedFiles.add(configFile);
       if (subDescriptor.readExternal(element, pathResolver, context, rootDescriptor)) {
         dependency.subDescriptor = subDescriptor;

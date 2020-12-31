@@ -29,7 +29,9 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.graph.*;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -77,7 +79,8 @@ public final class PluginManagerCore {
 
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
-  static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
+  private static volatile @Nullable Set<IdeaPluginDescriptorImpl> pluginIdentitySetCache;
+  private static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
   private static Map<PluginId, PluginLoadingError> ourPluginLoadingErrors;
 
   private static Map<String, String[]> ourAdditionalLayoutMap = Collections.emptyMap();
@@ -138,6 +141,21 @@ public final class PluginManagerCore {
     return result;
   }
 
+  static @NotNull Collection<IdeaPluginDescriptorImpl> getAllPlugins() {
+    return Arrays.asList(ourPlugins);
+  }
+
+  static boolean hasDescriptorByIdentity(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    Set<IdeaPluginDescriptorImpl> cache = pluginIdentitySetCache;
+    if (cache == null) {
+      IdeaPluginDescriptorImpl[] allPlugins = ourPlugins;
+      cache = Collections.newSetFromMap(new IdentityHashMap<>(allPlugins.length));
+      Collections.addAll(cache, allPlugins);
+      pluginIdentitySetCache = cache;
+    }
+    return cache.contains(descriptor);
+  }
+
   /**
    * Returns descriptors of plugins which are successfully loaded into IDE. The result is sorted in a way that if each plugin comes after
    * the plugins it depends on.
@@ -176,11 +194,10 @@ public final class PluginManagerCore {
     return ourPlugins != null;
   }
 
-  @ApiStatus.Internal
-  static synchronized void doSetPlugins(@NotNull IdeaPluginDescriptorImpl @NotNull [] value) {
+  static synchronized void doSetPlugins(@NotNull IdeaPluginDescriptorImpl @Nullable [] value) {
     ourPlugins = value;
-    //noinspection NonPrivateFieldAccessedInSynchronizedContext
-    ourLoadedPlugins = Collections.unmodifiableList(getOnlyEnabledPlugins(value));
+    ourLoadedPlugins = value == null ? null : Collections.unmodifiableList(getOnlyEnabledPlugins(value));
+    pluginIdentitySetCache = null;
   }
 
   public static boolean isDisabled(@NotNull PluginId pluginId) {
@@ -449,9 +466,7 @@ public final class PluginManagerCore {
   }
 
   public static synchronized void invalidatePlugins() {
-    ourPlugins = null;
-    //noinspection NonPrivateFieldAccessedInSynchronizedContext
-    ourLoadedPlugins = null;
+    doSetPlugins(null);
     DisabledPluginsState.invalidate();
     ourShadowedBundledPlugins = null;
   }
@@ -577,10 +592,10 @@ public final class PluginManagerCore {
     return null;
   }
 
-  private static @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                                                                         @NotNull Function<? super PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
-                                                                                         boolean withOptional,
-                                                                                         boolean hasAllModules) {
+  static @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
+                                                                                 @NotNull Function<? super PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
+                                                                                 boolean withOptional,
+                                                                                 boolean hasAllModules) {
     Supplier<IdeaPluginDescriptorImpl> javaDep = () -> idToDescriptorMap.apply(JAVA_MODULE_ID);
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> in = new HashMap<>(descriptors.size());
@@ -1397,11 +1412,9 @@ public final class PluginManagerCore {
   }
 
   public static @Nullable IdeaPluginDescriptor findPluginByModuleDependency(@NotNull PluginId id) {
-    for (IdeaPluginDescriptor descriptor : getPlugins()) {
-      if (descriptor instanceof IdeaPluginDescriptorImpl) {
-        if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id)) {
-          return descriptor;
-        }
+    for (IdeaPluginDescriptorImpl descriptor : ourPlugins) {
+      if (descriptor.getModules().contains(id)) {
+        return descriptor;
       }
     }
     return null;
@@ -1483,23 +1496,6 @@ public final class PluginManagerCore {
       }
     }
 
-    return true;
-  }
-
-  public static boolean processAllBackwardDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                       boolean withOptionalDeps,
-                                                       @NotNull Function<? super IdeaPluginDescriptor, FileVisitResult> consumer) {
-    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = createPluginIdGraph(Arrays.asList(ourPlugins),
-                                                                               (id) -> (IdeaPluginDescriptorImpl)getPlugin(id),
-                                                                               withOptionalDeps,
-                                                                               findPluginByModuleDependency(ALL_MODULES_MARKER) != null);
-    Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
-    Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();
-    GraphAlgorithms.getInstance().collectOutsRecursively(graph, rootDescriptor, dependencies);
-    for (IdeaPluginDescriptorImpl dependency : dependencies) {
-      if (dependency == rootDescriptor) continue;
-      if (consumer.apply(dependency) == FileVisitResult.TERMINATE) return false;
-    }
     return true;
   }
 

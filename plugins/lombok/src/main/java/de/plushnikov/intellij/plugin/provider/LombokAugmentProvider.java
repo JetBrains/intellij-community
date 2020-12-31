@@ -10,6 +10,7 @@ import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -59,18 +60,12 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
    */
   @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
-    if (!valProcessor.isEnabled(typeElement.getProject())) {
-      return false;
-    }
     return valProcessor.canInferType(typeElement);
   }
 
   @Nullable
   @Override
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
-    if (!valProcessor.isEnabled(typeElement.getProject())) {
-      return null;
-    }
     return valProcessor.inferType(typeElement);
   }
 
@@ -89,7 +84,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
     // skip processing if plugin is disabled
     final Project project = element.getProject();
-    if (!ProjectSettings.isLombokEnabledInProject(project)) {
+    if (!ProjectSettings.isLombokEnabledInProject(project) || !LombokProjectValidatorActivity.hasLombokLibrary(project)) {
       return emptyResult;
     }
 

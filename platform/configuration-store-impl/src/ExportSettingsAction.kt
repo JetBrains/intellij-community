@@ -152,7 +152,7 @@ data class ExportableItem(val fileSpec: FileSpec,
 data class LocalExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
 fun exportInstalledPlugins(zip: Compressor) {
-  val plugins = PluginManagerCore.getPlugins().asSequence().filter { !it.isBundled && it.isEnabled }.map { it.pluginId }.toList()
+  val plugins = PluginManagerCore.getLoadedPlugins().asSequence().filter { !it.isBundled }.map { it.pluginId }.toList()
   if (plugins.isNotEmpty()) {
     val buffer = StringWriter()
     PluginManagerCore.writePluginsList(plugins, buffer)

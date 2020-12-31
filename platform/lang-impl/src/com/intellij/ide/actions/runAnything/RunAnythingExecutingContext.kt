@@ -8,10 +8,11 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.NlsActions.*
 import com.intellij.openapi.util.io.FileUtil
 import javax.swing.Icon
 
-sealed class RunAnythingContext(val label: String, var description: String = "", val icon: Icon? = null) {
+sealed class RunAnythingContext(@ActionText val label: String, @ActionDescription var description: String = "", val icon: Icon? = null) {
   data class ProjectContext(val project: Project) :
     RunAnythingContext(IdeBundle.message("run.anything.context.project"), project.basePath.orEmpty())
 
@@ -20,7 +21,7 @@ sealed class RunAnythingContext(val label: String, var description: String = "",
                        module.project.guessProjectDir()?.let { project ->
                          FileUtil.getRelativePath(project.path, ModuleRootManager.getInstance(
                            module).contentRoots.let { if (it.size == 1) it[0].path else ModuleUtilCore.getModuleDirPath(module) }, '/')
-                       } ?: "undefined",
+                       } ?: IdeBundle.message("run.anything.context.project.undefined"),
                        AllIcons.Nodes.Module)
 
   object BrowseRecentDirectoryContext :

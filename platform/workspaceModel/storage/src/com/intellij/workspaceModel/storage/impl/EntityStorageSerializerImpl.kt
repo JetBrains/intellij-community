@@ -35,8 +35,7 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
-                                  private val virtualFileManager: VirtualFileUrlManager,
-                                  private val registrationRequired: Boolean) : EntityStorageSerializer {
+                                  private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   @set:TestOnly
@@ -45,7 +44,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   internal fun createKryo(): Kryo {
     val kryo = Kryo()
 
-    kryo.isRegistrationRequired = registrationRequired
+    kryo.isRegistrationRequired = true
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
     kryo.addDefaultSerializer(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
@@ -236,7 +235,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
    */
   private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableSet<TypeInfo>, objectClasses: MutableSet<TypeInfo>) {
     val kClass = entity::class
-    if (registerKClass(kClass, kryo, objectClasses, simpleClasses)) return
+    val classAlreadyRegistered = registerKClass(kClass, kryo, objectClasses, simpleClasses)
+    if (classAlreadyRegistered) return
     if (entity is VirtualFileUrl) return
 
     kClass.memberProperties.forEach {
@@ -255,6 +255,12 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       recursiveClassFinder(kryo, property, simpleClasses, objectClasses)
 
       if (property is List<*>) {
+        // Get and register generic type of the list. This is required for kryo proper work
+        val genericType = it.returnType.arguments.firstOrNull()?.type?.jvmErasure
+        if (genericType != null) {
+          registerKClass(genericType, kryo, objectClasses, simpleClasses)
+        }
+
         property.filterNotNull().forEach { listItem ->
           recursiveClassFinder(kryo, listItem, simpleClasses, objectClasses)
         }

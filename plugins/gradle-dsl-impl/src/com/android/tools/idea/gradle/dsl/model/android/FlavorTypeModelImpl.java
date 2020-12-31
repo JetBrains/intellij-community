@@ -39,7 +39,6 @@ import java.util.List;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.psi.KtFile;
 
 /**
  * Common base class for {@link BuildTypeModelImpl} and {@link ProductFlavorModelImpl}.
@@ -311,7 +310,7 @@ public abstract class FlavorTypeModelImpl extends GradleDslBlockModel implements
     // TODO(b/141842964): Groovy expects buildConfigField and resValue to be expressed with GradleDslExpressionList, while Kotlin expresses
     //  them with a GradleDslMethodCall.  This method of detecting which to produce is unsound given the possibility of multi-language build
     //  files, and should in any case be replaced by the two language backends producing a common representation.
-    boolean forKotlin = myDslElement.getDslFile().getPsiElement() instanceof KtFile;
+    boolean forKotlin = myDslElement.getDslFile().isKotlin();
     GradleDslExpressionList expressionList;
     GradleDslMethodCall expressionCall = null;
     if (forKotlin) {

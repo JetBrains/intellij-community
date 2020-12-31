@@ -99,7 +99,6 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
         is ModuleContext -> ModuleItem(it)
         is BrowseRecentDirectoryContext -> BrowseDirectoryItem(it)
         is RecentDirectoryContext -> RecentDirectoryItem(it)
-        else -> throw UnsupportedOperationException()
       }
     }
   }
@@ -213,7 +212,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
         .plus(ProjectContext(project))
         .plus(ModuleManager.getInstance(project).modules.map {
           ModuleContext(it)
-        }.let { if (it.size > 1) it else emptyList<RunAnythingContext>() })
+        }.let { if (it.size > 1) it else emptyList() })
         .toList()
     }
   }

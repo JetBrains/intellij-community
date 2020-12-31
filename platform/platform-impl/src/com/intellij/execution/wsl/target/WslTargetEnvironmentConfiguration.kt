@@ -21,6 +21,7 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
       distributionMsId = value?.msId
       distributionLazy.drop()
     }
+  override var projectRootOnTarget: String = ""
 
   constructor(initialDistribution: WSLDistribution?) : this() {
     distributionMsId = initialDistribution?.msId
@@ -28,14 +29,17 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
 
   override fun getState() = MyState().also {
     it.distributionMsId = distributionMsId
+    it.projectRootOnTarget = projectRootOnTarget
   }
 
   override fun loadState(state: MyState) {
     distributionMsId = state.distributionMsId
     distributionLazy.drop()
+    projectRootOnTarget = state.projectRootOnTarget ?: ""
   }
 
   class MyState : BaseState() {
     var distributionMsId by string()
+    var projectRootOnTarget by string()
   }
 }

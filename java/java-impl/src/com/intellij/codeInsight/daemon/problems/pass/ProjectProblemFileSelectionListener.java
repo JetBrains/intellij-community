@@ -3,16 +3,14 @@ package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.problems.FileStateCache;
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
+import com.intellij.codeInsight.hints.InlayHintsPassFactory;
 import com.intellij.codeInsight.hints.InlayHintsSettings;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -61,6 +59,10 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
     Editor newEditor = getEditor(event.getNewEditor());
     if (newEditor == null || !ProjectProblemUtils.isProjectUpdated(newJavaFile, newEditor)) return;
     FileStateUpdater.setPreviousState(newJavaFile);
+    boolean isInSplitEditorMode = FileEditorManager.getInstance(myProject).getSelectedEditors().length > 1;
+    if (isInSplitEditorMode) {
+      InlayHintsPassFactory.Companion.forceHintsUpdateOnNextPass();
+    }
   }
 
   @Override

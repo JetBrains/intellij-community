@@ -95,7 +95,7 @@ object ExecUtil {
     CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
 
   @JvmStatic
-  fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String? =
+  fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String =
     CapturingProcessHandler(commandLine).also { processHandler ->
       processHandler.addProcessListener(object : ProcessAdapter() {
         override fun startNotified(event: ProcessEvent) {

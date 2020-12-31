@@ -195,6 +195,16 @@ public final class DisabledPluginsState {
     trySaveDisabledPlugins(disabled);
   }
 
+  static boolean updateDisabledPluginsState(@NotNull Collection<PluginId> pluginIdsToEnable,
+                                            @NotNull Collection<PluginId> pluginIdsToDisable) {
+    Set<PluginId> disabledIds = getDisabledIds();
+
+    pluginIdsToEnable.forEach(disabledIds::remove);
+    disabledIds.addAll(pluginIdsToDisable);
+
+    return trySaveDisabledPlugins(disabledIds);
+  }
+
   static boolean trySaveDisabledPlugins(@NotNull Collection<PluginId> disabledPlugins) {
     try {
       saveDisabledPlugins(disabledPlugins, false);

@@ -7,6 +7,7 @@ import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
  */
 public class GetterTest extends AbstractLombokParsingTestCase {
 
+  @Override
   protected boolean shouldCompareCodeBlocks() {
     return false;
   }

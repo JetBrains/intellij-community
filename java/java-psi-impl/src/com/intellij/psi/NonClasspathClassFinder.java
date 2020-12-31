@@ -213,7 +213,10 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     List<GlobalSearchScope> nonClasspathScopes = new SmartList<>();
     for (PsiElementFinder finder : EP.getExtensions(project)) {
       if (finder instanceof NonClasspathClassFinder) {
-        nonClasspathScopes.add(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
+        GlobalSearchScope scope = NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots());
+        if (scope != GlobalSearchScope.EMPTY_SCOPE) {
+          nonClasspathScopes.add(scope);
+        }
       }
     }
     if (nonClasspathScopes.isEmpty()) {

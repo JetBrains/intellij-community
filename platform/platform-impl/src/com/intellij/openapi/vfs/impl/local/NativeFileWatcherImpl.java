@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.text.Normalizer;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NativeFileWatcherImpl extends PluggableFileWatcher {
@@ -56,7 +57,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
   private volatile List<String> myRecursiveWatchRoots = Collections.emptyList();
   private volatile List<String> myFlatWatchRoots = Collections.emptyList();
-  private volatile List<String> myIgnoredRoots = new SmartList<>();
+  private volatile List<String> myIgnoredRoots = Collections.emptyList();
   private final String[] myLastChangedPaths = new String[2];
   private int myLastChangedPathIndex;
 
@@ -242,21 +243,21 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     if (!restart && myRecursiveWatchRoots.equals(recursive) && myFlatWatchRoots.equals(flat)) {
-      myNotificationSink.notifyManualWatchRoots(myIgnoredRoots);
+      myNotificationSink.notifyManualWatchRoots(this, myIgnoredRoots);
       return;
     }
 
     mySettingRoots.incrementAndGet();
     myRecursiveWatchRoots = recursive;
     myFlatWatchRoots = flat;
-    myIgnoredRoots = new SmartList<>();
 
+    List<String> ignored = new SmartList<>();
     if (SystemInfo.isWindows) {
-      List<String> ignored = new SmartList<>();
       recursive = screenUncRoots(recursive, ignored);
       flat = screenUncRoots(flat, ignored);
-      myIgnoredRoots = ignored;
     }
+    myIgnoredRoots = new CopyOnWriteArrayList<>(ignored);
+    myNotificationSink.notifyManualWatchRoots(this, ignored);
 
     try {
       writeLine(ROOTS_COMMAND);
@@ -425,9 +426,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     private void processUnwatchable() {
-      List<String> unwatched = myIgnoredRoots;
-      unwatched.addAll(myLines);
-      myNotificationSink.notifyManualWatchRoots(unwatched);
+      myIgnoredRoots.addAll(myLines);
+      myNotificationSink.notifyManualWatchRoots(NativeFileWatcherImpl.this, myLines);
     }
 
     private void processChange(String path, WatcherOp op) {

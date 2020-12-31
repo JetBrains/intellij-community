@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.action.BaseRefactorHandler;
 
@@ -20,6 +21,7 @@ public class RefactorGetterHandler extends BaseRefactorHandler {
     super(dataContext, project);
   }
 
+  @Override
   protected String getChooserTitle() {
     return "Select Fields to replace Getter-Method With @Getter";
   }
@@ -38,7 +40,7 @@ public class RefactorGetterHandler extends BaseRefactorHandler {
   protected List<EncapsulatableClassMember> getEncapsulatableClassMembers(PsiClass psiClass) {
     final List<EncapsulatableClassMember> result = new ArrayList<>();
     for (PsiField field : psiClass.getFields()) {
-      if (null != PropertyUtil.findPropertyGetter(psiClass, field.getName(), false, false)) {
+      if (null != PropertyUtilBase.findPropertyGetter(psiClass, field.getName(), false, false)) {
         result.add(new PsiFieldMember(field));
       }
     }
@@ -51,7 +53,7 @@ public class RefactorGetterHandler extends BaseRefactorHandler {
       final PsiElementClassMember elementClassMember = (PsiElementClassMember) classMember;
 
       PsiField psiField = (PsiField) elementClassMember.getPsiElement();
-      PsiMethod psiMethod = PropertyUtil.findPropertyGetter(psiField.getContainingClass(), psiField.getName(), false, false);
+      PsiMethod psiMethod = PropertyUtilBase.findPropertyGetter(psiField.getContainingClass(), psiField.getName(), false, false);
 
       if (null != psiMethod) {
         PsiModifierList modifierList = psiField.getModifierList();

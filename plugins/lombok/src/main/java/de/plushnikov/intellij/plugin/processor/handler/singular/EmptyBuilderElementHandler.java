@@ -28,6 +28,7 @@ class EmptyBuilderElementHandler implements BuilderElementHandler {
     return "";
   }
 
+  @Override
   public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation) {
     return Collections.emptyList();
   }

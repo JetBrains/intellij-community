@@ -25,11 +25,6 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     super(supportedClass, supportedAnnotationClass);
   }
 
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
-  }
-
   @NotNull
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {

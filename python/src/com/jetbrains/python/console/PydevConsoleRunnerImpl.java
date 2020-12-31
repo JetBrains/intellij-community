@@ -384,9 +384,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                     @Nullable String workingDir, int port) {
     final PythonConsoleRunParams runParams = createConsoleRunParams(workingDir, sdk, environmentVariables);
 
-    GeneralCommandLine cmd =
-      PythonCommandLineState.createPythonCommandLine(myProject, sdk.getSdkAdditionalData(), runParams, false,
-                                                     PtyCommandLine.isEnabled() && !SystemInfo.isWindows);
+    String title = PyBundle.message("connecting.to.console.title");
+    GeneralCommandLine cmd = ProgressManager.getInstance().run(new Task.WithResult<>(myProject, title, false) {
+      @Override
+      protected GeneralCommandLine compute(@NotNull ProgressIndicator indicator) {
+        return PythonCommandLineState.createPythonCommandLine(myProject, sdk.getSdkAdditionalData(), runParams, false,
+                                                              PtyCommandLine.isEnabled() && !SystemInfo.isWindows);
+      }
+    });
     cmd.withWorkDirectory(myWorkingDir);
 
     ParamsGroup exeGroup = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);

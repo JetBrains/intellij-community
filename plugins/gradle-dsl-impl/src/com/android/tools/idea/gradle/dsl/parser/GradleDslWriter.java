@@ -107,5 +107,15 @@ public interface GradleDslWriter extends GradleDslNameConverter {
 
     @Override
     public void applyDslPropertiesElement(@NotNull GradlePropertiesDslElement element) { }
+
+    @Override
+    public boolean isGroovy() {
+      return false;
+    }
+
+    @Override
+    public boolean isKotlin() {
+      return false;
+    }
   }
 }

@@ -120,6 +120,16 @@ public interface GradleDslParser extends GradleDslNameConverter {
 
   class Adapter implements GradleDslParser {
     @Override
+    public boolean isGroovy() {
+      return false;
+    }
+
+    @Override
+    public boolean isKotlin() {
+      return false;
+    }
+
+    @Override
     public void parse() { }
 
     @Override

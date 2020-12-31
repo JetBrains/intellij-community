@@ -1,38 +1,38 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.emojipicker;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class EmojiSearchIndex implements Serializable {
-
-
-  private final String myChars;
+  @NonNls private final String myChars;
   private final int[] myData;
   private final int myRootNodeOffset, myTotalEmojiIndices;
 
-  private EmojiSearchIndex(String chars, int[] data, int rootNodeOffset, int totalEmojiIndices) {
+  private EmojiSearchIndex(@NonNls String chars, int[] data, int rootNodeOffset, int totalEmojiIndices) {
     myChars = chars;
     myData = data;
     myRootNodeOffset = rootNodeOffset;
     myTotalEmojiIndices = totalEmojiIndices;
   }
 
-  private int findNodeForPrefix(String key, int prefixOffset, int nodeOffset) {
-    if(prefixOffset == key.length()) return nodeOffset;
+  private int findNodeForPrefix(@NonNls String key, int prefixOffset, int nodeOffset) {
+    if (prefixOffset == key.length()) return nodeOffset;
     int children = myData[nodeOffset + 2];
     for (int c = 0; c < children; c++) {
       int child = myData[nodeOffset + 3 + c];
       int childCharsFrom = myData[child], childCharsTo = myData[child + 1];
-      int i, limit = Math.min(key.length() - prefixOffset,  childCharsTo - childCharsFrom);
+      int i, limit = Math.min(key.length() - prefixOffset, childCharsTo - childCharsFrom);
       for (i = 0; i < limit; i++) {
-        if(key.charAt(prefixOffset + i) != myChars.charAt(childCharsFrom + i)) break;
+        if (key.charAt(prefixOffset + i) != myChars.charAt(childCharsFrom + i)) break;
       }
-      if(i == childCharsTo - childCharsFrom) return findNodeForPrefix(key, prefixOffset + i, child);
-      if(i == key.length() - prefixOffset) return child;
-      if(i > 0) return -1;
+      if (i == childCharsTo - childCharsFrom) return findNodeForPrefix(key, prefixOffset + i, child);
+      if (i == key.length() - prefixOffset) return child;
+      if (i > 0) return -1;
     }
     return -1;
   }
@@ -50,13 +50,13 @@ public class EmojiSearchIndex implements Serializable {
     }
   }
 
-  public boolean lookupIds(boolean[] idMap, String prefix) {
-    if(idMap.length < myTotalEmojiIndices) {
+  public boolean lookupIds(boolean[] idMap, @NonNls String prefix) {
+    if (idMap.length < myTotalEmojiIndices) {
       throw new IllegalArgumentException("Output array is too small: " + idMap.length +
                                          ", but there are " + myTotalEmojiIndices + "emoji indices");
     }
     int node = findNodeForPrefix(prefix, 0, myRootNodeOffset);
-    if(node == -1) return false;
+    if (node == -1) return false;
     Arrays.fill(idMap, false);
     collectIdsFromSubtree(idMap, node);
     return true;
@@ -67,34 +67,32 @@ public class EmojiSearchIndex implements Serializable {
   }
 
 
-
-
-
   public static class PrefixTree {
 
-    private String myPrefix;
+    @NonNls private String myPrefix;
     private final List<PrefixTree> myChildren = new ArrayList<>();
     private final List<Integer> myValues = new ArrayList<>();
 
-    private PrefixTree(String prefix) { myPrefix = prefix; }
+    private PrefixTree(@NonNls String prefix) { myPrefix = prefix; }
+
     public PrefixTree() { this(""); }
 
-    public void add(String key, int value) {
-      if(key.isEmpty()) {
+    public void add(@NonNls String key, int value) {
+      if (key.isEmpty()) {
         myValues.add(value);
         return;
       }
-      for(int c = 0; c < myChildren.size(); c++) {
+      for (int c = 0; c < myChildren.size(); c++) {
         PrefixTree child = myChildren.get(c);
-        int i, limit = Math.min(key.length(),  child.myPrefix.length());
+        int i, limit = Math.min(key.length(), child.myPrefix.length());
         for (i = 0; i < limit; i++) {
-          if(key.charAt(i) != child.myPrefix.charAt(i)) break;
+          if (key.charAt(i) != child.myPrefix.charAt(i)) break;
         }
-        if(i == child.myPrefix.length()) {
+        if (i == child.myPrefix.length()) {
           child.add(key.substring(limit), value);
           return;
         }
-        else if(i > 0) {
+        else if (i > 0) {
           PrefixTree
             firstPart = new PrefixTree(key.substring(0, i));
           child.myPrefix = child.myPrefix.substring(i);
@@ -128,8 +126,8 @@ public class EmojiSearchIndex implements Serializable {
       System.arraycopy(childrenLinks, 0, data.myData, data.myDataPointer, childrenLinks.length);
       data.myDataPointer += childrenLinks.length;
       data.write(myValues.size());
-      for(int i : myValues) {
-        if(i > data.myMaxEmojiId) data.myMaxEmojiId = i;
+      for (int i : myValues) {
+        if (i > data.myMaxEmojiId) data.myMaxEmojiId = i;
         data.write(i);
       }
       return index;
@@ -139,15 +137,15 @@ public class EmojiSearchIndex implements Serializable {
       StringBuffer myChars;
       int[] myData;
       int myDataPointer, myMaxEmojiId = -1;
+
       private void ensureDataCapacity(int remaining) {
-        if(myDataPointer + remaining > myData.length) myData = Arrays.copyOf(myData, myData.length * 2);
+        if (myDataPointer + remaining > myData.length) myData = Arrays.copyOf(myData, myData.length * 2);
       }
+
       private BuildData write(int i) {
         myData[myDataPointer++] = i;
         return this;
       }
     }
-
   }
-
 }

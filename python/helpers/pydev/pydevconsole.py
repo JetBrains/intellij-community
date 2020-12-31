@@ -250,13 +250,12 @@ def process_exec_queue(interpreter):
             except _queue.Empty:
                 continue
 
-            with interpreter.vars_lock:
-                if hasattr(code_fragment, '__call__'):
-                    # It can be a callable (i.e.: something that must run in the main
-                    # thread can be put in the queue for later execution).
-                    code_fragment()
-                else:
-                    interpreter.add_exec(code_fragment)
+            if hasattr(code_fragment, '__call__'):
+                # It can be a callable (i.e.: something that must run in the main
+                # thread can be put in the queue for later execution).
+                code_fragment()
+            else:
+                interpreter.add_exec(code_fragment)
         except KeyboardInterrupt:
             interpreter.buffer = None
             continue

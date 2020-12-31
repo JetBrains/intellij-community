@@ -68,6 +68,12 @@ public final class CpuUsageData {
     return printLongestNames(myThreadTimes);
   }
 
+  public long getMemDelta() {
+    long usedBefore = myMemStart.total - myMemStart.free;
+    long usedAfter = myMemEnd.total - myMemEnd.free;
+    return usedAfter - usedBefore;
+  }
+
   public String getSummary(String indent) {
     return indent + "GC: " + getGcStats() + "\n" +
            indent + "Threads: " + getThreadStats() + "\n" +

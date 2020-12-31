@@ -140,8 +140,7 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
 
   @Override
   protected @Nullable EditorWithProviderComposite getEditorComposite(@NotNull FileEditor editor) {
-    VirtualFile virtualFile = editor.getFile();
-    return virtualFile != null ? LightEditUtil.findEditorComposite(virtualFile) : null;
+    return LightEditUtil.findEditorComposite(editor);
   }
 
   @Override

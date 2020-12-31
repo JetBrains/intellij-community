@@ -10,11 +10,13 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
+import com.intellij.execution.target.LanguageRuntimeType.VolumeType
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.OrderRootType
@@ -60,6 +62,10 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
+  private val projectHomeOnTarget = VolumeDescriptor(VolumeType(JdkCommandLineSetup::class.java.simpleName + ":projectHomeOnTarget"),
+                                                     "", "", "",
+                                                     target?.projectRootOnTarget ?: "")
+
   /**
    * @param uploadPathIsFile
    *   * true: [uploadPathString] points to a file, the volume should be created for the file's directory.
@@ -80,8 +86,21 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     request.uploadVolumes += uploadRoot
     val result = DeferredTargetValue(uploadPathString)
     dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
+      if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
+        result.stopProceeding()
+        return@then
+      }
       val volume = environment.uploadVolumes.getValue(uploadRoot)
-      result.resolve(volume.upload(if (isDir) "." else uploadPath.fileName.toString(), targetProgressIndicator))
+      try {
+        val upload = volume.upload(if (isDir) "." else uploadPath.fileName.toString(), targetProgressIndicator)
+        result.resolve(upload)
+      }
+      catch (t: Throwable) {
+        LOG.warn(t)
+        targetProgressIndicator.stopWithErrorMessage(LangBundle.message("progress.message.failed.to.upload.0.1", volume.localRoot,
+                                                                        t.localizedMessage))
+        result.resolveFailure(t)
+      }
     }
     return result
   }
@@ -127,7 +146,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
     else {
       if (languageRuntime == null) {
-        throw CantRunException("Cannot find Java configuration in " + target.displayName + " target")
+        throw CantRunException(LangBundle.message("error.message.cannot.find.java.configuration.in.0.target", target.displayName))
       }
 
       val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
@@ -138,14 +157,14 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private fun setupWorkingDirectory(javaParameters: SimpleJavaParameters) {
     val workingDirectory = javaParameters.workingDirectory
     if (workingDirectory != null) {
-      val targetWorkingDirectory = uploadIntoTarget(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, workingDirectory)
+      val targetWorkingDirectory = uploadIntoTarget(projectHomeOnTarget, workingDirectory)
       commandLine.setWorkingDirectory(targetWorkingDirectory)
     }
   }
 
   @Throws(CantRunException::class)
   private fun setupEnvironment(javaParameters: SimpleJavaParameters) {
-    javaParameters.env.forEach { (key: String, value: String?) -> commandLine.addEnvironmentVariable(key, value) }
+    javaParameters.env.forEach { key: String, value: String? -> commandLine.addEnvironmentVariable(key, value) }
 
     if (request is LocalTargetEnvironmentRequest) {
       val type = if (javaParameters.isPassParentEnvs) ParentEnvironmentType.CONSOLE else ParentEnvironmentType.NONE
@@ -164,7 +183,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     // copies agent .jar files to the beginning of the classpath to load agent classes faster
     if (vmParameters.isUrlClassloader()) {
       if (request !is LocalTargetEnvironmentRequest) {
-        throw CantRunException("Cannot run application with UrlClassPath on the remote target.")
+        throw CantRunException(LangBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
       }
 
       for (parameter in vmParameters.parameters) {
@@ -250,7 +269,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters) {
         rememberFileContentAfterUpload(argFile.file, argFileParameter)
       }
-      
+
     }
     catch (e: IOException) {
       throwUnableToCreateTempFile(e)
@@ -374,7 +393,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
       if (vmParameters.isUrlClassloader()) {
         if (request !is LocalTargetEnvironmentRequest) {
-          throw CantRunException("Cannot run application with UrlClassPath on the remote target.")
+          throw CantRunException(LangBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
         }
 
         // since request is known to be local we will simplify to TargetValue.fixed below
@@ -432,7 +451,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
     else if (jarPath != null) {
       listOf(TargetValue.fixed("-jar"),
-             uploadIntoTarget(JavaLanguageRuntimeType.APPLICATION_FOLDER_VOLUME, jarPath, uploadPathIsFile = true))
+             uploadIntoTarget(projectHomeOnTarget, jarPath, uploadPathIsFile = true))
     }
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
@@ -595,7 +614,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
     @Throws(CantRunException::class)
     private fun throwUnableToCreateTempFile(cause: IOException?) {
-      throw CantRunException("Failed to create a temporary file in " + FileUtil.getTempDirectory(), cause)
+      throw CantRunException(LangBundle.message("error.message.failed.to.create.a.temporary.file.in.0", FileUtil.getTempDirectory()), cause)
     }
   }
 

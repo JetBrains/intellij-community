@@ -255,7 +255,7 @@
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction" internal="true"/>
     <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider">
       <add-to-group group-id="CopyFileReference"/>
-      <add-to-group group-id="CopyGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
+      <add-to-group group-id="CutCopyPasteGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
     </action>
 
     <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction" use-shortcut-of="CheckinProject"/>
@@ -268,6 +268,7 @@
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
+    <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
@@ -275,6 +276,9 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Git.Stage.Refresh"/>
       <reference id="Git.Stash.Silently"/>
+      <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.Show" popup="true">
+        <reference id="Git.Stage.ToggleIgnored"/>
+      </group>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Merge"/>
@@ -383,6 +387,8 @@
                               This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications."/>
     <registryKey key="git.use.setsid.wait.for.wsl.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid -w' for remote operations with WSL executable."/>
+    <registryKey key="git.wsl.exe.executable.no.shell" defaultValue="false"
+                 description="Run git process for WSL executables without wrapping into a shell command."/>
     <registryKey key="git.use.push.force.with.lease" defaultValue="true"
                  description="Use '--force-with-lease' to push from IDE instead of '--force'"/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"
@@ -398,9 +404,9 @@
     <registryKey key="git.enable.stage" defaultValue="false"
                  description="Obsolete property, replaced by Settings | Version Control | Git | Enable staging area"/>
     <registryKey key="git.enable.stage.line.status.tracker" defaultValue="true"
-                 description="Show staged and unstaged changes in gutter markers."/>
+                 description="Show staged and unstaged changes in gutter markers." restartRequired="true"/>
     <registryKey key="git.enable.stage.disable.local.changes" defaultValue="true"
-                 description="Hide Local Changes tab when staging area tab is enabled."/>
+                 description="Hide Local Changes tab when staging area tab is enabled." restartRequired="true"/>
     <registryKey key="git.shelve.load.base.in.batches" defaultValue="1000"
                  description="If set to a value > 0, load base contents for shelving in batches: by reading the given number of files at once. If set to -1, contents are loaded as usual, one by one."/>
     <registryKey key="git.allow.wsl1.executables" defaultValue="false"
@@ -544,12 +550,12 @@
                         predicateClassName="git4idea.index.GitStageContentVisibilityPredicate"
                         preloaderClassName="git4idea.index.GitStageContentPreloader"
                         displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"/>
+    <projectService serviceImplementation="git4idea.index.ui.GitStageUiSettingsImpl"/>
 
-    <projectService serviceImplementation="git4idea.index.GitStageManager"/>
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
     <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
 
-    <vcsStartupActivity implementation="git4idea.index.GitStageManager$GitStageStartupActivity"/>
+    <backgroundPostStartupActivity implementation="git4idea.index.GitStageManager$GitStageStartupActivity"/>
 
     <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>

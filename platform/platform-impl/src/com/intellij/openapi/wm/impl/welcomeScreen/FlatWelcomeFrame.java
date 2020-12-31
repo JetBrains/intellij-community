@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditServiceListener;
 import com.intellij.ide.plugins.PluginDropHandler;
 import com.intellij.ide.plugins.newui.VerticalLayout;
@@ -24,9 +23,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.WindowStateService;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
@@ -50,7 +48,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import net.miginfocom.swing.MigLayout;
+import org.jdom.internal.SystemProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,21 +67,15 @@ import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
-import static com.intellij.openapi.actionSystem.IdeActions.GROUP_HELP_MENU;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.collectAllActions;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getLinkNormalColor;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainBackground;
-import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
-
 /**
  * @author Konstantin Bulenkov
  */
 public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor, WelcomeFrameUpdater {
+  @SuppressWarnings("StaticNonFinalField")
+  public static boolean USE_TABBED_WELCOME_SCREEN = Boolean.parseBoolean(SystemProperty.get("use.tabbed.welcome.screen", "true"));
+
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
-  public static final int DEFAULT_HEIGHT = Registry.is("use.tabbed.welcome.screen") ? 600 : 460;
+  public static final int DEFAULT_HEIGHT = USE_TABBED_WELCOME_SCREEN ? 600 : 460;
   public static final int MAX_DEFAULT_WIDTH = 800;
   private final AbstractWelcomeScreen myScreen;
   private WelcomeBalloonLayoutImpl myBalloonLayout;
@@ -91,9 +85,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     SplashManager.hideBeforeShow(this);
 
     JRootPane rootPane = getRootPane();
-    boolean useTabWelcomeScreen = Registry.is("use.tabbed.welcome.screen");
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
-    myScreen = useTabWelcomeScreen ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
+    myScreen = USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
 
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
       @Override
@@ -110,9 +103,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       Color backgroundColor = UIManager.getColor("WelcomeScreen.background");
-
       FrameHeader header = new DefaultFrameHeader(this);
-
       if (backgroundColor != null) {
         header.setBackground(backgroundColor);
       }
@@ -126,7 +117,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     }
     else {
-      if (useTabWelcomeScreen && SystemInfo.isMac) {
+      if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
         rootPane.setJMenuBar(new WelcomeFrameMenuBar());
       }
       setContentPane(myScreen.getWelcomePanel());
@@ -134,14 +125,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
-    if (useTabWelcomeScreen) {
+    if (USE_TABBED_WELCOME_SCREEN) {
       getRootPane().setPreferredSize(JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight));
     }
     else {
       int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;
       getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
     }
-    setResizable(useTabWelcomeScreen);
+    setResizable(USE_TABBED_WELCOME_SCREEN);
 
     Dimension size = getPreferredSize();
     Point location = WindowStateService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY);
@@ -157,7 +148,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     // at this point a window insets may be unavailable,
     // so we need resize window when it is shown
-    doWhenFirstShown(this, this::pack);
+    UiNotifyConnector.doWhenFirstShown(this, this::pack);
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -166,7 +157,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Disposer.dispose(FlatWelcomeFrame.this);
       }
     });
-    connection.subscribe(LightEditService.TOPIC, new LightEditServiceListener() {
+    connection.subscribe(LightEditServiceListener.TOPIC, new LightEditServiceListener() {
       @Override
       public void lightEditWindowOpened(@NotNull Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
@@ -227,7 +218,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   protected String getWelcomeFrameTitle() {
-    return getApplicationTitle();
+    return WelcomeScreenComponentFactory.getApplicationTitle();
   }
 
   @NotNull
@@ -247,9 +238,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private boolean inDnd;
 
     FlatWelcomeScreen() {
-      setBackground(getMainBackground());
+      setBackground(WelcomeScreenUIManager.getMainBackground());
       if (RecentProjectListActionProvider.getInstance().getActions(false, true).size() > 0) {
-        JComponent recentProjects = createRecentProjects(this);
+        JComponent recentProjects = WelcomeScreenComponentFactory.createRecentProjects(this);
         add(recentProjects, BorderLayout.WEST);
         JList<?> projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
         if (projectsList != null) {
@@ -356,7 +347,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     @NotNull
     private JComponent createBody() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      panel.add(createLogo(), BorderLayout.NORTH);
+      panel.add(WelcomeScreenComponentFactory.createLogo(), BorderLayout.NORTH);
       myTouchbarActions.removeAll();
       ActionPanel actionPanel = createQuickStartActionPanel();
       panel.add(actionPanel, BorderLayout.CENTER);
@@ -377,13 +368,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       NonOpaquePanel toolbar = new NonOpaquePanel();
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
-      toolbar.add(createErrorsLink(this));
+      toolbar.add(WelcomeScreenComponentFactory.createErrorsLink(this));
       toolbar.add(createEventsLink());
-      toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"),
-                                   IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
-                                   AllIcons.General.GearPlain, UIUtil.findComponentOfType(frame.getRootPane(), JList.class)));
+      toolbar.add(WelcomeScreenComponentFactory.createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"),
+                                                                 IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
+                                                                 AllIcons.General.GearPlain, UIUtil.findComponentOfType(frame.getRootPane(), JList.class)));
       toolbar
-        .add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null
+        .add(WelcomeScreenComponentFactory
+               .createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null
         ));
       panel.add(toolbar, BorderLayout.EAST);
 
@@ -392,14 +384,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
 
     private Component createEventsLink() {
-      return createEventLink(IdeBundle.message("action.Events"), FlatWelcomeFrame.this);
+      return WelcomeScreenComponentFactory.createEventLink(IdeBundle.message("action.Events"), FlatWelcomeFrame.this);
     }
 
     @NotNull
     private ActionPanel createQuickStartActionPanel() {
       DefaultActionGroup group = new DefaultActionGroup();
       ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
-      collectAllActions(group, quickStart);
+      WelcomeScreenActionsUtil.collectAllActions(group, quickStart);
 
       ActionPanel mainPanel =
         new ActionPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
@@ -451,15 +443,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           // Don't allow focus, as the containing panel is going to focusable.
           link.setFocusable(false);
           link.setPaintUnderline(false);
-          link.setNormalColor(getLinkNormalColor());
-          JActionLinkPanel button = new JActionLinkPanel(link);
+          link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor());
+          WelcomeScreenComponentFactory.JActionLinkPanel button = new WelcomeScreenComponentFactory.JActionLinkPanel(link);
           button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
-            button.add(createArrow(link), BorderLayout.EAST);
+            button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST);
             TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
-          installFocusable(FlatWelcomeFrame.this, button, action, KeyEvent.VK_DOWN,
-                           KeyEvent.VK_UP, UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class)
+          WelcomeScreenFocusManager.installFocusable(FlatWelcomeFrame.this, button, action, KeyEvent.VK_DOWN,
+                                                     KeyEvent.VK_UP, UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class)
           );
 
           panel.add(button);
@@ -555,8 +547,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     @Override
     public @NotNull ActionGroup getMainMenuActionGroup() {
-      return new DefaultActionGroup(ActionManager.getInstance().getAction(GROUP_FILE),
-                                    ActionManager.getInstance().getAction(GROUP_HELP_MENU));
+      return new DefaultActionGroup(ActionManager.getInstance().getAction(IdeActions.GROUP_FILE),
+                                    ActionManager.getInstance().getAction(IdeActions.GROUP_HELP_MENU));
     }
   }
 }

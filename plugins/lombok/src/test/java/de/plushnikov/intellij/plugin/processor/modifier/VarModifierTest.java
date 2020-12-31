@@ -39,7 +39,7 @@ public class VarModifierTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.type('1');
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertTrue(var.isValid());
-    assertEquals(PsiPrimitiveType.INT, var.getType());
+    assertEquals(PsiType.INT, var.getType());
 
     assertNotNull(var.getModifierList());
     boolean isFinal = var.getModifierList().hasModifierProperty(PsiModifier.FINAL);

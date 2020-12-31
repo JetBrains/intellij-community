@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladimir Kondratyev
  */
-final class OnlineDocAction extends AnAction implements DumbAware {
+public final class OnlineDocAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     BrowserUtil.browse(ApplicationInfoImpl.getShadowInstance().getDocumentationUrl());

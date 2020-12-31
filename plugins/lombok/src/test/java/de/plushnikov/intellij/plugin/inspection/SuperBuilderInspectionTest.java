@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.inspection;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.RecursionManager;
 
 public class SuperBuilderInspectionTest extends LombokInspectionTest {
 
@@ -15,14 +14,6 @@ public class SuperBuilderInspectionTest extends LombokInspectionTest {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new LombokInspection();
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
   }
 
   public void testBuilderDefaultValue() {

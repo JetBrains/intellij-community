@@ -36,6 +36,7 @@ import java.nio.file.Paths
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.JRadioButton
+import javax.swing.JTextField
 
 internal class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                              CredentialStoreBundle.message("password.safe.configurable"),
@@ -246,6 +247,9 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
           radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
         }
       }
+    }
+    if (keePassDbFile != null) {
+      keePassDbFile!!.accessibleContext.accessibleName = CredentialStoreBundle.message("settings.password.database")
     }
     return myPanel
   }

@@ -12,7 +12,7 @@ import javax.swing.*;
  */
 public final class XsltDebuggerIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-    return IconManager.getInstance().loadRasterizedIcon(path, XsltDebuggerIcons.class, cacheKey, flags);
+    return IconManager.getInstance().loadRasterizedIcon(path, XsltDebuggerIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon XmlComment = load("/icons/xmlComment.svg", 8307305859969558941L, 0);
+  /** 16x16 */ public static final @NotNull Icon XmlComment = load("icons/xmlComment.svg", 8307305859969558941L, 0);
 }

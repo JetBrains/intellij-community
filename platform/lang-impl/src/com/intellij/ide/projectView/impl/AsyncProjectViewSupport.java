@@ -175,30 +175,30 @@ public class AsyncProjectViewSupport {
     //noinspection CodeBlock2Expr
     myNodeUpdater.updateImmediately(() -> expand(tree, promise -> {
       promise.onSuccess(o -> callback.setDone());
-      myAsyncTreeModel
-        .accept(visitor)
-        .onProcessed(path -> {
-          if (selectPaths(tree, pathsToSelect, visitor) ||
-              element == null ||
-              file == null ||
-              Registry.is("async.project.view.support.extra.select.disabled")) {
+      acceptOnEDT(visitor, () -> {
+        if (selectPaths(tree, pathsToSelect, visitor) ||
+            element == null ||
+            file == null ||
+            Registry.is("async.project.view.support.extra.select.disabled")) {
+          promise.setResult(null);
+        }
+        else {
+          // try to search the specified file instead of element,
+          // because Kotlin files cannot represent containing functions
+          pathsToSelect.clear();
+          TreeVisitor fileVisitor = AbstractProjectViewPane.createVisitor(null, file, pathsToSelect);
+          acceptOnEDT(fileVisitor, () -> {
+            selectPaths(tree, pathsToSelect, fileVisitor);
             promise.setResult(null);
-          }
-          else {
-            // try to search the specified file instead of element,
-            // because Kotlin files cannot represent containing functions
-            pathsToSelect.clear();
-            TreeVisitor fileVisitor = AbstractProjectViewPane.createVisitor(null, file, pathsToSelect);
-            myAsyncTreeModel
-              .accept(fileVisitor)
-              .onProcessed(path2 -> {
-                selectPaths(tree, pathsToSelect, fileVisitor);
-                promise.setResult(null);
-              });
-          }
-        });
+          });
+        }
+      });
     }));
     return callback;
+  }
+
+  private void acceptOnEDT(@NotNull TreeVisitor visitor, @NotNull Runnable task) {
+    myAsyncTreeModel.accept(visitor).onProcessed(path -> myAsyncTreeModel.onValidThread(task));
   }
 
   private static boolean selectPaths(@NotNull JTree tree, @NotNull List<TreePath> paths, @NotNull TreeVisitor visitor) {

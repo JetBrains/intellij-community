@@ -382,9 +382,12 @@ def patch_fork_exec_executable_list(args, other_args):
     return other_args
 
 
+_ORIGINAL_PREFIX = 'original_'
+
+
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
-        original_name = 'original_' + funcname
+        original_name = _ORIGINAL_PREFIX + funcname
         if not hasattr(module, original_name):
             setattr(module, original_name, getattr(module, funcname))
             setattr(module, funcname, create_func(original_name))
@@ -412,7 +415,20 @@ def create_warn_multiproc(original_name):
 
         warn_multiproc()
 
-        return getattr(os, original_name)(*args)
+        result = getattr(os, original_name)(*args)
+
+        if original_name == _ORIGINAL_PREFIX + 'fork':
+            pid = result
+            # If automatic attaching to new processes is disabled, it is important to stop tracing in the child process. The reason is the
+            # "forked" instance of the debugger can potentially hit a breakpoint, which results in the process hanging.
+            if pid == 0:
+                debugger = get_global_debugger()
+                if debugger:
+                    debugger.stoptrace()
+            return pid
+        else:
+            return result
+
     return new_warn_multiproc
 
 

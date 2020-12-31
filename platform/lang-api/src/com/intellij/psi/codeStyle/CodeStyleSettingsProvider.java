@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettingsFactory {
+public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettingsFactory, DisplayPrioritySortable {
   public static final ExtensionPointName<CodeStyleSettingsProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeStyleSettingsProvider");
 
 
@@ -72,6 +72,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
     return true;
   }
 
+  @Override
   public DisplayPriority getPriority() {
     List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
     return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;

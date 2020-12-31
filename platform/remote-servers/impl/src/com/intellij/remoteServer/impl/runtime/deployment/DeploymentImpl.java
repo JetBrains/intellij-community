@@ -2,6 +2,7 @@
 package com.intellij.remoteServer.impl.runtime.deployment;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.impl.runtime.ServerConnectionImpl;
 import com.intellij.remoteServer.runtime.Deployment;
@@ -35,6 +36,7 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
 
   @Override
   @NotNull
+  @NlsSafe
   public String getName() {
     return myName;
   }

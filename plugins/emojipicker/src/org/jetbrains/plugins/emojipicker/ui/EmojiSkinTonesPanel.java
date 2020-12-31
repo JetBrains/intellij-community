@@ -3,6 +3,7 @@ package org.jetbrains.plugins.emojipicker.ui;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.InplaceButton;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
 import org.jetbrains.plugins.emojipicker.service.EmojiService;
@@ -14,10 +15,8 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class EmojiSkinTonesPanel extends JPanel {
-
-
   private static final int ITEM_SIZE = 34;
-  private static final String ITEM_EMOJI = "🖐";
+  @NlsSafe private static final String ITEM_EMOJI = "🖐";
 
   private final EmojiPickerStyle myStyle;
   private final Map<EmojiSkinTone, Item> myItemMap = new EnumMap<>(EmojiSkinTone.class);
@@ -28,7 +27,7 @@ public class EmojiSkinTonesPanel extends JPanel {
     myStyle = style;
     setVisible(false);
     setLayout(new GridBagLayout());
-    for(EmojiSkinTone tone : EmojiSkinTone.values()) {
+    for (EmojiSkinTone tone : EmojiSkinTone.values()) {
       Item item = new Item(emojiPicker, tone);
       myItemMap.put(tone, item);
     }
@@ -45,7 +44,7 @@ public class EmojiSkinTonesPanel extends JPanel {
   @Override
   public void paint(Graphics g) {
     super.paint(g);
-    if(myFocusedItem != -1) {
+    if (myFocusedItem != -1) {
       g.setColor(myStyle.myFocusBorderColor);
       g.drawRoundRect(3, myFocusedItem * ITEM_SIZE + 3, ITEM_SIZE - 4, ITEM_SIZE - 4, 6, 6);
     }
@@ -66,8 +65,8 @@ public class EmojiSkinTonesPanel extends JPanel {
 
   void setCurrentItemFromFocus() {
     Component c = getComponent(myFocusedItem);
-    for(Item item : myItemMap.values()) {
-      if(item.myButton == c) {
+    for (Item item : myItemMap.values()) {
+      if (item.myButton == c) {
         myCurrentSkinTone = item.myTone;
         return;
       }
@@ -84,8 +83,8 @@ public class EmojiSkinTonesPanel extends JPanel {
     gbc.gridx = 0;
     removeAll();
     add(myItemMap.get(myCurrentSkinTone).myButton, gbc);
-    for(Map.Entry<EmojiSkinTone, Item> item : myItemMap.entrySet()) {
-      if(item.getKey() != myCurrentSkinTone) add(item.getValue().myButton, gbc);
+    for (Map.Entry<EmojiSkinTone, Item> item : myItemMap.entrySet()) {
+      if (item.getKey() != myCurrentSkinTone) add(item.getValue().myButton, gbc);
     }
     doLayout();
     setVisible(true);
@@ -114,33 +113,34 @@ public class EmojiSkinTonesPanel extends JPanel {
 
     private class Icon implements javax.swing.Icon {
       private final boolean myHover;
+
       private Icon(boolean hover) { myHover = hover; }
+
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
-        if(myHover) {
+        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
+        if (myHover) {
           g.setColor(myStyle.myHoverBackgroundColor);
           g.fillRoundRect(x, y, getIconWidth(), getIconHeight(), 6, 6);
         }
 
-        String emoji = ITEM_EMOJI + myTone.getStringValue();
+        @NlsSafe String emoji = ITEM_EMOJI + myTone.getStringValue();
         FontMetrics metrics = g.getFontMetrics(myStyle.myEmojiFont);
         int verticalOffset = metrics.getHeight() / 2 - metrics.getDescent();
         int width = metrics.stringWidth(emoji);
-        new TextLayout(emoji, myStyle.myEmojiFont, ((Graphics2D) g).getFontRenderContext())
-          .draw((Graphics2D) g, x + (getIconWidth() - width) / 2F, y + getIconHeight() / 2F + verticalOffset);
+        new TextLayout(emoji, myStyle.myEmojiFont, ((Graphics2D)g).getFontRenderContext())
+          .draw((Graphics2D)g, x + (getIconWidth() - width) / 2F, y + getIconHeight() / 2F + verticalOffset);
       }
+
       @Override
       public int getIconWidth() {
         return ITEM_SIZE;
       }
+
       @Override
       public int getIconHeight() {
         return ITEM_SIZE;
       }
     }
-
   }
-
-
 }

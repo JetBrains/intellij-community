@@ -51,8 +51,9 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
   public void check(ProjectStructureProblemsHolder problemsHolder) {
     checkModulesNames(problemsHolder);
 
-    final ModuleRootModel rootModel = myContext.getModulesConfigurator().getRootModel(myModule);
-    if (rootModel == null) return; //already disposed
+    ModuleEditor moduleEditor = myContext.getModulesConfigurator().getModuleEditor(myModule);
+    if (moduleEditor == null) return; //already disposed
+    final ModuleRootModel rootModel = moduleEditor.getRootModel();
     final OrderEntry[] entries = rootModel.getOrderEntries();
     for (OrderEntry entry : entries) {
       if (!entry.isValid()){

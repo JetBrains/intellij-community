@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.psi.*
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 
 internal class ScopedMember(val member: Member, val scope: SearchScope) {
@@ -19,7 +20,8 @@ internal class ScopedMember(val member: Member, val scope: SearchScope) {
   }
 
   companion object {
-    internal fun create(psiMember: PsiMember, scope: SearchScope = psiMember.useScope): ScopedMember? {
+    internal fun create(psiMember: PsiMember,
+                        scope: SearchScope = PsiSearchHelper.getInstance(psiMember.project).getUseScope(psiMember)): ScopedMember? {
       val member = Member.create(psiMember) ?: return null
       return ScopedMember(member, scope)
     }

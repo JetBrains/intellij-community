@@ -248,9 +248,12 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
       provider.detach(module);
     }
 
-    provider = getProvider(storageId);
-    module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, provider == null ? null : storageId);
-    module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider == null ? null : provider.getContentRoot(model));
+    ClasspathStorageProvider newProvider = getProvider(storageId);
+    module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, newProvider == null ? null : storageId);
+    module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, newProvider == null ? null : newProvider.getContentRoot(model));
+    if (newProvider != null) {
+      newProvider.attach(module);
+    }
   }
 
   public static void modulePathChanged(@NotNull Module module) {

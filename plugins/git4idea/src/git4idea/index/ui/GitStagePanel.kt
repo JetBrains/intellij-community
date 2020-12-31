@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -12,6 +13,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.OnePixelSplitter
@@ -24,7 +26,9 @@ import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
+import com.intellij.vcs.commit.EditedCommitNode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -43,8 +47,6 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitChangeProvider
 import java.awt.BorderLayout
 import javax.swing.JPanel
-
-val GIT_STAGE_TRACKER = DataKey.create<GitStageTracker>("GitStageTracker")
 
 internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffPreview: Boolean, disposableParent: Disposable) :
   JPanel(BorderLayout()), DataProvider, Disposable {
@@ -74,6 +76,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
     }
     commitPanel.commitActionsPanel.setupShortcuts(this, this)
+    commitPanel.addEditedCommitListener(tree::editedCommitChanged, this)
     commitWorkflowHandler = GitStageCommitWorkflowHandler(GitStageCommitWorkflow(project), commitPanel)
     Disposer.register(this, commitPanel)
 
@@ -127,13 +130,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
       hasPendingUpdates = true
       return
     }
-    tree.update()
+    tree.rebuildTree()
     commitPanel.state = state
     commitWorkflowHandler.state = state
   }
 
   override fun getData(dataId: String): Any? {
-    if (GIT_STAGE_TRACKER.`is`(dataId)) return tracker
+    if (GitStageDataKeys.GIT_STAGE_TRACKER.`is`(dataId)) return tracker
     return null
   }
 
@@ -155,12 +158,18 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
     }
   }
 
+  internal fun setCommitMessage(commitMessage: String) {
+    commitPanel.commitMessage.setCommitMessage(commitMessage)
+  }
+
   override fun dispose() {
   }
 
-  private inner class MyChangesTree(project: Project) : GitStageTree(project, this) {
+  private inner class MyChangesTree(project: Project) : GitStageTree(project, project.service<GitStageUiSettingsImpl>(), this) {
     override val state
       get() = this@GitStagePanel.state
+    override val ignoredFilePaths
+      get() = this@GitStagePanel.tracker.ignoredPaths
     override val operations: List<StagingAreaOperation> = listOf(GitAddOperation, GitResetOperation)
 
     init {
@@ -178,6 +187,25 @@ internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffP
           OpenSourceUtil.openSourcesFrom(dataContext, true)
         }
         true
+      }
+    }
+
+    fun editedCommitChanged() {
+      rebuildTree()
+
+      commitPanel.editedCommit?.let {
+        val node = TreeUtil.findNodeWithObject(root, it)
+        node?.let { expandPath(TreeUtil.getPathFromRoot(node)) }
+      }
+    }
+
+    override fun customizeTreeModel(builder: TreeModelBuilder) {
+      super.customizeTreeModel(builder)
+
+      commitPanel.editedCommit?.let {
+        val commitNode = EditedCommitNode(it)
+        builder.insertSubtreeRoot(commitNode)
+        builder.insertChanges(it.commit.changes, commitNode)
       }
     }
 

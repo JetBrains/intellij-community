@@ -482,4 +482,17 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ it is MySource }, replacement)
   }
+
+  @Test
+  fun `replace same entity with persistent id and different sources`() {
+    val name = "Hello"
+    builder.addNamedEntity(name, MySource)
+    val replacement = WorkspaceEntityStorageBuilderImpl.create()
+    replacement.addNamedEntity(name, AnotherSource)
+
+    builder.replaceBySource({ it is AnotherSource }, replacement)
+
+    assertEquals(1, builder.entities(NamedEntity::class.java).toList().size)
+    assertEquals(AnotherSource, builder.entities(NamedEntity::class.java).single().entitySource)
+  }
 }

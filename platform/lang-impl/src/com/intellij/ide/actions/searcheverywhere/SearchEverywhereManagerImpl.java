@@ -79,6 +79,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor>
       contributors = createContributors(initEvent, project, contextComponent);
+    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors.keySet());
     mySearchEverywhereUI = createView(myProject, contributors);
     contributors.keySet().forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToTab(tabID);

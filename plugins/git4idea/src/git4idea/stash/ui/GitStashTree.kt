@@ -38,6 +38,7 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
   init {
     isKeepTreeState = true
+    isScrollToSelection = false
     setEmptyText(GitBundle.message("stash.empty.text"))
 
     doubleClickHandler = Processor { e ->

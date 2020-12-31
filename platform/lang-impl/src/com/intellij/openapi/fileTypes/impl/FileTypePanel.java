@@ -10,14 +10,11 @@ import javax.swing.*;
 
 class FileTypePanel {
   JPanel myWholePanel;
-  JPanel myRecognizedFileTypesPanel;
-  JPanel myPatternsPanel;
-  JPanel myHashBangPanel;
   JButton myAssociateButton;
   JPanel myAssociatePanel;
-  JPanel myRightPanel;
   JBLabel myAssociateMessageLabel;
   @SuppressWarnings("unused") private JLabel myAssociateContextHelpLabel;
+  JPanel myUpperPanel;
 
   private void createUIComponents() {
     myAssociateContextHelpLabel = ContextHelpLabel.create(

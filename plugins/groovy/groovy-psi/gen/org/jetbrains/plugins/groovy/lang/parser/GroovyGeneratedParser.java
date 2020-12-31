@@ -7764,7 +7764,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = true;
         exit_section_(b, l, m, PROPERTY_EXPRESSION, r, true, null);
       }
-      else if (g < 17 && method_call_expression_0(b, l + 1)) {
+      else if (g < 17 && callTail(b, l + 1, GroovyGeneratedParser::call_tail_with_nl_before_closure, GroovyGeneratedParser::call_tail)) {
         r = true;
         exit_section_(b, l, m, METHOD_CALL_EXPRESSION, r, true, null);
       }
@@ -8427,28 +8427,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "property_expression_0_1_0_0")) return false;
     type_argument_list(b, l + 1);
     return true;
-  }
-
-  // <<isParseNlBeforeClosure>> call_tail_with_nl_before_closure | call_tail
-  private static boolean method_call_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "method_call_expression_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = method_call_expression_0_0(b, l + 1);
-    if (!r) r = call_tail(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // <<isParseNlBeforeClosure>> call_tail_with_nl_before_closure
-  private static boolean method_call_expression_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "method_call_expression_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = isParseNlBeforeClosure(b, l + 1);
-    r = r && call_tail_with_nl_before_closure(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   // <<parseBlockLazy closure 'CLOSURE'>>

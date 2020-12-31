@@ -38,8 +38,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   }
 
   final override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
-    @Suppress("DEPRECATION")
-    if (component is com.intellij.openapi.components.SettingsSavingComponent) {
+    if (component is @Suppress("DEPRECATION") com.intellij.openapi.components.SettingsSavingComponent) {
       settingsSavingComponents.add(component)
     }
     else if (component is SettingsSavingComponent) {

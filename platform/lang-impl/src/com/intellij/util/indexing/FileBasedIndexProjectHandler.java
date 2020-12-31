@@ -97,7 +97,7 @@ public final class FileBasedIndexProjectHandler {
       IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
       IndexingJobStatistics statistics;
       IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
-      ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project.getName());
+      ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
       projectIndexingHistory.getTimes().setIndexingStart(Instant.now());
       try {
         statistics = indexUpdateRunner.indexFiles(project, "Refreshed files", files, indicator);

@@ -7,8 +7,9 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.emojipicker.Emoji;
@@ -32,18 +33,18 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.plugins.emojipicker.messages.EmojipickerBundle.message;
+
 @Service
 @State(name = "EmojiPickerState", storages = @Storage("emoji.picker.xml"))
 public final class EmojiService implements PersistentStateComponent<EmojiService.State> {
-
-
   private final List<Emoji> myEmoji;
   private final List<EmojiCategory> myCategories;
   private final EmojiCategory myRecentlyUsedCategory;
 
   private volatile SearchIndex myEmojiSearchIndex;
 
-  private final String[] myEmojiNames;
+  @Nls private final String[] myEmojiNames;
   private volatile EmojiSkinTone mySkinTone;
   private volatile boolean dirty;
 
@@ -61,62 +62,65 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
     myCategories = new ArrayList<>();
     List<Emoji> emoji;
     SearchIndex searchIndex;
-    String[] emojiNames;
+    @Nls String[] emojiNames;
     try {
-      try(ObjectInputStream in = new ObjectInputStream(Files.newInputStream(serializedEmojiPath))) {
-        emoji = (List<Emoji>) in.readObject();
+      try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(serializedEmojiPath))) {
+        emoji = (List<Emoji>)in.readObject();
         myCategories.add(myRecentlyUsedCategory);
-        myCategories.addAll((List<EmojiCategory>) in.readObject());
+        myCategories.addAll((List<EmojiCategory>)in.readObject());
       }
-      try(ObjectInputStream in = new ObjectInputStream(Files.newInputStream(serializedIndexPath))) {
-        searchIndex = new SearchIndex((EmojiSearchIndex) in.readObject());
+      try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(serializedIndexPath))) {
+        searchIndex = new SearchIndex((EmojiSearchIndex)in.readObject());
       }
-      try(ObjectInputStream in = new ObjectInputStream(Files.newInputStream(serializedNamesPath))) {
-        emojiNames = (String[]) in.readObject();
+      try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(serializedNamesPath))) {
+        emojiNames = (String[])in.readObject();
       }
-    } catch (IOException | ClassNotFoundException ignore) {
+    }
+    catch (IOException | ClassNotFoundException ignore) {
       Files.createDirectories(configDir);
       EmojiData emojiData = EmojiData.read();
       emoji = emojiData.myEmoji;
       myCategories.clear();
       myCategories.add(myRecentlyUsedCategory);
       myCategories.addAll(emojiData.myCategories);
-      String[] names = emojiNames = new String[emoji.size()];
+      @Nls String[] names = emojiNames = new String[emoji.size()];
       CldrData cldr = new CldrData(emojiData);
       final Locale baseLocale = Locale.ENGLISH;
       cldr.read(baseLocale, emojiNames);
       searchIndex = new SearchIndex(cldr.myIndexTree.buildIndex());
 
       ProgressManager.getInstance().run(
-        new Task.Backgroundable(null, getString("message.EmojiPicker.Initializing"), false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+        new Task.Backgroundable(null, message("message.EmojiPicker.Initializing"), false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             try {
-              try(ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedEmojiPath, StandardOpenOption.CREATE))) {
+              try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedEmojiPath, StandardOpenOption.CREATE))) {
                 out.writeObject(emojiData.myEmoji);
                 out.writeObject(emojiData.myCategories);
               }
-              try(ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedNamesPath, StandardOpenOption.CREATE))) {
+              try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedNamesPath, StandardOpenOption.CREATE))) {
                 out.writeObject(names);
               }
-              indicator.setText(getString("message.EmojiPicker.BuildingIndex"));
+              indicator.setText(message("message.EmojiPicker.BuildingIndex"));
               indicator.setIndeterminate(false);
               Locale[] locales = Locale.getAvailableLocales();
-              double multiplier = 1.0 / (double) locales.length;
+              double multiplier = 1.0 / (double)locales.length;
               for (int i = 0; i < locales.length; i++) {
-                indicator.setFraction((double) i * multiplier);
-                if(!locales[i].equals(baseLocale)) cldr.read(locales[i], null);
+                indicator.setFraction((double)i * multiplier);
+                if (!locales[i].equals(baseLocale)) cldr.read(locales[i], null);
               }
               indicator.setIndeterminate(true);
               SearchIndex searchIndex = new SearchIndex(cldr.myIndexTree.buildIndex());
-              indicator.setText(getString("message.EmojiPicker.SavingIndexData"));
-              try(ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedIndexPath, StandardOpenOption.CREATE))) {
+              indicator.setText(message("message.EmojiPicker.SavingIndexData"));
+              try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(serializedIndexPath, StandardOpenOption.CREATE))) {
                 out.writeObject(searchIndex.myIndex);
               }
               myEmojiSearchIndex = searchIndex;
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
               throw new UncheckedIOException(e);
-            } catch (SAXException e) {
+            }
+            catch (SAXException e) {
               throw new RuntimeException(e);
             }
           }
@@ -132,30 +136,18 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
     return myCategories;
   }
 
-  public @NlsSafe String getString(String key) throws MissingResourceException {
-    return ResourceBundle.getBundle("/messages/EmojipickerBundle").getString(key);
-  }
-
-  public @NlsSafe String findNameForCategory(EmojiCategory category) {
-    if(category == null) return null;
-    try {
-      return getString("category.EmojiPicker." + category.getId());
-    } catch (MissingResourceException ignore) {
-      return category.getId();
-    }
-  }
-
+  @Nls
   public String findNameForEmoji(Emoji emoji) {
     return emoji == null ? null : myEmojiNames[emoji.getId()];
   }
 
-  public List<Emoji> findEmojiByPrefix(String prefix) {
+  public List<Emoji> findEmojiByPrefix(@NonNls String prefix) {
     return myEmojiSearchIndex.lookupEmoji(prefix);
   }
 
   public void saveRecentlyUsedEmoji(Emoji emoji) {
     myRecentlyUsedCategory.getEmoji().remove(emoji);
-    while(myRecentlyUsedCategory.getEmoji().size() >= 32) {
+    while (myRecentlyUsedCategory.getEmoji().size() >= 32) {
       myRecentlyUsedCategory.getEmoji().remove(myRecentlyUsedCategory.getEmoji().size() - 1);
     }
     myRecentlyUsedCategory.getEmoji().add(0, emoji);
@@ -173,15 +165,15 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
   @Override
   public @Nullable State getState() {
-    if(!dirty) return null;
+    if (!dirty) return null;
     dirty = false;
     return new State(mySkinTone, ContainerUtil.map(myRecentlyUsedCategory.getEmoji(), Emoji::getId));
   }
 
   @Override
   public void loadState(@NotNull State state) {
-    if(state.mySkinTone != null) mySkinTone = state.mySkinTone;
-    if(state.myRecentlyUsedEmoji != null && !state.myRecentlyUsedEmoji.isEmpty()) {
+    if (state.mySkinTone != null) mySkinTone = state.mySkinTone;
+    if (state.myRecentlyUsedEmoji != null && !state.myRecentlyUsedEmoji.isEmpty()) {
       myRecentlyUsedCategory.getEmoji().clear();
       myRecentlyUsedCategory.getEmoji().addAll(ContainerUtil.map(state.myRecentlyUsedEmoji, myEmoji::get));
     }
@@ -192,9 +184,6 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
   }
 
 
-
-
-
   static class State {
 
     public EmojiSkinTone mySkinTone;
@@ -202,6 +191,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
     @SuppressWarnings("unused")
     private State() { this(EmojiSkinTone.NO_TONE, List.of()); }
+
     private State(EmojiSkinTone tone, List<Integer> emoji) {
       mySkinTone = tone;
       myRecentlyUsedEmoji = emoji;
@@ -219,11 +209,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
     public int hashCode() {
       return Objects.hash(mySkinTone, myRecentlyUsedEmoji);
     }
-
   }
-
-
-
 
 
   private class SearchIndex {
@@ -236,40 +222,40 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
       myIdMap = new boolean[index.getTotalEmojiIndices()];
     }
 
-    synchronized List<Emoji> lookupEmoji(String prefix) {
-      if(myIndex.lookupIds(myIdMap, prefix)) {
+    synchronized List<Emoji> lookupEmoji(@NonNls String prefix) {
+      if (myIndex.lookupIds(myIdMap, prefix)) {
         List<Emoji> result = new ArrayList<>(100);
         for (int i = 0; i < myIdMap.length; i++) {
-          if(myIdMap[i]) result.add(myEmoji.get(i));
+          if (myIdMap[i]) result.add(myEmoji.get(i));
         }
         return result;
       }
-      else return List.of();
+      else {
+        return List.of();
+      }
     }
-
   }
-
-
-
 
 
   private static class EmojiData {
 
     private final List<Emoji> myEmoji = new ArrayList<>();
     private final List<EmojiCategory> myCategories = new ArrayList<>();
-    private final Map<String, Integer> myIndicesMap = new HashMap<>();
+    private final Map<@NonNls String, Integer> myIndicesMap = new HashMap<>();
 
     private static EmojiData read() throws IOException {
-      Set<String> tonedEmojiSet = readToned();
+      Set<@NonNls String> tonedEmojiSet = readToned();
       EmojiData emojiData = new EmojiData();
-      try(BufferedReader reader = new BufferedReader(new InputStreamReader(
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(
         EmojiService.class.getResourceAsStream("/data/emoji.txt"), StandardCharsets.UTF_8))) {
         EmojiCategory category = null;
-        String s;
-        while((s = reader.readLine()) != null) {
-          if(s.isBlank()) category = null;
+        @NonNls String s;
+        while ((s = reader.readLine()) != null) {
+          if (s.isBlank()) {
+            category = null;
+          }
           else {
-            if(category == null) {
+            if (category == null) {
               emojiData.myCategories.add(category = new EmojiCategory(s, new ArrayList<>()));
             }
             else {
@@ -285,17 +271,13 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
       return emojiData;
     }
 
-    private static Set<String> readToned() throws IOException {
-      try(BufferedReader reader = new BufferedReader(new InputStreamReader(
+    private static Set<@NonNls String> readToned() throws IOException {
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(
         EmojiService.class.getResourceAsStream("/data/toned.txt"), StandardCharsets.UTF_8))) {
         return reader.lines().collect(Collectors.toSet());
       }
     }
-
   }
-
-
-
 
 
   private static class CldrData {
@@ -316,38 +298,38 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
       myDocumentBuilder = factory.newDocumentBuilder();
     }
 
-    private void read(Locale locale, String[] names) throws IOException, SAXException {
-      String l = locale.getLanguage();
-      if(!locale.getScript().isEmpty()) l += "_" + locale.getScript();
-      if(!locale.getCountry().isEmpty()) l += "_" + locale.getCountry();
+    private void read(Locale locale, @Nls String[] names) throws IOException, SAXException {
+      @NonNls String l = locale.getLanguage();
+      if (!locale.getScript().isEmpty()) l += "_" + locale.getScript();
+      if (!locale.getCountry().isEmpty()) l += "_" + locale.getCountry();
       InputStream annotations = EmojiService.class.getResourceAsStream("/data/cldr/annotations/" + l + ".xml");
-      if(annotations != null) read(annotations, locale, names);
+      if (annotations != null) read(annotations, locale, names);
       InputStream derived = EmojiService.class.getResourceAsStream("/data/cldr/annotationsDerived/" + l + ".xml");
-      if(derived != null) read(derived, locale, names);
+      if (derived != null) read(derived, locale, names);
     }
 
-    private void read(InputStream in, Locale locale, String[] names) throws IOException, SAXException {
-      try(in) {
+    private void read(InputStream in, Locale locale, @Nls String[] names) throws IOException, SAXException {
+      try (in) {
         Document document = myDocumentBuilder.parse(in);
         NodeList annotations = document.getElementsByTagName("annotation");
         for (int i = 0; i < annotations.getLength(); i++) {
           Node node = annotations.item(i);
-          String emoji = node.getAttributes().getNamedItem("cp").getTextContent();
+          @NonNls String emoji = node.getAttributes().getNamedItem("cp").getTextContent();
           Integer index = myEmojiData.myIndicesMap.get(emoji);
-          if(index != null) {
-            String value = node.getTextContent();
-            if(node.getAttributes().getNamedItem("type") == null) {
-              for(String keyword : value.split("\\|")) {
+          if (index != null) {
+            @NonNls String value = node.getTextContent();
+            if (node.getAttributes().getNamedItem("type") == null) {
+              for (String keyword : value.split("\\|")) {
                 myIndexTree.add(keyword.strip(), index);
               }
             }
-            else if(names != null) names[index] = value.substring(0, 1).toUpperCase(locale) + value.substring(1);
+            else if (names != null) {
+              @Nls String name = value.substring(0, 1).toUpperCase(locale) + value.substring(1);
+              names[index] = name;
+            }
           }
         }
       }
     }
-
   }
-
-
 }

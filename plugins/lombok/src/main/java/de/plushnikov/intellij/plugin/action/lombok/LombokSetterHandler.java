@@ -5,6 +5,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,8 @@ public class LombokSetterHandler extends BaseLombokHandler {
   protected void processClass(@NotNull PsiClass psiClass) {
     final Map<PsiField, PsiMethod> fieldMethodMap = new HashMap<>();
     for (PsiField psiField : psiClass.getFields()) {
-      PsiMethod propertySetter = PropertyUtil.findPropertySetter(psiClass, psiField.getName(), psiField.hasModifierProperty(PsiModifier.STATIC), false);
+      PsiMethod propertySetter =
+        PropertyUtilBase.findPropertySetter(psiClass, psiField.getName(), psiField.hasModifierProperty(PsiModifier.STATIC), false);
 
       if (null != propertySetter) {
         fieldMethodMap.put(psiField, propertySetter);

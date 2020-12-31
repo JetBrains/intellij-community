@@ -304,7 +304,10 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(getSelectedTemplate() != null && !FileTemplateBase.isChild(getSelectedTemplate()) &&
+        e.getPresentation().setEnabled(getSelectedTemplate() != null &&
+                                       myCurrentTab != null &&
+                                       !isInternalTemplate(getSelectedTemplate().getName(), myCurrentTab.getTitle()) &&
+                                       !FileTemplateBase.isChild(getSelectedTemplate()) &&
                                        myCurrentTab == myTemplatesList);
       }
     };

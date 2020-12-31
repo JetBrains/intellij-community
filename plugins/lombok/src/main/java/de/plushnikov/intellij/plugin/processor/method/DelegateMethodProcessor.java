@@ -16,18 +16,12 @@ import java.util.List;
 
 public class DelegateMethodProcessor extends AbstractMethodProcessor {
 
-  @SuppressWarnings({"deprecation"})
   public DelegateMethodProcessor() {
     super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);
   }
 
   private DelegateHandler getDelegateHandler() {
     return ApplicationManager.getApplication().getService(DelegateHandler.class);
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull Project project) {
-    return ProjectSettings.isEnabled(project, ProjectSettings.IS_DELEGATE_ENABLED);
   }
 
   @Override

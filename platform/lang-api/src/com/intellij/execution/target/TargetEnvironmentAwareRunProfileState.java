@@ -32,6 +32,14 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
       public boolean isCanceled() {
         return false;
       }
+
+      @Override
+      public void stop() { }
+
+      @Override
+      public boolean isStopped() {
+        return false;
+      }
     };
 
     void addText(@NotNull String text, @NotNull Key<?> key);
@@ -41,5 +49,15 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
     }
 
     boolean isCanceled();
+
+    void stop();
+
+    boolean isStopped();
+
+    default void stopWithErrorMessage(@NotNull String text) {
+      addText(text, ProcessOutputType.STDERR);
+      addText("\n", ProcessOutputType.STDERR);
+      stop();
+    }
   }
 }

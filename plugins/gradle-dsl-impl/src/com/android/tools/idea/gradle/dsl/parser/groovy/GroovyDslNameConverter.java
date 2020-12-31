@@ -31,7 +31,18 @@ import java.util.Map;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
-public class GroovyDslNameConverter implements GradleDslNameConverter {
+public abstract class GroovyDslNameConverter implements GradleDslNameConverter {
+
+  @Override
+  public boolean isGroovy() {
+    return true;
+  }
+
+  @Override
+  public boolean isKotlin() {
+    return false;
+  }
+
   @NotNull
   @Override
   public String psiToName(@NotNull PsiElement element) {

@@ -11,7 +11,7 @@ import javax.swing.*;
  */
 public final class PythonSdkIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-    return IconManager.getInstance().loadRasterizedIcon(path, PythonSdkIcons.class, cacheKey, flags);
+    return IconManager.getInstance().loadRasterizedIcon(path, PythonSdkIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Python = load("/icons/com/jetbrains/python.svg", 2013563801968945595L, 0);
+  /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/python.svg", 2013563801968945595L, 0);
 }

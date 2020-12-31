@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
 
 /**
@@ -27,7 +28,7 @@ internal class GithubProjectDefaultAccountHolder(private val project: Project) :
   private fun findAccountById(id: String): GithubAccount? {
     val account = service<GithubAccountManager>().accounts.find { it.id == id }
     if (account == null) runInEdt {
-      GithubNotifications.showWarning(project, "github.missing.default.account",
+      GithubNotifications.showWarning(project, GithubNotificationIdsHolder.MISSING_DEFAULT_ACCOUNT,
                                       GithubBundle.message("accounts.default.missing"),
                                       "",
                                       GithubNotifications.getConfigureAction(project))

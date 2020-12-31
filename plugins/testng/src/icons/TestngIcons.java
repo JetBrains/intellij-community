@@ -12,7 +12,7 @@ import javax.swing.*;
  */
 public final class TestngIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-    return IconManager.getInstance().loadRasterizedIcon(path, TestngIcons.class, cacheKey, flags);
+    return IconManager.getInstance().loadRasterizedIcon(path, TestngIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon TestNG = load("/resources/testNG.svg", -6687168982208697365L, 0);
+  /** 16x16 */ public static final @NotNull Icon TestNG = load("resources/testNG.svg", -6687168982208697365L, 0);
 }

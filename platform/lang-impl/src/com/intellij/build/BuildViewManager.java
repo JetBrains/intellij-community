@@ -7,8 +7,6 @@ import com.intellij.build.progress.BuildRootProgressImpl;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,13 +16,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BuildViewManager extends AbstractViewManager {
 
-  @Nullable private BuildViewProblemsService myBuildViewProblemsService = null;
-
   public BuildViewManager(Project project) {
     super(project);
-    if (Registry.is("gradle.build.errors.problems", false)) {
-      myBuildViewProblemsService = ServiceManager.getService(project, BuildViewProblemsService.class);
-      myBuildViewProblemsService.init(this);
+    @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
+    if (buildViewProblemsService != null) {
+      buildViewProblemsService.listenToBuildView(this);
     }
   }
 
@@ -34,13 +30,6 @@ public class BuildViewManager extends AbstractViewManager {
     return LangBundle.message("tab.title.build.output");
   }
 
-  @Override
-  public void dispose() {
-    if (myBuildViewProblemsService != null) {
-      Disposer.dispose(myBuildViewProblemsService);
-    }
-    super.dispose();
-  }
 
   @ApiStatus.Experimental
   public static BuildProgress<BuildProgressDescriptor> createBuildProgress(@NotNull Project project) {

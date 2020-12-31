@@ -3,10 +3,13 @@ package com.intellij.execution.target.java;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.options.BoundConfigurable;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 //todo[remoteServers]: should be eliminated
 public interface JavaLanguageRuntimeUIFactory {
   @NotNull
-  BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config, @NotNull TargetEnvironmentConfiguration target);
+  BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,
+                           @NotNull TargetEnvironmentConfiguration target,
+                           @NotNull Project project);
 }

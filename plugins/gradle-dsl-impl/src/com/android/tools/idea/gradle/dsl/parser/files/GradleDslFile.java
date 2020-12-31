@@ -35,11 +35,7 @@ import com.android.tools.idea.gradle.dsl.parser.dependencies.DependenciesDslElem
 import com.android.tools.idea.gradle.dsl.parser.elements.GradleNameElement;
 import com.android.tools.idea.gradle.dsl.parser.elements.GradlePropertiesDslElement;
 import com.android.tools.idea.gradle.dsl.parser.ext.ExtDslElement;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslParser;
-import com.android.tools.idea.gradle.dsl.parser.groovy.GroovyDslWriter;
 import com.android.tools.idea.gradle.dsl.parser.java.JavaDslElement;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslParser;
-import com.android.tools.idea.gradle.dsl.parser.kotlin.KotlinDslWriter;
 import com.android.tools.idea.gradle.dsl.parser.plugins.PluginsDslElement;
 import com.android.tools.idea.gradle.dsl.parser.repositories.RepositoriesDslElement;
 import com.android.tools.idea.gradle.dsl.parser.semantics.PropertiesElementDescription;
@@ -65,7 +61,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
@@ -133,7 +128,9 @@ public abstract class GradleDslFile extends GradlePropertiesDslElement {
     } else {
       // If we don't support the language we ignore the PsiElement and set stubs for the writer and parser.
       // This means this file will produce an empty model.
-      LOG.warn("cannot find converter factory for " + psiFile.getName() + "(" + psiFile.getClass().getCanonicalName() + ")");
+      if(LOG.isDebugEnabled()) {
+        LOG.debug("cannot find converter factory for " + psiFile.getName() + "(" + psiFile.getClass().getCanonicalName() + ")");
+      }
       myGradleDslParser = new GradleDslParser.Adapter();
       myGradleDslWriter = new GradleDslWriter.Adapter();
     }
@@ -289,6 +286,10 @@ public abstract class GradleDslFile extends GradlePropertiesDslElement {
       buildFileParent = buildFileParent.getParent();
     }
     return null;
+  }
+
+  public boolean isKotlin() {
+    return myGradleDslParser.isKotlin();
   }
 
 }

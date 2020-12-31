@@ -89,12 +89,12 @@ public abstract class PythonRemoteInterpreterManager {
         PathMappingSettings settings =
           ProgressManagerExtKt.runUnderProgress(ProgressManager.getInstance(),
                                                 PyBundle.message("remote.interpreter.accessing.remote.interpreter.progress.title"),
-                                                new Function0<PathMappingSettings>() {
-            @Override
-            public PathMappingSettings invoke() { //Path mapping may require external process with WSL
-              return mappingProvider.getPathMappingSettings(project, data);
-            }
-          });
+                                                new Function0<>() {
+                                                  @Override
+                                                  public PathMappingSettings invoke() { //Path mapping may require external process with WSL
+                                                    return mappingProvider.getPathMappingSettings(project, data);
+                                                  }
+                                                });
         newPathMapper.addAll(settings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.REPLICATED_FOLDER);
       }
     }

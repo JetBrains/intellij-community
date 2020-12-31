@@ -155,7 +155,8 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
 fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
                              existingSdks: List<Sdk>,
                              module: Module?,
-                             context: UserDataHolder) {
+                             context: UserDataHolder,
+                             callback: () -> Unit = {}) {
   addInterpretersAsync(
     sdkComboBox,
     { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
@@ -171,6 +172,7 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
           else -> items.getOrNull(0)
         }
       }
+      callback()
     }
   )
 }

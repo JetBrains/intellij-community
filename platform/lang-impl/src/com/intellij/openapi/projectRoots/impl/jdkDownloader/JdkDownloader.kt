@@ -18,7 +18,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeI
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -82,7 +82,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
   }
 
   private inline fun <T : Any> computeInBackground(project: Project?,
-                                                   @ProgressTitle title: String,
+                                                   @NlsContexts.DialogTitle title: String,
                                                    crossinline action: (ProgressIndicator) -> T): T =
     ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, true) {
       override fun compute(indicator: ProgressIndicator) = action(indicator)

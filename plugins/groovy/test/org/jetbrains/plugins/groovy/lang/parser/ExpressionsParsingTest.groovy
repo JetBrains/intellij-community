@@ -588,9 +588,13 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testrelational$inNegatedWithSpace() { doTest() }
 
+  void testrelational$inNegatedIdentifier() { doTest() }
+
   void testrelational$instanceOfNegated() { doTest() }
 
   void testrelational$instanceOfNegatedWithSpace() { doTest() }
+
+  void testrelational$instanceOfNegatedIdentifier() { doTest() }
 
   void testspecial$grvy1173() throws Throwable { doTest() }
 

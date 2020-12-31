@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
@@ -145,16 +146,17 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   /**
    * @return true if selection update needed
    */
-  public boolean updateModel(@Nullable String targetName) {
+  public boolean updateModel(@NotNull Project project, @Nullable String targetName) {
     myComboBoxModel.clear();
     myRemoteTarget = false;
     if (targetName != null) {
-      TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+      TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(targetName);
       if (config != null) {
         myRemoteTarget = true;
         List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
                                                              configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
-                                                                              new CustomJreItem((JavaLanguageRuntimeConfiguration)configuration) : null);
+                                                                              new CustomJreItem(
+                                                                                (JavaLanguageRuntimeConfiguration)configuration) : null);
         myComboBoxModel.addAll(items);
         if (!items.isEmpty()) {
           myComboBoxModel.setSelectedItem(items.get(0));

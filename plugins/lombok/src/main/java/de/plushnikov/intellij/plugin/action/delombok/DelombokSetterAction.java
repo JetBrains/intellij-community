@@ -6,6 +6,7 @@ import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import org.jetbrains.annotations.NotNull;
 
 public class DelombokSetterAction extends AbstractDelombokAction {
+  @Override
   @NotNull
   protected DelombokHandler createHandler() {
     return new DelombokHandler(

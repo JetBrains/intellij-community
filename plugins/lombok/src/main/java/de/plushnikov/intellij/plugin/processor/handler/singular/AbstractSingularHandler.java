@@ -24,6 +24,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     this.collectionQualifiedName = qualifiedName;
   }
 
+  @Override
   public Collection<PsiField> renderBuilderFields(@NotNull BuilderInfo info) {
     final PsiType builderFieldType = getBuilderFieldType(info.getFieldType(), info.getProject());
     return Collections.singleton(
@@ -99,6 +100,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     return "clear" + StringUtil.capitalize(fieldName);
   }
 
+  @Override
   public List<String> getBuilderMethodNames(@NotNull String fieldName, @Nullable PsiAnnotation singularAnnotation) {
     return Arrays.asList(createSingularName(singularAnnotation, fieldName), fieldName, createSingularClearMethodName(fieldName));
   }
@@ -121,6 +123,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
   protected abstract String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info);
 
+  @Override
   public String createSingularName(@NotNull PsiAnnotation singularAnnotation, String psiFieldName) {
     String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");
     if (StringUtil.isEmptyOrSpaces(singularName)) {

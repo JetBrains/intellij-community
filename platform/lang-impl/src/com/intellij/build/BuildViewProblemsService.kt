@@ -2,6 +2,7 @@
 package com.intellij.build
 
 import com.intellij.analysis.problemsView.FileProblem
+import com.intellij.analysis.problemsView.HighlightingDuplicate
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.build.BuildProgressListener
@@ -23,7 +24,7 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
   val workingDirToBuildId: MutableMap<String, Any> = mutableMapOf()
   val buildIdToFileProblems: MutableMap<Any, MutableSet<FileBuildProblem>> = mutableMapOf()
 
-  fun init(buildViewManager: BuildViewManager) {
+  fun listenToBuildView(buildViewManager: BuildViewManager) {
     val collector = project.service<ProblemsCollector>()
 
     buildViewManager.addListener(BuildProgressListener { buildId, event ->
@@ -54,7 +55,9 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
 
   class BuildProblemsProvider(override val project: Project) : ProblemsProvider
 
-  class FileBuildProblem(val event: FileMessageEvent, val virtualFile: VirtualFile, val problemsProvider: ProblemsProvider) : FileProblem {
+  class FileBuildProblem(val event: FileMessageEvent,
+                         val virtualFile: VirtualFile,
+                         val problemsProvider: ProblemsProvider) : FileProblem, HighlightingDuplicate {
     override val description: String?
       get() = event.description
     override val file: VirtualFile

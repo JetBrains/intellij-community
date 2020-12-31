@@ -80,7 +80,7 @@ public class CleanupProcessor extends AbstractProcessor {
   }
 
   private void validateInitializerExist(@NotNull ProblemNewBuilder problemNewBuilder, @NotNull PsiLocalVariable psiVariable) {
-    if (null == psiVariable.getInitializer()) {
+    if (!psiVariable.hasInitializer()) {
       problemNewBuilder.addError("'@Cleanup' variable declarations need to be initialized.");
     }
   }

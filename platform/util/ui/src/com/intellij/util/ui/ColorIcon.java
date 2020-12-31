@@ -80,7 +80,7 @@ public class ColorIcon extends EmptyIcon {
   }
 
   private int getColorHeight() {
-    return (int)ceil(scaleVal(myColorWidth));
+    return (int)ceil(scaleVal(myColorHeight));
   }
 
   @Override

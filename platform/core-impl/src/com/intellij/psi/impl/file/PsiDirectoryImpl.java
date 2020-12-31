@@ -351,7 +351,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       }
       else if (vFile instanceof LightVirtualFile) {
         copyVFile = parent.createChildData(this, newName);
-        copyVFile.setBinaryContent(originalFile.getText().getBytes(copyVFile.getCharset()));
+        copyVFile.setBinaryContent(vFile.contentsToByteArray());
       }
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);

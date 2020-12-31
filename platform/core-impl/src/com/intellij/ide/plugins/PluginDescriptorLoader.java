@@ -331,12 +331,19 @@ public final class PluginDescriptorLoader {
       return;
     }
 
-    for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparator + ","); t.hasMoreTokens(); ) {
+    String useCoreClassLoaderValue = System.getProperty("idea.use.core.classloader.for");
+    List<?> useCoreClassLoaderList =
+      useCoreClassLoaderValue == null ? Collections.emptyList() : Arrays.asList(useCoreClassLoaderValue.split(","));
+
+    for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparatorChar + ","); t.hasMoreTokens(); ) {
       String s = t.nextToken();
       IdeaPluginDescriptorImpl descriptor = loadDescriptor(Paths.get(s), false, context);
       if (descriptor != null) {
         // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
         result.add(descriptor,  /* overrideUseIfCompatible = */ true);
+        if (descriptor.getPluginId() != null && useCoreClassLoaderList.contains(descriptor.getPluginId().getIdString())) {
+          descriptor.setUseCoreClassLoader();
+        }
       }
     }
   }
@@ -416,8 +423,10 @@ public final class PluginDescriptorLoader {
             continue;
           }
         }
-        if (!PluginManagerCore.usePluginClassLoader) descriptor.setUseCoreClassLoader();
-        result.add(descriptor,  /* overrideUseIfCompatible = */ false);
+        if (!PluginManagerCore.usePluginClassLoader) {
+          descriptor.setUseCoreClassLoader();
+        }
+        result.add(descriptor, /* overrideUseIfCompatible = */ false);
       }
     }
   }
@@ -489,13 +498,15 @@ public final class PluginDescriptorLoader {
   }
 
   public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    if (descriptor.isEnabled()) {
-      return descriptor;
-    }
-
-    PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor, null);
-    return PluginManager
-      .loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled(), resolver);
+    return isFull(descriptor) ?
+           descriptor :
+           PluginManager.loadDescriptor(
+             descriptor.getPluginPath(),
+             PluginManagerCore.PLUGIN_XML,
+             Collections.emptySet(),
+             descriptor.isBundled(),
+             createPathResolverForPlugin(descriptor, null)
+           );
   }
 
   static @NotNull PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
@@ -525,7 +536,13 @@ public final class PluginDescriptorLoader {
     return fullDescriptor;
   }
 
-  private static @Nullable PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir, @NotNull DescriptorLoadingContext context) {
+  private static boolean isFull(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    return !PluginManagerCore.hasDescriptorByIdentity(descriptor) ||
+           PluginManagerCore.getLoadedPlugins().contains(descriptor);
+  }
+
+  private static @Nullable PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir,
+                                                                                                  @NotNull DescriptorLoadingContext context) {
     List<Path> pluginJarFiles = new ArrayList<>();
     List<Path> dirs = new ArrayList<>();
     if (!collectPluginDirectoryContents(pluginDir, pluginJarFiles, dirs)) {

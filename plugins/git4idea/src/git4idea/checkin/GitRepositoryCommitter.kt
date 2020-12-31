@@ -41,17 +41,16 @@ internal class GitRepositoryCommitter(val repository: GitRepository, val commitO
     runWithMessageFile(project, root, commitMessage) { messageFile -> commitStaged(messageFile) }
 
   @Throws(VcsException::class)
-  fun commitStaged(messageFile: File) = createCommitCommand(commitOptions, messageFile).execute()
+  fun commitStaged(messageFile: File) {
+    val handler = GitLineHandler(project, root, GitCommand.COMMIT)
+    handler.setStdoutSuppressed(false)
 
-  private fun createCommitCommand(options: GitCommitOptions, messageFile: File): GitLineHandler =
-    GitLineHandler(project, root, GitCommand.COMMIT).apply {
-      setStdoutSuppressed(false)
+    handler.setCommitMessage(messageFile)
+    handler.setCommitOptions(commitOptions)
+    handler.endOptions()
 
-      setCommitMessage(messageFile)
-      setCommitOptions(options)
-
-      endOptions()
-    }
+    Git.getInstance().runCommand(handler).throwOnError()
+  }
 }
 
 private fun GitLineHandler.setCommitOptions(options: GitCommitOptions) {
@@ -66,5 +65,3 @@ private fun GitLineHandler.setCommitMessage(messageFile: File) {
   addParameters("-F")
   addAbsoluteFile(messageFile)
 }
-
-private fun GitLineHandler.execute() = Git.getInstance().runCommand(this).throwOnError()

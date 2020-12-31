@@ -329,7 +329,7 @@ public final class GridCellImpl implements GridCell {
     service.setSize(getDimensionKey(), size, myContext.getProject());
     if (myContext.getWindow() != 0) {
       final Window frame = SwingUtilities.getWindowAncestor(myPlaceholder);
-      if (frame != null) {
+      if (frame != null && frame.isShowing()) {
         service.setLocation(getDimensionKey(), frame.getLocationOnScreen());
       }
     }

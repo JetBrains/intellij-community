@@ -235,7 +235,7 @@ class PyDBDaemonThread(threading.Thread):
             pydevd_tracing.SetTrace(None)  # no debugging on this thread
 
     def _warn_pydevd_thread_is_traced(self):
-        if sys.gettrace():
+        if self.pydev_do_not_trace and sys.gettrace():
             pydevd_log(1, "The debugger thread '%s' is traced which may lead to debugging performance issues." % self.__class__.__name__)
 
 

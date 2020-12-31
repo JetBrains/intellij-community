@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,7 +28,7 @@ import javax.swing.JComponent
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
-  private val previewFile = PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor) { getCurrentName() })
+  private val previewFile = EditorTabDiffPreviewVirtualFile(this)
   private val updatePreviewQueue =
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, diffProcessor).apply {
       setRestartTimerOnAdd(true)
@@ -125,6 +126,13 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
     openPreview(project, previewFile, focusEditor, escapeHandler)
     return true
+  }
+
+  private class EditorTabDiffPreviewVirtualFile(val preview: EditorTabPreview)
+    : PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(preview.diffProcessor) { preview.getCurrentName() }) {
+    init {
+      putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+    }
   }
 
   companion object {

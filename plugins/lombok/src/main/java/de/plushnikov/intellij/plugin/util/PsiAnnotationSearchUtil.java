@@ -8,7 +8,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
@@ -23,24 +22,6 @@ public class PsiAnnotationSearchUtil {
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String... annotationFQNs) {
     return findAnnotationQuick(psiModifierListOwner.getModifierList(), annotationFQNs);
-  }
-
-  @Nullable
-  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
-    return findAnnotationQuick(psiModifierListOwner.getModifierList(), annotationType.getName());
-  }
-
-  @Nullable
-  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
-    if (annotationTypes.length == 1) {
-      return findAnnotation(psiModifierListOwner, annotationTypes[0].getName());
-    }
-
-    final String[] qualifiedNames = new String[annotationTypes.length];
-    for (int i = 0; i < annotationTypes.length; i++) {
-      qualifiedNames[i] = annotationTypes[i].getName();
-    }
-    return findAnnotationQuick(psiModifierListOwner.getModifierList(), qualifiedNames);
   }
 
   @Nullable
@@ -146,15 +127,7 @@ public class PsiAnnotationSearchUtil {
     return null != findAnnotation(psiModifierListOwner, annotationTypes);
   }
 
-  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
-    return null != findAnnotation(psiModifierListOwner, annotationTypes);
-  }
-
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final String... annotationTypes) {
-    return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
-  }
-
-  public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
   }
 

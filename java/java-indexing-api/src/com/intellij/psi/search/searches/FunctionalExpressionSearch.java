@@ -4,6 +4,7 @@ package com.intellij.psi.search.searches;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.EmptyQuery;
@@ -28,7 +29,8 @@ public final class FunctionalExpressionSearch extends ExtensibleQueryFactory<Psi
 
     @NotNull
     public SearchScope getEffectiveSearchScope () {
-      return myScope.intersectWith(myElementToSearch.getUseScope());
+      return myScope
+        .intersectWith(PsiSearchHelper.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch));
     }
   }
 

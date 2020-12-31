@@ -35,11 +35,13 @@ public class CreateFieldQuickFix extends LocalQuickFixOnPsiElement implements In
     myModifiers = Arrays.asList(modifiers);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return String.format("Create new field '%s'", myName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -89,6 +91,7 @@ public class CreateFieldQuickFix extends LocalQuickFixOnPsiElement implements In
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

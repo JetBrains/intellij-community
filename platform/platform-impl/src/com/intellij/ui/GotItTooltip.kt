@@ -26,12 +26,11 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.Color
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.net.URL
@@ -159,55 +158,59 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
     return this
   }
 
-  fun showDynamic(position: Balloon.Position, point: () -> RelativePoint) {
-    (point().component as JComponent).addAncestorListener(object : AncestorListenerAdapter() {
-      var balloon : Balloon? = null
+  fun canShow() : Boolean = canShow("$PROPERTY_PREFIX.$id")
 
-      override fun ancestorAdded(event: AncestorEvent?) {
-        event?.let {
-          balloon = it.component.getClientProperty(PROPERTY_PREFIX) as Balloon?
+  fun showDynamic(position: Balloon.Position, component: Component, pointProvider: (Component) -> Point) {
+    var balloon : Balloon? = null
 
-          if (balloon == null && canShow("$PROPERTY_PREFIX.$id") ) {
-            balloon = createAndShow(position, point())
-            it.component.putClientProperty(PROPERTY_PREFIX, balloon)
-          }
-          else {
-            chainFunction()
+    if (component.isShowing) {
+      balloon = showAt(position, component, pointProvider)
+    }
+    else {
+      (component as JComponent).addAncestorListener(object: AncestorListenerAdapter() {
+        override fun ancestorAdded(event: AncestorEvent?) {
+          event?.let {
+            balloon = showAt(position, it.source as Component, pointProvider)
           }
         }
-      }
 
-      override fun ancestorRemoved(event: AncestorEvent?) {
-        balloon?.hide()
-        balloon = null
-        event?.component?.putClientProperty(PROPERTY_PREFIX, null)
-      }
-    })
+        override fun ancestorRemoved(event: AncestorEvent?) {
+            balloon?.hide()
+            balloon = null
+        }
+      })
+    }
   }
 
-  fun showAt(position: Balloon.Position, point: RelativePoint) : Balloon? {
-    val balloon = (point.component as JComponent).getClientProperty(PROPERTY_PREFIX)
-    return if (balloon == null && canShow("$PROPERTY_PREFIX.$id"))
-      createAndShow(position, point).also { (point.component as JComponent).putClientProperty(PROPERTY_PREFIX, it) }
+  fun showAt(position: Balloon.Position, component: Component, pointProvider: (Component) -> Point) : Balloon? {
+    val balloon = (component as JComponent).getClientProperty(PROPERTY_PREFIX)
+    return if (balloon == null && canShow()) {
+      val tracker = object : PositionTracker<Balloon> (component) {
+        override fun recalculateLocation(balloon: Balloon): RelativePoint = RelativePoint(component, pointProvider(component))
+      }
+      createAndShow(position, tracker).also { component.putClientProperty(PROPERTY_PREFIX, it) }
+    }
     else {
       chainFunction()
       null
     }
   }
 
-  fun showAfter(tooltip: GotItTooltip, position: Balloon.Position, point: () -> RelativePoint) {
-    tooltip.chainFunction = { showAt(position, point()) }
+  fun showAfter(tooltip: GotItTooltip, position: Balloon.Position, component: Component, pointProvider: (Component) -> Point) {
+    tooltip.chainFunction = { showAt(position, component, pointProvider) }
   }
 
-  private fun createAndShow(position: Balloon.Position, point: RelativePoint) : Balloon = createBalloon().also {
+  private fun createAndShow(position: Balloon.Position, tracker: PositionTracker<Balloon>) : Balloon = createBalloon().also {
       val dispatcherDisposable = Disposer.newDisposable()
       Disposer.register(disposable, dispatcherDisposable)
 
       it.addListener(object : JBPopupListener {
         override fun onClosed(event: LightweightWindowEvent) {
           onGotIt("$PROPERTY_PREFIX.$id")
-          HelpTooltip.setMasterPopupOpenCondition(point.component, null)
-          (point.component as JComponent).putClientProperty(PROPERTY_PREFIX, null)
+          HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
+
+          (tracker.component as JComponent).putClientProperty(PROPERTY_PREFIX, null)
+
           Disposer.dispose(dispatcherDisposable)
           chainFunction()
         }
@@ -221,11 +224,11 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, val disposable
         else false
       }, dispatcherDisposable)
 
-      HelpTooltip.setMasterPopupOpenCondition(point.component) {
+      HelpTooltip.setMasterPopupOpenCondition(tracker.component) {
         it.isDisposed
       }
 
-      it.show(point, position)
+      it.show(tracker, position)
     }
 
   private fun createBalloon() : Balloon {

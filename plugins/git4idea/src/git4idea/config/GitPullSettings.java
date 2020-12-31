@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import git4idea.pull.GitPullOption;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -18,7 +17,6 @@ import static java.util.EnumSet.copyOf;
 public class GitPullSettings implements PersistentStateComponent<GitPullSettings.State> {
 
   public static class State {
-    public @Nullable String BRANCH = null;
     public @NotNull Set<GitPullOption> OPTIONS = none();
   }
 
@@ -32,14 +30,6 @@ public class GitPullSettings implements PersistentStateComponent<GitPullSettings
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-  }
-
-  public @Nullable String getBranch() {
-    return myState.BRANCH;
-  }
-
-  public void setBranch(@Nullable String branch) {
-    myState.BRANCH = branch;
   }
 
   public @NotNull Set<GitPullOption> getOptions() {

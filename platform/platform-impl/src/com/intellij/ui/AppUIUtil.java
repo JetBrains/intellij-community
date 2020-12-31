@@ -159,12 +159,8 @@ public final class AppUIUtil {
     return null;
   }
 
-  private static @Nullable Icon loadApplicationIcon(String svgPath, ScaleContext scaleContext, int size) {
-    if (svgPath == null) {
-      return null;
-    }
-
-    Icon icon = IconLoader.findIcon(svgPath, AppUIUtil.class);
+  private static @Nullable Icon loadApplicationIcon(@NotNull String svgPath, ScaleContext scaleContext, int size) {
+    Icon icon = IconLoader.findIcon(svgPath, AppUIUtil.class.getClassLoader());
     if (icon == null) {
       getLogger().info("Cannot load SVG application icon from " + svgPath);
       return null;

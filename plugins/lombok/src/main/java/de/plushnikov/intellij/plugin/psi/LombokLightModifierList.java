@@ -34,6 +34,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     myImplicitModifiers.add(implicitModifier);
   }
 
+  @Override
   public void setModifierProperty(@PsiModifier.ModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
     if (value) {
       addModifier(name);
@@ -65,6 +66,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     return result;
   }
 
+  @Override
   public void checkSetModifierProperty(@PsiModifier.ModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }

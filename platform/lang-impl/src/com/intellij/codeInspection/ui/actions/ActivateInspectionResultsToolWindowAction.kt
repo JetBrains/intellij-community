@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
@@ -25,11 +26,16 @@ import org.jetbrains.annotations.Nls
 class ActivateInspectionResultsToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.INSPECTION,
                                                                              AllIcons.Toolwindows.ToolWindowInspection) {
   override fun setupEmptyText(project: Project, text: StatusText) {
-    text.appendText(InspectionsBundle.message("inspections.empty.state.1") + " ")
-    appendActionLink(text, project, IdeActions.ACTION_INSPECT_CODE,
-                     ActionsBundle.actionText(IdeActions.ACTION_INSPECT_CODE).replace("_", ""))
-    text.appendText(" " + InspectionsBundle.message("inspections.empty.state.2") + " ")
-    appendActionLink(text, project, "RunInspection", IdeBundle.message("goto.inspection.action.text").replace("&", ""))
+    val pattern = InspectionsBundle.message("inspections.empty.state.pattern")
+    for (fragment in pattern.split("$")) {
+      when (fragment) {
+        "action_inspect_code" -> appendActionLink(text, project, IdeActions.ACTION_INSPECT_CODE, 
+                                                  TextWithMnemonic.parse(ActionsBundle.actionText(IdeActions.ACTION_INSPECT_CODE)).text)
+        "action_inspection_by_name" -> appendActionLink(text, project, "RunInspection", 
+                                                        TextWithMnemonic.parse(IdeBundle.message("goto.inspection.action.text")).text)
+        else -> text.appendText(fragment)
+      }
+    }
     text.appendLine("")
     text.appendLine(AllIcons.General.ContextHelp, InspectionsBundle.message("inspections.empty.state.help"), SimpleTextAttributes.LINK_ATTRIBUTES) {
       HelpManager.getInstance().invokeHelp("procedures.inspecting.running")

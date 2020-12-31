@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DelombokConstructorAction extends AbstractDelombokAction {
 
+  @Override
   @NotNull
   protected DelombokHandler createHandler() {
     return new DelombokHandler(

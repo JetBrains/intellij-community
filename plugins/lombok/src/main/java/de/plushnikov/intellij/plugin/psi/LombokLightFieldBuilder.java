@@ -37,12 +37,14 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return myModifierList;
   }
 
+  @Override
   public LombokLightFieldBuilder setModifiers(String... modifiers) {
     myModifierList.clearModifiers();
     Stream.of(modifiers).forEach(myModifierList::addModifier);
     return this;
   }
 
+  @Override
   public LombokLightFieldBuilder setModifierList(LightModifierList modifierList) {
     setModifiers(modifierList.getModifiers());
     return this;

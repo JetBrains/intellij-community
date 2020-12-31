@@ -21,4 +21,22 @@ class MetadataConsistencyTest {
 
   @Test
   fun testPHPMetadata() = ExperimentPhpMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testRubyMetadata() = ExperimentRubyMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testGoMetadata() = ExperimentGoMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testJSMetadata() = ExperimentJSMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testTypeScriptMetadata() = ExperimentTypeScriptMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testDartMetadata() = ExperimentDartMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testSwiftMetadata() = ExperimentSwiftMLRankingProvider().assertModelMetadataConsistent()
 }

@@ -102,13 +102,22 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>, replaceMap: HashBiMap<EntityId, EntityId>) {
-    other.indexLog.forEach {
-      when (it) {
-        is IndexLogRecord.Add<*> -> add(replaceMap.getOrDefault(it.id, it.id), it.data as T)
-        is IndexLogRecord.Remove -> remove(replaceMap.getOrDefault(it.id, it.id))
+    other.indexLog.forEach { indexEntry ->
+      when (indexEntry) {
+        is IndexLogRecord.Add<*> -> getTargetId(replaceMap, indexEntry.id)?.let { add(it, indexEntry.data as T) }
+        is IndexLogRecord.Remove -> getTargetId(replaceMap, indexEntry.id)?.let { remove(it) }
         IndexLogRecord.Clear -> clearMapping()
       }
     }
+  }
+
+  private fun getTargetId(replaceMap: HashBiMap<EntityId, EntityId>, id: EntityId): EntityId? {
+    val possibleTargetId = replaceMap[id]
+    if (possibleTargetId != null) return possibleTargetId
+
+    // It's possible that before addDiff there was a gup in this particular id. If it's so, replaceMap should not have a mapping to it
+    val sourceId = replaceMap.inverse()[id]
+    return if (sourceId != null) null else id
   }
 
   private fun startWrite() {

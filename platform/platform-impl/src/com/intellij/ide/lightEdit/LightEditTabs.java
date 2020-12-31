@@ -385,11 +385,17 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   @Nullable
-  public EditorWithProviderComposite findEditorComposite(@NotNull VirtualFile virtualFile) {
-    for (TabInfo tabInfo : getTabs()) {
-      final Object data = tabInfo.getObject();
-      if (data instanceof TabEditorData && virtualFile.equals(((TabEditorData)data).editorInfo.getFile())) {
-        return ((TabEditorData)data).editorComposite;
+  public EditorWithProviderComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+    VirtualFile virtualFile = fileEditor.getFile();
+    if (virtualFile != null) {
+      for (TabInfo tabInfo : getTabs()) {
+        final Object data = tabInfo.getObject();
+        if (data instanceof TabEditorData && virtualFile.equals(((TabEditorData)data).editorInfo.getFile())) {
+          EditorWithProviderComposite composite = ((TabEditorData)data).editorComposite;
+          if (ContainerUtil.exists(composite.getEditors(), editor->editor.equals(fileEditor))) {
+            return composite;
+          }
+        }
       }
     }
     return null;

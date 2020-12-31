@@ -100,7 +100,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
 
     @JvmStatic
     fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
-      FileDocumentManager.getInstance().saveAllDocuments();
+      FileDocumentManager.getInstance().saveAllDocuments()
 
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
 
@@ -187,7 +187,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           val repository = repositoryManager.getRepositoryForRoot(root)
           if (repository == null) {
             GithubNotifications.showError(project,
-                                          "github.share.cannot.find.git.repo",
+                                          GithubNotificationIdsHolder.SHARE_CANNOT_FIND_GIT_REPO,
                                           GithubBundle.message("share.error.failed.to.create.repo"),
                                           GithubBundle.message("cannot.find.git.repo"))
             return
@@ -216,7 +216,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           }
 
           GithubNotifications.showInfoURL(project,
-                                          "github.share.project.successfully.shared",
+                                          GithubNotificationIdsHolder.SHARE_PROJECT_SUCCESSFULLY_SHARED,
                                           GithubBundle.message("share.process.successfully.shared"),
                                           name,
                                           url)
@@ -226,7 +226,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
                                              root: VirtualFile): Boolean {
           val result = Git.getInstance().init(project, root)
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError("github.git.repo.init.error",
+            VcsNotifier.getInstance(project).notifyError(GithubNotificationIdsHolder.GIT_REPO_INIT_REPO,
                                                          GitBundle.getString("initializing.title"),
                                                          result.errorOutputAsHtmlString)
             LOG.info("Failed to create empty git repo: " + result.errorOutputAsJoinedString)
@@ -275,7 +275,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
             val files2commit = dialog.selectedFiles
             if (!dialog.isOK || files2commit.isEmpty()) {
               GithubNotifications.showInfoURL(project,
-                                              "github.share.empty.repo.created",
+                                              GithubNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
                                               GithubBundle.message("share.process.empty.project.created"),
                                               name, url)
               return false
@@ -302,7 +302,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           }
           catch (e: VcsException) {
             LOG.warn(e)
-            GithubNotifications.showErrorURL(project, "github.share.project.created.init.commit.failed",
+            GithubNotifications.showErrorURL(project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED,
                                              GithubBundle.message("share.error.cannot.finish"),
                                              GithubBundle.message("share.error.created.project"),
                                              " '$name' ",
@@ -330,7 +330,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
                                       url: String): Boolean {
           val currentBranch = repository.currentBranch
           if (currentBranch == null) {
-            GithubNotifications.showErrorURL(project, "github.share.init.push.failed",
+            GithubNotifications.showErrorURL(project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED,
                                              GithubBundle.message("share.error.cannot.finish"),
                                              GithubBundle.message("share.error.created.project"),
                                              " '$name' ",
@@ -340,7 +340,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           }
           val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
           if (!result.success()) {
-            GithubNotifications.showErrorURL(project, "github.share.init.push.failed",
+            GithubNotifications.showErrorURL(project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED,
                                              GithubBundle.message("share.error.cannot.finish"),
                                              GithubBundle.message("share.error.created.project"),
                                              " '$name' ",
@@ -353,7 +353,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
 
         override fun onThrowable(error: Throwable) {
           GithubNotifications.showError(project,
-                                        "github.share.cannot.create.repo",
+                                        GithubNotificationIdsHolder.SHARE_CANNOT_CREATE_REPO,
                                         GithubBundle.message("share.error.failed.to.create.repo"), error)
         }
       }.queue()

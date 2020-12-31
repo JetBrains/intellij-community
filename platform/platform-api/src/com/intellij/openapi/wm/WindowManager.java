@@ -96,4 +96,7 @@ public abstract class WindowManager {
   public abstract boolean isFullScreenSupportedInCurrentOS();
 
   public abstract void requestUserAttention(@NotNull IdeFrame frame, boolean critical);
+
+  public void updateDefaultFrameInfoOnProjectClose(@NotNull Project project) {
+  }
 }

@@ -11,8 +11,14 @@ import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.clearCachesForAllProjects
+import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.div
+import com.intellij.util.io.exists
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.lastModified
 import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
@@ -26,15 +32,15 @@ import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable): Disposable {
-  private val cacheFile: File
+  private val cacheFile: Path
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager,
-                                                                                ApplicationManager.getApplication().isEAP)
+  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
   init {
     Disposer.register(parentDisposable, this)
@@ -51,23 +57,16 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     })
   }
 
-  private fun initCacheFile(): File {
+  private fun initCacheFile(): Path {
 
     if (ApplicationManager.getApplication().isUnitTestMode && testCacheFile != null) {
       // For testing purposes
-      val testFile = testCacheFile!!
+      val testFile = testCacheFile!!.toPath()
       if (!testFile.exists()) error("Test cache file defined, but doesn't exist")
       return testFile
     }
 
-    val hasher = Hashing.sha256().newHasher()
-    project.basePath?.let { hasher.putString(it, Charsets.UTF_8) }
-    project.projectFilePath?.let { hasher.putString(it, Charsets.UTF_8) }
-    hasher.putString(project.locationHash, Charsets.UTF_8)
-    hasher.putString(serializer.javaClass.name, Charsets.UTF_8)
-    hasher.putString(serializer.serializerDataFormatVersion, Charsets.UTF_8)
-
-    return File(cacheDir, hasher.hash().toString().take(20) + ".data")
+    return project.getProjectDataPath(DATA_DIR_NAME) / "cache.data"
   }
 
   private val saveAlarm = pooledThreadSingleAlarm(1000, this) {
@@ -89,7 +88,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     try {
       if (!cacheFile.exists()) return null
 
-      if (invalidateCachesMarkerFile.exists() && cacheFile.lastModified() < invalidateCachesMarkerFile.lastModified()) {
+      if (invalidateCachesMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateCachesMarkerFile.lastModified()) {
         LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
         FileUtil.delete(cacheFile)
         return null
@@ -110,16 +109,16 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
   private fun saveCache(storage: WorkspaceEntityStorage) {
-    val tmpFile = FileUtil.createTempFile(cacheFile.parentFile, "cache", ".tmp")
+    val tmpFile = FileUtil.createTempFile(cacheFile.parent.toFile(), "cache", ".tmp")
     try {
       tmpFile.outputStream().use { serializer.serializeCache(it, storage) }
 
       try {
-        Files.move(tmpFile.toPath(), cacheFile.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tmpFile.toPath(), cacheFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
       }
       catch (e: AtomicMoveNotSupportedException) {
         LOG.warn(e)
-        Files.move(tmpFile.toPath(), cacheFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tmpFile.toPath(), cacheFile, StandardCopyOption.REPLACE_EXISTING)
       }
     } finally {
       tmpFile.delete()
@@ -144,14 +143,13 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
 
   companion object {
     private val LOG = logger<WorkspaceModelCacheImpl>()
-
-    private val cacheDir = appSystemDir.resolve("projectModelCache").toFile()
+    private const val DATA_DIR_NAME = "project-model-cache"
 
     @TestOnly
     var testCacheFile: File? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
-    private val invalidateCachesMarkerFile = File(cacheDir, ".invalidate")
+    private val invalidateCachesMarkerFile = File(appSystemDir.resolve("projectModelCache").toFile(), ".invalidate")
 
     fun invalidateCaches() {
       LOG.info("Invalidating project model caches by creating $invalidateCachesMarkerFile")
@@ -159,7 +157,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       cachesInvalidated.set(true)
 
       try {
-        FileUtil.createDirectory(cacheDir)
+        FileUtil.createParentDirs(invalidateCachesMarkerFile)
         FileUtil.writeToFile(invalidateCachesMarkerFile, System.currentTimeMillis().toString())
       }
       catch (t: Throwable) {
@@ -167,8 +165,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
       }
 
       ApplicationManager.getApplication().executeOnPooledThread {
-        val filesToRemove = (cacheDir.listFiles() ?: emptyArray()).filter { it.isFile && !it.name.startsWith(".") }
-        FileUtil.asyncDelete(filesToRemove)
+        clearCachesForAllProjects(DATA_DIR_NAME)
       }
     }
   }

@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
@@ -46,8 +45,6 @@ public class FieldDefaultsModifierTest extends AbstractLombokLightCodeInsightTes
   }
 
   public void testFieldDefaultsWithNonFinal() {
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
     assertFalse("@FieldDefaults(makeFinal = true) should not make @NonFinal fields final", modifierList.hasModifierProperty(PsiModifier.FINAL));
@@ -114,8 +111,6 @@ public class FieldDefaultsModifierTest extends AbstractLombokLightCodeInsightTes
   }
 
   public void testFieldDefaultsPublicWithPackagePrivate() {
-    //TODO disable assertions for the moment
-    RecursionManager.disableMissedCacheAssertions(myFixture.getProjectDisposable());
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
     assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make @PackagePrivate fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));

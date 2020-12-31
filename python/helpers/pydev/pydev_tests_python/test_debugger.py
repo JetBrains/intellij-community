@@ -2129,6 +2129,55 @@ def test_multiprocessing(case_setup_multiprocessing):
         writer.write_run_thread(hit2.thread_id)
         writer.finished_ok = True
 
+
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+def test_fork_no_attach(case_setup):
+    with case_setup.test_file('_debugger_case_fork.py') as writer:
+        writer.write_add_breakpoint(writer.get_line_index_with_content('break here'))
+        writer.write_make_initial_run()
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+def test_fork_with_attach_no_breakpoints(case_setup_multiproc):
+    with case_setup_multiproc.test_file('_debugger_case_fork.py') as writer:
+        wait_for_condition(lambda: len(writer.writers) == 1)
+        writer1 = writer.writers[0]
+        writer1.write_make_initial_run()
+
+        wait_for_condition(lambda: len(writer.writers) == 2)
+        writer2 = writer.writers[1]
+        writer2.write_make_initial_run()
+
+        for w in writer.writers:
+            w.finished_ok = True
+
+        writer.finished_ok = True
+
+
+@pytest.mark.skip('PY-44245 - forking with breakpoints available hangs the debugger')
+@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+def test_fork_with_attach(case_setup_multiproc):
+    with case_setup_multiproc.test_file('_debugger_case_fork.py') as writer:
+        break_line = writer.get_line_index_with_content('break here')
+        writer.write_add_breakpoint(break_line)
+
+        wait_for_condition(lambda: len(writer.writers) == 1)
+        writer1 = writer.writers[0]
+        writer1.write_make_initial_run()
+
+        wait_for_condition(lambda: len(writer.writers) == 2)
+        writer2 = writer.writers[1]
+        writer2.write_make_initial_run()
+
+        hit1 = writer1.wait_for_breakpoint_hit()
+        writer1.write_run_thread(hit1.thread_id)
+
+        for w in writer.writers:
+            w.finished_ok = True
+
+        writer.finished_ok = True
+
     
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_remote_debugger_basic(case_setup_remote):

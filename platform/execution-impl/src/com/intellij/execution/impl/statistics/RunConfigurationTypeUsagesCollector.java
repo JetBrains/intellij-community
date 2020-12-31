@@ -4,6 +4,9 @@ package com.intellij.execution.impl.statistics;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -33,7 +36,7 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 7);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 8);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", "run_config_id");
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory", "run_config_factory");
   private static final IntEventField COUNT_FIELD = EventFields.Int("count");
@@ -43,10 +46,11 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
   private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
   private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
+  private static final StringEventField TARGET_FIELD = EventFields.StringValidatedByCustomRule("target", "run_target");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
   private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
     GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
-                              ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD);
+                              ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD, TARGET_FIELD);
   private static final VarargEventId FEATURE_USED_EVENT =
     GROUP.registerVarargEvent("feature.used", COUNT_FIELD, ID_FIELD, EventFields.PluginInfo, FEATURE_NAME_FIELD);
 
@@ -85,6 +89,15 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
           if (runConfiguration instanceof FusAwareRunConfiguration) {
             List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
             pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData)));
+          }
+          if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
+            String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
+            if (defaultTargetName != null) {
+              TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
+              if (target != null) {
+                pairs.add(TARGET_FIELD.with(target.getTypeId()));
+              }
+            }
           }
         }
         Set<MetricEvent> metrics = new HashSet<>();

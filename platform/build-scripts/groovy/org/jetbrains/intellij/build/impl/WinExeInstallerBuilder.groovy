@@ -58,10 +58,10 @@ class WinExeInstallerBuilder {
     customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
-  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
+  String buildInstaller(String winDistPath, String additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
     if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
-      return
+      return null
     }
 
     String communityHome = buildContext.paths.communityHome
@@ -121,7 +121,7 @@ class WinExeInstallerBuilder {
                           " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
                           " \"${box}/nsiconf/idea.nsi\"")
       }
-      else if (SystemInfo.isLinux) {
+      else {
         String installerToolsDir = "$box/installer"
         String installScriptPath = "$installerToolsDir/install_nsis3.sh"
         buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
@@ -154,6 +154,7 @@ class WinExeInstallerBuilder {
 
     buildContext.signExeFile(installerPath)
     buildContext.notifyArtifactBuilt(installerPath)
+    return installerPath
   }
 
   private void prepareConfigurationFiles(String box, String winDistPath, boolean jre32BitVersionSupported) {

@@ -12,16 +12,15 @@ import java.util.*
 @NonNls
 private val NUMBER = Regex("\\d+")
 
-class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UpdateSettings) {
-  constructor(currentBuild: BuildNumber, updates: UpdatesInfo) :
-    this(currentBuild, updates, UpdateSettings.getInstance())
+class UpdateStrategy(private val currentBuild: BuildNumber, private val product: Product?, private val settings: UpdateSettings) {
+  constructor(currentBuild: BuildNumber, updates: UpdatesInfo, settings: UpdateSettings) :
+    this(currentBuild, updates[currentBuild.productCode], settings)
 
   enum class State {
     LOADED, CONNECTION_ERROR, NOTHING_LOADED
   }
 
   fun checkForUpdates(): CheckForUpdateResult {
-    val product = updates[currentBuild.productCode]
     if (product == null || product.channels.isEmpty()) {
       return CheckForUpdateResult(State.NOTHING_LOADED, null)
     }

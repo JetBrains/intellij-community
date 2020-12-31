@@ -33,6 +33,7 @@ class SingularMapHandler extends AbstractSingularHandler {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
   }
 
+  @Override
   public Collection<PsiField> renderBuilderFields(@NotNull BuilderInfo info) {
     final PsiType keyType = getKeyType(info.getManager(), info.getFieldType());
     final PsiType builderFieldKeyType = getBuilderFieldType(keyType, info.getProject());
@@ -51,12 +52,14 @@ class SingularMapHandler extends AbstractSingularHandler {
         .withNavigationElement(info.getVariable()));
   }
 
+  @Override
   @NotNull
   protected PsiType getBuilderFieldType(@NotNull PsiType psiType, @NotNull Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     return PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_ARRAY_LIST, psiType);
   }
 
+  @Override
   protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
     final PsiType keyType = getKeyType(psiManager, psiFieldType);
@@ -66,6 +69,7 @@ class SingularMapHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName + VALUE, valueType);
   }
 
+  @Override
   protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
     final PsiType keyType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
@@ -76,6 +80,7 @@ class SingularMapHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
+  @Override
   protected String getClearMethodBody(@NotNull BuilderInfo info) {
     final String codeBlockFormat = "if (this.{0}" + LOMBOK_KEY + " != null) '{'\n this.{0}" + LOMBOK_KEY + ".clear();\n " +
       " this.{0}" + LOMBOK_VALUE + ".clear(); '}'\n" +
@@ -83,6 +88,7 @@ class SingularMapHandler extends AbstractSingularHandler {
     return MessageFormat.format(codeBlockFormat, info.getFieldName(), info.getBuilderChainResult());
   }
 
+  @Override
   protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
       "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<{3}>(); \n" +
@@ -99,6 +105,7 @@ class SingularMapHandler extends AbstractSingularHandler {
       keyType.getCanonicalText(false), valueType.getCanonicalText(false));
   }
 
+  @Override
   protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
       "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<{2}>(); \n" +
@@ -160,6 +167,7 @@ class SingularMapHandler extends AbstractSingularHandler {
       valueType.getCanonicalText(false), builderVariable);
   }
 
+  @Override
   public String renderSuperBuilderConstruction(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
     final String basicCode = renderBuildCode(psiVariable, fieldName, "b");
     final String assignment = "this." + psiVariable.getName() + "=" + fieldName + ";\n";

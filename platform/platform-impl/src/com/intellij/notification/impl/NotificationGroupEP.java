@@ -21,8 +21,13 @@ import javax.swing.*;
 import java.util.ResourceBundle;
 
 /**
- * Extension point to register notification group.
- * To get an instance of registered NotificationGroup use {@link com.intellij.notification.NotificationGroupManager}
+ * Registers notification group.
+ * <p>
+ * Use {@link com.intellij.notification.NotificationGroupManager#getNotificationGroup(String)} to obtain instance via {@link #id}.
+ * </p>
+ * <p>
+ * See <a href="https://jetbrains.org/intellij/sdk/docs/user_interface_components/notifications.html#top-level-notifications">Top-Level Notifications</a>.
+ * </p>
  */
 public final class NotificationGroupEP implements PluginAware {
   static final ExtensionPointName<NotificationGroupEP> EP_NAME = new ExtensionPointName<>("com.intellij.notificationGroup");
@@ -63,7 +68,8 @@ public final class NotificationGroupEP implements PluginAware {
   public String key;
 
   /**
-   * Semicolon-separated list of notificationIds which should be recorder in feature usage statistics.
+   * Semicolon-separated list of notificationIds which should be recorded in feature usage statistics.
+   *
    * @see Notification#displayId
    */
   @Attribute("notificationIds")
@@ -115,19 +121,19 @@ public final class NotificationGroupEP implements PluginAware {
 
   private enum DisplayType {
     /**
-     * No popup
+     * No popup.
      */
     NONE(NotificationDisplayType.NONE),
     /**
-     *  Expires automatically after 10 seconds.
+     * Expires automatically after 10 seconds.
      */
     BALLOON(NotificationDisplayType.BALLOON),
     /**
-     * Needs to be closed by user
+     * Needs to be closed by user.
      */
     STICKY_BALLOON(NotificationDisplayType.STICKY_BALLOON),
     /**
-     * Tool window balloon
+     * Tool window balloon.
      */
     TOOL_WINDOW(NotificationDisplayType.TOOL_WINDOW);
 

@@ -7,10 +7,7 @@ import com.intellij.execution.RunOnTargetComboBox;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.target.LanguageRuntimeType;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.target.TargetEnvironmentsConfigurable;
-import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.target.*;
 import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -20,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -427,6 +423,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         if (!StringUtil.equals(myDefaultTargetName, chosenTarget)) {
           setModified(true);
           setTargetName(chosenTarget);
+          SingleConfigurationConfigurable.this.updateWarning();
         }
       });
     }
@@ -445,7 +442,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       if (targetAware) {
         String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();
         LanguageRuntimeType<?> defaultRuntime = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType();
-        ((RunOnTargetComboBox)myRunOnComboBox).setDefaultLanguageRuntimeTime(defaultRuntime);
+        ((RunOnTargetComboBox)myRunOnComboBox).setDefaultLanguageRuntimeType(defaultRuntime);
         resetRunOnComboBox(defaultTargetName);
         setTargetName(defaultTargetName);
       }
@@ -459,7 +456,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
       ((RunOnTargetComboBox)myRunOnComboBox).initModel();
-      ((RunOnTargetComboBox)myRunOnComboBox).addTargets(TargetEnvironmentsManager.getInstance().getTargets().resolvedConfigs());
+      ((RunOnTargetComboBox)myRunOnComboBox).addTargets(TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs());
       ((RunOnTargetComboBox)myRunOnComboBox).selectTarget(targetNameToChoose);
     }
 
@@ -518,9 +515,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myManageTargetsLabel =
         LinkLabel.create(ExecutionBundle.message("edit.run.configuration.run.configuration.manage.targets.label"), () -> {
           String selectedName = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
-          TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName);
-          if (ShowSettingsUtil.getInstance().editConfigurable(myWholePanel, configurable)) {
-            resetRunOnComboBox(selectedName);
+          LanguageRuntimeType<?> languageRuntime = ((RunOnTargetComboBox)myRunOnComboBox).getDefaultLanguageRuntimeType();
+          TargetEnvironmentsConfigurable configurable = new TargetEnvironmentsConfigurable(myProject, selectedName, languageRuntime);
+          if (configurable.openForEditing()) {
+            TargetEnvironmentConfiguration lastEdited = configurable.getSelectedTargetConfig();
+            String chosenTargetName = lastEdited != null ? lastEdited.getDisplayName() : selectedName;
+            resetRunOnComboBox(chosenTargetName);
+            setTargetName(chosenTargetName);
+            SingleConfigurationConfigurable.this.updateWarning();
           }
         });
       myJBScrollPane = wrapWithScrollPane(null);

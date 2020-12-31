@@ -50,6 +50,7 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "force", false);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     if (null != methodVisibility) {

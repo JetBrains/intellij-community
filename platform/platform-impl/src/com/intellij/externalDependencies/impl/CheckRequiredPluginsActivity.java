@@ -60,7 +60,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
     final Set<PluginId> notInstalled = new HashSet<>();
     List<IdeaPluginDescriptor> pluginsToEnableWithoutRestart = new ArrayList<>();
-    ProjectPluginTracker pluginTracker = ProjectPluginTracker.getInstance(project);
+    ProjectPluginTracker pluginTracker = ProjectPluginTrackerManager.getInstance().createPluginTracker(project);
 
     for (DependencyOnPlugin dependency : dependencies) {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
@@ -158,12 +158,11 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
   private static void enablePlugins(@NotNull Project project,
                                     @NotNull List<? extends IdeaPluginDescriptor> plugins) {
-    LOG.info(PluginEnabler.getLogMessage("Required plugins to enable", plugins));
+    Set<PluginId> pluginIds = PluginEnabler.mapPluginId(plugins);
+    LOG.info(PluginEnabler.getLogMessage("Required plugins to enable", pluginIds));
 
-    ProjectPluginTracker pluginTracker = ProjectPluginTracker.getInstance(project);
-    for (IdeaPluginDescriptor descriptor : plugins) {
-      pluginTracker.changeEnableDisable(descriptor.getPluginId(), PluginEnabledState.ENABLED);
-    }
+    ProjectPluginTracker pluginTracker = ProjectPluginTrackerManager.getInstance().createPluginTracker(project);
+    pluginIds.forEach(id -> pluginTracker.changeEnableDisable(id, PluginEnabledState.ENABLED));
 
     PluginEnabler.enablePlugins(project, plugins, true);
   }

@@ -11,7 +11,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.ref.GCWatcher;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -839,17 +838,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   void setClassLoader(@Nullable ClassLoader classLoader) {
     this.classLoader = classLoader;
-  }
-
-  public boolean unloadClassLoader(int timeoutMs) {
-    if (timeoutMs == 0) {
-      classLoader = null;
-      return true;
-    }
-
-    GCWatcher watcher = GCWatcher.tracking(classLoader);
-    classLoader = null;
-    return watcher.tryCollect(timeoutMs);
   }
 
   @Override

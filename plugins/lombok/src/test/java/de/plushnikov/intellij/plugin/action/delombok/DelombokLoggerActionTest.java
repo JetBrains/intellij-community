@@ -5,6 +5,7 @@ import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
 
 public class DelombokLoggerActionTest extends LombokLightActionTestCase {
 
+  @Override
   protected AnAction getAction() {
     return new DelombokLoggerAction();
   }

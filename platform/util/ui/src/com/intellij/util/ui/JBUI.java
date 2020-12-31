@@ -1012,7 +1012,7 @@ public class JBUI {
       }
     }
 
-    public static final class NotificationErrorColor {
+    public static final class NotificationError {
       @NotNull
       public static Color backgroundColor() {
         return JBColor.namedColor("Notification.ToolWindow.errorBackground", new JBColor(0xffcccc, 0x704745));

@@ -7,10 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 final class CachingSemiGraph<Node> implements InboundSemiGraph<Node> {
-  private final List<Node> nodes;
+  private final Collection<Node> nodes;
   private final Map<Node, List<Node>> in;
 
-  CachingSemiGraph(@NotNull List<Node> nodes, @NotNull Map<Node, List<Node>> in) {
+  CachingSemiGraph(@NotNull Collection<Node> nodes, @NotNull Map<Node, List<Node>> in) {
     this.nodes = nodes;
     this.in = in;
   }

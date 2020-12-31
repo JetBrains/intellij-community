@@ -449,20 +449,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
           if (targetRootPath instanceof TargetEnvironment.TargetPath.Temporary &&
               mavenProjectFolderVolumeType.getId().equals(((TargetEnvironment.TargetPath.Temporary)targetRootPath).getHint())) {
             String targetPath = TargetEnvironmentFunctions.getTargetUploadPath(uploadVolume).apply(targetEnvironment);
-            targetFileMapper = path -> {
-              if (path == null) return null;
-              boolean isWindows = targetEnvironment.getTargetPlatform().getPlatform() == Platform.WINDOWS;
-              path = isWindows && path.charAt(0) == '/' ? path.substring(1) : path;
-              if (path.startsWith(targetPath)) {
-                return Paths.get(localPath, trimStart(path, targetPath)).toString();
-              }
-              // workaround for "var -> private/var" symlink
-              // TODO target absolute path can be used instead for such mapping of target file absolute paths
-              if (path.startsWith("/private" + targetPath)) {
-                return Paths.get(localPath, trimStart(path, "/private" + targetPath)).toString();
-              }
-              return path;
-            };
+            targetFileMapper = createTargetFileMapper(targetEnvironment, localPath, targetPath);
             break;
           }
         }
@@ -578,6 +565,24 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
   }
 
+  private static @NotNull Function<String, String> createTargetFileMapper(@NotNull TargetEnvironment targetEnvironment,
+                                                                          @NotNull String projectRootlocalPath,
+                                                                          @NotNull String projectRootTargetPath) {
+    return path -> {
+      if (path == null) return null;
+      boolean isWindows = targetEnvironment.getTargetPlatform().getPlatform() == Platform.WINDOWS;
+      path = isWindows && path.charAt(0) == '/' ? path.substring(1) : path;
+      if (path.startsWith(projectRootTargetPath)) {
+        return Paths.get(projectRootlocalPath, trimStart(path, projectRootTargetPath)).toString();
+      }
+      // workaround for "var -> private/var" symlink
+      // TODO target absolute path can be used instead for such mapping of target file absolute paths
+      if (path.startsWith("/private" + projectRootTargetPath)) {
+        return Paths.get(projectRootlocalPath, trimStart(path, "/private" + projectRootTargetPath)).toString();
+      }
+      return path;
+    };
+  }
 
   public static class MavenHandlerFilterSpyWrapper extends ProcessHandler {
     private final ProcessHandler myOriginalHandler;

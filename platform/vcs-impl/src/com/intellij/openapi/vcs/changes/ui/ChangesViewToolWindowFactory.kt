@@ -88,7 +88,7 @@ internal class SwitchToCommitDialogHint(private val toolWindow: ToolWindowEx, pr
   private fun showHint() {
     val c : JComponent = toolbar.getGearButton() ?: toolbar.component
     balloon = GotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"), toolbarVisibilityTracker).
-      showAt(Balloon.Position.below, RelativePoint(c, Point(c.width / 2, c.height)))
+      showAt(Balloon.Position.below, c) { Point(it.width / 2, it.height) }
   }
 
   private fun hideHint(dispose: Boolean) {

@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -169,7 +168,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
         new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()),
                          fragment).
           withHeader(ExecutionBundle.message("gotIt.popup.title")).
-          showAt(Balloon.Position.below, new RelativePoint(component, new Point(GotItTooltip.ARROW_SHIFT, component.getHeight())));
+          showAt(Balloon.Position.below, component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
       }
     }
   }

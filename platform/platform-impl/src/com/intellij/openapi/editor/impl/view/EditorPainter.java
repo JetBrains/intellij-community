@@ -1101,7 +1101,17 @@ public final class EditorPainter implements TextDrawingCallback {
           if (startOffset == endOffset) {
             lastX = fragment.getEndX();
             Inlay inlay = fragment.getCurrentInlay();
-            if (inlay != null && !inlay.isRelatedToPrecedingText()) continue;
+            if (inlay != null) {
+              if (startOffset == minOffset && inlay.isRelatedToPrecedingText()) {
+                float x = fragment.getStartX();
+                result.add(x);
+                result.add(x);
+                break;
+              }
+              else {
+                continue;
+              }
+            }
             if (startOffset >= minOffset && startOffset < maxOffset) {
               float x = fragment.offsetToX(startOffset);
               result.add(x);

@@ -39,11 +39,25 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
     otherProblems.toSet()
   }
 
-  override fun problemAppeared(problem: Problem) = notify(problem, when {
-    problem.provider.project != project -> SetUpdateState.IGNORED
-    problem is FileProblem -> process(problem, true) { SetUpdateState.add(problem, it) }
-    else -> synchronized(otherProblems) { SetUpdateState.add(problem, otherProblems) }
-  })
+  override fun problemAppeared(problem: Problem) {
+    notify(problem, when {
+      problem.provider.project != project -> SetUpdateState.IGNORED
+      problem is FileProblem -> process(problem, true) { set ->
+        when {
+          // do not add HighlightingDuplicate if there is any HighlightingProblem
+          problem is HighlightingDuplicate && set.any { it is HighlightingProblem } -> SetUpdateState.IGNORED
+          else -> SetUpdateState.add(problem, set)
+        }
+      }
+      else -> synchronized(otherProblems) { SetUpdateState.add(problem, otherProblems) }
+    })
+    if (problem is HighlightingProblem) {
+      // remove any HighlightingDuplicate if HighlightingProblem is appeared
+      synchronized(fileProblems) {
+        fileProblems[problem.file]?.filter { it is HighlightingDuplicate }
+      }?.forEach { problemDisappeared(it) }
+    }
+  }
 
   override fun problemDisappeared(problem: Problem) = notify(problem, when {
     problem.provider.project != project -> SetUpdateState.IGNORED
@@ -59,11 +73,6 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
 
   private fun process(problem: FileProblem, create: Boolean, function: (MutableSet<FileProblem>) -> SetUpdateState): SetUpdateState {
     val file = problem.file
-    if (create && problem is HighlightingDuplicate) {
-      if (project.isDisposed || HighlightingErrorsProvider.getInstance(project).isFileWatched(file)) {
-        return SetUpdateState.IGNORED
-      }
-    }
     synchronized(fileProblems) {
       val set = when (create) {
         true -> fileProblems.computeIfAbsent(file) { mutableSetOf() }

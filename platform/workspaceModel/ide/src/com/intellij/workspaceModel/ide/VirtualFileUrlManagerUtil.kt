@@ -1,4 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmName("VirtualFileUrlManagerUtil")
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
@@ -15,7 +16,7 @@ import java.nio.file.Paths
  * should have as many dependencies as possible and there is no dependency to intellij.platform.core module.
  * That's why this method was declared here, where service was registered.
  */
-fun VirtualFileUrlManager.Companion.getInstance(project: Project) = project.service<VirtualFileUrlManager>()
+fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUrlManager = project.service()
 
 fun VirtualFileUrl.append(relativePath: String, manager: VirtualFileUrlManager): VirtualFileUrl {
   return manager.fromUrl(this.url + "/" + relativePath.removePrefix("/"))

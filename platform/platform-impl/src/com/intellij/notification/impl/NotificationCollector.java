@@ -2,11 +2,13 @@
 package com.intellij.notification.impl;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.notification.*;
@@ -26,15 +28,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.*;
 
 @SuppressWarnings("deprecation")
 public final class NotificationCollector {
   private static final Logger LOG = Logger.getInstance(NotificationCollector.class);
   private static final Map<String, PluginInfo> ourNotificationGroupsWhitelist = new ConcurrentHashMap<>();
   private static final Set<String> ourNotificationsWhitelist = new HashSet<>();
-  private static final String NOTIFICATIONS = "notifications";
-  private static final String UNKNOWN = "unknown";
-  private static final String NOTIFICATION_GROUP = "notification_group";
+  public static final String UNKNOWN = "unknown";
 
   private NotificationCollector() {
     NotificationWhitelistEP.EP_NAME.getExtensionList().forEach(NotificationCollector::addNotificationsToWhitelist);
@@ -59,84 +60,85 @@ public final class NotificationCollector {
                               @NotNull NotificationDisplayType displayType,
                               @NotNull Notification notification,
                               boolean isExpandable) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId)
-      .addData("display_type", displayType.name())
-      .addData("severity", notification.getType().name())
-      .addData("is_expandable", isExpandable);
-    FUCounterUsageLogger.getInstance().logEvent(project, NOTIFICATIONS, "shown", data);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    data.add(DISPLAY_TYPE.with(displayType));
+    data.add(SEVERITY.with(notification.getType()));
+    data.add(IS_EXPANDABLE.with(isExpandable));
+    SHOWN.log(project, data);
   }
 
   public void logToolWindowNotificationShown(@Nullable Project project,
                                              @NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId)
-      .addData("display_type", NotificationDisplayType.TOOL_WINDOW.name())
-      .addData("severity", notification.getType().name());
-    FUCounterUsageLogger.getInstance().logEvent(project, NOTIFICATIONS, "shown", data);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    data.add(DISPLAY_TYPE.with(NotificationDisplayType.TOOL_WINDOW));
+    data.add(SEVERITY.with(notification.getType()));
+    SHOWN.log(project, data);
   }
 
   public void logNotificationLoggedInEventLog(@NotNull Project project, @NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId)
-      .addData("severity", notification.getType().name());
-    FUCounterUsageLogger.getInstance().logEvent(project, NOTIFICATIONS, "logged", data);
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    data.add(SEVERITY.with(notification.getType()));
+    LOGGED.log(project, data);
   }
 
   public void logNotificationBalloonClosedByUser(@Nullable String notificationId,
                                                  @Nullable String notificationDisplayId,
                                                  @Nullable String groupId) {
     if (notificationId == null) return;
-    FeatureUsageData data = createNotificationData(groupId, notificationId, notificationDisplayId);
-    FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "closed.by.user", data);
+    CLOSED_BY_USER.log(createNotificationData(groupId, notificationId, notificationDisplayId));
   }
 
   public void logNotificationActionInvoked(@NotNull Notification notification,
                                            @NotNull AnAction action,
                                            @NotNull NotificationPlace notificationPlace) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId)
-      .addData("notification_place", notificationPlace.name());
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
+    data.add(NOTIFICATION_PLACE.with(notificationPlace));
     if (action instanceof NotificationAction.Simple) {
       Object actionInstance = ((NotificationAction.Simple)action).getActionInstance();
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(actionInstance.getClass());
-      data.addData("action_id", info.isSafeToReport() ? actionInstance.getClass().getName() : ActionsCollectorImpl.DEFAULT_ID);
+      String actionId = info.isSafeToReport() ? actionInstance.getClass().getName() : ActionsCollectorImpl.DEFAULT_ID;
+      data.add(ActionsEventLogGroup.ACTION_ID.with(actionId));
     }
     else {
       ActionsCollectorImpl.addActionClass(data, action, PluginInfoDetectorKt.getPluginInfo(action.getClass()));
     }
-    FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "action.invoked", data);
+    ACTION_INVOKED.log(data);
   }
 
   public void logHyperlinkClicked(@NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
-    FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "hyperlink.clicked", data);
+    HYPERLINK_CLICKED.log(createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
   }
 
   public void logBalloonShownFromEventLog(@NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
-    FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "event.log.balloon.shown", data);
+    EVENT_LOG_BALLOON_SHOWN.log(createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
   }
 
   public void logNotificationSettingsClicked(@NotNull String notificationId,
                                              @Nullable String notificationDisplayId,
                                              @Nullable String groupId) {
-    FeatureUsageData data = createNotificationData(groupId, notificationId, notificationDisplayId);
-    FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "settings.clicked", data);
+    SETTINGS_CLICKED.log(createNotificationData(groupId, notificationId, notificationDisplayId));
   }
 
   public void logNotificationBalloonExpanded(@NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
-    FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "balloon.expanded", data);
+    BALLOON_EXPANDED.log(createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
   }
 
   public void logNotificationBalloonCollapsed(@NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
-    FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "balloon.collapsed", data);
+    BALLOON_COLLAPSED.log(createNotificationData(notification.getGroupId(), notification.id, notification.displayId));
   }
 
-  private static @NotNull FeatureUsageData createNotificationData(@Nullable String groupId, @NotNull String id, @Nullable String displayId) {
-    return new FeatureUsageData()
-      .addData("id", id)
-      .addData("display_id", Strings.isNotEmpty(displayId) ? displayId : UNKNOWN)
-      .addData(NOTIFICATION_GROUP, Strings.isNotEmpty(groupId) ? groupId : UNKNOWN)
-      .addPluginInfo(getPluginInfo(groupId));
+  private static @NotNull List<EventPair<?>> createNotificationData(@Nullable String groupId,
+                                                                    @NotNull String id,
+                                                                    @Nullable String displayId) {
+    ArrayList<EventPair<?>> data = new ArrayList<>();
+    data.add(ID.with(id));
+    data.add(ADDITIONAL.with(new ObjectEventData(NOTIFICATION_ID.with(Strings.isNotEmpty(displayId) ? displayId : UNKNOWN))));
+    data.add(NOTIFICATION_GROUP_ID.with(Strings.isNotEmpty(groupId) ? groupId : UNKNOWN));
+    PluginInfo pluginInfo = getPluginInfo(groupId);
+    if (pluginInfo != null) {
+      data.add(EventFields.PluginInfo.with(pluginInfo));
+    }
+    return data;
   }
 
   public static NotificationCollector getInstance() {
@@ -155,7 +157,7 @@ public final class NotificationCollector {
     }
   }
 
-  private static PluginInfo getPluginInfo(@Nullable String groupId) {
+  private static @Nullable PluginInfo getPluginInfo(@Nullable String groupId) {
     if (groupId == null) return null;
     PluginInfo pluginInfo = ourNotificationGroupsWhitelist.get(groupId);
     if (pluginInfo != null) {
@@ -205,7 +207,7 @@ public final class NotificationCollector {
   static final class NotificationGroupValidator extends CustomValidationRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return NOTIFICATION_GROUP.equals(ruleId);
+      return "notification_group".equals(ruleId);
     }
 
     @Override

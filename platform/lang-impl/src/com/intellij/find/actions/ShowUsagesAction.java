@@ -16,7 +16,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.ModelDiff;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,6 +41,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -69,7 +70,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
@@ -89,8 +89,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
-import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationTitle;
+import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
   public static final String ID = "ShowUsages";
@@ -600,19 +601,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static InplaceButton createSettingsButton(@NotNull Project project,
                                                     @NotNull Runnable cancelAction,
                                                     @NotNull Runnable showDialogAndFindUsagesRunnable) {
-    String shortcutText = "";
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
-    if (shortcut != null) {
-      shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
-    }
-    return new InplaceButton("Settings..." + shortcutText, AllIcons.General.Settings, __ -> {
+    String tooltip = shortcut == null
+                     ? FindBundle.message("show.usages.settings.tooltip")
+                     : FindBundle.message("show.usages.settings.tooltip.shortcut", KeymapUtil.getShortcutText(shortcut));
+    return new InplaceButton(tooltip, AllIcons.General.Settings, __ -> {
       ApplicationManager.getApplication().invokeLater(showDialogAndFindUsagesRunnable, project.getDisposed());
       cancelAction.run();
     });
   }
 
   private static @Nullable FindUsagesOptions showDialog(@NotNull FindUsagesHandlerBase handler) {
-    UIEventLogger.logUIEvent(UIEventId.ShowUsagesPopupShowSettings);
+    UIEventLogger.ShowUsagesPopupShowSettings.log();
     AbstractFindUsagesDialog dialog;
     if (handler instanceof FindUsagesHandlerUi) {
       dialog = ((FindUsagesHandlerUi)handler).getFindUsagesDialog(false, false, false);
@@ -647,7 +647,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       actionHandler.getSelectedScope().getDisplayName()
     );
     builder.setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + StringUtil.escapeXmlEntities(title) + "</nobr></body>"));
-    builder.setAdText(getSecondInvocationTitle(actionHandler));
+    builder.setAdText(getSecondInvocationHint(actionHandler));
 
     builder.setMovable(true).setResizable(true);
     builder.setItemChoosenCallback(itemChoseCallback);
@@ -791,12 +791,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     }
   }
 
-  @NotNull
-  private static String suggestSecondInvocation(@NotNull String text, @Nullable String title) {
-    if (title != null) {
-      text += "<br><small>" + title + "</small>";
+  private static @Nls @NotNull String suggestSecondInvocation(@Nls(capitalization = Sentence) @NotNull String text,
+                                                              @Nls(capitalization = Sentence) @Nullable String hint) {
+    HtmlBuilder builder = new HtmlBuilder().append(text);
+    if (hint != null) {
+      builder.br().append(HtmlChunk.text(hint).wrapWith("small"));
     }
-    return XmlStringUtil.wrapInHtml(UIUtil.convertSpace2Nbsp(text));
+    return builder.wrapWithHtmlBody().toString();
   }
 
   @Nullable
@@ -996,7 +997,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   private static void navigateAndHint(@NotNull Usage usage,
-                                      @NotNull String hint,
+                                      @Nls(capitalization = Sentence) @NotNull String hint,
                                       @NotNull ShowUsagesParameters parameters,
                                       @NotNull ShowUsagesActionHandler actionHandler) {
     usage.navigate(true);
@@ -1006,7 +1007,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   private static void hint(boolean isWarning,
-                           @NotNull String hint,
+                           @Nls(capitalization = Sentence) @NotNull String hint,
                            @NotNull ShowUsagesParameters parameters,
                            @NotNull ShowUsagesActionHandler actionHandler) {
     Project project = parameters.project;
@@ -1017,7 +1018,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         return;
       }
       JComponent label = createHintComponent(
-        suggestSecondInvocation(hint, getSecondInvocationTitle(actionHandler)),
+        suggestSecondInvocation(hint, getSecondInvocationHint(actionHandler)),
         isWarning,
         createSettingsButton(
           project,

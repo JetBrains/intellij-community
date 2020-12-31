@@ -36,7 +36,6 @@ public abstract class AbstractProcessor implements Processor {
    *  @param supportedClass           kind of output elements this processor supports
    * @param supportedAnnotationClasses annotations this processor supports
    */
-  @SuppressWarnings("unchecked")
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                               @NotNull String... supportedAnnotationClasses) {
     this.configDiscovery = ConfigDiscovery.getInstance();
@@ -44,6 +43,7 @@ public abstract class AbstractProcessor implements Processor {
     this.supportedAnnotationClasses = supportedAnnotationClasses;
   }
 
+  @Override
   public final @NotNull String @NotNull [] getSupportedAnnotationClasses() {
     return supportedAnnotationClasses;
   }
@@ -90,6 +90,7 @@ public abstract class AbstractProcessor implements Processor {
     }
   }
 
+  @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     return LombokPsiElementUsage.NONE;
   }

@@ -157,7 +157,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
                                 python: String?,
                                 installPackages: Boolean): Sdk? {
   val projectPath = newProjectPath ?: module?.basePath ?: project?.basePath ?: return null
-  val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.setting.up.pipenv.sentence"), true) {
+  val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.setting.up.pipenv.title"), true) {
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true
       val pipEnv = setupPipEnv(FileUtil.toSystemDependentName(projectPath), python, installPackages)
@@ -475,4 +475,3 @@ private data class PipFileLockPackage(@SerializedName("version") var version: St
                                       @SerializedName("editable") var editable: Boolean?,
                                       @SerializedName("hashes") var hashes: List<String>?,
                                       @SerializedName("markers") var markers: String?)
-

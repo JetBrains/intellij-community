@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" exported="" name="Guava" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="com.google.protobuf:protobuf-java" type="repository">
+        <properties maven-id="com.google.protobuf:protobuf-java:3.13.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.13.0/protobuf-java-3.13.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.13.0/protobuf-java-3.13.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.grpc:grpc-core" type="repository">
+        <properties maven-id="io.grpc:grpc-core:1.32.2">
+          <exclude>
+            <dependency maven-id="com.google.guava:guava" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.32.2/grpc-core-1.32.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.32.2/grpc-api-1.32.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.32.2/grpc-context-1.32.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.6/gson-2.8.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.18/animal-sniffer-annotations-1.18.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.3.4/error_prone_annotations-2.3.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.19.0/perfmark-api-0.19.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.32.2/grpc-core-1.32.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.32.2/grpc-api-1.32.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.32.2/grpc-context-1.32.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.6/gson-2.8.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.18/animal-sniffer-annotations-1.18-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.3.4/error_prone_annotations-2.3.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.19.0/perfmark-api-0.19.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.grpc:grpc-stub" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-stub:1.32.2" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.32.2/grpc-stub-1.32.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.32.2/grpc-stub-1.32.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.grpc:grpc-protobuf" type="repository">
+        <properties maven-id="io.grpc:grpc-protobuf:1.32.2">
+          <exclude>
+            <dependency maven-id="io.grpc:grpc-api" />
+            <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+            <dependency maven-id="org.codehaus.mojo:animal-sniffer-annotations" />
+            <dependency maven-id="com.google.protobuf:protobuf-java" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.32.2/grpc-protobuf-1.32.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/1.17.0/proto-google-common-protos-1.17.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.32.2/grpc-protobuf-lite-1.32.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.32.2/grpc-protobuf-1.32.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/1.17.0/proto-google-common-protos-1.17.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.32.2/grpc-protobuf-lite-1.32.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.grpc:grpc-netty-shaded" type="repository">
+        <properties maven-id="io.grpc:grpc-netty-shaded:1.32.2">
+          <exclude>
+            <dependency maven-id="io.grpc:grpc-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.32.2/grpc-netty-shaded-1.32.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.32.2/grpc-netty-shaded-1.32.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.grpc:grpc-kotlin-stub" type="repository">
+        <properties maven-id="io.grpc:grpc-kotlin-stub:0.2.0">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="io.grpc:grpc-protobuf" />
+            <dependency maven-id="io.grpc:grpc-stub" />
+            <dependency maven-id="javax.annotation:javax.annotation-api" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/0.2.0/grpc-kotlin-stub-0.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/0.2.0/grpc-kotlin-stub-0.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="javax.annotation-api" level="project" />
+  </component>
+</module>

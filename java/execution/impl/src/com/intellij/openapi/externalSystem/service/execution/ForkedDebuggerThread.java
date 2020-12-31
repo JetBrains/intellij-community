@@ -56,7 +56,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.function.Consumer;
 import java.net.SocketException;
 import java.util.function.Consumer;
 
@@ -182,34 +181,36 @@ class ForkedDebuggerThread extends Thread {
     DebuggerBackendExtension extension = DebuggerBackendExtension.EP_NAME.findFirstSafe(it -> it.id().equals(debuggerId));
     if (extension != null) {
       RunnerAndConfigurationSettings settings = extension.debugConfigurationSettings(myProject, processName, processParameters);
+      RunConfiguration runConfiguration = settings.getConfiguration();
       if (myMainRunnableState.isReattachDebugProcess()) {
-        reattachRemoteDebugger(settings, debugProcess -> {
-          stopForkedProcessWhenMainProcessTerminated(debugProcess.getProcessHandler());
-          initTerminateForkedProcessHandler(debugProcess.getProcessHandler());
-          unblockRemote(accept, inputStream);
-        });
+        if (runConfiguration instanceof RemoteConfiguration) {
+          reattachRemoteDebugger((RemoteConfiguration)runConfiguration, debugProcess -> {
+            stopForkedProcessWhenMainProcessTerminated(debugProcess.getProcessHandler());
+            initTerminateForkedProcessHandler(debugProcess.getProcessHandler());
+            unblockRemote(accept, inputStream);
+          });
+          return;
+        }
+        ExternalSystemTaskDebugRunner.LOG.warn("Unsupported reattach child debugger process into main process");
       }
-      else {
-        runDebugConfiguration(settings, descriptor -> {
-          // select tab for the forked process only when it has been suspended
-          descriptor.setSelectContentWhenAdded(false);
+      runDebugConfiguration(settings, descriptor -> {
+        // select tab for the forked process only when it has been suspended
+        descriptor.setSelectContentWhenAdded(false);
 
-          // restore selection of the 'main' tab to avoid flickering of the reused content tab when no suspend events occur
-          stopForkedProcessWhenMainProcessTerminated(descriptor.getProcessHandler());
-          removeRunContentWhenProcessIsTerminated(descriptor);
-          initForkedProcessLogger(descriptor, processName);
-          initTerminateForkedProcessHandler(descriptor.getProcessHandler());
-          unblockRemote(accept, inputStream);
-        });
-      }
+        // restore selection of the 'main' tab to avoid flickering of the reused content tab when no suspend events occur
+        stopForkedProcessWhenMainProcessTerminated(descriptor.getProcessHandler());
+        removeRunContentWhenProcessIsTerminated(descriptor);
+        initForkedProcessLogger(descriptor, processName);
+        initTerminateForkedProcessHandler(descriptor.getProcessHandler());
+        unblockRemote(accept, inputStream);
+      });
     }
   }
 
-  private void reattachRemoteDebugger(@NotNull RunnerAndConfigurationSettings settings, @NotNull Consumer<DebugProcess> callback) {
+  private void reattachRemoteDebugger(@NotNull RemoteConfiguration runConfiguration, @NotNull Consumer<DebugProcess> callback) {
     DebuggerManager debuggerManager = DebuggerManager.getInstance(myProject);
     DebugProcess debugProcess = debuggerManager.getDebugProcess(myMainProcessHandler);
     if (debugProcess instanceof DebugProcessImpl) {
-      RemoteConfiguration runConfiguration = (RemoteConfiguration)settings.getConfiguration();
       RemoteConnection connection = runConfiguration.createRemoteConnection();
       DebugEnvironment environment = new DefaultDebugEnvironment(myMainExecutionEnvironment, myMainRunnableState, connection, true);
       ApplicationManager.getApplication().invokeAndWait(() -> {

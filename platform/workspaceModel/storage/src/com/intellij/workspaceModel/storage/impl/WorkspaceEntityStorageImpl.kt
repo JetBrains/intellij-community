@@ -312,7 +312,11 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
         // Find if the entity exists in local store
         val localNodeAndId = localMatchedEntities.find(matchedEntityData, replaceWith)
-        if (localNodeAndId != null) {
+
+        // We should check if the issue still exists in this builder because it can be removed if it's referenced by another entity
+        //   that had persistent id clash.
+        val entityStillExists = localNodeAndId?.second?.let { this.entityDataById(it) != null } ?: false
+        if (entityStillExists && localNodeAndId != null) {
           val (localNode, localNodePid) = localNodeAndId
           // This entity already exists. Store the association of pids
           replaceMap[localNodePid] = matchedEntityId
@@ -320,28 +324,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
           if (localNode.hasPersistentId() && (dataDiffersByEntitySource || dataDiffersByProperties)) {
             // Entity exists in local store, but has changes. Generate replace operation
-            val clonedEntity = matchedEntityData.clone()
-            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: error("PersistentId expected for $matchedEntityData")
-            clonedEntity.id = localNode.id
-            val clonedEntityId = matchedEntityId.copy(arrayId = clonedEntity.id)
-            this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntityId.clazz)
-            val pid = clonedEntityId
-
-            updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
-            replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
-              .groupBy({ it.propertyName }, { it.vfu })
-              .forEach { (property, vfus) ->
-                this.indexes.virtualFileIndex.index(pid, property, vfus)
-              }
-            replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(pid, it) }
-            this.indexes.updateExternalMappingForEntityId(matchedEntityId, pid, replaceWith.indexes)
-
-            if (dataDiffersByProperties) {
-              this.changeLog.addReplaceEvent(pid, clonedEntity, emptyList(), emptyList(), emptyMap())
-            }
-            if (dataDiffersByEntitySource) {
-              this.changeLog.addChangeSourceEvent(pid, clonedEntity)
-            }
+            replaceOperation(matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties, dataDiffersByEntitySource)
           }
 
 
@@ -353,6 +336,28 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
         else {
           // This is a new entity for this store. Perform add operation
+
+          val persistentId = matchedEntityData.persistentId(this)
+          if (persistentId != null) {
+            val existingEntity = this.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.firstOrNull()
+            if (existingEntity != null) {
+              // Bad news, we have this persistent id already. CPP-22547
+              // This may happened if local entity has entity source and remote entity has a different entity source
+              // Technically we should throw an exception, but now we just remove local entity
+              // Entity exists in local store, but has changes. Generate replace operation
+
+              val localNode = this.entityDataByIdOrDie(existingEntity)
+
+              val dataDiffersByProperties = !localNode.equalsIgnoringEntitySource(matchedEntityData)
+              val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
+
+              replaceOperation(matchedEntityData, replaceWith, localNode, matchedEntityId, dataDiffersByProperties, dataDiffersByEntitySource)
+
+              replaceMap[existingEntity] = matchedEntityId
+              continue
+            }
+          }
+
           val entityClass = ClassConversion.entityDataToEntity(matchedEntityData.javaClass).toClassId()
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as WorkspaceEntityData<WorkspaceEntity>, entityClass)
           val newPid = matchedEntityId.copy(arrayId = newEntity.id)
@@ -506,6 +511,36 @@ internal class WorkspaceEntityStorageBuilderImpl(
     this.assertConsistencyInStrictModeForRbs("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
 
     LOG.debug { "Replace by source finished" }
+  }
+
+  private fun replaceOperation(matchedEntityData: WorkspaceEntityData<out WorkspaceEntity>,
+                               replaceWith: AbstractEntityStorage,
+                               localNode: WorkspaceEntityData<out WorkspaceEntity>,
+                               matchedEntityId: EntityId,
+                               dataDiffersByProperties: Boolean,
+                               dataDiffersByEntitySource: Boolean) {
+    val clonedEntity = matchedEntityData.clone()
+    val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: error("PersistentId expected for $matchedEntityData")
+    clonedEntity.id = localNode.id
+    val clonedEntityId = matchedEntityId.copy(arrayId = clonedEntity.id)
+    this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntityId.clazz)
+    val pid = clonedEntityId
+
+    updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
+    replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
+      .groupBy({ it.propertyName }, { it.vfu })
+      .forEach { (property, vfus) ->
+        this.indexes.virtualFileIndex.index(pid, property, vfus)
+      }
+    replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(pid, it) }
+    this.indexes.updateExternalMappingForEntityId(matchedEntityId, pid, replaceWith.indexes)
+
+    if (dataDiffersByProperties) {
+      this.changeLog.addReplaceEvent(pid, clonedEntity, emptyList(), emptyList(), emptyMap())
+    }
+    if (dataDiffersByEntitySource) {
+      this.changeLog.addChangeSourceEvent(pid, clonedEntity)
+    }
   }
 
   private fun rbsFailedAndReport(message: String,

@@ -61,6 +61,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     ColumnInfo firstColumn = columns[0];
     if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0), 0);
+      JBTable.setupCheckboxShortcut(table, 0);
     }
 
    boolean needTableHeader = false;

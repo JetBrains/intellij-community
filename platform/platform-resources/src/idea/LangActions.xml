@@ -110,18 +110,18 @@
 
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
-      <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="CopyReferencePopupGroup" anchor="after" relative-to-action="CopyExternalReferenceGroup"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="Copy.Paste.Special" anchor="first"/>
     </action>
 
     <action id="CopyAsRichText" class="com.intellij.openapi.editor.richcopy.CopyAsRichTextAction">
-      <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
     </action>
 
     <action id="CopyAsPlainText" class="com.intellij.openapi.editor.richcopy.CopyAsPlainTextAction">
-      <add-to-group group-id="CopyGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="Copy.Paste.Special" anchor="after" relative-to-action="CopyReference"/>
     </action>
 
@@ -522,10 +522,10 @@
 
     <group id="SegmentedRunDebugConfigActionGroup">
       <!--<group class="com.intellij.execution.segmentedRunDebugWidget.RDCPillLabelGroup"/>-->
-      <action class="com.intellij.execution.segmentedRunDebugWidget.RunningRDCLabelAction"/>
-      <action class="com.intellij.execution.segmentedRunDebugWidget.DebuggingRDCLabelAction"/>
-      <action class="com.intellij.execution.segmentedRunDebugWidget.ProfilingRDCLabelAction"/>
-      <action class="com.intellij.execution.segmentedRunDebugWidget.RDCBarAction"/>
+      <action id="RunningRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.RunningRDCLabelAction"/>
+      <action id="DebuggingRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.DebuggingRDCLabelAction"/>
+      <action id="ProfilingRDCLabel" class="com.intellij.execution.segmentedRunDebugWidget.ProfilingRDCLabelAction"/>
+      <action id="RDCBar" class="com.intellij.execution.segmentedRunDebugWidget.RDCBarAction"/>
     </group>
 
     <group id="RunDebugConfigActionBarGroup" popup="false">

@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
@@ -651,7 +650,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
         else {
           suspender.suspendProcess(null);
         }
-        UIEventLogger.logUIEvent(suspender.isSuspended() ? UIEventId.ProgressPaused : UIEventId.ProgressResumed);
+        (suspender.isSuspended() ? UIEventLogger.ProgressPaused : UIEventLogger.ProgressResumed).log();
       };
     }
 

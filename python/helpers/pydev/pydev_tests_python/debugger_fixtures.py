@@ -375,6 +375,40 @@ def case_setup_multiprocessing():
 
 
 @pytest.fixture
+def case_setup_multiproc():
+
+    runner = DebuggerRunnerSimple()
+
+    class WriterThread(debugger_unittest.AbstractDispatcherThread):
+        pass
+
+    class CaseSetup(object):
+
+        @contextmanager
+        def test_file(
+                self,
+                filename,
+                **kwargs
+        ):
+
+            def update_command_line_args(writer, args):
+                ret = debugger_unittest.AbstractWriterThread.update_command_line_args(writer, args)
+                ret.insert(ret.index('--qt-support'), '--multiproc')
+                return ret
+
+            WriterThread.update_command_line_args = update_command_line_args
+            WriterThread.TEST_FILE = debugger_unittest._get_debugger_test_file(filename)
+            for key, value in kwargs.items():
+                assert hasattr(WriterThread, key)
+                setattr(WriterThread, key, value)
+
+            with runner.check_case(WriterThread) as writer:
+                yield writer
+
+    return CaseSetup()
+
+
+@pytest.fixture
 def case_setup_m_switch():
 
     runner = DebuggerRunnerSimple()
