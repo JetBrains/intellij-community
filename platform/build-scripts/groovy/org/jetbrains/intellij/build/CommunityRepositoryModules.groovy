@@ -424,6 +424,8 @@ final class CommunityRepositoryModules {
       withProjectLibrary("perfetto-proto")
       withProjectLibrary("studio-proto")
       withProjectLibrary("studio-grpc")
+      withProjectLibrary("layoutinspector-proto")
+      withProjectLibrary("emulator-proto")
       // Profiler downloader will download all the other profiler libraries: profilers-transform.jar, perfa_okhttp.dex, perfa, perfd, simpleperf
       // Profiler downloader will also download instant run installers: /resources/installer
       // Profiler downloader will also download instant run transport: /resources/transport
