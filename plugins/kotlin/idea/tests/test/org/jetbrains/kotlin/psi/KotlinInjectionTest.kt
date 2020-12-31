@@ -348,7 +348,8 @@ class KotlinInjectionTest : AbstractInjectionTest() {
         shreds = listOf(
             ShredInfo(range(0, 6), hostRange = range(1, 7)),
             ShredInfo(range(6, 21), hostRange = range(11, 14), prefix = "missingValue")
-        )
+        ),
+        injectedText = "simplemissingValue.kt"
     )
 
     fun testInjectionOnInterpolatedStringWithComment() = doInjectionPresentTest(
@@ -361,7 +362,8 @@ class KotlinInjectionTest : AbstractInjectionTest() {
         shreds = listOf(
             ShredInfo(range(0, 6), hostRange = range(1, 7)),
             ShredInfo(range(6, 17), hostRange = range(12, 19), prefix = "some")
-        )
+        ),
+        injectedText = "<html>some</html>"
     )
 
     fun testEditorShortShreadsInInterpolatedInjection() = doInjectionPresentTest(
@@ -378,7 +380,8 @@ class KotlinInjectionTest : AbstractInjectionTest() {
             ShredInfo(range(8, 20), hostRange = range(15, 15), prefix = "missingValue"),
             ShredInfo(range(20, 27), hostRange = range(17, 23), prefix = "s"),
             ShredInfo(range(27, 28), hostRange = range(25, 25), prefix = "s")
-        )
+        ),
+        injectedText = "s text smissingValues text s"
     )
 
     fun testEditorLongShreadsInInterpolatedInjection() = doInjectionPresentTest(
@@ -395,7 +398,8 @@ class KotlinInjectionTest : AbstractInjectionTest() {
             ShredInfo(range(30, 31), hostRange = range(17, 17), prefix = "s"),
             ShredInfo(range(31, 49), hostRange = range(21, 27), prefix = "missingValue"),
             ShredInfo(range(49, 61), hostRange = range(31, 31), prefix = "missingValue")
-        )
+        ),
+        injectedText = "missingValue text missingValuesmissingValue text missingValue"
     )
 
     fun testEditorShreadsWithEscapingInjection() = doInjectionPresentTest(

@@ -10,6 +10,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.injection.Injectable
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.InjectionTestFixture
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.intellij.plugins.intelliLang.Configuration
@@ -39,10 +40,14 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
     ) {
     }
 
+    val myInjectionFixture: InjectionTestFixture
+       get() = InjectionTestFixture(myFixture)
+
     protected fun doInjectionPresentTest(
         @Language("kotlin") text: String, @Language("Java") javaText: String? = null,
         languageId: String? = null, unInjectShouldBePresent: Boolean = true,
-        shreds: List<ShredInfo>? = null
+        shreds: List<ShredInfo>? = null,
+        injectedText: String? = null
     ) {
         if (javaText != null) {
             myFixture.configureByText("${getTestName(true)}.java", javaText.trimIndent())
@@ -65,6 +70,10 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
             assertOrderedEquals(
                 actualShreds.sortedBy { it.range.startOffset },
                 shreds.sortedBy { it.range.startOffset })
+        }
+
+        if (injectedText != null) {
+            TestCase.assertEquals("injected file text", injectedText, myInjectionFixture.injectedElement?.containingFile?.text)
         }
     }
 
