@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.stream.Stream;
 
 abstract class StorageBufferingHandler {
-  private static final Logger LOG = Logger.getInstance(StorageBufferingHandler.class);
-
   private final StorageGuard myStorageLock = new StorageGuard();
   private volatile boolean myPreviousDataBufferingState;
   private final Object myBufferingStateUpdateLock = new Object();
@@ -40,14 +38,6 @@ abstract class StorageBufferingHandler {
 
   void resetState() {
     myPreviousDataBufferingState = false;
-  }
-
-  void assertTransientMode() {
-    LOG.assertTrue(myPreviousDataBufferingState);
-  }
-
-  void assertOnTheDiskMode() {
-    LOG.assertTrue(!myPreviousDataBufferingState);
   }
 
   @NotNull
