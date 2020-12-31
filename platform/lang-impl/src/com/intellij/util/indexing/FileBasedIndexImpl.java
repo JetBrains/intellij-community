@@ -21,7 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -965,7 +965,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (previousDocStamp == currentDocStamp) return;
 
     final CharSequence contentText = content.getText();
-    getFileTypeManager().freezeFileTypeTemporarilyIn(vFile, () -> {
+    FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(vFile, () -> {
       IndexedFileImpl indexedFile = new IndexedFileImpl(vFile, project);
       if (getAffectedIndexCandidates(indexedFile).contains(requestedIndexId) &&
           acceptsInput(requestedIndexId, indexedFile)) {
@@ -1297,7 +1297,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Project guessedProject = project != null ? project : ProjectUtil.guessProjectForFile(file);
     IndexedFileImpl indexedFile = new IndexedFileImpl(file, guessedProject);
 
-    getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
+    FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
       ProgressManager.checkCanceled();
 
       FileContentImpl fc = null;
@@ -1685,7 +1685,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       else {
         ourFileToBeIndexed.set(file);
         try {
-          getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
+          FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
             List<ID<?, ?>> candidates = getAffectedIndexCandidates(indexedFile);
 
             boolean scheduleForUpdate = false;
@@ -1725,10 +1725,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   public Collection<ID<?, ?>> getContentDependentIndexes() {
     return myRegisteredIndexes.getRequiringContentIndices();
-  }
-
-  static FileTypeManagerImpl getFileTypeManager() {
-    return (FileTypeManagerImpl)FileTypeManager.getInstance();
   }
 
   void clearUpToDateIndexesForUnsavedOrTransactedDocs() {

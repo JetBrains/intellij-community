@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -98,7 +99,7 @@ final class UnindexedFilesFinder {
 
       AtomicBoolean shouldIndex = new AtomicBoolean();
 
-      FileBasedIndexImpl.getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
+      FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
         boolean isDirectory = file.isDirectory();
         int inputId = FileBasedIndex.getFileId(file);
         FileIndexingState fileTypeIndexState = null;

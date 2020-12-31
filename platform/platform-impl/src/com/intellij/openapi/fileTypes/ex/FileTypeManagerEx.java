@@ -4,12 +4,15 @@ package com.intellij.openapi.fileTypes.ex;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class FileTypeManagerEx extends FileTypeManager {
   public static FileTypeManagerEx getInstanceEx() {
     return (FileTypeManagerEx)getInstance();
   }
+
+  public abstract void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable);
 
   /**
    * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
