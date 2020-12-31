@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
@@ -93,7 +94,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return Collections.singleton("-iron");
       }
     });
   }
@@ -190,7 +191,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("python3.8");
+        return Collections.singleton("python3.8");
       }
     });
   }
@@ -234,7 +235,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return Sets.newHashSet("python3");
+        return Collections.singleton("python3");
       }
     });
   }
