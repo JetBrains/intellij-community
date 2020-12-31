@@ -56,11 +56,18 @@ open class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
     requestShutdown()
   }
 
-  fun requestShutdown() {
-    processManager.use {  // to close it
-      server.shutdown()
+  fun requestShutdown(): Unit = synchronized(server) {
+    if (!server.isShutdown) {
+      System.err.println("Server shutdown requested")
+      quotaManager.use {  // to close it
+        processManager.use {
+          server.shutdown()
+        }
+      }
     }
-    System.err.println("server shut down")
+    else {
+      System.err.println("Server shutdown requested, but it's already been shut down")
+    }
   }
 
   override fun blockUntilShutdown() {
