@@ -1982,7 +1982,7 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.cancelAllRequests();
     Runnable clearErrorRunnable = () -> {
       if (myErrorText != null) {
-        myErrorText.clearError(info.isEmpty());
+        myErrorText.clearError(info.stream().noneMatch(i -> StringUtil.isNotEmpty(i.message)));
       }
     };
     if (headless) {
@@ -2013,13 +2013,13 @@ public abstract class DialogWrapper {
           }
         }
 
-        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
+        if (StringUtil.isNotEmpty(vi.message)) SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
       });
     }
     else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
-          myErrorText.appendError(vi);
+          if (StringUtil.isNotEmpty(vi.message)) myErrorText.appendError(vi);
         }
       };
       if (headless) {
