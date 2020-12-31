@@ -47,8 +47,8 @@ should be called from the ``pydev`` root directory:
 
 ::
 
-   PYTHONPATH=python build_tools/build.py --no-remove-binaries
-   PYTHONPATH=python3.9 build_tools/build.py --no-remove-binaries
+   PYTHONPATH=. python build_tools/build.py --no-remove-binaries
+   PYTHONPATH=. python3.9 build_tools/build.py --no-remove-binaries
 
  Note, that it's important to run the build script twice: one for the
  versions older than 3.9 and another for Python 3.9 and above.
