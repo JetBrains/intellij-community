@@ -4,8 +4,17 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository;
 
 import java.io.IOException;
+import java.util.List;
 
 public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
+
+  public void testGetDependencies(){
+    List<UnifiedDependency> dependencies = myModifierService.declaredDependencies(getModule("project"));
+    assertNotNull(dependencies);
+    assertEquals(2, dependencies.size());
+    assertEquals(new UnifiedDependency("somegroup", "someartifact", "1.0", null), dependencies.get(0));
+    assertEquals(new UnifiedDependency("anothergroup", "anotherArtifact", "2.0", null), dependencies.get(1));
+  }
 
   public void testAddDependency() throws IOException {
     myModifierService.addDependency(getModule("project"), new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"));
