@@ -36,7 +36,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
 
   private fun experimentalModules() = listOf(
     @Suppress("HardCodedStringLiteral")
-    LearningModule(name = "Essential",
+    LearningModule(name = "Onboarding Tour",
                    description = "A brief overview of the main ${LessonUtil.productName} features.",
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {

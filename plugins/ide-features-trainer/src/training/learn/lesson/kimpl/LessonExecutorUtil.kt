@@ -1,18 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.kimpl
 
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.JBColor
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.Alarm
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.commands.kotlin.TaskTestContext
+import training.learn.ActionsRecorder
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
 import training.ui.LearningUiHighlightingManager
@@ -22,7 +25,6 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.ActionEvent
-import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.*
@@ -43,18 +45,25 @@ internal object LessonExecutorUtil {
     return fakeTaskContext.messages
   }
 
-  fun showBalloonMessage(text: String, ui: JComponent, balloonConfig: LearningBalloonConfig, taskDisposable: Disposable) {
+  fun showBalloonMessage(text: String, ui: JComponent, balloonConfig: LearningBalloonConfig, actionsRecorder: ActionsRecorder, project: Project) {
     val messages = MessageFactory.convert(text)
     val messagesPane = LessonMessagePane()
     messagesPane.addMessage(messages)
+    messagesPane.toolTipText = LearnBundle.message("learn.stop.hint")
     val balloonPanel = JPanel()
     balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
-    //balloonPanel.layout = FlowLayout()
     balloonPanel.preferredSize = balloonConfig.dimension
-    //balloonPanel.maximumSize = Dimension(500, 1000)
     balloonPanel.add(messagesPane)
-    val stopButton = JButton()
-    balloonPanel.add(stopButton)
+    val gotItCallBack = balloonConfig.gotItCallBack
+    if (gotItCallBack != null) {
+      val stopButton = JButton()
+      balloonPanel.add(stopButton)
+      stopButton.action = object : AbstractAction(UIBundle.message("got.it")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          gotItCallBack()
+        }
+      }
+    }
 
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
       .setCloseButtonEnabled(false)
@@ -63,23 +72,29 @@ internal object LessonExecutorUtil {
       .setBlockClicksThroughBalloon(true)
       .setBorderColor(JBColor(Color.BLACK, Color.WHITE))
       .setHideOnCloseClick(false)
-      .setDisposable(taskDisposable)
+      .setDisposable(actionsRecorder)
+      .setCloseButtonEnabled(true)
       .createBalloon()
-    val gotItCallBack = balloonConfig.gotItCallBack
-    stopButton.action = if (gotItCallBack != null) {
-      object : AbstractAction(UIBundle.message("got.it")) {
-        override fun actionPerformed(e: ActionEvent?) {
-          gotItCallBack()
+
+
+    balloon.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        val checkStopLesson = {
+          invokeLater {
+            if (actionsRecorder.disposed) return@invokeLater
+            val yesNo = Messages.showYesNoDialog(project, LearnBundle.message("learn.stop.lesson.question"), LearnBundle.message("learn.stop.lesson"), null)
+            if (yesNo == Messages.YES) {
+              LessonManager.instance.stopLesson()
+            }
+            else {
+              if (actionsRecorder.disposed) return@invokeLater
+              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project)
+            }
+          }
         }
+        Alarm().addRequest(checkStopLesson, 500) // it is a hacky a little bit
       }
-    }
-    else {
-      object : AbstractAction(LearnBundle.message("learn.ui.button.stop.lesson")) {
-        override fun actionPerformed(e: ActionEvent?) {
-          LessonManager.instance.stopLesson()
-        }
-      }
-    }
+    })
     balloon.show(getPosition(ui, balloonConfig.side), balloonConfig.side)
   }
 

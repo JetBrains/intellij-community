@@ -19,17 +19,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
+import training.learn.ActionsRecorder
 import training.learn.lesson.kimpl.*
 import java.awt.Component
 
 @LearningDsl
 open class TaskRuntimeContext(private val lessonExecutor: LessonExecutor,
-                              val taskDisposable: Disposable,
+                              internal val actionsRecorder: ActionsRecorder,
                               val restorePreviousTaskCallback: () -> Unit,
                               private val previousGetter: () -> PreviousTaskInfo
 ): LearningDslBase {
   constructor(base: TaskRuntimeContext)
-    : this(base.lessonExecutor, base.taskDisposable, base.restorePreviousTaskCallback, base.previousGetter)
+    : this(base.lessonExecutor, base.actionsRecorder, base.restorePreviousTaskCallback, base.previousGetter)
+
+  val taskDisposable: Disposable = actionsRecorder
 
   val editor: Editor get() = lessonExecutor.editor
   val project: Project get() = lessonExecutor.project

@@ -286,9 +286,8 @@ internal object OpenLessonActivities {
       val toolWindowManager = ToolWindowManager.getInstance(myLearnProject)
       val learnToolWindow = toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
       if (learnToolWindow != null) {
-        val runnable = if (lesson.properties.showLearnToolwindowAtStart) null else Runnable { learnToolWindow.hide() }
         DumbService.getInstance(myLearnProject).runWhenSmart {
-          learnToolWindow.show(runnable)
+          if (!lesson.properties.showLearnToolwindowAtStart) learnToolWindow.show()
           // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
             DumbService.getInstance(myLearnProject).runWhenSmart {

@@ -44,7 +44,8 @@ class ActionsRecorder(private val project: Project,
   private val actionListeners: MutableList<AnActionListener> = mutableListOf()
   private val eventDispatchers: MutableList<IdeEventQueue.EventDispatcher> = mutableListOf()
 
-  private var disposed = false
+  var disposed = false
+    private set
 
   private val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
 

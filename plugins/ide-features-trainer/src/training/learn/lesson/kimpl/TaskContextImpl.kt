@@ -125,10 +125,12 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   override fun text(@Language("HTML") text: String, useBalloon: LearningBalloonConfig?) {
-    lessonExecutor.text(text)
+    if (useBalloon == null || useBalloon.duplicateMessage)
+      lessonExecutor.text(text)
+
     if (useBalloon != null) {
-      val ui = runtimeContext.previous.ui as? JComponent ?: return
-      LessonExecutorUtil.showBalloonMessage(text, ui, useBalloon, runtimeContext.taskDisposable)
+      val ui = useBalloon.highlightingComponent ?: runtimeContext.previous.ui as? JComponent ?: return
+      LessonExecutorUtil.showBalloonMessage(text, ui, useBalloon, runtimeContext.actionsRecorder, lessonExecutor.project)
     }
   }
 

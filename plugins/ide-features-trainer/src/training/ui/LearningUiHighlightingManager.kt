@@ -24,6 +24,8 @@ object LearningUiHighlightingManager {
 
   private val highlights: MutableList<RepaintByTimer<*>> = ArrayList()
 
+  val highlightingComponents: List<Component> get() = highlights.map { it.original }
+
   fun highlightComponent(original: Component, options: HighlightingOptions = HighlightingOptions()) {
     highlightComponent(original, options.clearPreviousHighlights) { glassPane ->
       RepaintByTimer(original, glassPane, options)

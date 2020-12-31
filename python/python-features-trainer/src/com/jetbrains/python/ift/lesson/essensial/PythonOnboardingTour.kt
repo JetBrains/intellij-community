@@ -1,17 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift.lesson.essensial
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
+import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
@@ -19,29 +19,37 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.StripeButton
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.Alarm
+import com.intellij.util.ui.UIUtil
+import com.intellij.xdebugger.XDebuggerBundle
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonLanguage
+import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.general.run.toggleBreakpointTask
 import training.learn.lesson.kimpl.*
+import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.ui.LearningUiHighlightingManager
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 @Suppress("HardCodedStringLiteral")
 class PythonOnboardingTour(module: Module) :
-  KLesson("python.onboarding", "Onboarding tour", module, PythonLanguage.INSTANCE.id) {
+  KLesson("python.onboarding", "Get acquainted with PyCharm", module, PythonLanguage.INSTANCE.id) {
 
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"
@@ -53,7 +61,7 @@ class PythonOnboardingTour(module: Module) :
   )
 
   val sample: LessonSample = parseLessonSample("""
-    def find_average(values: list):
+    def find_average(values: list)<caret id=3/>:
         result = 0
         for v in values:
             result += v
@@ -80,11 +88,16 @@ class PythonOnboardingTour(module: Module) :
       }
     }
 
-    gotItTask(Balloon.Position.above, Dimension(500, 200)) {
-      "When you open a project first time <ide/> needs some time to <strong>index</strong> Python SDK and the project itself: " +
-      "IDE is scanning the project and libraries to ensure prompt (quick?) performance of code completion, finding " +
-      "usages, navigation and so on. Note that many IDE operations and capabilities are restricted or unavailable during " +
-      "<strong>indexing</strong> process."
+    task {
+      text("Welcome to <ide/>, an integrated environment for Python development. This lesson will introduce you to the key " +
+           "components of its user interface and guide you through the basic workflow.")
+      text("Whatever you do in <ide/>, you do it in the context of a <strong>project</strong>. This course will create a learning project so that " +
+           "you can try the basic features in action. As you start, <ide/> does some indexing to collect information about Python SDK and the project itself.")
+      text("To proceed, press ${strong(UIBundle.message("got.it"))} in the notification popup in the lower-right corner.")
+      gotItStep(Balloon.Position.above, Dimension(500, 200),
+                "When you open a project for the first time PyCharm needs some time to index Python SDK and the project itself: " +
+                "IDE is scanning the project and libraries to ensure the prompt performance of code completion, finding usages, navigation, and so on. " +
+                "Note that many IDE operations and capabilities are restricted or unavailable during the indexing process.")
     }
 
     projectTasks()
@@ -95,31 +108,26 @@ class PythonOnboardingTour(module: Module) :
 
     runTasks()
 
-    debugTaks()
+    debugTasks()
 
     completionSteps()
 
     contextActions()
 
+    waitBeforeContinue(500)
+
     searchEverywhereTasks()
 
     task {
-      val veryFullName = "${PluginManagerCore.VENDOR_JETBRAINS} ${ApplicationNamesInfo.getInstance().fullProductNameWithEdition}"
-      text("Here we will finish our onboarding tour. In this tool window you can find other interactive guides about different features in <ide/>. " +
-           "Most of them are much shorter :) Thank you for choosing ${strong(veryFullName)}.")
-
-      text("<strong>Note,</strong> that currently opened project is the <strong>demo learning project</strong> used by this tool. Any modifications here are " +
-           "likely to be rewritten automatically at some point of time. So we recommend you to close this project when you finish with IDE learning and " +
-           "open/create your own project to do your work/experiments with Python.")
-    }
-
-    task {
-      text("Last task")
-      stateCheck { false }
+      val closePath = ActionsBundle.message("group.FileMenu.text").dropMnemonic() + " | " + ActionsBundle.message("action.CloseProject.text").dropMnemonic()
+      text("You have just completed the onboarding tour! " +
+           "<ide/> Feature Trainer provides more task-oriented lessons. Try them as you work with the IDE. " +
+           "To start with your own Python project, close this demo by selecting ${strong(closePath)} from the main menu. " +
+           "Then you'll be able to open an existing project or create a new project in <ide/>.")
     }
   }
 
-  private fun LessonContext.debugTaks() {
+  private fun LessonContext.debugTasks() {
     var logicalPosition = LogicalPosition(0, 0)
     prepareRuntimeTask {
       logicalPosition = editor.offsetToLogicalPosition(sample.startOffset)
@@ -127,14 +135,24 @@ class PythonOnboardingTour(module: Module) :
     caret(sample.startOffset)
 
     toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
+      text("Click here", LearningBalloonConfig(Balloon.Position.below, Dimension(100, 50), duplicateMessage = false))
       "You may notice that method ${code("find_average")} returns wrong answer. Let's debug it and stop at the" +
       "${code("return")} statement. First of all, set breakpoint: just click at the gutter in the highlighted area."
     }
 
-    highlightButtonById("Debug")
+    highlightButtonByIdTask("Debug")
 
     actionTask("Debug") {
+      buttonBalloon("Let's start debug")
       "Let's start debug. Click at ${icon(AllIcons.Actions.StartDebugger)} icon."
+    }
+
+    task {
+      // Need to wait until Debugger tab will be selected
+      stateCheck {
+        val f = UIUtil.getParentOfType(JBRunnerTabs::class.java, focusOwner)
+        f?.selectedInfo?.text == XDebuggerBundle.message("xdebugger.debugger.tab.title")
+      }
     }
 
     task {
@@ -149,20 +167,38 @@ class PythonOnboardingTour(module: Module) :
       checkFirstButton(ui, ActionManager.getInstance().getAction("Rerun"))
     }
 
-    gotItTask(Balloon.Position.above, Dimension(500, 150)) {
-      "In the debug tool window you may find the most of the actions you can do during debug like step in, step over, " +
-      "run to cursor and so on. ${strong(LessonsBundle.message("debug.workflow.lesson.name"))} lesson can give you overview of them. " +
-      "We suggest to pass it later!"
+    task {
+      text("Press ${strong(UIBundle.message("got.it"))} to proceed.")
+      gotItStep(Balloon.Position.above, Dimension(500, 150),
+                "This tool provides you with debugging actions, such as step in, step over, run to the cursor, and so on. " +
+                "The ${strong(LessonsBundle.message("debug.workflow.lesson.name"))} lesson can give you an overview of them. " +
+                "We suggest that you try it later!")
     }
 
-    highlightButtonById("Stop")
+    highlightButtonByIdTask("Stop")
     actionTask("Stop") {
+      buttonBalloon("Let's stop debugging")
       "Let's stop debugging. Click at ${icon(AllIcons.Actions.Suspend)} icon."
     }
 
     prepareRuntimeTask {
       LearningUiHighlightingManager.clearHighlights()
     }
+  }
+
+  private fun LessonContext.highlightButtonByIdTask(actionId: String) {
+    val highlighted = highlightButtonById(actionId)
+    task {
+      addStep(highlighted)
+    }
+  }
+
+  private fun TaskContext.buttonBalloon(message: String) {
+    val useBalloon = LearningBalloonConfig(Balloon.Position.below,
+                                           Dimension(200, 50),
+                                           highlightingComponent = LearningUiHighlightingManager.highlightingComponents.firstOrNull() as? JComponent,
+                                           duplicateMessage = false)
+    text(message, useBalloon)
   }
 
   private fun checkFirstButton(ui: ActionToolbarImpl,
@@ -198,10 +234,14 @@ class PythonOnboardingTour(module: Module) :
       }
     }
 
-    gotItTask(Balloon.Position.below, Dimension(500, 170)) {
-      "You may notice that <ide/> has been created the temporary run configuration. With this toolbar you may choose " +
-      "run configuration, modify it (drop-down menu), rerun it, debug, collect code coverage, profile and so on. " +
-      "Later you can open ${strong(LessonsBundle.message("run.configuration.lesson.name"))} lesson to find more information."
+    task {
+      text("PyCharm has just created a temporary run configuration." +
+           "You can modify it later to specify the way PyCharm executes your code.")
+
+      text("Press ${strong(UIBundle.message("got.it"))} to proceed.")
+      gotItStep(Balloon.Position.below, Dimension(400, 200),
+                "Use this toolbar to select a configuration from the list, modify it, rerun it, debug your code, collect code coverage, " +
+                "and profile your application. Try other lessons to learn more details about running and debugging code.")
     }
   }
 
@@ -268,7 +308,7 @@ class PythonOnboardingTour(module: Module) :
     }
 
     task {
-      text("Let's open file ${code(demoFileName)}.",
+      text("Double-click to open ${code(demoFileName)}.",
            LearningBalloonConfig(Balloon.Position.atRight, dimension = Dimension(300, 100)))
       stateCheck l@{
         if (FileEditorManager.getInstance(project).selectedTextEditor == null) return@l false
@@ -280,9 +320,19 @@ class PythonOnboardingTour(module: Module) :
   private fun LessonContext.completionSteps() {
     val completionPosition = sample.getPosition(2)
     caret(completionPosition)
+    prepareRuntimeTask {
+      FocusManagerImpl.getInstance(project).requestFocusInProject(editor.contentComponent, project)
+    }
     task {
       text("It seems we need to divide the ${code("result")} sum by ${code("values")} length. " +
-           "Type ${code(" / le")}")
+           "Type ${code(" / l")}")
+      var wasEmpty = false
+      proposeRestore {
+        checkExpectedStateOfEditor(previous.sample) {
+          if (it.isEmpty()) wasEmpty = true
+          wasEmpty && "/len".contains(it.replace(" ", ""))
+        }
+      }
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { // no highlighting
         it.toString().contains("string=len;")
       }
@@ -294,6 +344,7 @@ class PythonOnboardingTour(module: Module) :
       trigger(it) {
         checkEditorModification(completionPosition, "/len()")
       }
+      restoreByUi()
     }
 
     task("CodeCompletion") {
@@ -302,6 +353,7 @@ class PythonOnboardingTour(module: Module) :
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains("values")
       }
+      restoreIfModifiedOrMoved()
     }
 
     task("EditorChooseLookupItem") {
@@ -309,6 +361,7 @@ class PythonOnboardingTour(module: Module) :
       trigger(it) {
         checkEditorModification(completionPosition, "/len(values)")
       }
+      restoreByUi()
     }
   }
 
@@ -339,19 +392,16 @@ class PythonOnboardingTour(module: Module) :
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(reformatMessage)
       }
-    }
-
-    var before = ""
-    prepareRuntimeTask {
-      before = editor.document.text
+      restoreIfModifiedOrMoved()
     }
 
     task {
       text("Let's apply the first item, quick fix for this problem: ${strong(reformatMessage)}.")
       stateCheck {
         // TODO: make normal check
-        before != editor.document.text
+        previous.sample.text != editor.document.text
       }
+      restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
     val returnTypeMessage = PyPsiBundle.message("INTN.specify.return.type.in.annotation")
@@ -363,27 +413,36 @@ class PythonOnboardingTour(module: Module) :
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(returnTypeMessage)
       }
-    }
-
-    prepareRuntimeTask {
-      before = editor.document.text
+      restoreIfModifiedOrMoved()
     }
 
     task {
       text("Let's apply ${strong(returnTypeMessage)} intention.")
       stateCheck {
         // TODO: make normal check
-        before != editor.document.text
+        previous.sample.text != editor.document.text
       }
+      restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
     task {
-      text("Note that the caret has been moved to the place for return type. Type ${
-        code("float")
-      } now and then press ${LessonUtil.rawEnter()}.")
+      lateinit var forRestore: LessonSample
+      before {
+        val text = previous.sample.text
+        val toReplace = "object"
+        forRestore = LessonSample(text.replace(toReplace, ""), text.indexOf(toReplace).takeIf { it != -1 } ?: 0)
+      }
+      text("Note that the caret has been moved to the place for return type. Type ${code("float")} " +
+           "now and then press ${LessonUtil.rawEnter()}.")
       stateCheck {
         // TODO: make normal check
-        editor.document.text.contains("float")
+        val activeTemplate = TemplateManagerImpl.getInstance(project).getActiveTemplate(editor)
+        editor.document.text.contains("float") && activeTemplate == null
+      }
+      proposeRestore {
+        checkExpectedStateOfEditor(forRestore) {
+          "object".contains(it) || "float".contains(it)
+        }
       }
     }
   }
@@ -394,15 +453,17 @@ class PythonOnboardingTour(module: Module) :
       text("You may notice we selected ${code("AVERAGE")}. Let's look at another important <ide/> feature: " +
            "${LessonUtil.actionName(it)}. Press ${LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)} two times in a row.")
       trigger(it)
+      restoreIfModifiedOrMoved()
     }
 
     task {
       text("Here you can find any entity in your project or any feature in <ide/> by its name! As you see, selected text automatically " +
-           "copied into input string. And the only item we found by now is the ${code("find_average")} function from current file. " +
-           "Later you may pass ${strong(LessonsBundle.message("search.everywhere.lesson.name"))} lesson to learn " +
+           "copied into input string. And the only item we found by now is the ${code("find_average")} function from the current file. " +
+           "Later you may pass the ${strong(LessonsBundle.message("search.everywhere.lesson.name"))} lesson to learn " +
            "more about code navigation and library staff discover.")
       text("Now let's clear the ${LessonUtil.actionName("SearchEverywhere")} input field.")
       stateCheck { checkWordInSearch("") }
+      restoreIfModifiedOrMoved()
     }
 
     val toggleCase = ActionsBundle.message("action.EditorToggleCase.text")
@@ -412,19 +473,13 @@ class PythonOnboardingTour(module: Module) :
       triggerByListItemAndHighlight { item ->
         item.toString().contains(toggleCase)
       }
+      restoreIfModifiedOrMoved()
     }
 
-    var before = ""
-    prepareRuntimeTask {
-      before = editor.document.text
-    }
-    task {
-      text("We found ${strong(toggleCase)} action. Note that it has its own shortcut and you can remember and use it later. " +
-           "But it may be needed rarely so you can just find it again when you will need it. Now apply the action.")
-      stateCheck {
-        // TODO: make normal check
-        before != editor.document.text
-      }
+    actionTask("EditorToggleCase") {
+      "We found ${strong(toggleCase)} action. Note that it has its own shortcut and you can remember and use it later. " +
+      "But it may be needed rarely so you can just find it again when you will need it. Now apply the action: " +
+      "select highlighted item and press ${LessonUtil.rawEnter()}. Or just click it."
     }
 
     task {
