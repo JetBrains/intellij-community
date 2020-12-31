@@ -1188,6 +1188,17 @@ while (u) {
 ''', null
   }
 
+  void 'test no soe cyclic multi-assignment'() {
+    allowNestedContext(4, testRootDisposable)
+    doTest '''\
+def input = ""
+while (condition) {
+  def (name) = parseOption(input)
+  input = input.substring(<caret>name)
+}
+''', null
+  }
+
   void 'test String variable assigned with GString inside closure @CS'() {
     doTest '''\
 @groovy.transform.CompileStatic

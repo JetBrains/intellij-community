@@ -10,6 +10,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -57,6 +59,12 @@ internal fun findReadDependencies(writeInstruction: Instruction, instructionsByE
 }
 
 private fun findDependencyScope(element: PsiElement): PsiElement? {
+  if (element is GrVariable) {
+    val parent = element.parent
+    if (parent is GrVariableDeclaration && parent.isTuple) {
+      return parent
+    }
+  }
   return PsiTreeUtil.findFirstParent(element) {
     (it.parent !is GrExpression || it is GrBinaryExpression || it is GrInstanceOfExpression || isExpressionStatement(it))
   }
