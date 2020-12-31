@@ -223,6 +223,11 @@ public class PythonConsoleTest extends PyEnvTestCase {
         assertEquals("(3, 2)", var.getShape());
         var = findDebugValueByName(frameVariables, "series");
         assertEquals("(5,)", var.getShape());
+
+        var = findDebugValueByName(frameVariables, "custom_shape");
+        assertEquals("(3,)", var.getShape());
+        var = findDebugValueByName(frameVariables, "custom_shape2");
+        assertEquals("(2, 3)", var.getShape());
       }
 
       @NotNull
