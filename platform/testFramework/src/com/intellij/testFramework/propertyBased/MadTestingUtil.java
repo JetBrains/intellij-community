@@ -223,7 +223,7 @@ public final class MadTestingUtil {
     Function<GenerationEnvironment, File> generator =
       useRouletteWheel ? new RouletteWheelFileGenerator(root, interestingIdeaFiles) : new FileGenerator(root, interestingIdeaFiles);
     return Generator.from(generator)
-      .suchThat(new Predicate<File>() {
+      .suchThat(new Predicate<>() {
         @Override
         public boolean test(File file) {
           return file != null;
@@ -257,9 +257,9 @@ public final class MadTestingUtil {
    */
   @NotNull
   public static Supplier<MadTestingAction> performOnFileContents(CodeInsightTestFixture fixture,
-                                                                  String rootPath,
-                                                                  FileFilter fileFilter,
-                                                                  BiConsumer<ImperativeCommand.Environment, VirtualFile> action) {
+                                                                 String rootPath,
+                                                                 FileFilter fileFilter,
+                                                                 BiConsumer<? super ImperativeCommand.Environment, ? super VirtualFile> action) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> env -> new RunAll(
       () -> {
@@ -520,7 +520,7 @@ public final class MadTestingUtil {
     private final File myRoot;
     private final FileFilter myFilter;
     private static final File[] EMPTY_DIRECTORY = new File[0];
-    private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<File, File[]>() {
+    private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<>() {
       @Override
       protected File[] create(File f) {
         File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));

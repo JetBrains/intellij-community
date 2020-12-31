@@ -59,7 +59,7 @@ public final class ConcurrencyUtil {
     }
     finally {
       if (!done) {
-        for (Future f : futures) {
+        for (Future<?> f : futures) {
           f.cancel(false);
         }
       }
@@ -84,6 +84,8 @@ public final class ConcurrencyUtil {
    */
   @NotNull
   public static <T> T cacheOrGet(@NotNull AtomicReference<T> ref, @NotNull T defaultValue) {
+    T value = ref.get();
+    if (value != null) return value;
     return ref.updateAndGet(prev -> prev == null ? defaultValue : prev);
   }
 

@@ -163,7 +163,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     severitiesChanged();
   }
 
-  private @NotNull Object2IntMap<HighlightSeverity> ensureAllStandardIncluded(List<HighlightSeverity> read, List<HighlightSeverity> knownSeverities) {
+  private @NotNull Object2IntMap<HighlightSeverity> ensureAllStandardIncluded(@NotNull List<HighlightSeverity> read, @NotNull List<HighlightSeverity> knownSeverities) {
     Object2IntMap<HighlightSeverity> orderMap = fromList(read);
     if (orderMap.isEmpty()) {
       return fromList(knownSeverities);
@@ -232,9 +232,9 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return STANDARD_SEVERITIES.size() + myMap.size();
   }
 
-  public @Nullable HighlightSeverity getSeverityByIndex(int i) {
+  public @Nullable HighlightSeverity getSeverityByIndex(int index) {
     for (Object2IntMap.Entry<HighlightSeverity> entry : getOrderMap().object2IntEntrySet()) {
-      if (entry.getIntValue() == i) {
+      if (entry.getIntValue() == index) {
         return entry.getKey();
       }
     }
@@ -249,8 +249,8 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return null;
   }
 
-  Icon getRendererIconByIndex(int i, boolean defaultIcon) {
-    HighlightSeverity severity = getSeverityByIndex(i);
+  Icon getRendererIconByIndex(int index, boolean defaultIcon) {
+    HighlightSeverity severity = getSeverityByIndex(index);
     HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
     if (level != null) {
       return defaultIcon ? level.getIcon() : level.getOutlineIcon();
@@ -275,45 +275,34 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   private @NotNull Object2IntMap<HighlightSeverity> getOrderMap() {
-    Object2IntMap<HighlightSeverity> result = orderMap.get();
-    if (result != null) {
-      return result;
-    }
-
-    Object2IntMap<HighlightSeverity> defaultOrder = fromList(getDefaultOrder());
-    while (!orderMap.compareAndSet(null, defaultOrder)) {
-      result = orderMap.get();
-      if (result != null) {
-        return result;
-      }
-    }
-    return defaultOrder;
+    Object2IntMap<HighlightSeverity> map = orderMap.get();
+    if (map != null) return map;
+    return orderMap.updateAndGet(oldMap -> oldMap == null ? fromList(getDefaultOrder()) : oldMap);
   }
 
   private static @NotNull Object2IntMap<HighlightSeverity> fromList(@NotNull List<HighlightSeverity> orderList) {
-    if (orderList.size() != new HashSet<>(orderList).size()) {
-      LOG.error("Severities order list MUST contain only unique severities: " + orderList);
-    }
-
     if (orderList.isEmpty()) {
       return Object2IntMaps.emptyMap();
     }
 
-    Object2IntMap<HighlightSeverity> map = new Object2IntOpenHashMap<>();
+    Object2IntMap<HighlightSeverity> map = new Object2IntOpenHashMap<>(orderList.size());
     map.defaultReturnValue(-1);
-    for (int i = 0; i < orderList.size(); i++) {
-      map.put(orderList.get(i), i);
+    for (int index = 0; index < orderList.size(); index++) {
+      HighlightSeverity severity = orderList.get(index);
+      map.put(severity, index);
     }
-    return Object2IntMaps.unmodifiable(new Object2IntOpenHashMap<>(map));
+    if (map.size() != orderList.size()) {
+      LOG.error("Severities order list must contain unique severities but got: " + orderList);
+    }
+    return Object2IntMaps.unmodifiable(map);
   }
 
   private @NotNull List<HighlightSeverity> getDefaultOrder() {
-    Collection<SeverityBasedTextAttributes> values = myMap.values();
-    List<HighlightSeverity> order = new ArrayList<>(STANDARD_SEVERITIES.size() + values.size());
+    List<HighlightSeverity> order = new ArrayList<>(STANDARD_SEVERITIES.size() + myMap.size());
     for (HighlightInfoType type : STANDARD_SEVERITIES.values()) {
       order.add(type.getSeverity(null));
     }
-    for (SeverityBasedTextAttributes attributes : values) {
+    for (SeverityBasedTextAttributes attributes : myMap.values()) {
       order.add(attributes.getSeverity());
     }
     order.sort(null);
