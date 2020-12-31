@@ -186,7 +186,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   void ensureUpToDate() {
-    if (!FileBasedIndexImpl.isUpToDateCheckEnabled()) {
+    if (!IndexUpToDateCheckIn.isUpToDateCheckEnabled()) {
       return;
     }
     //assert ApplicationManager.getApplication().isReadAccessAllowed() || ShutDownTracker.isShutdownHookRunning();

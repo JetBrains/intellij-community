@@ -612,38 +612,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     SnapshotHashEnumeratorService.getInstance().flush();
   }
 
-  private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<>();
-
   public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    disableUpToDateCheckForCurrentThread();
-    try {
-      return runnable.compute();
-    }
-    finally {
-      enableUpToDateCheckForCurrentThread();
-    }
-  }
-  private static void disableUpToDateCheckForCurrentThread() {
-    final Integer currentValue = myUpToDateCheckState.get();
-    myUpToDateCheckState.set(currentValue == null ? 1 : currentValue.intValue() + 1);
-  }
-
-  private static void enableUpToDateCheckForCurrentThread() {
-    final Integer currentValue = myUpToDateCheckState.get();
-    if (currentValue != null) {
-      final int newValue = currentValue.intValue() - 1;
-      if (newValue != 0) {
-        myUpToDateCheckState.set(newValue);
-      }
-      else {
-        myUpToDateCheckState.remove();
-      }
-    }
-  }
-
-  static boolean isUpToDateCheckEnabled() {
-    final Integer value = myUpToDateCheckState.get();
-    return value == null || value.intValue() == 0;
+    return IndexUpToDateCheckIn.disableUpToDateCheckIn(runnable);
   }
 
   private final ThreadLocal<Boolean> myReentrancyGuard = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -679,7 +649,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myReentrancyGuard.set(Boolean.TRUE);
 
     try {
-      if (isUpToDateCheckEnabled()) {
+      if (IndexUpToDateCheckIn.isUpToDateCheckEnabled()) {
         try {
           if (!RebuildStatus.isOk(indexId)) {
             if (getCurrentDumbModeAccessType_NoDumbChecks() == null) {
@@ -777,7 +747,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             return data;
           }
         }
-        else if (!isUpToDateCheckEnabled()) {
+        else if (!IndexUpToDateCheckIn.isUpToDateCheckEnabled()) {
           return null;
         }
 
