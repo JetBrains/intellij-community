@@ -30,6 +30,7 @@
     <preFormatProcessor implementation="com.intellij.json.formatter.JsonTrailingCommaRemover"/>
     <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
     <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
+    <quoteHandler fileType="JSON5" className="com.intellij.json.JsonQuoteHandler"/>
     <enterBetweenBracesDelegate language="JSON"  implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
     <enterHandlerDelegate implementation="com.intellij.json.editor.JsonEnterHandler" id="JsonEnterHandler"/>
     <typedHandler implementation="com.intellij.json.editor.JsonTypedHandler" id="JsonTypedHandler"/>
