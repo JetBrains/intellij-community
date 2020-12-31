@@ -495,14 +495,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         for (VirtualFile file : getChangedFilesCollector().getAllPossibleFilesToUpdate()) {
           int fileId = getFileId(file);
-          if (file.isValid()) {
-            // TODO remove data otherwise it might be observed in invalid state on the next runs
-            dropNontrivialIndexedStates(fileId);
-          }
-          else {
-            removeDataFromIndicesForFile(fileId, file);
-          }
+          removeDataFromIndicesForFile(fileId, file);
         }
+
         getChangedFilesCollector().clearFilesToUpdate();
 
         IndexingStamp.flushCaches();
