@@ -10,8 +10,11 @@ import kotlin.system.exitProcess
 
 
 fun main() {
-  val baseDir = getBaseDirValue()!!
-  val pythons = System.getenv("PACK_STDLIB_FROM_PATH")
+  val pythons = System.getenv("PACK_STDLIB_FROM")
+  val baseDir = System.getenv("PACK_STDLIB_TO")
+  if (!File(baseDir).exists()) {
+    File(baseDir).mkdirs()
+  }
 
   try {
     for (python in File(pythons).listFiles()!!) {
