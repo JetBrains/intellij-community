@@ -156,7 +156,3 @@ Integer extractVersion(File file, Pattern versionPattern) {
     throw new RuntimeException("Can't find version in ${file.path}")
   }
 }
-
-task wrapper(type: Wrapper) doLast {
-  gradleVersion = '4.2'
-}
