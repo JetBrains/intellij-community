@@ -48,7 +48,7 @@ object PsiElementChecker {
 
         with(element) {
             try {
-                Assert.assertEquals("Number of methods has changed. Please update test.", 56, PsiElement::class.java.methods.size)
+                Assert.assertEquals("Number of methods has changed. Please update test.", 57, PsiElement::class.java.methods.size)
 
                 project
                 Assert.assertTrue(language == KotlinLanguage.INSTANCE)
@@ -95,7 +95,8 @@ object PsiElementChecker {
 
                 Assert.assertTrue(isValid)
                 isWritable
-                @Suppress("UnstableApiUsage") ownReferences
+                ownDeclarations
+                ownReferences
                 reference
                 references
                 putCopyableUserData(TEST_DATA_KEY, 12)
