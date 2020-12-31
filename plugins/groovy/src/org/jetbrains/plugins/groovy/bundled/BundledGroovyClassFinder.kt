@@ -2,12 +2,8 @@
 package org.jetbrains.plugins.groovy.bundled
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil.getQualifiedName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.NonClasspathClassFinder
-import com.intellij.psi.PsiPackage
-import com.intellij.psi.impl.file.PsiPackageImpl
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.groovy.GroovyFileType
 
 class BundledGroovyClassFinder(project: Project) : NonClasspathClassFinder(project, GroovyFileType.DEFAULT_EXTENSION) {

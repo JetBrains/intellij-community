@@ -92,11 +92,6 @@ public class PackageDirectoryCache {
     return info;
   }
 
-  public @NotNull Set<String> getSubpackageNames(final @NotNull String packageName) {
-    final PackageInfo info = getPackageInfo(packageName);
-    return info == null ? Collections.emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
-  }
-
   public @NotNull Set<String> getSubpackageNames(final @NotNull String packageName, @NotNull GlobalSearchScope scope) {
     final PackageInfo info = getPackageInfo(packageName);
     if (info == null) return Collections.emptySet();
