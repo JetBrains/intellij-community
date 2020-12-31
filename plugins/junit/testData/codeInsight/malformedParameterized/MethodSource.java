@@ -240,3 +240,29 @@ class Base {
     return Stream.of("a", "aa");
   }
 }
+
+
+abstract class AbstrClass {
+  @ParameterizedTest
+  @MethodSource("provideValues")
+  void checkValues(String value) {}
+}
+
+class FooTest extends AbstrClass {
+  static Stream<String> provideValues() {
+    return Stream.of("A", "B", "C");
+  }
+}
+
+interface FooInterface {
+
+  @ParameterizedTest
+  @MethodSource("provideValues")
+  default void checkValues(String value) {}
+}
+
+class FooTestTwo implements FooInterface {
+  static Stream<String> provideValues() {
+    return Stream.of("A", "B", "C");
+  }
+}

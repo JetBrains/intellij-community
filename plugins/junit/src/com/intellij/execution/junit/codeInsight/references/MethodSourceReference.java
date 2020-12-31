@@ -19,7 +19,9 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +77,27 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLanguageInjection
       }
     }
     PsiMethod[] clazzMethods = psiClazz.findMethodsByName(methodName, true);
-    final PsiClass finalCls = psiClazz;
+    if (clazzMethods.length == 0 && (psiClazz.isInterface() || PsiUtil.isAbstractClass(psiClazz))) {
+      final PsiMethod[] neededMethod = new PsiMethod[1];
+      final String finalMethodName = methodName;
+      ClassInheritorsSearch.search(psiClazz, psiClazz.getResolveScope(), false)
+        .anyMatch(aClazz -> {
+                    PsiMethod[] methods = aClazz.findMethodsByName(finalMethodName, false);
+                    PsiMethod method = filteredMethod(methods, aClazz);
+                    if (method != null) {
+                      neededMethod[0] = method;
+                      return true;
+                    }
+                    return false;
+                  }
+        );
+      return neededMethod[0];
+    }
+    return filteredMethod(clazzMethods, psiClazz);
+  }
+
+  @Nullable
+  private static PsiMethod filteredMethod(PsiMethod[] clazzMethods, PsiClass finalCls) {
     return Arrays.stream(clazzMethods)
       .filter(method -> staticOrOneInstancePerClassNoParams(method, finalCls))
       .findFirst()
