@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
@@ -19,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -61,8 +61,7 @@ public abstract class ArchiveHandler {
   @Nullable
   public FileAttributes getAttributes(@NotNull String relativePath) {
     if (relativePath.isEmpty()) {
-      FileAttributes attributes = FileSystemUtil.getAttributes(myPath);
-      return attributes != null ? new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE) : null;
+      return Files.exists(myPath.toPath()) ? new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE) : null;
     }
     else {
       EntryInfo entry = getEntryInfo(relativePath);
