@@ -43,7 +43,7 @@ class UnixFifoInputHandle(path: Path) : FileInputHandle(path) {
   }
 
   init {
-    try {
+    cleanup.runClosingOnFailure {
       mkfifo(path).also {
         cleanup.registerCloseable { Files.delete(path) }
       }
@@ -51,11 +51,6 @@ class UnixFifoInputHandle(path: Path) : FileInputHandle(path) {
       // We need to open the write end of the pipe to ensure opening the pipe for reading would not block indefinitely
       // in case the real daemon process doesn't open in for writing (for example, if it fails to start).
       Files.newByteChannel(path, StandardOpenOption.READ, StandardOpenOption.WRITE).also(cleanup::registerCloseable)
-    }
-    catch (e: Throwable) {
-      use {  // to close any closeable registered so far
-        throw e
-      }
     }
   }
 
