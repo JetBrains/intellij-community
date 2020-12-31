@@ -14,7 +14,7 @@ from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
     MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, is_string, pandas_to_str, \
+from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_pandas_container, is_string, pandas_to_str, \
     should_evaluate_full_value, should_evaluate_shape
 
 try:
@@ -350,8 +350,8 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     xml_shape = ''
     try:
         if should_evaluate_shape():
-            if is_numeric_container(type_qualifier, typeName, v):
-                xml_shape = ' shape="%s"' % make_valid_xml_value(str(v.shape))
+            if hasattr(v, 'shape') and not callable(v.shape):
+                xml_shape = ' shape="%s"' % make_valid_xml_value(str(tuple(v.shape)))
             elif hasattr(v, '__len__') and not is_string(v):
                 xml_shape = ' shape="%s"' % make_valid_xml_value("%s" % str(len(v)))
     except:

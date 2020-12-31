@@ -573,10 +573,6 @@ def is_numpy_container(type_qualifier, var_type, var):
     return var_type == "ndarray" and type_qualifier == "numpy" and hasattr(var, "shape")
 
 
-def is_numeric_container(type_qualifier, var_type, var):
-    return is_numpy_container(type_qualifier, var_type, var) or is_pandas_container(type_qualifier, var_type, var)
-
-
 def is_builtin(x):
     return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
 
