@@ -156,3 +156,7 @@ Integer extractVersion(File file, Pattern versionPattern) {
     throw new RuntimeException("Can't find version in ${file.path}")
   }
 }
+
+tasks.named('wrapper') {
+  gradleVersion = '6.7.1'
+}
