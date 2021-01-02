@@ -359,7 +359,7 @@ public class Mock {
 
     @Override
     @NotNull
-    public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+    public List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
       return Collections.emptyList();
     }
 

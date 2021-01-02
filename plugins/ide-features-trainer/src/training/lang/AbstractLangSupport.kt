@@ -28,7 +28,8 @@ abstract class AbstractLangSupport : LangSupport {
   override fun installAndOpenLearningProject(projectPath: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
-    ProjectUtils.copyLearningProjectFiles(projectPath, this)
+    val copied = ProjectUtils.copyLearningProjectFiles(projectPath, this)
+    if (!copied) return
     ProjectUtils.createVersionFile(projectPath)
     val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectPath)
                                       ?: error("Copied Learn project folder is null")

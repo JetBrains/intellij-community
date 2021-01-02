@@ -13,7 +13,7 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
 
   abstract val sample: LessonSample
   abstract val warningQuickFix: String
-  abstract val warningCaret: String
+  abstract val warningPossibleArea: String
 
   abstract val intentionText: String
   abstract val intentionCaret: String
@@ -26,7 +26,7 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(warningQuickFix)
       }
-      restoreIfModifiedOrMovedIncorrectly(warningCaret)
+      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea)
     }
 
     var before = ""
@@ -43,7 +43,7 @@ abstract class ContextActionsLesson(module: Module, lang: String) :
       stateCheck {
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
-      restoreIfModifiedOrMovedIncorrectly(warningCaret)
+      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea)
     }
 
     caret(intentionCaret)

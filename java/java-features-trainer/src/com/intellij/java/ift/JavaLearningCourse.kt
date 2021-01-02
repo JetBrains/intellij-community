@@ -46,7 +46,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
         SelectLesson(it, lang, ls("01.Select.java.sample")),
         SingleLineCommentLesson(it, lang, ls("02.Comment.java.sample")),
         DuplicateLesson(it, lang, ls("04.Duplicate.java.sample")),
-        MoveLesson(it, lang, ls("05.Move.java.sample")),
+        MoveLesson(it, lang, "run()", ls("05.Move.java.sample")),
         CollapseLesson(it, lang, ls("06.Collapse.java.sample")),
         JavaSurroundAndUnwrapLesson(it),
         MultipleSelectionHtmlLesson(it),
@@ -57,6 +57,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       listOf(
+        JavaBasicCompletionLesson(it),
         JavaSmartTypeCompletionLesson(it),
         JavaPostfixCompletionLesson(it),
         JavaStatementCompletionLesson(it),
@@ -92,6 +93,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
       listOf(
+        JavaSearchEverywhereLesson(it),
         JavaFileStructureLesson(it),
         JavaDeclarationAndUsagesLesson(it),
         JavaInheritanceHierarchyLesson(it),

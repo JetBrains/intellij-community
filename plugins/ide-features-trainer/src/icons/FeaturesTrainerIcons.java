@@ -19,7 +19,7 @@ public final class FeaturesTrainerIcons {
     /** 16x16 */ public static final @NotNull Icon Checkmark = load("img/checkmark.svg", 6907338944229206668L, 2);
     /** 16x16 */ public static final @NotNull Icon FeatureTrainer = load("img/featureTrainer.svg", -6460187159917247672L, 2);
     /** 13x13 */ public static final @NotNull Icon FeatureTrainerToolWindow = load("img/featureTrainerToolWindow.svg", -5555050524412059250L, 2);
-    /** 16x16 */ public static final @NotNull Icon GreenCheckmark = load("img/greenCheckmark.svg", -7871038605619664903L, 2);
+    /** 16x16 */ public static final @NotNull Icon GreenCheckmark = load("img/greenCheckmark.svg", -5456882804508189998L, 2);
     /** 40x40 */ public static final @NotNull Icon PluginIcon = load("img/pluginIcon.svg", 8850918341785325000L, 0);
     /** 16x16 */ public static final @NotNull Icon ResetLesson = load("img/resetLesson.svg", 3168924485572023045L, 2);
   }

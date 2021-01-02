@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.MODULE_DESCRIPTION
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -19,6 +20,7 @@ import training.actions.StartLearnAction
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Module
+import training.statistic.StatisticBase
 import java.awt.Component
 import java.awt.Component.LEFT_ALIGNMENT
 import java.awt.Dimension
@@ -58,10 +60,6 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   override fun getExpandContent(): JComponent {
-    return modulesPanel()
-  }
-
-  private fun modulesPanel(): JPanel {
     val modules = CourseManager.instance.modules
     val panel = JPanel()
     panel.isOpaque = false
@@ -75,11 +73,12 @@ class IFTInteractiveCourseData : InteractiveCourseData {
       panel.add(rigid(16, 16))
     }
     panel.add(rigid(16, 15))
+    StatisticBase.instance.onExpandWelcomeScreenPanel()
     return panel
   }
 
   private fun moduleDescription(module: Module): HeightLimitedPane {
-    return HeightLimitedPane(module.description ?: "", -2, MODULE_DESCRIPTION)
+    return HeightLimitedPane(module.description ?: "", -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
   }
 
   private fun moduleHeader(module: Module): LinkLabel<Any> {
@@ -87,7 +86,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
       override fun setUI(ui: LabelUI?) {
         super.setUI(ui)
         if (font != null) {
-          font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(-1)))
+          font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(-1) + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0))
         }
       }
     }
@@ -96,6 +95,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
       { _, _ ->
         var lesson = module.giveNotPassedLesson()
         if (lesson == null) lesson = module.lessons[0]
+        StatisticBase.instance.onStartModuleAction(module)
         performActionOnWelcomeScreen(OpenLessonAction(lesson))
       }, null)
     return linkLabel

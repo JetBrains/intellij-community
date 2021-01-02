@@ -273,9 +273,9 @@ public class FoldingModelSupport {
   }
 
   @Nullable
-  protected static FoldedRangeDescription getLineSeparatorDescription(@NotNull Project project,
-                                                                      @NotNull Document document,
-                                                                      int lineNumber) {
+  public static FoldedRangeDescription getLineSeparatorDescription(@NotNull Project project,
+                                                                   @NotNull Document document,
+                                                                   int lineNumber) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null) return null;
     VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -296,11 +296,11 @@ public class FoldingModelSupport {
     return new FoldedRangeDescription(description, anchorLine);
   }
 
-  protected static final class FoldedRangeDescription {
-    @NotNull private final String description;
-    private final int anchorLine;
+  public static final class FoldedRangeDescription {
+    @NotNull public final String description;
+    public final int anchorLine;
 
-    private FoldedRangeDescription(@NotNull String description, int anchorLine) {
+    public FoldedRangeDescription(@NotNull String description, int anchorLine) {
       this.description = description;
       this.anchorLine = anchorLine;
     }

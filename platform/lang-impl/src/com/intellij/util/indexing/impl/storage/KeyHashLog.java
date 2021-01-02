@@ -13,11 +13,8 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.*;
@@ -26,10 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.*;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -52,9 +46,13 @@ class KeyHashLog<Key> implements Closeable {
   private volatile int myLastScannedId;
 
   KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile) throws IOException {
+    this(descriptor, baseStorageFile, true);
+  }
+
+  private KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile, boolean compact) throws IOException {
     myKeyDescriptor = descriptor;
     myBaseStorageFile = baseStorageFile;
-    if (isRequiresCompaction()) {
+    if (compact && isRequiresCompaction()) {
       performCompaction();
     }
     myKeyHashToVirtualFileMapping =
@@ -228,7 +226,9 @@ class KeyHashLog<Key> implements Closeable {
         oldMapping.unlockRead();
       }
 
-      Path newDataFile = oldDataFile.resolveSibling(oldDataFile.getFileName().toString() + ".new");
+      String dataFileName = oldDataFile.getFileName().toString();
+      String newDataFileName = "new." + dataFileName;
+      Path newDataFile = oldDataFile.resolveSibling(newDataFileName);
       AppendableStorageBackedByResizableMappedFile<int[]> newMapping = openMapping(newDataFile, 32 * 2 * data.size());
 
       newMapping.lockWrite();
@@ -247,12 +247,22 @@ class KeyHashLog<Key> implements Closeable {
         newMapping.unlockWrite();
       }
 
-      FileUtil.deleteWithRenaming(oldDataFile.toFile());
-      FileUtil.rename(newDataFile.toFile(), oldDataFile.toFile());
+      IOUtil.deleteAllFilesStartingWith(oldDataFile.toFile());
+
+      try (DirectoryStream<Path> paths = Files.newDirectoryStream(newDataFile.getParent())) {
+        for (Path path : paths) {
+          String name = path.getFileName().toString();
+          if (name.startsWith(newDataFileName)) {
+            FileUtil.rename(path.toFile(), dataFileName + name.substring(newDataFileName.length()));
+          }
+        }
+      }
+
       try {
         Files.delete(getCompactionMarker());
       }
       catch (IOException ignored) {}
+
     } catch (ProcessCanceledException e) {
       LOG.error(e);
       throw e;
@@ -395,6 +405,25 @@ class KeyHashLog<Key> implements Closeable {
     @Override
     public boolean isEqual(int[] val1, int[] val2) {
       return val1[0] == val2[0] && val1[1] == val2[1];
+    }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void main(String[] args) throws Exception {
+    String indexPath = args[0];
+    EnumeratorStringDescriptor enumeratorStringDescriptor = EnumeratorStringDescriptor.INSTANCE;
+
+    try (KeyHashLog<String> keyHashLog = new KeyHashLog<>(enumeratorStringDescriptor, Path.of(indexPath), false)) {
+      IntSet allHashes = keyHashLog.getSuitableKeyHashes(new IdFilter() {
+        @Override
+        public boolean containsFileId(int id) {
+          return true;
+        }
+      });
+
+      for (Integer hash : allHashes) {
+        System.out.println("key hash = " + hash);
+      }
     }
   }
 }

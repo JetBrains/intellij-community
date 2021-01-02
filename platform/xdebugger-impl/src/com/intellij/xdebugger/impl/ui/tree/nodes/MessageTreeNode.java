@@ -80,6 +80,16 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return myLink;
   }
 
+  @Override
+  public void appendToComponent(@NotNull ColoredTextContainer component) {
+    if (myEllipsis) {
+      getText().appendToComponent(component);
+    }
+    else {
+      super.appendToComponent(component);
+    }
+  }
+
   @NotNull
   @Override
   public List<? extends XDebuggerTreeNode> getLoadedChildren() {
@@ -90,10 +100,19 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   public void clearChildren() {
   }
 
-  public static MessageTreeNode createEllipsisNode(XDebuggerTree tree, XDebuggerTreeNode parent, final int remaining) {
+  public static MessageTreeNode createEllipsisNode(XDebuggerTree tree,
+                                                   XDebuggerTreeNode parent,
+                                                   final int remaining,
+                                                   @NotNull Runnable onClick) {
     String message = remaining == -1 ? XDebuggerBundle.message("node.text.ellipsis.0.unknown.more.nodes.double.click.to.show")
                                      : XDebuggerBundle.message("node.text.ellipsis.0.more.nodes.double.click.to.show", remaining);
-    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.GRAYED_ATTRIBUTES, null, true, null);
+    XDebuggerTreeNodeHyperlink link = new XDebuggerTreeNodeHyperlink(message) {
+      @Override
+      public void onClick(MouseEvent event) {
+        onClick.run();
+      }
+    };
+    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.GRAYED_ATTRIBUTES, null, true, link);
   }
 
   public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, @Nls String message, @Nullable Icon icon) {

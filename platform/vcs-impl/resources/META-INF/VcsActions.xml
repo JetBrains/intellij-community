@@ -528,9 +528,6 @@
       </group>
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
-      <separator key="separator.Local.History.text"/>
-      <reference id="LocalHistory.ShowHistory"/>
-      <reference id="LocalHistory.PutLabel"/>
     </group>
 
   </actions>

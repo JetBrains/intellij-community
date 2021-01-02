@@ -6,28 +6,33 @@ import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
+import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
-class MoveLesson(module: Module, lang: String, private val sample: LessonSample)
+class MoveLesson(module: Module, lang: String, private val caretText: String, private val sample: LessonSample)
   : KLesson("Move", LessonsBundle.message("move.lesson.name"), module, lang) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)
 
       actionTask("MoveLineDown") {
+        restoreIfModifiedOrMoved()
         LessonsBundle.message("move.pull.down", action(it))
       }
       actionTask("MoveLineUp") {
+        restoreIfModifiedOrMoved()
         LessonsBundle.message("move.pull.up", action(it))
       }
-      if (lang == "JAVA") caret(9, 5)
+      caret(caretText)
       task("MoveStatementUp") {
+        restoreIfModifiedOrMoved()
         text(LessonsBundle.message("move.whole.method.up", action(it)))
         trigger(it, { editor.document.text }, { before, now ->
           checkSwapMoreThan2Lines(before, now)
         })
-        test { actions("EditorUp", it) }
+        test { actions(it) }
       }
       actionTask("MoveStatementDown") {
+        restoreIfModifiedOrMoved()
         LessonsBundle.message("move.whole.method.down", action(it))
       }
     }

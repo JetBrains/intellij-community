@@ -2,6 +2,7 @@
 package com.jetbrains.python.ift.lesson.run
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.editor.LogicalPosition
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.commands.kotlin.TaskTestContext
 import training.learn.interfaces.Module
@@ -12,6 +13,8 @@ import training.learn.lesson.kimpl.highlightButtonById
 class PythonDebugLesson(module: Module) : CommonDebugLesson(module, "python.debug.workflow", "Python") {
   override val configurationName = PythonRunLessonsUtils.demoConfigurationName
   override val sample = PythonRunLessonsUtils.demoSample
+  override var logicalPosition: LogicalPosition = LogicalPosition(4, 8)
+
   override val confNameForWatches = "PythonConfigurationType"
   override val quickEvaluationArgument = "int"
   override val expressionToBeEvaluated = "result/len(value)"

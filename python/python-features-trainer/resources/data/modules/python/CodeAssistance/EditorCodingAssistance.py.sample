@@ -1,12 +1,16 @@
-from math import cos, exp
+import random
 
-<caret>print("This is program for calculating elementary mathematical functions.")
-print("Enter function argument: ")
-value = float(input())
-sin_x = sin(value)
-cos_x = math.cos(value)
-e_pow_x = math.exp(value)
 
-print("sin({:f}) = {:6f}".format(value, sin_x))
-print("cos({:f}) = {:6f}".format(value, cos_x))
-print("e^({:f}) = {:6f}".format(value, e_pow_x))
+class Cat:
+    happiness = math.comb(5, 2)
+
+    def say_meow(self):
+        print("meow")
+
+    def eat(self):
+        self.happiness += random.randint(5, 20)
+
+
+cat = Cat()
+cat.say_meow("meow")
+cat.eat()

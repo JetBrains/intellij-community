@@ -14,6 +14,10 @@ import groovy.transform.Immutable
 class LibraryLicense {
   private static final Map<String, String> PREDEFINED_LICENSE_URLS = ["Apache 2.0": "http://www.apache.org/licenses/LICENSE-2.0"]
   public static final String JETBRAINS_OWN = "JetBrains"
+  /**
+   * Denotes version of library built from custom revision
+   */
+  public static final String CUSTOM_REVISION = "custom revision"
 
   /**
    * Presentable full name of the library. If {@code null} {@link #libraryName} will be used instead.

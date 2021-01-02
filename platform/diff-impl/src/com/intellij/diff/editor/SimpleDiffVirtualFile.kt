@@ -8,7 +8,7 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
-class SimpleDiffVirtualFile(private val request: DiffRequest) : DiffVirtualFile(DiffBundle.message("label.default.diff.editor.tab.name")) {
+class SimpleDiffVirtualFile(val request: DiffRequest) : DiffVirtualFile(DiffBundle.message("label.default.diff.editor.tab.name")) {
   override fun getName(): String = request.title ?: super.getName()
 
   override fun createProcessor(project: Project): DiffRequestProcessor = MyDiffRequestProcessor(project, request)

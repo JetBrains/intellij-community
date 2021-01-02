@@ -311,6 +311,7 @@
   <action id="RenameElement">
     <keyboard-shortcut first-keystroke="control R"/>
   </action>
+  <action id="SelectVirtualTemplateElement"/>
   <action id="Replace">
     <keyboard-shortcut first-keystroke="control H"/>
   </action>

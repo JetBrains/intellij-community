@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -123,8 +122,11 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       if (focusable != null) {
         focusable.requestFocus();
       }
-      // hack instead of doWhenFocusSettlesDown (not working as expected at the moment)
-      ApplicationManager.getApplication().invokeLater(() -> ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject));
+      // hack until doWhenFocusSettlesDown will work as expected
+      ApplicationManager.getApplication().invokeLater(() -> {
+        IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() ->
+          ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject));
+      });
     };
   }
 

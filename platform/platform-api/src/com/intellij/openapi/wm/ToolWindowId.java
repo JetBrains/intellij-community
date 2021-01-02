@@ -23,6 +23,7 @@ public interface ToolWindowId {
   String TODO_VIEW = "TODO";
   String DEPENDENCIES = "Dependency Viewer";
   String VCS = "Version Control";
+  String COMMIT = "Commit";
   String MODULES_DEPENDENCIES = "Module Dependencies";
   String DUPLICATES = "Duplicates";
   String EXTRACT_METHOD = "Extract Method";

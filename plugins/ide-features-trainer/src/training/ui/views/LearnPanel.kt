@@ -32,7 +32,7 @@ import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.border.MatteBorder
 
-class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
+class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonPanel = JPanel()
 
   private val moduleNameLabel: JLabel = if (!useNewLearningUi) JLabel()
@@ -54,11 +54,14 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
 
   private val lessonPanelBoxLayout = BoxLayout(lessonPanel, BoxLayout.Y_AXIS)
 
+  internal var scrollToNewMessages = true
+
   init {
     isFocusable = false
   }
 
   fun reinitMe(lesson: Lesson) {
+    scrollToNewMessages = true
     clearMessages()
     modulePanel.removeAll()
     footer.removeAll()
@@ -153,7 +156,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.isOpaque = false
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
     lessonMessagePane.margin = JBUI.emptyInsets()
-    lessonMessagePane.border = EmptyBorder(0, 0, 0, 0)
+    lessonMessagePane.border = EmptyBorder(0, 0, UISettings.instance.beforeButtonGap, UISettings.instance.eastInset)
     lessonMessagePane.maximumSize = Dimension(UISettings.instance.width, 10000)
 
     //Set Next Button UI
@@ -166,7 +169,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
     }
 
     buttonPanel.name = "buttonPanel"
-    buttonPanel.border = UISettings.instance.checkmarkShiftBorder
+    buttonPanel.border = UISettings.instance.checkmarkShiftButtonBorder
     buttonPanel.isOpaque = false
     buttonPanel.isFocusable = false
     buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
@@ -184,9 +187,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
       lessonPanel.add(UISettings.rigidGap(UISettings::moduleNameLessonGap))
       lessonPanel.add(lessonNameLabel)
       lessonPanel.add(lessonMessagePane)
-      //lessonPanel.add(Box.createVerticalStrut(UISettings.instance.beforeButtonGap))
       lessonPanel.add(buttonPanel)
-      //lessonPanel.add(Box.createVerticalStrut(UISettings.instance.afterButtonGap))
       lessonPanel.add(Box.createVerticalGlue())
     }
     else {
@@ -194,7 +195,6 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
       lessonPanel.add(Box.createVerticalStrut(UISettings.instance.lessonNameGap))
       lessonPanel.add(lessonNameLabel)
       lessonPanel.add(lessonMessagePane)
-      lessonPanel.add(Box.createVerticalStrut(UISettings.instance.beforeButtonGap))
 
       lessonPanel.add(Box.createVerticalGlue())
       lessonPanel.add(buttonPanel)
@@ -228,7 +228,7 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
     val needToShow = lessonMessagePane.addMessage(messageParts, state)
     adjustMessagesArea()
     if (useNewLearningUi) {
-      if (state != LessonMessagePane.MessageState.INACTIVE && needToShow != null) {
+      if (scrollToNewMessages && state != LessonMessagePane.MessageState.INACTIVE && needToShow != null) {
         lessonMessagePane.scrollRectToVisible(needToShow)
       }
     }
@@ -262,6 +262,8 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
 
   fun setPreviousMessagesPassed() {
     lessonMessagePane.passPreviousMessages()
+    lessonMessagePane.revalidate()
+    lessonMessagePane.repaint()
   }
 
   fun setLessonPassed() {
@@ -527,6 +529,9 @@ class LearnPanel(private val learnToolWindow: LearnToolWindow) : JPanel() {
     nextButton.isSelected = true
     nextButton.isFocusable = true
     nextButton.requestFocus()
+    if (scrollToNewMessages) {
+      nextButton.scrollRectToVisible(Rectangle(0, 0, nextButton.width, nextButton.height))
+    }
   }
 
   fun clearRestoreMessage() {

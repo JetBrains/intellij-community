@@ -28,7 +28,7 @@ class JavaContextActionsLesson(module: Module) : ContextActionsLesson(module, "J
   """.trimIndent())
 
   override val warningQuickFix: String = QuickFixBundle.message("safe.delete.text", "redundant")
-  override val warningCaret: String = "redundant"
+  override val warningPossibleArea: String = "redundant"
 
   override val intentionText: String = IntentionPowerPackBundle.message("negate.conditional.intention.name")
   override val intentionCaret: String = "? a : b"

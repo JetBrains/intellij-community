@@ -3,6 +3,7 @@ package training.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.BidirectionalMap
+import training.learn.lesson.LessonManager
 import training.util.WeakReferenceDelegator
 import javax.swing.Icon
 
@@ -16,6 +17,8 @@ object LearningUiManager {
   fun resetModulesView() {
     activeToolWindow?.setModulesPanel()
     activeToolWindow = null
+    LessonManager.instance.stopLesson()
+    LessonManager.instance.clearCurrentLesson()
   }
 
   fun getIconIndex(icon: Icon): String {

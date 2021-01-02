@@ -289,9 +289,9 @@ public final class DiffUtil {
                                                                            : new LineNumberConverterAdapter(contentLineConvertor));
   }
 
-  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content,
+  public static void installLineConvertor(@NotNull EditorEx editor, @Nullable DocumentContent content,
                                           @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
-    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    TIntFunction contentLineConvertor = content != null ? getContentLineConvertor(content) : null;
     TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
     TIntFunction merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
     editor.getGutter().setLineNumberConverter(merged == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged));

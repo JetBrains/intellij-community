@@ -23,7 +23,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.withOpenedEditor {
       val tracker = file.tracker
       assertNotNull(tracker)
-      assertTrue(tracker is SimpleLocalLineStatusTracker)
+      assertTrue(tracker is PartialLocalLineStatusTracker)
     }
     file.assertNullTracker()
   }
@@ -40,7 +40,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       assertNotNull(tracker)
       assertTrue(tracker is PartialLocalLineStatusTracker)
     }
-    assertNotNull(file.tracker)
+    file.assertNullTracker()
 
     lstm.waitUntilBaseContentsLoaded()
     file.assertNullTracker()

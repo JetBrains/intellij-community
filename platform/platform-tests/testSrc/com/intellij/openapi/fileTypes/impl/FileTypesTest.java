@@ -79,7 +79,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
     FileTypeManagerImpl.reDetectAsync(true);
-    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.THROW);
+    ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.THROW);
     Assume.assumeTrue("Test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage which is created on each HelmYamlFileType registration which happens a lot in this class",
                       StdFileTypes.JSPX == StdFileTypes.PLAIN_TEXT);
   }
@@ -87,7 +87,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.LOG_ERROR);
+      ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.LOG_ERROR);
       FileTypeManagerImpl.reDetectAsync(false);
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       myFileTypeManager.clearForTests();
@@ -380,7 +380,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   private void doReassignTest(@NotNull FileType fileType, @NotNull String newExtension) {
     FileType oldFileType = myFileTypeManager.getFileTypeByExtension(newExtension);
     try {
-      ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
+      ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.IGNORE);
       DefaultLogger.disableStderrDumping(getTestRootDisposable());
       myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
 
@@ -518,7 +518,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
   public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
-    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
+    ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.IGNORE);
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin"));
 
     Element element = myFileTypeManager.getState();
@@ -1134,7 +1134,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.setPluginDescriptor(new DefaultPluginDescriptor(PluginId.getId("myTestPlugin"), PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID).getPluginClassLoader()));
     Disposable disposable = Disposer.newDisposable();
     Disposer.register(getTestRootDisposable(), disposable);
-    ConflictingMappingTracker.onConflict(ConflictingMappingTracker.ConflictPolicy.IGNORE);
+    ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.IGNORE);
     ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerImpl.EP_NAME.getPoint().registerExtension(bean, disposable));
 
     assertInstanceOf(fileTypeManager.findFileTypeByName(bean.name), MyImageFileType.class);

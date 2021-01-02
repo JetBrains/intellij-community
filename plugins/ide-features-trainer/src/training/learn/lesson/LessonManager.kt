@@ -17,7 +17,9 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.LessonType
+import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonExecutor
+import training.learn.lesson.kimpl.OpenPassedContext
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.ui.LessonMessagePane
@@ -25,6 +27,7 @@ import training.ui.MessagePart
 import training.ui.views.LearnPanel
 import training.util.createNamedSingleThreadExecutor
 import training.util.useNewLearningUi
+import java.awt.Rectangle
 import java.util.concurrent.Executor
 
 @Service
@@ -57,6 +60,19 @@ class LessonManager {
     })
   }
 
+  internal fun clearCurrentLesson() {
+    currentLesson = null
+  }
+
+  internal fun openLessonPassed(lesson: KLesson, project: Project) {
+    initLesson(null, lesson, project)
+    learnPanel?.scrollToNewMessages = false
+    OpenPassedContext(project).apply(lesson.lessonContent)
+    learnPanel?.scrollRectToVisible(Rectangle(0, 0, 1, 1))
+    learnPanel?.makeNextButtonSelected()
+    learnPanel?.learnToolWindow?.showGotItAboutRestart()
+  }
+
   internal fun initDslLesson(editor: Editor?, cLesson: Lesson, lessonExecutor: LessonExecutor) {
     initLesson(editor, cLesson, lessonExecutor.project)
     currentLessonExecutor = lessonExecutor
@@ -69,6 +85,7 @@ class LessonManager {
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
       it.lesson.onStop()
       it.stopLesson()
+      currentLessonExecutor = null
     }
     LearningUiHighlightingManager.clearHighlights()
   }
@@ -108,8 +125,9 @@ class LessonManager {
     }
   }
 
-  fun addMessage(@Language("HTML") text: String) {
-    learnPanel?.addMessage(text)
+  fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false) {
+    val state = if (isInformer) LessonMessagePane.MessageState.INFORMER else LessonMessagePane.MessageState.NORMAL
+    learnPanel?.addMessage(text, state)
     if (!useNewLearningUi) LearningUiManager.activeToolWindow?.updateScrollPane()
   }
 

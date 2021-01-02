@@ -11,17 +11,6 @@ import javax.swing.*;
 public interface XDebugSessionTabCustomizer {
     @Nullable SessionTabComponentProvider getBottomLocalsComponentProvider();
     interface SessionTabComponentProvider {
-        default void visibilityChanged(boolean isVisible) {
-        }
-
-        default @Nullable Icon getComponentIcon(){
-            return null;
-        }
-
-        default @Nullable String getComponentIconPopupText(){
-            return null;
-        }
-
         JComponent createBottomLocalsComponent(@NotNull Disposable layoutDisposable);
     }
 }

@@ -31,14 +31,16 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
     get() = {
       prepareSample(sample)
       task("GotoAction") {
-        val macOsWorkaround = if (SystemInfo.isMacOSMojave)
-          LessonsBundle.message("goto.action.mac.workaround", LessonUtil.actionName(it), FIND_ACTION_WORKAROUND)
-        else ""
+        text(LessonsBundle.message("goto.action.use.find.action.1",
+                                   LessonUtil.actionName(it), action(it)))
 
-        text(LessonsBundle.message("goto.action.use.find.action",
-                                   LessonUtil.actionName(it), action(it),
-                                   LessonUtil.actionName("SearchEverywhere"), LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)
-        ) + macOsWorkaround)
+        if (SystemInfo.isMacOSMojave) {
+          text(LessonsBundle.message("goto.action.mac.workaround", LessonUtil.actionName(it), FIND_ACTION_WORKAROUND))
+        }
+
+        text(LessonsBundle.message("goto.action.use.find.action.2",
+                                   LessonUtil.actionName("SearchEverywhere"), LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))
+
         searchEverywhereCheck()
         test { actions(it) }
       }

@@ -15,9 +15,9 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
   fun reportMissingLicenses(collector: ErrorCollector) {
     val nonPublicModules = setOf("intellij.idea.ultimate.build", "intellij.idea.community.build", "buildSrc", "intellij.platform.testGuiFramework")
     val libraries = HashMap<JpsLibrary, JpsModule>()
-    project.modules.filter { it.name !in nonPublicModules 
-                             && !it.name.contains("guiTests") 
-                             && !it.name.startsWith("fleet") 
+    project.modules.filter { it.name !in nonPublicModules
+                             && !it.name.contains("guiTests")
+                             && !it.name.startsWith("fleet")
                              && !it.name.contains("integrationTests", ignoreCase = true)}.forEach { module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.forEach {
         libraries[it] = module

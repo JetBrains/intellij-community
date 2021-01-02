@@ -924,7 +924,7 @@ Android Studio: This attempts to read a non-existent file. */
     def productLayout = buildContext.productProperties.productLayout
     def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
             buildContext.proprietaryBuildTools.artifactsServer != null
-    CompatibleBuildRange compatibleBuildRange = bundled ||
+    CompatibleBuildRange compatibleBuildRange = bundled || plugin.pluginCompatibilityExactVersion ||
             //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
             includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
                     //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
@@ -1225,6 +1225,12 @@ Android Studio: This attempts to read a non-existent file. */
       def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
               ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
       def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
+      if (toPublish) {
+        //JetProfile uploaded broken date for the release version of PDB plugin, so we have to fix for 203 branch
+        if (releaseVersion == "2020300" && text.contains("code=\"PDB\"")) {
+          releaseDate = "20200922"
+        }
+      }
       text = text.replaceFirst(
               "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
               !toPublish ? "" :

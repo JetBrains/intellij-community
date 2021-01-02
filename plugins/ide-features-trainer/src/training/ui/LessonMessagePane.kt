@@ -20,7 +20,6 @@ import icons.FeaturesTrainerIcons
 import training.keymap.KeymapUtil
 import training.learn.LearnBundle
 import training.util.invokeActionForFocusContext
-import training.util.useNewLearningUi
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -32,17 +31,17 @@ import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
 class LessonMessagePane : JTextPane() {
-  enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE }
+  enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
   private data class LessonMessage(
     val messageParts: List<MessagePart>,
-    var start: Int,
-    var end: Int,
-    var state: MessageState = MessageState.NORMAL
+    var state: MessageState,
+    var start: Int = 0,
+    var end: Int = 0
   )
+
   private data class RangeData(var range: IntRange, val action: (Point) -> Unit)
 
-  private val lessonMessages get() = activeMessages + restoreMessages + inactiveMessages
   private val activeMessages = mutableListOf<LessonMessage>()
   private val restoreMessages = mutableListOf<LessonMessage>()
   private val inactiveMessages = mutableListOf<LessonMessage>()
@@ -52,6 +51,8 @@ class LessonMessagePane : JTextPane() {
   private val ranges = mutableSetOf<RangeData>()
 
   private var insertOffset: Int = 0
+
+  private fun allLessonMessages() = activeMessages + restoreMessages + inactiveMessages
 
   //, fontFace, check_width + check_right_indent
   init {
@@ -80,7 +81,7 @@ class LessonMessagePane : JTextPane() {
     addMouseMotionListener(listener)
   }
 
-  private fun getRangeDataForMouse(me: MouseEvent) : RangeData? {
+  private fun getRangeDataForMouse(me: MouseEvent): RangeData? {
     val point = Point(me.x, me.y)
     val offset = viewToModel(point)
     val result = ranges.find { offset in it.range } ?: return null
@@ -95,7 +96,6 @@ class LessonMessagePane : JTextPane() {
   }
 
   private fun initStyleConstants() {
-    val labelFontName = UIUtil.getLabelFont().fontName
     val fontSize = UISettings.instance.fontSize.toInt()
 
     StyleConstants.setForeground(INACTIVE, UISettings.instance.passedColor)
@@ -124,11 +124,11 @@ class LessonMessagePane : JTextPane() {
     StyleConstants.setUnderline(LINK, true)
     StyleConstants.setFontSize(LINK, fontSize)
 
-    StyleConstants.setLeftIndent(PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
-    StyleConstants.setRightIndent(PARAGRAPH_STYLE, 0f)
-    StyleConstants.setSpaceAbove(PARAGRAPH_STYLE, 16.0f)
-    StyleConstants.setSpaceBelow(PARAGRAPH_STYLE, 0.0f)
-    StyleConstants.setLineSpacing(PARAGRAPH_STYLE, 0.2f)
+    StyleConstants.setLeftIndent(TASK_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
+    StyleConstants.setRightIndent(TASK_PARAGRAPH_STYLE, 0f)
+    StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, 20.0f)
+    StyleConstants.setSpaceBelow(TASK_PARAGRAPH_STYLE, 0.0f)
+    StyleConstants.setLineSpacing(TASK_PARAGRAPH_STYLE, 0.2f)
 
     StyleConstants.setForeground(REGULAR, UISettings.instance.defaultTextColor)
     StyleConstants.setForeground(BOLD, UISettings.instance.defaultTextColor)
@@ -136,118 +136,85 @@ class LessonMessagePane : JTextPane() {
     StyleConstants.setForeground(LINK, UISettings.instance.lessonLinkColor)
     StyleConstants.setForeground(CODE, UISettings.instance.codeForegroundColor)
 
-    this.setParagraphAttributes(PARAGRAPH_STYLE, true)
   }
 
   fun messagesNumber(): Int = activeMessages.size
 
   private fun removeMessagesRange(startIdx: Int, endIdx: Int, list: MutableList<LessonMessage>) {
     if (startIdx == endIdx) return
-
-    val lastIdx = endIdx - 1
-    val startOffset = list[startIdx].start
-    val endOffset = list[lastIdx].end
-    val removeLength = endOffset - startOffset
     list.subList(startIdx, endIdx).clear()
-    ranges.removeIf { startOffset <= it.range.first && it.range.last < endOffset }
-    fixOffsets(endOffset, -removeLength)
-
-    if (insertOffset in startOffset..endOffset) insertOffset = startOffset
-    else if (insertOffset > endOffset) insertOffset -= removeLength
-    document.remove(startOffset, endOffset - startOffset)
-  }
-
-  private fun fixOffsets(fromOffset: Int, lengthChange: Int) {
-    ranges.filter { it.range.first >= fromOffset }.forEach {
-      it.range = (it.range.first + lengthChange)..(it.range.last + lengthChange)
-    }
-    lessonMessages.forEach { message ->
-      if (message.start >= fromOffset) {
-        message.start += lengthChange
-        message.end += lengthChange
-        for (part in message.messageParts) {
-          part.startOffset += lengthChange
-          part.endOffset += lengthChange
-        }
-      }
-    }
   }
 
   fun clearRestoreMessages() {
     removeMessagesRange(0, restoreMessages.size, restoreMessages)
+    redrawMessages()
   }
 
   fun removeInactiveMessages(number: Int) {
     removeMessagesRange(0, number, inactiveMessages)
+    redrawMessages()
   }
 
   fun resetMessagesNumber(number: Int) {
+    val move = activeMessages.subList(number, activeMessages.size)
+    move.forEach {
+      it.state = MessageState.INACTIVE
+    }
+    inactiveMessages.addAll(0, move)
+    move.clear()
     clearRestoreMessages()
-
-    if (useNewLearningUi) {
-      val move = activeMessages.subList(number, activeMessages.size)
-      move.forEach {
-        setInactiveStyle(it)
-        it.state = MessageState.INACTIVE
-      }
-      inactiveMessages.addAll(0, move)
-      move.clear()
-    }
-    else {
-      removeMessagesRange(number, activeMessages.size - number, activeMessages)
-    }
   }
 
   private fun insertText(text: String, attributeSet: AttributeSet) {
     document.insertString(insertOffset, text, attributeSet)
+    styledDocument.setParagraphAttributes(insertOffset, insertOffset + text.length - 1, TASK_PARAGRAPH_STYLE, true)
     insertOffset += text.length
   }
 
   fun addMessage(messageParts: List<MessagePart>, state: MessageState = MessageState.NORMAL): Rectangle? {
-    val lastActiveOffset = activeMessages.takeIf { it.isNotEmpty() }?.last()?.end ?: 0
-    insertOffset = when (state) {
-      MessageState.INACTIVE -> document.length
-      MessageState.RESTORE -> restoreMessages.takeIf { it.isNotEmpty() }?.last()?.end ?: lastActiveOffset
-      else -> lastActiveOffset
-    }
-    val start = insertOffset
-    if (insertOffset != 0)
-      insertText("\n", REGULAR)
-    val newRanges = mutableListOf<RangeData>()
-    for (message in messageParts) {
-      val startOffset = insertOffset
-      message.startOffset = startOffset
-      when (message.type) {
-        MessagePart.MessageType.TEXT_REGULAR -> insertText(message.text, REGULAR)
-        MessagePart.MessageType.TEXT_BOLD -> insertText(message.text, BOLD)
-        MessagePart.MessageType.SHORTCUT -> appendShortcut(message).let { newRanges.add(it) }
-        MessagePart.MessageType.CODE -> insertText(" ${message.text} ", CODE)
-        MessagePart.MessageType.CHECK -> insertText(message.text, ROBOTO)
-        MessagePart.MessageType.LINK -> appendLink(message)?.let { newRanges.add(it) }
-        MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[message.text]?.let { addPlaceholderForIcon(it) }
-        MessagePart.MessageType.PROPOSE_RESTORE -> insertText(message.text, BOLD)
-      }
-      message.endOffset = insertOffset
-    }
-    val end = insertOffset
-    val lessonMessage = LessonMessage(messageParts, start, end)
-    if (state == MessageState.INACTIVE) {
-      setInactiveStyle(lessonMessage)
-    }
-    lessonMessage.state = state
-
-    fixOffsets(start, end - start)
-    ranges.addAll(newRanges)
+    val lessonMessage = LessonMessage(messageParts, state)
     when (state) {
       MessageState.INACTIVE -> inactiveMessages
       MessageState.RESTORE -> restoreMessages
       else -> activeMessages
     }.add(lessonMessage)
 
-    val startRect = modelToView(start) ?: return null
-    val endRect = modelToView(end - 1) ?: return null
+    redrawMessages()
+
+    val startRect = modelToView(lessonMessage.start) ?: return null
+    val endRect = modelToView(lessonMessage.end - 1) ?: return null
     return Rectangle(startRect.x, startRect.y, endRect.x + endRect.width - startRect.x, endRect.y + endRect.height - startRect.y)
-    //learnToolWindow?.scrollToTheEnd()
+  }
+
+  fun redrawMessages() {
+    ranges.clear()
+    text = ""
+    insertOffset = 0
+    for (lessonMessage in allLessonMessages()) {
+      val messageParts: List<MessagePart> = lessonMessage.messageParts
+      lessonMessage.start = insertOffset
+      if (insertOffset != 0)
+        insertText("\n", REGULAR)
+      for (part in messageParts) {
+        val startOffset = insertOffset
+        part.startOffset = startOffset
+        when (part.type) {
+          MessagePart.MessageType.TEXT_REGULAR -> insertText(part.text, REGULAR)
+          MessagePart.MessageType.TEXT_BOLD -> insertText(part.text, BOLD)
+          MessagePart.MessageType.SHORTCUT -> appendShortcut(part).let { ranges.add(it) }
+          MessagePart.MessageType.CODE -> insertText(" ${part.text} ", CODE)
+          MessagePart.MessageType.CHECK -> insertText(part.text, ROBOTO)
+          MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
+          MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[part.text]?.let { addPlaceholderForIcon(it) }
+          MessagePart.MessageType.PROPOSE_RESTORE -> insertText(part.text, BOLD)
+        }
+        part.endOffset = insertOffset
+      }
+      lessonMessage.end = insertOffset
+      if (lessonMessage.state == MessageState.INACTIVE) {
+        setInactiveStyle(lessonMessage)
+      }
+    }
   }
 
   private fun addPlaceholderForIcon(icon: Icon) {
@@ -259,43 +226,15 @@ class LessonMessagePane : JTextPane() {
     insertText(placeholder, REGULAR)
   }
 
-  /**
-   * inserts a checkmark icon to the end of the LessonMessagePane document as a styled label.
-   */
-  @Throws(BadLocationException::class)
   fun passPreviousMessages() {
-    if (!useNewLearningUi) { //Repaint text with passed style
-      val lessonMessage = lessonMessages.lastOrNull() ?: return
-      lessonMessage.state = MessageState.PASSED
-      setPassedStyle(lessonMessage)
+    for (message in activeMessages) {
+      message.state = MessageState.PASSED
     }
-    else { //Repaint text with passed style
-      val lessonMessage = lessonMessages.lastOrNull { it.state == MessageState.NORMAL } ?: return
-      lessonMessage.state = MessageState.PASSED
-    }
-  }
-
-  private fun setPassedStyle(lessonMessage: LessonMessage) {
-    val passedStyle = this.addStyle(null, null)
-    StyleConstants.setForeground(passedStyle, UISettings.instance.passedColor)
-    styledDocument.setCharacterAttributes(0, lessonMessage.end, passedStyle, false)
+    redrawMessages()
   }
 
   private fun setInactiveStyle(lessonMessage: LessonMessage) {
     styledDocument.setCharacterAttributes(lessonMessage.start, lessonMessage.end, INACTIVE, false)
-  }
-
-
-  fun redrawMessages() {
-    val copy = lessonMessages.toList()
-    clear()
-    for (lessonMessage in copy) {
-      addMessage(lessonMessage.messageParts, lessonMessage.state)
-    }
-    for ((index, it) in lessonMessages.withIndex()) {
-      it.state = copy[index].state
-      if (it.state == MessageState.PASSED && !useNewLearningUi) setPassedStyle(it)
-    }
   }
 
   fun clear() {
@@ -352,7 +291,7 @@ class LessonMessagePane : JTextPane() {
       .setCloseButtonEnabled(true)
       .setAnimationCycle(0)
       .setBlockClicksThroughBalloon(true)
-      //.setContentInsets(Insets(0, 0, 0, 0))
+    //.setContentInsets(Insets(0, 0, 0, 0))
     builder.setBorderColor(JBColor(Color.BLACK, Color.WHITE))
     balloon = builder.createBalloon()
     balloon.show(RelativePoint(this, it), Balloon.Position.below)
@@ -378,13 +317,13 @@ class LessonMessagePane : JTextPane() {
   }
 
   private fun paintLessonCheckmarks(g: Graphics) {
-    for (lessonMessage in lessonMessages) {
+    for (lessonMessage in allLessonMessages()) {
       if (lessonMessage.state == MessageState.PASSED) {
         var startOffset = lessonMessage.start
         if (startOffset != 0) startOffset++
         try {
           val rectangle = modelToView(startOffset)
-          val checkmark = if (useNewLearningUi) FeaturesTrainerIcons.Img.GreenCheckmark else FeaturesTrainerIcons.Img.Checkmark
+          val checkmark = FeaturesTrainerIcons.Img.GreenCheckmark
           if (SystemInfo.isMac) {
             checkmark.paintIcon(this, g, rectangle.x - UISettings.instance.checkIndent, rectangle.y + JBUI.scale(1))
           }
@@ -403,7 +342,7 @@ class LessonMessagePane : JTextPane() {
   @Throws(BadLocationException::class)
   private fun paintMessages(g: Graphics) {
     val g2d = g as Graphics2D
-    for (lessonMessage in lessonMessages) {
+    for (lessonMessage in allLessonMessages()) {
       val myMessages = lessonMessage.messageParts
       for (myMessage in myMessages) {
         if (myMessage.type == MessagePart.MessageType.SHORTCUT) {
@@ -419,11 +358,18 @@ class LessonMessagePane : JTextPane() {
           }
         }
         else if (myMessage.type == MessagePart.MessageType.ICON_IDX) {
-          val rect = modelToView(myMessage.startOffset + 1)
+          val rect = modelToView2D(myMessage.startOffset + 1)
           val icon = LearningUiManager.iconMap[myMessage.text]
-          icon?.paintIcon(this, g2d, rect.x, rect.y)
+          icon?.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
         }
       }
+    }
+    val lastActiveMessage: LessonMessage? = activeMessages.lastOrNull()
+    val lastPassedMessage: LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
+      .takeIf { it != -1 && it < activeMessages.size - 1 }
+      ?.let { activeMessages[it + 1] }
+    if (lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
+      drawRectangleAroundMessage(lastPassedMessage, lastActiveMessage, g2d, UISettings.instance.activeTaskBorder)
     }
   }
 
@@ -433,8 +379,8 @@ class LessonMessagePane : JTextPane() {
                                       draw: (r2d: RoundRectangle2D) -> Unit) {
     val startOffset = myMessage.startOffset
     val endOffset = myMessage.endOffset
-    val rectangleStart = modelToView(startOffset + 1)
-    val rectangleEnd = modelToView(endOffset - 1)
+    val rectangleStart = modelToView2D(startOffset + 1)
+    val rectangleEnd = modelToView2D(endOffset - 1)
     val color = g2d.color
     val fontSize = UISettings.instance.fontSize
 
@@ -452,6 +398,38 @@ class LessonMessagePane : JTextPane() {
     g2d.color = color
   }
 
+  private fun drawRectangleAroundMessage(lastPassedMessage: LessonMessage? = null,
+                                         lastActiveMessage: LessonMessage,
+                                         g2d: Graphics2D,
+                                         needColor: Color) {
+    val startOffset = lastPassedMessage?.let { it.start + 1 } ?: 0
+    val endOffset = lastActiveMessage.end
+
+    val topLineX = modelToView2D(startOffset).x
+    val topLineY = modelToView2D(startOffset).y
+    val bottomLineY = modelToView2D(endOffset - 1).let { it.y + it.height }
+    val textHeight = bottomLineY - topLineY
+    val color = g2d.color
+
+    g2d.color = needColor
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+    val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
+      RoundRectangle2D.Double(topLineX - activeTaskInset, topLineY - activeTaskInset - JBUIScale.scale(1),
+                              this.bounds.width - UISettings.instance.checkIndent.toDouble() - insets.right * 1.0f + 2 * activeTaskInset, textHeight + 2 * activeTaskInset - JBUIScale.scale(2),
+                              arc.toDouble(), arc.toDouble())
+    else
+      RoundRectangle2D.Double(topLineX - activeTaskInset, topLineY - activeTaskInset - JBUIScale.scale(1),
+                              this.bounds.width - UISettings.instance.checkIndent.toDouble() - insets.right * 1.0f + 2 * activeTaskInset, textHeight + 2 * activeTaskInset - JBUIScale.scale(2),
+                              arc.toDouble(), arc.toDouble())
+    g2d.draw(r2d)
+    g2d.color = color
+  }
+
+  override fun getMaximumSize(): Dimension {
+    return preferredSize
+  }
+
   companion object {
     private val LOG = Logger.getInstance(LessonMessagePane::class.java)
 
@@ -463,10 +441,12 @@ class LessonMessagePane : JTextPane() {
     private val ROBOTO = SimpleAttributeSet()
     private val CODE = SimpleAttributeSet()
     private val LINK = SimpleAttributeSet()
-    private val PARAGRAPH_STYLE = SimpleAttributeSet()
+
+    private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
 
     //arc & indent for shortcut back plate
     private val arc by lazy { JBUI.scale(4) }
     private val indent by lazy { JBUI.scale(2) }
+    private val activeTaskInset by lazy { JBUI.scale(8) }
   }
 }

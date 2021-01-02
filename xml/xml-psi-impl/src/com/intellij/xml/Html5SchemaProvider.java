@@ -39,6 +39,7 @@ public abstract class Html5SchemaProvider {
     return CHARS_DTD_LOCATION.getValue();
   }
 
+  @NotNull
   private static Html5SchemaProvider getInstance() {
     return ApplicationManager.getApplication().getService(Html5SchemaProvider.class);
   }

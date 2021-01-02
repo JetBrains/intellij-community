@@ -38,6 +38,11 @@ class LangManager : PersistentStateComponent<LangManager.State> {
     fun getInstance() = service<LangManager>()
   }
 
+  fun getLearningProjectPath(langSupport: LangSupport): String? = state.languageToProjectMap[langSupport.primaryLanguage]
+  fun setLearningProjectPath(langSupport: LangSupport, path: String) {
+    state.languageToProjectMap[langSupport.primaryLanguage] = path
+  }
+
   fun getLangSupportById(languageId: String): LangSupport? {
     return supportedLanguagesExtensions.singleOrNull { it.language == languageId }?.instance
   }
