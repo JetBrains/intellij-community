@@ -23,7 +23,7 @@ envs {
   String python39version = "3.9.0"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
-  project.buildDir = customBuildDir? new File(customBuildDir): buildDir
+  project.buildDir = customBuildDir ? new File(customBuildDir) : buildDir
   bootstrapDirectory = new File(buildDir, 'pythons')
   envsDirectory = new File(buildDir, 'envs')
 
@@ -104,12 +104,14 @@ task buildBinaries() {
 task checkVersionOfCFiles() {
   description "Checks if the binary version in C files matches the regular version."
   doLast {
-    File additionalThreadInfoRegular = Paths.get(project.ext.pydevDir.path, "_pydevd_bundle", "pydevd_additional_thread_info_regular.py").toFile()
+    File additionalThreadInfoRegular =
+      Paths.get(project.ext.pydevDir.path, "_pydevd_bundle", "pydevd_additional_thread_info_regular.py").toFile()
     File cFile = Paths.get(project.ext.pydevDir.path, "_pydevd_bundle", "pydevd_cython.c").toFile()
     Integer regularVersion = extractVersion(additionalThreadInfoRegular, ~/version = (\d+)/)
     Integer cVersion = extractVersion(cFile, ~/\s+version = (\d+)/)
-    assert regularVersion == cVersion : "The version '$regularVersion' in ${additionalThreadInfoRegular.name} does not matches the '$cVersion' " +
-                                        "version in ${cFile.name}"
+    assert
+      regularVersion == cVersion: "The version '$regularVersion' in ${additionalThreadInfoRegular.name} does not matches the '$cVersion' " +
+                                  "version in ${cFile.name}"
   }
 }
 
@@ -133,7 +135,7 @@ task checkCFilesAreUpToDate() {
       File cFile = Paths.get(pydevdRoot, dir, extName + ".c").toFile()
 
       def checkTimespamps = { File mainFile, File dependentFile ->
-        assert dependentFile.lastModified() > mainFile.lastModified() : "${dependentFile.name} is older than ${mainFile.name}"
+        assert dependentFile.lastModified() > mainFile.lastModified(): "${dependentFile.name} is older than ${mainFile.name}"
       }
 
       checkTimespamps(pxdFile, cFile)
@@ -145,7 +147,7 @@ task checkCFilesAreUpToDate() {
 }
 
 Integer extractVersion(File file, Pattern versionPattern) {
-  file.withReader {reader ->
+  file.withReader { reader ->
     def line
     while ((line = reader.readLine()) != null) {
       def matcher = line =~ versionPattern
