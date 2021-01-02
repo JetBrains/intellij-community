@@ -35,6 +35,9 @@ class TomlPsiFactory(private val project: Project, private val markGenerated: Bo
         // contains the quote in the beginning and the end. E.g.: `createValue("\"1.0.90\"")`
         createFromText("dummy = $value") ?: error("Failed to create TomlLiteral")
 
+    fun createKeySegment(key: String): TomlKeySegment =
+        createFromText("$key = \"dummy\"") ?: error("Failed to create TomlKeySegment")
+
     fun createKey(key: String): TomlKey =
         createFromText("$key = \"dummy\"") ?: error("Failed to create TomlKey")
 

@@ -1,7 +1,8 @@
 TOML File
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('str')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('str')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -10,7 +11,8 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('str1')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('str1')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -19,7 +21,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('str2')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('str2')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -28,7 +31,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('str3')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('str3')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -37,7 +41,8 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('str1')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('str1')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -46,7 +51,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('str2')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('str2')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -55,7 +61,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('str3')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('str3')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -64,7 +71,8 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('winpath')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('winpath')
     PsiWhiteSpace('  ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -73,7 +81,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('winpath2')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('winpath2')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -82,7 +91,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('quoted')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('quoted')
     PsiWhiteSpace('   ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -91,7 +101,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('regex')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('regex')
     PsiWhiteSpace('    ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -100,7 +111,8 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('regex2')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('regex2')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -109,7 +121,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('lines')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('lines')
     PsiWhiteSpace('  ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')

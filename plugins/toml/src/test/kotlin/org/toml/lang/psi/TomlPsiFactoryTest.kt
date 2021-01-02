@@ -15,6 +15,11 @@ class TomlPsiFactoryTest : TomlTestBase() {
         assertEquals("\"value\"", literal.text)
     }
 
+    fun `test create key segment`() {
+        val keySegment = factory.createKeySegment("segment")
+        assertEquals("segment", keySegment.name)
+    }
+
     fun `test create key`() {
         val key = factory.createKey("key")
         assertEquals("key", key.text)
@@ -39,7 +44,7 @@ class TomlPsiFactoryTest : TomlTestBase() {
     fun `test create table header`() {
         val tableHeader = factory.createTableHeader("key1.key2")
         assertEquals("[key1.key2]", tableHeader.text)
-        assertEquals(listOf("key1", "key2"), tableHeader.names.map { it.text })
+        assertEquals(listOf("key1", "key2"), tableHeader.key?.segments.orEmpty().map { it.text })
     }
 
     fun `test create array`() {

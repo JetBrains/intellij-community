@@ -1,7 +1,8 @@
 TOML File
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('name')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('name')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -10,7 +11,8 @@ TOML File
       PsiWhiteSpace(' ')
       TomlKeyValue
         TomlKey
-          PsiElement(BARE_KEY)('first')
+          TomlKeySegment
+            PsiElement(BARE_KEY)('first')
         PsiWhiteSpace(' ')
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
@@ -20,7 +22,8 @@ TOML File
       PsiWhiteSpace(' ')
       TomlKeyValue
         TomlKey
-          PsiElement(BARE_KEY)('last')
+          TomlKeySegment
+            PsiElement(BARE_KEY)('last')
         PsiWhiteSpace(' ')
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
@@ -31,7 +34,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('point')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('point')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -40,7 +44,8 @@ TOML File
       PsiWhiteSpace(' ')
       TomlKeyValue
         TomlKey
-          PsiElement(BARE_KEY)('x')
+          TomlKeySegment
+            PsiElement(BARE_KEY)('x')
         PsiWhiteSpace(' ')
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
@@ -50,7 +55,8 @@ TOML File
       PsiWhiteSpace(' ')
       TomlKeyValue
         TomlKey
-          PsiElement(BARE_KEY)('y')
+          TomlKeySegment
+            PsiElement(BARE_KEY)('y')
         PsiWhiteSpace(' ')
         PsiElement(=)('=')
         PsiWhiteSpace(' ')
