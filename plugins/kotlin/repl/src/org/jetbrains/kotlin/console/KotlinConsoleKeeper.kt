@@ -10,12 +10,15 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinClassPath
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
 import java.io.File
@@ -28,7 +31,7 @@ class KotlinConsoleKeeper(val project: Project) {
     fun putVirtualFileToConsole(virtualFile: VirtualFile, console: KotlinConsoleRunner) = consoleMap.put(virtualFile, console)
     fun removeConsole(virtualFile: VirtualFile) = consoleMap.remove(virtualFile)
 
-    fun run(module: Module, previousCompilationFailed: Boolean = false): KotlinConsoleRunner? {
+    fun run(module: Module, previousCompilationFailed: Boolean = false): KotlinConsoleRunner {
         val path = module.moduleFilePath
         val cmdLine = createReplCommandLine(project, module)
         val consoleRunner = KotlinConsoleRunner(
@@ -57,9 +60,20 @@ class KotlinConsoleKeeper(val project: Project) {
                 .build()
 
             javaParameters.charset = null
-            javaParameters.vmParametersList.add("-Dkotlin.repl.ideMode=true")
+            with(javaParameters.vmParametersList) {
+                add("-Dkotlin.repl.ideMode=true")
 
-            val kotlinArtifacts = KotlinArtifacts.instance
+                if (isUnitTestMode() && javaParameters.jdk?.version?.isAtLeast(JavaSdkVersion.JDK_1_9) == true) {
+                    // TODO: Have to get rid of illegal access to java.util.ResourceBundle.setParent(java.util.ResourceBundle):
+                    //  WARNING: Illegal reflective access by com.intellij.util.ReflectionUtil (file:...kotlin-ide/intellij/out/kotlinc-dist/kotlinc/lib/kotlin-compiler.jar) to method java.util.ResourceBundle.setParent(java.util.ResourceBundle)
+                    //  WARNING: Please consider reporting this to the maintainers of com.intellij.util.ReflectionUtil
+                    //  WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+                    //  WARNING: All illegal access operations will be denied in a future release
+                    add("--add-opens")
+                    add("java.base/java.util=ALL-UNNAMED")
+                }
+            }
+
             javaParameters.classPath.apply {
                 val classPath = KotlinClassPath.CompilerWithScripting.computeClassPath()
                 addAll(classPath.map {
@@ -75,23 +89,27 @@ class KotlinConsoleKeeper(val project: Project) {
                 val classPath = JavaParametersBuilder.getModuleDependencies(module)
                 if (classPath.isNotEmpty()) {
                     javaParameters.setUseDynamicParameters(javaParameters.isDynamicClasspath)
-                    javaParameters.programParametersList.add("-cp")
-                    javaParameters.programParametersList.add(
-                        classPath.joinToString(File.pathSeparator)
-                    )
+                    with(javaParameters.programParametersList) {
+                        add("-cp")
+                        add(classPath.joinToString(File.pathSeparator))
+                    }
                 }
                 TargetPlatformDetector.getPlatform(module).subplatformsOfType<JdkPlatform>().firstOrNull()?.targetVersion?.let {
-                    javaParameters.programParametersList.add("-jvm-target")
-                    javaParameters.programParametersList.add(it.description)
+                    with(javaParameters.programParametersList) {
+                        add("-jvm-target")
+                        add(it.description)
+                    }
                 }
             }
 
-            javaParameters.programParametersList.add("-kotlin-home")
-            javaParameters.programParametersList.add(KotlinArtifacts.instance.kotlincDirectory.also {
-                check(it.exists()) {
-                    "Kotlinc directory does not exist"
-                }
-            }.absolutePath)
+            with(javaParameters.programParametersList) {
+                add("-kotlin-home")
+                add(KotlinArtifacts.instance.kotlincDirectory.also {
+                    check(it.exists()) {
+                        "Kotlinc directory does not exist"
+                    }
+                }.absolutePath)
+            }
 
             return javaParameters.toCommandLine()
         }

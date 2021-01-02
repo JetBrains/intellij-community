@@ -118,7 +118,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
         KotlinCompilerStandalone(
             listOf(baseDir),
             target = outputDir,
-            classpath = listOf(KotlinArtifacts.instance.kotlinScriptRuntime, KotlinArtifacts.instance.jetbrainsAnnotations)
+            classpath = listOf(kotlinArtifacts.kotlinScriptRuntime, kotlinArtifacts.jetbrainsAnnotations)
         ).compile()
 
         PsiTestUtil.setCompilerOutputPath(myFixture.module, outputDir.path, false)
