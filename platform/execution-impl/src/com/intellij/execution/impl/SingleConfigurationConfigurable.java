@@ -437,7 +437,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
 
       boolean targetAware =
-        configuration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("run.targets");
+        configuration instanceof TargetEnvironmentAwareRunProfile &&
+        ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType() != null &&
+        Experiments.getInstance().isFeatureEnabled("run.targets");
       myRunOnPanel.setVisible(targetAware);
       if (targetAware) {
         String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();

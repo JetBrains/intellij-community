@@ -176,6 +176,6 @@ fun BuildView.assertExecutionTree(expected: String): BuildView {
 }
 
 fun BuildView.assertExecutionTreeNode(nodeText: String, consoleTextChecker: (String?) -> Unit, assertSelected: Boolean = false): BuildView {
-  BuildViewTestFixture.assertExecutionTreeNode(this, nodeText, consoleTextChecker, assertSelected)
+  BuildViewTestFixture.assertExecutionTreeNode(this, nodeText, consoleTextChecker, null, assertSelected)
   return this
 }

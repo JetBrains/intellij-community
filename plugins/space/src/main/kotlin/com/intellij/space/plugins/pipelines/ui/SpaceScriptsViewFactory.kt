@@ -5,6 +5,8 @@ import com.intellij.space.messages.SpaceBundle
 import circlet.pipelines.DefaultDslFileName
 import circlet.pipelines.config.api.ScriptConfig
 import circlet.pipelines.config.api.ScriptStep
+import circlet.pipelines.config.api.ScriptStep.*
+import circlet.pipelines.config.api.ScriptStep.ProcessExecutable.*
 import com.intellij.space.plugins.pipelines.services.SpaceKtsModelBuilder
 import com.intellij.space.plugins.pipelines.viewmodel.SpaceModelTreeNode
 import com.intellij.space.plugins.pipelines.viewmodel.ScriptState
@@ -266,8 +268,8 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
           }
 
           val jobsNode = SpaceModelTreeNode("jobs")
-          it.steps.forEach {
-            jobsNode.add(it.traverseJobs())
+          it.steps.forEach { step ->
+            jobsNode.add(step.toTreeNode())
           }
           taskNode.add(jobsNode)
         }
@@ -347,41 +349,30 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
   }
 }
 
-fun ScriptStep.traverseJobs(): SpaceModelTreeNode {
-  when (val job = this) {
-    is ScriptStep.CompositeStep -> {
-      val res = SpaceModelTreeNode(job::class.java.simpleName)
-      job.children.forEach {
-        val child = it.traverseJobs()
-        res.add(child)
-      }
-      return res
-    }
-
-    is ScriptStep.Process.Container -> {
-      val res = SpaceModelTreeNode("container: ${job.image}")
-      val execPrefix = "exec: "
-      val execNode = DefaultMutableTreeNode("exec:")
-      val exec = job.data.exec
-      when (exec) {
-        is ScriptStep.ProcessExecutable.ContainerExecutable.DefaultCommand -> {
-          execNode.userObject = execPrefix + "defaultCommand${exec.args.presentArgs()}"
-        }
-        is ScriptStep.ProcessExecutable.ContainerExecutable.OverrideEntryPoint -> {
-          execNode.userObject = execPrefix + "overrideEntryPoint: ${exec.entryPoint}${exec.args.presentArgs()}"
-        }
-        is ScriptStep.ProcessExecutable.KotlinScript -> {
-          execNode.userObject = execPrefix + "kts script"
-        }
-      }
-      res.add(execNode)
-      return res
-    }
-    is ScriptStep.Process.VM -> {
-      return SpaceModelTreeNode("vm: ${job.image}. VM is not implemented in UI yet")
+private fun ScriptStep.toTreeNode(): SpaceModelTreeNode = when (val job = this) {
+  is CompositeStep -> SpaceModelTreeNode(job::class.java.simpleName).apply {
+    job.children.forEach { child ->
+      add(child.toTreeNode())
     }
   }
+  is SimpleStep.Process.Container -> SpaceModelTreeNode("container: ${job.image}").apply {
+    add(job.data.exec.toTreeNode())
+  }
+  is SimpleStep.Process.VM -> SpaceModelTreeNode("vm: ${job.image}")
+  is SimpleStep.DockerComposeStep -> SpaceModelTreeNode("compose: ${job.mainService}")
 }
+
+private fun ProcessExecutable<*>.toTreeNode() = DefaultMutableTreeNode(treeNodeText)
+
+private val ProcessExecutable<*>.treeNodeText: String
+  get() = when (this) {
+    is ContainerExecutable.DefaultCommand -> "exec: defaultCommand${args.presentArgs()}"
+    is ContainerExecutable.OverrideEntryPoint -> "exec: overrideEntryPoint: $entryPoint${args.presentArgs()}"
+    is Command -> "exec: command: ${cmd.joinToString(" ")}"
+    is KotlinScript -> "exec: kts script"
+    is ShellScript -> "exec: shell script"
+    is VMExecutable -> "exec: VM executable"
+  }
 
 private fun List<String>.presentArgs(): String {
   return if (this.any()) ". args: ${this.joinToString()}" else ""

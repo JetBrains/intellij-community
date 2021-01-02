@@ -298,23 +298,21 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   @Nullable
   Project findConfigurableProject(@Nullable Configurable configurable) {
     MyNode node = findNode(configurable);
-    return node == null ? null : findConfigurableProject(node, true);
+    return node == null ? null : findConfigurableProject(node);
   }
 
   @Nullable
-  private static Project findConfigurableProject(@NotNull MyNode node, boolean checkProjectLevel) {
+  private static Project findConfigurableProject(@NotNull MyNode node) {
     Configurable configurable = node.myConfigurable;
     Project project = node.getProject();
-    if (checkProjectLevel) {
-      Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, configurable);
-      if (wrapped != null) return wrapped.isProjectLevel() ? project : null;
-    }
+    Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, configurable);
+    if (wrapped != null) return wrapped.isProjectLevel() ? project : null;
     if (configurable instanceof ConfigurableWrapper) return project;
     if (configurable instanceof SortedConfigurableGroup) return project;
 
     SimpleNode parent = node.getParent();
     return parent instanceof MyNode
-           ? findConfigurableProject((MyNode)parent, checkProjectLevel)
+           ? findConfigurableProject((MyNode)parent)
            : null;
   }
 
@@ -636,7 +634,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       // configure project icon
       Project project = null;
       if (node != null) {
-        project = findConfigurableProject(node, false);
+        project = findConfigurableProject(node);
       }
       Configurable configurable = null;
       if (node != null) {

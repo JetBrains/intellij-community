@@ -34,7 +34,10 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
    */
   abstract fun createEnvironmentFactory(project: Project, config: C): TargetEnvironmentFactory
 
-  abstract fun createConfigurable(project: Project, config: C, defaultLanguage: LanguageRuntimeType<*>?): Configurable
+  abstract fun createConfigurable(project: Project,
+                                  config: C,
+                                  defaultLanguage: LanguageRuntimeType<*>?,
+                                  parentConfigurable: Configurable?): Configurable
 
   /**
    * The optional target-specific contribution to all the volumes configurables defined by the respected

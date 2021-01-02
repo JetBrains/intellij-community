@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.RegisterToolWindowTaskProvider;
+import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,6 +106,16 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
     ToolWindow toolWindow = toolWindowManager.getToolWindow(extension.id);
     if (toolWindow == null) {
       toolWindowManager.initToolWindow(extension);
+
+      if (!extension.showOnStripeByDefault) {
+        toolWindow = toolWindowManager.getToolWindow(extension.id);
+        if (toolWindow != null) {
+          WindowInfoImpl windowInfo = toolWindowManager.getLayout().getInfo(extension.id);
+          if (windowInfo != null && !windowInfo.isFromPersistentSettings()) {
+            toolWindow.setShowStripeButton(false);
+          }
+        }
+      }
     }
   }
 

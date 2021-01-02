@@ -24,7 +24,6 @@ import com.jetbrains.python.codeInsight.typing.isInStubPackage
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
 import com.jetbrains.python.module.PyModuleService
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
@@ -33,7 +32,6 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.util.*
-import java.util.regex.Pattern
 
 /**
  * Python resolve utilities for qualified names.
@@ -332,8 +330,8 @@ private fun isRelativeImportResult(name: QualifiedName, directory: PsiDirectory,
     return true
   }
   else {
-    val py2 = LanguageLevel.forElement(directory).isPython2
-    return context.relativeLevel == 0 && py2 && PyUtil.isPackage(directory, false, null) &&
+    val sameDirectoryImportsEnabled = !ResolveImportUtil.isAbsoluteImportEnabledFor(context.foothold)
+    return context.relativeLevel == 0 && sameDirectoryImportsEnabled && PyUtil.isPackage(directory, false, null) &&
            result is PsiFileSystemItem && name != QualifiedNameFinder.findShortestImportableQName(result)
   }
 }

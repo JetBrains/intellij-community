@@ -10,6 +10,7 @@ class MavenBuildFileBuilder(val artifactId: String) {
   private var packaging: String? = null
   private val modules = ArrayList<Module>()
   private val dependencies = ArrayList<Dependency>()
+  private val properties = ArrayList<Property>()
   private val plugins = ArrayList<Plugin>()
 
   fun withPomPackaging(): MavenBuildFileBuilder {
@@ -24,6 +25,11 @@ class MavenBuildFileBuilder(val artifactId: String) {
 
   fun withDependency(groupId: String, artifactId: String, version: String, scope: MavenArtifactScope? = null): MavenBuildFileBuilder {
     dependencies.add(Dependency(groupId, artifactId, version, scope))
+    return this
+  }
+
+  fun withProperty(name: String, value: String): MavenBuildFileBuilder {
+    properties.add(Property(name, value))
     return this
   }
 
@@ -44,6 +50,7 @@ class MavenBuildFileBuilder(val artifactId: String) {
         generateProjectInfo()
         generateModules()
         generateDependencies()
+        generateProperties()
         generatePlugins()
       }
     }
@@ -88,6 +95,19 @@ class MavenBuildFileBuilder(val artifactId: String) {
     }
   }
 
+  private fun XmlBuilder.generateProperties() {
+    if (properties.isEmpty()) return
+    block("properties") {
+      for (property in properties) {
+        generateProperty(property)
+      }
+    }
+  }
+
+  private fun XmlBuilder.generateProperty(property: Property) {
+    value(property.name, property.value)
+  }
+
   private fun XmlBuilder.generatePlugins() {
     if (plugins.isEmpty()) return
     block("build") {
@@ -116,6 +136,8 @@ class MavenBuildFileBuilder(val artifactId: String) {
   data class Module(val name: String)
 
   data class Dependency(val groupId: String, val artifactId: String, val version: String, val scope: MavenArtifactScope?)
+
+  data class Property(val name: String, val value: String)
 
   data class Plugin(val groupId: String,
                     val artifactId: String,

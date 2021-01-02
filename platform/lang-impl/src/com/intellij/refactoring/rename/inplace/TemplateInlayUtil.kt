@@ -130,12 +130,17 @@ object TemplateInlayUtil {
     }
 
     val colorsScheme = editor.colorsScheme
-    val tooltip = RefactoringBundle.message("refactoring.extract.method.inplace.options.tooltip")
+    var hovered = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_HOVERED))
+    val shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement")
+    if (shortcut != null) {
+      val tooltip = RefactoringBundle.message("refactoring.extract.method.inplace.options.tooltip", KeymapUtil.getShortcutText(shortcut))
+      hovered = factory.withTooltip(tooltip, hovered)
+    }
     return SelectableInlayButton(
       editor,
       default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
       active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
-      hovered = factory.withTooltip(tooltip, button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_HOVERED)))
+      hovered
     )
   }
 
@@ -173,7 +178,11 @@ object TemplateInlayUtil {
     else {
       toSearchForTextOccurrences = false
     }
-    tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement")
+
+    val shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement")
+    if (shortcut != null) {
+      tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement", KeymapUtil.getShortcutText(shortcut))
+    }
 
     fun withBackground(bgKey: ColorKey) =
       factory.container(factory.container(buttonsPresentation,

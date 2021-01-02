@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util
 
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ContributedReferenceHost
@@ -187,10 +188,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         if (decode) {
           val start = escaper.getOffsetInHost(inSegmentStart, segmentRange)
           val end = escaper.getOffsetInHost(inSegmentEnd, segmentRange)
-          if (start != -1 && end != -1)
+          if (start != -1 && end != -1 && start <= end)
             return TextRange(start, end)
           else {
-            logger<PartiallyKnownString>().warn("decoding of ${segmentRange} failed for ${host.text} : [$start, $end]")
+            logger<PartiallyKnownString>().error(
+              "decoding of ${segmentRange} failed for $host : [$start, $end] inSegment = [$inSegmentStart, $inSegmentEnd]",
+              Attachment("host:", host.text ?: "<null>"),
+              Attachment("file:", host.containingFile?.text ?: "<null>")
+            )
             return TextRange(segmentRange.startOffset + inSegmentStart, segmentRange.startOffset + inSegmentEnd)
           }
         }

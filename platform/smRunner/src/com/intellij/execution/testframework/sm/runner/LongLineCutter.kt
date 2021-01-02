@@ -23,7 +23,7 @@ fun cutLineIfTooLong(text: String, maxLength: Int = ConsoleBuffer.getCycleBuffer
     return text
   }
 
-  val message = ServiceMessageUtil.parse(text.trim(), false)
+  val message = ServiceMessageUtil.parse(text.trim(), false, false)
 
   if (message == null) {
     //Not a message, cut as regular text

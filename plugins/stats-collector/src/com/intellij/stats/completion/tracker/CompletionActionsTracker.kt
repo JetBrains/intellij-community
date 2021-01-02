@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.storage.LookupStorage
+import com.intellij.completion.ml.util.prefix
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val lookupStorage: LookupStorage,
@@ -17,6 +18,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
     private var completionStarted = false
     private var selectedByDotTyping = false
+    private var prefixLength = 0
 
     private val deferredLog = DeferredLog()
 
@@ -48,8 +50,9 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         val timestamp = System.currentTimeMillis()
         completionStarted = true
+        prefixLength = lookup.prefix().length
         deferredLog.defer {
-            logger.completionStarted(lookup, experimentInfo.inExperiment, experimentInfo.version, timestamp)
+            logger.completionStarted(lookup, prefixLength, experimentInfo.inExperiment, experimentInfo.version, timestamp)
         }
     }
 
@@ -104,9 +107,10 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         if (!isCompletionActive()) return
 
         val timestamp = System.currentTimeMillis()
+        prefixLength--
         deferredLog.log()
         deferredLog.defer {
-            logger.afterBackspacePressed(lookup, timestamp)
+            logger.afterBackspacePressed(lookup, prefixLength, timestamp)
         }
     }
 
@@ -131,12 +135,13 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
 
     override fun afterAppend(c: Char) {
-        if (!isCompletionActive()) return
+        if (!isCompletionActive() || !c.isJavaIdentifierPart()) return
 
         val timestamp = System.currentTimeMillis()
+        prefixLength++
         deferredLog.log()
         deferredLog.defer {
-            logger.afterCharTyped(c, lookup, timestamp)
+            logger.afterCharTyped(c, lookup, prefixLength, timestamp)
         }
     }
 

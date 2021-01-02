@@ -137,14 +137,8 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     builder.createKindNode(NodeKind.STAGED)
     builder.createKindNode(NodeKind.UNSTAGED)
 
-    state.rootStates.forEach { (root, rootState) ->
-      rootState.statuses.forEach { (_, status) ->
-        NodeKind.values().forEach { kind ->
-          if (kind.`is`(status)) {
-            builder.insertStatus(root, status, kind)
-          }
-        }
-      }
+    state.forEachStatus(*NodeKind.values()) { root, status, kind ->
+      builder.insertStatus(root, status, kind)
     }
 
     if (settings.ignoredFilesShown()) {
@@ -586,6 +580,30 @@ data class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, v
   override fun toString(): @NonNls String {
     return "GitFileStatusNode(root=$root, status=$fileStatus, kind=$kind)"
   }
+}
+
+internal fun GitStageTracker.State.fileStatusNodes(vararg kinds: NodeKind): List<GitFileStatusNode> {
+  val result = mutableListOf<GitFileStatusNode>()
+  forEachStatus(*kinds) { root, status, kind ->
+    result.add(GitFileStatusNode(root, status, kind))
+  }
+  return result
+}
+
+internal fun GitStageTracker.State.forEachStatus(vararg kinds: NodeKind, function: (VirtualFile, GitFileStatus, NodeKind) -> Unit) {
+  rootStates.forEach { (root, rootState) ->
+    rootState.statuses.forEach { (_, status) ->
+      kinds.forEach { kind ->
+        if (kind.`is`(status)) {
+          function(root, status, kind)
+        }
+      }
+    }
+  }
+}
+
+internal fun GitStageTracker.State.hasMatchingRoots(vararg kinds: NodeKind): Boolean {
+  return rootStates.values.any { rootState -> rootState.statuses.values.any { status -> kinds.any { it.`is`(status) } } }
 }
 
 internal fun GitFileStatusNode.createConflict(): GitConflict? {

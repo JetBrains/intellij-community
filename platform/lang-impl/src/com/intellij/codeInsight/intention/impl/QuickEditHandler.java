@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.injected.editor.InjectedFileChangesHandler;
 import com.intellij.injected.editor.InjectedFileChangesHandlerProvider;
 import com.intellij.lang.Language;
@@ -44,6 +45,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -86,9 +88,14 @@ public class QuickEditHandler implements Disposable, DocumentListener {
 
     PsiFileFactory factory = PsiFileFactory.getInstance(project);
     String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile);
-    String newFileName =
-      StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
-      origFile.getName() + ":" + firstShred.getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
+    @Nls
+    String newFileName = CodeInsightBundle.message(
+      "name.for.injected.file.0.fragment.1.2.3",
+      StringUtil.notNullize(language.getDisplayName(), CodeInsightBundle.message("name.for.injected.file.default.lang.name")),
+      origFile.getName(),
+      firstShred.getHost().getTextRange().getStartOffset(),
+      fileType.getDefaultExtension()
+    );
 
     // preserve \r\n as it is done in MultiHostRegistrarImpl
     myNewFile = factory.createFileFromText(newFileName, language, text, true, false);

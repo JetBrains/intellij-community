@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.util.messages.Topic
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -209,13 +208,7 @@ var Module.pythonSdk: Sdk?
   set(value) {
     ModuleRootModificationUtil.setModuleSdk(this, value)
     PyUiUtil.clearFileLevelInspectionResults(project)
-    fireActivePythonSdkChanged(value)
   }
-
-fun Module.fireActivePythonSdkChanged(value: Sdk?): Unit = project
-  .messageBus
-  .syncPublisher(ACTIVE_PYTHON_SDK_TOPIC)
-  .activeSdkChanged(this, value)
 
 var Project.pythonSdk: Sdk?
   get() {
@@ -345,13 +338,4 @@ private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
   else {
     paths
   }
-}
-
-val ACTIVE_PYTHON_SDK_TOPIC: Topic<ActiveSdkListener> = Topic("Active SDK changed", ActiveSdkListener::class.java)
-
-/**
- * The listener that is used with [ACTIVE_PYTHON_SDK_TOPIC] message bus topic.
- */
-interface ActiveSdkListener {
-  fun activeSdkChanged(module: Module, sdk: Sdk?)
 }

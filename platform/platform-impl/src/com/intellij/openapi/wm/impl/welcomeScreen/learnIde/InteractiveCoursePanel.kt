@@ -6,6 +6,8 @@ import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -37,8 +39,9 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
   val pluginPanel = JPanel()
   val pluginLabel = JLabel(data.getIcon())
 
-  private val roundBorder1px = CompoundBorder(RoundedLineBorder(LearnIdeContentColorsAndFonts.InteractiveCoursesBorder, 4, 1),
-                                              JBUI.Borders.emptyRight(5))
+  private val roundBorder1pxActive = CompoundBorder(RoundedLineBorder(LearnIdeContentColorsAndFonts.ActiveInteractiveCoursesBorder, 8, 1), JBUI.Borders.emptyRight(5))
+
+  private val roundBorder1pxInactive = CompoundBorder(RoundedLineBorder(LearnIdeContentColorsAndFonts.InactiveInteractiveCoursesBorder, 8, 1), JBUI.Borders.emptyRight(5))
 
   private val calculateInnerComponentHeight: () -> Int = { preferredSize.height }
 
@@ -48,7 +51,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
 
     layout = BoxLayout(this, BoxLayout.LINE_AXIS)
     isOpaque = false
-    border = roundBorder1px
+    border = roundBorder1pxInactive
     alignmentX = LEFT_ALIGNMENT
 
     add(pluginPanel)
@@ -100,15 +103,11 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
 
     panel.add(rigid(12, 10))
 
-    val learnIdeFeaturesHeader = object : JBLabel(data.getName()) {
-      override fun setUI(ui: LabelUI?) {
-        super.setUI(ui)
-        if (font != null) {
-          font = FontUIResource(font.deriveFont(font.size2D).deriveFont(Font.BOLD))
-        }
-      }
-    }
+    val learnIdeFeaturesHeader = DynamicFontLabel(data.getName())
 
+    learnIdeFeaturesHeader.apply { val labelFont = UIUtil.getLabelFont()
+      font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D)
+    }
     learnIdeFeaturesHeader.alignmentX = LEFT_ALIGNMENT
     panel.add(learnIdeFeaturesHeader)
 
@@ -171,6 +170,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
   private fun activateLearnIdeFeaturesPanel() {
     background = LearnIdeContentColorsAndFonts.HoveredColor
     isOpaque = true
+    border = roundBorder1pxActive
     repaint()
     cursor = Cursor(Cursor.HAND_CURSOR)
   }
@@ -178,6 +178,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
   private fun deactivateLearnIdeFeaturesPanel(mouseLocationOnScreen: Point) {
     if (pointerInLearnIdeFeaturesPanel(mouseLocationOnScreen)) return
     isOpaque = false
+    border = roundBorder1pxInactive
     repaint()
     cursor = Cursor(Cursor.DEFAULT_CURSOR)
   }
@@ -203,6 +204,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     chevronPanel.maximumSize = chevronPanel.size
     interactiveCourseContent.revalidate()
     interactiveCourseContent.repaint()
+    border = roundBorder1pxInactive
     repaint()
 
   }
@@ -225,6 +227,16 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
   private fun rigid(_width: Int, _height: Int): Component {
     return Box.createRigidArea(
       Dimension(JBUI.scale(_width), JBUI.scale(_height))).apply { (this as JComponent).alignmentX = LEFT_ALIGNMENT }
+  }
+
+  class DynamicFontLabel(@Nls text: String): JBLabel(text) {
+
+    override fun setUI(ui: LabelUI?) {
+      super.setUI(ui)
+      if (font != null) {
+        font = FontUIResource(font.deriveFont(UIUtil.getLabelFont().size.toFloat()).deriveFont(Font.BOLD))
+      }
+    }
   }
 
 }

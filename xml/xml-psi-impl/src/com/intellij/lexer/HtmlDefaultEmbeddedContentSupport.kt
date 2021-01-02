@@ -54,7 +54,7 @@ open class HtmlScriptStyleEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTa
     }
   }
 
-  protected fun styleLanguage(styleLang: String?): Language? {
+  protected open fun styleLanguage(styleLang: String?): Language? {
     val cssLanguage = Language.findLanguageByID("CSS")
     if (styleLang != null && !styleLang.equals("text/css", ignoreCase = true)) {
       cssLanguage
@@ -67,7 +67,7 @@ open class HtmlScriptStyleEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTa
     return cssLanguage
   }
 
-  protected fun scriptEmbedmentInfo(mimeType: String?): HtmlEmbedmentInfo? =
+  protected open fun scriptEmbedmentInfo(mimeType: String?): HtmlEmbedmentInfo? =
     if (mimeType != null)
       Language.findInstancesByMimeType(if (lexer.isCaseInsensitive) StringUtil.toLowerCase(mimeType) else mimeType)
         .asSequence()

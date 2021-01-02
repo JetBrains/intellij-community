@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,6 +20,8 @@ class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
   override fun cleanup() = writer.cleanup()
 
   override fun rollOver() = writer.rollOver()
+
+  override fun dispose() = Disposer.dispose(writer)
 }
 
 @ApiStatus.Internal

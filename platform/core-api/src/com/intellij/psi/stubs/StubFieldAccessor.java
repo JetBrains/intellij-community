@@ -4,7 +4,7 @@ package com.intellij.psi.stubs;
 import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
-final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, Stub>> {
+final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? extends Stub>> {
   private final Field myField;
   final String externalId;
   private volatile ObjectStubSerializer<?, Stub> myFieldValue;

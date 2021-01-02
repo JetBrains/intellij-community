@@ -31,7 +31,9 @@ abstract class EventLogConfigBaseParserTest {
                        existingConfig: Map<EventLogBuildType, EventLogSendConfiguration> = emptyMap(),
                        existingEndpoints: Map<String, String> = emptyMap(),
                        notExistingConfig: Set<EventLogBuildType> = emptySet(),
-                       notExistingEndpoints: Set<String> = emptySet()) {
+                       notExistingEndpoints: Set<String> = emptySet(),
+                       existingOptions: Map<String, String> = emptyMap(),
+                       notExistingOptions: Set<String> = emptySet()) {
     val reader = BufferedReader(StringReader(config))
     val settings = EventLogExternalSettings.parseSendSettings(reader, DEFAULT_VERSION)
     Assert.assertNotNull(settings)
@@ -55,6 +57,14 @@ abstract class EventLogConfigBaseParserTest {
 
     for (endpoint in notExistingEndpoints) {
       Assert.assertNull(settings.getEndpoint(endpoint))
+    }
+
+    for (option in existingOptions) {
+      Assert.assertEquals(option.value, settings.getOption(option.key))
+    }
+
+    for (option in notExistingOptions) {
+      Assert.assertNull(settings.getOption(option))
     }
   }
 

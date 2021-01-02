@@ -1032,10 +1032,20 @@ public final class PlatformTestUtil {
    */
   public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
                                                                  @NotNull String executorId) throws InterruptedException {
+    return executeConfigurationAndWait(runConfiguration, executorId, 60);
+  }
+
+  /**
+   * Executing {@code runConfiguration} with executor {@code executoId} and wait for the {@code timeoutInSeconds} seconds till process ends.
+   */
+  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
+                                                                 @NotNull String executorId,
+                                                                 long timeoutInSeconds) throws InterruptedException {
     Pair<ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
     ProcessHandler processHandler = result.second.getProcessHandler();
-    processHandler.waitFor(60000);
-    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
+    if (!processHandler.waitFor(timeoutInSeconds * 1000)) {
+      fail("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler);
+    }
     return result.first;
   }
 
@@ -1100,7 +1110,7 @@ public final class PlatformTestUtil {
     });
     LOG.debug("Waiting for process to start");
     if (!latch.await(60, TimeUnit.SECONDS)) {
-      fail("Process failed to start");
+      fail("Process failed to start in 60 seconds");
     }
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }

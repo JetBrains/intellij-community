@@ -248,12 +248,19 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   private class MyMouseMotionListener extends MouseMotionAdapter {
     private Point myLastMouseLocation;
 
+    /**
+     * this method should be changed only in par with
+     * {@link com.intellij.ui.popup.list.ListPopupImpl.MyMouseMotionListener#isMouseMoved(Point)}
+     */
     private boolean isMouseMoved(Point location) {
       if (myLastMouseLocation == null) {
         myLastMouseLocation = location;
         return false;
       }
-      return !myLastMouseLocation.equals(location);
+
+      Point prev = myLastMouseLocation;
+      myLastMouseLocation = location;
+      return !prev.equals(location);
     }
 
     @Override

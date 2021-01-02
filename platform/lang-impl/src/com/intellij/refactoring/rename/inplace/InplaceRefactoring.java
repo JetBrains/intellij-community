@@ -12,10 +12,12 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -66,7 +68,6 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
 import com.intellij.util.containers.NotNullList;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -913,6 +914,18 @@ public abstract class InplaceRefactoring {
 
   public static void setShowBalloonInHeadlessMode(boolean showBalloonInHeadlessMode) {
     ourShowBalloonInHeadlessMode = showBalloonInHeadlessMode;
+  }
+
+  protected final void initPopupOptionsAdvertisement() {
+    Shortcut shortcut = KeymapUtil.getPrimaryShortcut("SelectVirtualTemplateElement");
+    if (shortcut != null) {
+      setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text", KeymapUtil.getShortcutText(shortcut)));
+    }
+    else {
+      String enterShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
+      String tabShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
+      setAdvertisementText(LangBundle.message("popup.advertisement.press.or.to.replace", enterShortcut, tabShortcut));
+    }
   }
 
   private class MyTemplateListener extends TemplateEditingAdapter {

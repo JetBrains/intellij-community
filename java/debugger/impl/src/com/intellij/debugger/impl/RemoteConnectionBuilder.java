@@ -15,6 +15,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 import java.util.jar.Attributes;
 
@@ -194,44 +197,31 @@ public class RemoteConnectionBuilder {
     }
   }
 
-  private static final String AGENT_FILE_NAME = "debugger-agent.jar";
+  private static final String AGENT_ARTIFACT_NAME = "debugger-agent";
   @NonNls private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   private static void addDebuggerAgent(JavaParameters parameters, @Nullable Project project) {
     if (AsyncStacksUtils.isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
-      if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_FILE_NAME))) {
+      if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_ARTIFACT_NAME + ".jar"))) {
         Sdk jdk = parameters.getJdk();
         String version = jdk != null ? JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION) : null;
         if (version != null) {
           JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(version);
           if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
-            File classesRoot = new File(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
-            File agentFile;
-            if (classesRoot.isFile()) {
-              agentFile = new File(classesRoot.getParentFile(), "rt/" + AGENT_FILE_NAME);
-            }
-            else {
-              File artifactsInBuildScripts = new File(classesRoot.getParentFile().getParentFile().getParentFile(), "project-artifacts");
-              if (artifactsInBuildScripts.exists()) {
-                //running tests via build scripts
-                agentFile = new File(artifactsInBuildScripts, "debugger_agent/" + AGENT_FILE_NAME);
-              }
-              else {
-                //running IDE or tests in IDE
-                agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + AGENT_FILE_NAME);
-              }
-            }
-            if (agentFile.exists()) {
-              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(
-                agentFile.getAbsolutePath(), "captureAgent", null, f -> f.getName().startsWith("debugger-agent"));
+            String classesRoot = PathUtil.getJarPathForClass(DebuggerManagerImpl.class);
+            Path agentArtifactPath = PathManager.getJarArtifactPath(classesRoot, AGENT_ARTIFACT_NAME);
+            if (Files.exists(agentArtifactPath)) {
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentArtifactPath.toAbsolutePath().toString(),
+                                                                           "captureAgent", null,
+                                                                           f -> f.getName().startsWith("debugger-agent"));
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + generateAgentSettings(project));
               }
             }
             else {
-              LOG.warn("Capture agent not found: " + agentFile);
+              LOG.warn("Capture agent not found: " + agentArtifactPath);
             }
           }
           else {

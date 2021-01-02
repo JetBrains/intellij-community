@@ -47,11 +47,16 @@ class UnknownInvalidSdkFixLocal extends UnknownSdkFixActionLocalBase implements 
                                  mySdk.mySdk.getName());
   }
 
+  @Override
+  protected @NotNull String getSuggestedSdkHome() {
+    return myFix.getExistingSdkHome();
+  }
+
   @NotNull
   @Override
   protected Sdk applyLocalFix() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     try {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       String sdkFixVersionString = myFix.getVersionString();
       String sdkHome = myFix.getExistingSdkHome();
 

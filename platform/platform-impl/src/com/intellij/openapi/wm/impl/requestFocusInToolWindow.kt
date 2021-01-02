@@ -46,32 +46,9 @@ internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
 
 private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {
   val owner = SwingUtilities.getWindowAncestor(toolWindow.component)
-  //Toolwindow component shouldn't take focus back if new dialog or frame appears
-  //Example: Ctrl+D on file history brings a diff dialog to front and then hides it by main frame by calling
-  // toFront on toolwindow window
   val activeFrame = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
   if (activeFrame != null && activeFrame !== owner) {
-    return
-  }
-  //if (owner == null) {
-  //  System.out.println("owner = " + owner);
-  //  return;
-  //}
-  // if owner is active window or it has active child window which isn't floating decorator then
-  // don't bring owner window to font. If we will make toFront every time then it's possible
-  // the following situation:
-  // 1. user perform refactoring
-  // 2. "Do not show preview" dialog is popping up.
-  // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
-  // isn't active.
-  if (owner != null && owner.focusOwner == null) {
-    val activeWindow = getActiveWindow(owner.ownedWindows)
-    if (activeWindow == null || activeWindow is FloatingDecorator) {
-      LOG.debug("owner.toFront()")
-      //Thread.dumpStack();
-      //System.out.println("------------------------------------------------------");
-      owner.toFront()
-    }
+    owner.toFront()
   }
 }
 

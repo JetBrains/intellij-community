@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
+import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
@@ -90,6 +91,8 @@ public class ValidationRulesPersistedStorage extends BaseValidationRulesPersiste
 
   @Override
   public void update() {
+    EventLogConfigOptionsService.getInstance().updateOptions(myRecorderId, myMetadataLoader);
+
     long lastModifiedLocally = myMetadataPersistence.getLastModified();
     long lastModifiedOnServer = myMetadataLoader.getLastModifiedOnServer();
     if (LOG.isTraceEnabled()) {

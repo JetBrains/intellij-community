@@ -257,13 +257,13 @@ Android Studio: exclude smali */
     plugin("intellij.statsCollector") {
       bundlingRestrictions.includeInEapOnly = true
     },
-    plugin("intellij.statsCollector"),
 Android Studio: exclude intellij.statsCollector */
     plugin("intellij.jps.cache"),
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
       withProjectLibrary("ktor-server-jetty")
+      withProjectLibrary("org.jetbrains.kotlinx:kotlinx-serialization-core")
       withGeneratedResources(new ResourcesGenerator() {
         @Override
         File generateResources(BuildContext context) {
@@ -399,6 +399,7 @@ Android Studio: exclude intellij.statsCollector */
       withResourceFromModule("intellij.android.core", "lib/commons-compress-1.8.1.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/javawriter-2.2.1.jar", "lib")
 
+      withResourceFromModule("intellij.android.core", "lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("intellij.android.core", "lib/sampleData", "lib/sampleData")
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")

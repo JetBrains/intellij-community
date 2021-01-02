@@ -44,6 +44,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.*;
 
 @State(name = "DockManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
@@ -339,30 +340,24 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   private @Nullable DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent<?> content) {
-    DockContainer candidate = null;
-    for (DockContainer each : getContainers()) {
+    List<DockContainer> containers = new ArrayList<>(getContainers());
+    containers.remove(myCurrentDragSession.myStartDragContainer);
+    containers.add(0, myCurrentDragSession.myStartDragContainer);
+
+    for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptArea();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
-        Window window = UIUtil.getWindow(each.getContainerComponent());
-        if (window != null && window.isActive()) return each;
-        if (candidate == null || Comparing.equal(candidate, myCurrentDragSession.myStartDragContainer)) {
-          candidate = each;
-        }
+        return each;
       }
     }
 
-    for (DockContainer each : getContainers()) {
+    for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptAreaFallback();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
-        Window window = UIUtil.getWindow(each.getContainerComponent());
-        if (window != null && window.isActive()) return candidate;
-        if (candidate == null || Comparing.equal(candidate, myCurrentDragSession.myStartDragContainer)) {
-          candidate = each;
-        }
+        return each;
       }
     }
-
-    return candidate;
+    return null;
   }
 
   private DockContainerFactory getFactory(String type) {

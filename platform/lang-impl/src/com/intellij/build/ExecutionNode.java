@@ -69,6 +69,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private volatile NullableLazyValue<Icon> myPreferredIconValue;
   private Predicate<? super ExecutionNode> myFilter;
   private boolean myAlwaysLeaf;
+  private boolean myAlwaysVisible;
 
   public ExecutionNode(Project aProject, ExecutionNode parentNode, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
     super(aProject, parentNode);
@@ -79,7 +80,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   private boolean nodeIsVisible(ExecutionNode node) {
-    return myFilter == null || myFilter.test(node);
+    return node.myAlwaysVisible || myFilter == null || myFilter.test(node);
   }
 
   @Override
@@ -103,6 +104,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
       }
       presentation.addText(hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
+  }
+
+  @ApiStatus.Internal
+  void applyFrom(@NotNull BuildEventPresentationData buildEventPresentationData) {
+    myAlwaysVisible = true;
+    setIconProvider(() -> buildEventPresentationData.getNodeIcon());
   }
 
   @Override
@@ -197,9 +204,9 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
       List<ExecutionNode> parentVisibleChildrenList = myParentNode.myVisibleChildrenList;
       if (parentVisibleChildrenList != null) {
         Predicate<? super ExecutionNode> filter = myParentNode.myFilter;
-        if (filter != null) {
+        if (myAlwaysVisible || filter != null) {
           boolean wasPresent = parentVisibleChildrenList.contains(this);
-          boolean shouldBePresent = filter.test(this);
+          boolean shouldBePresent = myAlwaysVisible || filter.test(this);
           if (shouldBePresent != wasPresent) {
             if (shouldBePresent) {
               myParentNode.maybeReapplyFilter();
@@ -360,7 +367,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return Collections.emptyList();
   }
 
-  public void setIconProvider(Supplier<? extends Icon> iconProvider) {
+  public void setIconProvider(@NotNull Supplier<? extends Icon> iconProvider) {
     myPreferredIconValue = new NullableLazyValue<>() {
       @Nullable
       @Override

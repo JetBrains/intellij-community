@@ -150,7 +150,10 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("intention.text.edit.0.fragment", StringUtil.notNullize(myLastLanguageName, "Injected"));
+    return CodeInsightBundle.message(
+      "intention.text.edit.0.fragment",
+      StringUtil.notNullize(myLastLanguageName, CodeInsightBundle.message("name.for.injected.file.default.lang.name"))
+    );
   }
 
   @Override

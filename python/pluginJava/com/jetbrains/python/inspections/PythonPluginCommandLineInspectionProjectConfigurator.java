@@ -79,7 +79,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
           ProjectJdkTable.getInstance().addJdk(sdk);
         });
 
-        PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, null, null);
+        PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, null);
       }
       else {
         logger.reportMessage(1, "ERROR: Can't find Python interpreter");

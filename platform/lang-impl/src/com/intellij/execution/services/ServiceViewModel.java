@@ -501,7 +501,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
           return roots.contains(item);
         }
       });
-      myRoots = roots;
+      myRoots = new CopyOnWriteArrayList<>(roots);
     }
 
     @NotNull

@@ -90,4 +90,6 @@ class TestEventLogMetadataLoader(private val myContent: String) : EventLogMetada
   override fun getLastModifiedOnServer(): Long = 0
 
   override fun loadMetadataFromServer(): String = myContent
+
+  override fun getOptionValue(name: String): String? = null
 }

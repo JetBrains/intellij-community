@@ -157,13 +157,14 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   private void registerShortcuts() {
     for (AnAction action : buildGroup(new Ref<>()).getChildActionsOrStubs()) {
-      ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(action);
-      if (shortcutSet != null && action instanceof ToggleFragmentAction) {
-        action.registerCustomShortcutSet(shortcutSet, null);
+      ShortcutSet shortcutSet = action.getShortcutSet();
+      if (shortcutSet.getShortcuts().length > 0 && action instanceof ToggleFragmentAction) {
         new AnAction(action.getTemplateText()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            ((ToggleFragmentAction)action).myFragment.toggle(true); // show or set focus
+            SettingsEditorFragment<?, ?> fragment = ((ToggleFragmentAction)action).myFragment;
+            fragment.toggle(true); // show or set focus
+            IdeFocusManager.getGlobalInstance().requestFocus(fragment.getEditorComponent(), false);
           }
         }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane());
       }
@@ -219,7 +220,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         actionGroup.add(customGroup);
         continue;
       }
-      actionGroup.add(new ToggleFragmentAction(fragment, lastSelected));
+      ToggleFragmentAction action = new ToggleFragmentAction(fragment, lastSelected);
+      ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(action);
+      if (shortcutSet != null) {
+        action.registerCustomShortcutSet(shortcutSet, null);
+      }
+      actionGroup.add(action);
       List<SettingsEditorFragment<Settings, ?>> children = fragment.getChildren();
       if (!children.isEmpty()) {
         DefaultActionGroup childGroup = buildGroup(children, lastSelected);

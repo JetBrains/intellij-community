@@ -10,11 +10,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.types.Path
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.TestingOptions
-import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -49,13 +45,18 @@ class TestingTasksImpl extends TestingTasks {
     checkOptions()
 
     def compilationTasks = CompilationTasks.create(context)
+    def projectArtifacts = options.beforeRunProjectArtifacts?.split(";")?.toList()
+    if (projectArtifacts) {
+      compilationTasks.buildProjectArtifacts(projectArtifacts)
+    }
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
       def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
       JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
     }
     if (runConfigurations != null) {
-      compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
-      compilationTasks.buildProjectArtifacts(runConfigurations.collectMany {it.requiredArtifacts})
+      compilationTasks.
+        compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
+      compilationTasks.buildProjectArtifacts(runConfigurations.collectMany { it.requiredArtifacts })
     }
     else if (options.mainModule != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], [options.mainModule, "intellij.platform.buildScripts"])

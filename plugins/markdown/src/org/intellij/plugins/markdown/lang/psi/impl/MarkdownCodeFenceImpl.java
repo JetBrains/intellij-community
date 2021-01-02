@@ -97,13 +97,19 @@ public class MarkdownCodeFenceImpl extends CompositePsiElement implements PsiLan
   @NotNull
   @Override
   public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    //Note that in this text escaper getStartOffsetInParent() refers to offset in host
     return new LiteralTextEscaper<PsiLanguageInjectionHost>(this) {
       @Override
       public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
         List<PsiElement> elements = MarkdownCodeFenceUtils.getContent((MarkdownCodeFenceImpl)this.myHost, false);
+
         if (elements == null) return true;
+
         for (PsiElement element: elements) {
-          outChars.append(element.getText());
+          TextRange intersected = rangeInsideHost.intersection(element.getTextRangeInParent());
+          if (intersected == null) continue;
+
+          outChars.append(intersected.substring(myHost.getText()));
         }
 
         return true;
@@ -115,19 +121,24 @@ public class MarkdownCodeFenceImpl extends CompositePsiElement implements PsiLan
         if (elements == null) return -1;
         int cur = 0;
         for (PsiElement element: elements) {
-          if (cur + element.getTextLength() == offsetInDecoded) {
-            return element.getStartOffsetInParent() + element.getTextLength();
+          TextRange intersected = rangeInsideHost.intersection(element.getTextRangeInParent());
+          if (intersected == null || intersected.isEmpty()) continue;
+
+          if (cur + intersected.getLength() == offsetInDecoded) {
+            return intersected.getStartOffset() + intersected.getLength();
           } else if (cur == offsetInDecoded) {
-            return element.getStartOffsetInParent();
-          } else if (cur < offsetInDecoded &&  (cur + element.getTextLength()) > offsetInDecoded) {
-            return element.getStartOffsetInParent() + (offsetInDecoded - cur);
+            return intersected.getStartOffset();
+          } else if (cur < offsetInDecoded &&  (cur + intersected.getLength()) > offsetInDecoded) {
+            return intersected.getStartOffset() + (offsetInDecoded - cur);
           }
-          cur += element.getTextLength();
+          cur += intersected.getLength();
         }
 
         PsiElement last = elements.get(elements.size() - 1);
+        TextRange intersected = rangeInsideHost.intersection(last.getTextRangeInParent());
+        if (intersected == null || intersected.isEmpty()) return -1;
 
-        int result = last.getStartOffsetInParent() + (offsetInDecoded - (cur - last.getTextLength()));
+        int result = intersected.getStartOffset() + (offsetInDecoded - (cur - intersected.getLength()));
         if (rangeInsideHost.getStartOffset() <= result && result <=rangeInsideHost.getEndOffset()) {
           return result;
         }

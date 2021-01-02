@@ -6,6 +6,7 @@ import com.intellij.execution.target.TargetEnvironmentFactory
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.wsl.WSLUtil
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import javax.swing.Icon
@@ -29,7 +30,8 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
 
   override fun createConfigurable(project: Project,
                                   config: WslTargetEnvironmentConfiguration,
-                                  defaultLanguage: LanguageRuntimeType<*>?) = WslTargetConfigurable(config)
+                                  defaultLanguage: LanguageRuntimeType<*>?,
+                                  parentConfigurable: Configurable?) = WslTargetConfigurable(config)
 
   override fun duplicateConfig(config: WslTargetEnvironmentConfiguration): WslTargetEnvironmentConfiguration =
     duplicateTargetConfiguration(this, config)

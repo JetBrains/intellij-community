@@ -126,7 +126,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   protected void showDialogAdvertisement(@NonNls String actionId) {
     if (Registry.is("enable.rename.options.inplace", true)) {
-      setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text"));
+      initPopupOptionsAdvertisement();
     }
     else {
       super.showDialogAdvertisement(actionId);

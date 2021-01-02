@@ -35,7 +35,9 @@ class GradleDebugSettingsEditor : SettingsEditor<GradleRunConfiguration?>() {
         }
       }
       row {
-        component(myDebugAllCheckBox)
+        component(myDebugAllCheckBox).apply {
+          comment(GradleBundle.message("gradle.tasks.debugging.all.comment"))
+        }
       }
     }
 }

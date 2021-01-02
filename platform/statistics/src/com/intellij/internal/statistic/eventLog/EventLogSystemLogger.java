@@ -13,7 +13,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class EventLogSystemLogger {
-  private static final String GROUP = "event.log";
+  public static final String GROUP = "event.log";
 
   public static void logMetadataLoad(@NotNull String recorderId, @Nullable String version) {
     final FeatureUsageData data = new FeatureUsageData().addVersionByString(version);

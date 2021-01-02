@@ -22,7 +22,8 @@ class CompletionFileLogger(private val installationUID: String,
 
   private val ideVersion by lazy { ApplicationInfo.getInstance().build.asString() }
 
-  override fun completionStarted(lookup: LookupImpl, isExperimentPerformed: Boolean, experimentVersion: Int, timestamp: Long) {
+  override fun completionStarted(lookup: LookupImpl, prefixLength: Int, isExperimentPerformed: Boolean, experimentVersion: Int,
+                                 timestamp: Long) {
     val state = stateManager.update(lookup, false)
 
     val lookupStorage = LookupStorage.get(lookup)
@@ -37,7 +38,7 @@ class CompletionFileLogger(private val installationUID: String,
       installationUID, completionUID, language.displayName,
       isExperimentPerformed, experimentVersion,
       state, userFactors, contextFactors,
-      prefixLength = lookup.prefix().length, bucket = bucket,
+      prefixLength = prefixLength, bucket = bucket,
       timestamp = lookupStorage?.startedTimestamp ?: timestamp)
 
     val shownTimestamp = CompletionUtil.getShownTimestamp(lookup)
@@ -63,9 +64,9 @@ class CompletionFileLogger(private val installationUID: String,
     eventLogger.log(event)
   }
 
-  override fun afterCharTyped(c: Char, lookup: LookupImpl, timestamp: Long) {
+  override fun afterCharTyped(c: Char, lookup: LookupImpl, prefixLength: Int, timestamp: Long) {
     val state = stateManager.update(lookup, true)
-    val event = TypeEvent(installationUID, completionUID, state, lookup.prefix().length, bucket, timestamp, language.displayName)
+    val event = TypeEvent(installationUID, completionUID, state, prefixLength, bucket, timestamp, language.displayName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)
@@ -110,10 +111,10 @@ class CompletionFileLogger(private val installationUID: String,
     eventLogger.log(event)
   }
 
-  override fun afterBackspacePressed(lookup: LookupImpl, timestamp: Long) {
+  override fun afterBackspacePressed(lookup: LookupImpl, prefixLength: Int, timestamp: Long) {
     val state = stateManager.update(lookup, true)
 
-    val event = BackspaceEvent(installationUID, completionUID, state, lookup.prefix().length, bucket, timestamp, language.displayName)
+    val event = BackspaceEvent(installationUID, completionUID, state, prefixLength, bucket, timestamp, language.displayName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)

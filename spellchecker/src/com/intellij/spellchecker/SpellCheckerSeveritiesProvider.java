@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,7 +16,14 @@ import java.util.List;
 
 public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
   private static final TextAttributesKey TYPO_KEY = TextAttributesKey.createTextAttributesKey("TYPO");
-  public static final HighlightSeverity TYPO = new HighlightSeverity("TYPO", HighlightSeverity.INFORMATION.myVal + 5);
+  @SuppressWarnings("UnresolvedPropertyKey")
+  public static final HighlightSeverity TYPO = new HighlightSeverity(
+    "TYPO",
+    HighlightSeverity.INFORMATION.myVal + 5,
+    SpellCheckerBundle.messagePointer("typo.severity"),
+    SpellCheckerBundle.messagePointer("typo.severity.capitalized"),
+    SpellCheckerBundle.messagePointer("typo.severity.count.message")
+  );
 
   @Override
   @NotNull

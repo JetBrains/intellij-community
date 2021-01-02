@@ -120,7 +120,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     while (parts.size() > 1) {
       index = parts.size() / 2 - 1;
       parts.remove(index);
-      if (fm.stringWidth(StringUtil.join(parts, separator) + "...") < maxWidth) {
+      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
         parts.add(index, "...");
         return left + StringUtil.join(parts, separator);
       }

@@ -79,14 +79,15 @@ public class ReferenceFilter extends FilterAction {
         }
       };
       private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("reference.filter.help.text"));
-      private final CheckBox myCheckBox = new CheckBox(SSRBundle.message("reference.filter.invert.template"), this, "inverseTemplate");
+      private final CheckBox myCheckBox = new CheckBox(SSRBundle.message("invert.filter"), this, "inverseTemplate");
+      private final Component myGlue = Box.createGlue();
       public boolean inverseTemplate = myConstraint.isInvertReference();
 
       @Override
       protected void layoutComponents() {
         myComboBox.setRenderer(renderer);
         myComboBox.setPreferredSize(new Dimension(160, 28));
-        ComboboxSpeedSearch.installSpeedSearch(myComboBox, configuration -> configuration.getName());
+        myComboBox.setSwingPopup(false);
 
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);
@@ -97,19 +98,24 @@ public class ReferenceFilter extends FilterAction {
             .addGroup(layout.createSequentialGroup()
                         .addComponent(myLabel)
                         .addComponent(myComboBox)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
-                        .addComponent(myHelpLabel))
+            )
             .addGroup(layout.createSequentialGroup()
-                        .addComponent(myCheckBox))
+                        .addComponent(myCheckBox)
+                        .addComponent(myGlue)
+                        .addComponent(myHelpLabel)
+            )
         );
         layout.setVerticalGroup(
           layout.createSequentialGroup()
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
                         .addComponent(myLabel)
                         .addComponent(myComboBox)
-                        .addComponent(myHelpLabel))
+            )
             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(myCheckBox))
+                        .addComponent(myCheckBox)
+                        .addComponent(myGlue)
+                        .addComponent(myHelpLabel)
+            )
         );
       }
 

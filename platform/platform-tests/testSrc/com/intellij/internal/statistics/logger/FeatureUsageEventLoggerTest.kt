@@ -546,6 +546,7 @@ class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
   override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
+  override fun dispose() = Unit
 }
 
 class TestSystemEventIdProvider(var value: Long) : StatisticsSystemEventIdProvider {
