@@ -364,7 +364,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                         val callableDeclaration = parameter.getStrictParentOfType<KtCallableDeclaration>()?.let {
                             if (it !is KtNamedFunction) it.containingClass() else it
                         } ?: return@any false
-                        val typeParameters = callableDeclaration.typeParameters.map { it.text }
+                        val typeParameters = callableDeclaration.typeParameters.map { it.name }
                         if (typeParameters.isEmpty()) return@any false
                         if (typeArguments.none { it.text in typeParameters }) return@any false
 
