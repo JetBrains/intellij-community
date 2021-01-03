@@ -16,8 +16,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,10 +31,14 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.Objects;
 
 public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericDebuggerRunnerSettings> {
+  private static final Logger LOG = Logger.getInstance(GenericDebuggerRunner.class);
+
   @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile
@@ -52,21 +59,44 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     }
 
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
-    executionManager
-      .executePreparationTasks(environment, state)
-      .onSuccess(__ -> {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          executionManager.startRunProfile(environment, state, state1 -> {
-            return doExecute(state, environment);
-          });
-        });
+    RunProfile runProfile = environment.getRunProfile();
+    if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
+        Experiments.getInstance().isFeatureEnabled("run.targets") &&
+        state instanceof TargetEnvironmentAwareRunProfileState &&
+        ((TargetEnvironmentAwareRunProfile)runProfile).getDefaultTargetName() != null) {
+      executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {
+        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment);
       });
+    }
+    else {
+      executionManager.startRunProfile(environment, state, state1 -> {
+        return doExecute(state, environment);
+      });
+    }
   }
 
   // used externally
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return createContentDescriptor(state, env);
+  }
+
+  @NotNull
+  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
+                                                                   @NotNull ExecutionEnvironment env)
+    throws ExecutionException {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    AsyncPromise<@Nullable RunContentDescriptor> promise = new AsyncPromise<>();
+    state.prepareTargetToCommandExecution(env, () -> {
+      try {
+        promise.setResult(doExecute(state, env));
+      }
+      catch (Throwable e) {
+        LOG.warn("Failed to execute debug configuration async", e);
+        promise.setError(e.getLocalizedMessage());
+      }
+    });
+    return promise;
   }
 
   @Nullable

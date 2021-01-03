@@ -17,10 +17,13 @@ import java.util.Collection;
 
 /**
  * Provides low-level identifier search for a project.
+ * <p>
  * Basically it uses {@link com.intellij.psi.impl.cache.impl.id.IdIndex} data,
- * so some custom language implementation may filter out some words on indexing stage {@link BaseFilterLexer}.
- *
- * Similar to {@link PsiSearchHelper} but doesn't operate with {@link PsiFile}-s.
+ * so some custom language implementation may filter out some words on indexing stage {@link com.intellij.psi.impl.cache.impl.BaseFilterLexer}.
+ * </p>
+ * <p>
+ * Similar to {@link PsiSearchHelper}, but doesn't operate with {@link PsiFile}-s.
+ * </p>
  */
 public interface CacheManager {
 

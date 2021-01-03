@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
@@ -19,7 +18,7 @@ import git4idea.index.GitStageTrackerListener
 import git4idea.index.createTwoSidesDiffRequestProducer
 import java.util.stream.Stream
 
-class GitStageDiffPreview(project: Project, private val tree: ChangesTree, tracker: GitStageTracker, parent: Disposable) :
+class GitStageDiffPreview(project: Project, private val tree: GitStageTree, tracker: GitStageTracker, parent: Disposable) :
   ChangeViewDiffRequestProcessor(project, "Stage") {
 
   init {
@@ -53,7 +52,7 @@ class GitStageDiffPreview(project: Project, private val tree: ChangesTree, track
 
   private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper> =
     Stream.concat(
-      modelData.userObjectsStream(GitFileStatusNode::class.java).map { GitFileStatusNodeWrapper(it) },
+      modelData.userObjectsStream(GitFileStatusNode::class.java).filter { it.kind != NodeKind.IGNORED }.map { GitFileStatusNodeWrapper(it) },
       modelData.userObjectsStream(Change::class.java).map { ChangeWrapper(it) }
     )
 
@@ -62,7 +61,7 @@ class GitStageDiffPreview(project: Project, private val tree: ChangesTree, track
 
     override fun getUserObject(): Any = node
 
-    override fun createProducer(project: Project?): DiffRequestProducer {
+    override fun createProducer(project: Project?): DiffRequestProducer? {
       return createTwoSidesDiffRequestProducer(project!!, node)
     }
   }

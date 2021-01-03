@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
@@ -26,12 +25,13 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     return moduleEntity?.externalSystemOptions
   }
 
-  private fun editEntity(action: ModifiableExternalSystemModuleOptionsEntity.() -> Unit) {
-    val diff = (module as ModuleBridge).diff
-    if (diff != null) {
+  private fun editEntity(moduleDiff: WorkspaceEntityStorageDiffBuilder? = null,
+                         action: ModifiableExternalSystemModuleOptionsEntity.() -> Unit) {
+    module as ModuleBridge
+    if (moduleDiff != null) {
       val moduleEntity = module.entityStorage.current.findModuleEntity(module) ?: return
-      val options = diff.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
-      diff.modifyEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, options, action)
+      val options = moduleDiff.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
+      moduleDiff.modifyEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, options, action)
     }
     else {
       WriteAction.runAndWait<RuntimeException> {
@@ -44,26 +44,24 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     }
   }
 
-  private fun updateSource() {
-    WriteAction.runAndWait<RuntimeException> {
-      val storage = (module as ModuleBridge).entityStorage.current
-      val moduleEntity = storage.findModuleEntity(module) ?: return@runAndWait
-      val externalSystemId = moduleEntity.externalSystemOptions?.externalSystem
-      val entitySource = moduleEntity.entitySource
-      if (externalSystemId == null && entitySource is JpsFileEntitySource ||
-          externalSystemId != null && (entitySource as? JpsImportedEntitySource)?.externalSystemId == externalSystemId ||
-          entitySource !is JpsFileEntitySource && entitySource !is JpsImportedEntitySource) {
-        return@runAndWait
-      }
-      val newSource = if (externalSystemId == null) {
-        (entitySource as JpsImportedEntitySource).internalFile
-      }
-      else {
-        val internalFile = entitySource as? JpsFileEntitySource ?: (entitySource as JpsImportedEntitySource).internalFile
-        JpsImportedEntitySource(internalFile, externalSystemId, module.project.isExternalStorageEnabled)
-      }
-      ModuleManagerComponentBridge.changeModuleEntitySource(module, newSource)
+  private fun updateSource(moduleDiff: WorkspaceEntityStorageDiffBuilder? = null) {
+    val storage = (module as ModuleBridge).entityStorage.current
+    val moduleEntity = storage.findModuleEntity(module) ?: return
+    val externalSystemId = moduleEntity.externalSystemOptions?.externalSystem
+    val entitySource = moduleEntity.entitySource
+    if (externalSystemId == null && entitySource is JpsFileEntitySource ||
+        externalSystemId != null && (entitySource as? JpsImportedEntitySource)?.externalSystemId == externalSystemId ||
+        entitySource !is JpsFileEntitySource && entitySource !is JpsImportedEntitySource) {
+      return
     }
+    val newSource = if (externalSystemId == null) {
+      (entitySource as JpsImportedEntitySource).internalFile
+    }
+    else {
+      val internalFile = entitySource as? JpsFileEntitySource ?: (entitySource as JpsImportedEntitySource).internalFile
+      JpsImportedEntitySource(internalFile, externalSystemId, module.project.isExternalStorageEnabled)
+    }
+    ModuleManagerComponentBridge.changeModuleEntitySource(module, storage, newSource, moduleDiff)
   }
 
   override fun getExternalSystemId(): String? = findEntity()?.externalSystem
@@ -97,8 +95,10 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     updateSource()
   }
 
-  override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) {
-    editEntity {
+  override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?,
+                                  modelsProvider: IdeModifiableModelsProvider?) {
+    val moduleDiff = getModuleDiff(modelsProvider)
+    editEntity(moduleDiff) {
       externalSystem = id.toString()
       linkedProjectId = moduleData.id
       linkedProjectPath = moduleData.linkedExternalProjectPath
@@ -107,7 +107,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
       externalSystemModuleGroup = moduleData.group
       externalSystemModuleVersion = moduleData.version
     }
-    updateSource()
+    updateSource(moduleDiff)
   }
 
   override fun setExternalId(id: ProjectSystemId) {
@@ -129,12 +129,15 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     }
   }
 
-  override fun setExternalModuleType(type: String?) {
-    editEntity {
+  override fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider?) {
+    editEntity(getModuleDiff(modelsProvider)) {
       externalSystemModuleType = type
     }
   }
 
   override fun swapStore() {
   }
+
+  private fun getModuleDiff(modelsProvider: IdeModifiableModelsProvider?): WorkspaceEntityStorageDiffBuilder? =
+    if (modelsProvider is IdeModifiableModelsProviderImpl) modelsProvider.actualStorageBuilder else (module as ModuleBridge).diff
 }

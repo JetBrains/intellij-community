@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.concurrency.Promise
 
 interface SuspendContextManager<CALL_FRAME : CallFrame> {
@@ -29,7 +30,7 @@ interface SuspendContextManager<CALL_FRAME : CallFrame> {
 
   fun isContextObsolete(context: SuspendContext<*>): Boolean = this.context !== context
 
-  fun setOverlayMessage(message: String?)
+  fun setOverlayMessage(@NlsContexts.NotificationContent message: String?)
 
   /**
    * Resumes the VM execution. This context becomes invalid until another context is supplied through the

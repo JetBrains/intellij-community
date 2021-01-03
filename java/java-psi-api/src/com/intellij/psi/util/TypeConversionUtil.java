@@ -400,12 +400,12 @@ public final class TypeConversionUtil {
     return true;
   }
 
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   public static boolean isPrimitiveAndNotNull(PsiType type) {
     return type instanceof PsiPrimitiveType && !isNullType(type);
   }
 
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   public static boolean isEnumType(PsiType type) {
     type = uncapture(type);
     if (type instanceof PsiClassType) {
@@ -423,39 +423,41 @@ public final class TypeConversionUtil {
     return PsiType.NULL.equals(type);
   }
 
-  @Contract("null -> false")
-  public static boolean isFloatOrDoubleType(PsiType type) {
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isFloatOrDoubleType(@Nullable PsiType type) {
     return isFloatType(type) || isDoubleType(type);
   }
 
-  @Contract("null -> false")
-  public static boolean isDoubleType(PsiType type) {
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isDoubleType(@Nullable PsiType type) {
     type = uncapture(type);
     return PsiType.DOUBLE.equals(type) || PsiType.DOUBLE.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
-  @Contract("null -> false")
-  public static boolean isFloatType(PsiType type) {
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isFloatType(@Nullable PsiType type) {
     type = uncapture(type);
     return PsiType.FLOAT.equals(type) || PsiType.FLOAT.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
-  @Contract("null -> false")
-  public static boolean isLongType(PsiType type) {
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isLongType(@Nullable PsiType type) {
     type = uncapture(type);
     return PsiType.LONG.equals(type) || PsiType.LONG.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
-  public static boolean isVoidType(PsiType type) {
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isVoidType(@Nullable PsiType type) {
     return PsiType.VOID.equals(type);
   }
 
+  @Contract(value = "null -> false", pure = true)
   public static boolean isBooleanType(@Nullable PsiType type) {
     type = uncapture(type);
     return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
-  @Contract("null -> null")
+  @Contract(value = "null -> null", pure = true)
   private static PsiType uncapture(PsiType type) {
     while (type instanceof PsiCapturedWildcardType) {
       type = ((PsiCapturedWildcardType)type).getUpperBound();
@@ -463,12 +465,15 @@ public final class TypeConversionUtil {
     return type;
   }
 
+  @Contract(pure = true)
   public static boolean isNumericType(@TypeRank int typeRank) {
     return typeRank <= MAX_NUMERIC_RANK;
   }
+  @Contract(pure = true)
   public static boolean isNumericType(PsiType type) {
     return type != null && isNumericType(getTypeRank(type));
   }
+  @Contract(pure = true)
   public static boolean isIntegralNumberType(PsiType type) {
     return type != null && getTypeRank(type) <= LONG_RANK;
   }
@@ -480,6 +485,7 @@ public final class TypeConversionUtil {
    *         Integer.MAX_VALUE for others
    */
   @TypeRank
+  @Contract(pure = true)
   public static int getTypeRank(@NotNull PsiType type) {
     type = uncapture(type);
     PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
@@ -502,6 +508,7 @@ public final class TypeConversionUtil {
    * @param strict    true if operator result type should be convertible to the left operand
    * @return true if lOperand operator rOperand expression is syntactically correct
    */
+  @Contract(pure = true)
   public static boolean isBinaryOperatorApplicable(@NotNull IElementType tokenType,
                                                    PsiExpression lOperand,
                                                    PsiExpression rOperand,
@@ -512,6 +519,7 @@ public final class TypeConversionUtil {
     return isBinaryOperatorApplicable(tokenType, ltype, rtype, strict);
   }
 
+  @Contract(pure = true)
   public static boolean isBinaryOperatorApplicable(@NotNull IElementType tokenType, final PsiType ltype, final PsiType rtype, final boolean strict) {
     if (ltype == null || rtype == null) return true;
     int resultTypeRank = BOOL_RANK;
@@ -598,6 +606,7 @@ public final class TypeConversionUtil {
     return isApplicable;
   }
 
+  @Contract(pure = true)
   public static boolean isPrimitiveAndNotNullOrWrapper(PsiType type) {
     type = uncapture(type);
     if (type instanceof PsiClassType) {
@@ -607,12 +616,14 @@ public final class TypeConversionUtil {
     return isPrimitiveAndNotNull(type);
   }
 
+  @Contract(pure = true)
   public static boolean isUnaryOperatorApplicable(@NotNull PsiJavaToken token, PsiExpression operand) {
     if (operand == null) return false;
     PsiType type = operand.getType();
     return type != null && isUnaryOperatorApplicable(token, type);
   }
 
+  @Contract(pure = true)
   public static boolean isUnaryOperatorApplicable(@NotNull PsiJavaToken token, @NotNull PsiType type) {
     IElementType i = token.getTokenType();
     int typeRank = getTypeRank(type);
@@ -635,6 +646,7 @@ public final class TypeConversionUtil {
   /**
    * @return true if expression can be the left part of assignment operator
    */
+  @Contract(pure = true)
   public static boolean isLValue(PsiExpression element) {
     if (element instanceof PsiReferenceExpression) {
       final PsiReferenceExpression expression = (PsiReferenceExpression)element;
@@ -662,6 +674,7 @@ public final class TypeConversionUtil {
   /**
    * JLS 5.2
    */
+  @Contract(pure = true)
   public static boolean areTypesAssignmentCompatible(PsiType lType, PsiExpression rExpr) {
     if (lType == null || rExpr == null) return true;
     PsiType rType = rExpr.getType();
@@ -709,10 +722,12 @@ public final class TypeConversionUtil {
    * @return true if value of type {@code right} can be assigned to an l-value of
    *         type {@code left}
    */
+  @Contract(pure = true)
   public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right) {
     return isAssignable(left, right, true);
   }
 
+  @Contract(pure = true)
   public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right, boolean allowUncheckedConversion) {
     return isAssignable(left, right, allowUncheckedConversion, true);
   }
@@ -1513,8 +1528,8 @@ public final class TypeConversionUtil {
     if (target == null || source == null) return false;
     if (target.equals(source)) return true;
 
-    int sourceRank = TYPE_TO_RANK_MAP.get(source);
-    int targetRank = TYPE_TO_RANK_MAP.get(target);
+    int sourceRank = TYPE_TO_RANK_MAP.getInt(source);
+    int targetRank = TYPE_TO_RANK_MAP.getInt(target);
     if (sourceRank == 0 || sourceRank > MAX_NUMERIC_RANK ||
         targetRank == 0 || targetRank > MAX_NUMERIC_RANK ||
         !IS_ASSIGNABLE_BIT_SET[sourceRank-1][targetRank-1]) {

@@ -1,32 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.XDebugSession;
@@ -55,13 +56,15 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase.getCustomizedActionGroup;
 
 public class XDebuggerTreeInlayPopup<D> {
-  private static final Logger LOG = Logger.getInstance(XDebuggerTreeInlayPopup.class);
+  public static final String ACTION_PLACE = "XDebuggerTreeInlayPopup";
   protected final DebuggerTreeCreator<D> myTreeCreator;
   private final XSourcePosition myPresentationPosition;
   @NotNull protected final XDebugSession mySession;
@@ -70,8 +73,8 @@ public class XDebuggerTreeInlayPopup<D> {
   private final Editor myEditor;
   private final Point myPoint;
   @Nullable private final Runnable myHideRunnable;
-  private XValueNodeImpl myValueNode;
-  private ActionToolbar myToolbar;
+  private final XValueNodeImpl myValueNode;
+  private JComponent myToolbar;
 
   private XDebuggerTreeInlayPopup(@NotNull DebuggerTreeCreator<D> creator,
                                   @NotNull Editor editor,
@@ -94,43 +97,53 @@ public class XDebuggerTreeInlayPopup<D> {
   }
 
   protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
-    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree)).addToBottom(createToolbar(mainPanel, tree));
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(tree, true);
+    JComponent toolbar = createToolbar(mainPanel, tree);
+    tree.setBackground(UIUtil.getToolTipBackground());
+    toolbar.setBackground(UIUtil.getToolTipActionBackground());
+    WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
+    toolbar.addMouseListener(moveListener);
+    toolbar.addMouseMotionListener(moveListener);
+    return mainPanel
+      .addToCenter(scrollPane)
+      .addToBottom(toolbar);
   }
 
   protected void updateTree(@NotNull D selectedItem) {
     updateContainer(myTreeCreator.createTree(selectedItem));
   }
 
-  private JComponent createToolbar(JPanel parent, Tree tree) {
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.addAll(getCustomizedActionGroup(XDebuggerActions.WATCHES_INLINE_POPUP_GROUP));
+  private JComponent createToolbar(JPanel mainPanel, Tree tree) {
+    DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    toolbarActions.addAll(getCustomizedActionGroup(XDebuggerActions.WATCHES_INLINE_POPUP_GROUP));
     AnAction watchAction = myValueNode instanceof InlineWatchNodeImpl
                            ? new EditInlineWatch()
                            : new AddInlineWatch();
 
-    toolbarGroup.add(watchAction, Constraints.LAST);
+    toolbarActions.add(watchAction, Constraints.LAST);
 
-    myToolbar = new ActionToolbarImpl("XDebuggerTreeInlayPopup", toolbarGroup, true) {
-      @Override
-      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
-                                                          ActionButtonLook look,
-                                                          @NotNull String place,
-                                                          @NotNull Presentation presentation,
-                                                          @NotNull Dimension minimumSize) {
-        return new ActionButtonWithText(action, presentation, place, minimumSize);
-      }
-    };
+    DefaultActionGroup wrappedActions = new DefaultActionGroup();
+    for (AnAction action : toolbarActions.getChildren(null)) {
+      ActionWrapper actionLink = new ActionWrapper(action);
+      actionLink.setDataProvider(tree);
+      wrappedActions.add(actionLink);
+    }
 
-    return myToolbar.getComponent();
+    myToolbar = new ActionToolbarImpl(ACTION_PLACE, wrappedActions, true);
+    for (AnAction action : wrappedActions.getChildren(null)) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), mainPanel);
+    }
+
+    myToolbar.setBorder(BorderFactory.createEmptyBorder());
+    return myToolbar;
   }
 
   private class AddInlineWatch extends XDebuggerTreeActionBase {
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setIcon(AllIcons.Debugger.AddToWatch);
-      e.getPresentation().setText(XDebuggerBundle.message("debugger.inline.watches.popup.action.add.as.inline.watch"));
-      super.update(e);
+    private AddInlineWatch() {
+      ActionUtil.mergeFrom(this, "Debugger.AddInlineWatch");
+      Presentation presentation = getTemplatePresentation();
+      presentation.setText(XDebuggerBundle.message("debugger.inline.watches.popup.action.add.as.inline.watch"));
     }
 
     @Override
@@ -155,7 +168,6 @@ public class XDebuggerTreeInlayPopup<D> {
 
     EditInlineWatch() {
       super(XDebuggerBundle.message("debugger.inline.watches.edit.watch.expression.text"));
-      ActionUtil.mergeFrom(this, "XDebugger.SetValue");
     }
 
     @Override
@@ -189,14 +201,14 @@ public class XDebuggerTreeInlayPopup<D> {
     }
   }
 
-  public static <D> void showTreePopup(XDebuggerTreeCreator creator,
-                                       Pair<XValue, String> initialItem,
-                                       XValueNodeImpl valueNode,
-                                       @NotNull Editor editor,
-                                       @NotNull Point point,
-                                       @NotNull XSourcePosition position,
-                                       @NotNull XDebugSession session,
-                                       Runnable hideRunnable) {
+  public static void showTreePopup(XDebuggerTreeCreator creator,
+                                   Pair<XValue, String> initialItem,
+                                   XValueNodeImpl valueNode,
+                                   @NotNull Editor editor,
+                                   @NotNull Point point,
+                                   @NotNull XSourcePosition position,
+                                   @NotNull XDebugSession session,
+                                   Runnable hideRunnable) {
     new XDebuggerTreeInlayPopup<>(creator, editor, point, position, session, hideRunnable, valueNode).updateTree(initialItem);
   }
 
@@ -257,6 +269,7 @@ public class XDebuggerTreeInlayPopup<D> {
       myPopup.cancel();
       return;
     }
+    myPopup.setSize(new Dimension(0, 0));
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
 
     ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
@@ -298,8 +311,7 @@ public class XDebuggerTreeInlayPopup<D> {
     final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
-    final Rectangle windowBounds = popupWindow.getBounds();
-    int width = Math.max(size.width, myToolbar.getComponent().getPreferredSize().width) + 150;
+    int width = Math.max(size.width, myToolbar.getPreferredSize().width) + 150;
     int maxWidth = 600;
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
@@ -310,5 +322,124 @@ public class XDebuggerTreeInlayPopup<D> {
     popupWindow.setBounds(targetBounds);
     popupWindow.validate();
     popupWindow.repaint();
+  }
+
+  private static class ActionWrapper extends AnAction implements CustomComponentAction {
+    private final AnAction myDelegate;
+    private Component myProvider;
+
+    ActionWrapper(AnAction delegate) {
+      super(delegate.getTemplateText());
+      copyFrom(delegate);
+      myDelegate = delegate;
+    }
+
+    public void setDataProvider(Component provider) {
+      myProvider = provider;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(myDelegate,
+                                                                     e.getInputEvent(),
+                                                                     ACTION_PLACE,
+                                                                     DataManager.getInstance().getDataContext(myProvider));
+      myDelegate.actionPerformed(delegateEvent);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      myDelegate.update(e);
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return myDelegate.isDumbAware();
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      myDelegate.applyTextOverride(ACTION_PLACE, presentation);
+      JPanel actionPanel = new JPanel(new GridBagLayout());
+
+      GridBag gridBag = new GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST);
+      int topInset = 5;
+      int bottomInset = 4;
+
+      ActionLinkButton button = new ActionLinkButton(this, presentation, (DataProvider)myProvider);
+      actionPanel.add(button, gridBag.next().insets(topInset, 10, bottomInset, 4));
+
+      Shortcut[] shortcuts = getShortcutSet().getShortcuts();
+      String shortcutsText = KeymapUtil.getShortcutsText(shortcuts);
+      if (!shortcutsText.isEmpty()) {
+        JComponent keymapHint = createKeymapHint(shortcutsText);
+        actionPanel.add(keymapHint, gridBag.next().insets(topInset, 4, bottomInset, 12));
+      }
+      actionPanel.setBackground(UIUtil.getToolTipActionBackground());
+      return actionPanel;
+    }
+
+    private static JComponent createKeymapHint(@NlsContexts.Label String shortcutRunAction) {
+      JBLabel shortcutHint = new JBLabel(shortcutRunAction) {
+        @Override
+        public Color getForeground() {
+          return getKeymapColor();
+        }
+      };
+      shortcutHint.setBorder(JBUI.Borders.empty());
+      shortcutHint.setFont(UIUtil.getToolTipFont());
+      return shortcutHint;
+    }
+
+    private static Color getKeymapColor() {
+      return JBColor.namedColor("ToolTip.Actions.infoForeground", new JBColor(0x99a4ad, 0x919191));
+    }
+
+  }
+
+  private static class ActionLinkButton extends ActionLink {
+    private final @Nullable DataProvider myDataProvider;
+    boolean isEnabled;
+
+    ActionLinkButton(@NotNull AnAction action,
+                     @NotNull Presentation presentation,
+                     @Nullable DataProvider contextComponent) {
+      //noinspection DialogTitleCapitalization
+      super(presentation.getText(), action);
+      isEnabled = presentation.isEnabled();
+      myDataProvider = contextComponent;
+      presentation.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (evt.getPropertyName() == Presentation.PROP_TEXT) {
+            setText((String)evt.getNewValue());
+            repaint();
+          }
+          if (evt.getPropertyName() == Presentation.PROP_ENABLED) {
+            isEnabled =(boolean)evt.getNewValue();
+            repaint();
+          }
+        }
+      });
+      setFont(UIUtil.getToolTipFont());
+    }
+
+    @Override
+    protected Color getTextColor() {
+      return isEnabled ? super.getTextColor() : getDisabledColor();
+    }
+
+    private static Color getDisabledColor() {
+      return JBUI.CurrentTheme.Label.disabledForeground();
+    }
+
+
+    @Override
+    public Object getData(@NotNull @NonNls String dataId) {
+      Object data = super.getData(dataId);
+      if (data != null) return data;
+
+      return myDataProvider != null ? myDataProvider.getData(dataId) : null;
+    }
   }
 }

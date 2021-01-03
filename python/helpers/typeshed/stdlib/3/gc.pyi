@@ -1,5 +1,3 @@
-# Stubs for gc
-
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 

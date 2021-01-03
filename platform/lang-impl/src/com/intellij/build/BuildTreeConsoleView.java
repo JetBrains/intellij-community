@@ -1011,11 +1011,14 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
 
     public void maybeAddExecutionConsole(@NotNull ExecutionNode node, @NotNull BuildEventPresentationData presentationData) {
-      ExecutionConsole executionConsole = presentationData.getExecutionConsole();
-      if (executionConsole != null) {
+      invokeLaterIfNeeded(() -> {
+        ExecutionConsole executionConsole = presentationData.getExecutionConsole();
+        if (executionConsole == null) return;
         String nodeConsoleViewName = getNodeConsoleViewName(node);
-        myView.addView(new PresentableBuildEventExecutionConsole(executionConsole, presentationData.consoleToolbarActions()), nodeConsoleViewName);
-      }
+        PresentableBuildEventExecutionConsole presentableEventView =
+          new PresentableBuildEventExecutionConsole(executionConsole, presentationData.consoleToolbarActions());
+        myView.addView(presentableEventView, nodeConsoleViewName);
+      });
     }
 
     private void addOutput(@NotNull ExecutionNode node, @NotNull String text, boolean stdOut) {

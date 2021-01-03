@@ -101,7 +101,7 @@ open class UsageViewSettings(
    * Compact middle directories option for directories usage grouping
    */
   @get:OptionTag("COMPACT_MIDDLE_DIRECTORIES")
-  var isCompactMiddleDirectories by property(true)
+  var isCompactMiddleDirectories by property(false)
 
   @get:OptionTag("GROUP_BY_SCOPE")
   var isGroupByScope by property(isGroupByScope)

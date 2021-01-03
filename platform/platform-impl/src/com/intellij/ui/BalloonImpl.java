@@ -108,6 +108,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   private ActionProvider myActionProvider;
   private List<ActionButton> myActionButtons;
+  private boolean invalidateShadow;
 
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     @Override
@@ -827,7 +828,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     RelativePoint newPosition = tracker.recalculateLocation(this);
 
     if (newPosition != null) {
-      myTargetPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutShift);
+      Point newPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutShift);
+      invalidateShadow = !Objects.equals(myTargetPoint, newPoint);
+      myTargetPoint = newPoint;
       myPosition.updateBounds(this);
     }
   }
@@ -1949,8 +1952,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     void _setBounds(@NotNull Rectangle bounds) {
       Rectangle currentBounds = getBounds();
-      if (!currentBounds.equals(bounds)) {
+      if (!currentBounds.equals(bounds) || invalidateShadow) {
         invalidateShadowImage();
+        invalidateShadow = false;
       }
 
       setBounds(bounds);

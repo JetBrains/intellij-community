@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator
 
+import com.intellij.execution.process.mediator.client.MediatedProcess
+import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
@@ -40,7 +42,7 @@ open class ProcessMediatorTest {
   protected open fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
     val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
     val credentials = DaemonClientCredentials.generate()
-    return object : ProcessMediatorServerDaemon(InProcessServerBuilder.forName(bindName).directExecutor(), credentials) {
+    return object : ProcessMediatorServerDaemon(coroutineScope, InProcessServerBuilder.forName(bindName).directExecutor(), credentials) {
       override fun createChannel(): ManagedChannel {
         return InProcessChannelBuilder.forName(bindName)
           .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))

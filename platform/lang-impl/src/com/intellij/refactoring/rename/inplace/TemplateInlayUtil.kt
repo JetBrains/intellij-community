@@ -117,7 +117,7 @@ object TemplateInlayUtil {
   }
 
   @JvmStatic
-  fun createSettingsPresentation(editor: EditorImpl): SelectableInlayPresentation {
+  fun createSettingsPresentation(editor: EditorImpl, onClick: (MouseEvent) -> Unit = {}): SelectableInlayPresentation {
     val factory = PresentationFactory(editor)
     fun button(background: Color?): InlayPresentation {
       val button = factory.container(
@@ -136,12 +136,15 @@ object TemplateInlayUtil {
       val tooltip = RefactoringBundle.message("refactoring.extract.method.inplace.options.tooltip", KeymapUtil.getShortcutText(shortcut))
       hovered = factory.withTooltip(tooltip, hovered)
     }
-    return SelectableInlayButton(
-      editor,
-      default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
-      active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
-      hovered
-    )
+    return object: SelectableInlayButton(editor,
+                                        default = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_DEFAULT)),
+                                        active = button(colorsScheme.getColor(INLINE_REFACTORING_SETTINGS_FOCUSED)),
+                                        hovered) {
+      override fun mouseClicked(event: MouseEvent, translated: Point) {
+        super.mouseClicked(event, translated)
+        onClick(event)
+      }
+    }
   }
 
   @JvmStatic

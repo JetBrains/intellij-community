@@ -1,6 +1,9 @@
 package de.plushnikov.intellij.plugin;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.List;
 
 public interface LombokClassNames {
   @NonNls String ACCESSORS = "lombok.experimental.Accessors";
@@ -19,6 +22,7 @@ public interface LombokClassNames {
   @NonNls String EQUALS_AND_HASHCODE_INCLUDE = "lombok.EqualsAndHashCode.Include";
   @NonNls String EXPERIMENTAL_DELEGATE = "lombok.experimental.Delegate";
   @NonNls String EXPERIMENTAL_VAR = "lombok.experimental.var";
+  @NonNls String EXTENSION_METHOD = "lombok.experimental.ExtensionMethod";
   @NonNls String FIELD_DEFAULTS = "lombok.experimental.FieldDefaults";
   @NonNls String FIELD_NAME_CONSTANTS = "lombok.experimental.FieldNameConstants";
   @NonNls String FIELD_NAME_CONSTANTS_EXCLUDE = "lombok.experimental.FieldNameConstants.Exclude";
@@ -50,4 +54,12 @@ public interface LombokClassNames {
   @NonNls String WITH = "lombok.With";
   @NonNls String WITHER = "lombok.experimental.Wither";
   @NonNls String XSLF_4_J = "lombok.extern.slf4j.XSlf4j";
+
+  List<String> MAIN_LOMBOK_CLASSES = ContainerUtil.immutableList(ALL_ARGS_CONSTRUCTOR, REQUIRED_ARGS_CONSTRUCTOR, NO_ARGS_CONSTRUCTOR,
+                                                                 DATA, GETTER, SETTER, EQUALS_AND_HASHCODE, TO_STRING,
+                                                                 LOG_4_J, LOG_4_J_2, SLF_4_J, JAVA_LOG, JBOSS_LOG, FLOGGER, COMMONS_LOG,
+                                                                 CUSTOM_LOG,
+                                                                 BUILDER, SUPER_BUILDER, FIELD_DEFAULTS, VALUE,
+                                                                 UTILITY_CLASS, WITH, WITHER, EXPERIMENTAL_DELEGATE,
+                                                                 SNEAKY_THROWS, CLEANUP, SYNCHRONIZED, EXTENSION_METHOD);
 }

@@ -98,45 +98,45 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
     YamlMetaType metaType = meta.getMetaType();
-    if (params.getCompletionType().equals(CompletionType.BASIC)) {
-      if (insertedScalar.getParent() instanceof YAMLKeyValue) {
-        PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
-        if (isOfType(prevSibling, YAMLTokenTypes.COLON)) {
-          prevSibling = PsiTreeUtil.skipWhitespacesBackward(prevSibling);
-        }
-        if (isOfType(prevSibling, YAMLTokenTypes.SCALAR_KEY)) {
-          boolean hadScalarLookups = addValueCompletions(insertedScalar, metaType, result, Collections.emptyMap(), params);
-          if (hadScalarLookups) {
-            return;
-          }
-        }
+
+    if (insertedScalar.getParent() instanceof YAMLKeyValue) {
+      PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
+      if (isOfType(prevSibling, YAMLTokenTypes.COLON)) {
+        prevSibling = PsiTreeUtil.skipWhitespacesBackward(prevSibling);
       }
-
-      if (insertedScalar.getParent() instanceof YAMLSequenceItem) {
-        YAMLSequenceItem currentItem = (YAMLSequenceItem)insertedScalar.getParent();
-
-        List<YAMLSequenceItem> siblingItems = Optional.ofNullable(currentItem.getParent())
-          .filter(YAMLSequence.class::isInstance)
-          .map(YAMLSequence.class::cast)
-          .map(YAMLSequence::getItems)
-          .orElse(Collections.emptyList());
-
-        Map<String, YAMLScalar> siblingValues =
-          siblingItems.stream()
-            .filter(i -> i.getKeysValues().isEmpty()) // we only are interested in literal siblings
-            .filter(i -> !currentItem.equals(i))
-            .map(YAMLSequenceItem::getValue)
-            .filter(Objects::nonNull)
-            .filter(YAMLScalar.class::isInstance)
-            .map(YAMLScalar.class::cast)
-            .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
-
-        boolean hadScalarInSequenceLookups = addValueCompletions(insertedScalar, metaType, result, siblingValues, params);
-        if (hadScalarInSequenceLookups) {
+      if (isOfType(prevSibling, YAMLTokenTypes.SCALAR_KEY)) {
+        boolean hadScalarLookups = addValueCompletions(insertedScalar, metaType, result, Collections.emptyMap(), params);
+        if (hadScalarLookups) {
           return;
         }
       }
     }
+
+    if (insertedScalar.getParent() instanceof YAMLSequenceItem) {
+      YAMLSequenceItem currentItem = (YAMLSequenceItem)insertedScalar.getParent();
+
+      List<YAMLSequenceItem> siblingItems = Optional.ofNullable(currentItem.getParent())
+        .filter(YAMLSequence.class::isInstance)
+        .map(YAMLSequence.class::cast)
+        .map(YAMLSequence::getItems)
+        .orElse(Collections.emptyList());
+
+      Map<String, YAMLScalar> siblingValues =
+        siblingItems.stream()
+          .filter(i -> i.getKeysValues().isEmpty()) // we only are interested in literal siblings
+          .filter(i -> !currentItem.equals(i))
+          .map(YAMLSequenceItem::getValue)
+          .filter(Objects::nonNull)
+          .filter(YAMLScalar.class::isInstance)
+          .map(YAMLScalar.class::cast)
+          .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
+
+      boolean hadScalarInSequenceLookups = addValueCompletions(insertedScalar, metaType, result, siblingValues, params);
+      if (hadScalarInSequenceLookups) {
+        return;
+      }
+    }
+
     if (!(metaType instanceof YamlScalarType)) { // if it's certainly not a value
       addKeyCompletions(params, metaTypeProvider, meta, result, insertedScalar);
     }

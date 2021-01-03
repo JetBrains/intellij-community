@@ -1,5 +1,3 @@
-# Stubs for requests.packages.urllib3.connection (Python 3.4)
-
 import ssl
 import sys
 from typing import Any

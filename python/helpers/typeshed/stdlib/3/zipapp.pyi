@@ -1,5 +1,3 @@
-# Stubs for zipapp (Python 3.5+)
-
 import sys
 from pathlib import Path
 from typing import BinaryIO, Callable, Optional, Union

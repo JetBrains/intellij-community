@@ -48,7 +48,8 @@ class ProductInfoGenerator {
       productCode: context.applicationInfo.productCode,
       dataDirectoryName: context.systemSelector,
       svgIconPath: context.applicationInfo.svgRelativePath != null ? "$relativePathToBin/${context.productProperties.baseFileName}.svg" : null,
-      launch: launch
+      launch: launch,
+      customProperties: context.productProperties.generateCustomPropertiesForProductInfo()
     )
     def file = new File(targetDirectory, FILE_NAME)
     FileUtil.createParentDirs(file)

@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -43,6 +44,7 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.Objects;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
@@ -458,7 +460,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
       ((RunOnTargetComboBox)myRunOnComboBox).initModel();
-      ((RunOnTargetComboBox)myRunOnComboBox).addTargets(TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs());
+      List<TargetEnvironmentConfiguration> configs = TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs();
+      ((RunOnTargetComboBox)myRunOnComboBox).addTargets(ContainerUtil.filter(configs, configuration -> {
+        return TargetEnvironmentConfigurationKt.getTargetType(configuration).isSystemCompatible();
+      }));
       ((RunOnTargetComboBox)myRunOnComboBox).selectTarget(targetNameToChoose);
     }
 

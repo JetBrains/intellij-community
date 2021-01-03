@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   @NotNull
   @Override
   public ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {
-    MyScheduledFutureTask<?> task = new MyScheduledFutureTask<Void>(command, null, triggerTime(delayQueue, delay, unit)){
+    MyScheduledFutureTask<?> task = new MyScheduledFutureTask<Void>(ClientId.decorateRunnable(command), null, triggerTime(delayQueue, delay, unit)){
       @Override
       void executeMeInBackendExecutor() {
         EdtExecutorService.getInstance().execute(this, modalityState);

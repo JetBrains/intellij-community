@@ -7,15 +7,14 @@ import ast
 import os
 import os.path
 import shutil
-
 from dataclasses import dataclass
-from typing import Optional, List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 # These names may be still discussed so I make them constants.
 STDLIB_NAMESPACE = "stdlib"
 THIRD_PARTY_NAMESPACE = "stubs"
 DEFAULT_VERSION = "0.1"
-DEFAULT_PY3_VERSION = "3.5"
+DEFAULT_PY3_VERSION = "3.6"
 PY2_NAMESPACE = "python2"
 OUTPUT_DIR = "out"
 
@@ -62,6 +61,7 @@ known_versions = {
 # The latter two are distinguished by is_dir flag.
 class PackageBase:
     """Common attributes for packages/modules"""
+
     path: str  # full initial path like stdlib/2and3/argparse.pyi
     is_dir: bool
 
@@ -79,6 +79,7 @@ class PackageBase:
 @dataclass
 class StdLibPackage(PackageBase):
     """Package/module in standard library."""
+
     path: str
     py_version: Optional[str]  # Can be omitted for Python 2 only packages.
     is_dir: bool
@@ -93,8 +94,7 @@ class ThirdPartyPackage(PackageBase):
     requires: List[str]  # distributions this depends on
 
 
-def add_stdlib_packages_from(subdir: str, packages: List[StdLibPackage],
-                             py_version: Optional[str]) -> None:
+def add_stdlib_packages_from(subdir: str, packages: List[StdLibPackage], py_version: Optional[str]) -> None:
     """Add standard library packages/modules from a given stdlib/xxx subdirectory.
 
     Append to packages list in-place, use py_version as the minimal supported version.
@@ -113,37 +113,34 @@ def collect_stdlib_packages() -> Tuple[List[StdLibPackage], List[StdLibPackage]]
     add_stdlib_packages_from("stdlib/2and3", stdlib, "2.7")
     # Use oldest currently supported version for Python 3 packages/modules.
     add_stdlib_packages_from("stdlib/3", stdlib, DEFAULT_PY3_VERSION)
-    for version in ("3.6", "3.7", "3.8", "3.9"):
+    for version in ("3.7", "3.8", "3.9"):
         subdir = os.path.join("stdlib", version)
         if os.path.isdir(subdir):
             add_stdlib_packages_from(subdir, stdlib, version)
     return stdlib, py2_stdlib
 
 
-def add_third_party_packages_from(subdir: str, packages: List[ThirdPartyPackage],
-                                  py2_compatible: bool, py3_compatible: bool) -> None:
+def add_third_party_packages_from(
+    subdir: str, packages: List[ThirdPartyPackage], py2_compatible: bool, py3_compatible: bool
+) -> None:
     """Add third party packages/modules from a given third_party/xxx subdirectory."""
     for name in os.listdir(subdir):
         path = os.path.join(subdir, name)
-        packages.append(ThirdPartyPackage(path, py2_compatible, py3_compatible,
-                                          requires=[], is_dir=os.path.isdir(path)))
+        packages.append(ThirdPartyPackage(path, py2_compatible, py3_compatible, requires=[], is_dir=os.path.isdir(path)))
 
 
 def collect_third_party_packages() -> Tuple[List[ThirdPartyPackage], List[ThirdPartyPackage]]:
     """Collect third party packages/modules from all current third_party/xxx sub-directories."""
     third_party: List[ThirdPartyPackage] = []
     py2_third_party: List[ThirdPartyPackage] = []
-    add_third_party_packages_from("third_party/3", third_party,
-                                  py2_compatible=False, py3_compatible=True)
-    add_third_party_packages_from("third_party/2and3", third_party,
-                                  py2_compatible=True, py3_compatible=True)
+    add_third_party_packages_from("third_party/3", third_party, py2_compatible=False, py3_compatible=True)
+    add_third_party_packages_from("third_party/2and3", third_party, py2_compatible=True, py3_compatible=True)
     # We special-case Python 2 for third party packages like six.
     subdir = "third_party/2"
     py3_packages = os.listdir("third_party/3")
     for name in os.listdir(subdir):
         path = os.path.join(subdir, name)
-        package = ThirdPartyPackage(path, py2_compatible=True, py3_compatible=False,
-                                    requires=[], is_dir=os.path.isdir(path))
+        package = ThirdPartyPackage(path, py2_compatible=True, py3_compatible=False, requires=[], is_dir=os.path.isdir(path))
         if name in py3_packages:
             # If there is a package with the same name in /2 and /3, we add the former to
             # a separate list, packages from there will be put into /python2 sub-directories.
@@ -168,19 +165,19 @@ def get_top_imported_names(file: str) -> Set[str]:
     for node in ast.walk(parsed):
         if isinstance(node, ast.Import):
             for name in node.names:
-                top_imported.add(name.name.split('.')[0])
+                top_imported.add(name.name.split(".")[0])
         elif isinstance(node, ast.ImportFrom):
             if node.level > 0:
                 # Relative imports always refer to the current package.
                 continue
             assert node.module
-            top_imported.add(node.module.split('.')[0])
+            top_imported.add(node.module.split(".")[0])
     return top_imported
 
 
-def populate_requirements(package: ThirdPartyPackage,
-                          stdlib: List[str], py2_stdlib: List[str],
-                          known_distributions: Set[str]) -> None:
+def populate_requirements(
+    package: ThirdPartyPackage, stdlib: List[str], py2_stdlib: List[str], known_distributions: Set[str]
+) -> None:
     """Generate requirements using imports found in a package."""
     assert not package.requires, "Populate must be called once"
     if not package.is_dir:
@@ -272,14 +269,12 @@ def generate_metadata(package: ThirdPartyPackage, py2_packages: List[str]) -> st
     if not package.py3_compatible:
         lines.append("python3 = false")
     if package.requires:
-        distributions = [f'"types-{package_to_distribution.get(dep, dep)}"'
-                         for dep in package.requires]
+        distributions = [f'"types-{package_to_distribution.get(dep, dep)}"' for dep in package.requires]
         lines.append(f"requires = [{', '.join(distributions)}]")
     return "\n".join(lines)
 
 
-def copy_third_party(packages: List[ThirdPartyPackage],
-                     py2_packages: List[ThirdPartyPackage]) -> None:
+def copy_third_party(packages: List[ThirdPartyPackage], py2_packages: List[ThirdPartyPackage]) -> None:
     """Refactor the third party part using collected metadata."""
     third_party_dir = os.path.join(OUTPUT_DIR, THIRD_PARTY_NAMESPACE)
     os.makedirs(third_party_dir, exist_ok=True)
@@ -325,8 +320,7 @@ def main() -> None:
     py2_stdlib_names += [package.name for package in stdlib if package.py_version == "2.7"]
 
     # Collect all known distributions (for sanity checks).
-    known_distributions = {package_to_distribution.get(package.name, package.name)
-                           for package in third_party + py2_third_party}
+    known_distributions = {package_to_distribution.get(package.name, package.name) for package in third_party + py2_third_party}
 
     # Compute dependencies between third party packages/modules to populate metadata.
     for package in third_party + py2_third_party:

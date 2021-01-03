@@ -296,6 +296,16 @@ public class SdkEditor implements Configurable, Place.Navigator {
     SdkPopupFactory
       .newBuilder()
       .withSdkType(sdkType)
+      .withSdkFilter(sdk -> {
+        if (sdk == null) return false;
+
+        if (sdk.getName().equals(this.myInitialName)) return false;
+        if (sdk.getName().equals(mySdk.getName())) return false;
+
+        if (FileUtil.pathsEqual(sdk.getHomePath(), mySdk.getHomePath())) return false;
+
+        return true;
+      })
       .onSdkSelected(sdk -> {
         SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
         if (tracker.isDownloading(sdk)) {
@@ -312,6 +322,13 @@ public class SdkEditor implements Configurable, Place.Navigator {
           reset();
         } else {
           doSetHomePath(sdk.getHomePath(), sdkType);
+        }
+      })
+      .withOwnProjectSdksModel(new ProjectSdksModel() {
+        @Override
+        protected boolean forceAddActionToSelectFromDisk(@NotNull SdkType type) {
+          //make the `Add` action use the original SdkConfigurationUtil.selectSdkHome method
+          return true;
         }
       })
       .buildPopup()

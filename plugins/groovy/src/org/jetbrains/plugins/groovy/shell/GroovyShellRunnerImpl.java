@@ -18,6 +18,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.console.BuildAndRestartConsoleAction;
@@ -41,7 +42,7 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
   };
   private GeneralCommandLine myCommandLine;
 
-  public GroovyShellRunnerImpl(@NotNull String consoleTitle,
+  public GroovyShellRunnerImpl(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String consoleTitle,
                                @NotNull GroovyShellConfig shellRunner,
                                @NotNull Module module) {
     super(module.getProject(), consoleTitle, shellRunner.getWorkingDirectory(module));

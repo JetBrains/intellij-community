@@ -1,9 +1,3 @@
-# Stubs for io
-
-# Based on https://docs.python.org/2/library/io.html
-
-# Only a subset of functionality is included.
-
 from typing import IO, Any, Union
 
 import _io

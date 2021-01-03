@@ -153,6 +153,12 @@ public final class RenderingUtil {
   }
 
 
+  @ApiStatus.Internal
+  public static boolean isHoverPaintingDisabled(@NotNull JComponent component) {
+    return Boolean.FALSE.equals(component.getClientProperty(PAINT_HOVERED_BACKGROUND));
+  }
+
+
   public static boolean isFocused(@NotNull JComponent component) {
     if (isFocusedImpl(component)) return true;
     JComponent sibling = UIUtil.getClientProperty(component, FOCUSABLE_SIBLING);

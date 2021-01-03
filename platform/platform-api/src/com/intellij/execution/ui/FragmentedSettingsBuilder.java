@@ -3,6 +3,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.TextWithMnemonic;
@@ -40,11 +42,19 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   public static final int TAG_VGAP = JBUI.scale(6);
   public static final int TAG_HGAP = JBUI.scale(2);
 
+  private Disposable myDisposable;
   private final JPanel myPanel = new JPanel(new GridBagLayout()) {
     @Override
     public void addNotify() {
       super.addNotify();
+      myDisposable = Disposer.newDisposable();
       registerShortcuts();
+    }
+
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+      Disposer.dispose(myDisposable);
     }
   };
   private final GridBagConstraints myConstraints =
@@ -166,7 +176,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
             fragment.toggle(true); // show or set focus
             IdeFocusManager.getGlobalInstance().requestFocus(fragment.getEditorComponent(), false);
           }
-        }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane());
+        }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane(), myDisposable);
       }
     }
   }

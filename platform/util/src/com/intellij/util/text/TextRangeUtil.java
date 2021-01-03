@@ -89,9 +89,9 @@ public final class TextRangeUtil {
 
   /**
    * Checks that the given offset is contained in one of the ranges in the list by performing a binary search.
-   * @param range     The range to check.
+   *
    * @param rangeList The range list. <b>The list must be ordered by range start offset.</b>
-   * @return True if the range intersects at least one range in the list.
+   * @return {@code true} if the offset intersects at least one range in the list.
    */
   public static boolean rangesContain(List<? extends TextRange> rangeList, int offset) {
     return rangesContain(rangeList, 0, rangeList.size() - 1, offset);

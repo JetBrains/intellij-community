@@ -1,6 +1,3 @@
-"""Stub file for the 'time' module."""
-# See https://docs.python.org/3/library/time.html
-
 import sys
 from typing import Any, NamedTuple, Optional, Tuple, Union
 

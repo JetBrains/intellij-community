@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -370,7 +371,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
-    return action.createCustomComponent(presentation, myPlace);
+    JComponent result = action.createCustomComponent(presentation, myPlace);
+    GotItTooltip.followToolbarComponent(presentation, result, getComponent());
+    return result;
   }
 
   private void tweakActionComponentUI(@NotNull Component actionComponent) {
@@ -418,6 +421,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     actionButton.setLook(look);
     actionButton.setBorder(myOrientation == SwingConstants.VERTICAL ? JBUI.Borders.empty(2, 1) : JBUI.Borders.empty(1, 2));
 
+    GotItTooltip.followToolbarComponent(presentation, actionButton, getComponent());
     return actionButton;
   }
 

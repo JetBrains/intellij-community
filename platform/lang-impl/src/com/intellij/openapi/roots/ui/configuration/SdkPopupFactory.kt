@@ -99,8 +99,19 @@ interface SdkPopupBuilder {
   @Contract(pure = true)
   fun withProject(project: Project?): SdkPopupBuilder
 
+  /**
+   * The SdkPopup uses a given [ProjectSdksModel] instance,
+   * assuming it is in a proper state and the outer code
+   * is responsive to update and commit the model when needed
+   */
   @Contract(pure = true)
   fun withProjectSdksModel(projectSdksModel: ProjectSdksModel): SdkPopupBuilder
+
+  /**
+   * The SdkPopup will manage a given [ProjectSdksModel] instance (e.g. cals [ProjectSdksModel.reset])
+   */
+  @Contract(pure = true)
+  fun withOwnProjectSdksModel(projectSdksModel: ProjectSdksModel): SdkPopupBuilder
 
   @Contract(pure = true)
   fun withSdkListModelBuilder(sdkListModelBuilder: SdkListModelBuilder): SdkPopupBuilder

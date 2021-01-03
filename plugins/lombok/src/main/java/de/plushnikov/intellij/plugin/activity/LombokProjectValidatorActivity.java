@@ -44,23 +44,11 @@ import java.util.List;
 public class LombokProjectValidatorActivity implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
-    // If plugin is not enabled - no point to continue
-    if (!ProjectSettings.isLombokEnabledInProject(project)) {
-      return;
-    }
-
     LombokProcessorProvider lombokProcessorProvider = LombokProcessorProvider.getInstance(project);
     ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) return null;
 
       final boolean hasLombokLibrary = hasLombokLibrary(project);
-
-      // If dependency is missing and missing dependency notification setting is enabled (defaults to disabled)
-      if (!hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false)) {
-        return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.missing.title"),
-                                                         LombokBundle.message("config.warn.dependency.missing.message", project.getName()),
-                                                         NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
-      }
 
       // If dependency is present and out of date notification setting is enabled (defaults to disabled)
       if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false)) {
@@ -148,7 +136,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
   }
 
   public static boolean isVersionLessThan1_18_16(Project project) {
-    if (ProjectSettings.isLombokEnabledInProject(project) && hasLombokLibrary(project)) {
+    if (hasLombokLibrary(project)) {
       return CachedValuesManager.getManager(project)
         .getCachedValue(project, () -> {
           Boolean isVersionLessThan = ReadAction.compute(() -> isVersionLessThan1_18_16_Internal(project));

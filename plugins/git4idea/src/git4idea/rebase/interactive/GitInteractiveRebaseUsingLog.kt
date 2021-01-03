@@ -141,7 +141,7 @@ internal class CantRebaseUsingLogException(val reason: Reason) : Exception(reaso
 
 @VisibleForTesting
 internal class GitRebaseEntryGeneratedUsingLog(details: VcsCommitMetadata) :
-  GitRebaseEntryWithDetails(GitRebaseEntry(Action.PICK, details.id.asString(), details.subject), details) {
+  GitRebaseEntryWithDetails(GitRebaseEntry(Action.PICK, details.id.asString(), details.subject.trimStart()), details) {
 
   fun equalsWithReal(realEntry: GitRebaseEntry) =
     action == realEntry.action &&

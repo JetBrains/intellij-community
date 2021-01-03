@@ -2,13 +2,23 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ReadOnlyModificationException extends RuntimeException {
   private final Document myDocument;
 
+  /**
+   * @deprecated use {@link ReadOnlyModificationException#ReadOnlyModificationException(Document, String)} instead
+   */
+  @Deprecated
   public ReadOnlyModificationException(@NotNull Document document) {
-    super(CoreBundle.message("attempt.to.modify.read.only.document.error.message"));
+    this(document, CoreBundle.message("attempt.to.modify.read.only.document.error.message"));
+  }
+
+  public ReadOnlyModificationException(@NotNull Document document, @Nullable String message) {
+    super(message);
     myDocument = document;
   }
 

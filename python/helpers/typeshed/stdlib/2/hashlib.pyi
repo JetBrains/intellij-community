@@ -1,5 +1,3 @@
-# Stubs for hashlib (Python 2)
-
 from typing import Tuple, Union
 
 _DataType = Union[str, unicode, bytearray, buffer, memoryview]

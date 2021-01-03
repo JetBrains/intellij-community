@@ -2,6 +2,7 @@
   <extensionPoints>
     <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension" dynamic="true"/>
     <extensionPoint name="fileBasedIndexInfrastructureExtension" interface="com.intellij.util.indexing.FileBasedIndexInfrastructureExtension" dynamic="true"/>
+    <extensionPoint name="projectIndexingHistoryListener" interface="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper$ProjectIndexingHistoryListener" dynamic="true"/>
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor" dynamic="true"/>
     <extensionPoint name="indexableFilesContributor" interface="com.intellij.util.indexing.roots.IndexableFilesContributor" dynamic="true"/>
     <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension" dynamic="true"/>

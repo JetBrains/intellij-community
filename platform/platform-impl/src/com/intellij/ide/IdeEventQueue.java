@@ -126,6 +126,7 @@ public final class IdeEventQueue extends EventQueue {
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = new HashSet<>();
+  private final HoverService myHoverService = new HoverService();
   private boolean myKeyboardBusy;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
@@ -413,6 +414,7 @@ public final class IdeEventQueue extends EventQueue {
       }
 
       checkForTimeJump(startedAt);
+      myHoverService.process(e);
 
       if (!appIsLoaded()) {
         try {

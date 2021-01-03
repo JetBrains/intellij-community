@@ -4,6 +4,7 @@ package com.intellij.execution.process.mediator.daemon;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.Message;
 import com.intellij.execution.process.mediator.rpc.ProcessMediatorProto;
+import com.sun.jna.Native;
 import io.grpc.Context;
 import io.grpc.Grpc;
 import io.grpc.internal.ServerImpl;
@@ -22,13 +23,16 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+@SuppressWarnings("RedundantArrayCreation")  // using arrays to allow trailing comma
 public class ProcessMediatorDaemonRuntimeClasspath {
 
-  private static final Class<?>[] CLASSPATH_CLASSES = {
+  private static final List<Class<?>> CLASSPATH_CLASSES = List.of(new Class<?>[]{
     ProcessMediatorDaemonMainKt.class,
+    DaemonLaunchOptions.class,
     ProcessMediatorProto.class,
 
     KotlinVersion.class, // kotlin-stdlib
@@ -51,13 +55,32 @@ public class ProcessMediatorDaemonRuntimeClasspath {
     ByteBufAllocator.class, // netty buffer
     ProtobufDecoder.class, // netty codec
     PerfMark.class, // perfmark-api
-  };
+
+    Native.class, // JNA
+  });
+
+  private static final List<String> PROPERTY_NAMES = List.of(new String[]{
+    "java.net.preferIPv4Stack",
+    "java.net.preferIPv6Addresses",
+    "java.util.logging.config.file",
+  });
 
   public static @NotNull Class<?> getMainClass() {
     return ProcessMediatorDaemonMainKt.class;
   }
 
   public static @NotNull List<@NotNull Class<?>> getClasspathClasses() {
-    return Arrays.asList(CLASSPATH_CLASSES);
+    return CLASSPATH_CLASSES;
+  }
+
+  public static @NotNull Map<@NotNull String, @NotNull String> getProperties() {
+    LinkedHashMap<String, String> properties = new LinkedHashMap<>();
+    for (String name : PROPERTY_NAMES) {
+      String property = System.getProperty(name);
+      if (property != null) {
+        properties.put(name, property);
+      }
+    }
+    return properties;
   }
 }

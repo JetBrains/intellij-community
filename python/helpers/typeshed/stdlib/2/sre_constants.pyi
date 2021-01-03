@@ -1,5 +1,3 @@
-# Source: https://hg.python.org/cpython/file/2.7/Lib/sre_constants.py
-
 from typing import Dict, List, TypeVar
 
 MAGIC: int

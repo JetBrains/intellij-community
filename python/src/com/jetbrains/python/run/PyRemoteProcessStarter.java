@@ -23,6 +23,15 @@ import org.jetbrains.annotations.Nullable;
 public class PyRemoteProcessStarter {
   public static final Key<Boolean> OPEN_FOR_INCOMING_CONNECTION = Key.create("OPEN_FOR_INCOMING_CONNECTION");
   public static final Key<HostAndPort> WEB_SERVER_HOST_AND_PORT = new Key<>("WEB_SERVER_HOST_AND_PORT");
+  /**
+   * This key is used to give the hint for the process starter that the
+   * process is auxiliary.
+   * <p>
+   * As for now this flag takes effect for Docker Compose process starters
+   * which uses {@code docker-compose run} command to the contrary of the usual
+   * process execution using {@code docker-compose up} command.
+   */
+  public static final Key<Boolean> RUN_AS_AUXILIARY_PROCESS = Key.create("RUN_AS_AUXILIARY_PROCESS");
 
   @NotNull
   public ProcessHandler startRemoteProcess(@NotNull Sdk sdk,

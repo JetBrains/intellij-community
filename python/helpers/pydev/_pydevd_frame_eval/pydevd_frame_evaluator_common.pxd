@@ -94,3 +94,4 @@ cdef class FuncCodeInfo:
 
 cdef ThreadInfo get_thread_info()
 cdef FuncCodeInfo get_func_code_info(PyCodeObject *code_obj)
+cdef clear_thread_local_info()

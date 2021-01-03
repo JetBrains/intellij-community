@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.jetbrains.python.inspections.PyNonAsciiCharInspection;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
@@ -157,10 +156,6 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.configureFromTempProjectFile("test.py");
     myFixture.enableInspections(PyInitNewSignatureInspection.class);
     myFixture.checkHighlighting(true, false, true);
-  }
-
-  public void testPyCallByClassInspection() {
-    doHighlightingTest(PyCallByClassInspection.class); // ok, we can handle insanely long lines :)
   }
 
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) {

@@ -1,5 +1,3 @@
-# Stubs for email.mime.application
-
 from email.mime.nonmultipart import MIMENonMultipart
 from typing import Callable, Optional, Tuple, Union
 

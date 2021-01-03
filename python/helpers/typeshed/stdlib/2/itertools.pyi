@@ -1,7 +1,3 @@
-# Stubs for itertools
-
-# Based on https://docs.python.org/2/library/itertools.html
-
 from typing import Any, Callable, Generic, Iterable, Iterator, Optional, Sequence, Tuple, TypeVar, Union, overload
 
 _T = TypeVar("_T")

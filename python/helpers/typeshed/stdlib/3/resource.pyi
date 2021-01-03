@@ -1,7 +1,5 @@
-# Stubs for resource
-
 import sys
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple, Optional, Tuple, overload
 
 RLIMIT_AS: int
 RLIMIT_CORE: int
@@ -49,6 +47,9 @@ def getrusage(__who: int) -> _RUsage: ...
 def setrlimit(__resource: int, __limits: Tuple[int, int]) -> None: ...
 
 if sys.platform == "linux":
-    def prlimit(pid: int, resource: int, limits: Optional[Tuple[int, int]]) -> Tuple[int, int]: ...
+    @overload
+    def prlimit(pid: int, resource: int, limits: Tuple[int, int]) -> Tuple[int, int]: ...
+    @overload
+    def prlimit(pid: int, resource: int) -> Tuple[int, int]: ...
 
 error = OSError

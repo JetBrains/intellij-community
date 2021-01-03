@@ -79,7 +79,7 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
     super.doOKAction();
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
       XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
-      watchesManager.addInlineWatchExpression(expression, -1, myPresentationPosition, true);
+      watchesManager.addInlineWatchExpression(expression, -1, myPresentationPosition, false);
     }
   }
 
@@ -88,7 +88,7 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
     super.cancelEditing();
     if (myInitialExpression != null) {
       XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
-      watchesManager.addInlineWatchExpression(myInitialExpression, -1, myPresentationPosition, true);
+      watchesManager.addInlineWatchExpression(myInitialExpression, -1, myPresentationPosition, false);
     }
   }
 

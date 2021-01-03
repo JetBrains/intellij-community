@@ -9,9 +9,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
 import javax.swing.Icon
 
 class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(TYPE_ID) {
+
+  override fun isSystemCompatible(): Boolean = SystemInfo.isWin10OrNewer
 
   override val displayName: String
     @NlsSafe get() = "WSL"

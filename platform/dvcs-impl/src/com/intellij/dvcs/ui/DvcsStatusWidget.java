@@ -178,7 +178,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @NlsContexts.Tooltip
   @Nullable
   @RequiresEdt
-  private String getToolTip(@Nullable T repository) {
+  protected String getToolTip(@Nullable T repository) {
     if (repository == null) return null;
     String message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", myVcsName, getFullBranchName(repository));
     if (isMultiRoot(repository.getProject())) {

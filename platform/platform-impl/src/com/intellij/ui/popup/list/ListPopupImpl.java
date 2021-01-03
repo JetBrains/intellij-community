@@ -520,7 +520,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     private boolean isMovingToSubmenu(Point prevPoint, Point newPoint) {
-      if (myChild == null) return false;
+      if (myChild == null || myChild.isDisposed()) return false;
 
       Rectangle childBounds = myChild.getBounds();
       childBounds.setLocation(myChild.getLocationOnScreen());

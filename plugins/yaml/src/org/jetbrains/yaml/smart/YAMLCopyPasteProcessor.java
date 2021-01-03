@@ -37,7 +37,9 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   @NotNull
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
-    if (file.getLanguage() != YAMLLanguage.INSTANCE) return text;
+    if (!(file instanceof YAMLFile)) {
+      return text;
+    }
     CaretModel caretModel = editor.getCaretModel();
     SelectionModel selectionModel = editor.getSelectionModel();
     Document document = editor.getDocument();

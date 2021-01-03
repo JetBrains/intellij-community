@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provider that allows to customize indexing hash evaluation {@link IndexedHashesSupport} via mixing additional objects to hash function.
+ * Provider that allows to customize indexing hash evaluation {@link com.intellij.util.indexing.IndexedHashesSupport} via mixing additional objects to hash function.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental

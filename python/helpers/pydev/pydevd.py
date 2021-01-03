@@ -1497,8 +1497,16 @@ class PyDB(object):
         return globals
 
     def exiting(self):
-        sys.stdout.flush()
-        sys.stderr.flush()
+        # noinspection PyBroadException
+        try:
+            sys.stdout.flush()
+        except:
+            pass
+        # noinspection PyBroadException
+        try:
+            sys.stderr.flush()
+        except:
+            pass
         self.check_output_redirect()
         cmd = self.cmd_factory.make_exit_message()
         self.writer.add_command(cmd)
@@ -1727,6 +1735,7 @@ def _locked_settrace(
             SetupHolder.setup = setup
 
         debugger = PyDB()
+        pydev_log.debug("pydev debugger: process %d is connecting\n" % os.getpid())
         debugger.connect(host, port)  # Note: connect can raise error.
 
         # Mark connected only if it actually succeeded.
@@ -2040,8 +2049,8 @@ def main():
                 dispatcher.connect(host, port)
                 if dispatcher.port is not None:
                     port = dispatcher.port
-                    pydev_log.debug("Received port %d\n" %port)
-                    pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
+                    pydev_log.debug("Received port %d\n" % port)
+                    pydev_log.debug("pydev debugger: process %d is connecting\n" % os.getpid())
 
                     try:
                         pydev_monkey.patch_new_process_functions()

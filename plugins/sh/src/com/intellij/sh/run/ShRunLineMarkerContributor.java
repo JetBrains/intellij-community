@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElementImpl;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +22,8 @@ public class ShRunLineMarkerContributor extends RunLineMarkerContributor impleme
   @Nullable
   @Override
   public Info getInfo(@NotNull PsiElement element) {
-    if (!(element instanceof LeafElement) || element.getTextRange().getStartOffset() != 0) return null;
+    if (element instanceof OuterLanguageElementImpl || !(element instanceof LeafElement ) || element.getTextRange().getStartOffset() != 0)
+      return null;
     PsiFile psiFile = element.getContainingFile();
     if (!(psiFile instanceof ShFile) && !element.getText().startsWith("#!")) return null;
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());

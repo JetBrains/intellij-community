@@ -1,4 +1,3 @@
-# Stubs for uu (Python 2 and 3)
 import sys
 from typing import BinaryIO, Optional, Text, Union
 

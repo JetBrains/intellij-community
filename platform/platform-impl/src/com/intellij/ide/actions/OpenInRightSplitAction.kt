@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nullable
+import javax.swing.JComponent
 
 class OpenInRightSplitAction : AnAction(), DumbAware {
 
@@ -77,6 +78,25 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
         ApplicationManager.getApplication().invokeLater({ element.navigate(true) }, project.disposed)
       }
       return editorWindow
+    }
+
+    fun overrideDoubleClickWithOneClick(component: JComponent) {
+      val action = ActionManager.getInstance().getAction(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT) ?: return
+
+      val set = action.shortcutSet
+      for (shortcut in set.shortcuts) {
+        if (shortcut is MouseShortcut) {
+          //convert double click -> one click
+          if (shortcut.clickCount == 2) {
+            val customSet = CustomShortcutSet(MouseShortcut(shortcut.button, shortcut.modifiers, 1))
+            object: AnAction(null as String?) {
+              override fun actionPerformed(e: AnActionEvent) {
+                action.actionPerformed(e)
+              }
+            }.registerCustomShortcutSet(customSet, component)
+          }
+        }
+      }
     }
   }
 }

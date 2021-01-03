@@ -274,16 +274,8 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
         }
       }
 
-      // check for enabled children
+      // prevent button disappearing when isVisible = false
       Presentation presentationBackup = event.getPresentation();
-      for (AnAction childAction : myActionGroup.getChildren(event)) {
-        childAction.update(event);
-        Presentation eventPresentation = event.getPresentation();
-        if (eventPresentation.isEnabled()) {
-          presentationBackup.setEnabledAndVisible(true);
-          break;
-        }
-      }
       presentationBackup.setVisible(true);
       event.getPresentation().copyFrom(presentationBackup);
     }

@@ -172,4 +172,7 @@ public class PinActiveTabAction extends DumbAwareAction {
       return null;
     }
   }
+
+  public static class Toggle extends PinActiveTabAction implements Toggleable {
+  }
 }

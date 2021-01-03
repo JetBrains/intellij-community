@@ -1,5 +1,3 @@
-# Stubs for requests.auth (Python 3)
-
 from typing import Any, Text, Union
 
 from . import cookies, models, status_codes, utils
@@ -7,7 +5,6 @@ from . import cookies, models, status_codes, utils
 extract_cookies_to_jar = cookies.extract_cookies_to_jar
 parse_dict_header = utils.parse_dict_header
 to_native_string = utils.to_native_string
-codes = status_codes.codes
 
 CONTENT_TYPE_FORM_URLENCODED: Any
 CONTENT_TYPE_MULTI_PART: Any
@@ -39,3 +36,4 @@ class HTTPDigestAuth(AuthBase):
     def handle_redirect(self, r, **kwargs): ...
     def handle_401(self, r, **kwargs): ...
     def __call__(self, r): ...
+    def init_per_thread_state(self) -> None: ...

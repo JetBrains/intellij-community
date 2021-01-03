@@ -1,5 +1,3 @@
-# Stubs for email.contentmanager (Python 3.4)
-
 from email.message import Message
 from typing import Any, Callable
 

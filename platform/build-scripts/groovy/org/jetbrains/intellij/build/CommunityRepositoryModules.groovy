@@ -59,6 +59,11 @@ class CommunityRepositoryModules {
     "intellij.platform.editor.ex",
     "intellij.platform.codeStyle.impl",
     "intellij.platform.indexing.impl",
+    "intellij.platform.elevation",
+    "intellij.platform.elevation.client",
+    "intellij.platform.elevation.common",
+    "intellij.platform.elevation.daemon",
+    "intellij.platform.elevation.rpc",
     "intellij.platform.execution.impl",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
@@ -263,7 +268,6 @@ Android Studio: exclude intellij.statsCollector */
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
       withProjectLibrary("ktor-server-jetty")
-      withProjectLibrary("org.jetbrains.kotlinx:kotlinx-serialization-core")
       withGeneratedResources(new ResourcesGenerator() {
         @Override
         File generateResources(BuildContext context) {

@@ -4,17 +4,15 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.LineNumberConverter;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Adapter that should help in migration from {@link EditorGutterComponentEx#setLineNumberConvertor(TIntFunction)} and
- * {@link EditorGutterComponentEx#setLineNumberConvertor(TIntFunction, TIntFunction)} to
+ * Adapter for migrating from obsolete removed API
+ * {@code EditorGutterComponentEx#setLineNumberConvertor(TIntFunction lineNumberConvertor)} to
  * {@link EditorGutter#setLineNumberConverter(LineNumberConverter)} and
  * {@link EditorGutter#setLineNumberConverter(LineNumberConverter, LineNumberConverter)}
  */
-@SuppressWarnings("deprecation")
 public class LineNumberConverterAdapter implements LineNumberConverter {
   private final TIntFunction myFunction;
 

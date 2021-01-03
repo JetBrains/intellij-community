@@ -1,5 +1,3 @@
-"""Stub file for the '_json' module."""
-
 from typing import Any, Callable, Dict, Optional, Tuple
 
 class make_encoder:

@@ -66,6 +66,16 @@ abstract class ExecutionManager {
     }
   }
 
+  @ApiStatus.Internal
+  @Throws(ExecutionException::class)
+  fun startRunProfileWithPromise(environment: ExecutionEnvironment,
+                                 state: RunProfileState,
+                                 executor: ThrowableConvertor<RunProfileState, Promise<RunContentDescriptor?>, ExecutionException>) {
+    startRunProfile(environment) {
+      executor.convert(state)
+    }
+  }
+
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #startRunProfile(RunProfileStarter, ExecutionEnvironment)}")
   fun startRunProfile(starter: RunProfileStarter, @Suppress("UNUSED_PARAMETER") state: RunProfileState, environment: ExecutionEnvironment) {

@@ -5,68 +5,90 @@ import com.google.protobuf.ByteString
 import com.intellij.execution.process.mediator.daemon.FdConstants.STDERR
 import com.intellij.execution.process.mediator.daemon.FdConstants.STDIN
 import com.intellij.execution.process.mediator.daemon.FdConstants.STDOUT
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 typealias Pid = Long
 
-internal class ProcessManager : Closeable {
-  private val processMap = ConcurrentHashMap<Pid, Process>()
-  private val isClosed = AtomicBoolean()
+internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable, CoroutineScope by coroutineScope {
+  private val handleMap = ConcurrentHashMap<Pid, Handle>()
+  private val job = Job(coroutineContext[Job])
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Pid {
-    val processBuilder = ProcessBuilder().apply {
-      command(command)
-      directory(workingDir)
-      environment().run {
-        clear()
-        putAll(environVars)
+    val completion = CompletableDeferred<Int>(job)
+    completion.ensureActive()
+    try {
+      val processBuilder = ProcessBuilder().apply {
+        command(command)
+        directory(workingDir)
+        environment().run {
+          clear()
+          putAll(environVars)
+        }
+        inFile?.let { redirectInput(it) }
+        outFile?.let { redirectOutput(it) }
+        errFile?.let { redirectError(it) }
       }
-      inFile?.let { redirectInput(it) }
-      outFile?.let { redirectOutput(it) }
-      errFile?.let { redirectError(it) }
-    }
 
-    val process = withContext(Dispatchers.IO) {
-      @Suppress("BlockingMethodInNonBlockingContext")
-      processBuilder.start()
-    }
+      val process = withContext(Dispatchers.IO) {
+        @Suppress("BlockingMethodInNonBlockingContext")
+        processBuilder.start()
+      }
 
-    return registerProcess(process)
+      val handle = Handle(process, completion)
+      return registerHandle(handle)
+    }
+    catch (e: Throwable) {
+      completion.cancel("Failed to create process", e)
+      throw e
+    }
   }
 
-  fun destroyProcess(pid: Pid, force: Boolean) {
-    val process = getProcess(pid)
-    if (force) {
-      process.destroyForcibly()
+  fun destroyProcess(pid: Pid, force: Boolean, destroyGroup: Boolean) {
+    val handle = getHandle(pid)
+    val process = handle.process
+    val processHandle = process.toHandle()
+    if (destroyGroup) {
+      processHandle.doDestroyRecursively(force)
     }
     else {
-      process.destroy()
+      processHandle.doDestroy(force)
+    }
+  }
+
+  private fun ProcessHandle.doDestroyRecursively(force: Boolean) {
+    for (child in children()) {
+      child.doDestroyRecursively(force)
+    }
+    doDestroy(force)
+  }
+
+  private fun ProcessHandle.doDestroy(force: Boolean) {
+    if (force) {
+      destroyForcibly()
+    }
+    else {
+      destroy()
     }
   }
 
   suspend fun awaitTermination(pid: Pid): Int {
-    val process = getProcess(pid)
+    val handle = getHandle(pid)
+    val process = handle.process
 
-    withContext(Dispatchers.IO) {
-      process.onExit().await()
-    }
+    handle.completion.await()
 
     return process.exitValue()
   }
 
   fun readStream(pid: Pid, fd: Int): Flow<ByteString> {
-    val process = getProcess(pid)
+    val handle = getHandle(pid)
+    val process = handle.process
     val inputStream = when (fd) {
       STDOUT -> process.inputStream
       STDERR -> process.errorStream
@@ -87,7 +109,8 @@ internal class ProcessManager : Closeable {
   }
 
   suspend fun writeStream(pid: Pid, fd: Int, chunkFlow: Flow<ByteString>, ackChannel: SendChannel<Unit>?) {
-    val process = getProcess(pid)
+    val handle = getHandle(pid)
+    val process = handle.process
     val outputStream = when (fd) {
       STDIN -> process.outputStream
       else -> throw IllegalArgumentException("Unknown process input FD $fd for PID $pid")
@@ -95,7 +118,7 @@ internal class ProcessManager : Closeable {
     @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
       outputStream.use { outputStream ->
-        process.onExit().whenComplete { _, _ -> cancel(CancellationException("Process exited")) }
+        handle.cancelJobOnCompletion(currentCoroutineContext()[Job]!!)
         @Suppress("EXPERIMENTAL_API_USAGE")
         chunkFlow.onCompletion {
           ackChannel?.close(it)
@@ -110,41 +133,58 @@ internal class ProcessManager : Closeable {
   }
 
   fun release(pid: Pid) {
-    val process = unregisterProcess(pid)
-    releaseProcess(process)
+    unregisterHandle(pid).release()
   }
 
-  private fun releaseProcess(process: Process) {
-    process.destroy()
-  }
-
-  private fun registerProcess(process: Process): Pid {
-    val pid = process.pid()
-    processMap.putIfAbsent(pid, process).also { previous ->
+  private fun registerHandle(handle: Handle): Pid {
+    val pid = handle.pid
+    handleMap.putIfAbsent(pid, handle).also { previous ->
       check(previous == null) { "Duplicate PID $pid" }
-    }
-    if (isClosed.get()) {
-      processMap.remove(pid)?.let { releaseProcess(it) }
     }
     return pid
   }
 
-  private fun getProcess(pid: Pid): Process {
-    val process = processMap[pid]
-    return requireNotNull(process) { "Unknown PID $pid" }
+  private fun getHandle(pid: Pid): Handle {
+    val handle = handleMap[pid]
+    return requireNotNull(handle) { "Unknown PID $pid" }
   }
 
-  private fun unregisterProcess(pid: Pid): Process {
-    val process = processMap.remove(pid)
-    return requireNotNull(process) { "Unknown PID $pid" }
+  private fun unregisterHandle(pid: Pid): Handle {
+    val handle = handleMap.remove(pid)
+    return requireNotNull(handle) { "Unknown PID $pid" }
   }
 
   override fun close() {
-    if (!isClosed.getAndSet(true)) {
-      while (true) {
-        val pid = processMap.keys.firstOrNull() ?: break
-        processMap.remove(pid)?.let { releaseProcess(it) }
+    job.cancel("closed")
+    while (true) {
+      val pid = handleMap.keys.firstOrNull() ?: break
+      handleMap.remove(pid)?.release()
+    }
+  }
+
+  private data class Handle(
+    val process: Process,
+    val completion: CompletableDeferred<Int>,
+  ) {
+    val pid get() = process.pid()
+
+    init {
+      process.onExit().whenComplete { p, _ ->
+        completion.complete(p.exitValue())
       }
+    }
+
+    fun cancelJobOnCompletion(job: Job) {
+      completion.invokeOnCompletion { cause ->
+        job.cancel(cause as? CancellationException ?: CancellationException("Process exited", cause))
+      }.also { disposableHandle ->
+        job.invokeOnCompletion { disposableHandle.dispose() }
+      }
+    }
+
+    fun release() {
+      completion.cancel("process released")
+      process.destroy()  // TODO should we really destroy it?
     }
   }
 }

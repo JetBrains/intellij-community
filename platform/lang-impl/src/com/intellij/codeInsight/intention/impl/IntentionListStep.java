@@ -119,17 +119,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
         return;
       }
 
-      Runnable runnable = () -> {
-        ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
-      };
       Component focusable = myEditor == null ? null : myEditor.getContentComponent();
       if (focusable != null) {
-        IdeFocusManager manager = IdeFocusManager.getInstance(myProject);
-        manager.requestFocus(focusable, true).doWhenDone(() -> manager.doWhenFocusSettlesDown(runnable));
+        focusable.requestFocus();
       }
-      else {
-        runnable.run();
-      }
+      // hack instead of doWhenFocusSettlesDown (not working as expected at the moment)
+      ApplicationManager.getApplication().invokeLater(() -> ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject));
     };
   }
 

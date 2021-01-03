@@ -2,9 +2,9 @@
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.Empty
+import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
+import com.intellij.execution.process.mediator.grpc.ExceptionStatusDescriptionAugmenterServerInterceptor
 import com.intellij.execution.process.mediator.rpc.*
-import com.intellij.execution.process.mediator.util.ExceptionAsStatus
-import com.intellij.execution.process.mediator.util.ExceptionStatusDescriptionAugmenterServerInterceptor
 import io.grpc.ServerInterceptors
 import io.grpc.ServerServiceDefinition
 import kotlinx.coroutines.coroutineScope
@@ -12,20 +12,22 @@ import kotlinx.coroutines.flow.*
 import java.io.File
 
 internal class ProcessManagerServerService(
-  private val processManager: ProcessManager
+  private val processManager: ProcessManager,
+  private val quotaManager: QuotaManager,
 ) : ProcessManagerGrpcKt.ProcessManagerCoroutineImplBase() {
 
   override suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply {
     val commandLine = request.commandLine
 
     val pid = ExceptionAsStatus.wrap {
-      processManager.createProcess(commandLine.commandList,
-                                   File(commandLine.workingDir),
-                                   commandLine.environMap,
-                                   commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
-                                   commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
-                                   commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
-
+      quotaManager.runIfPermitted {
+        processManager.createProcess(commandLine.commandList,
+                                     File(commandLine.workingDir),
+                                     commandLine.environMap,
+                                     commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                     commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                     commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
+      } ?: throw QuotaExceededException()
     }
 
     return CreateProcessReply.newBuilder()
@@ -35,7 +37,7 @@ internal class ProcessManagerServerService(
 
   override suspend fun destroyProcess(request: DestroyProcessRequest): Empty {
     ExceptionAsStatus.wrap {
-      processManager.destroyProcess(request.pid, request.force)
+      processManager.destroyProcess(request.pid, request.force, request.destroyGroup)
     }
     return Empty.getDefaultInstance()
   }
@@ -95,8 +97,8 @@ internal class ProcessManagerServerService(
   }
 
   companion object {
-    fun createServiceDefinition(processManager: ProcessManager): ServerServiceDefinition {
-      val service = ProcessManagerServerService(processManager)
+    fun createServiceDefinition(processManager: ProcessManager, quotaManager: QuotaManager): ServerServiceDefinition {
+      val service = ProcessManagerServerService(processManager, quotaManager)
       return ServerInterceptors
         .intercept(service, ExceptionStatusDescriptionAugmenterServerInterceptor)
     }

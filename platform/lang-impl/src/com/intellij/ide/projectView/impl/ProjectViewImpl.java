@@ -175,7 +175,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     public void setSelected(boolean selected) {
       UISettings.getInstance().setOpenInPreviewTabIfPossible(selected);
-      if (selected) myAutoscrollToSource.setSelected(true);
     }
   };
 
@@ -518,7 +517,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
-        return myAutoscrollToSource.isSelected();
+        return myAutoscrollToSource.isSelected() || myOpenInPreviewTab.isSelected();
       }
 
       @Override

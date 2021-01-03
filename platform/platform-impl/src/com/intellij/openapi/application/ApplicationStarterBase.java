@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
+import com.intellij.idea.SocketLock;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
@@ -96,7 +97,8 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     try {
       int exitCode;
       try {
-        Future<CliResult> commandFuture = processCommand(args, null);
+        String currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR);
+        Future<CliResult> commandFuture = processCommand(args, currentDirectory);
         CliResult result = commandFuture.get();
         if (result.message != null) {
           System.out.println(result.message);

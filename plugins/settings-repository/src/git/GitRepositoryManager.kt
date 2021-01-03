@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
@@ -64,12 +64,15 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun deleteRepository() {
     ignoreRules = null
 
-    super.deleteRepository()
-
-    val r = _repository
-    if (r != null) {
-      _repository = null
-      r.close()
+    try {
+      super.deleteRepository()
+    }
+    finally {
+      val r = _repository
+      if (r != null) {
+        _repository = null
+        r.close()
+      }
     }
   }
 

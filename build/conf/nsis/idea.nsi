@@ -617,7 +617,7 @@ Function silentConfigReader
   ${LogText} "  config file: $R1"
 
   ${ConfigRead} "$R1" "mode=" $R0
-  IfErrors no_silent_config
+  IfErrors bad_silent_config
   ${LogText} "  mode: $R0"
   StrCpy $silentMode "user"
   IfErrors launcher_32
@@ -683,6 +683,11 @@ update_settings:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   goto done
 no_silent_config:
+  ${LogText} "  config file was not provided"
+  ${LogText} "  defaulting to admin mode"
+  StrCpy $silentMode "admin"
+  goto done
+bad_silent_config:
   Call IncorrectSilentInstallParameters
 done:
 FunctionEnd
@@ -1123,7 +1128,7 @@ skip_backup:
 command_exists:
   StrCpy $1 "$R5\DefaultIcon"
   StrCpy $2 ""
-  StrCpy $3 " $productLauncher,0"
+  StrCpy $3 "$productLauncher,0"
   Call OMWriteRegStr
   StrCpy $1 "$R5\shell\open\command"
   StrCpy $2 ""

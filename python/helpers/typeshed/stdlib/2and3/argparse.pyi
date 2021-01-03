@@ -38,6 +38,8 @@ ZERO_OR_MORE: str
 _UNRECOGNIZED_ARGS_ATTR: str  # undocumented
 
 class ArgumentError(Exception):
+    argument_name: Optional[str]
+    message: str
     def __init__(self, argument: Optional[Action], message: str) -> None: ...
 
 # undocumented

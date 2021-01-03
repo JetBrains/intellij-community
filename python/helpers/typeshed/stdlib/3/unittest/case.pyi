@@ -28,6 +28,9 @@ from typing import (
 )
 from warnings import WarningMessage
 
+if sys.version_info >= (3, 9):
+    from types import GenericAlias
+
 _E = TypeVar("_E", bound=BaseException)
 _FT = TypeVar("_FT", bound=Callable[..., Any])
 
@@ -258,6 +261,8 @@ class _AssertRaisesContext(Generic[_E]):
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> bool: ...
+    if sys.version_info >= (3, 9):
+        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
 
 class _AssertWarnsContext:
     warning: WarningMessage

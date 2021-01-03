@@ -49,7 +49,11 @@ def create_parser() -> argparse.ArgumentParser:
         "--print-stderr", action="store_true", default=False, help="Print stderr every time an error is encountered."
     )
     parser.add_argument(
-        "files", metavar="FILE", type=str, nargs="*", help="Files or directories to check. (Default: Check all files.)",
+        "files",
+        metavar="FILE",
+        type=str,
+        nargs="*",
+        help="Files or directories to check. (Default: Check all files.)",
     )
     return parser
 
@@ -82,10 +86,8 @@ def load_exclude_list(typeshed_location: str) -> List[str]:
 def run_pytype(*, filename: str, python_version: str, typeshed_location: str) -> Optional[str]:
     """Runs pytype, returning the stderr if any."""
     options = pytype_config.Options.create(
-        filename,
-        module_name=_get_module_name(filename),
-        parse_pyi=True,
-        python_version=python_version)
+        filename, module_name=_get_module_name(filename), parse_pyi=True, python_version=python_version
+    )
     old_typeshed_home = os.environ.get(TYPESHED_HOME, UNSET)
     os.environ[TYPESHED_HOME] = typeshed_location
     try:
@@ -162,13 +164,7 @@ def find_stubs_in_paths(paths: Sequence[str]) -> List[str]:
     return filenames
 
 
-def run_all_tests(
-    *,
-    files_to_test: Sequence[Tuple[str, int]],
-    typeshed_location: str,
-    print_stderr: bool,
-    dry_run: bool
-) -> None:
+def run_all_tests(*, files_to_test: Sequence[Tuple[str, int]], typeshed_location: str, print_stderr: bool, dry_run: bool) -> None:
     bad = []
     errors = 0
     total_tests = len(files_to_test)

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
@@ -121,7 +122,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
 
     JComponent component = HintUtil.createInformationLabel(InspectionsBundle.message("error.analysis.is.in.progress"), null, null, null);
-    AccessibleContextUtil.setName(component, "Hint");
+    AccessibleContextUtil.setName(component, IdeBundle.message("information.hint.accessible.context.name"));
     LightweightHint hint = new LightweightHint(component);
     Point p = hintManager.getHintPosition(hint, editor, HintManager.ABOVE);
 

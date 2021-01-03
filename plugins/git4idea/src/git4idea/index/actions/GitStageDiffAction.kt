@@ -11,13 +11,14 @@ import com.intellij.util.containers.isEmpty
 import git4idea.index.createThreeSidesDiffRequestProducer
 import git4idea.index.createTwoSidesDiffRequestProducer
 import git4idea.index.ui.GitStageDataKeys
+import git4idea.index.ui.NodeKind
 
 class GitStageDiffAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null &&
-                               !e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM).isEmpty()
+                               e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM)?.anyMatch { it.kind != NodeKind.IGNORED  } == true
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 
@@ -32,7 +33,7 @@ class GitStageThreeSideDiffAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null &&
                                e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null &&
-                               !e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM).isEmpty()
+                               e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES_STREAM)?.anyMatch { it.kind != NodeKind.IGNORED  } == true
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 

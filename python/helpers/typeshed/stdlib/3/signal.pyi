@@ -1,5 +1,3 @@
-"""Stub file for the 'signal' module."""
-
 import sys
 from enum import IntEnum
 from types import FrameType

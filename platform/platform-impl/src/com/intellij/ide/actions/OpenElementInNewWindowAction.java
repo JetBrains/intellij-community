@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * stop opening elements in a new editor window
  *
  * @author Konstantin Bulenkov
- * @see com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl#isOpenInNewWindow()
+ * @see FileEditorManagerImpl#getOpenMode(java.awt.AWTEvent)
  */
 final class OpenElementInNewWindowAction extends DumbAwareAction {
   @Override

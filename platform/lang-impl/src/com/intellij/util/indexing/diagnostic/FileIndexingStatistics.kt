@@ -8,5 +8,6 @@ class FileIndexingStatistics(
   val indexingTime: TimeNano,
   val fileType: FileType,
   val indexesProvidedByExtensions: Set<ID<*, *>>,
+  val wasFullyIndexedByExtensions: Boolean,
   val perIndexerTimes: Map<ID<*, *>, TimeNano>
 ) 

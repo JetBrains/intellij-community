@@ -1159,13 +1159,19 @@ public final class Switcher extends AnAction implements DumbAware {
       else {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
           final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+          EditorWindow splitWindow = null;
           for (Object value : values) {
             if (value instanceof FileInfo) {
               final FileInfo info = (FileInfo)value;
 
               VirtualFile file = info.first;
               if (mode == RIGHT_SPLIT) {
-                OpenInRightSplitAction.Companion.openInRightSplit(project, file, null);
+                if (splitWindow == null) {
+                  splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null);
+                }
+                else {
+                  manager.openFileWithProviders(file, true, splitWindow);
+                }
               }
               if (mode == NEW_WINDOW) {
                 manager.openFileInNewWindow(file);

@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -110,7 +111,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         }
       }.largeGapAfter()
 
-      row { checkBox(IdeBundle.message("updates.settings.show.editor"), settings.state::isShowWhatsNewEditor) }
+      if (WhatsNewAction.isAvailable()) {
+        row { checkBox(IdeBundle.message("updates.settings.show.editor"), settings.state::isShowWhatsNewEditor) }
+      }
 
       onGlobalApply {
         val isEnabled = settings.isCheckNeeded

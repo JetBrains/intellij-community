@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
@@ -32,6 +32,7 @@ import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaS
 public class JdkListConfigurable extends BaseStructureConfigurable {
   @NotNull
   private final ProjectSdksModel myJdksTreeModel;
+  private boolean hasListenerRegistered = false;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
     public void sdkAdded(@NotNull Sdk sdk) {
@@ -124,6 +125,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   public void dispose() {
     myJdksTreeModel.removeListener(myListener);
+    hasListenerRegistered = false;
     myJdksTreeModel.disposeUIResources();
   }
 
@@ -135,7 +137,10 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   public void reset() {
     super.reset();
-    myJdksTreeModel.addListener(myListener);
+    if (!hasListenerRegistered) {
+      hasListenerRegistered = true;
+      myJdksTreeModel.addListener(myListener);
+    }
     myTree.setRootVisible(false);
   }
 

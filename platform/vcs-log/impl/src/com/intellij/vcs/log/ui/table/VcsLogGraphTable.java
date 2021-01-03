@@ -624,7 +624,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
-    if (!selected && myMouseHoveredRow == row) {
+    if (!selected && row == getHoveredRow()) {
       Color background = Objects.requireNonNull(style.getBackground());
       VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(getHoveredBackgroundColor(background));
       style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));

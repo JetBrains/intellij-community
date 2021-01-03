@@ -1,5 +1,3 @@
-# Stubs for tracemalloc (Python 3.4+)
-
 import sys
 from typing import List, Optional, Sequence, Tuple, Union, overload
 
@@ -8,32 +6,25 @@ from _tracemalloc import *
 def get_object_traceback(obj: object) -> Optional[Traceback]: ...
 def take_snapshot() -> Snapshot: ...
 
-if sys.version_info >= (3, 6):
-    class DomainFilter:
-        inclusive: bool
-        domain: int
-        def __init__(self, inclusive: bool, domain: int) -> None: ...
+class DomainFilter:
+    inclusive: bool
+    domain: int
+    def __init__(self, inclusive: bool, domain: int) -> None: ...
 
 class Filter:
-    if sys.version_info >= (3, 6):
-        domain: Optional[int]
+    domain: Optional[int]
     inclusive: bool
     lineno: Optional[int]
     filename_pattern: str
     all_frames: bool
-    if sys.version_info >= (3, 6):
-        def __init__(
-            self,
-            inclusive: bool,
-            filename_pattern: str,
-            lineno: Optional[int] = ...,
-            all_frames: bool = ...,
-            domain: Optional[int] = ...,
-        ) -> None: ...
-    else:
-        def __init__(
-            self, inclusive: bool, filename_pattern: str, lineno: Optional[int] = ..., all_frames: bool = ...
-        ) -> None: ...
+    def __init__(
+        self,
+        inclusive: bool,
+        filename_pattern: str,
+        lineno: Optional[int] = ...,
+        all_frames: bool = ...,
+        domain: Optional[int] = ...,
+    ) -> None: ...
 
 class Statistic:
     count: int
@@ -87,10 +78,7 @@ class Snapshot:
     def __init__(self, traces: Sequence[_TraceTupleT], traceback_limit: int) -> None: ...
     def compare_to(self, old_snapshot: Snapshot, key_type: str, cumulative: bool = ...) -> List[StatisticDiff]: ...
     def dump(self, filename: str) -> None: ...
-    if sys.version_info >= (3, 6):
-        def filter_traces(self, filters: Sequence[Union[DomainFilter, Filter]]) -> Snapshot: ...
-    else:
-        def filter_traces(self, filters: Sequence[Filter]) -> Snapshot: ...
+    def filter_traces(self, filters: Sequence[Union[DomainFilter, Filter]]) -> Snapshot: ...
     @staticmethod
     def load(filename: str) -> Snapshot: ...
     def statistics(self, key_type: str, cumulative: bool = ...) -> List[Statistic]: ...

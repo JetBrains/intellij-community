@@ -386,7 +386,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public Rectangle getBounds() {
-    return new Rectangle(getContent().getLocationOnScreen(), getContent().getSize());
+    JComponent content = isDisposed() ? null : getContent();
+    return content == null ? null : new Rectangle(content.getLocationOnScreen(), content.getSize());
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {

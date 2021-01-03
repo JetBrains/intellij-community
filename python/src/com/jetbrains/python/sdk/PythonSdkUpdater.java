@@ -185,7 +185,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
           .notify(myProject);
       }
       catch (InvalidSdkException e) {
-        if (PythonSdkUtil.isRemote(mySdkKey)) {
+        if (PythonSdkUtil.isRemote(PythonSdkUtil.findSdkByKey(mySdkKey))) {
           PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
             Sdk revalidatedSdk = PythonSdkUtil.findSdkByKey(mySdkKey);
             if (revalidatedSdk != null) {

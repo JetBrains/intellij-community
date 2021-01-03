@@ -1,5 +1,3 @@
-# Stubs for hmac
-
 import sys
 from _typeshed import ReadableBuffer
 from types import ModuleType

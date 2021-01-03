@@ -39,6 +39,7 @@ public class ImportSpecImpl implements ImportSpec {
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
+  @Nullable private Runnable myRerunAction;
 
   public ImportSpecImpl(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -148,5 +149,14 @@ public class ImportSpecImpl implements ImportSpec {
 
   void setProjectResolverPolicy(@Nullable ProjectResolverPolicy projectResolverPolicy) {
     myProjectResolverPolicy = projectResolverPolicy;
+  }
+
+  @Nullable
+  public Runnable getRerunAction() {
+    return myRerunAction;
+  }
+
+  public void setRerunAction(@Nullable Runnable rerunAction) {
+    myRerunAction = rerunAction;
   }
 }

@@ -1,5 +1,3 @@
-"""Stubs for the 'sys' module."""
-
 from types import ClassType, FrameType, ModuleType, TracebackType
 from typing import IO, Any, BinaryIO, Callable, Dict, List, NoReturn, Optional, Sequence, Text, Tuple, Type, Union, overload
 

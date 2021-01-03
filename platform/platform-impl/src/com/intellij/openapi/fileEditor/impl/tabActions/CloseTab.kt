@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.BitUtil
 import com.intellij.util.ObjectUtils
 import java.awt.event.InputEvent
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
 @Suppress("ComponentNotRegistered")
@@ -70,7 +71,7 @@ class CloseTab(c: JComponent,
       window = mgr.currentWindow
     }
     if (window != null) {
-      if (BitUtil.isSet(e.inputEvent.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
+      if (e.inputEvent is MouseEvent && BitUtil.isSet(e.inputEvent.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
         window.closeAllExcept(file)
       }
       else {

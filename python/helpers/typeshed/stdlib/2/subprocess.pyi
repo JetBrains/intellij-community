@@ -1,7 +1,3 @@
-# Stubs for subprocess
-
-# Based on http://docs.python.org/2/library/subprocess.html and Python 3 stub
-
 from typing import IO, Any, Callable, Generic, List, Mapping, Optional, Sequence, Text, Tuple, TypeVar, Union
 
 _FILE = Union[None, int, IO[Any]]

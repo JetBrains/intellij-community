@@ -279,13 +279,11 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     }
 
     @Override
-    @Nullable
-    protected String findItemToAdd() {
+    protected @Nullable String findItemToAdd() {
       return showEditDialog("");
     }
 
-    @Nullable
-    private String showEditDialog(final String initialValue) {
+    private @Nullable String showEditDialog(final String initialValue) {
       return Messages.showInputDialog(this, myQuery, ExecutionBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
         @Override
         public boolean checkInput(String inputString) {
@@ -297,11 +295,10 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
           return !StringUtil.isEmpty(inputString);
         }
 
-        @Nullable
         @Override
-        public String getErrorText(String inputString) {
+        public @NlsContexts.DetailedDescription @Nullable String getErrorText(String inputString) {
           if (!checkInput(inputString)) {
-            return "Console folding rule string cannot be empty";
+            return ExecutionBundle.message("message.console.folding.rule.string.cannot.be.empty");
           }
           return null;
         }

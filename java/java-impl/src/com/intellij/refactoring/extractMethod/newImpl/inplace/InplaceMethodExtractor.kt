@@ -1,28 +1,30 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.ide.IdeEventQueue
+import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
+import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -45,6 +47,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
 import org.jetbrains.annotations.NonNls
 import java.awt.Point
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
   : InplaceRefactoring(editor, null, extractOptions.project) {
@@ -103,7 +107,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val replacedImport = FragmentState(importRange, document.getText(importRange.range))
     fragmentsToRevert.add(replacedImport)
 
-    val (callElements, method) = MethodExtractor().extractMethod(extractOptions.copy(methodName = "extracted"))
+    val (callElements, method) = MethodExtractor().extractMethod(extractOptions)
     val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)!!
     editor.caretModel.moveToOffset(callExpression.textOffset)
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
@@ -124,57 +128,89 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
   }
 
-  private fun showNavigationGotIt(templateState: TemplateState){
-    val selectedRange = templateState.currentVariableRange ?: return
-    val offset = minOf(selectedRange.startOffset + 3, selectedRange.endOffset)
-    val gotoDeclarationShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
-    val message = JavaRefactoringBundle.message("extract.method.gotit.navigation", gotoDeclarationShortcut)
-    gotItBalloon = GotItTooltip("extract.method.gotit.navigate", message, templateState)
-      .withMaxWidth(250)
-      .showInEditor(templateState.editor, offset)
+  private fun createChangeBasedDisposable(editor: Editor): Disposable {
+    val disposable = Disposer.newDisposable()
+    EditorUtil.disposeWithEditor(editor, disposable)
+    val changeListener = object: DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        Disposer.dispose(disposable)
+      }
+    }
+    editor.document.addDocumentListener(changeListener, disposable)
+    return disposable
   }
 
-  private fun showChangeSignatureGotIt(){
-    gotItBalloon?.hide()
-    val offset = minOf(methodNameRange.startOffset + 3, methodNameRange.endOffset)
+  private fun installGotItTooltips(){
+    showNavigationGotIt(editor, methodCallExpressionRange.range)
+    val disposable = createChangeBasedDisposable(editor)
+    val nameRange = methodNameRange.range
+    val caretListener = object: CaretListener {
+      override fun caretPositionChanged(event: CaretEvent) {
+        if (editor.logicalPositionToOffset(event.newPosition) in nameRange) {
+          showChangeSignatureGotIt(editor, nameRange)
+          Disposer.dispose(disposable)
+        }
+      }
+    }
+    editor.caretModel.addCaretListener(caretListener, disposable)
+  }
+
+  private fun showNavigationGotIt(editor: Editor, range: TextRange){
+    val gotoKeyboardShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
+    val gotoMouseShortcut = KeymapUtil.getFirstMouseShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
+    if (gotoKeyboardShortcut.isEmpty() || gotoMouseShortcut.isEmpty()) return
+    val header = JavaRefactoringBundle.message("extract.method.gotit.navigation.header")
+    val message = JavaRefactoringBundle.message("extract.method.gotit.navigation.message", gotoMouseShortcut, gotoKeyboardShortcut)
+    val disposable = Disposer.newDisposable()
+    EditorUtil.disposeWithEditor(editor, disposable)
+    GotItTooltip("extract.method.gotit.navigate", message, disposable)
+      .withHeader(header)
+      .showInEditor(editor, range) { gotItBalloon = it }
+  }
+
+  private fun showChangeSignatureGotIt(editor: Editor, range: TextRange){
+    gotItBalloon?.hide(true)
     val disposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, disposable)
     val moveLeftShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_LEFT)
     val moveRightShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_RIGHT)
     val contextActionShortcut = KeymapUtil.getFirstKeyboardShortcutText("ShowIntentionActions")
-    val message = JavaRefactoringBundle.message("extract.method.gotit.signature", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
+    val header = JavaRefactoringBundle.message("extract.method.gotit.signature.header")
+    val message = JavaRefactoringBundle.message("extract.method.gotit.signature.message", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
     GotItTooltip("extract.method.signature.change", message, disposable)
-      .withMaxWidth(250)
-      .showInEditor(editor, offset)
+      .withIcon(AllIcons.Gutter.SuggestedRefactoringBulbDisabled)
+      .withHeader(header)
+      .showInEditor(editor, range)
   }
 
-  private fun GotItTooltip.showInEditor(editor: Editor, offset: Int): Balloon? {
-    fun getPosition(): Point {
-      return editor.offsetToXY(offset)
+  private fun GotItTooltip.showInEditor(editor: Editor, range: TextRange, balloonCreated: (Balloon) -> Unit = {}) {
+    val offset = minOf(range.startOffset + 3, range.endOffset)
+    fun getPosition(): Point = editor.offsetToXY(offset)
+    fun isVisible(): Boolean = editor.scrollingModel.visibleArea.contains(getPosition())
+
+    withMaxWidth(250)
+    withPosition(Balloon.Position.above)
+
+    if (isVisible()) {
+      setOnBalloonCreated { balloon -> editor.scrollingModel.addVisibleAreaListener({
+          if (isVisible()) {
+            balloon.revalidate()
+          } else {
+            balloon.hide(true)
+            GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+          }
+        }, balloon)
+
+        balloonCreated(balloon)
+      }
+
+      show(editor.contentComponent) { getPosition() }
     }
-    fun isVisible(): Boolean {
-      val position = getPosition()
-      val visibleArea = EditorCodePreview.getActivePreview(editor)?.editorVisibleArea ?: editor.scrollingModel.visibleArea
-      return visibleArea.contains(position)
-    }
-    val balloon = if (isVisible()) showAt(Balloon.Position.above, editor.contentComponent) { getPosition() } else null
-    if (balloon != null) {
-      editor.scrollingModel.addVisibleAreaListener({
-        if (isVisible()) {
-          balloon.revalidate()
-        } else {
-          balloon.hide()
-        }
-     }, balloon)
-    }
-    return balloon
   }
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
     ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
-    val result = super.performInplaceRefactoring(nameSuggestions)
-    ApplicationManager.getApplication().runWriteAction { setMethodName(extractOptions.methodName) }
-    return result
+    return super.performInplaceRefactoring(nameSuggestions)
   }
 
   override fun revertState() {
@@ -194,40 +230,78 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   override fun afterTemplateStart() {
     super.afterTemplateStart()
     popupProvider.setChangeListener { restartInplace() }
-    popupProvider.setShowDialogAction { restartInDialog() }
-    popupProvider.setNavigateMethodAction { finishAndGotoDeclaration() }
+    popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
     val editor = templateState.editor as? EditorImpl ?: return
-    val presentation = TemplateInlayUtil.createSettingsPresentation(editor)
+    val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
+    val templateElement = object : TemplateInlayUtil.SelectableTemplateElement(presentation) {
+      override fun onSelect(templateState: TemplateState) {
+        super.onSelect(templateState)
+        logStatisticsOnShow(editor)
+      }
+    }
     val offset = templateState.currentVariableRange?.endOffset ?: return
-    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupProvider.panel) ?: return
+    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupProvider.panel,
+                                                                      templateElement) { logStatisticsOnHide(popupProvider) }
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
     setActiveExtractor(editor, this)
-
-    showNavigationGotIt(templateState)
 
     Disposer.register(templateState, preview)
     Disposer.register(templateState, { SuggestedRefactoringProvider.getInstance(extractOptions.project).reset() })
     Disposer.register(templateState, { methodNameRange.dispose() })
     Disposer.register(templateState, { methodCallExpressionRange.dispose() })
 
-    val connection = myProject.messageBus.connect(templateState)
-    connection.subscribe(AnActionListener.TOPIC, object: AnActionListener {
-      override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        if (action is GotoDeclarationAction){
-          showChangeSignatureGotIt()
-          templateState.gotoEnd(false)
-        }
+    templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
+      override fun templateFinished(template: Template, brokenOff: Boolean) {
+        afterTemplateFinished(brokenOff)
       }
     })
-
     installMethodNameValidation(templateState)
+  }
+
+  private fun afterTemplateFinished(brokenOff: Boolean) {
+    if (! brokenOff){
+      InplaceExtractMethodCollector.executed.log(extractOptions.methodName != getMethodName())
+      installGotItTooltips()
+    }
+  }
+
+  private fun logStatisticsOnShow(editor: Editor, mouseEvent: MouseEvent? = null){
+    val showEvent = mouseEvent
+                    ?: KeyEvent(editor.component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_TAB, KeyEvent.VK_TAB.toChar())
+    InplaceExtractMethodCollector.show.log(editor.project, FusInputEvent(showEvent, javaClass.simpleName))
+  }
+
+  private fun logStatisticsOnHide(popupProvider: ExtractMethodPopupProvider){
+    InplaceExtractMethodCollector.hide.log(myProject, popupProvider.isChanged)
+    if (popupProvider.annotate != popupProvider.annotateDefault) {
+      val change = if (popupProvider.annotate == true) ExtractMethodSettingChange.AnnotateOn else ExtractMethodSettingChange.AnnotateOff
+      logSettingsChange(change)
+    }
+    if (popupProvider.makeStatic != popupProvider.makeStaticDefault) {
+      val change = when {
+        popupProvider.makeStatic == true && popupProvider.staticPassFields -> ExtractMethodSettingChange.MakeStaticWithFieldsOn
+        popupProvider.makeStatic == false && popupProvider.staticPassFields -> ExtractMethodSettingChange.MakeStaticWithFieldsOff
+        popupProvider.makeStatic == true && ! popupProvider.staticPassFields -> ExtractMethodSettingChange.MakeStaticOn
+        popupProvider.makeStatic == false && ! popupProvider.staticPassFields -> ExtractMethodSettingChange.MakeStaticOff
+        else -> null
+      }
+      logSettingsChange(change)
+    }
+  }
+
+  private fun logSettingsChange(settingsChange: ExtractMethodSettingChange?){
+    if (settingsChange != null) {
+      InplaceExtractMethodCollector.settingsChanged.log(myProject, settingsChange)
+    }
   }
 
   private fun setMethodName(methodName: String) {
     editor.document.replaceString(methodCallExpressionRange.startOffset, methodCallExpressionRange.endOffset, methodName)
     editor.document.replaceString(methodNameRange.startOffset, methodNameRange.endOffset, methodName)
   }
+
+  private fun getMethodName() = editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
 
   private fun installMethodNameValidation(templateState: TemplateState) {
     templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
@@ -236,7 +310,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
       var errorMessage: @NonNls String? = null
 
       override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
-        val methodName = editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
+        val methodName = getMethodName()
         fun isValidName(): Boolean = PsiNameHelper.getInstance(myProject).isIdentifier(methodName)
         fun hasSingleResolve(): Boolean {
           val file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document) ?: return false
@@ -267,8 +341,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
           val options = restartOptions
           if (message != null && options != null) {
             WriteCommandAction.runWriteCommandAction(myProject) {
-              val extractor = InplaceMethodExtractor(editor, options, popupProvider)
+              val extractor = InplaceMethodExtractor(editor, options.copy(methodName = "extracted"), popupProvider)
               extractor.performInplaceRefactoring(linkedSetOf())
+              extractor.setMethodName(options.methodName)
               CommonRefactoringUtil.showErrorHint(myProject, editor, message, ExtractMethodHandler.getRefactoringName(), null)
             }
           }
@@ -277,20 +352,8 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     })
   }
 
-  private fun finishAndGotoDeclaration() {
-    val template = TemplateManagerImpl.getTemplateState(editor)
-    if (template != null) {
-      IdeEventQueue.getInstance().popupManager.closeAllPopups()
-      val file = FileDocumentManager.getInstance().getFile(editor.document)
-      if (file != null) {
-        navigate(myProject, file, methodNameRange.endOffset)
-      }
-      showChangeSignatureGotIt()
-      template.gotoEnd(false)
-    }
-  }
-
-  fun restartInDialog() {
+  fun restartInDialog(isLinkUsed: Boolean = false) {
+    InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
     val newOptions = revertAndMapOptions(popupProvider.annotate, popupProvider.makeStatic)
     MethodExtractor().doDialogExtract(newOptions)
   }

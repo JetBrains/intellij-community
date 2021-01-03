@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -58,7 +59,16 @@ object IndexDiagnosticDumper {
 
   private var lastTime: LocalDateTime = LocalDateTime.MIN
 
+  interface ProjectIndexingHistoryListener {
+    companion object {
+      val EP_NAME = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
+    }
+
+    fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
+  }
+
   fun dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory: ProjectIndexingHistory) {
+    ProjectIndexingHistoryListener.EP_NAME.forEachExtensionSafe { it.onFinishedIndexing(projectIndexingHistory) }
     if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
       return
     }

@@ -1,10 +1,4 @@
-# Stubs for re
-# Ron Murawski <ron@horizonchess.com>
-# 'bytes' support added by Jukka Lehtosalo
-
-# based on: http://docs.python.org/3.2/library/re.html
-# and http://hg.python.org/cpython/file/618ea5612e83/Lib/re.py
-
+import enum
 import sys
 from typing import Any, AnyStr, Callable, Iterator, List, Optional, Tuple, Union, overload
 
@@ -14,45 +8,7 @@ if sys.version_info >= (3, 7):
 else:
     from typing import Match, Pattern
 
-if sys.version_info >= (3, 6):
-    import enum
-    class RegexFlag(enum.IntFlag):
-        A: int
-        ASCII: int
-        DEBUG: int
-        I: int
-        IGNORECASE: int
-        L: int
-        LOCALE: int
-        M: int
-        MULTILINE: int
-        S: int
-        DOTALL: int
-        X: int
-        VERBOSE: int
-        U: int
-        UNICODE: int
-        T: int
-        TEMPLATE: int
-    A = RegexFlag.A
-    ASCII = RegexFlag.ASCII
-    DEBUG = RegexFlag.DEBUG
-    I = RegexFlag.I
-    IGNORECASE = RegexFlag.IGNORECASE
-    L = RegexFlag.L
-    LOCALE = RegexFlag.LOCALE
-    M = RegexFlag.M
-    MULTILINE = RegexFlag.MULTILINE
-    S = RegexFlag.S
-    DOTALL = RegexFlag.DOTALL
-    X = RegexFlag.X
-    VERBOSE = RegexFlag.VERBOSE
-    U = RegexFlag.U
-    UNICODE = RegexFlag.UNICODE
-    T = RegexFlag.T
-    TEMPLATE = RegexFlag.TEMPLATE
-    _FlagsType = Union[int, RegexFlag]
-else:
+class RegexFlag(enum.IntFlag):
     A: int
     ASCII: int
     DEBUG: int
@@ -70,7 +26,25 @@ else:
     UNICODE: int
     T: int
     TEMPLATE: int
-    _FlagsType = int
+
+A = RegexFlag.A
+ASCII = RegexFlag.ASCII
+DEBUG = RegexFlag.DEBUG
+I = RegexFlag.I
+IGNORECASE = RegexFlag.IGNORECASE
+L = RegexFlag.L
+LOCALE = RegexFlag.LOCALE
+M = RegexFlag.M
+MULTILINE = RegexFlag.MULTILINE
+S = RegexFlag.S
+DOTALL = RegexFlag.DOTALL
+X = RegexFlag.X
+VERBOSE = RegexFlag.VERBOSE
+U = RegexFlag.U
+UNICODE = RegexFlag.UNICODE
+T = RegexFlag.T
+TEMPLATE = RegexFlag.TEMPLATE
+_FlagsType = Union[int, RegexFlag]
 
 if sys.version_info < (3, 7):
     # undocumented

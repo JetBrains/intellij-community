@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
@@ -349,8 +350,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
-      TargetEnvironmentRequest targetEnvironmentRequest = getTargetEnvironmentRequest();
-      if (targetEnvironmentRequest == null || targetEnvironmentRequest instanceof LocalTargetEnvironmentRequest) {
+      if (getEnvironment().getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory) {
         JavaParameters parameters = MavenRunConfiguration.this.createJavaParameters(getEnvironment().getProject());
         JavaRunConfigurationExtensionManager.getInstance().updateJavaParameters(
           MavenRunConfiguration.this,

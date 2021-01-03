@@ -1,6 +1,3 @@
-# Stubs for os.path
-# Ron Murawski <ron@horizonchess.com>
-
 import os
 import sys
 from _typeshed import AnyPath, BytesPath, StrPath

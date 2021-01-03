@@ -11,7 +11,6 @@ import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,20 +74,17 @@ public class DelombokHandler {
     UndoUtil.markPsiFileForUndo(psiFile);
   }
 
-  private Collection<PsiAnnotation> processClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AbstractProcessor lombokProcessor) {
+  private Collection<PsiAnnotation> processClass(@NotNull Project project,
+                                                 @NotNull PsiClass psiClass,
+                                                 @NotNull AbstractProcessor lombokProcessor) {
     Collection<PsiAnnotation> psiAnnotations = lombokProcessor.collectProcessedAnnotations(psiClass);
 
     final List<? super PsiElement> psiElements = lombokProcessor.process(psiClass);
 
-    ProjectSettings.setLombokEnabledInProject(project, false);
-    try {
-      if (lombokProcessor instanceof FieldNameConstantsPredefinedInnerClassFieldProcessor) {
-        rebuildElementsBeforeExistingFields(project, psiClass, psiElements);
-      } else {
-        rebuildElements(project, psiClass, psiElements);
-      }
-    } finally {
-      ProjectSettings.setLombokEnabledInProject(project, true);
+    if (lombokProcessor instanceof FieldNameConstantsPredefinedInnerClassFieldProcessor) {
+      rebuildElementsBeforeExistingFields(project, psiClass, psiElements);
+    } else {
+      rebuildElements(project, psiClass, psiElements);
     }
 
     return psiAnnotations;
@@ -120,9 +116,9 @@ public class DelombokHandler {
     if (!psiElements.isEmpty()) {
       final PsiField existingField = PsiClassUtil.collectClassFieldsIntern(psiClass).stream().findFirst().orElse(null);
       Iterator<? super PsiElement> iterator = psiElements.iterator();
-      PsiElement prev = psiClass.addBefore(rebuildPsiElement(project, (PsiElement) iterator.next()), existingField);
+      PsiElement prev = psiClass.addBefore(rebuildPsiElement(project, (PsiElement)iterator.next()), existingField);
       while (iterator.hasNext()) {
-        PsiElement curr = rebuildPsiElement(project, (PsiElement) iterator.next());
+        PsiElement curr = rebuildPsiElement(project, (PsiElement)iterator.next());
         if (curr != null) {
           prev = psiClass.addAfter(curr, prev);
         }
@@ -132,7 +128,7 @@ public class DelombokHandler {
 
   private void rebuildElements(Project project, PsiClass psiClass, List<? super PsiElement> psiElements) {
     for (Object psiElement : psiElements) {
-      final PsiElement element = rebuildPsiElement(project, (PsiElement) psiElement);
+      final PsiElement element = rebuildPsiElement(project, (PsiElement)psiElement);
       if (null != element) {
         psiClass.add(element);
       }
@@ -192,7 +188,7 @@ public class DelombokHandler {
       resultClass.add(rebuildMethod(project, psiMethod));
     }
 
-    return (PsiClass) CodeStyleManager.getInstance(project).reformat(resultClass);
+    return (PsiClass)CodeStyleManager.getInstance(project).reformat(resultClass);
   }
 
   private PsiClass rebuildClass(@NotNull Project project, @NotNull PsiClass fromClass) {
@@ -216,7 +212,7 @@ public class DelombokHandler {
       resultClass.add(rebuildMethod(project, psiMethod));
     }
 
-    return (PsiClass) CodeStyleManager.getInstance(project).reformat(resultClass);
+    return (PsiClass)CodeStyleManager.getInstance(project).reformat(resultClass);
   }
 
   private PsiMethod rebuildMethod(@NotNull Project project, @NotNull PsiMethod fromMethod) {
@@ -264,7 +260,7 @@ public class DelombokHandler {
       resultMethod.getBody().delete();
     }
 
-    return (PsiMethod) CodeStyleManager.getInstance(project).reformat(resultMethod);
+    return (PsiMethod)CodeStyleManager.getInstance(project).reformat(resultMethod);
   }
 
   private void copyAnnotations(@NotNull PsiModifierList fromModifierList, @NotNull PsiModifierList toModifierList) {
@@ -308,7 +304,7 @@ public class DelombokHandler {
   @NotNull
   private String getTypeWithParameter(@NotNull PsiClassType psiClassType) {
     if (psiClassType instanceof PsiClassReferenceType) {
-      return ((PsiClassReferenceType) psiClassType).getReference().getText();
+      return ((PsiClassReferenceType)psiClassType).getReference().getText();
     }
     return psiClassType.getName();
   }
@@ -331,7 +327,6 @@ public class DelombokHandler {
     }
     copyModifiers(fromField.getModifierList(), resultField.getModifierList());
 
-    return (PsiField) CodeStyleManager.getInstance(project).reformat(resultField);
+    return (PsiField)CodeStyleManager.getInstance(project).reformat(resultField);
   }
-
 }

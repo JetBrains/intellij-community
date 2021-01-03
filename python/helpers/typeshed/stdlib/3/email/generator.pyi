@@ -1,5 +1,3 @@
-# Stubs for email.generator (Python 3.4)
-
 from email.message import Message
 from email.policy import Policy
 from typing import BinaryIO, Optional, TextIO

@@ -146,6 +146,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
       @Override
       public void finish() {
+        docTexts.keySet().forEach(mapper -> mappingSegments.freezeHighlighter(mapper));
         for (final LightMapper mapper : docTexts.values()) {
           mapper.finish();
         }
@@ -191,6 +192,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   private final class MappingSegments extends SegmentArrayWithData {
     private MappedRange[] myRanges = new MappedRange[INITIAL_SIZE];
     private final Map<LayerDescriptor, Mapper> myLayerBuffers = new HashMap<>();
+    private @Nullable Set<LazyLexerEditorHighlighter> myFreezedHighlighters;
 
     private MappingSegments(DataStorage o) {
       super(o);
@@ -222,14 +224,20 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     @Override
+    public void replace(int startIndex, int endIndex, @NotNull SegmentArrayWithData newData) {
+      withFreezedHighlighters(() -> super.replace(startIndex, endIndex, newData));
+    }
+
+    @Override
     public void setElementAt(int i, int startOffset, int endOffset, int data) {
       setElementLight(i, startOffset, endOffset, data);
       final MappedRange range = myRanges[i];
       if (range != null) {
+        freezeHighlighter(range.mapper);
         range.mapper.removeMapping(range);
         myRanges[i] = null;
       }
-      updateMappingForToken(i, null);
+      updateMappingForToken(i);
     }
 
     private void setElementLight(final int i, final int startOffset, final int endOffset, final int data) {
@@ -253,6 +261,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
       for (final Map.Entry<Mapper, Integer> entry : maxs.entrySet()) {
         Mapper mapper = entry.getKey();
+        freezeHighlighter(mapper);
         mapper.doc.deleteString(mins.get(mapper).intValue() - mapper.mySeparator.length(), entry.getValue().intValue());
       }
 
@@ -261,27 +270,10 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     @Override
-    public void replace(int startOffset, @NotNull SegmentArrayWithData data, int len) {
+    protected void replace(int startOffset, @NotNull SegmentArrayWithData data, int len) {
       super.replace(startOffset, data, len);
-      Set<LazyLexerEditorHighlighter> freezedHighlighters = new HashSet<>();
-      try {
-        for (int i = startOffset; i < startOffset + len; i++) {
-          updateMappingForToken(i, freezedHighlighters);
-        }
-      }
-      finally {
-        freezedHighlighters.forEach(highlighter -> {
-          try {
-            highlighter.finishUpdate();
-          }
-          catch (IllegalStateException e) {
-            LOG.error(e.getMessage() +
-                      "\nLayer highlighter: " + highlighter.getSyntaxHighlighter().toString() +
-                      "\nTop level highlighter: " + LayeredLexerEditorHighlighter.this.getSyntaxHighlighter().toString(), e,
-                      new Attachment("layerTextAfterChange.txt", highlighter.myText.toString()),
-                      new Attachment("editorTextAfterChange.txt", myText.toString()));
-          }
-        });
+      for (int i = startOffset; i < startOffset + len; i++) {
+        updateMappingForToken(i);
       }
     }
 
@@ -327,13 +319,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
     }
 
-    private void updateMappingForToken(final int i, @Nullable Set<LazyLexerEditorHighlighter> freezedHighlighters) {
+    private void updateMappingForToken(final int i) {
       final int data = getSegmentData(i);
       final IElementType token = getSegments().unpackTokenFromData(data);
       final Mapper mapper = getMappingDocument(token);
       final MappedRange oldMapping = myRanges[i];
       if (mapper != null) {
-        freezeHighlighter(mapper, freezedHighlighters);
+        freezeHighlighter(mapper);
         if (oldMapping != null) {
           if (oldMapping.mapper == mapper && oldMapping.outerToken == token) {
             mapper.updateMapping(i, oldMapping);
@@ -349,15 +341,41 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
       else {
         if (oldMapping != null) {
-          freezeHighlighter(oldMapping.mapper, freezedHighlighters);
+          freezeHighlighter(oldMapping.mapper);
           oldMapping.mapper.removeMapping(oldMapping);
           myRanges[i] = null;
         }
       }
     }
 
-    private void freezeHighlighter(@NotNull Mapper mapper, @Nullable Set<LazyLexerEditorHighlighter> freezedHighlighters) {
-      if (freezedHighlighters != null && freezedHighlighters.add(mapper.highlighter)) {
+    private void withFreezedHighlighters(@NotNull Runnable action) {
+      if (myFreezedHighlighters != null) {
+        action.run();
+        return;
+      }
+      myFreezedHighlighters = new HashSet<>();
+      try {
+        action.run();
+      }
+      finally {
+        myFreezedHighlighters.forEach(highlighter -> {
+          try {
+            highlighter.finishUpdate();
+          }
+          catch (IllegalStateException e) {
+            LOG.error(e.getMessage() +
+                      "\nLayer highlighter: " + highlighter.getSyntaxHighlighter().toString() +
+                      "\nTop level highlighter: " + LayeredLexerEditorHighlighter.this.getSyntaxHighlighter().toString(), e,
+                      new Attachment("layerTextAfterChange.txt", highlighter.myText.toString()),
+                      new Attachment("editorTextAfterChange.txt", myText.toString()));
+          }
+        });
+        myFreezedHighlighters = null;
+      }
+    }
+
+    private void freezeHighlighter(@NotNull Mapper mapper) {
+      if (myFreezedHighlighters != null && myFreezedHighlighters.add(mapper.highlighter)) {
         mapper.highlighter.beginUpdate();
       }
     }
@@ -629,10 +647,16 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     return ArrayUtil.realloc(array, SegmentArray.calcCapacity(array.length, index), MappedRange[]::new);
   }
 
+  /**
+   * The layered lexer editor highlighter can issue high volume of small document changes to it's layers' highlighters.
+   * Some of the changes might cause full re-lexing within the layer highlighter leading to huge
+   * performance issues. LazyLexerEditorHighlighter caches and merges all of the document updates and applies
+   * them in a batch heavily improving performance in large documents.
+   */
   private static class LazyLexerEditorHighlighter extends LexerEditorHighlighter {
 
     private boolean inUpdate = false;
-    private List<DocumentEvent> updates;
+    private List<DocumentUpdate> updates;
 
     LazyLexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter,
                                @NotNull EditorColorsScheme scheme) {
@@ -650,36 +674,122 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         updates = null;
         return;
       }
-      int lastOffset = -1;
-      final Document document = updates.get(0).getDocument();
-      for (DocumentEvent update : updates) {
-        int offset = update.getOffset();
-        if (offset < lastOffset) {
-          throw new IllegalStateException("Updates are not sorted: " + updates);
-        }
-        if (update.getDocument() != document) {
-          throw new IllegalStateException("Updates are for multiple documents: " + updates);
-        }
-        lastOffset = offset;
-      }
+      sortUpdates();
+      mergeUpdates();
+      final Document document = updates.get(0).document;
+      final int documentSize = document.getTextLength();
       int processedOffset = -1;
-      CharSequence text = document.getImmutableCharSequence();
-      for (DocumentEvent event : updates) {
-        if (event.getOffset() + event.getNewLength() < processedOffset) {
+      for (DocumentUpdate event : updates) {
+        if (event.offset + event.newLength < processedOffset) {
           continue;
         }
-        processedOffset = super.incrementalUpdate(event, text);
+        processedOffset = super.incrementalUpdate(event.offset, event.oldLength, event.newLength, document);
+        if (processedOffset >= documentSize) {
+          break;
+        }
       }
       updates = null;
     }
 
     @Override
-    int incrementalUpdate(@NotNull DocumentEvent e, CharSequence text) {
+    int incrementalUpdate(int eventOffset, int eventOldLength, int eventNewLength, Document document) {
       if (inUpdate) {
-        updates.add(e);
+        if (!mergeUpdate(updates, eventOffset, eventOldLength, eventNewLength)) {
+          updates.add(new DocumentUpdate(eventOffset, eventOldLength, eventNewLength, document));
+        }
         return -1;
       }
-      return super.incrementalUpdate(e, text);
+      return super.incrementalUpdate(eventOffset, eventOldLength, eventNewLength, document);
+    }
+
+    private static boolean mergeUpdate(List<DocumentUpdate> updates, int eventOffset, int eventOldLength, int eventNewLength) {
+      if (updates.isEmpty()) return false;
+      final int MERGE_MARGIN = 5;
+      DocumentUpdate a = updates.get(updates.size() - 1);
+      if (eventOffset < a.offset) {
+        // a not sorted update, ignore as it will be merged after sorting all of the updates
+        return false;
+      }
+      if (a.offset == eventOffset) {
+        if (a.newLength > eventOldLength) {
+          a.newLength += eventNewLength - eventOldLength;
+        } else {
+          a.oldLength += eventOldLength - a.newLength;
+          a.newLength = eventNewLength;
+        }
+      } else if (a.offset + a.newLength > eventOffset) {
+        if (a.offset + a.newLength < eventOffset + eventOldLength) {
+          a.oldLength = eventOldLength + eventOffset - (a.offset + a.oldLength);
+        }
+        a.newLength += eventNewLength - eventOldLength;
+      } else if (a.offset + a.newLength + MERGE_MARGIN >= eventOffset) {
+        int offsetDiff = eventOffset - a.offset - a.newLength;
+        a.oldLength += offsetDiff + eventOldLength;
+        a.newLength += offsetDiff + eventNewLength;
+      }
+      else {
+        return false;
+      }
+      return true;
+    }
+
+    private void mergeUpdates() {
+      List<DocumentUpdate> result = new ArrayList<>(updates.size());
+      result.add(updates.get(0));
+      for (int i = 1; i < updates.size(); i++) {
+        DocumentUpdate b = updates.get(i);
+        if (!mergeUpdate(result, b.offset, b.oldLength, b.newLength)) {
+          result.add(b);
+        }
+      }
+      updates = result;
+    }
+
+    private void sortUpdates() {
+      int sortedFrom = updates.size();
+      // We need to sort updates using bubble sort, because each swap requires offset update.
+      // The updates are merged and mostly sorted, so the complexity is expected to be close to O(3*n).
+      while (sortedFrom != 0) {
+        int lastSortedIndex = 0;
+        for (int i = 1; i < sortedFrom; i++) {
+          DocumentUpdate a = updates.get(i - 1);
+          DocumentUpdate b = updates.get(i);
+          if (a.offset > b.offset) {
+            if (a.offset < b.offset + b.oldLength) {
+              int delta = b.offset + b.oldLength - a.offset;
+              a.offset = b.offset;
+              a.oldLength -= Math.min(0, delta);
+              a.newLength -= Math.min(0, delta);
+            }
+            else {
+              a.offset += b.newLength - b.oldLength;
+            }
+            updates.set(i - 1, b);
+            updates.set(i, a);
+            lastSortedIndex = i;
+          }
+        }
+        sortedFrom = lastSortedIndex;
+      }
+    }
+
+    private static class DocumentUpdate {
+      int offset;
+      int oldLength;
+      int newLength;
+      final Document document;
+
+      DocumentUpdate(int offset, int oldLength, int newLength, Document document) {
+        this.offset = offset;
+        this.oldLength = oldLength;
+        this.newLength = newLength;
+        this.document = document;
+      }
+
+      @Override
+      public String toString() {
+        return "update at " + offset + ": " + oldLength + " => " + newLength;
+      }
     }
   }
 

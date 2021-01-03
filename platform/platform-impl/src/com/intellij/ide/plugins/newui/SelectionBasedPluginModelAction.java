@@ -5,7 +5,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginEnabledState;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +17,8 @@ import org.jetbrains.annotations.PropertyKey;
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 abstract class SelectionBasedPluginModelAction<C extends JComponent> extends DumbAwareAction {
 
@@ -49,16 +52,35 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     }
 
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Set<IdeaPluginDescriptor> plugins = mySelection.stream()
-        .map(this::getPluginDescriptor)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+    public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      Project project = e.getProject();
 
+      getAllDescriptors()
+        .map(myPluginModel::getState)
+        .map(oldState -> !isInvisible(oldState, project))
+        .forEach(presentation::setVisible);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myPluginModel.changeEnableDisable(
-        plugins,
+        getAllDescriptors().collect(Collectors.toSet()),
         myNewState
       );
+    }
+
+    protected boolean isInvisible(@NotNull PluginEnabledState oldState,
+                                  @Nullable Project project) {
+      return myNewState == oldState ||
+             myNewState.isPerProject() && (!isPerProjectEnabled() || project == null);
+    }
+
+    private @NotNull Stream<? extends IdeaPluginDescriptor> getAllDescriptors() {
+      return mySelection
+        .stream()
+        .map(this::getPluginDescriptor)
+        .filter(Objects::nonNull);
     }
 
     private static @NotNull @NonNls String getActionTextPropertyKey(@NotNull PluginEnabledState newState) {
@@ -74,6 +96,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         default:
           throw new IllegalArgumentException();
       }
+    }
+
+    private static boolean isPerProjectEnabled() {
+      return Registry.is("ide.plugins.per.project", false);
     }
   }
 

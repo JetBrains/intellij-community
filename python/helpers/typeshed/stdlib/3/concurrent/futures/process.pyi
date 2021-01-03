@@ -9,7 +9,7 @@ if sys.version_info >= (3, 7):
     from ._base import BrokenExecutor
     class BrokenProcessPool(BrokenExecutor): ...
 
-elif sys.version_info >= (3,):
+else:
     class BrokenProcessPool(RuntimeError): ...
 
 if sys.version_info >= (3, 7):

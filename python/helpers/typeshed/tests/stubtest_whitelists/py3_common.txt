@@ -110,8 +110,6 @@ csv.Dialect.skipinitialspace
 ctypes.Array.__iter__
 ctypes.CDLL._FuncPtr
 ctypes.cast
-ctypes.create_string_buffer
-ctypes.create_unicode_buffer
 ctypes.memmove
 ctypes.memset
 ctypes.pointer
@@ -265,12 +263,6 @@ multiprocessing.managers.SyncManager.RLock
 multiprocessing.pool.ApplyResult.__init__
 multiprocessing.pool.IMapIterator.__init__
 multiprocessing.pool.MapResult.__init__
-multiprocessing.pool.Pool.imap
-multiprocessing.pool.Pool.imap_unordered
-multiprocessing.pool.Pool.map
-multiprocessing.pool.Pool.map_async
-multiprocessing.pool.Pool.starmap
-multiprocessing.pool.Pool.starmap_async
 multiprocessing.queues.JoinableQueue.__init__
 multiprocessing.queues.Queue.__init__
 multiprocessing.queues.Queue.put_nowait
@@ -370,6 +362,7 @@ threading.Thread.__init__
 timeit.main
 tkinter.Misc.grid_propagate
 tkinter.Misc.pack_propagate
+tkinter.Tk.report_callback_exception  # A bit of a lie, since it's actually a method, but typing it as an attribute allows it to be assigned to
 trace.CoverageResults.__init__
 traceback.FrameSummary.__init__
 traceback.TracebackException.__init__
@@ -386,6 +379,7 @@ typing.AwaitableGenerator
 typing.IO.__iter__
 typing.IO.__next__
 typing.type_check_only
+unittest.mock.patch  # It's a complicated overload and I haven't been able to figure out why stubtest doesn't like it
 urllib.error.ContentTooShortError.__init__
 urllib.error.URLError.__init__
 urllib.parse._DefragResultBase.__new__

@@ -52,7 +52,7 @@ import static java.awt.event.InputEvent.META_DOWN_MASK;
 
 public final class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
   public static final int RIGHT_PANEL_WEST_OFFSET = 13;
-  private static final float MAX_LEFT_PANEL_PROP = 0.75F;
+  private static final float MAX_LEFT_PANEL_PROP = 0.9F;
   private static final float DEFAULT_PROP = 0.33F;
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
@@ -216,7 +216,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       mySplitter = new OnePixelSplitter(false, initialProportion);
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
       mySplitter.setOpaque(false);
       mySplitter.getDivider().setOpaque(false);
       add(mySplitter, BorderLayout.CENTER);
@@ -250,6 +249,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         mySplitter.setHonorComponentsMinimumSize(true);
         mySplitter.setHonorComponentsPreferredSize(true);
       }
+
+      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+
     }
 
     update("", "", false, false);
