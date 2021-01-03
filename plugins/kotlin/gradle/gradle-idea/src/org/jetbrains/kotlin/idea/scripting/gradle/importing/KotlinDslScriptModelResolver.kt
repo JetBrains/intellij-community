@@ -21,7 +21,7 @@ class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
 
     override fun getModelProvider() = KotlinDslScriptModelProvider()
 
-    override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider? {
+    override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {
         return ClassSetImportModelProvider(
                 emptySet(),
                 setOf(KotlinDslScriptAdditionalTask::class.java)
@@ -29,7 +29,6 @@ class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
     }
 }
 
-@Suppress("UnstableApiUsage")
 class KotlinDslScriptModelContributor : ProjectModelContributor {
     override fun accept(
         projectModelBuilder: ModifiableGradleProjectModel,

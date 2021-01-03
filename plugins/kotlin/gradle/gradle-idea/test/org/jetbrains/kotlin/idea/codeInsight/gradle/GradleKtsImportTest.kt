@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.ExtensionTestUtil
 import junit.framework.AssertionFailedError
-import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.applySuggestedScriptConfiguration
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -61,6 +63,15 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("6.0.1+")
     fun testError() {
+        var context: ProjectResolverContext? = null
+        val contributor =
+            ProjectModelContributor { _, _, resolverContext -> context = resolverContext }
+        ExtensionTestUtil.maskExtensions(
+            ProjectModelContributor.EP_NAME,
+            listOf(contributor) + ProjectModelContributor.EP_NAME.extensionList,
+            testRootDisposable
+        )
+
         configureByFiles()
 
         val result = try {
@@ -70,8 +81,8 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
         }
 
         assert(result is AssertionFailedError) { "Exception should be thrown" }
-        assert((result as AssertionFailedError).message?.contains(KotlinIdeaGradleBundle.message("title.kotlin.build.script")) == true)
-        checkConfiguration("build.gradle.kts")
+        assertNotNull(context)
+        assert(context?.cancellationTokenSource?.token()?.isCancellationRequested == true)
     }
 
     @Test
