@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import kotlin.math.abs
 import kotlin.random.Random
-import kotlin.random.nextUInt
 
 interface WizardStats {
     fun toPairs(): ArrayList<EventPair<*>>
@@ -27,7 +26,7 @@ class WizardStatsService : CounterUsagesCollector() {
     companion object {
 
         // Collector ID
-        private val GROUP = EventLogGroup("kotlin.ide.new.project", 5)
+        private val GROUP = EventLogGroup("kotlin.ide.new.project", 6)
 
         // Whitelisted values for the events fields
         private val allowedProjectTemplates = listOf( // Modules
@@ -206,9 +205,9 @@ class WizardStatsService : CounterUsagesCollector() {
             "jvmTarget",
             "androidTarget",
             "multiplatform",
-            "JVM Module",
+            "JVM_Module",
             "android",
-            "IOS Module",
+            "IOS_Module",
             "jsBrowserSinglePlatform",
             "jsNodeSinglePlatform",
         )
@@ -362,7 +361,7 @@ class WizardStatsService : CounterUsagesCollector() {
         ) {
             moduleCreatedEvent.log(
                 sessionIdField with session.id,
-                moduleTypeField with moduleType,
+                moduleTypeField with moduleType.withSpacesRemoved(),
                 pluginInfoField,
             )
         }
@@ -373,7 +372,7 @@ class WizardStatsService : CounterUsagesCollector() {
         ) {
             moduleRemovedEvent.log(
                 sessionIdField with session.id,
-                moduleTypeField with moduleType,
+                moduleTypeField with moduleType.withSpacesRemoved(),
                 pluginInfoField,
             )
         }
@@ -457,6 +456,8 @@ class WizardStatsService : CounterUsagesCollector() {
     }
 }
 
+private fun String.withSpacesRemoved(): String =
+    replace(' ', '_')
 
 private sealed class SettingIdWithPossibleValues {
     abstract val id: String
