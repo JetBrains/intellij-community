@@ -16,14 +16,16 @@
 package com.intellij.vcsUtil;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,8 +34,8 @@ import org.jetbrains.annotations.Nullable;
 public class JavaVcsSelectionProvider implements VcsSelectionProvider {
   @Override
   @Nullable
-  public VcsSelection getSelection(final VcsContext context) {
-    final Editor editor = context.getEditor();
+  public VcsSelection getSelection(@NotNull DataContext context) {
+    final Editor editor = context.getData(CommonDataKeys.EDITOR);
     if (editor == null) return null;
     PsiElement psiElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     if (psiElement == null) {
