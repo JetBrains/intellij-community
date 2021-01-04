@@ -508,7 +508,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (SystemInfo.isMac && SystemInfo.isIntel64 && SystemInfo.isJetBrainsJvm) {
+    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
       MacGestureSupportInstaller.installOnComponent(getComponent());
     }
 

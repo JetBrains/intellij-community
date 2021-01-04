@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -111,7 +110,7 @@ public final class StartupUiUtil {
 
   @ApiStatus.Internal
   public static int doGetLcdContrastValueForSplash(boolean isUnderDarcula) {
-    if (SystemInfoRt.isMac && SystemInfo.isIntel64) {
+    if (SystemInfoRt.isMac) {
       return isUnderDarcula ? 140 : 230;
     }
     else {
