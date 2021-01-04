@@ -34,7 +34,6 @@ public interface VcsDataKeys {
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");
   DataKey<FilePath> FILE_PATH = DataKey.create("FILE_PATH");
   @ApiStatus.Internal DataKey<Iterable<FilePath>> FILE_PATHS = DataKey.create("VCS_FILE_PATHS");
-  DataKey<Object> FILE_HISTORY_PANEL = DataKey.create("FILE_HISTORY_PANEL");
   DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
   DataKey<Change[]> CHANGES = DataKey.create("vcs.Change");
