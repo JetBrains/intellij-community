@@ -9,11 +9,17 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
 
 public class VcsContextUtil {
+  @Nullable
+  public static VirtualFile selectedFile(@NotNull DataContext context) {
+    return selectedFilesIterable(context).first();
+  }
+
   @NotNull
   public static List<VirtualFile> selectedFiles(@NotNull DataContext context) {
     return selectedFilesIterable(context).toList();

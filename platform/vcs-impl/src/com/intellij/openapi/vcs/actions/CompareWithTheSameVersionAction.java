@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,11 +24,13 @@ final class CompareWithTheSameVersionAction extends AbstractShowDiffAction {
   }
 
   @Override
-  protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
-    super.update(vcsContext, presentation);
-    Project project = vcsContext.getProject();
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    Presentation presentation = e.getPresentation();
     presentation.setText(ActionsBundle.message("action.Compare.SameVersion.text"));
 
+    Project project = e.getProject();
     if (project != null) {
       AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS();
       if (vcs != null) {
