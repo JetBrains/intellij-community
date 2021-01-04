@@ -20,10 +20,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.system.CpuArch
 import com.sun.management.OperatingSystemMXBean
 import com.sun.tools.attach.VirtualMachine
-import org.jetbrains.annotations.Nls
 import java.io.File
 import java.lang.management.ManagementFactory
 import java.nio.charset.StandardCharsets
@@ -49,20 +48,11 @@ object CDSManager {
     // AppCDS requires classes packed into JAR files, not from the out folder
     if (PluginManagerCore.isRunningFromSources()) return@lazy false
 
-    // CDS features are only available on 64 bit JVMs
-    if (!SystemInfo.is64Bit) return@lazy false
+    // CDS features are only available on 64-bit JVMs
+    if (CpuArch.is32Bit()) return@lazy false
 
-    // The AppCDS (JEP 310) is only added in JDK10,
-    // The closest JRE we ship/support is 11
-    if (!SystemInfo.isJavaVersionAtLeast(11)) return@lazy false
-
-    //AppCDS does not support Windows and macOS
-    if (!SystemInfo.isLinux) {
-      //Specific patches are included into JetBrains runtime
-      //to support Windows and macOS
-      if (!SystemInfo.isJetBrainsJvm) return@lazy false
-      if (VersionComparatorUtil.compare(SystemInfo.JAVA_RUNTIME_VERSION, "11.0.4+10-b520.2") < 0) return@lazy false
-    }
+    // AppCDS does not support Windows and macOS, but specific patches are included into JetBrains runtime
+    if (!(SystemInfo.isLinux || SystemInfo.isJetBrainsJvm)) return@lazy false
 
     // we do not like to overload a potentially small computer with our process
     val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
