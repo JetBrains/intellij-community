@@ -46,6 +46,14 @@ class TomlKeySegmentImpl(type: IElementType) : CompositePsiElement(type), TomlKe
 
     override fun toString(): String = "TomlKeySegment"
     override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
+
+    override fun accept(visitor: PsiElementVisitor) {
+        if (visitor is TomlVisitor) {
+            visitor.visitKeySegment(this)
+        } else {
+            super.accept(visitor)
+        }
+    }
 }
 
 class TomlKeyImpl(type: IElementType) : CompositePsiElement(type), TomlKey {
