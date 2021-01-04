@@ -78,8 +78,8 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
 
     final Project project = CommonDataKeys.PROJECT.getData(dc);
     final Iterable<Pair<FilePath, FileStatus>> iterable = e.getRequiredData(UpdateInfoTree.UPDATE_VIEW_FILES_ITERABLE);
-    final Label before = (Label)e.getRequiredData(UpdateInfoTree.LABEL_BEFORE);
-    final Label after = (Label)e.getRequiredData(UpdateInfoTree.LABEL_AFTER);
+    final Label before = e.getRequiredData(UpdateInfoTree.LABEL_BEFORE);
+    final Label after = e.getRequiredData(UpdateInfoTree.LABEL_AFTER);
     final FilePath selectedUrl = UpdateInfoTree.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
     DiffRequestChain requestChain = createDiffRequestChain(project, before, after, iterable, selectedUrl);

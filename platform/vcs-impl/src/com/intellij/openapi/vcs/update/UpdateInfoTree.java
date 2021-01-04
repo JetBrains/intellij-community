@@ -58,8 +58,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     DataKey.create("AbstractCommonUpdateAction.UpdateViewSelectedPath");
   public static final DataKey<Iterable<Pair<FilePath, FileStatus>>> UPDATE_VIEW_FILES_ITERABLE =
     DataKey.create("AbstractCommonUpdateAction.UpdatedFilesIterable");
-  public static final DataKey<Object> LABEL_BEFORE = DataKey.create("LABEL_BEFORE");
-  public static final DataKey<Object> LABEL_AFTER = DataKey.create("LABEL_AFTER");
+  public static final DataKey<Label> LABEL_BEFORE = DataKey.create("LABEL_BEFORE");
+  public static final DataKey<Label> LABEL_AFTER = DataKey.create("LABEL_AFTER");
 
   private final Tree myTree = new Tree();
   @NotNull private final Project myProject;
