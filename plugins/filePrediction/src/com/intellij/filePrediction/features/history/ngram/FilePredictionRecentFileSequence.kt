@@ -9,24 +9,28 @@ import java.io.ObjectInput
 import java.io.ObjectOutput
 import kotlin.math.min
 
-class FilePredictionRecentFileSequence(val maxSequenceLength: Int, private val nGramOrder: Int) : Externalizable {
-  private val fileSequence: MutableList<Int> = arrayListOf()
+class FilePredictionRecentFileSequence(val maxSequenceLength: Int, private val nGramOrder: Int, private val initialSize: Int = INITIAL_SIZE) : Externalizable {
+  companion object {
+    private const val INITIAL_SIZE: Int = 100
+  }
+
+  private var fileSequence: IntArray = IntArray(initialSize) { Int.MAX_VALUE }
   private var start: Int = 0
+  private var length: Int = 0
 
-  internal fun addWithLimit(model: NGramModel, index: Int) {
-    fileSequence.add(index)
-
-    if (size() > maxSequenceLength) {
+  internal fun addWithLimit(model: NGramModel, element: Int) {
+    if (size() >= maxSequenceLength) {
       forget(model, subListFromStart(nGramOrder))
-      start++
+      adjustIndices(1)
     }
+    add(element)
   }
 
   internal fun forgetUntil(model: NGramModel, keep: Int) {
     val forgetLast = size() - min(keep, maxSequenceLength)
     if (forgetLast > 0) {
       forget(model, subListFromStart(forgetLast + nGramOrder - 1))
-      start += forgetLast
+      adjustIndices(forgetLast)
     }
   }
 
@@ -35,12 +39,41 @@ class FilePredictionRecentFileSequence(val maxSequenceLength: Int, private val n
     model.counter.unCountBatch(sequences)
   }
 
-  private fun elementAt(index: Int) = fileSequence[start + index]
+  private fun add(element: Int) {
+    val index = start + length
+    while (fileSequence.size < maxSequenceLength && fileSequence.size <= index) {
+      grow()
+    }
 
-  internal fun size() = fileSequence.size - start
+    fileSequence[index % fileSequence.size] = element
+    length++
+  }
 
-  internal fun subListFromStart(length: Int): List<Int> {
-    return fileSequence.subList(start, (start + length).coerceAtMost(fileSequence.size))
+  private fun adjustIndices(remove: Int) {
+    start = (start + remove) % fileSequence.size
+    length -= remove
+  }
+
+  private fun elementAt(index: Int) = fileSequence[(start + index) % fileSequence.size]
+
+  internal fun size() = length
+
+  internal fun subListFromStart(newLength: Int): List<Int> {
+    val size = fileSequence.size
+    val end = start + newLength
+    if (end <= size) {
+      return fileSequence.copyOfRange(start, end).toList()
+    }
+    val first = fileSequence.copyOfRange(start, size)
+    val second = fileSequence.copyOfRange(0, end % size)
+    return (first + second).toList()
+  }
+
+  private fun grow() {
+    val oldLen: Int = fileSequence.size
+    val newLen = if (oldLen > 0) (oldLen * 2).coerceAtMost(maxSequenceLength) else initialSize
+    fileSequence = fileSequence.copyOf(newLen)
+    fileSequence.fill(Int.MAX_VALUE, oldLen)
   }
 
   @Throws(IOException::class)
@@ -56,8 +89,10 @@ class FilePredictionRecentFileSequence(val maxSequenceLength: Int, private val n
   @Throws(IOException::class)
   override fun readExternal(ins: ObjectInput) {
     val size = ins.readInt()
+    length = size
+    fileSequence = IntArray(size)
     for (i in 0 until size) {
-      fileSequence.add(ins.readInt())
+      fileSequence[i] = ins.readInt()
     }
   }
 }

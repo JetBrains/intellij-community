@@ -8,17 +8,26 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
 import kotlin.math.abs
+import kotlin.math.max
 
 class FilePredictionNGramSerializationTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
   private fun doTest(openedFiles: List<String>, nGramLength: Int) {
     for (lambda in arrayOf(0.1, 0.3, 0.5, 0.8, 1.0)) {
-      doTestInternal(openedFiles, nGramLength, lambda)
+      for (vocabularySize in nGramLength until 8) {
+        val maxSequenceLength = max(openedFiles.size + 2, nGramLength)
+        for (sequenceLength in nGramLength until maxSequenceLength step 4) {
+          doTestInternal(openedFiles, nGramLength, lambda, vocabularySize, sequenceLength)
+        }
+      }
     }
   }
 
-  private fun doTestInternal(openedFiles: List<String>, nGramLength: Int, lambda: Double) {
+  private fun doTestInternal(openedFiles: List<String>,
+                             nGramLength: Int, lambda: Double,
+                             maxVocabularySize: Int = 112,
+                             maxSequenceLength: Int = 12345) {
     val model = JMModel(counter = ArrayTrieCounter(), order = nGramLength, lambda = lambda)
-    val vocabulary = FilePredictionNGramVocabulary(112, FilePredictionRecentFileSequence(12345, nGramLength))
+    val vocabulary = FilePredictionNGramVocabulary(maxVocabularySize, FilePredictionRecentFileSequence(maxSequenceLength, nGramLength, 4))
     val runner = FilePredictionNGramModelRunner(nGramLength, lambda, model, vocabulary)
     for (file in openedFiles) {
       runner.learnNextFile(file)

@@ -45,7 +45,7 @@ class FilePredictionNGramVocabulary(var maxSize: Int,
 
       if (recent.size() >= maxSize) {
         val (toRemove, latestAppearance) = trimRecentTokensSize()
-        fileSequence.forgetUntil(model, recent.lastIndex() - latestAppearance)
+        fileSequence.forgetUntil(model, if (recent.size() > 0) recent.lastIndex() - latestAppearance else 0)
         for (tokenToRemove in toRemove) {
           wordIndices.remove(tokenToRemove)
         }
