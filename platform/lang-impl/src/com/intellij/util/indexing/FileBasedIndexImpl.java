@@ -1194,7 +1194,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     VirtualFile file = content.getVirtualFile();
     final int fileId = getFileId(file);
 
-    FileIndexingResult indexingResult;
+    boolean setIndexedStatus;
+    FileIndexingStatistics indexingStatistics;
     try {
       boolean isValid = file.isValid();
       // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
@@ -1208,64 +1209,35 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         isIndexesDeleted = true;
         ProgressManager.checkCanceled();
         removeDataFromIndicesForFile(fileId, file);
-        indexingResult = new FileIndexingResult(true,
-                                                Collections.emptyMap(),
-                                                Collections.emptyMap(),
-                                                file.getFileType(),
-                                                Collections.emptySet(),
-                                                false);
+        setIndexedStatus = true;
+        indexingStatistics = new FileIndexingStatistics(file.getFileType(),
+                                                        Collections.emptySet(),
+                                                        false,
+                                                        Collections.emptyMap(),
+                                                        Collections.emptyMap());
       }
       else {
         isIndexesDeleted = false;
-        indexingResult = doIndexFileContent(project, content);
+        var pair = doIndexFileContent(project, content);
+        setIndexedStatus = pair.first;
+        indexingStatistics = pair.second;
       }
 
-      if (indexingResult.setIndexedStatus && file instanceof VirtualFileSystemEntry) {
+      if (setIndexedStatus && file instanceof VirtualFileSystemEntry) {
         ((VirtualFileSystemEntry)file).setFileIndexed(true);
       }
       if (VfsEventsMerger.LOG != null) {
         VfsEventsMerger.LOG.info("File " + file +
-                                 " indexes have been updated for indexes " + indexingResult.updateTimesPerIndexer.keySet() +
-                                 " and deleted for " + indexingResult.deletionTimesPerIndexer.keySet() +
+                                 " indexes have been updated for indexes " + indexingStatistics.getPerIndexerUpdateTimes().keySet() +
+                                 " and deleted for " + indexingStatistics.getPerIndexerDeleteTimes().keySet() +
                                  ". Indexes was wiped = " + isIndexesDeleted +
                                  "; is file valid = " + isValid);
       }
       getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
-      // Indexing time takes only input data mapping time into account.
-      long indexingTime =
-        indexingResult.updateTimesPerIndexer.values().stream().mapToLong(e -> e).sum() +
-        indexingResult.deletionTimesPerIndexer.values().stream().mapToLong(e -> e).sum();
-      return new FileIndexingStatistics(indexingTime,
-                                        indexingResult.fileType,
-                                        indexingResult.indexesProvidedByExtensions,
-                                        indexingResult.wasFullyIndexedByExtensions,
-                                        ContainerUtil.union(indexingResult.updateTimesPerIndexer, indexingResult.deletionTimesPerIndexer));
+      return indexingStatistics;
     }
     finally {
       IndexingStamp.flushCache(fileId);
-    }
-  }
-
-  private static final class FileIndexingResult {
-    public final boolean setIndexedStatus;
-    public final Map<ID<?, ?>, Long> updateTimesPerIndexer;
-    public final Map<ID<?, ?>, Long> deletionTimesPerIndexer;
-    public final FileType fileType;
-    public final Set<ID<?, ?>> indexesProvidedByExtensions;
-    public final boolean wasFullyIndexedByExtensions;
-
-    private FileIndexingResult(boolean setIndexedStatus,
-                               @NotNull Map<ID<?, ?>, Long> updateTimesPerIndexer,
-                               @NotNull Map<ID<?, ?>, Long> deletionTimesPerIndexer,
-                               @NotNull FileType type,
-                               @NotNull Set<ID<?, ?>> indexesProvidedByExtensions,
-                               boolean wasFullyIndexedByExtensions) {
-      this.setIndexedStatus = setIndexedStatus;
-      this.updateTimesPerIndexer = updateTimesPerIndexer;
-      this.deletionTimesPerIndexer = deletionTimesPerIndexer;
-      this.fileType = type;
-      this.indexesProvidedByExtensions = indexesProvidedByExtensions;
-      this.wasFullyIndexedByExtensions = wasFullyIndexedByExtensions;
     }
   }
 
@@ -1280,7 +1252,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  private FileBasedIndexImpl.FileIndexingResult doIndexFileContent(@Nullable Project project, @NotNull CachedFileContent content) {
+  private Pair<Boolean, FileIndexingStatistics> doIndexFileContent(@Nullable Project project, @NotNull CachedFileContent content) {
     ProgressManager.checkCanceled();
     final VirtualFile file = content.getVirtualFile();
     Ref<Boolean> setIndexedStatus = Ref.create(Boolean.TRUE);
@@ -1367,12 +1339,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
 
     file.putUserData(IndexingDataKeys.REBUILD_REQUESTED, null);
-    return new FileIndexingResult(setIndexedStatus.get(),
-                                  perIndexerUpdateTimes,
-                                  perIndexerDeletionTimes,
-                                  fileTypeRef.get(),
-                                  indexesProvidedByExtensions,
-                                  wasFullyIndexedByInfrastructureExtensions.get());
+    return Pair.create(
+      setIndexedStatus.get(),
+      new FileIndexingStatistics(
+        fileTypeRef.get(),
+        indexesProvidedByExtensions,
+        wasFullyIndexedByInfrastructureExtensions.get(),
+        perIndexerUpdateTimes,
+        perIndexerDeletionTimes
+      ));
   }
 
   private static byte @NotNull[] getBytesOrNull(@NotNull CachedFileContent content) {

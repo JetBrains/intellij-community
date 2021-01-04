@@ -51,7 +51,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     if (fileStatistics.wasFullyIndexedByExtensions) {
       numberOfFilesFullyIndexedByExtensions++
     }
-    fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
+    (fileStatistics.perIndexerUpdateTimes + fileStatistics.perIndexerDeleteTimes).forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
         StatsPerIndexer(TimeStats(), 0, 0, 0)
       }
