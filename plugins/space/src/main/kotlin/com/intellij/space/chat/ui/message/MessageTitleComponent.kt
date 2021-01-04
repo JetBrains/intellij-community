@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.message
 
-import circlet.client.api.CApplicationPrincipalDetails
+import circlet.client.api.CExternalServicePrincipalDetails
 import circlet.client.api.CPrincipal
 import circlet.client.api.CUserPrincipalDetails
 import circlet.platform.client.resolve
@@ -69,9 +69,9 @@ internal class MessageTitleComponent(
         val user = details.user.resolve()
         user.link()
       }
-      is CApplicationPrincipalDetails -> {
-        val app = details.app.resolve()
-        HtmlChunk.link(SpaceUrls.app(app), app.name) // NON-NLS
+      is CExternalServicePrincipalDetails -> {
+        val service = details.service.resolve()
+        HtmlChunk.link(SpaceUrls.service(service), service.name) // NON-NLS
       }
       else -> {
         HtmlChunk.text(author.name) // NON-NLS
