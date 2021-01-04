@@ -47,7 +47,9 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     List<PsiElement> elements = getElements(editor, file, true);
     if (elements.isEmpty()) return false;
-    return isClassWithExtendsOrImplements(PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false));
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
+    if (psiClass == null) return false;
+    return psiClass instanceof PsiAnonymousClass || isClassWithExtendsOrImplements(psiClass);
   }
 
   public static boolean isClassWithExtendsOrImplements(@Nullable PsiClass psiClass) {

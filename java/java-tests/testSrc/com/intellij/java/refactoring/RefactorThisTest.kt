@@ -20,6 +20,10 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertTrue(doActionExists<PullUpAction>())
   }
 
+  fun testPullMembersUpFromAnonymousClass() {
+    assertTrue(doActionExists<PullUpAction>())
+  }
+
   fun testPullMembersUpFiltered() {
     assertFalse(doActionExists<PullUpAction>())
   }
