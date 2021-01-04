@@ -50,6 +50,10 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<MethodDuplicatesAction>())
   }
 
+  fun testGenerifyIsFiltered() {
+    assertFalse(doActionExists<TypeCookAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     return findAvailableActions().any { action -> action is A }
