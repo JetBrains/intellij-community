@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
@@ -800,6 +801,18 @@ public class HighlightInfo implements Segment {
       myKey = key;
       myProblemGroup = problemGroup;
       mySeverity = severity;
+    }
+
+    @Nullable IntentionActionDescriptor copyWithEmptyAction() {
+      String displayName = HighlightDisplayKey.getDisplayNameByKey(myKey);
+      if (displayName == null) return null;
+      return new IntentionActionDescriptor(new EmptyIntentionAction(displayName),
+                                           myOptions,
+                                           myDisplayName,
+                                           myIcon,
+                                           myKey,
+                                           myProblemGroup,
+                                           mySeverity);
     }
 
     @NotNull

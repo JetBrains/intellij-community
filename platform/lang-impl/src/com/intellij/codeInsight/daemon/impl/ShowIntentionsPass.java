@@ -37,9 +37,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
@@ -120,6 +118,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     Editor injectedEditor = null;
     PsiFile injectedFile = null;
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+
+    boolean hasAvailableAction = false;
+    HighlightInfo.IntentionActionDescriptor unavailableAction = null;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
       HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
       RangeMarker range = pair.second;
@@ -154,6 +155,17 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
       if (actionInGroup.getAction().isAvailable(project, editorToUse, fileToUse)) {
         outList.add(actionInGroup);
+        hasAvailableAction = true;
+      }
+      else if (unavailableAction == null) {
+        unavailableAction = actionInGroup;
+      }
+    }
+
+    if (!hasAvailableAction && unavailableAction != null) {
+      HighlightInfo.IntentionActionDescriptor emptyActionDescriptor = unavailableAction.copyWithEmptyAction();
+      if (emptyActionDescriptor != null) {
+        outList.add(emptyActionDescriptor);
       }
     }
   }
