@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -35,8 +34,6 @@ import java.util.List;
  * @author yole
  */
 public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
-
-  @NonNls private static final String PARAMETERIZED_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.Parameterized";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -123,7 +120,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     if (!(value instanceof UClassLiteralExpression)) return null;
     UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
     PsiType type = classLiteralExpression.getType();
-    return type != null && type.equalsToText(PARAMETERIZED_ANNOTATION_QUALIFIED_NAME) ? uClass.getJavaPsi() : null;
+    return type != null && type.equalsToText(TestFrameworkConstants.PARAMETERIZED_ANNOTATION_QUALIFIED_NAME) ? uClass.getJavaPsi() : null;
   }
 
   @Nullable

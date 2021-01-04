@@ -11,13 +11,13 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.testAssistant.TestDataNavigationHandler;
+import org.jetbrains.idea.devkit.testAssistant.TestFrameworkConstants;
 import org.jetbrains.uast.*;
 
 import java.util.Collections;
 import java.util.List;
 
 final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
-  private static final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataFile";
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -41,7 +41,7 @@ final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
             if (call == null) return PsiReference.EMPTY_ARRAY;
 
             PsiParameter targetParameter = UastUtils.getParameterForArgument(call, expression);
-            if (targetParameter == null || !targetParameter.hasAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
+            if (targetParameter == null || !targetParameter.hasAnnotation(TestFrameworkConstants.TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
               return PsiReference.EMPTY_ARRAY;
             }
 

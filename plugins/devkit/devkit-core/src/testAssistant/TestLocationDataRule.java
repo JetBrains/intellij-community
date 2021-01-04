@@ -20,8 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.testFramework.Parameterized;
-import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -106,10 +104,10 @@ public final class TestLocationDataRule implements GetDataRule {
                                       String fileName,
                                       String nameWithoutExtension,
                                       PsiClass aClass) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, TestDataPath.class.getName());
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
     if (annotation != null) {
       final Location parameterizedLocation =
-        PsiMemberParameterizedLocation.getParameterizedLocation(aClass, "[" + fileName + "]", Parameterized.class.getName());
+        PsiMemberParameterizedLocation.getParameterizedLocation(aClass, "[" + fileName + "]", TestFrameworkConstants.PARAMETERIZED_ANNOTATION_QUALIFIED_NAME);
       if (parameterizedLocation != null) {
         return parameterizedLocation;
       }

@@ -25,9 +25,6 @@ import java.util.Collections;
  * @author yole
  */
 public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
-  public static final String TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataPath";
-  public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
-  public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
 
   @Override
   public Info getInfo(@NotNull PsiElement e) {
@@ -65,7 +62,7 @@ public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
 
     final UAnnotation annotation =
       UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(psiClass,
-                                                                        Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME)),
+                                                                        Collections.singleton(TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME)),
                                UAnnotation.class);
     if (annotation != null) {
       UExpression value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
@@ -74,7 +71,7 @@ public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
         final Object constantValue = value.evaluate();
         if (constantValue instanceof String) {
           String path = (String)constantValue;
-          if (path.contains(CONTENT_ROOT_VARIABLE)) {
+          if (path.contains(TestFrameworkConstants.CONTENT_ROOT_VARIABLE)) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final VirtualFile file = psiClass.getContainingFile().getVirtualFile();
             if (file == null) {
@@ -82,14 +79,14 @@ public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
             }
             final VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
             if (contentRoot == null) return null;
-            path = path.replace(CONTENT_ROOT_VARIABLE, contentRoot.getPath());
+            path = path.replace(TestFrameworkConstants.CONTENT_ROOT_VARIABLE, contentRoot.getPath());
           }
-          if (path.contains(PROJECT_ROOT_VARIABLE)) {
+          if (path.contains(TestFrameworkConstants.PROJECT_ROOT_VARIABLE)) {
             String baseDir = project.getBasePath();
             if (baseDir == null) {
               return null;
             }
-            path = path.replace(PROJECT_ROOT_VARIABLE, baseDir);
+            path = path.replace(TestFrameworkConstants.PROJECT_ROOT_VARIABLE, baseDir);
           }
           return path;
         }

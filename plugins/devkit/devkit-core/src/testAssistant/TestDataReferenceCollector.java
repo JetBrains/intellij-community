@@ -25,7 +25,6 @@ import java.util.*;
  * @author yole
  */
 public class TestDataReferenceCollector {
-  private static final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataFile";
   private final String myTestDataPath;
   private final String myTestName;
   private final List<String> myLogMessages = new ArrayList<>();
@@ -98,7 +97,7 @@ public class TestDataReferenceCollector {
             for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
               PsiParameter psiParameter = psiParameters[i];
               final PsiModifierList modifierList = psiParameter.getModifierList();
-              if (modifierList != null && modifierList.hasAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
+              if (modifierList != null && modifierList.hasAnnotation(TestFrameworkConstants.TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
                 myFoundTestDataParameters = true;
                 if (psiParameter.isVarArgs()) {
                   processVarargCallArgument(expression, argumentMap, result);
