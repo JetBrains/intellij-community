@@ -2,9 +2,9 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.system.CpuArch;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -38,7 +38,7 @@ public final class StorageLock {
 
   static {
     final int lower = 100;
-    final int upper = SystemInfo.is64Bit ? 500 : 200;
+    final int upper = CpuArch.is32Bit() ? 200 : 500;
 
     BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * PagedFileStorage.MB;
     final long max = maxDirectMemory() - 2L * BUFFER_SIZE;
