@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.diff
 
 import com.intellij.diff.util.FileEditorBase
@@ -11,15 +11,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.util.ui.codereview.diff.MutableDiffRequestChainProcessor
 import libraries.coroutines.extra.LifetimeSource
 import javax.swing.JComponent
 
 internal class SpaceDiffFileEditor(project: Project, spaceDiffFile: SpaceDiffFile) : FileEditorBase() {
   private val editorLifetime = LifetimeSource()
 
-  private val diffProcessor: MutableDiffRequestChainProcessor = MutableDiffRequestChainProcessor(project, null)
-  private val chainBuilder: SpaceDiffRequestChainBuilder = SpaceDiffRequestChainBuilder(editorLifetime, project, spaceDiffFile.diffVm, spaceDiffFile.changesVm)
+  private val diffProcessor = SpaceDiffRequestProcessor(project)
+  private val chainBuilder = SpaceDiffRequestChainBuilder(editorLifetime, project, spaceDiffFile.diffVm, spaceDiffFile.changesVm)
 
   init {
     Disposer.register(this, Disposable { editorLifetime.terminate() })
