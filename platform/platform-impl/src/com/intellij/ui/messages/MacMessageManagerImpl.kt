@@ -51,10 +51,34 @@ private class MessageInfo(val title: String,
                           window: Window?,
                           val defaultOptionIndex: Int,
                           val doNotAskDialogOption: DoNotAskOption?) {
-  val message = StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message ?: "", "\n")).replace("%", "%%").replace("&nbsp;", " ")
+  val message = MacMessageHelper.stripHtmlMessage(message)
   val window = window ?: JBMacMessages.getForemostWindow()
   val popupMode = StackingPopupDispatcher.getInstance().isPopupFocused
   val nativeWindow: ID = if (popupMode) ID.NIL else MacUtil.findWindowFromJavaWindow(this.window)
+}
+
+class MacMessageHelper {
+  companion object {
+    @JvmStatic
+    fun stripHtmlMessage(message: String?): String {
+      if (message == null) {
+        return ""
+      }
+      var result: String = message
+      while (true) {
+        val start = StringUtil.indexOf(result, "<style>", 0)
+        if (start == -1) {
+          break
+        }
+        val end = StringUtil.indexOf(result, "</style>", start + 7)
+        if (end == -1) {
+          break
+        }
+        result = result.substring(0, start) + result.substring(end + 8)
+      }
+      return StringUtil.unescapeXmlEntities(StringUtil.stripHtml(result, "\n")).replace("%", "%%").replace("&nbsp;", " ")
+    }
+  }
 }
 
 @Service
