@@ -22,30 +22,28 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-public class VirtualFileStreamRule implements GetDataRule {
+public class VcsVirtualFilesRule implements GetDataRule {
   @Nullable
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
     if (files != null) {
-      return Stream.of(files);
+      return JBIterable.of(files);
     }
 
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataProvider);
     if (file != null) {
-      return Stream.of(file);
+      return JBIterable.of(file);
     }
 
     IdeView view = LangDataKeys.IDE_VIEW.getData(dataProvider);
     PsiDirectory[] directories = view == null ? PsiDirectory.EMPTY_ARRAY : view.getDirectories();
     if (directories.length > 0) {
-      return Stream.of(directories).map(o -> o.getVirtualFile()).collect(Collectors.toList()).stream();
+      return JBIterable.of(directories).filterMap(o -> o.getVirtualFile()).collect();
     }
     return null;
   }
