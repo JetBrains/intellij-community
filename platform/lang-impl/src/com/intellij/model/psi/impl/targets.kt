@@ -22,8 +22,8 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 fun targetSymbols(file: PsiFile, offset: Int): Collection<Symbol> {
   val (declaredData, referencedData) = declaredReferencedData(file, offset)
-  val data = declaredData
-             ?: referencedData
+  val data = referencedData
+             ?: declaredData
              ?: return emptyList()
   return data.targets.map { it.symbol }
 }
