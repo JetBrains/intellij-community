@@ -243,10 +243,11 @@ public final class SystemInfo {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
+  //</editor-fold>
 
   private static @NotNull String getEnvOrEmpty(@Nullable String name) {
     String value = System.getenv(name);
