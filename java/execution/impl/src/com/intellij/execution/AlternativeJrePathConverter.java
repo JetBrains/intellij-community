@@ -13,9 +13,9 @@ import java.nio.file.Path;
 
 public class AlternativeJrePathConverter extends Converter<String> {
   public static final NullableLazyValue<String> BUNDLED_JRE_PATH = NullableLazyValue.createValue(() -> {
-    String jbr = Path.of(PathManager.getBundledRuntimePath()).toString();
+    String jbr = getPatchedJrePath(Path.of(PathManager.getBundledRuntimePath()).toString());
     JdkVersionDetector.JdkVersionInfo versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jbr);
-    return versionInfo != null ? getPatchedJrePath(jbr) : null;
+    return versionInfo != null ? jbr : null;
   });
 
   private static final String BUNDLED = "BUNDLED";
