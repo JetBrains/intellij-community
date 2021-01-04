@@ -3,6 +3,7 @@ package com.intellij.jna;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.system.CpuArch;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,5 +42,5 @@ public final class JnaLoader {
    * @see Native#register
    * @see Native#load
    */
-  public static final boolean supportsDirectMapping = !SystemInfo.isMac || !SystemInfo.isArm64;
+  public static final boolean supportsDirectMapping = !(SystemInfo.isMac && CpuArch.isArm64());
 }
