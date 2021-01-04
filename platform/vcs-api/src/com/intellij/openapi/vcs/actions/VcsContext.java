@@ -36,6 +36,12 @@ import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * @see VcsContextFactory
+ * @see com.intellij.openapi.vcs.actions.VcsContextUtil
+ * @deprecated Prefer explicit {@link com.intellij.openapi.actionSystem.DataContext} state caching when needed.
+ */
+@Deprecated
 public interface VcsContext extends PlaceProvider {
   @Nullable Project getProject();
 

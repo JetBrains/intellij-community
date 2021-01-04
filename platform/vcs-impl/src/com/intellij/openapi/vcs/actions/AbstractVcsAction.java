@@ -14,6 +14,10 @@ import java.util.Collection;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptySet;
 
+/**
+ * @deprecated Use {@link DumbAwareAction} instead.
+ */
+@Deprecated
 public abstract class AbstractVcsAction extends DumbAwareAction {
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
