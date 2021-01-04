@@ -26,6 +26,11 @@ public class VcsContextUtil {
   }
 
   @NotNull
+  public static List<FilePath> selectedFilePaths(@NotNull DataContext context) {
+    return selectedFilePathsIterable(context).toList();
+  }
+
+  @NotNull
   public static JBIterable<VirtualFile> selectedFilesIterable(@NotNull DataContext context) {
     Iterable<VirtualFile> files = VcsDataKeys.VIRTUAL_FILES.getData(context);
     if (files != null) {
