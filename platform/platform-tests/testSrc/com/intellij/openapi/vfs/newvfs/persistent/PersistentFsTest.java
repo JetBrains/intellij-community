@@ -847,7 +847,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     jarVFile.refresh(false, false);
     events.sort(Comparator.comparing((VFileEvent e) ->e.getFile().getUrl()));
-    assertEvents(events, new VFileDeleteEvent(this, vFile, false), new VFileDeleteEvent(this, jarVFile, false));
+    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, vFile, false), new VFileDeleteEvent(this, jarVFile, false));
   }
 
   @Test
@@ -871,7 +871,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     ((JarFileSystemImpl)JarFileSystem.getInstance()).markDirtyAndRefreshVirtualFileDeepInsideJarForTest(webXml);
 
-    assertEvents(events, new VFileDeleteEvent(this, webXml, false),
+    assertEqualUnorderedEvents(events, new VFileDeleteEvent(this, webXml, false),
                  new VFileContentChangeEvent(this, vFile, 0, 0, false));
   }
 
