@@ -2,35 +2,22 @@
 package com.intellij.execution.target;
 
 import com.intellij.execution.Platform;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class TargetPlatform {
-  public enum Arch {x32bit, x64bit}
+  public static final TargetPlatform CURRENT = new TargetPlatform(Platform.current());
 
-  public static final TargetPlatform CURRENT = new TargetPlatform(Platform.current(), SystemInfo.is64Bit ? Arch.x64bit : Arch.x32bit);
-
-  @NotNull private final Platform myPlatform;
-  @NotNull private final Arch myArch;
+  private final Platform myPlatform;
 
   public TargetPlatform() {
-    this(Platform.UNIX, Arch.x64bit);
+    this(Platform.UNIX);
   }
 
-  public TargetPlatform(@NotNull Platform platform, @NotNull Arch arch) {
+  public TargetPlatform(@NotNull Platform platform) {
     myPlatform = platform;
-    myArch = arch;
   }
 
-  @NotNull
-  public Platform getPlatform() {
+  public @NotNull Platform getPlatform() {
     return myPlatform;
   }
-
-  @NotNull
-  public Arch getArch() {
-    return myArch;
-  }
 }
-
-

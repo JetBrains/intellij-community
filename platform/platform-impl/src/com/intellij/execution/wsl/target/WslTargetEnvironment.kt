@@ -35,7 +35,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     get() = Collections.unmodifiableMap(myLocalPortBindings)
 
   override val targetPlatform: TargetPlatform
-    get() = TargetPlatform(Platform.UNIX, TargetPlatform.CURRENT.arch)
+    get() = TargetPlatform(Platform.UNIX)
 
   init {
     for (uploadRoot in wslRequest.uploadVolumes) {
