@@ -43,7 +43,7 @@ abstract class FilePredictionHistoryBaseTest : CodeInsightFixtureTestCase<Module
     assertDoubleEquals("MLE/max(MLE) for $fileName", expected.mleToMax, actual.mleToMax)
   }
 
-  private fun assertDoubleEquals(itemName: String, expected: Double, actual: Double) {
+  protected fun assertDoubleEquals(itemName: String, expected: Double, actual: Double) {
     assertTrue("$itemName isn't equal to expected. Expected: $expected, Actual: $actual", abs(expected - actual) < 0.0000000001)
   }
 }

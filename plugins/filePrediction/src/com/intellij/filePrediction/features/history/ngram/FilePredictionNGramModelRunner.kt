@@ -2,43 +2,56 @@
 package com.intellij.filePrediction.features.history.ngram
 
 import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
-import com.intellij.completion.ngram.slp.modeling.Model
 import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
+import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
 import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner
-import org.jetbrains.annotations.TestOnly
 
-class FilePredictionNGramModelRunner(private var nGramLength: Int, model: Model, vocabulary: FilePredictionNGramVocabulary)
+class FilePredictionNGramModelRunner(private val nGramOrder: Int,
+                                     val lambda: Double,
+                                     model: NGramModel, vocabulary: FilePredictionNGramVocabulary)
   : ModelRunner(model, vocabulary) {
 
   companion object {
-    private const val LAST_STORED_FILES: Int = 100
+    private const val DEFAULT_LAMBDA: Double = 0.5
+    private const val LAST_STORED_FILES: Int = 200
+    private const val LAST_STORED_FILES_SEQUENCE: Int = 10000
 
-    fun createNewModelRunner(order: Int): FilePredictionNGramModelRunner {
+    fun createNewModelRunner(order: Int, lambda: Double = DEFAULT_LAMBDA): FilePredictionNGramModelRunner {
       return FilePredictionNGramModelRunner(
-        order,
+        nGramOrder = order,
+        lambda = lambda,
         model = JMModel(counter = ArrayTrieCounter(), order = order),
-        vocabulary = FilePredictionNGramVocabulary(LAST_STORED_FILES)
+        vocabulary = FilePredictionNGramVocabulary(LAST_STORED_FILES, FilePredictionRecentFileSequence(LAST_STORED_FILES_SEQUENCE, order))
       )
     }
 
     fun createModelRunner(order: Int,
+                          lambda: Double,
                           counter: ArrayTrieCounter,
                           vocabulary: FilePredictionNGramVocabulary): FilePredictionNGramModelRunner {
       return FilePredictionNGramModelRunner(
         order,
-        model = JMModel(counter = counter, order = order),
+        lambda,
+        model = JMModel(counter = counter, order = order, lambda = lambda),
         vocabulary = vocabulary
       )
     }
   }
 
-  private var prevFiles: MutableList<String> = arrayListOf()
+  init {
+    assert(vocabulary.maxSize >= nGramOrder && vocabulary.fileSequence.maxSequenceLength >= nGramOrder)
+  }
+
+  internal var prevFiles: MutableList<String> = arrayListOf()
 
   fun learnNextFile(fileUrl: String) {
     updatePrevFiles(fileUrl)
 
-    if (vocabulary is FilePredictionNGramVocabulary) {
+    if (vocabulary is FilePredictionNGramVocabulary && model is NGramModel) {
       val indices = vocabulary.toIndicesWithLimit(prevFiles, model)
+      if (indices.size > 1) {
+        model.forget(indices.subList(0, indices.size - 1))
+      }
       model.learn(indices)
     }
   }
@@ -57,7 +70,7 @@ class FilePredictionNGramModelRunner(private var nGramLength: Int, model: Model,
   }
 
   private fun updatePrevFiles(fileUrl: String) {
-    if (prevFiles.size < nGramLength) {
+    if (prevFiles.size < nGramOrder) {
       prevFiles.add(fileUrl)
       return
     }
@@ -70,11 +83,6 @@ class FilePredictionNGramModelRunner(private var nGramLength: Int, model: Model,
     for (i in 0..prevFiles.size - 2) {
       prevFiles[i] = prevFiles[i + 1]
     }
-  }
-
-  @TestOnly
-  fun cleanPreviousFilesSequence() {
-    prevFiles.clear()
   }
 }
 
