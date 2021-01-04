@@ -3,10 +3,7 @@ package com.intellij.java.refactoring
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.refactoring.actions.InheritanceToDelegationAction
-import com.intellij.refactoring.actions.PullUpAction
-import com.intellij.refactoring.actions.RefactoringQuickListPopupAction
-import com.intellij.refactoring.actions.ReplaceMethodWithMethodObjectAction
+import com.intellij.refactoring.actions.*
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import org.jetbrains.annotations.NonNls
 
@@ -47,6 +44,10 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
 
   fun testReplaceMethodWithMethodObjectIsFiltered() {
     assertFalse(doActionExists<ReplaceMethodWithMethodObjectAction>())
+  }
+
+  fun testFindAndReplaceDuplicatesIsFiltered() {
+    assertFalse(doActionExists<MethodDuplicatesAction>())
   }
 
   private inline fun <reified A> doActionExists(): Boolean {

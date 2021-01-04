@@ -68,8 +68,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    return getCannotRefactorMessage(PsiTreeUtil.getParentOfType(element, PsiMember.class)) == null;
+    return false;
   }
 
   @Override
