@@ -201,6 +201,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest();
   }
   public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed"); }
+  public void testNoSealedModifier() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(1, "final"); }
   public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "permits"); }
   public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(0, "permits"); }
   public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed");}

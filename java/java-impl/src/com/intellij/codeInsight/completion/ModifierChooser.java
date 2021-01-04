@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
@@ -23,7 +22,7 @@ public final class ModifierChooser {
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
   };
 
-  private static final String[][] CLASS_15_MODIFIERS = {
+  private static final String[][] CLASS_MODIFIERS_WITH_SEALED = {
     {PsiKeyword.PUBLIC},
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
     {PsiKeyword.FINAL, PsiKeyword.SEALED, PsiKeyword.NON_SEALED}
@@ -98,7 +97,7 @@ public final class ModifierChooser {
   }
 
   public static String[] addClassModifiers(PsiModifierList list, @NotNull PsiElement scope) {
-    return addKeywords(list, PsiUtil.getLanguageLevel(scope).isAtLeast(LanguageLevel.JDK_15_PREVIEW) ? CLASS_15_MODIFIERS : CLASS_MODIFIERS);
+    return addKeywords(list, HighlightingFeature.SEALED_CLASSES.isAvailable(scope) ? CLASS_MODIFIERS_WITH_SEALED : CLASS_MODIFIERS);
   }
 
   public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface, @NotNull PsiElement position) {
