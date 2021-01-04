@@ -18,16 +18,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service(Service.Level.APP)
@@ -42,46 +40,67 @@ public final class WslDistributionManager implements Disposable {
     return ApplicationManager.getApplication().getService(WslDistributionManager.class);
   }
 
-  private volatile CachedDistributions myCachedDistributions;
+  private volatile CachedDistributions myInstalledDistributions;
+  private final Map<String, WSLDistribution> myMsIdToDistributionCache = ContainerUtil.createConcurrentWeakMap();
 
   @Override
   public void dispose() {
+    myMsIdToDistributionCache.clear();
+    myInstalledDistributions = null;
   }
 
+  /**
+   * @return list of installed WSL distributions by parsing output of `wsl.exe -l`. Please call it
+   * on a pooled thread and outside of the read action as it runs a process under the hood.
+   * @see #getInstalledDistributionsFuture
+   */
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
-    CachedDistributions cachedDistributions = myCachedDistributions;
+    CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return cachedDistributions.myInstalledDistributions;
     }
-    myCachedDistributions = null;
+    myInstalledDistributions = null;
     synchronized (LOCK) {
-      cachedDistributions = myCachedDistributions;
+      cachedDistributions = myInstalledDistributions;
       if (cachedDistributions == null) {
         cachedDistributions = new CachedDistributions(loadInstalledDistributions());
-        myCachedDistributions = cachedDistributions;
+        myInstalledDistributions = cachedDistributions;
       }
     }
     return cachedDistributions.myInstalledDistributions;
   }
 
   public @NotNull CompletableFuture<List<WSLDistribution>> getInstalledDistributionsFuture() {
-    CachedDistributions cachedDistributions = myCachedDistributions;
+    CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return CompletableFuture.completedFuture(cachedDistributions.myInstalledDistributions);
     }
     return CompletableFuture.supplyAsync(this::getInstalledDistributions, AppExecutorUtil.getAppExecutorService());
   }
 
-  public WSLDistribution getDistributionByMsId(@Nullable String name) {
-    if (name == null) {
-      return null;
+  /**
+   * @return {@link WSLDistribution} instance by WSL distribution name. Please note that
+   * the returned distribution is not guaranteed to be installed actually (for that check if the distribution is contained in
+   * {@link #getInstalledDistributions}).
+   * @param msId WSL distribution name, same as produced by `wsl.exe -l`
+   */
+  public @NotNull WSLDistribution getOrCreateDistributionByMsId(@NonNls @NotNull String msId) {
+    if (msId.isEmpty()) {
+      throw new IllegalStateException("WSL msId is empty");
     }
-    for (WSLDistribution distribution : getInstalledDistributions()) {
-      if (name.equalsIgnoreCase(distribution.getMsId())) {
-        return distribution;
+    // reuse previously created WSLDistribution instances to avoid re-calculating Host IP / WSL IP
+    WSLDistribution d = myMsIdToDistributionCache.get(msId);
+    if (d != null) {
+      return d;
+    }
+    synchronized (myMsIdToDistributionCache) {
+      d = myMsIdToDistributionCache.get(msId);
+      if (d == null) {
+        d = new WSLDistribution(msId);
+        myMsIdToDistributionCache.put(msId, d);
       }
     }
-    return null;
+    return d;
   }
 
   @Nullable
@@ -97,12 +116,7 @@ public final class WslDistributionManager implements Disposable {
     String distName = path.substring(0, index);
     String wslPath = FileUtil.toSystemIndependentName(path.substring(index));
 
-    WSLDistribution distribution = getDistributionByMsId(distName);
-    if (distribution == null) {
-      LOG.debug(String.format("Unknown WSL distribution: %s, known distributions: %s", distName,
-                              StringUtil.join(getInstalledDistributions(), WSLDistribution::getMsId, ", ")));
-    }
-    return Pair.create(wslPath, distribution);
+    return Pair.create(wslPath, getOrCreateDistributionByMsId(distName));
   }
 
   @Nullable
@@ -118,25 +132,8 @@ public final class WslDistributionManager implements Disposable {
     return FileUtil.toSystemDependentName(path).startsWith(WSLDistribution.UNC_PREFIX);
   }
 
-  @NotNull
-  private static List<WSLDistribution> loadInstalledDistributions() {
+  private @NotNull List<WSLDistribution> loadInstalledDistributions() {
     checkEdtAndReadAction();
-    List<WSLDistribution> wslCliDistributions = fetchDistributionsFromWslCli();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return wslCliDistributions;
-    }
-    List<WSLDistribution> oldDistributionsWithExecutable = WSLUtil.getAvailableDistributions();
-    List<WSLDistribution> result = new ArrayList<>(oldDistributionsWithExecutable);
-    // Prefer distributions with executables as it allows to switch to the old execution schema.
-    for (WSLDistribution parsedDistribution : wslCliDistributions) {
-      if (oldDistributionsWithExecutable.stream().noneMatch((d) -> d.getMsId().equals(parsedDistribution.getMsId()))) {
-        result.add(parsedDistribution);
-      }
-    }
-    return result;
-  }
-
-  private static @NotNull List<WSLDistribution> fetchDistributionsFromWslCli() {
     if (!new WSLCommandLineOptions().isLaunchWithWslExe()) {
       return Collections.emptyList();
     }
@@ -153,7 +150,7 @@ public final class WslDistributionManager implements Disposable {
     }
   }
 
-  private static @NotNull Pair<GeneralCommandLine, List<WSLDistribution>> doFetchDistributionsFromWslCli() throws IOException {
+  private @NotNull Pair<GeneralCommandLine, List<WSLDistribution>> doFetchDistributionsFromWslCli() throws IOException {
     GeneralCommandLine commandLine = createCommandLine();
     ProcessOutput output;
     try {
@@ -171,10 +168,10 @@ public final class WslDistributionManager implements Disposable {
       ), ", ");
       throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + details);
     }
-    List<@NlsSafe String> distributions = ContainerUtil.filter(output.getStdoutLines(), distribution -> {
+    List<@NlsSafe String> msIds = ContainerUtil.filter(output.getStdoutLines(), distribution -> {
       return !INTERNAL_DISTRIBUTIONS.contains(distribution);
     });
-    return Pair.create(commandLine, ContainerUtil.map(distributions, WSLDistribution::new));
+    return Pair.create(commandLine, ContainerUtil.map(msIds, this::getOrCreateDistributionByMsId));
   }
 
   private static @NotNull GeneralCommandLine createCommandLine() throws IOException {

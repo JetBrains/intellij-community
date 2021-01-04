@@ -62,10 +62,10 @@ public final class WSLUtil {
 
 
   /**
-   * @return list of installed WSL distributions
-   * @apiNote order of entries depends on configuration file and may change between launches.
-   * @see WSLDistributionService
+   * @deprecated use {@link WslDistributionManager#getInstalledDistributions()} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
     if (!isSystemCompatible()) return Collections.emptyList();
@@ -108,8 +108,10 @@ public final class WSLUtil {
   }
 
   /**
-   * @return instance of WSL distribution or null if it's unavailable
+   * @deprecated use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public static WSLDistribution getDistributionById(@Nullable String id) {
     if (id == null) {
@@ -125,7 +127,7 @@ public final class WSLUtil {
 
   /**
    * @return instance of WSL distribution or null if it's unavailable
-   * @deprecated Use {@link WslDistributionManager#getDistributionByMsId(String)}
+   * @deprecated Use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)}
    */
   @Nullable
   @Deprecated

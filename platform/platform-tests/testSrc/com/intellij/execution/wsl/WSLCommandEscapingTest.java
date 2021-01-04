@@ -28,7 +28,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   private static NullableLazyValue<WSLDistribution> WSL = NullableLazyValue.createValue(() -> {
-    List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
+    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
     if (distributions.isEmpty()) return null;
     WSLDistribution distribution = distributions.get(0);
     if (distribution instanceof WSLDistributionLegacy || !IoTestUtil.reanimateWslDistribution(distribution.getId())) return null;
