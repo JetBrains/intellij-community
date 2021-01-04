@@ -82,13 +82,18 @@ internal fun Library.asLibraryEx(): LibraryEx {
 
 private fun Library.wrap() = LibraryWrapper(this.asLibraryEx())
 
-internal val LibraryEx.allRootUrls: Set<String>
-    get() = mutableSetOf<String>().apply {
-        for (orderRootType in OrderRootType.getAllTypes()) {
-            ProgressManager.checkCanceled()
-            addAll(rootProvider.getUrls(orderRootType))
+private val LibraryEx.lazyAllRootUrls
+    get() = lazy {
+        mutableSetOf<String>().apply {
+            for (orderRootType in OrderRootType.getAllTypes()) {
+                ProgressManager.checkCanceled()
+                addAll(rootProvider.getUrls(orderRootType))
+            }
         }
     }
+
+internal val LibraryEx.allRootUrls: Set<String>
+    get() = lazyAllRootUrls.value
 
 internal fun LibraryEx.hasEqualRoots(other: LibraryEx): Boolean {
     if (allRootUrls != other.allRootUrls) return false

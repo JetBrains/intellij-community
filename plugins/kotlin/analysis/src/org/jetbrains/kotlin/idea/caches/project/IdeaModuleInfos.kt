@@ -339,9 +339,7 @@ private class ModuleTestSourceScope(module: Module) : ModuleSourceScope(module) 
 abstract class LibraryInfo(override val project: Project, val library: Library) :
     IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
 
-    init {
-        require(library is LibraryEx) { "Library '${name}' does not implement LibraryEx which is not expected" }
-    }
+    private val libraryEx: LibraryEx = library.asLibraryEx()
 
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.LIBRARY
@@ -389,11 +387,11 @@ abstract class LibraryInfo(override val project: Project, val library: Library) 
         if (this === other) return true
         if (other !is LibraryInfo) return false
 
-        return library.asLibraryEx().hasEqualRoots(other.library.asLibraryEx())
+        return libraryEx.hasEqualRoots(other.libraryEx)
     }
 
     private val lazyHashCode: Int by lazy {
-        library.asLibraryEx().rootBasedHashCode()
+        libraryEx.rootBasedHashCode()
     }
 
     override fun hashCode(): Int = lazyHashCode
