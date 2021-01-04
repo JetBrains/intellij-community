@@ -14,9 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +24,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static com.intellij.util.containers.UtilKt.concat;
-import static com.intellij.util.containers.UtilKt.stream;
 
 public class VcsContextWrapper implements VcsContext {
   @NotNull protected final DataContext myContext;
@@ -77,27 +72,18 @@ public class VcsContextWrapper implements VcsContext {
   @Nullable
   @Override
   public VirtualFile getSelectedFile() {
-    return getSelectedFilesStream().findFirst().orElse(null);
+    return VcsContextUtil.selectedFilesIterable(myContext).first();
   }
 
   @Override
   public VirtualFile @NotNull [] getSelectedFiles() {
-    VirtualFile[] fileArray = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
-    if (fileArray != null) {
-      return Stream.of(fileArray).filter(VirtualFile::isInLocalFileSystem).toArray(VirtualFile[]::new);
-    }
-
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(myContext);
-    return file != null && file.isInLocalFileSystem() ? new VirtualFile[]{file} : VirtualFile.EMPTY_ARRAY;
+    return VcsContextUtil.selectedFilesIterable(myContext).toList().toArray(VirtualFile[]::new);
   }
 
   @NotNull
   @Override
   public Stream<VirtualFile> getSelectedFilesStream() {
-    Iterable<VirtualFile> result = VcsDataKeys.VIRTUAL_FILES.getData(myContext);
-
-    return result != null ? StreamEx.of(JBIterable.from(result).iterator()).filter(VirtualFile::isInLocalFileSystem) :
-           VcsContext.super.getSelectedFilesStream();
+    return StreamEx.of(VcsContextUtil.selectedFilesIterable(myContext).iterator());
   }
 
   @NotNull
@@ -121,18 +107,12 @@ public class VcsContextWrapper implements VcsContext {
   @Nullable
   @Override
   public File getSelectedIOFile() {
-    File file = VcsDataKeys.IO_FILE.getData(myContext);
-
-    return file != null ? file : ArrayUtil.getFirstElement(VcsDataKeys.IO_FILE_ARRAY.getData(myContext));
+    return VcsContextUtil.selectedIOFilesIterable(myContext).first();
   }
 
   @Override
   public File @Nullable [] getSelectedIOFiles() {
-    File[] files = VcsDataKeys.IO_FILE_ARRAY.getData(myContext);
-    if (!ArrayUtil.isEmpty(files)) return files;
-
-    File file = VcsDataKeys.IO_FILE.getData(myContext);
-    return file != null ? new File[]{file} : null;
+    return VcsContextUtil.selectedIOFilesIterable(myContext).toList().toArray(new File[0]);
   }
 
   @Override
@@ -145,6 +125,12 @@ public class VcsContextWrapper implements VcsContext {
     return Refreshable.PANEL_KEY.getData(myContext);
   }
 
+  @Nullable
+  @Override
+  public FilePath getSelectedFilePath() {
+    return VcsContextUtil.selectedFilePathsIterable(myContext).first();
+  }
+
   @Override
   public FilePath @NotNull [] getSelectedFilePaths() {
     return getSelectedFilePathsStream().toArray(FilePath[]::new);
@@ -153,20 +139,7 @@ public class VcsContextWrapper implements VcsContext {
   @NotNull
   @Override
   public Stream<FilePath> getSelectedFilePathsStream() {
-    FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
-    Iterable<FilePath> pathsData = VcsDataKeys.FILE_PATHS.getData(myContext);
-
-    return concat(
-      StreamEx.ofNullable(path),
-      pathsData != null ? StreamEx.of(JBIterable.from(pathsData).iterator()) : getSelectedFilesStream().map(VcsUtil::getFilePath),
-      stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
-    ).distinct();
-  }
-
-  @Nullable
-  @Override
-  public FilePath getSelectedFilePath() {
-    return ArrayUtil.getFirstElement(getSelectedFilePaths());
+    return StreamEx.of(VcsContextUtil.selectedFilePathsIterable(myContext).iterator());
   }
 
   @Override
