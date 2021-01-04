@@ -40,10 +40,7 @@ public final class SystemInfo {
   public static final boolean isUnix = SystemInfoRt.isUnix;
   public static final boolean isChromeOS = isLinux && isCrostini();
 
-  public static final boolean isAppleJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Apple", 0) >= 0;
   public static final boolean isOracleJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Oracle", 0) >= 0;
-  public static final boolean isSunJvm =
-    Strings.indexOfIgnoreCase(JAVA_VENDOR, "Sun", 0) >= 0 && Strings.indexOfIgnoreCase(JAVA_VENDOR, "Microsystems", 0) >= 0;
   public static final boolean isIbmJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "IBM", 0) >= 0;
   public static final boolean isAzulJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Azul", 0) >= 0;
   public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
@@ -265,6 +262,16 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final boolean isMacIntel64 = isMac && isIntel64;
+
+  /** @deprecated always false */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isAppleJvm = false;
+
+  /** @deprecated always false */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isSunJvm = false;
   //</editor-fold>
 
   private static @NotNull String getEnvOrEmpty(@Nullable String name) {

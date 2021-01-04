@@ -61,9 +61,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private fun getJavaVendor() : String {
     return when {
       SystemInfo.isJetBrainsJvm -> "JetBrains"
-      SystemInfo.isAppleJvm -> "Apple"
       SystemInfo.isOracleJvm -> "Oracle"
-      SystemInfo.isSunJvm -> "Sun"
       SystemInfo.isIbmJvm -> "IBM"
       SystemInfo.isAzulJvm -> "Azul"
       else -> "Other"
