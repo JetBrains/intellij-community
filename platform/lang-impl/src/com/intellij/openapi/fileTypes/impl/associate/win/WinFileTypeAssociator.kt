@@ -11,8 +11,8 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.system.CpuArch
 import java.nio.file.Path
 
 class WinFileTypeAssociator : com.intellij.openapi.fileTypes.impl.associate.SystemFileTypeAssociator {
@@ -51,7 +51,7 @@ class WinFileTypeAssociator : com.intellij.openapi.fileTypes.impl.associate.Syst
   @Throws(OSFileAssociationException::class)
   private fun createAssignCommandLineToFiletypeCommand(): String {
     val scriptName = ApplicationNamesInfo.getInstance().scriptName
-    val suffix = if (SystemInfo.is64Bit) "64" else ""
+    val suffix = if (CpuArch.isIntel64()) "64" else ""
     val scriptPath: Path = PathManager.findBinFile("$scriptName$suffix.exe") ?: throw OSFileAssociationException(
       ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()))
     return "ftype " + getUniqueFileType() + "=" + StringUtil.wrapWithDoubleQuote(scriptPath.toString()) + " \"%1\" %*"

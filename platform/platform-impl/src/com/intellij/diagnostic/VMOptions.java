@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,7 +215,7 @@ public final class VMOptions {
   @NotNull
   public static String getCustomVMOptionsFileName() {
     String fileName = ApplicationNamesInfo.getInstance().getScriptName();
-    if (SystemInfo.is64Bit && !SystemInfo.isMac) fileName += "64";
+    if (!SystemInfo.isWindows && CpuArch.isIntel64() || SystemInfo.isXWindow && !CpuArch.is32Bit()) fileName += "64";
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
     return fileName;
