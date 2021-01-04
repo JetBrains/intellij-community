@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -25,6 +24,7 @@ import java.util.*;
  * @author yole
  */
 public class TestDataReferenceCollector {
+  
   private final String myTestDataPath;
   private final String myTestName;
   private final List<String> myLogMessages = new ArrayList<>();
@@ -171,12 +171,11 @@ public class TestDataReferenceCollector {
     public Object evaluateMethodCall(@NotNull PsiMethod target, @NotNull List<? extends UValue> argumentValues) {
       if (target.getName().equals("getTestName") && argumentValues.size() == 1) {
         UValue lowercaseArg = argumentValues.get(0);
-        boolean lowercaseArgValue = lowercaseArg instanceof UBooleanConstant && ((UBooleanConstant) lowercaseArg).getValue();
+        boolean lowercaseArgValue = lowercaseArg instanceof UBooleanConstant && ((UBooleanConstant)lowercaseArg).getValue();
         if (lowercaseArgValue && !StringUtil.isEmpty(myTestName)) {
-          return PlatformTestUtil.lowercaseFirstLetter(myTestName, true);
+          return lowercaseFirstLetter(myTestName);
         }
         return myTestName;
-
       }
       return super.evaluateMethodCall(target, argumentValues);
     }
@@ -192,6 +191,27 @@ public class TestDataReferenceCollector {
         }
       }
       return super.evaluateVariable(variable);
+    }
+
+    // copied from com.intellij.testFramework.PlatformTestUtil
+    private @NotNull String lowercaseFirstLetter(@NotNull String name) {
+      if (!isAllUppercaseName(name)) {
+        name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+      }
+      return name;
+    }
+
+    private boolean isAllUppercaseName(@NotNull String name) {
+      int uppercaseChars = 0;
+      for (int i = 0; i < name.length(); i++) {
+        if (Character.isLowerCase(name.charAt(i))) {
+          return false;
+        }
+        if (Character.isUpperCase(name.charAt(i))) {
+          uppercaseChars++;
+        }
+      }
+      return uppercaseChars >= 3;
     }
   }
 }
