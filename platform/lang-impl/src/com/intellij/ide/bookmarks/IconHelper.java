@@ -6,11 +6,13 @@ import com.intellij.ui.IconWrapperWithToolTip;
 import com.intellij.util.ui.RegionPaintIcon;
 import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.Icon;
-import java.awt.Component;
+import javax.swing.*;
+import java.awt.*;
 
-final class IconHelper {
+@VisibleForTesting
+public final class IconHelper {
   private static final String MNEMONICS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   private static final char DEFAULT = 0;
   private static final Icon NORMAL_ICON = createIcon(false, DEFAULT);
