@@ -100,13 +100,6 @@ public final class SystemInfo {
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
   public static final boolean areSymLinksSupported = isUnix || isWindows;
 
-  private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
-  public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
-  public static final boolean is64Bit = !is32Bit;
-  public static final boolean isIntel64 = CpuArch.CURRENT == CpuArch.X86_64;
-  public static final boolean isArm64 = CpuArch.CURRENT == CpuArch.ARM64;
-  public static final boolean isMacIntel64 = isMac && isIntel64;
-
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = PathExecLazyValue.create("xdg-open");
   public static boolean hasXdgOpen() {
     return isXWindow && ourHasXdgOpen.getValue();
@@ -247,6 +240,31 @@ public final class SystemInfo {
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
+
+  /** @deprecated may be inaccurate; please use {@link CpuArch} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean is32Bit = CpuArch.CURRENT.width == 32;
+
+  /** @deprecated may be inaccurate; please use {@link CpuArch} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
+
+  /** @deprecated moved; please use {@link CpuArch#isIntel64()} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public static final boolean isIntel64 = CpuArch.isIntel64();
+
+  /** @deprecated moved; please use {@link CpuArch#isArm64()} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public static final boolean isArm64 = CpuArch.isArm64();
+
+  /** @deprecated trivial and mostly outdated */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public static final boolean isMacIntel64 = isMac && isIntel64;
   //</editor-fold>
 
   private static @NotNull String getEnvOrEmpty(@Nullable String name) {
