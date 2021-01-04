@@ -4,7 +4,6 @@ package com.intellij.execution.wsl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -12,7 +11,6 @@ import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.*;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
@@ -50,11 +48,10 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  @Bombed(year = 2021, month = Calendar.FEBRUARY, day = 1, user = "yole")
   public void testWslToWinPath() {
     assertNull(wsl.getWindowsPath("/mnt/cd"));
-    assertNull(wsl.getWindowsPath("/mnt"));
-    assertNull(wsl.getWindowsPath(""));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId(), wsl.getWindowsPath(""));
     assertNull(wsl.getWindowsPath("/mnt//test"));
     assertNull(wsl.getWindowsPath("/mnt/1/test"));
 
