@@ -11,8 +11,14 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 
 public class VcsContextUtil {
+  @NotNull
+  public static List<VirtualFile> selectedFiles(@NotNull DataContext context) {
+    return selectedFilesIterable(context).toList();
+  }
+
   @NotNull
   public static JBIterable<VirtualFile> selectedFilesIterable(@NotNull DataContext context) {
     Iterable<VirtualFile> files = VcsDataKeys.VIRTUAL_FILES.getData(context);
