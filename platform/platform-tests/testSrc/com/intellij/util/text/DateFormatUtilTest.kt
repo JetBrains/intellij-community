@@ -4,12 +4,10 @@ package com.intellij.util.text
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.Clock
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.io.IoTestUtil.assumeMacOS
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -24,9 +22,9 @@ class DateFormatUtilTest {
   }
 
   @Test fun system() {
-    IoTestUtil.assumeMacOS()
+    assumeMacOS()
     val testDate = LocalDateTime.of(2019, 5, 22, 13, 45).toMillis()
-    val helper = File(DateFormatUtilTest::class.java.getResource("DateFormatUtilTest_macOS").toURI())
+    val helper = File(DateFormatUtilTest::class.java.getResource("DateFormatUtilTest_macOS")!!.toURI())
     FileUtil.setExecutable(helper)
     val expected = ExecUtil.execAndGetOutput(GeneralCommandLine(helper.path, "${testDate / 1000}")).stdoutLines[0]
     assertEquals(expected, DateFormatUtil.formatDateTime(testDate))
