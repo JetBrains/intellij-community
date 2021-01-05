@@ -22,7 +22,7 @@ public final class ByteBufferUtil {
 
     if (JavaVersion.current().feature >= 9) {
       // in Java 9+, the "official" dispose method is sun.misc.Unsafe#invokeCleaner
-      @SuppressWarnings("deprecation") Object unsafe = ReflectionUtil.getUnsafe();
+      Object unsafe = ReflectionUtil.getUnsafe();
       try {
         MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
         MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);
