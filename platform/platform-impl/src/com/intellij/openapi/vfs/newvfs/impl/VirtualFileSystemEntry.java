@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -372,7 +373,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (isValid()) {
       return getUrl();
     }
-    String reason = getUserData(DebugInvalidation.INVALIDATION_REASON);
+    String reason = getInvalidationInfo();
     return getUrl() + " (invalid" + (reason == null ? "" : ", reason: "+reason) + ")";
   }
 
@@ -409,6 +410,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private static class DebugInvalidation {
     private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
     private static final Key<String> INVALIDATION_REASON = Key.create("INVALIDATION_REASON");
+    private static final Key<Throwable> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
   }
 
   @ApiStatus.Internal
@@ -422,8 +424,19 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (DebugInvalidation.DEBUG && !ApplicationInfoImpl.isInStressTest()) {
       String oldReason = getUserData(DebugInvalidation.INVALIDATION_REASON);
       String newReason = source + ": " + reason;
+      if (oldReason == null) {
+        putUserData(DebugInvalidation.INVALIDATION_TRACE, new Throwable());
+      }
       putUserData(DebugInvalidation.INVALIDATION_REASON, oldReason == null ? newReason : oldReason + "; " + newReason);
     }
+  }
+
+  private String getInvalidationInfo() {
+    String reason = getUserData(DebugInvalidation.INVALIDATION_REASON);
+    if (reason == null) return null;
+    Throwable trace = getUserData(DebugInvalidation.INVALIDATION_TRACE);
+    if (trace == null) return reason;
+    return reason + "; stacktrace:\n" + ExceptionUtil.getThrowableText(trace);
   }
 
   @NotNull
