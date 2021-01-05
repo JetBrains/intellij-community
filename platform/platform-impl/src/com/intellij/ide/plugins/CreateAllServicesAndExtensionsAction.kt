@@ -76,8 +76,8 @@ private val badServices = java.util.Set.of(
   "com.intellij.usageView.impl.UsageViewContentManagerImpl",
   "com.jetbrains.python.scientific.figures.PyPlotToolWindow",
   "org.jetbrains.plugins.grails.runner.GrailsConsole",
-  "intellij.analysis.pwa.analyser.PwaServiceImpl",
-  "intellij.analysis.pwa.view.toolwindow.PwaProblemsViewImpl",
+  "com.intellij.analysis.pwa.analyser.PwaServiceImpl",
+  "com.intellij.analysis.pwa.view.toolwindow.PwaProblemsViewImpl",
 )
 
 @Suppress("HardCodedStringLiteral")
