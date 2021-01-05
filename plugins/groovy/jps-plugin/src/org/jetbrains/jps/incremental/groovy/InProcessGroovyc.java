@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +12,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,7 +194,7 @@ final class InProcessGroovyc implements GroovycFlavor {
       ClassLoader auxiliary = parent != null ? parent : buildCompilationClassLoader(compilationClassPath, null).get();
       Class<?> gcl = auxiliary.loadClass("groovy.lang.GroovyClassLoader");
       groovyClassLoader = (ClassLoader)gcl.getConstructor(ClassLoader.class)
-        .newInstance(parent != null ? parent : ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9());
+        .newInstance(parent != null ? parent : getPlatformLoaderParentIfOnJdk9());
     }
     catch (ClassNotFoundException e) {
       return null;
@@ -216,6 +216,19 @@ final class InProcessGroovyc implements GroovycFlavor {
         }
         return true;
       });
+  }
+
+  private static @Nullable ClassLoader getPlatformLoaderParentIfOnJdk9() {
+    if (JavaVersion.current().feature >= 9) {
+      // on Java 8, 'tools.jar' is on a classpath; on Java 9, its classes are available via the platform loader
+      try {
+        return (ClassLoader)ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -298,7 +311,7 @@ final class InProcessGroovyc implements GroovycFlavor {
     UrlClassLoader groovyAllLoader = UrlClassLoader.build()
       .files(toPaths(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyJar))))
       .useCache(ourLoaderCachePool, url -> true)
-      .parent(ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9()).get();
+      .parent(getPlatformLoaderParentIfOnJdk9()).get();
 
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
-import com.intellij.openapi.util.ClassLoaderUtil.getPlatformLoaderParentIfOnJdk9
 import com.intellij.util.lang.UrlClassLoader
 import java.net.URL
 import java.nio.file.Paths
@@ -41,7 +40,7 @@ private fun createRobotClassLoader(): UrlClassLoader {
     .files(getUrlOfBaseClassLoader().map { Paths.get(it.path) })
     .usePersistentClasspathIndexForLocalClassDirectories()
     .useCache()
-    .parent(getPlatformLoaderParentIfOnJdk9()).get()
+    .parent(ClassLoader.getPlatformClassLoader()).get()
 }
 
 private fun getUrlOfBaseClassLoader(): List<URL> {

@@ -39,19 +39,4 @@ public final class ClassLoaderUtil {
   public static <T> T runWithClassLoader(ClassLoader classLoader, Computable<T> computable) {
     return computeWithClassLoader(classLoader, () -> computable.compute());
   }
-
-  @Nullable
-  public static ClassLoader getPlatformLoaderParentIfOnJdk9() {
-    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
-      // on Java 8, 'tools.jar' is on a classpath; on Java 9, its classes are available via the platform loader
-      try {
-        //noinspection JavaReflectionMemberAccess
-        return (ClassLoader)ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return null;
-  }
 }
