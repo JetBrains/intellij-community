@@ -8,6 +8,8 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.PropertiesComponent
 
 class ToolwindowSidebarPositionProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
+  private val updaters = mutableListOf<Runnable>()
+
   override fun getId(): String = "toolwindow.sidebar.position"
 
   override fun getOptions(): Collection<OptionDescription> =
@@ -15,8 +17,12 @@ class ToolwindowSidebarPositionProvider : OptionsSearchTopHitProvider.Applicatio
       override fun isOptionEnabled() = PropertiesComponent.getInstance().isTrueValue(POSITION_RIGHT)
       override fun setOptionState(enabled: Boolean) {
         PropertiesComponent.getInstance().setValue(POSITION_RIGHT, enabled)
+        updaters.forEach { it.run() }
       }
     })
+
+  fun addUpdateListener(listener: Runnable) = updaters.add(listener)
+  fun removeUpdateListener(listener: Runnable) = updaters.remove(listener)
 
   companion object {
     fun isRightPosition() = PropertiesComponent.getInstance().isTrueValue(POSITION_RIGHT)

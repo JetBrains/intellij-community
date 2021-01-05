@@ -33,7 +33,7 @@ class IdeLeftToolbar internal constructor() : JPanel() {
     extendedBag = GridBag()
     add(extendedPane, if (isRightPosition()) BorderLayout.WEST else BorderLayout.EAST)
 
-    squareButtonPane = initSquarePane()
+    squareButtonPane = initMainPane()
     add(squareButtonPane, BorderLayout.CENTER)
 
     moreButton = MoreSquareStripeButton(this)
@@ -132,9 +132,9 @@ class IdeLeftToolbar internal constructor() : JPanel() {
         }.toTypedArray().ifEmpty { null })
     }
 
-    private fun initSquarePane() = JPanel(VerticalFlowLayout(0, 0))
+    private fun initMainPane() = JPanel(VerticalFlowLayout(0, 0))
       .apply {
-        border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 0,
+        border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1,
                                          if (isRightPosition()) 1 else 0, 0, if (isRightPosition()) 0 else 1)
       }
 
@@ -143,7 +143,7 @@ class IdeLeftToolbar internal constructor() : JPanel() {
         layout = GridBagLayout()
         isVisible = false
         background = JBUI.CurrentTheme.BigPopup.searchFieldBackground()
-        border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 0,
+        border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1,
                                          if (isRightPosition()) 1 else 0, 0, if (isRightPosition()) 0 else 1)
       }
   }
