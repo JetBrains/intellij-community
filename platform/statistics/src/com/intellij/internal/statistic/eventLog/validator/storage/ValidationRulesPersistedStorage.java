@@ -5,6 +5,8 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
+import com.intellij.internal.statistic.eventLog.connection.metadata.*;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationRuleFactory;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
@@ -20,8 +22,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
-public class ValidationRulesPersistedStorage extends BaseValidationRulesPersistedStorage {
+public class ValidationRulesPersistedStorage implements ValidationRulesStorage {
   private static final Logger LOG = Logger.getInstance(ValidationRulesPersistedStorage.class);
 
   protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
@@ -30,6 +34,7 @@ public class ValidationRulesPersistedStorage extends BaseValidationRulesPersiste
   private @Nullable String myVersion;
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull EventLogMetadataLoader myMetadataLoader;
+  private final @NotNull AtomicBoolean myIsInitialized;
 
   ValidationRulesPersistedStorage(@NotNull String recorderId) {
     myRecorderId = recorderId;
@@ -37,6 +42,7 @@ public class ValidationRulesPersistedStorage extends BaseValidationRulesPersiste
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     myMetadataLoader = new EventLogServerMetadataLoader(recorderId);
     myVersion = loadValidatorsFromLocalCache(recorderId);
+    myIsInitialized = new AtomicBoolean(false);
   }
 
   @TestOnly
@@ -48,6 +54,7 @@ public class ValidationRulesPersistedStorage extends BaseValidationRulesPersiste
     myMetadataPersistence = persistence;
     myMetadataLoader = loader;
     myVersion = loadValidatorsFromLocalCache(recorderId);
+    myIsInitialized = new AtomicBoolean(false);
   }
 
   @Override
@@ -76,11 +83,11 @@ public class ValidationRulesPersistedStorage extends BaseValidationRulesPersiste
       EventGroupRemoteDescriptors groups = EventGroupRemoteDescriptors.create(rawEventsScheme);
       EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
       Map<String, EventGroupRules> result = createValidators(build, groups);
-      isInitialized.set(false);
+      myIsInitialized.set(false);
       eventsValidators.clear();
       eventsValidators.putAll(result);
 
-      isInitialized.set(true);
+      myIsInitialized.set(true);
       return groups.version;
     }
     finally {
@@ -125,4 +132,21 @@ public class ValidationRulesPersistedStorage extends BaseValidationRulesPersiste
   public void reload() {
     myVersion = loadValidatorsFromLocalCache(myRecorderId);
   }
+
+  @Override
+  public boolean isUnreachable() {
+    return !myIsInitialized.get();
+  }
+
+
+  @NotNull
+  protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
+    GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
+    return groups.groups.stream()
+      .filter(group -> EventGroupFilterRules.create(group).accepts(build))
+      .collect(Collectors.toMap(group -> group.id, group -> {
+        return EventGroupRules.create(group, globalRulesHolder, new ValidationRuleFactory());
+      }));
+  }
+
 }

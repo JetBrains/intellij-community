@@ -6,17 +6,13 @@ import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
-import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationRuleFactory;
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationRuleFactory;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
 import org.jetbrains.annotations.NotNull;
@@ -26,20 +22,24 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public final class ValidationTestRulesPersistedStorage extends BaseValidationRulesPersistedStorage {
+public final class ValidationTestRulesPersistedStorage implements ValidationRulesStorage {
   protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final Object myLock = new Object();
   private final @NotNull EventLogTestMetadataPersistence myTestMetadataPersistence;
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull String myRecorderId;
+  private final @NotNull AtomicBoolean myIsInitialized;
+
 
   ValidationTestRulesPersistedStorage(@NotNull String recorderId) {
     myTestMetadataPersistence = new EventLogTestMetadataPersistence(recorderId);
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     updateValidators();
     myRecorderId = recorderId;
+    myIsInitialized = new AtomicBoolean(false);
   }
 
   @Override
@@ -57,16 +57,21 @@ public final class ValidationTestRulesPersistedStorage extends BaseValidationRul
     updateValidators();
   }
 
+  @Override
+  public boolean isUnreachable() {
+    return !myIsInitialized.get();
+  }
+
   private void updateValidators() {
     synchronized (myLock) {
       eventsValidators.clear();
-      isInitialized.set(false);
+      myIsInitialized.set(false);
       EventGroupRemoteDescriptors productionGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
       EventGroupRemoteDescriptors testGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence);
       final Map<String, EventGroupRules> result = createValidators(testGroups, productionGroups.rules);
 
       eventsValidators.putAll(result);
-      isInitialized.set(true);
+      myIsInitialized.set(true);
     }
   }
 
