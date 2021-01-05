@@ -18,7 +18,7 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
 /**
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 1.31.1)",
+    value = "by gRPC proto compiler (version 1.21.1)",  // Android Studio: b/176938468
     comments = "Source: processMediator.proto")
 public final class ProcessManagerGrpc {
 
@@ -44,7 +44,7 @@ public final class ProcessManagerGrpc {
           ProcessManagerGrpc.getCreateProcessMethod = getCreateProcessMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.CreateProcessRequest, com.intellij.execution.process.mediator.rpc.CreateProcessReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "CreateProcess"))
+              .setFullMethodName(generateFullMethodName("intellij.process.mediator.rpc.ProcessManager", "CreateProcess"))  // Android Studio: b/176938468
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.CreateProcessRequest.getDefaultInstance()))
@@ -75,7 +75,7 @@ public final class ProcessManagerGrpc {
           ProcessManagerGrpc.getDestroyProcessMethod = getDestroyProcessMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.DestroyProcessRequest, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "DestroyProcess"))
+              .setFullMethodName(generateFullMethodName("intellij.process.mediator.rpc.ProcessManager", "DestroyProcess"))  // Android Studio: b/176938468
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.DestroyProcessRequest.getDefaultInstance()))
@@ -106,7 +106,7 @@ public final class ProcessManagerGrpc {
           ProcessManagerGrpc.getAwaitTerminationMethod = getAwaitTerminationMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest, com.intellij.execution.process.mediator.rpc.AwaitTerminationReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "AwaitTermination"))
+              .setFullMethodName(generateFullMethodName("intellij.process.mediator.rpc.ProcessManager", "AwaitTermination"))  // Android Studio: b/176938468
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.AwaitTerminationRequest.getDefaultInstance()))
@@ -137,7 +137,7 @@ public final class ProcessManagerGrpc {
           ProcessManagerGrpc.getWriteStreamMethod = getWriteStreamMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.WriteStreamRequest, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "WriteStream"))
+              .setFullMethodName(generateFullMethodName("intellij.process.mediator.rpc.ProcessManager", "WriteStream"))  // Android Studio: b/176938468
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.WriteStreamRequest.getDefaultInstance()))
@@ -168,7 +168,7 @@ public final class ProcessManagerGrpc {
           ProcessManagerGrpc.getReadStreamMethod = getReadStreamMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.ReadStreamRequest, com.intellij.execution.process.mediator.rpc.DataChunk>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ReadStream"))
+              .setFullMethodName(generateFullMethodName("intellij.process.mediator.rpc.ProcessManager", "ReadStream"))  // Android Studio: b/176938468
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.ReadStreamRequest.getDefaultInstance()))
@@ -199,7 +199,7 @@ public final class ProcessManagerGrpc {
           ProcessManagerGrpc.getReleaseMethod = getReleaseMethod =
               io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.ReleaseRequest, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "Release"))
+              .setFullMethodName(generateFullMethodName("intellij.process.mediator.rpc.ProcessManager", "Release"))  // Android Studio: b/176938468
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.intellij.execution.process.mediator.rpc.ReleaseRequest.getDefaultInstance()))
@@ -217,6 +217,7 @@ public final class ProcessManagerGrpc {
    * Creates a new async stub that supports all call types for the service
    */
   public static ProcessManagerStub newStub(io.grpc.Channel channel) {
+    return new ProcessManagerStub(channel);  /* Android Studio: b/176938468
     io.grpc.stub.AbstractStub.StubFactory<ProcessManagerStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<ProcessManagerStub>() {
         @java.lang.Override
@@ -225,6 +226,7 @@ public final class ProcessManagerGrpc {
         }
       };
     return ProcessManagerStub.newStub(factory, channel);
+    Android Studio: b/176938468 */
   }
 
   /**
@@ -232,6 +234,7 @@ public final class ProcessManagerGrpc {
    */
   public static ProcessManagerBlockingStub newBlockingStub(
       io.grpc.Channel channel) {
+    return new ProcessManagerBlockingStub(channel);  /* Android Studio: b/176938468
     io.grpc.stub.AbstractStub.StubFactory<ProcessManagerBlockingStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<ProcessManagerBlockingStub>() {
         @java.lang.Override
@@ -240,6 +243,7 @@ public final class ProcessManagerGrpc {
         }
       };
     return ProcessManagerBlockingStub.newStub(factory, channel);
+    Android Studio: b/176938468 */
   }
 
   /**
@@ -247,6 +251,7 @@ public final class ProcessManagerGrpc {
    */
   public static ProcessManagerFutureStub newFutureStub(
       io.grpc.Channel channel) {
+    return new ProcessManagerFutureStub(channel);  /* Android Studio: b/176938468
     io.grpc.stub.AbstractStub.StubFactory<ProcessManagerFutureStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<ProcessManagerFutureStub>() {
         @java.lang.Override
@@ -255,6 +260,7 @@ public final class ProcessManagerGrpc {
         }
       };
     return ProcessManagerFutureStub.newStub(factory, channel);
+    Android Studio: b/176938468 */
   }
 
   /**
@@ -353,7 +359,12 @@ public final class ProcessManagerGrpc {
 
   /**
    */
-  public static final class ProcessManagerStub extends io.grpc.stub.AbstractAsyncStub<ProcessManagerStub> {
+  // Android Studio: b/176938468
+  public static final class ProcessManagerStub extends io.grpc.stub.AbstractStub<ProcessManagerStub> {
+    private ProcessManagerStub(io.grpc.Channel channel) {
+      super(channel);
+    }
+
     private ProcessManagerStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
@@ -416,7 +427,12 @@ public final class ProcessManagerGrpc {
 
   /**
    */
-  public static final class ProcessManagerBlockingStub extends io.grpc.stub.AbstractBlockingStub<ProcessManagerBlockingStub> {
+  // Android Studio: b/176938468
+  public static final class ProcessManagerBlockingStub extends io.grpc.stub.AbstractStub<ProcessManagerBlockingStub> {
+    private ProcessManagerBlockingStub(io.grpc.Channel channel) {
+      super(channel);
+    }
+
     private ProcessManagerBlockingStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
@@ -467,7 +483,12 @@ public final class ProcessManagerGrpc {
 
   /**
    */
-  public static final class ProcessManagerFutureStub extends io.grpc.stub.AbstractFutureStub<ProcessManagerFutureStub> {
+  // Android Studio: b/176938468
+  public static final class ProcessManagerFutureStub extends io.grpc.stub.AbstractStub<ProcessManagerFutureStub> {
+    private ProcessManagerFutureStub(io.grpc.Channel channel) {
+      super(channel);
+    }
+
     private ProcessManagerFutureStub(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       super(channel, callOptions);
