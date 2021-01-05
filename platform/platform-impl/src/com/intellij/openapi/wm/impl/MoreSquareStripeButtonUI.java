@@ -9,12 +9,9 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.DimensionUIResource;
 import java.awt.*;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class SquareStripeButtonUI extends StripeButtonUI {
-  public static ComponentUI createSquareUI(JComponent c) {
-    return new SquareStripeButtonUI();
+public class MoreSquareStripeButtonUI extends StripeButtonUI {
+  public static ComponentUI createMoreSquareUI(JComponent c) {
+    return new MoreSquareStripeButtonUI();
   }
 
   @Override
@@ -24,10 +21,9 @@ public class SquareStripeButtonUI extends StripeButtonUI {
 
   @Override
   public void update(Graphics g, JComponent c) {
-    SquareStripeButton button = (SquareStripeButton)c;
+    MoreSquareStripeButton button = (MoreSquareStripeButton)c;
 
-    //Icon icon = (button.isEnabled()) ? button.getIcon() : button.getDisabledIcon();
-    Icon icon = button.getToolWindow().getIcon();
+    Icon icon = button.getIcon();
     if (icon instanceof ScalableIcon) {
       icon = ((ScalableIcon)icon).scale(1.4f);
     }

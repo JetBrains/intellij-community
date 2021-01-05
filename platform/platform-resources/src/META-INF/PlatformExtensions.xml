@@ -1137,6 +1137,9 @@
     <startupActivity implementation="com.intellij.ide.LanguageDetector"/>
     <experimentalFeature id="language.detect.notification" percentOfUsers="0"/>
     <notificationGroup id="Language Plugins Notifications" displayType="NONE"/>
+
+    <search.topHitProvider implementation="com.intellij.openapi.wm.impl.ToolwindowSidebarPositionProvider"/>
+    <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowSidebarProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

@@ -5,7 +5,6 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -39,7 +38,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   private boolean myPressedWhenSelected;
 
   private JLayeredPane myDragPane;
-  final ToolWindowsPane pane;
+  @NotNull final ToolWindowsPane pane;
   final ToolWindowImpl toolWindow;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
