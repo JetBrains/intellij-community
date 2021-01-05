@@ -126,6 +126,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       Runnable listener = () -> {
         myContentPane.remove(myTwToolbar);
         myContentPane.add(myTwToolbar, getPosition());
+        myContentPane.revalidate();
       };
       ToolwindowSidebarPositionProvider positionProvider =
         SearchTopHitProvider.EP_NAME.findExtension(ToolwindowSidebarPositionProvider.class);
