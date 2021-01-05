@@ -2,9 +2,9 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
@@ -163,10 +163,11 @@ public class AbstractBundle {
   //see https://docs.oracle.com/javase/9/docs/api/java/util/PropertyResourceBundle.html and
   //https://docs.oracle.com/javase/8/docs/api/java/util/PropertyResourceBundle.html
   //for more details
+  @ReviseWhenPortedToJDK("9")
   private ResourceBundle.Control getResourceBundleControl() {
     ResourceBundle.Control control = com.intellij.reference.SoftReference.dereference(myControl);
     if (control == null) {
-      if (SystemInfo.isJavaVersionAtLeast(9)) {
+      if (JavaVersion.current().feature >= 9) {
         control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
       }
       else {

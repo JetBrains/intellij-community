@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.ReviseWhenPortedToJDK;
-
 import java.util.Locale;
 
 /**
@@ -29,18 +27,4 @@ public final class SystemInfoRt {
   /** @deprecated inexact, please use {@code com.intellij.util.system.CpuArch} instead */
   @Deprecated
   public static final boolean is64Bit = !(ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32"));
-
-  @ReviseWhenPortedToJDK("9")
-  public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
-
-  @SuppressWarnings("JavaReflectionMemberAccess")
-  private static boolean isModularJava() {
-    try {
-      Class.class.getMethod("getModule");
-      return true;
-    }
-    catch (Throwable t) {
-      return false;
-    }
-  }
 }

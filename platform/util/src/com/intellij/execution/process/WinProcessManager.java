@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
@@ -22,17 +23,18 @@ public final class WinProcessManager {
 
   private WinProcessManager() { }
 
+  @ReviseWhenPortedToJDK("9")
   public static int getProcessId(Process process) {
     String processClassName = process.getClass().getName();
     if (processClassName.equals("java.lang.Win32Process") || processClassName.equals("java.lang.ProcessImpl")) {
       try {
-        if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
-          //noinspection JavaReflectionMemberAccess
+        if (JavaVersion.current().feature >= 9) {
           return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
         }
-
-        long handle = Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
-        return Kernel32.INSTANCE.GetProcessId(new WinNT.HANDLE(Pointer.createConstant(handle)));
+        else {
+          long handle = Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
+          return Kernel32.INSTANCE.GetProcessId(new WinNT.HANDLE(Pointer.createConstant(handle)));
+        }
       }
       catch (Throwable t) {
         throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);

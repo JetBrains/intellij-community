@@ -2,7 +2,6 @@
 package com.intellij.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
@@ -77,13 +76,26 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
    * @return instance of {@link ByteArrayCharSequence} if the supplied string can be stored internally
    * as a byte array of 8-bit code points (for more compact representation); its {@code string} argument otherwise
    */
-  @NotNull
-  public static CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
-    if (SystemInfoRt.IS_AT_LEAST_JAVA9) return string; // see JEP 254: Compact Strings
+  @ReviseWhenPortedToJDK("9")
+  public static @NotNull CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
+    if (JAVA_9) return string; // see JEP 254: Compact Strings
     if (string.length() == 0) return "";
     if (string instanceof ByteArrayCharSequence) return string;
     byte[] bytes = toBytesIfPossible(string);
     return bytes == null ? string : new ByteArrayCharSequence(bytes);
+  }
+
+  private static final boolean JAVA_9;
+  static {
+    boolean hasModuleClass;
+    try {
+      Class.class.getMethod("getModule");
+      hasModuleClass = true;
+    }
+    catch (Throwable t) {
+      hasModuleClass = false;
+    }
+    JAVA_9 = hasModuleClass;
   }
 
   byte @NotNull [] getBytes() {

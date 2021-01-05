@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
@@ -8,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -50,13 +52,15 @@ public final class UnixProcessManager {
 
   private UnixProcessManager() { }
 
+  @ReviseWhenPortedToJDK("9")
   public static int getProcessId(@NotNull Process process) {
     try {
-      if (SystemInfoRt.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
-        //noinspection JavaReflectionMemberAccess
+      if (JavaVersion.current().feature >= 9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
         return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }
-      return Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
+      else {
+        return Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
+      }
     }
     catch (Throwable t) {
       throw new IllegalStateException("Failed to get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);

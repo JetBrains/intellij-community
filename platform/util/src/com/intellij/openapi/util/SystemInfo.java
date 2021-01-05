@@ -9,7 +9,6 @@ import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -44,12 +43,6 @@ public final class SystemInfo {
   public static final boolean isIbmJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "IBM", 0) >= 0;
   public static final boolean isAzulJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Azul", 0) >= 0;
   public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
-
-  /**
-   * @deprecated Doesn't make sense - Java 11+ is only supported.
-   */
-  @Deprecated
-  public static final boolean IS_AT_LEAST_JAVA9 = SystemInfoRt.IS_AT_LEAST_JAVA9;
 
   @SuppressWarnings("SpellCheckingInspection")
   private static boolean isCrostini() {
@@ -161,16 +154,28 @@ public final class SystemInfo {
     }
   }
 
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean IS_AT_LEAST_JAVA9 = JavaVersion.current().feature >= 9;
+
+  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean isJavaVersionAtLeast(int major) {
-    return isJavaVersionAtLeast(major, 0, 0);
+    return JavaVersion.current().feature >= major;
   }
 
+  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} */
+  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean isJavaVersionAtLeast(String v) {

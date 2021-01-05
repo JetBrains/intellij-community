@@ -93,7 +93,7 @@ public class FontPreferences {
 
   @NlsSafe
   public static String getDefaultFontName() {
-    if (SystemInfo.isJetBrainsJvm && SystemInfo.isJavaVersionAtLeast(11)) {
+    if (SystemInfo.isJetBrainsJvm) {
       return JETBRAINS_MONO;
     }
     if (SystemInfo.isWindows) {

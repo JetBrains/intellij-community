@@ -100,6 +100,6 @@ public class _FirstInSuiteTest extends TestCase {
       IoTestUtil.isSymLinkCreationSupported);
     assertEquals(
       "The `sun.io.useCanonCaches` makes `File#getCanonical*` methods unreliable and should be set to `false`",
-      "false", System.getProperty("sun.io.useCanonCaches", SystemInfo.isJavaVersionAtLeast(13) ? "false" : ""));
+      "false", System.getProperty("sun.io.useCanonCaches", Runtime.version().feature() >= 13 ? "false" : ""));
   }
 }

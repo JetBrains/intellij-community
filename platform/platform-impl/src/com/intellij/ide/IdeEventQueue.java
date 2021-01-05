@@ -83,7 +83,6 @@ public final class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
-  private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfo.isMac && SystemProperties.getBooleanProperty("action.aware.typeAhead", false);
   private static final boolean ourTypeAheadSearchEverywhereEnabled =
     SystemProperties.getBooleanProperty("action.aware.typeAhead.searchEverywhere", false);
@@ -431,7 +430,7 @@ public final class IdeEventQueue extends EventQueue {
       if (metaEvent != null && Registry.is("keymap.windows.as.meta")) {
         e = metaEvent;
       }
-      if (JAVA11_ON_MAC && e instanceof InputEvent) {
+      if (SystemInfo.isMac && e instanceof InputEvent) {
         disableAltGrUnsupportedOnMac(e);
       }
 
