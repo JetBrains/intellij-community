@@ -102,7 +102,7 @@ public class GutterIntentionMenuContributor implements IntentionMenuContributor 
     if (icon == null) icon = EmptyIcon.ICON_16;
     final GutterIntentionAction gutterAction = new GutterIntentionAction(action, order.getAndIncrement(), icon);
     if (!gutterAction.isAvailable(dataContext)) return;
-    descriptors.add(new HighlightInfo.IntentionActionDescriptor(gutterAction, Collections.emptyList(), null, icon) {
+    descriptors.add(new HighlightInfo.IntentionActionDescriptor(gutterAction, Collections.emptyList(), null, icon, null, null, null) {
       @NotNull
       @Override
       public String getDisplayName() {

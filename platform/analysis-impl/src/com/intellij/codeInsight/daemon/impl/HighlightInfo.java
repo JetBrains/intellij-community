@@ -772,21 +772,6 @@ public class HighlightInfo implements Segment {
     private final Icon myIcon;
     private Boolean myCanCleanup;
 
-    IntentionActionDescriptor(@NotNull IntentionAction action, List<IntentionAction> options, @Nls String displayName) {
-      this(action, options, displayName, null);
-    }
-
-    public IntentionActionDescriptor(@NotNull IntentionAction action, Icon icon) {
-      this(action, null, null, icon);
-    }
-
-    IntentionActionDescriptor(@NotNull IntentionAction action,
-                              @Nullable List<IntentionAction> options,
-                              @Nullable @Nls String displayName,
-                              @Nullable Icon icon) {
-      this(action, options, displayName, icon, null, null, null);
-    }
-
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable List<IntentionAction> options,
                                      @Nullable @Nls String displayName,

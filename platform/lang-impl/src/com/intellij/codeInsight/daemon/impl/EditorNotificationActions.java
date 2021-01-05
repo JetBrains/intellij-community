@@ -26,7 +26,7 @@ final class EditorNotificationActions {
       if (component instanceof IntentionActionProvider) {
         IntentionActionWithOptions action = ((IntentionActionProvider)component).getIntentionAction();
         if (action != null) {
-          intentions.notificationActionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, action.getOptions(), null));
+          intentions.notificationActionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, action.getOptions(), null, null, null, null, null));
         }
       }
     }

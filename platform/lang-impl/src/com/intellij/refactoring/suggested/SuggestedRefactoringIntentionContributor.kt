@@ -97,7 +97,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     // we don't add into it if it's empty to keep the color of the bulb
     val collectionToAdd = intentions.errorFixesToShow.takeIf { it.isNotEmpty() }
                           ?: intentions.inspectionFixesToShow
-    collectionToAdd.add(0, HighlightInfo.IntentionActionDescriptor(intention, icon))
+    collectionToAdd.add(0, HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
   }
 
   private class MyIntention(

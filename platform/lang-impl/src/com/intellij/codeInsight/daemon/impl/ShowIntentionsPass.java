@@ -338,7 +338,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
           enableDisableIntentionAction.add(new EnableDisableIntentionAction(action));
           enableDisableIntentionAction.add(new EditIntentionSettingsAction(action));
           HighlightInfo.IntentionActionDescriptor descriptor =
-            new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null);
+            new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null);
           if (!fixes.contains(descriptor)) {
             intentions.intentionsToShow.add(descriptor);
           }
