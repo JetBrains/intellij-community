@@ -41,6 +41,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
@@ -182,8 +183,8 @@ fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
   return this
 }
 
-fun <T : JTextField> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
-  return withBinding(JTextField::getText, JTextField::setText, modelBinding)
+fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
+  return withBinding(JTextComponent::getText, JTextComponent::setText, modelBinding)
 }
 
 fun <T : AbstractButton> CellBuilder<T>.withSelectedBinding(modelBinding: PropertyBinding<Boolean>): CellBuilder<T> {
@@ -370,6 +371,21 @@ abstract class Cell : BaseBuilder {
 
   fun textField(property: GraphProperty<String>, columns: Int? = null): CellBuilder<JBTextField> {
     return textField(property::get, property::set, columns)
+      .withGraphProperty(property)
+      .applyToComponent { bind(property) }
+  }
+
+  fun textArea(prop: KMutableProperty0<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> = textArea(prop.toBinding(), rows, columns)
+
+  fun textArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null, columns: Int? = null) = textArea(PropertyBinding(getter, setter), rows, columns)
+
+  fun textArea(binding: PropertyBinding<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> {
+    return component(JBTextArea(binding.get(), rows ?: 0, columns ?: 0))
+      .withTextBinding(binding)
+  }
+
+  fun textArea(property: GraphProperty<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> {
+    return textArea(property::get, property::set, rows, columns)
       .withGraphProperty(property)
       .applyToComponent { bind(property) }
   }
@@ -652,7 +668,7 @@ private fun TextFieldWithBrowseButton.bind(property: GraphProperty<String>) {
   textField.bind(property)
 }
 
-private fun JTextField.bind(property: GraphProperty<String>) {
+private fun JTextComponent.bind(property: GraphProperty<String>) {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
