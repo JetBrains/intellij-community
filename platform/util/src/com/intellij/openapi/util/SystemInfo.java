@@ -9,7 +9,6 @@ import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -59,18 +58,22 @@ public final class SystemInfo {
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
 
   public static final boolean isXWindow = SystemInfoRt.isXWindow;
-  public static final boolean isWayland = isXWindow && !Strings.isEmpty(System.getenv("WAYLAND_DISPLAY"));
-  /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
-  public static final boolean isGNOME = isXWindow &&
-                                        (getEnvOrEmpty("GDMSESSION").startsWith("gnome") ||
-                                         Strings.toLowerCase(getEnvOrEmpty("XDG_CURRENT_DESKTOP")).endsWith("gnome"));
-  /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
-  public static final boolean isKDE = isXWindow && !Strings.isEmpty(System.getenv("KDE_FULL_SESSION"));
-
-  public static final boolean isXfce = isXWindow && getEnvOrEmpty("GDMSESSION").startsWith("xfce") ||
-                                       Strings.toLowerCase(getEnvOrEmpty("XDG_CURRENT_DESKTOP")).contains("xfce");
-  public static final boolean isI3 = (isXWindow && getEnvOrEmpty("GDMSESSION").startsWith("i3")) ||
-                                     Strings.toLowerCase(getEnvOrEmpty("XDG_CURRENT_DESKTOP")).contains("i3");
+  public static final boolean isWayland, isGNOME, isKDE, isXfce, isI3;
+  static {
+    // http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669
+    // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
+    if (isXWindow) {
+      isWayland = System.getenv("WAYLAND_DISPLAY") != null;
+      String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
+      isGNOME = desktop != null && desktop.contains("GNOME") || gdmSession != null && gdmSession.contains("gnome");
+      isKDE = !isGNOME && (desktop != null && desktop.contains("KDE") || System.getenv("KDE_FULL_SESSION") != null);
+      isXfce = !isGNOME && !isKDE && (desktop != null && desktop.contains("XFCE"));
+      isI3 = !isGNOME && !isKDE && !isXfce && (desktop != null && desktop.contains("i3"));
+    }
+    else {
+      isWayland = isGNOME = isKDE = isXfce = isI3 = false;
+    }
+  }
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
@@ -154,7 +157,6 @@ public final class SystemInfo {
       return 0;
     }
   }
-
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
@@ -263,9 +265,4 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static final boolean areSymLinksSupported = isUnix || isWindows;
   //</editor-fold>
-
-  private static @NotNull String getEnvOrEmpty(@Nullable String name) {
-    String value = System.getenv(name);
-    return value == null ? "" : value;
-  }
 }
