@@ -10,7 +10,10 @@ import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.packageDependencies.ui.FileTreeModelBuilder;
 import com.intellij.packageDependencies.ui.Marker;
 import com.intellij.packageDependencies.ui.TreeModel;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.ui.tree.TreeTestUtil;
@@ -117,6 +120,40 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
                                            "     -src\n" +
                                            "      -package1\n" +
                                            "       Test1.java\n");
+  }
+
+  public void testExternalDependencies() {
+    final Set<PsiFile> set = new HashSet<>();
+    ContainerUtil.addAll(set, getPackageDirectory("package1").getFiles());
+    set.add(JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject())).getContainingFile());
+    
+    final DependenciesPanel.DependencyPanelSettings panelSettings = new DependenciesPanel.DependencyPanelSettings();
+    panelSettings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = false;
+    panelSettings.UI_FLATTEN_PACKAGES = false;
+    panelSettings.UI_SHOW_FILES = true;
+    panelSettings.UI_FILTER_LEGALS = false;
+    panelSettings.UI_SHOW_MODULES = true;
+    panelSettings.UI_GROUP_BY_SCOPE_TYPE = false;
+
+    
+    TreeModel model = FileTreeModelBuilder.createTreeModel(getProject(), false, set, ALL_MARKED, panelSettings);
+
+    JTree tree = new Tree();
+    TreeTestUtil.assertTreeUI(tree);
+    tree.setModel(model);
+    TreeUtil.expandAll(tree);
+    PlatformTestUtil.assertTreeEqual(tree,
+                                     "-Root\n" +
+                                     " -structure\n" +
+                                     "  -src\n" +
+                                     "   -package1\n" +
+                                     "    Test1.java\n" +
+                                     " -External Dependencies\n" +
+                                     "  -< java 1.7 >\n" +
+                                     "   -rt.jar\n" +
+                                     "    -java\n" +
+                                     "     -lang\n" +
+                                     "      Object.class");
   }
 
   @NotNull

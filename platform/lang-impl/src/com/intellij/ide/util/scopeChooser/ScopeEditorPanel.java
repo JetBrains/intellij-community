@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -481,9 +480,6 @@ public final class ScopeEditorPanel {
           ((PackageDependenciesNode)model.getRoot()).sortChildren();
           if (myErrorMessage == null) {
             String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
-            if (FilePatternPackageSet.SCOPE_FILE.equals(DependencyUISettings.getInstance().SCOPE_TYPE)) {
-              message = UIUtil.toHtml(message + "<br>" + LangBundle.message("non.project.files.are.not.shown"));
-            }
             myMatchingCountLabel.setText(message);
             myMatchingCountLabel.setForeground(new JLabel().getForeground());
           }

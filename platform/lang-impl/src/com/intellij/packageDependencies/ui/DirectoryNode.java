@@ -167,7 +167,7 @@ public class DirectoryNode extends PackageDependenciesNode {
       return "";
     }
     if (contentRoot == null) {
-      return "";
+      return toString();
     }
     return VfsUtilCore.getRelativePath(directory, contentRoot, '/');
   }
@@ -212,6 +212,8 @@ public class DirectoryNode extends PackageDependenciesNode {
     final DirectoryNode packageNode = (DirectoryNode)o;
 
     if (!toString().equals(packageNode.toString())) return false;
+
+    if (!myVDirectory.equals(packageNode.myVDirectory)) return false;
 
     return true;
   }
