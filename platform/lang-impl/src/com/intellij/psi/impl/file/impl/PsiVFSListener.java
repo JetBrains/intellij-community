@@ -95,7 +95,7 @@ public final class PsiVFSListener implements BulkFileListener {
 
       connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
-        public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
           PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
           ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
         }
