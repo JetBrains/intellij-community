@@ -3,31 +3,30 @@ package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.UtilRuleProducer
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.atomic.AtomicBoolean
 
-abstract class BaseValidationRuleStorage(val initialMetadataContent: String?) : ValidationRulesStorage {
+class SimpleValidationRuleStorage(val initialMetadataContent: String,
+                                  val utilRulesProducer: UtilRuleProducer = ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER)
+  : ValidationRulesStorage {
+  private val validationRuleFactory = ValidationSimpleRuleFactory(utilRulesProducer)
   private val eventsValidators: ConcurrentMap<String, EventGroupRules> = ConcurrentHashMap()
-  private val isInitialized: AtomicBoolean = AtomicBoolean(false)
   private val lock = Any()
 
   init {
-    val metadata = initialMetadataContent ?: loadMetadataContent()
-    updateEventGroupRules(metadata)
+    updateEventGroupRules(initialMetadataContent)
   }
 
-  override fun update() {
-    updateEventGroupRules(loadMetadataContent())
+  fun update(metadataContent: String) {
+    updateEventGroupRules(metadataContent)
   }
 
   private fun updateEventGroupRules(metadataContent: String?) {
     synchronized(lock) {
-      isInitialized.set(false)
       eventsValidators.clear()
       eventsValidators.putAll(createValidators(metadataContent))
-      isInitialized.set(true)
     }
   }
 
@@ -35,14 +34,12 @@ abstract class BaseValidationRuleStorage(val initialMetadataContent: String?) : 
     val descriptors = EventGroupRemoteDescriptors.create(content)
     val globalRulesHolder = GlobalRulesHolder(descriptors.rules)
     val groups = descriptors.groups
-    return groups.associate { it.id to EventGroupRules.create(it, globalRulesHolder, ValidationSimpleRuleFactory()) }
+    return groups.associate { it.id to EventGroupRules.create(it, globalRulesHolder, validationRuleFactory) }
   }
 
-  override fun reload() = update()
-
-  override fun isUnreachable(): Boolean = !isInitialized.get()
-
-  override fun getGroupRules(groupId: String): EventGroupRules? = eventsValidators[groupId]
-
-  abstract fun loadMetadataContent(): String
+  override fun getGroupRules(groupId: String): EventGroupRules? {
+    synchronized(lock) {
+      return eventsValidators[groupId]
+    }
+  }
 }

@@ -55,7 +55,7 @@ public class ValidationSimpleRuleFactory {
   }
 
   @NotNull
-  public FUSRule createRule(@NotNull String rule,
+  private FUSRule createRule(@NotNull String rule,
                             @NotNull EventGroupContextData contextData) {
     // 1. enum:<value> or {enum:<value>}   => enum:A|B|C
     // 2. enum#<ref-id> or {enum#<ref-id>} => enum#my-enum

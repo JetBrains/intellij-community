@@ -45,8 +45,8 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         val validator = SensitiveDataValidator.getInstance(recorderId)
         if (!validator.isGroupAllowed(group)) return@Runnable
         val context = EventContext.create(eventId, data)
-        val validatedEventId = validator.guaranteeCorrectEventId(group, context)
-        val validatedEventData = validator.guaranteeCorrectEventData(group, context)
+        val validatedEventId = validator.guaranteeCorrectEventId(group.id, context)
+        val validatedEventData = validator.guaranteeCorrectEventData(group.id, context)
 
         val creationTime = System.currentTimeMillis()
         val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion,

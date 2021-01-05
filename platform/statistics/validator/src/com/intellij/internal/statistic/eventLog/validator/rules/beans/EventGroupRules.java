@@ -16,11 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
+import static com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER;
 
 public final class EventGroupRules {
   public static final EventGroupRules EMPTY =
     new EventGroupRules(Collections.emptySet(), Collections.emptyMap(), EventGroupContextData.EMPTY,
-                        new ValidationSimpleRuleFactory());
+                        new ValidationSimpleRuleFactory(REJECTING_UTIL_URL_PRODUCER));
 
   private final FUSRule[] eventIdRules;
   private final Map<String, FUSRule[]> eventDataRules = new ConcurrentHashMap<>();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.validator
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -503,7 +503,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
     val data = hashMapOf<String, Any>("obj" to listOf(hashMapOf("name" to "AAA"), hashMapOf("name" to "NOT_DEFINED")))
 
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
     val objData = validatedEventData["obj"] as List<*>
     TestCase.assertEquals(2, objData.size)
     val elements = objData.map { it as Map<*, *> }
@@ -518,7 +518,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
     val data = hashMapOf<String, Any>("obj" to hashMapOf("nested_obj" to hashMapOf("name" to "NOT_DEFINED", "count" to "1")))
 
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
     val objData = validatedEventData["obj"] as Map<*, *>
     val nestedObj = objData["nested_obj"] as Map<*, *>
     TestCase.assertEquals(ValidationResultType.REJECTED.description, nestedObj["name"])
@@ -532,7 +532,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
     val data = hashMapOf<String, Any>("elements" to listOf("NOT_DEFINED", "AAA"))
 
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
     val elements = validatedEventData["elements"] as List<*>
     TestCase.assertEquals(2, elements.size)
     TestCase.assertEquals(ValidationResultType.REJECTED.description, elements[0])
@@ -546,7 +546,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
       val data = hashMapOf<String, Any>("obj" to hashMapOf("id_1" to TestCustomActionId.FIRST.name, "id_2" to "NOT_DEFINED"))
 
-      val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+      val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
       val objData = validatedEventData["obj"] as Map<*, *>
       TestCase.assertEquals(TestCustomActionId.FIRST.name, objData["id_1"])
       TestCase.assertEquals(ValidationResultType.REJECTED.description, objData["id_2"])
@@ -558,7 +558,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val validator = createUnreachableValidator()
     val eventLogGroup = EventLogGroup("object.group", 1)
     val data: HashMap<String, Any> = hashMapOf( "count" to 1)
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
 
     TestCase.assertEquals(ValidationResultType.UNREACHABLE_METADATA.description, validatedEventData["count"])
   }
@@ -568,7 +568,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val validator = newValidatorByFile("test_empty_rule.json")
     val eventLogGroup = EventLogGroup("build.gradle.actions", 1)
     val data: HashMap<String, Any> = hashMapOf("count" to 1)
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
 
     TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE.description, validatedEventData["count"])
   }
@@ -599,30 +599,33 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
   private fun assertEventAccepted(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, eventId: String) {
     val context = EventContext.create(eventId, Collections.emptyMap())
-    val actual = validator.validateEvent(eventLogGroup, context)
+    val actual = validator.validateEvent(context, eventLogGroup.id)
     TestCase.assertEquals("Validation failed for $eventId", ValidationResultType.ACCEPTED, actual)
   }
 
   private fun assertUndefinedRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
+                                                                                       eventLogGroup.id))
   }
 
   private fun assertIncorrectRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.INCORRECT_RULE, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+    TestCase.assertEquals(ValidationResultType.INCORRECT_RULE, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
+                                                                                       eventLogGroup.id))
   }
 
   private fun assertThirdPartyRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.THIRD_PARTY, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+    TestCase.assertEquals(ValidationResultType.THIRD_PARTY, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
+                                                                                    eventLogGroup.id))
   }
 
   private fun assertEventRejected(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.REJECTED, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+    TestCase.assertEquals(ValidationResultType.REJECTED, validator.validateEvent(EventContext.create(s, Collections.emptyMap()), eventLogGroup.id))
   }
 
   private fun assertEventDataAccepted(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, key: String, dataValue: String) {
     val data = FeatureUsageData().addData(key, dataValue).build()
     val (preparedKey, preparedValue) = data.entries.iterator().next()
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
     TestCase.assertEquals(preparedValue, validatedEventData[preparedKey])
   }
 
@@ -632,7 +635,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
                                          key: String,
                                          dataValue: String) {
     val eventContext = EventContext.create("test_event", FeatureUsageData().addData(key, dataValue).build())
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, eventContext)
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, eventContext)
     TestCase.assertEquals(resultType.description, validatedEventData[key])
   }
 

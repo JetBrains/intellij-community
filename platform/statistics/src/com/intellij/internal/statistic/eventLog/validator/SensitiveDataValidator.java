@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -18,16 +18,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.internal.statistic.eventLog.EventLogSystemEvents.SYSTEM_EVENTS;
-import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
+import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.UNDEFINED_RULE;
+import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.UNREACHABLE_METADATA;
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
 /**
  * <p>
  *   The data from all collectors is validated before it's recorded locally.
  *   It's necessary to make sure that the data is correct and it doesn't contain personal or proprietary information.<br/>
- *   Validation is performed right before logging in {@link SensitiveDataValidator#guaranteeCorrectEventId(EventLogGroup, EventContext)}
- *   and {@link SensitiveDataValidator#guaranteeCorrectEventData(EventLogGroup, EventContext)}.<br/>
+ *   Validation is performed right before logging in {@link SensitiveDataValidator#guaranteeCorrectEventId(String, EventContext)}
+ *   and {@link SensitiveDataValidator#guaranteeCorrectEventData(String, EventContext)}.<br/>
  * </p>
  *
  * <p>
@@ -138,17 +138,13 @@ public class SensitiveDataValidator {
     return myRulesStorage.getGroupRules(group.getId()) != null;
   }
 
-  public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
-                                        @NotNull EventContext context) {
+  public String guaranteeCorrectEventId(@NotNull String groupId, @NotNull EventContext context) {
     if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
-    if (SYSTEM_EVENTS.contains(context.eventId)) return context.eventId;
-
-    ValidationResultType validationResultType = validateEvent(group, context);
-    return validationResultType == ACCEPTED ? context.eventId : validationResultType.getDescription();
+    return SimpleSensitiveDataValidator.guaranteeCorrectEventId(context, myRulesStorage.getGroupRules(groupId));
   }
 
-  public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
-    EventGroupRules groupRules = myRulesStorage.getGroupRules(group.getId());
+  public Map<String, Object> guaranteeCorrectEventData(@NotNull String groupId, @NotNull EventContext context) {
+    EventGroupRules groupRules = myRulesStorage.getGroupRules(groupId);
     if (isTestModeEnabled(groupRules)) {
       return context.eventData;
     }
@@ -177,13 +173,8 @@ public class SensitiveDataValidator {
            Arrays.stream(rule.getEventIdRules()).anyMatch(r -> r instanceof TestModeValidationRule);
   }
 
-  public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
-    EventGroupRules groupRules = myRulesStorage.getGroupRules(group.getId());
-    if (groupRules == null || !groupRules.areEventIdRulesDefined()) {
-      return UNDEFINED_RULE; // there are no rules (eventId and eventData) to validate
-    }
-
-    return groupRules.validateEventId(context);
+  public ValidationResultType validateEvent(@NotNull EventContext context, String groupId) {
+    return SimpleSensitiveDataValidator.validateEvent(context, myRulesStorage.getGroupRules(groupId));
   }
 
   private Object validateEventData(@NotNull EventContext context,
@@ -210,12 +201,12 @@ public class SensitiveDataValidator {
     }
 
     @Override
-    public String guaranteeCorrectEventId(@NotNull EventLogGroup group, @NotNull EventContext context) {
+    public String guaranteeCorrectEventId(@NotNull String groupId, @NotNull EventContext context) {
       return context.eventId;
     }
 
     @Override
-    public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
+    public Map<String, Object> guaranteeCorrectEventData(@NotNull String groupId, @NotNull EventContext context) {
       return context.eventData;
     }
 

@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.util.containers.ContainerUtil;
-
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -40,7 +40,6 @@ public interface EventLogSystemEvents {
    */
   String TOO_MANY_EVENTS = "validation.too_many_events";
 
-  Set<String> SYSTEM_EVENTS = ContainerUtil.newHashSet(
-    COLLECTOR_REGISTERED, STATE_COLLECTOR_INVOKED, STATE_COLLECTOR_FAILED, TOO_MANY_EVENTS, TOO_MANY_EVENTS_ALERT
-  );
+  Set<String> SYSTEM_EVENTS = new HashSet<>(
+    Arrays.asList(COLLECTOR_REGISTERED, STATE_COLLECTOR_INVOKED, STATE_COLLECTOR_FAILED, TOO_MANY_EVENTS, TOO_MANY_EVENTS_ALERT));
 }
