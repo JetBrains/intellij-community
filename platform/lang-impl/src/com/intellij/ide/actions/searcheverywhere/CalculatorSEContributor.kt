@@ -49,6 +49,9 @@ private class CalculatorSEContributor : WeightedSearchEverywhereContributor<Eval
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<EvaluationResult>>) {
+    if (pattern.toDoubleOrNull() != null) {
+      return
+    }
     val result = try {
       evaluate(pattern)
     }
