@@ -81,7 +81,6 @@ public final class SystemInfo {
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
-  public static final boolean areSymLinksSupported = isUnix || isWindows;
 
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = PathExecLazyValue.create("xdg-open");
   public static boolean hasXdgOpen() {
@@ -252,6 +251,11 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static final boolean isWinVistaOrNewer = isWindows;
+
+  /** @deprecated always true */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean areSymLinksSupported = isUnix || isWindows;
   //</editor-fold>
 
   private static @NotNull String getEnvOrEmpty(@Nullable String name) {
