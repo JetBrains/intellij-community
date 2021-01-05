@@ -239,11 +239,14 @@ private fun evaluate(str: String): Double {
         }
         return str.substring(startPos, pos).toDouble()
       }
-      else {
+      else if (ch in '0'..'7') {
         while (ch in '0'..'7') {
           nextChar()
         }
         return parseLong(str.substring(startPos, pos), 8).toDouble()
+      }
+      else {
+        return 0.0
       }
     }
 
