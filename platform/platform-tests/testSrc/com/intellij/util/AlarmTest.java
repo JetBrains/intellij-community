@@ -33,11 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
     assertRequestsExecuteSequentially(alarm);
   }
 
-  public void testAlarmRequestsShouldExecuteSequentiallyEveryWhere() throws Exception {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getTestRootDisposable());
-    assertRequestsExecuteSequentially(alarm);
-  }
-
   public void testAlarmRequestsShouldExecuteSequentiallyAbsolutelyEveryWhere() throws Exception {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);

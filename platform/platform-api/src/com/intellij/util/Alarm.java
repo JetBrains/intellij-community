@@ -86,13 +86,6 @@ public class Alarm implements Disposable {
      * @see Application#executeOnPooledThread(Callable)
      */
     POOLED_THREAD,
-
-    /**
-     * @deprecated Use {@link #POOLED_THREAD} instead
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-    OWN_THREAD
   }
 
   /**
@@ -115,7 +108,7 @@ public class Alarm implements Disposable {
 
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
-    if (threadToUse == ThreadToUse.OWN_THREAD || threadToUse == ThreadToUse.SHARED_THREAD) {
+    if (threadToUse == ThreadToUse.SHARED_THREAD) {
       DeprecatedMethodException.report("Please use POOLED_THREAD instead");
     }
 
