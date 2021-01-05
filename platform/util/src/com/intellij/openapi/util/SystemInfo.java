@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -17,7 +16,6 @@ import java.util.List;
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
 @SuppressWarnings("unused")
-@NonNls
 public final class SystemInfo {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
