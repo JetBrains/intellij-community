@@ -142,7 +142,7 @@ public final class MavenServerManager implements Disposable {
     MavenDistribution distribution = findMavenDistribution(project, multimoduleDirectory);
     String vmOptions = readVmOptions(project, multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
-    MavenServerConnector connector = new MavenServerConnector(project, this, jdk, vmOptions, debugPort, distribution);
+    MavenServerConnector connector = new MavenServerConnector(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
     synchronized (myMultimoduleDirToConnectorMap) {
       myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector);
     }

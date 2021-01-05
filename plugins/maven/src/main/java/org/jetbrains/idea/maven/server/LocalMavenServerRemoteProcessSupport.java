@@ -20,4 +20,9 @@ public class LocalMavenServerRemoteProcessSupport extends AbstractMavenServerRem
   protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
     return new MavenServerCMDState(myJdk, myOptions, myDistribution, myDebugPort);
   }
+
+  @Override
+  public String type() {
+    return "Local";
+  }
 }

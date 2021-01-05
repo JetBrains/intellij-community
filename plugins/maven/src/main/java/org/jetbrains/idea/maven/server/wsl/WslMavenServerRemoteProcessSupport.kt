@@ -21,6 +21,8 @@ class WslMavenServerRemoteProcessSupport(private val myWslDistribution: WSLDistr
   }
 
   override fun getRemoteHost(): String = myWslDistribution.wslIp
+
+  override fun type() = "WSL"
 }
 
 

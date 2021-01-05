@@ -15,6 +15,8 @@ class MavenActionsUsagesCollector {
     ExtractManagedDependenciesAction,
     RunBuildAction,
     ExecuteMavenRunConfigurationAction,
+    ShowMavenConnectors,
+    KillMavenConnector
   }
 
   companion object {

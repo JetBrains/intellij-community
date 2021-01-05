@@ -42,6 +42,7 @@ public class MavenServerConnector implements @NotNull Disposable {
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
   private final Sdk myJdk;
+  private final String myMultimoduleDirectory;
   private @NotNull final MavenDistribution myDistribution;
   private final String myVmOptions;
   private int connectedProjects;
@@ -55,13 +56,15 @@ public class MavenServerConnector implements @NotNull Disposable {
                               @NotNull Sdk jdk,
                               @NotNull String vmOptions,
                               @Nullable Integer debugPort,
-                              @NotNull MavenDistribution mavenDistribution) {
+                              @NotNull MavenDistribution mavenDistribution,
+                              @NotNull String multimoduleDirectory) {
     myProject = project;
     myManager = manager;
     myDebugPort = debugPort;
     myDistribution = mavenDistribution;
     myVmOptions = vmOptions;
     myJdk = jdk;
+    myMultimoduleDirectory = multimoduleDirectory;
     myServerPromise = connect();
   }
 
@@ -193,7 +196,7 @@ public class MavenServerConnector implements @NotNull Disposable {
   }
 
 
-  void shutdown(boolean wait) {
+  public void shutdown(boolean wait) {
     synchronized (mutex){
       if (connectedProjects-- > 0) {
         return;
@@ -248,6 +251,35 @@ public class MavenServerConnector implements @NotNull Disposable {
     return myVmOptions;
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
+  public String getMultimoduleDirectory() {
+    return myMultimoduleDirectory;
+  }
+
+  public String getSupportType() {
+    MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
+    return support == null? "???" : support.type();
+  }
+
+  public State getState() {
+    switch (myServerPromise.getState()){
+      case SUCCEEDED: {
+        return mySupport == null? State.STOPPED : State.RUNNING;
+      }
+      case REJECTED: return State.FAILED;
+      default: return State.STARTING;
+    }
+  }
+
+  public enum State {
+    STARTING,
+    RUNNING,
+    FAILED,
+    STOPPED
+  }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
     @Override

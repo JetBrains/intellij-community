@@ -670,6 +670,7 @@
       <reference ref="Maven.BaseProjectMenu"/>
     </group>
 
+    <action id="Maven.ShowConnectors" class="org.jetbrains.idea.maven.server.ui.ShowMavenConnectorsAction"/>
     <action id="Maven.GenerateGroup" class="org.jetbrains.idea.maven.dom.generate.MavenGenerateDomActionGroup">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
