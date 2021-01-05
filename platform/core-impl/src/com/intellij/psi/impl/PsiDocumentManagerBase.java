@@ -287,7 +287,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    * @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
   public boolean cancelAndRunWhenAllCommitted(@NonNls @NotNull Object key, @NotNull Runnable action) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) {
       action.run();
       return true;
@@ -493,7 +493,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().runWriteAction(runnable);
-    } else {
+    }
+    else {
       runnable.run();
     }
 
@@ -574,7 +575,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean performWhenAllCommitted(@NotNull Runnable action, @NotNull ModalityState modality) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     checkWeAreOutsideAfterCommitHandler();
 
     assert !myProject.isDisposed() : "Already disposed: " + myProject;
@@ -671,14 +672,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
             runActionsWhenAllCommitted();
           }
         }, myProject.getDisposed());
-      } else {
+      }
+      else {
         runActionsWhenAllCommitted();
       }
     }
   }
 
   private void runActionsWhenAllCommitted() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<Runnable> actions = new ArrayList<>(actionsWhenAllDocumentsAreCommitted.values());
     beforeCommitHandler();
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
@@ -812,7 +814,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private void associateUncommittedInfo(Document document, UncommittedInfo info) {
     if (isEventSystemEnabled(document)) {
       myUncommittedInfos.put(document, info);
-    } else {
+    }
+    else {
       document.putUserData(FREE_THREADED_UNCOMMITTED_INFO, info);
     }
   }
@@ -931,9 +934,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     boolean commitNecessary = files.stream().noneMatch(file -> PsiToDocumentSynchronizer.isInsideAtomicChange(file) || !(file instanceof PsiFileImpl));
 
-    boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&
+    Application application = ApplicationManager.getApplication();
+    boolean forceCommit = application.hasWriteAction(ExternalChangeAction.class) &&
                           (SystemProperties.getBooleanProperty("idea.force.commit.on.external.change", false) ||
-                           ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode());
+                           application.isHeadlessEnvironment() && !application.isUnitTestMode());
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
     // current document lines number is roughly above 5000. This makes sense in situations when external change is performed
@@ -1006,7 +1010,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         // we can end up outside write action here if the document has forUseInNonAWTThread=true
         ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() ->
           ((AbstractFileViewProvider)viewProvider).onContentReload());
-      } else if (FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
+      } 
+      else if (FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
         ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() ->
           ((FileManagerImpl)fileManager).firePropertyChangedForUnloadedPsi());
       }
