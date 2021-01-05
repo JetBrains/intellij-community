@@ -119,11 +119,11 @@ public final class IoTestUtil {
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    assumeTrue("Can't create symlinks on " + SystemInfo.OS_NAME, isSymLinkCreationSupported);
+    assumeTrue("Can't create symlinks on " + SystemInfo.getOsNameAndVersion(), isSymLinkCreationSupported);
   }
 
   public static void assumeNioSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    assumeTrue("Can't create symlinks via NIO2 on " + SystemInfo.OS_NAME, symLinkMode == Boolean.TRUE);
+    assumeTrue("Can't create symlinks via NIO2 on " + SystemInfo.getOsNameAndVersion(), symLinkMode == Boolean.TRUE);
   }
 
   public static void assumeWindows() throws AssumptionViolatedException {
@@ -143,11 +143,11 @@ public final class IoTestUtil {
   }
 
   public static void assumeCaseSensitiveFS() throws AssumptionViolatedException {
-    assumeTrue("Assumed case sensitive FS but got " + SystemInfo.OS_NAME, SystemInfo.isFileSystemCaseSensitive);
+    assumeTrue("Assumed case sensitive FS but got " + SystemInfo.getOsNameAndVersion(), SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static void assumeCaseInsensitiveFS() throws AssumptionViolatedException {
-    assumeFalse("Assumed case insensitive FS but got " + SystemInfo.OS_NAME, SystemInfo.isFileSystemCaseSensitive);
+    assumeFalse("Assumed case insensitive FS but got " + SystemInfo.getOsNameAndVersion(), SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static void assumeWslPresence() throws AssumptionViolatedException {
@@ -375,7 +375,7 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            //noinspection RedundantSuppression;SSBasedInspection
+            //noinspection RedundantSuppression,SSBasedInspection
             Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
             runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
@@ -390,7 +390,7 @@ public final class IoTestUtil {
       }
     }
     catch (Throwable t) {
-      //noinspection RedundantSuppression;SSBasedInspection
+      //noinspection RedundantSuppression,SSBasedInspection
       Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
       return null;
     }
