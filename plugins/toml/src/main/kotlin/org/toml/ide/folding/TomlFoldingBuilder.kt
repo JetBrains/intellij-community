@@ -1,37 +1,42 @@
-package org.toml.ide.folding;
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.toml.ide.folding
 
 import com.intellij.lang.ASTNode
-import com.intellij.lang.folding.FoldingBuilderEx
+import com.intellij.lang.folding.CustomFoldingBuilder
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import org.toml.lang.psi.*
 
-class TomlFoldingBuilder : FoldingBuilderEx(), DumbAware {
-    override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
-        if (root !is TomlFile) return emptyArray()
+class TomlFoldingBuilder : CustomFoldingBuilder(), DumbAware {
+    override fun buildLanguageFoldRegions(
+        descriptors: MutableList<FoldingDescriptor>,
+        root: PsiElement,
+        document: Document,
+        quick: Boolean
+    ) {
+        if (root !is TomlFile) return
 
-        val visitor = TomlFoldingVisitor()
+        val visitor = TomlFoldingVisitor(descriptors)
         root.accept(visitor)
-        return visitor.folds.toTypedArray()
     }
 
-    override fun getPlaceholderText(node: ASTNode): String = when (node.elementType) {
-        TomlElementTypes.ARRAY -> "[...]"
-        else -> "{...}"
-    }
+    override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String =
+        when (node.elementType) {
+            TomlElementTypes.ARRAY -> "[...]"
+            else -> "{...}"
+        }
 
-    override fun isCollapsedByDefault(node: ASTNode): Boolean = false
+    override fun isRegionCollapsedByDefault(node: ASTNode): Boolean = false
 }
 
-private class TomlFoldingVisitor: TomlRecursiveVisitor() {
-    val folds: List<FoldingDescriptor>
-        get() = descriptors
-    private val descriptors: MutableList<FoldingDescriptor> = mutableListOf()
-
+private class TomlFoldingVisitor(private val descriptors: MutableList<FoldingDescriptor>): TomlRecursiveVisitor() {
     override fun visitTable(element: TomlTable) {
         if (element.entries.isNotEmpty()) {
             foldChildren(element, element.header.nextSibling, element.lastChild)

@@ -14,6 +14,7 @@ class TomlFoldingBuilderTest : TomlTestBase() {
     fun `test array table`() = doTest()
     fun `test inline table`() = doTest()
     fun `test array`() = doTest()
+    fun `test custom regions`() = doTest()
 
     private fun doTest() {
         val fileName = "$testName.toml"
