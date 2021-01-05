@@ -84,7 +84,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
           ASTNode startNode = localFoldingStack.pop();
           int startOffset = startNode.getTextRange().getStartOffset();
           TextRange range = new TextRange(startOffset, child.getTextRange().getEndOffset());
-          descriptors.add(new CompositeFoldingBuilder.FoldingDescriptorWrapper(new FoldingDescriptor(startNode, range), this));
+          descriptors.add(new FoldingDescriptor(startNode, range));
           Set<ASTNode> nodeSet = ourCustomRegionElements.get();
           nodeSet.add(startNode);
           nodeSet.add(child);

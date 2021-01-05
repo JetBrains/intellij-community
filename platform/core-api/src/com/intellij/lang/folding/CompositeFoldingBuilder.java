@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +111,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     return null;
   }
 
-  static class FoldingDescriptorWrapper extends FoldingDescriptor {
+  private static class FoldingDescriptorWrapper extends FoldingDescriptor {
     @NotNull private final FoldingDescriptor myFoldingDescriptor;
     @NotNull private final FoldingBuilder myBuilder;
 
