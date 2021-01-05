@@ -1180,6 +1180,7 @@
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
+    <codeCompletionConfigurable instance="com.intellij.application.options.JavaCompletionConfigurable" order="first"/>
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler" order="before afterUnmatchedBrace"/>

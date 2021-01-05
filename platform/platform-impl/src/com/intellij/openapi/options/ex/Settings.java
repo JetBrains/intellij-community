@@ -45,15 +45,23 @@ public abstract class Settings {
   public final ActionCallback select(Configurable configurable, String option) {
     ActionCallback callback = select(configurable);
     if (option != null && configurable instanceof SearchableConfigurable) {
-      SearchableConfigurable searchable = (SearchableConfigurable)configurable;
-      Runnable search = searchable.enableSearch(option);
-      if (search != null) callback.doWhenDone(search);
+      Runnable runnable = ((SearchableConfigurable)configurable).enableSearch(option);
+      callback.doWhenDone(() -> {
+        if (runnable != null) {
+          runnable.run();
+        }
+        else {
+          setSearchText(option);
+        }
+      });
     }
     return callback;
   }
 
   @NotNull
   protected abstract Promise<? super Object> selectImpl(Configurable configurable);
+
+  protected abstract void setSearchText(String option);
 
   private <T extends Configurable> T unwrap(Configurable configurable, Class<T> type) {
     T result = ConfigurableWrapper.cast(type, configurable);

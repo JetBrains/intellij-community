@@ -80,6 +80,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       }
 
       @Override
+      protected void setSearchText(String search) {
+        myFilter.update(search);
+      }
+
+      @Override
       public void revalidate() {
         myEditor.requestUpdate();
       }
