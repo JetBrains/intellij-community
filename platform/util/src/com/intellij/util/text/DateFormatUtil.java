@@ -319,7 +319,7 @@ public final class DateFormatUtil {
       else if (SystemInfoRt.isUnix) {
         formats = getUnixFormats();
       }
-      else if (JnaLoader.isLoaded() ) {
+      else if (SystemInfoRt.isWindows && JnaLoader.isLoaded() ) {
         formats = getWindowsFormats();
       }
     }
