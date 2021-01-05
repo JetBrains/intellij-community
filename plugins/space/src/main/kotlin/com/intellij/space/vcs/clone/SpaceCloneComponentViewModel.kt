@@ -101,7 +101,7 @@ internal class SpaceCloneComponentViewModel(
   private suspend fun loadSshState(cloneType: CloneType): SpaceKeysState {
     if (cloneType == HTTP) return SpaceKeysState.NotChecked
 
-    return ssh.sshKeys(me.value.id).let {
+    return ssh.sshKeys(me.value.identifier).let {
       if (it.isNullOrEmpty()) SpaceKeysState.NotSet else SpaceKeysState.Set(it)
     }
   }
