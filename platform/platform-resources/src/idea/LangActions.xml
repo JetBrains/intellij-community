@@ -286,7 +286,9 @@
 
       <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
         <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
-        <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
+        <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction">
+          <synonym key="action.SmartTypeCompletion.synonym"/>
+        </action>
         <separator/>
         <reference ref="EditorCompleteStatement"/>
         <separator/>
