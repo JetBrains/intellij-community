@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 
 import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil;
@@ -10,9 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ValidationSimpleRuleFactory {
   public static final String UTIL_PREFIX = "util#";
@@ -23,6 +21,7 @@ public class ValidationSimpleRuleFactory {
   private static final EnumReferenceRuleProducer ENUM_REFERENCE_RULE_PRODUCER = new EnumReferenceRuleProducer();
   private static final RegexpRuleProducer REGEXP_RULE_PRODUCER = new RegexpRuleProducer();
   private static final RegexpReferenceRuleProducer REGEXP_REFERENCE_RULE_PRODUCER = new RegexpReferenceRuleProducer();
+  public static final UtilRuleProducer REJECTING_UTIL_URL_PRODUCER = new RejectingUtilRuleProducer();
 
   private final UtilRuleProducer myUtilRuleProducer;
 
@@ -33,12 +32,26 @@ public class ValidationSimpleRuleFactory {
   }
 
   public ValidationSimpleRuleFactory() {
-    this(new UtilRuleProducer() {
-      @Override
-      public UtilValidationRule createValidationRule(@NotNull String value, @NotNull EventGroupContextData contextData) {
-        return (s,c) -> ValidationResultType.REJECTED;
-      }
-    });
+    this(REJECTING_UTIL_URL_PRODUCER);
+  }
+
+  public FUSRule @NotNull [] getRules(@Nullable String key, @Nullable Set<String> rules,
+                                      @NotNull EventGroupContextData contextData) {
+    if (rules == null) return FUSRule.EMPTY_ARRAY;
+    List<FUSRule> fusRules = new ArrayList<>();
+    for (String rule : rules) {
+      fusRules.add(createRule(rule, contextData));
+    }
+    fusRules.sort(getRulesComparator());
+    return fusRules.toArray(FUSRule.EMPTY_ARRAY);
+  }
+
+  private static @NotNull Comparator<FUSRule> getRulesComparator() {
+    // todo: do it better )))
+    return (o1, o2) -> {
+      if (o1 instanceof EnumValidationRule) return o2 instanceof EnumValidationRule ? -1 : 0;
+      return o2 instanceof EnumValidationRule ? 0 : 1;
+    };
   }
 
   @NotNull

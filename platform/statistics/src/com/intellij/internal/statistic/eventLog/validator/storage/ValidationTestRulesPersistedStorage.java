@@ -6,6 +6,11 @@ import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationRuleFactory;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
@@ -75,7 +80,8 @@ public final class ValidationTestRulesPersistedStorage extends BaseValidationRul
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
       filter(group -> EventGroupFilterRules.create(group).accepts(build)).
-      collect(Collectors.toMap(group -> group.id, group -> EventGroupRules.create(group, new GlobalRulesHolder(rules))));
+      collect(Collectors.toMap(group -> group.id, group -> EventGroupRules.create(group, new GlobalRulesHolder(rules),
+                                                                                  new ValidationRuleFactory())));
   }
 
   public void addTestGroup(@NotNull GroupValidationTestRule group) throws IOException {

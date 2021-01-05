@@ -1,46 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.beans;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
-import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
 import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
 public final class EventGroupRules {
   public static final EventGroupRules EMPTY =
-    new EventGroupRules(Collections.emptySet(), Collections.emptyMap(), EventGroupContextData.EMPTY);
+    new EventGroupRules(Collections.emptySet(), Collections.emptyMap(), EventGroupContextData.EMPTY,
+                        new ValidationSimpleRuleFactory());
 
   private final FUSRule[] eventIdRules;
   private final Map<String, FUSRule[]> eventDataRules = new ConcurrentHashMap<>();
-  private final ValidationSimpleRuleFactory myValidationRuleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer());
 
   private EventGroupRules(@Nullable Set<String> eventIdRules,
-                          @Nullable Map<String, Set<String>> eventDataRules, @NotNull EventGroupContextData contextData) {
-    this.eventIdRules = getRules(eventIdRules, contextData);
+                          @Nullable Map<String, Set<String>> eventDataRules,
+                          @NotNull EventGroupContextData contextData,
+                          @NotNull ValidationSimpleRuleFactory factory) {
+    this.eventIdRules = factory.getRules(null, eventIdRules, contextData);
 
     if (eventDataRules != null) {
       for (Map.Entry<String, Set<String>> entry : eventDataRules.entrySet()) {
-        if (FeatureUsageData.Companion.getPlatformDataKeys().contains(entry.getKey())) {
-          this.eventDataRules.put(entry.getKey(), new FUSRule[]{FUSRule.TRUE});
-        }
-        else {
-          this.eventDataRules.put(entry.getKey(), getRules(entry.getValue(), contextData));
-        }
+        this.eventDataRules.put(entry.getKey(), factory.getRules(entry.getKey(), entry.getValue(), contextData));
       }
     }
   }
@@ -51,25 +44,6 @@ public final class EventGroupRules {
 
   public Map<String, FUSRule[]> getEventDataRules() {
     return eventDataRules;
-  }
-
-  private FUSRule @NotNull [] getRules(@Nullable Set<String> rules,
-                                       @NotNull EventGroupContextData contextData) {
-
-    if (rules == null) return FUSRule.EMPTY_ARRAY;
-    List<FUSRule> fusRules = new SortedList<>(getRulesComparator());
-    for (String rule : rules) {
-      ContainerUtil.addIfNotNull(fusRules, myValidationRuleFactory.createRule(rule, contextData));
-    }
-    return fusRules.toArray(FUSRule.EMPTY_ARRAY);
-  }
-
-  private static @NotNull Comparator<FUSRule> getRulesComparator() {
-    // todo: do it better )))
-    return (o1, o2) -> {
-      if (o1 instanceof EnumValidationRule) return o2 instanceof EnumValidationRule ? -1 : 0;
-      return o2 instanceof EnumValidationRule ? 0 : 1;
-    };
   }
 
   public boolean areEventIdRulesDefined() {
@@ -96,8 +70,6 @@ public final class EventGroupRules {
   public Object validateEventData(@NotNull String key,
                                   @Nullable Object data,
                                   @NotNull EventContext context) {
-    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return data;
-
     if (data == null) return REJECTED.getDescription();
 
     if (data instanceof Map<?, ?>) {
@@ -115,7 +87,7 @@ public final class EventGroupRules {
     }
 
     if (data instanceof List<?>) {
-      return ContainerUtil.map(((List<?>)data), value -> validateEventData(key, value, context));
+      return ((List<?>)data).stream().map(value -> validateEventData(key, value, context)).collect(Collectors.toList());
     }
 
     FUSRule[] rules = eventDataRules.get(key);
@@ -141,11 +113,12 @@ public final class EventGroupRules {
   }
 
   public static @NotNull EventGroupRules create(@NotNull EventGroupRemoteDescriptor group,
-                                                @NotNull GlobalRulesHolder globalRulesHolder) {
+                                                @NotNull GlobalRulesHolder globalRulesHolder,
+                                                @NotNull ValidationSimpleRuleFactory factory) {
     GroupRemoteRule rules = group.rules;
     return rules == null
            ? EMPTY
            : new EventGroupRules(rules.event_id, rules.event_data,
-                                 new EventGroupContextData(rules.enums, rules.regexps, globalRulesHolder));
+                                 new EventGroupContextData(rules.enums, rules.regexps, globalRulesHolder), factory);
   }
 }
