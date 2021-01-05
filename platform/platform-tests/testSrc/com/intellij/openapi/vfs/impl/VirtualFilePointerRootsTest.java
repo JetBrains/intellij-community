@@ -131,18 +131,17 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
 
   public void testUpdatePerformanceOfFewLongPointers() throws IOException {
     VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
-    VirtualFile d = root;
     for (int i=0;i <20; i++) {
-      d = VfsTestUtil.createDir(d, "directory" + i);
+      root = VfsTestUtil.createDir(root, "directory" + i);
     }
-    VirtualFile dir = d;
+    VirtualFile dir = root;
     VirtualFile f = WriteAction.compute(() -> dir.createChildData(this, "file.txt"));
 
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir.getUrl()+"/file.txt", disposable, new VirtualFilePointerListener() {});
+    assertTrue(pointer.isValid());
     FileAttributes attributes = new FileAttributes(false, false, false, false, 0, 1, true);
     List<VFileEvent> createEvents = Collections.singletonList(new VFileCreateEvent(this, dir, "file.txt", false, attributes, null, true, null));
     List<VFileEvent> deleteEvents = Collections.singletonList(new VFileDeleteEvent(this, f, true));
-
 
     PersistentFSImpl persistentFS = (PersistentFSImpl)ManagingFS.getInstance();
 
