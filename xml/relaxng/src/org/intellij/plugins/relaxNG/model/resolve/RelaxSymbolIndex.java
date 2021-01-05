@@ -2,7 +2,6 @@
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -111,7 +110,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML, RncFileType.getInstance()) {
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, RncFileType.getInstance()) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
         return !(file.getFileSystem() instanceof JarFileSystem);
