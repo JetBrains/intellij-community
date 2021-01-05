@@ -60,21 +60,7 @@ public final class SystemInfo {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
   }
 
-  /* version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx */
-  public static final boolean isWin2kOrNewer = isWindows && isOsVersionAtLeast("5.0");
-
-  /**
-   * @deprecated IDEA 2021 or newer requires Windows 7 or newer.
-   */
-  @Deprecated
-  public static final boolean isWinVistaOrNewer = isWindows && isOsVersionAtLeast("6.0");
-
-  /**
-   * @deprecated IDEA 2021 or newer requires Windows 7 or newer.
-   */
-  @Deprecated
   public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
-
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
 
@@ -256,6 +242,16 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static final boolean isMacOSMavericks = isMac;
+
+  /** @deprecated always true (Java 8 requires Windows Vista / Server 2008) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isWin2kOrNewer = isWindows;
+
+  /** @deprecated always true (Java 8 requires Windows Vista / Server 2008) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isWinVistaOrNewer = isWindows;
   //</editor-fold>
 
   private static @NotNull String getEnvOrEmpty(@Nullable String name) {
