@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,7 +73,7 @@ public class ValidationRulesPersistedStorage extends BaseValidationRulesPersiste
   private @Nullable String updateValidators(@NotNull String rawEventsScheme) throws EventLogMetadataParseException {
     mySemaphore.down();
     try {
-      EventGroupRemoteDescriptors groups = EventLogMetadataUtils.parseGroupRemoteDescriptors(rawEventsScheme);
+      EventGroupRemoteDescriptors groups = EventGroupRemoteDescriptors.create(rawEventsScheme);
       EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
       Map<String, EventGroupRules> result = createValidators(build, groups);
       isInitialized.set(false);

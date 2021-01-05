@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +53,27 @@ public final class EventGroupRemoteDescriptors {
   public final ArrayList<EventGroupRemoteDescriptor> groups = new ArrayList<>();
   @Nullable public GroupRemoteRule rules;
   @Nullable public String version;
+
+  @NotNull
+  public static EventGroupRemoteDescriptors create(@Nullable String content) throws EventLogMetadataParseException {
+    if (ValidatorStringUtil.isEmptyOrSpaces(content)) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.EMPTY_CONTENT);
+    }
+
+    try {
+      EventGroupRemoteDescriptors groups = new GsonBuilder().create().fromJson(content, EventGroupRemoteDescriptors.class);
+      if (groups != null) {
+        return groups;
+      }
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON);
+    }
+    catch (JsonSyntaxException e) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON, e);
+    }
+    catch (Exception e) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.UNKNOWN, e);
+    }
+  }
 
   public static final class EventGroupRemoteDescriptor {
     @Nullable

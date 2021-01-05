@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException.EventLogMetadataLoadErrorType;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException.EventLogMetadataParseErrorType;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestResult;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsResponseException;
@@ -45,33 +42,12 @@ public final class EventLogMetadataUtils {
 
   @NotNull
   public static EventGroupsFilterRules parseGroupFilterRules(@Nullable String content) throws EventLogMetadataParseException {
-    EventGroupRemoteDescriptors groups = parseGroupRemoteDescriptors(content);
+    EventGroupRemoteDescriptors groups = EventGroupRemoteDescriptors.create(content);
     Map<String, EventGroupFilterRules> groupToCondition = new HashMap<>();
     for (EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group : groups.groups) {
       groupToCondition.put(group.id, EventGroupFilterRules.create(group));
     }
     return EventGroupsFilterRules.create(groupToCondition);
-  }
-
-  @NotNull
-  public static EventGroupRemoteDescriptors parseGroupRemoteDescriptors(@Nullable String content) throws EventLogMetadataParseException {
-    if (isEmptyOrSpaces(content)) {
-      throw new EventLogMetadataParseException(EventLogMetadataParseErrorType.EMPTY_CONTENT);
-    }
-
-    try {
-      EventGroupRemoteDescriptors groups = new GsonBuilder().create().fromJson(content, EventGroupRemoteDescriptors.class);
-      if (groups != null) {
-        return groups;
-      }
-      throw new EventLogMetadataParseException(EventLogMetadataParseErrorType.INVALID_JSON);
-    }
-    catch (JsonSyntaxException e) {
-      throw new EventLogMetadataParseException(EventLogMetadataParseErrorType.INVALID_JSON, e);
-    }
-    catch (Exception e) {
-      throw new EventLogMetadataParseException(EventLogMetadataParseErrorType.UNKNOWN, e);
-    }
   }
 
   @NotNull
