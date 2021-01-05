@@ -249,11 +249,9 @@ public abstract class TestUtils {
     PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, parent);
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> void runAll(@NotNull Collection<? extends T> input,
                                 @NotNull ThrowableConsumer<? super T, Throwable> action) {
-    List<ThrowableRunnable<Throwable>> runnables = ContainerUtil.map(input, it -> () -> action.consume(it));
-    new RunAll(runnables.toArray(new ThrowableRunnable[0])).run();
+    new RunAll(ContainerUtil.map(input, it -> () -> action.consume(it))).run();
   }
 
   public static <K, V> void runAll(@NotNull Map<? extends K, ? extends V> input,
