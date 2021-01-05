@@ -55,6 +55,22 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<TypeCookAction>())
   }
 
+  fun testReplaceConstructorWithFactoryFilteredOnParameters() {
+    assertFalse(doActionExists<ReplaceConstructorWithFactoryAction>())
+  }
+
+  fun testReplaceConstructorWithFactoryFilteredOnStatement() {
+    assertFalse(doActionExists<ReplaceConstructorWithFactoryAction>())
+  }
+
+  fun testReplaceConstructorWithFactoryOnCall() {
+    assertTrue(doActionExists<ReplaceConstructorWithFactoryAction>())
+  }
+
+  fun testReplaceConstructorWithFactoryOnDeclaration() {
+    assertTrue(doActionExists<ReplaceConstructorWithFactoryAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     return findAvailableActions().any { action -> action is A }

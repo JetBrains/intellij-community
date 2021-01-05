@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.actions;
 
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
@@ -25,6 +24,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -46,15 +46,11 @@ public class ReplaceConstructorWithFactoryAction extends BaseJavaRefactoringActi
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context) {
     PsiMethod method = RefactoringActionContextUtil.getJavaMethodHeader(element);
-    return (method != null &&
-            method.isConstructor() &&
-            acceptClass(method.getContainingClass())  ||
-            acceptClass(element))
-           && element.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+    return method != null && method.isConstructor() && isNotEnumClass(method.getContainingClass());
   }
 
-  private static boolean acceptClass(PsiElement element) {
-    return element instanceof PsiClass && !((PsiClass)element).isEnum();
+  private static boolean isNotEnumClass(@Nullable PsiClass psiClass) {
+    return psiClass != null && ! psiClass.isEnum();
   }
 
   @Override
