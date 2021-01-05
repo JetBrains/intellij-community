@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.util.RecursionManager
@@ -270,7 +270,7 @@ class CollectionNoArgConstructor implements Collection {
       else {
         Assert.assertNull(text, reference)
       }
-    }.run()
+    }
   }
 
   @Test
@@ -294,7 +294,7 @@ class CollectionNoArgConstructor implements Collection {
       else {
         Assert.assertNull(text, reference)
       }
-    }.run()
+    }
   }
 
   @Test
@@ -319,7 +319,7 @@ class CollectionNoArgConstructor implements Collection {
       def method = result.element
       assertTrue(text, method.constructor)
       assertEquals(text, parametersCount, method.parameterList.parametersCount)
-    }.run()
+    }
   }
 
   @Test
@@ -335,7 +335,7 @@ class CollectionNoArgConstructor implements Collection {
       results.each {
         assert ((GroovyMethodResult)it).applicability == Applicability.inapplicable
       }
-    }.run()
+    }
   }
 
   @Test
