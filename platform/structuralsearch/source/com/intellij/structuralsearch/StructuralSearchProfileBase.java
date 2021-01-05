@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.dupLocator.util.NodeFilter;
@@ -408,8 +407,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         final PsiElement patternChild = element.getFirstChild();
         final PsiElement matchedChild = myGlobalVisitor.getElement().getFirstChild();
 
-        final FilteringNodeIterator patternIterator = new SsrFilteringNodeIterator(patternChild);
-        final FilteringNodeIterator matchedIterator = new SsrFilteringNodeIterator(matchedChild);
+        final NodeIterator patternIterator = SsrFilteringNodeIterator.create(patternChild);
+        final NodeIterator matchedIterator = SsrFilteringNodeIterator.create(matchedChild);
 
         final boolean matched = myGlobalVisitor.matchSequentially(patternIterator, matchedIterator);
         myGlobalVisitor.setResult(matched);

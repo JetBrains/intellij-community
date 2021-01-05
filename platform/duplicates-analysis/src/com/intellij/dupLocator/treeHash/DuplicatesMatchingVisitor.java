@@ -145,8 +145,8 @@ public final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return element2.getFirstChild() == null && element2.getTextLength() == 0;
     }
 
-    return matchSequentially(new FilteringNodeIterator(new SiblingNodeIterator(element1.getFirstChild()), getNodeFilter()),
-                             new FilteringNodeIterator(new SiblingNodeIterator(element2.getFirstChild()), getNodeFilter()));
+    return matchSequentially(new FilteringNodeIterator(SiblingNodeIterator.create(element1.getFirstChild()), getNodeFilter()),
+                             new FilteringNodeIterator(SiblingNodeIterator.create(element2.getFirstChild()), getNodeFilter()));
   }
 
   @Override

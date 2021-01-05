@@ -99,7 +99,7 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
   public List<PsiElement> getNodeChildren(PsiElement node) {
     final List<PsiElement> result = new ArrayList<>();
 
-    final FilteringNodeIterator it = new FilteringNodeIterator(new SiblingNodeIterator(node.getFirstChild()), myNodeFilter);
+    final FilteringNodeIterator it = new FilteringNodeIterator(SiblingNodeIterator.create(node.getFirstChild()), myNodeFilter);
     while (it.hasNext()) {
       result.add(it.current());
       it.advance();
