@@ -107,59 +107,13 @@ public final class SystemInfo {
     return isXWindow && ourHasXdgMime.getValue();
   }
 
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
-  public static final boolean isMacOSTiger = isMac && isOsVersionAtLeast("10.4");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
-  public static final boolean isMacOSLeopard = isMac && isOsVersionAtLeast("10.5");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
-  public static final boolean isMacOSSnowLeopard = isMac && isOsVersionAtLeast("10.6");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
-  public static final boolean isMacOSLion = isMac && isOsVersionAtLeast("10.7");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
-  public static final boolean isMacOSMountainLion = isMac && isOsVersionAtLeast("10.8");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
-  public static final boolean isMacOSMavericks = isMac && isOsVersionAtLeast("10.9");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
   public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
-  /**
-   * @deprecated IJ Platform requires at least macOS 10.13.
-   */
-  @Deprecated
   public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
   public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
-  public static final boolean isMacOSBigSur = isMac && (isOsVersionAtLeast("11.0") || isOsVersionAtLeast("10.16"));
+  public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
 
   public static @NotNull String getMacOSMajorVersion() {
     return getMacOSMajorVersion(OS_VERSION);
@@ -272,6 +226,36 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static final boolean isSunJvm = false;
+
+  /** @deprecated always true (Java 8 requires macOS 10.9+) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isMacOSTiger = isMac;
+
+  /** @deprecated always true (Java 8 requires macOS 10.9+) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isMacOSLeopard = isMac;
+
+  /** @deprecated always true (Java 8 requires macOS 10.9+) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isMacOSSnowLeopard = isMac;
+
+  /** @deprecated always true (Java 8 requires macOS 10.9+) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isMacOSLion = isMac;
+
+  /** @deprecated always true (Java 8 requires macOS 10.9+) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isMacOSMountainLion = isMac;
+
+  /** @deprecated always true (Java 8 requires macOS 10.9+) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public static final boolean isMacOSMavericks = isMac;
   //</editor-fold>
 
   private static @NotNull String getEnvOrEmpty(@Nullable String name) {
