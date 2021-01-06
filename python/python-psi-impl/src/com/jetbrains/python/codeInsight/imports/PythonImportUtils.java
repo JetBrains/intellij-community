@@ -35,12 +35,12 @@ public final class PythonImportUtils {
       return null;
     }
 
-    return addCandidates(node, reference, refText, null);
+    return addCandidates(node, reference, refText);
   }
 
   @Nullable
-  private static AutoImportQuickFix addCandidates(PyElement node, PsiReference reference, String refText, @Nullable String asName) {
-    return PyImportCollectorFactory.getInstance().create(node, reference, refText, asName).addCandidates();
+  private static AutoImportQuickFix addCandidates(PyElement node, PsiReference reference, String refText) {
+    return PyImportCollectorFactory.getInstance().create(node, reference, refText).addCandidates();
   }
 
   public static boolean isImportable(PsiElement refElement) {

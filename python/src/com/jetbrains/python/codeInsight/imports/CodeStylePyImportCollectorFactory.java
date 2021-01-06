@@ -6,7 +6,7 @@ import com.jetbrains.python.psi.PyElement;
 
 public class CodeStylePyImportCollectorFactory implements PyImportCollectorFactory {
   @Override
-  public PyImportCollector create(PyElement node, PsiReference reference, String refText, String asName) {
-    return new CodeStylePyImportCollector(node, reference, refText, asName);
+  public PyImportCollector create(PyElement node, PsiReference reference, String refText) {
+    return new CodeStylePyImportCollector(node, reference, refText);
   }
 }

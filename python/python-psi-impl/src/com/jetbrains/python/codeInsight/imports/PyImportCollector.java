@@ -30,16 +30,13 @@ public class PyImportCollector {
   private final PyElement myNode;
   private final PsiReference myReference;
   private final String myRefText;
-  private final String myAlias;
   private final AutoImportQuickFix fix;
   private final Set<String> seenCandidateNames;
 
-  public PyImportCollector(PyElement node, PsiReference reference, String refText, String alias) {
+  public PyImportCollector(PyElement node, PsiReference reference, String refText) {
     myNode = node;
     myReference = reference;
     myRefText = refText;
-    myAlias = alias;
-
 
     boolean qualify = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
     fix = new AutoImportQuickFix(node, reference.getClass(), refText, qualify);
