@@ -279,7 +279,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       });
       assertNotNull(importNumpyAsNpVariant);
       List<String> candidateText = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());
-      assertContainsInRelativeOrder(candidateText, "numpy", "pandas.np");
+      assertContainsInRelativeOrder(candidateText, "numpy as np", "pandas.np");
       return true;
     });
   }

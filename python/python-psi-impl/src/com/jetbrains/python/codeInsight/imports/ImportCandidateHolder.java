@@ -155,6 +155,9 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
         sb.append(source.asQualifiedName());
       }
     }
+    if (myAsName != null) {
+      sb.append(" as ").append(myAsName);
+    }
     return sb.toString();
   }
 
