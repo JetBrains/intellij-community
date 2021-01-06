@@ -87,16 +87,17 @@ public class PyImportCollector {
     PyFile sourceFile = as(PyUtil.turnDirIntoInit(source), PyFile.class);
     if (sourceFile instanceof PyFileImpl) {
 
-      PsiElement res = sourceFile.findExportedName(myRefText);
-      final String name = res instanceof PyQualifiedNameOwner ? ((PyQualifiedNameOwner)res).getQualifiedName() : null;
+      PsiElement variant = sourceFile.findExportedName(myRefText);
+      final String name = variant instanceof PyQualifiedNameOwner ? ((PyQualifiedNameOwner)variant).getQualifiedName() : null;
       if (name != null && seenCandidateNames.contains(name)) {
         return existingImportFile;
       }
+      PsiNamedElement definition = as(variant, PsiNamedElement.class);
       // allow importing from this source if it either declares the name itself or represents a higher-level package that reexports the name
-      if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && res.getContainingFile() != null &&
-          PsiTreeUtil.isAncestor(source, res.getContainingFile(), false)) {
+      if (definition != null && !(definition instanceof PyFile || definition instanceof PyImportElement) &&
+          definition.getContainingFile() != null && PsiTreeUtil.isAncestor(source, definition.getContainingFile(), false)) {
         existingImportFile = sourceFile;
-        fix.addImport(res, sourceFile, importElement);
+        fix.addImport(definition, sourceFile, importElement);
         if (name != null) {
           seenCandidateNames.add(name);
         }
@@ -107,7 +108,7 @@ public class PyImportCollector {
 
   private void addSymbolImportCandidates(PsiFile existingImportFile) {
     Project project = myNode.getProject();
-    List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, true));
+    List<PsiNamedElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, true));
     GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(myNode);
     if (!isQualifier()) {
       symbols.addAll(PyFunctionNameIndex.find(myRefText, project, scope));
@@ -120,7 +121,7 @@ public class PyImportCollector {
         symbols.addAll(findImportableModules(packageQName, project, scope));
       }
     }
-    for (PsiElement symbol : symbols) {
+    for (PsiNamedElement symbol : symbols) {
       if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
         PsiFileSystemItem srcfile =
           symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
@@ -132,10 +133,7 @@ public class PyImportCollector {
           if (symbol instanceof PsiFileSystemItem) {
             importPath = importPath.removeTail(1);
           }
-          if (!(symbol instanceof PsiNamedElement)) {
-            continue;
-          }
-          String name = PyUtil.getElementNameWithoutExtension((PsiNamedElement)symbol);
+          String name = PyUtil.getElementNameWithoutExtension(symbol);
           final String symbolImportQName = importPath.append(name).toString();
           if (seenCandidateNames.add(symbolImportQName)) {
             String alias = name.equals(myRefText) ? null : myRefText;

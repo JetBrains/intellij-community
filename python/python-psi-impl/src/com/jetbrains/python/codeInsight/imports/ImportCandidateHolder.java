@@ -31,11 +31,11 @@ import java.util.List;
 // visibility is intentionally package-level
 public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private static final Logger LOG = Logger.getInstance(ImportCandidateHolder.class);
-  @NotNull private final SmartPsiElementPointer<PsiElement> myImportable;
+  @NotNull private final SmartPsiElementPointer<PsiNamedElement> myImportable;
   @Nullable private final SmartPsiElementPointer<PyImportElement> myImportElement;
   @NotNull private final SmartPsiElementPointer<PsiFileSystemItem> myFile;
   @Nullable private final QualifiedName myPath;
-  private final String myImportableName;
+  @NotNull private final String myImportableName;
   @Nullable private final String myAsName;
   private final int myRelevance;
 
@@ -51,12 +51,13 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
    *                      (empty for modules and packages located at source roots).
    *
    */
-  public ImportCandidateHolder(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
+  public ImportCandidateHolder(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path, @Nullable String asName) {
     SmartPointerManager pointerManager = SmartPointerManager.getInstance(importable.getProject());
     myFile = pointerManager.createSmartPsiElementPointer(file);
     myImportable = pointerManager.createSmartPsiElementPointer(importable);
-    myImportableName = importable instanceof PsiNamedElement ? PyUtil.getElementNameWithoutExtension(((PsiNamedElement)importable)) : null;
+    myImportableName = PyUtil.getElementNameWithoutExtension(importable);
+    assert myImportableName != null;
     myImportElement = importElement != null ? pointerManager.createSmartPsiElementPointer(importElement) : null;
     myPath = path;
     myAsName = asName;
@@ -65,17 +66,17 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     assert importElement != null || path != null; // one of these must be present
   }
 
-  public ImportCandidateHolder(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
+  public ImportCandidateHolder(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path) {
     this(importable, file, importElement, path, null);
   }
 
   @Nullable
-  public PsiElement getImportable() {
+  public PsiNamedElement getImportable() {
     return myImportable.getElement();
   }
 
-  public String getImportableName() {
+  public @NotNull String getImportableName() {
     return myImportableName;
   }
 
