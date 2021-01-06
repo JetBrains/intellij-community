@@ -52,7 +52,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     for (VirtualFile file : files) {
       if (file.isDirectory()) {  // Accurate calculation is very costly especially in presence of excluded directories!
         enabled = true;
-        fromWhere = "all files in " + file.getName() + " (recursively)" + (files.length == 1 ? "" : " and others");
+        fromWhere = "all files in '" + file.getName() + "' directory (recursively)" + (files.length == 1 ? "" : " and others");
         break;
       }
       else if (file.getBOM() != null) {
