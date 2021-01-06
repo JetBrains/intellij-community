@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.BundledSchemeEP
 import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -10,6 +12,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileLoadUtil
 import com.intellij.profile.codeInspection.InspectionProfileManager
@@ -26,8 +29,8 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Function
 
-open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(
-  ApplicationManager.getApplication().messageBus), InspectionProfileManager {
+open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
+  BaseInspectionProfileManager(ApplicationManager.getApplication().messageBus) {
 
   init {
     val app = ApplicationManager.getApplication()
@@ -57,7 +60,16 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
     override fun onSchemeAdded(scheme: InspectionProfileImpl) {
       fireProfileChanged(scheme)
     }
+
+    override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?,
+                                         newScheme: InspectionProfileImpl?,
+                                         processChangeSynchronously: Boolean) {
+      DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
+        CommonDataKeys.PROJECT.getData(it)?.messageBus?.syncPublisher(ProfileChangeAdapter.TOPIC)?.profileActivated(oldScheme, newScheme)
+      }
+    }
   })
+
   protected val profilesAreInitialized by lazy {
     val app = ApplicationManager.getApplication()
     if (!(app.isUnitTestMode || app.isHeadlessEnvironment)) {
@@ -98,7 +110,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
   }
 
   override fun setRootProfile(profileName: String?) {
-    schemeManager.currentSchemeName = profileName
+    schemeManager.setCurrentSchemeName(profileName, true)
   }
 
   override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
