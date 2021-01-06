@@ -107,11 +107,17 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     )
   }
 
-  fun stopTracking(pluginId: PluginId) {
+  fun stopTrackingPerProject(
+    pluginIds: Collection<PluginId>,
+    project: Project?,
+  ) {
+    if (project == null) return
+
     state
       .trackers
       .values
-      .forEach { it.unregister(pluginId) }
+      .map { ProjectPluginTracker(project, it) }
+      .forEach { state -> state.stopTrackingPerProject(pluginIds) }
   }
 
   @JvmOverloads
@@ -124,13 +130,12 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
     assert(!action.isPerProject || project != null)
 
     val pluginIds = descriptors.map { it.pluginId }
-    val pluginTracker = project?.let { createPluginTracker(it) }
 
     fun enablePlugins(enabled: Boolean) = DisabledPluginsState.enablePlugins(descriptors, enabled)
 
-    fun startTrackingPerProject(enable: Boolean) = pluginTracker!!.startTrackingPerProject(pluginIds, enable)
+    fun startTrackingPerProject(enable: Boolean) = createPluginTracker(project!!).startTrackingPerProject(pluginIds, enable)
 
-    fun stopTrackingPerProject() = pluginTracker?.stopTrackingPerProject(pluginIds)
+    fun stopTrackingPerProject() = stopTrackingPerProject(pluginIds, project)
 
     fun loadPlugins() = loadPlugins(descriptors)
 
