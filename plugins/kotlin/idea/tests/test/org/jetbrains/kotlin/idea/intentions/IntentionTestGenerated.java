@@ -3441,11 +3441,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/chop/argumentList/leftParOnSameLine.kt");
             }
 
-            @TestMetadata("leftParOnSameLine.kt")
-            public void testLeftParOnSameLine() throws Exception {
-                runTest("idea/testData/intentions/chop/argumentList/leftParOnSameLine.kt");
-            }
-
             @TestMetadata("parOnSameLine.kt")
             public void testParOnSameLine() throws Exception {
                 runTest("testData/intentions/chop/argumentList/parOnSameLine.kt");
@@ -8120,6 +8115,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/destructuringInLambda/fold.kt");
         }
 
+        @TestMetadata("hasSameNameParameter.kt")
+        public void testHasSameNameParameter() throws Exception {
+            runTest("idea/testData/intentions/destructuringInLambda/hasSameNameParameter.kt");
+        }
+
+        @TestMetadata("hasShadowedVariable.kt")
+        public void testHasShadowedVariable() throws Exception {
+            runTest("idea/testData/intentions/destructuringInLambda/hasShadowedVariable.kt");
+        }
+
+        @TestMetadata("hasShadowedVariable2.kt")
+        public void testHasShadowedVariable2() throws Exception {
+            runTest("idea/testData/intentions/destructuringInLambda/hasShadowedVariable2.kt");
+        }
+
         @TestMetadata("invisible.kt")
         public void testInvisible() throws Exception {
             runTest("testData/intentions/destructuringInLambda/invisible.kt");
@@ -8211,6 +8221,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("classProperty.kt")
         public void testClassProperty() throws Exception {
             runTest("testData/intentions/destructuringVariables/classProperty.kt");
+        }
+
+        @TestMetadata("hasShadowedVariable.kt")
+        public void testHasShadowedVariable() throws Exception {
+            runTest("idea/testData/intentions/destructuringVariables/hasShadowedVariable.kt");
         }
 
         @TestMetadata("noInitializer.kt")
@@ -12846,6 +12861,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeBraces/ifLambda2.kt");
         }
 
+        @TestMetadata("ifLong.kt")
+        public void testIfLong() throws Exception {
+            runTest("idea/testData/intentions/removeBraces/ifLong.kt");
+        }
+
         @TestMetadata("ifWithComment.kt")
         public void testIfWithComment() throws Exception {
             runTest("testData/intentions/removeBraces/ifWithComment.kt");
@@ -12889,6 +12909,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("whenLambda3.kt")
         public void testWhenLambda3() throws Exception {
             runTest("testData/intentions/removeBraces/whenLambda3.kt");
+        }
+
+        @TestMetadata("whenLong.kt")
+        public void testWhenLong() throws Exception {
+            runTest("idea/testData/intentions/removeBraces/whenLong.kt");
         }
 
         @TestMetadata("whenMultiple.kt")
@@ -14503,6 +14528,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceWithOrdinaryAssignment/complexRightExpression.kt");
         }
 
+        @TestMetadata("minusAssignOperatorFun.kt")
+        public void testMinusAssignOperatorFun() throws Exception {
+            runTest("idea/testData/intentions/replaceWithOrdinaryAssignment/minusAssignOperatorFun.kt");
+        }
+
+        @TestMetadata("mutableList.kt")
+        public void testMutableList() throws Exception {
+            runTest("idea/testData/intentions/replaceWithOrdinaryAssignment/mutableList.kt");
+        }
+
         @TestMetadata("nonAssignmentExpression.kt")
         public void testNonAssignmentExpression() throws Exception {
             runTest("testData/intentions/replaceWithOrdinaryAssignment/nonAssignmentExpression.kt");
@@ -14511,6 +14546,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("nonAugmentedAssign.kt")
         public void testNonAugmentedAssign() throws Exception {
             runTest("testData/intentions/replaceWithOrdinaryAssignment/nonAugmentedAssign.kt");
+        }
+
+        @TestMetadata("plusAssignOperatorFun.kt")
+        public void testPlusAssignOperatorFun() throws Exception {
+            runTest("idea/testData/intentions/replaceWithOrdinaryAssignment/plusAssignOperatorFun.kt");
+        }
+
+        @TestMetadata("qualifiedExpression.kt")
+        public void testQualifiedExpression() throws Exception {
+            runTest("idea/testData/intentions/replaceWithOrdinaryAssignment/qualifiedExpression.kt");
         }
 
         @TestMetadata("simple.kt")
