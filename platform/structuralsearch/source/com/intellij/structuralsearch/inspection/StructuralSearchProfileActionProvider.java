@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -54,7 +54,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
         !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
       // enable SSBasedInspection if it was manually disabled
-      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true);
+      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true, panel.getProject(), false);
 
       for (ScopeToolState tool : profile.getAllTools()) {
         final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
@@ -158,7 +158,6 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       ((InspectionProfileModifiableModel)profile).setModified(true);
     }
     InspectionProfileUtil.fireProfileChanged(profile);
-    profile.getProfileManager().fireProfileChanged(profile);
     return true;
   }
 
