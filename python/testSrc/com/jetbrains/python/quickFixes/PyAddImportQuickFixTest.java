@@ -284,6 +284,15 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     });
   }
 
+  // PY-36374
+  public void testUnrelatedSubpackagesNotSuggestedForCommonPackageAliases() {
+    doMultiFileAutoImportTest("Import", fix -> {
+      ImportCandidateHolder onlyCandidate = assertOneElement(fix.getCandidates());
+      assertEquals("numpy as np", onlyCandidate.getPresentableText());
+      return false;
+    });
+  }
+
   public void testCommonPackageAlias() {
     doMultiFileAutoImportTest("Import");
   }

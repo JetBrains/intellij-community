@@ -115,10 +115,10 @@ public class PyImportCollector {
     }
     symbols.addAll(PyVariableNameIndex.find(myRefText, project, scope));
     if (isPossibleModuleReference()) {
-      symbols.addAll(findImportableModules(myRefText, project, scope));
+      symbols.addAll(findImportableModules(myRefText, false, project, scope));
       String packageQName = PyPackageAliasesProvider.commonImportAliases.get(myRefText);
       if (packageQName != null) {
-        symbols.addAll(findImportableModules(packageQName, project, scope));
+        symbols.addAll(findImportableModules(packageQName, true, project, scope));
       }
     }
     for (PsiNamedElement symbol : symbols) {
@@ -190,14 +190,21 @@ public class PyImportCollector {
     return true;
   }
 
-  private Collection<PsiFileSystemItem> findImportableModules(String name, Project project, GlobalSearchScope scope) {
+  private Collection<PsiFileSystemItem> findImportableModules(String name,
+                                                              boolean matchQualifiedName,
+                                                              Project project,
+                                                              GlobalSearchScope scope) {
     List<PsiFileSystemItem> result = new ArrayList<>();
     // Add packages
+    QualifiedName qualifiedName = QualifiedName.fromDottedString(name);
     FilenameIndex.processFilesByName(name, true, item -> {
       ProgressManager.checkCanceled();
       final PsiDirectory candidatePackageDir = as(item, PsiDirectory.class);
       if (candidatePackageDir != null && candidatePackageDir.findFile(PyNames.INIT_DOT_PY) != null) {
-        result.add(candidatePackageDir);
+        QualifiedName shortestName = QualifiedNameFinder.findShortestImportableQName(candidatePackageDir);
+        if (!matchQualifiedName || qualifiedName.equals(shortestName)) {
+          result.add(candidatePackageDir);
+        }
       }
       return true;
     }, scope, project, null);
@@ -205,7 +212,10 @@ public class PyImportCollector {
     FilenameIndex.processFilesByName(name + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
       if (PyUtil.isImportable(myNode.getContainingFile(), item)) {
-        result.add(item);
+        QualifiedName shortestName = QualifiedNameFinder.findShortestImportableQName(item);
+        if (!matchQualifiedName || qualifiedName.equals(shortestName)) {
+          result.add(item);
+        }
       }
       return true;
     }, scope, project, null);
