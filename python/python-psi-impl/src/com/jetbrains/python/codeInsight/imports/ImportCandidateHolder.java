@@ -28,9 +28,9 @@ import java.util.List;
  *
  * @author dcheryasov
  */
-// visibility is intentionally package-level
 public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private static final Logger LOG = Logger.getInstance(ImportCandidateHolder.class);
+
   @NotNull private final SmartPsiElementPointer<PsiNamedElement> myImportable;
   @Nullable private final SmartPsiElementPointer<PyImportElement> myImportElement;
   @NotNull private final SmartPsiElementPointer<PsiFileSystemItem> myFile;
@@ -49,10 +49,12 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
    *                      For top-level imported symbols it's <em>qualified name of containing module</em> (or package for __init__.py).
    *                      For modules and packages it should be <em>qualified name of their parental package</em>
    *                      (empty for modules and packages located at source roots).
-   *
    */
   public ImportCandidateHolder(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path, @Nullable String asName) {
+    if (importElement == null && path == null) {
+      throw new IllegalArgumentException("Either an import path or an existing import should be provided for " + importable);
+    }
     SmartPointerManager pointerManager = SmartPointerManager.getInstance(importable.getProject());
     myFile = pointerManager.createSmartPsiElementPointer(file);
     myImportable = pointerManager.createSmartPsiElementPointer(importable);
@@ -63,7 +65,6 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     myAsName = asName;
     myRelevance = PyCompletionUtilsKt.computeCompletionWeight(importable, myImportableName, myPath, null, false);
     LOG.debug("Computed relevance for import item ", myImportableName, ": ", myRelevance);
-    assert importElement != null || path != null; // one of these must be present
   }
 
   public ImportCandidateHolder(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file,

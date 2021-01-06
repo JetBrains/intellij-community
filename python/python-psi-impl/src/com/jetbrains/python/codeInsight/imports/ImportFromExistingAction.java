@@ -27,10 +27,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author dcheryasov
  */
 public class ImportFromExistingAction implements QuestionAction {
-  PsiElement myTarget;
-  List<? extends ImportCandidateHolder> mySources; // list of <import, imported_item>
-  String myName;
-  boolean myUseQualifiedImport;
+  private final PsiElement myTarget;
+  private final List<ImportCandidateHolder> mySources;
+  private final String myName;
+  private final boolean myUseQualifiedImport;
   private Runnable myOnDoneCallback;
   private final boolean myImportLocally;
 
@@ -40,7 +40,7 @@ public class ImportFromExistingAction implements QuestionAction {
    * @param name relevant name ot the target element (e.g. of identifier in an expression).
    * @param useQualified if True, use qualified "import modulename" instead of "from modulename import ...".
    */
-  public ImportFromExistingAction(@NotNull PsiElement target, @NotNull List<? extends ImportCandidateHolder> sources, @NotNull String name,
+  public ImportFromExistingAction(@NotNull PsiElement target, @NotNull List<ImportCandidateHolder> sources, @NotNull String name,
                                   boolean useQualified, boolean importLocally) {
     myTarget = target;
     mySources = sources;
