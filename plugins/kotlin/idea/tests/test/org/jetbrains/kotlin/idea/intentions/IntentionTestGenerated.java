@@ -15050,6 +15050,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/samConversionToAnonymousObject/typeArgument_ni.kt");
         }
 
+        @TestMetadata("underScoreParameters.kt")
+        public void testUnderScoreParameters() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/underScoreParameters.kt");
+        }
+
+        @TestMetadata("underScoreParameters2.kt")
+        public void testUnderScoreParameters2() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/underScoreParameters2.kt");
+        }
+
+        @TestMetadata("underScoreParameters3.kt")
+        public void testUnderScoreParameters3() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/underScoreParameters3.kt");
+        }
+
         @TestMetadata("usedSameFunction.kt")
         public void testUsedSameFunction() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunction.kt");

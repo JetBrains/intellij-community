@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -71,6 +72,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
             lambda: KtLambdaExpression,
             functionDescriptor: FunctionDescriptor,
             functionName: String = "",
+            functionParameterName: (ValueParameterDescriptor, Int) -> String = { parameter, _ -> parameter.name.asString().quoteIfNeeded() },
             typeParameters: Map<String, KtTypeReference> = emptyMap(),
             replaceElement: (KtNamedFunction) -> KtExpression = { lambda.replaced(it) }
         ): KtExpression? {
@@ -94,14 +96,14 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
                     }
 
                     name(functionName)
-                    for (parameter in functionDescriptor.valueParameters) {
+                    for ((index, parameter) in functionDescriptor.valueParameters.withIndex()) {
                         val type = parameter.type.let { if (it.isFlexible()) it.makeNotNullable() else it }
                         val renderType = typeSourceCode.renderType(type)
-                        val name = parameter.name.asString().quoteIfNeeded()
+                        val parameterName = functionParameterName(parameter, index)
                         if (type.isTypeParameter()) {
-                            param(name, typeParameters[renderType]?.text ?: renderType)
+                            param(parameterName, typeParameters[renderType]?.text ?: renderType)
                         } else {
-                            param(name, renderType)
+                            param(parameterName, renderType)
                         }
                     }
 
