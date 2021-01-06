@@ -12,7 +12,7 @@ import com.intellij.find.actions.TargetVariant
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext.getSimpleContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
@@ -76,7 +76,7 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
       CommonDataKeys.PSI_FILE.name to file,
       CommonDataKeys.EDITOR.name to editor
     )
-    val dataContext = getSimpleContext(contextMap, DataContext.EMPTY_CONTEXT, true)
+    val dataContext = SimpleDataContext.getSimpleContext(contextMap, DataContext.EMPTY_CONTEXT)
     showUsages(project, dataContext, searchTargets)
   }
 

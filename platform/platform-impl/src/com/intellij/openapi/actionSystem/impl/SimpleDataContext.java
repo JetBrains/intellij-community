@@ -6,32 +6,20 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public final class SimpleDataContext implements DataContext {
   private final Map<String, Object> myDataId2Data;
   private final DataContext myParent;
-  private final boolean myWithRules;
-  private final DataProvider myDataProvider;
 
-  private SimpleDataContext(String dataId, Object data, DataContext parent) {
-    this(new HashMap<>(1), parent, false);
-    myDataId2Data.put(dataId, data);
-  }
-
-  private SimpleDataContext(@NotNull Map<String, Object> dataId2data, DataContext parent, boolean withRules) {
+  private SimpleDataContext(@NotNull Map<String, Object> dataId2data, DataContext parent) {
     myDataId2Data = dataId2data;
     myParent = parent;
-    myWithRules = withRules;
-    myDataProvider = withRules ? dataId -> getDataFromSelfOrParent(dataId) : __ -> null;
   }
 
   @Override
@@ -42,42 +30,33 @@ public final class SimpleDataContext implements DataContext {
       result = IdeFocusManager.getGlobalInstance().getFocusOwner();
     }
 
-    if (result == null && myWithRules) {
+    if (result == null) {
       GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
       if (rule != null) {
-        return rule.getData(myDataProvider);
+        return rule.getData(this::getDataFromSelfOrParent);
       }
     }
 
     return result;
   }
 
-  @Nullable
-  private Object getDataFromSelfOrParent(String dataId) {
+  private Object getDataFromSelfOrParent(@NotNull String dataId) {
     return myDataId2Data.containsKey(dataId) ? myDataId2Data.get(dataId) :
            myParent == null ? null : myParent.getData(dataId);
   }
 
   @NotNull
-  public static DataContext getSimpleContext(String dataId, Object data, DataContext parent) {
-    return new SimpleDataContext(dataId, data, parent);
+  public static DataContext getSimpleContext(@NotNull String dataId, Object data, DataContext parent) {
+    return new SimpleDataContext(Map.of(dataId, data), parent);
   }
 
   @NotNull
   public static DataContext getSimpleContext(@NotNull Map<String,Object> dataId2data, DataContext parent) {
-    return getSimpleContext(dataId2data, parent, false);
-  }
-
-  /**
-   * Creates a simple data context which can apply data rules.
-   */
-  @NotNull
-  public static DataContext getSimpleContext(@NotNull Map<String, Object> dataId2data, DataContext parent, boolean withRules) {
-    return new SimpleDataContext(dataId2data, parent, withRules);
+    return new SimpleDataContext(dataId2data, parent);
   }
 
   @NotNull
-  public static DataContext getSimpleContext(String dataId, Object data) {
+  public static DataContext getSimpleContext(@NotNull String dataId, Object data) {
     return getSimpleContext(dataId, data, null);
   }
 
