@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
@@ -488,12 +489,12 @@ public class WSLDistribution {
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o != null && getClass() == o.getClass() && myDescriptor.equals(((WSLDistribution)o).myDescriptor);
+    return this == o || o != null && getClass() == o.getClass() && getMsId().equals(((WSLDistribution)o).getMsId());
   }
 
   @Override
   public int hashCode() {
-    return myDescriptor.hashCode();
+    return Strings.stringHashCodeInsensitive(getMsId());
   }
 
   /** @deprecated use {@link WSLDistribution#getUNCRootPath()} instead */
