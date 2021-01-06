@@ -95,4 +95,20 @@
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Use destructuring declaration</problem_class>
         <description>Use destructuring declaration</description>
     </problem>
+    <problem>
+        <file>hasShadowedVariable2.kt</file>
+        <line>7</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="method" FQNAME="hasShadowedVariable2.HasShadowedVariable2Kt void test()" />
+        <problem_class id="Destructure" severity="INFO" attribute_key="INFO_ATTRIBUTES">Use destructuring declaration</problem_class>
+        <description>Use destructuring declaration</description>
+    </problem>
+    <problem>
+        <file>hasSameNameParameter.kt</file>
+        <line>8</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="method" FQNAME="hasSameNameParameter.HasSameNameParameterKt void test2()" />
+        <problem_class id="Destructure" severity="INFO" attribute_key="INFO_ATTRIBUTES">Use destructuring declaration</problem_class>
+        <description>Use destructuring declaration</description>
+    </problem>
 </problems>
