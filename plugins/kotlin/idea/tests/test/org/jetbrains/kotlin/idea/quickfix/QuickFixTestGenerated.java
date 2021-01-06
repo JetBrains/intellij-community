@@ -13761,6 +13761,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("unusedVariableInDestructuringDeclaration.kt")
+        public void testUnusedVariableInDestructuringDeclaration() throws Exception {
+            runTest("testData/quickfix/variables/unusedVariableInDestructuringDeclaration.kt");
+        }
+
         @TestMetadata("unusedVariableWithAnonymousFunctionInitialize1.kt")
         public void testUnusedVariableWithAnonymousFunctionInitialize1() throws Exception {
             runTest("testData/quickfix/variables/unusedVariableWithAnonymousFunctionInitialize1.kt");
