@@ -121,19 +121,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateMainMenuVisibility();
 
     if (Registry.is("ide.new.stripes.ui")) {
-      myTwToolbar = new IdeLeftToolbar();
-      myContentPane.add(myTwToolbar, getPosition());
-      Runnable listener = () -> {
-        myContentPane.remove(myTwToolbar);
-        myContentPane.add(myTwToolbar, getPosition());
-        myContentPane.revalidate();
-      };
-      ToolwindowSidebarPositionProvider positionProvider =
-        SearchTopHitProvider.EP_NAME.findExtension(ToolwindowSidebarPositionProvider.class);
-      if (positionProvider != null) {
-        positionProvider.addUpdateListener(listener);
-        Disposer.register(parentDisposable, () -> positionProvider.removeUpdateListener(listener));
-      }
+      myTwToolbar = new IdeLeftToolbar(parentDisposable);
+      myContentPane.add(myTwToolbar, IdeLeftToolbar.getMainPosition());
+      addMainPanePositionListener(parentDisposable);
     }
 
     myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
@@ -143,9 +133,18 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  @NotNull
-  private static String getPosition() {
-    return ToolwindowSidebarPositionProvider.Companion.isRightPosition() ? BorderLayout.EAST : BorderLayout.WEST;
+  private void addMainPanePositionListener(@NotNull Disposable parentDisposable) {
+    Runnable listener = () -> {
+      myContentPane.remove(myTwToolbar);
+      myContentPane.add(myTwToolbar, IdeLeftToolbar.getMainPosition());
+      myContentPane.revalidate();
+    };
+    ToolwindowSidebarPositionProvider positionProvider =
+      SearchTopHitProvider.EP_NAME.findExtension(ToolwindowSidebarPositionProvider.class);
+    if (positionProvider != null) {
+      positionProvider.addUpdateListener(listener);
+      Disposer.register(parentDisposable, () -> positionProvider.removeUpdateListener(listener));
+    }
   }
 
   public IdeLeftToolbar getTwToolbar() {

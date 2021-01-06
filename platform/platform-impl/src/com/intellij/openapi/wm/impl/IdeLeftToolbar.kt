@@ -1,14 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.openapi.wm.impl.ToolwindowSidebarPositionProvider.Companion.isRightPosition
 import com.intellij.ui.components.OnOffButton
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.NotNull
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -18,7 +22,7 @@ import javax.swing.Box
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class IdeLeftToolbar internal constructor() : JPanel() {
+class IdeLeftToolbar(private val parentDisposable: @NotNull Disposable) : JPanel() {
   lateinit var pane: ToolWindowsPane
   private val squareButtonPane: JPanel
   private val extendedPane: JPanel
@@ -31,12 +35,26 @@ class IdeLeftToolbar internal constructor() : JPanel() {
 
     extendedPane = initExtendedPane()
     extendedBag = GridBag()
-    add(extendedPane, if (isRightPosition()) BorderLayout.WEST else BorderLayout.EAST)
+
+    addExtendedPositionListener(extendedPane)
+    add(extendedPane, getExtendedPosition())
 
     squareButtonPane = initMainPane()
     add(squareButtonPane, BorderLayout.CENTER)
 
     moreButton = MoreSquareStripeButton(this)
+  }
+
+  private fun addExtendedPositionListener(extendedPane: JPanel) {
+    val listener = Runnable {
+      remove(extendedPane)
+      add(extendedPane, getExtendedPosition())
+      revalidate()
+    }
+    SearchTopHitProvider.EP_NAME.findExtension(ToolwindowSidebarPositionProvider::class.java)?.let {
+      it.addUpdateListener(listener)
+      Disposer.register(parentDisposable, { it.removeUpdateListener(listener) })
+    }
   }
 
   private fun initSideBar() {
@@ -146,5 +164,8 @@ class IdeLeftToolbar internal constructor() : JPanel() {
         border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1,
                                          if (isRightPosition()) 1 else 0, 0, if (isRightPosition()) 0 else 1)
       }
+
+    @JvmStatic fun getMainPosition() = if (isRightPosition()) BorderLayout.EAST else BorderLayout.WEST
+    @JvmStatic fun getExtendedPosition() = if (isRightPosition()) BorderLayout.WEST else BorderLayout.EAST
   }
 }
