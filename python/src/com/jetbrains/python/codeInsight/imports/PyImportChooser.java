@@ -21,9 +21,7 @@ import java.util.List;
 public class PyImportChooser implements ImportChooser {
 
   @Override
-  public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources,
-                                                     String name,
-                                                     boolean useQualifiedImport) {
+  public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources, boolean useQualifiedImport) {
 
     AsyncPromise<ImportCandidateHolder> result = new AsyncPromise<>();
 

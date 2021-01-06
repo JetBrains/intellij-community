@@ -91,7 +91,7 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void selectSourceAndDo() {
     ImportChooser.getInstance()
-      .selectImport(mySources, myName, myUseQualifiedImport)
+      .selectImport(mySources, myUseQualifiedImport)
       .onSuccess(candidate -> {
         PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
         doWriteAction(candidate);
