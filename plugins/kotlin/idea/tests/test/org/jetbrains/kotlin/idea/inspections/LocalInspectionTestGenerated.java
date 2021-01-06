@@ -471,22 +471,22 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @TestMetadata("callInvokeOperator.kt")
             public void testCallInvokeOperator() throws Exception {
-                runTest("idea/testData/inspectionsLocal/branched/ifThenToSafeAccess/callInvokeOperator.kt");
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/callInvokeOperator.kt");
             }
 
             @TestMetadata("callInvokeOperator2.kt")
             public void testCallInvokeOperator2() throws Exception {
-                runTest("idea/testData/inspectionsLocal/branched/ifThenToSafeAccess/callInvokeOperator2.kt");
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/callInvokeOperator2.kt");
             }
 
             @TestMetadata("callVariable.kt")
             public void testCallVariable() throws Exception {
-                runTest("idea/testData/inspectionsLocal/branched/ifThenToSafeAccess/callVariable.kt");
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/callVariable.kt");
             }
 
             @TestMetadata("callVariable2.kt")
             public void testCallVariable2() throws Exception {
-                runTest("idea/testData/inspectionsLocal/branched/ifThenToSafeAccess/callVariable2.kt");
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/callVariable2.kt");
             }
 
             @TestMetadata("conditionComparesNullWithNull.kt")
@@ -3677,7 +3677,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("recursiveCall.kt")
         public void testRecursiveCall() throws Exception {
-            runTest("idea/testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/recursiveCall.kt");
+            runTest("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck/recursiveCall.kt");
         }
 
         @TestMetadata("until.kt")

@@ -2086,7 +2086,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("addExtensionFunctionParameterForTypeMismatch.kt")
         public void testAddExtensionFunctionParameterForTypeMismatch() throws Exception {
-            runTest("idea/testData/quickfix/changeSignature/addExtensionFunctionParameterForTypeMismatch.kt");
+            runTest("testData/quickfix/changeSignature/addExtensionFunctionParameterForTypeMismatch.kt");
         }
 
         @TestMetadata("addForItParameter.kt")
@@ -2465,6 +2465,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("constantExpectedTypeMismatch.kt")
+        public void testConstantExpectedTypeMismatch() throws Exception {
+            runTest("testData/quickfix/changeToLabeledReturn/constantExpectedTypeMismatch.kt");
+        }
+
         @TestMetadata("multipleInner.kt")
         public void testMultipleInner() throws Exception {
             runTest("testData/quickfix/changeToLabeledReturn/multipleInner.kt");
@@ -2487,22 +2492,22 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("nullForNonnullType.kt")
         public void testNullForNonnullType() throws Exception {
-            runTest("idea/testData/quickfix/changeToLabeledReturn/nullForNonnullType.kt");
+            runTest("testData/quickfix/changeToLabeledReturn/nullForNonnullType.kt");
         }
 
         @TestMetadata("nullForNonnullType2.kt")
         public void testNullForNonnullType2() throws Exception {
-            runTest("idea/testData/quickfix/changeToLabeledReturn/nullForNonnullType2.kt");
+            runTest("testData/quickfix/changeToLabeledReturn/nullForNonnullType2.kt");
         }
 
         @TestMetadata("typeMismatch.kt")
         public void testTypeMismatch() throws Exception {
-            runTest("idea/testData/quickfix/changeToLabeledReturn/typeMismatch.kt");
+            runTest("testData/quickfix/changeToLabeledReturn/typeMismatch.kt");
         }
 
         @TestMetadata("typeMismatch2.kt")
         public void testTypeMismatch2() throws Exception {
-            runTest("idea/testData/quickfix/changeToLabeledReturn/typeMismatch2.kt");
+            runTest("testData/quickfix/changeToLabeledReturn/typeMismatch2.kt");
         }
     }
 
@@ -6519,22 +6524,22 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @TestMetadata("invoke.kt")
             public void testInvoke() throws Exception {
-                runTest("idea/testData/quickfix/deprecatedSymbolUsage/operatorCalls/invoke.kt");
+                runTest("testData/quickfix/deprecatedSymbolUsage/operatorCalls/invoke.kt");
             }
 
             @TestMetadata("invoke2.kt")
             public void testInvoke2() throws Exception {
-                runTest("idea/testData/quickfix/deprecatedSymbolUsage/operatorCalls/invoke2.kt");
+                runTest("testData/quickfix/deprecatedSymbolUsage/operatorCalls/invoke2.kt");
             }
 
             @TestMetadata("invoke3.kt")
             public void testInvoke3() throws Exception {
-                runTest("idea/testData/quickfix/deprecatedSymbolUsage/operatorCalls/invoke3.kt");
+                runTest("testData/quickfix/deprecatedSymbolUsage/operatorCalls/invoke3.kt");
             }
 
             @TestMetadata("invoke4.kt")
             public void testInvoke4() throws Exception {
-                runTest("idea/testData/quickfix/deprecatedSymbolUsage/operatorCalls/invoke4.kt");
+                runTest("testData/quickfix/deprecatedSymbolUsage/operatorCalls/invoke4.kt");
             }
 
             @TestMetadata("plusAssign.kt")
@@ -13017,7 +13022,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("variableInitializedWithNullProperty.kt")
         public void testVariableInitializedWithNullProperty() throws Exception {
-            runTest("idea/testData/quickfix/typeMismatch/variableInitializedWithNullProperty.kt");
+            runTest("testData/quickfix/typeMismatch/variableInitializedWithNullProperty.kt");
         }
 
         @TestMetadata("when.kt")
