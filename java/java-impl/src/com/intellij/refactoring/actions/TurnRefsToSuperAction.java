@@ -45,8 +45,9 @@ public class TurnRefsToSuperAction extends BaseJavaRefactoringAction {
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
     if (ActionPlaces.isPopupPlace(place) || place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
-      PsiClass psiClass = PsiTreeUtil.getParentOfType(element,PsiClass.class, false);
-      return RefactoringActionContextUtil.isJavaClassHeader(element) && RefactoringActionContextUtil.isClassWithExtendsOrImplements(psiClass);
+      PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);
+      PsiClass psiClass = PsiTreeUtil.getParentOfType(caretElement, PsiClass.class, false);
+      return RefactoringActionContextUtil.isJavaClassHeader(caretElement) && RefactoringActionContextUtil.isClassWithExtendsOrImplements(psiClass);
     }
     return super.isAvailableOnElementInEditorAndFile(element, editor, file, context, place);
   }

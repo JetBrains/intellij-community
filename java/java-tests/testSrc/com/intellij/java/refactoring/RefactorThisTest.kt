@@ -75,8 +75,8 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertTrue(doActionExists<TurnRefsToSuperAction>())
   }
 
-  fun testUseInterfaceWherePossibleOnReference() {
-    assertTrue(doActionExists<TurnRefsToSuperAction>())
+  fun testUseInterfaceWherePossibleFilteredOnReference() {
+    assertFalse(doActionExists<TurnRefsToSuperAction>())
   }
 
   fun testUseInterfaceWherePossibleIsFiltered() {

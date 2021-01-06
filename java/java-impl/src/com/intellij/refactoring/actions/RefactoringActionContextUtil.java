@@ -13,7 +13,8 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public final class RefactoringActionContextUtil {
-  public static boolean isJavaClassHeader(@NotNull PsiElement element) {
+  public static boolean isJavaClassHeader(@Nullable PsiElement element) {
+    if (element == null) return false;
     if (element.getLanguage() != JavaLanguage.INSTANCE) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     return psiClass != null && (element == psiClass || element == psiClass.getNameIdentifier() ||
