@@ -17,7 +17,13 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyEvent
+import java.lang.Double.isFinite
 import java.lang.Long.parseLong
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.*
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.KeyStroke
@@ -31,7 +37,7 @@ internal class CalculatorSEContributorFactory : SearchEverywhereContributorFacto
   }
 }
 
-internal class EvaluationResult(val value: Double)
+internal class EvaluationResult(val value: String)
 
 private class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {
 
@@ -55,7 +61,7 @@ private class CalculatorSEContributor : WeightedSearchEverywhereContributor<Eval
   override fun getDataForItem(element: EvaluationResult, dataId: String): Any? = null
 
   override fun processSelectedItem(selected: EvaluationResult, modifiers: Int, searchText: String): Boolean {
-    CopyPasteManager.getInstance().setContents(StringSelection(selected.value.toString()))
+    CopyPasteManager.getInstance().setContents(StringSelection(selected.value))
     return true
   }
 
@@ -83,7 +89,7 @@ private class EvaluationResultRenderer : ListCellRenderer<EvaluationResult> {
     resultComponent.icon = AllIcons.Debugger.EvaluateExpression
     val foreground = if (isSelected) list.selectionForeground else list.foreground
     val attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground)
-    resultComponent.append(LangBundle.message("search.everywhere.calculator.result.0", value.value.toString()), attributes)
+    resultComponent.append(LangBundle.message("search.everywhere.calculator.result.0", value.value), attributes)
 
     shortcutComponent.clear()
     val shortcutText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
@@ -99,6 +105,10 @@ private class EvaluationResultRenderer : ListCellRenderer<EvaluationResult> {
     panel.font = list.font
     return panel
   }
+}
+
+internal fun evaluate(input: String): String {
+  return format(round(doEvaluate(input)))
 }
 
 /**
@@ -119,7 +129,7 @@ private class EvaluationResultRenderer : ListCellRenderer<EvaluationResult> {
  *            | functionName factor
  *            | factor `^` factor
  */
-private fun evaluate(str: String): Double {
+private fun doEvaluate(str: String): Double {
   return object : Any() {
     var pos = -1
     var ch: Char = Char.MIN_VALUE
@@ -259,4 +269,34 @@ private fun evaluate(str: String): Double {
       return x
     }
   }.parse()
+}
+
+private const val precision: Int = 9
+
+/**
+ * `x.yyEzz` will have maximum [precision] digits after decimal separator in exponential notation
+ */
+private const val minExponentialNotationValue: Long = 1_000_000_000 // 10 ^ maxFractionDigits
+
+private fun round(value: Double): Double {
+  if (isFinite(value)) {
+    return BigDecimal(value.toString()).setScale(precision, RoundingMode.HALF_UP).toDouble()
+  }
+  else {
+    return value
+  }
+}
+
+private fun format(doubleValue: Double): String {
+  val longValue = doubleValue.toLong()
+  val pattern = if (abs(longValue) < minExponentialNotationValue) "0" else "0E0"
+  val df = DecimalFormat(pattern, DecimalFormatSymbols.getInstance(Locale.ENGLISH)).apply {
+    maximumFractionDigits = precision
+  }
+  return if (longValue.toDouble() == doubleValue) {
+    df.format(longValue)
+  }
+  else {
+    df.format(doubleValue)
+  }
 }
