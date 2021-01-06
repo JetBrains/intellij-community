@@ -126,10 +126,10 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   }
 
   @NotNull
-  public @NlsSafe String getPresentableText(@NotNull String myName) {
+  public @NlsSafe String getPresentableText() {
     PyImportElement importElement = getImportElement();
     PsiElement importable = getImportable();
-    final StringBuilder sb = new StringBuilder(getQualifiedName(myName, myPath, importElement));
+    final StringBuilder sb = new StringBuilder(getQualifiedName(getImportableName(), myPath, importElement));
     PsiElement parent = null;
     if (importElement != null) {
       parent = importElement.getParent();

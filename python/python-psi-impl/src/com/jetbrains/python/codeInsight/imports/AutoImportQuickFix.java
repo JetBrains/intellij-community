@@ -121,7 +121,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   public String getText() {
     if (myUseQualifiedImport) return PyPsiBundle.message("ACT.qualify.with.module");
     else if (myImports.size() == 1) {
-      return PyPsiBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText(myInitialName));
+      return PyPsiBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText());
     }
     else {
       return PyPsiBundle.message("QFIX.auto.import.import.this.name");

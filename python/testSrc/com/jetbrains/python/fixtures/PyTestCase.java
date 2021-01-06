@@ -570,7 +570,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     if (expected.length > 0) {
       T prev = expected[0];
       int prevIndex = actualList.indexOf(prev);
-      assertTrue(prevIndex >= 0);
+      assertTrue(prev + " is not found in " + actualList, prevIndex >= 0);
       for (int i = 1; i < expected.length; i++) {
         final T next = expected[i];
         final int nextIndex = actualList.indexOf(next);

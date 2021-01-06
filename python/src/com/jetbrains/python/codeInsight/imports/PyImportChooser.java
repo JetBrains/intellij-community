@@ -30,12 +30,12 @@ public class PyImportChooser implements ImportChooser {
     // GUI part
     DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
       .createPopupChooserBuilder(sources)
-      .setRenderer(new CellRenderer(name))
+      .setRenderer(new CellRenderer())
       .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
       .setItemChosenCallback(item -> {
         result.setResult(item);
       })
-      .setNamerForFiltering(o -> o.getPresentableText(name))
+      .setNamerForFiltering(o -> o.getPresentableText())
       .createPopup()
       .showInBestPositionFor(dataContext));
 
@@ -45,10 +45,8 @@ public class PyImportChooser implements ImportChooser {
   // Stolen from FQNameCellRenderer
   private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer<ImportCandidateHolder> {
     private final Font FONT;
-    private final String myName;
 
-    CellRenderer(String name) {
-      myName = name;
+    CellRenderer() {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
       setOpaque(true);
@@ -66,7 +64,7 @@ public class PyImportChooser implements ImportChooser {
       if (importable != null) {
         setIcon(importable.getIcon(0));
       }
-      String item_name = value.getPresentableText(myName);
+      String item_name = value.getPresentableText();
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
       setFont(FONT);
