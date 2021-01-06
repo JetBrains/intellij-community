@@ -35,6 +35,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   @Nullable private final SmartPsiElementPointer<PyImportElement> myImportElement;
   @NotNull private final SmartPsiElementPointer<PsiFileSystemItem> myFile;
   @Nullable private final QualifiedName myPath;
+  private final String myImportableName;
   @Nullable private final String myAsName;
   private final int myRelevance;
 
@@ -55,12 +56,12 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     SmartPointerManager pointerManager = SmartPointerManager.getInstance(importable.getProject());
     myFile = pointerManager.createSmartPsiElementPointer(file);
     myImportable = pointerManager.createSmartPsiElementPointer(importable);
+    myImportableName = importable instanceof PsiNamedElement ? PyUtil.getElementNameWithoutExtension(((PsiNamedElement)importable)) : null;
     myImportElement = importElement != null ? pointerManager.createSmartPsiElementPointer(importElement) : null;
     myPath = path;
     myAsName = asName;
-    String name = importable instanceof PsiNamedElement ? ((PsiNamedElement)importable).getName() : null;
-    myRelevance = PyCompletionUtilsKt.computeCompletionWeight(importable, name, path, null, false);
-    LOG.debug("Computed relevance for import item ", name, ": ", myRelevance);
+    myRelevance = PyCompletionUtilsKt.computeCompletionWeight(importable, myImportableName, myPath, null, false);
+    LOG.debug("Computed relevance for import item ", myImportableName, ": ", myRelevance);
     assert importElement != null || path != null; // one of these must be present
   }
 
@@ -72,6 +73,10 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   @Nullable
   public PsiElement getImportable() {
     return myImportable.getElement();
+  }
+
+  public String getImportableName() {
+    return myImportableName;
   }
 
   @Nullable
@@ -156,6 +161,9 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   public int compareTo(@NotNull ImportCandidateHolder other) {
     if (myImportElement != null && other.myImportElement == null) return -1;
     if (myImportElement == null && other.myImportElement != null) return 1;
+    if (myAsName != null && other.myAsName == null) return -1;
+    if (myAsName == null && other.myAsName != null) return 1;
+
     int comparedRelevance = Comparator
       .comparing(ImportCandidateHolder::getRelevance).reversed()
       .compare(this, other);

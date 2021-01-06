@@ -17,9 +17,12 @@ package com.jetbrains.python.quickFixes;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,11 +34,14 @@ import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Mikhail Golubev
@@ -263,6 +269,25 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   public void testOrderingOfNamesInFromImportEnd() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-36374
+  public void testGlobalDefinitionDoesNotShadowCommonPackageAliasVariant() {
+    doMultiFileAutoImportTest("Import", fix -> {
+      List<ImportCandidateHolder> candidates = fix.getCandidates();
+      ImportCandidateHolder importNumpyAsNpVariant = ContainerUtil.find(candidates, c -> {
+        PsiDirectory dir = as(c.getImportable(), PsiDirectory.class);
+        return dir != null && dir.getName().equals("numpy") && "np".equals(c.getAsName());
+      });
+      assertNotNull(importNumpyAsNpVariant);
+      List<String> candidateText = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText("np"));
+      assertContainsInRelativeOrder(candidateText, "np", "pandas.np");
+      return true;
+    });
+  }
+
+  public void testCommonPackageAlias() {
     doMultiFileAutoImportTest("Import");
   }
 

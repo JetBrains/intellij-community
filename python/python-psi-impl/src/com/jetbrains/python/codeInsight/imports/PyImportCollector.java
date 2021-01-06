@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -113,27 +114,32 @@ public class PyImportCollector {
     }
     symbols.addAll(PyVariableNameIndex.find(myRefText, project, scope));
     if (isPossibleModuleReference()) {
-      symbols.addAll(findImportableModules(project, scope));
+      symbols.addAll(findImportableModules(myRefText, project, scope));
+      String packageQName = PyPackageAliasesProvider.commonImportAliases.get(myRefText);
+      if (packageQName != null) {
+        symbols.addAll(findImportableModules(packageQName, project, scope));
+      }
     }
-    if (!symbols.isEmpty()) {
-      for (PsiElement symbol : symbols) {
-        if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
-          PsiFileSystemItem srcfile =
-            symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
-          if (srcfile != null && isAcceptableForImport(existingImportFile, srcfile)) {
-            QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, myNode);
-            if (importPath == null) {
-              continue;
-            }
-            if (symbol instanceof PsiFileSystemItem) {
-              importPath = importPath.removeTail(1);
-            }
-            final String symbolImportQName = importPath.append(myRefText).toString();
-            if (!seenCandidateNames.contains(symbolImportQName)) {
-              // a new, valid hit
-              fix.addImport(symbol, srcfile, importPath, myAlias);
-              seenCandidateNames.add(symbolImportQName);
-            }
+    for (PsiElement symbol : symbols) {
+      if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
+        PsiFileSystemItem srcfile =
+          symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
+        if (srcfile != null && isAcceptableForImport(existingImportFile, srcfile)) {
+          QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, myNode);
+          if (importPath == null) {
+            continue;
+          }
+          if (symbol instanceof PsiFileSystemItem) {
+            importPath = importPath.removeTail(1);
+          }
+          if (!(symbol instanceof PsiNamedElement)) {
+            continue;
+          }
+          String name = PyUtil.getElementNameWithoutExtension((PsiNamedElement)symbol);
+          final String symbolImportQName = importPath.append(name).toString();
+          if (seenCandidateNames.add(symbolImportQName)) {
+            String alias = name.equals(myRefText) ? null : myRefText;
+            fix.addImport(symbol, srcfile, importPath, alias);
           }
         }
       }
@@ -186,10 +192,10 @@ public class PyImportCollector {
     return true;
   }
 
-  private Collection<PsiElement> findImportableModules(Project project, GlobalSearchScope scope) {
-    List<PsiElement> result = new ArrayList<>();
+  private Collection<PsiFileSystemItem> findImportableModules(String name, Project project, GlobalSearchScope scope) {
+    List<PsiFileSystemItem> result = new ArrayList<>();
     // Add packages
-    FilenameIndex.processFilesByName(myRefText, true, item -> {
+    FilenameIndex.processFilesByName(name, true, item -> {
       ProgressManager.checkCanceled();
       final PsiDirectory candidatePackageDir = as(item, PsiDirectory.class);
       if (candidatePackageDir != null && candidatePackageDir.findFile(PyNames.INIT_DOT_PY) != null) {
@@ -198,7 +204,7 @@ public class PyImportCollector {
       return true;
     }, scope, project, null);
     // Add modules
-    FilenameIndex.processFilesByName(myRefText + ".py", false, true, item -> {
+    FilenameIndex.processFilesByName(name + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
       if (PyUtil.isImportable(myNode.getContainingFile(), item)) {
         result.add(item);
