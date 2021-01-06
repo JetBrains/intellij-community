@@ -64,42 +64,41 @@ class IdeLeftToolbar(private val parentDisposable: @NotNull Disposable) : JPanel
   }
 
   fun addStripeButton(project: Project, button: StripeButton) {
-    val stickySquareButton = SquareStripeButton(button)
     if (PropertiesComponent.getInstance(project).getValues(STICKY_TW) == null) {
       ToolWindowSidebarProvider.getInstance().defaultToolwindows(project).forEach {
         saveTWid(project, it)
       }
     }
 
-    if (isTWSticky(project, stickySquareButton)) {
+    if (isTWSticky(project, button)) {
       rebuildOrderedSquareButtons(project)
     }
 
-    addButtonOnExtendedPane(project, button, stickySquareButton)
+    addButtonOnExtendedPane(project, button)
   }
 
-  private fun addButtonOnExtendedPane(project: Project, button: StripeButton, stickySquareButton: SquareStripeButton) {
+  private fun addButtonOnExtendedPane(project: Project, button: StripeButton) {
     extendedBag.nextLine()
     extendedPane.apply {
       remove(horizontalGlue)
       add(SquareStripeButton(button), extendedBag.next())
       add(JLabel(button.text).apply { border = JBUI.Borders.emptyRight(50) }, extendedBag.next().anchor(GridBagConstraints.WEST))
-      add(createOnOffButton(project, stickySquareButton), extendedBag.next().coverLine())
+      add(createOnOffButton(project, button), extendedBag.next().coverLine())
       add(horizontalGlue, extendedBag.nextLine().next().weighty(1.0).fillCell().coverLine())
     }
   }
 
-  private fun createOnOffButton(project: Project, stickySquareButton: SquareStripeButton) =
+  private fun createOnOffButton(project: Project, button: StripeButton) =
     OnOffButton().also {
-      it.model.isSelected = isTWSticky(project, stickySquareButton)
+      it.model.isSelected = isTWSticky(project, button)
 
       it.addActionListener(object : AbstractAction() {
         override fun actionPerformed(e: ActionEvent) {
           if (it.isSelected) {
-            addStickySquareStripeButton(project, stickySquareButton)
+            addStickySquareStripeButton(project, button)
           }
           else {
-            removeSquareStripeButton(project, stickySquareButton)
+            removeSquareStripeButton(project, button)
           }
           squareButtonPane.revalidate()
         }
@@ -110,24 +109,26 @@ class IdeLeftToolbar(private val parentDisposable: @NotNull Disposable) : JPanel
     squareButtonPane.removeAll()
     PropertiesComponent.getInstance(project).getValues(STICKY_TW).orEmpty().forEach { sticky ->
       val toolWindow = getInstance(project).getToolWindow(sticky) as ToolWindowImpl? ?: return@forEach
-      squareButtonPane.add(SquareStripeButton(StripeButton(pane, toolWindow)))
+      squareButtonPane.add(SquareStripeButton(StripeButton(pane, toolWindow).also { it.updatePresentation() }))
     }
     squareButtonPane.add(moreButton)
   }
 
-  private fun addStickySquareStripeButton(project: Project, stickySquareButton: SquareStripeButton) {
-    saveTWid(project, stickySquareButton.toolWindow.id)
+  private fun addStickySquareStripeButton(project: Project, button: StripeButton) {
+    saveTWid(project, button.toolWindow.id)
     rebuildOrderedSquareButtons(project)
   }
 
-  private fun removeSquareStripeButton(project: Project, stickySquareButton: SquareStripeButton) {
-    unsetTWid(project, stickySquareButton)
+  private fun removeSquareStripeButton(project: Project, button: StripeButton) {
+    unsetTWid(project, button)
     rebuildOrderedSquareButtons(project)
   }
 
   fun openExtendedToolwindowPane(show: Boolean) {
     extendedPane.isVisible = show
   }
+
+  fun isExtendedToolwindowPaneShown() = extendedPane.isVisible
 
   companion object {
     private const val STICKY_TW = "STICKY_TW"
@@ -139,14 +140,14 @@ class IdeLeftToolbar(private val parentDisposable: @NotNull Disposable) : JPanel
       }
     }
 
-    private fun isTWSticky(project: Project, stickySquareButton: SquareStripeButton) =
-      PropertiesComponent.getInstance(project).getValues(STICKY_TW)?.contains(stickySquareButton.toolWindow.id) ?: false
+    private fun isTWSticky(project: Project, button: StripeButton) =
+      PropertiesComponent.getInstance(project).getValues(STICKY_TW)?.contains(button.toolWindow.id) ?: false
 
-    private fun unsetTWid(project: Project, stickySquareButton: SquareStripeButton) {
+    private fun unsetTWid(project: Project, button: StripeButton) {
       PropertiesComponent.getInstance(project).setValues(
         STICKY_TW,
         (PropertiesComponent.getInstance(project).getValues(STICKY_TW).orEmpty()).toMutableList().apply {
-          remove(stickySquareButton.toolWindow.id)
+          remove(button.toolWindow.id)
         }.toTypedArray().ifEmpty { null })
     }
 

@@ -248,7 +248,7 @@ class PythonOnboardingTour(module: Module) :
   private fun LessonContext.openLearnToolwindow() {
     task {
       triggerByUiComponentAndHighlight { stripe: StripeButton ->
-        (stripe !is SquareStripeButton) && stripe.windowInfo.id == "Learn"
+        stripe.windowInfo.id == "Learn"
       }
     }
 
@@ -271,7 +271,7 @@ class PythonOnboardingTour(module: Module) :
     }
     task {
       triggerByUiComponentAndHighlight { stripe: StripeButton ->
-        (stripe !is SquareStripeButton) && stripe.windowInfo.id == "Project"
+        stripe.windowInfo.id == "Project"
       }
     }
 
