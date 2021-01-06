@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui
 
 import circlet.client.api.M2ChannelRecord
 import circlet.client.api.TD_MemberProfile
 import circlet.client.api.fullName
-import circlet.completion.mentions.MentionConverter
 import circlet.m2.ChannelsVm
 import circlet.m2.M2MessageVm
 import circlet.m2.channel.M2ChannelVm
@@ -15,9 +14,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.space.chat.markdown.convertToHtml
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItemWithThread
-import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.ColorUtil
@@ -102,18 +99,6 @@ internal fun M2MessageVm.getLink(): String? =
 @Nls
 internal fun TD_MemberProfile.link(): HtmlChunk =
   HtmlChunk.link(SpaceUrls.member(username), name.fullName()) // NON-NLS
-
-@NlsSafe
-internal fun processItemText(server: String, @NlsSafe text: String, isEdited: Boolean) = convertToHtml(
-  MentionConverter.markdown(text, server).let {
-    if (isEdited) {
-      it + " " + getGrayTextHtml(SpaceBundle.message("chat.message.edited.text"))
-    }
-    else {
-      it
-    }
-  }
-)
 
 @NlsSafe
 internal fun getGrayTextHtml(@Nls text: String): String =

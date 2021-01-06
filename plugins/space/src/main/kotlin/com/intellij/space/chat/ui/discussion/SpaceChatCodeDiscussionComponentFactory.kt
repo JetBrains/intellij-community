@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.discussion
 
 import circlet.code.api.CodeDiscussionAddedFeedEvent
@@ -11,10 +11,9 @@ import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.ui.SpaceChatAvatarType
-import com.intellij.space.chat.ui.processItemText
+import com.intellij.space.chat.ui.SpaceChatMarkdownTextComponent
 import com.intellij.space.chat.ui.thread.createThreadComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
@@ -75,7 +74,7 @@ class SpaceChatCodeDiscussionComponentFactory(
       add(fileNameComponent)
       add(diffEditorComponent, VerticalLayout.FILL_HORIZONTAL)
     }
-    val reviewCommentComponent = HtmlEditorPane()
+    val reviewCommentComponent = SpaceChatMarkdownTextComponent(server)
 
     val panel = JPanel(VerticalLayout(UI.scale(4))).apply {
       isOpaque = false
@@ -126,7 +125,7 @@ class SpaceChatCodeDiscussionComponentFactory(
     thread.mvms.forEachWithPrevious(lifetime) { prev, new ->
       val messages = new.messages
       val comment = messages.first()
-      reviewCommentComponent.setBody(processItemText(server, comment.message.text, comment.message.edited != null))
+      reviewCommentComponent.setMarkdownText(comment.message.text, comment.message.edited != null)
       reviewCommentComponent.repaint()
       if (!collapseModel.value) {
         updateActionsComponentsVisibility(threadComponent, outerActionsPanel, component, prev?.messages?.size, messages.size)

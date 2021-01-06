@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui
 
 import circlet.client.api.M2TextItemContent
+import circlet.client.api.mc.ChatMessage
 import circlet.client.api.mc.MCMessage
+import circlet.client.api.mc.toMessage
 import circlet.code.api.*
 import circlet.platform.client.resolve
-import circlet.platform.client.resolveAll
 import circlet.principals.asUser
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
@@ -18,17 +18,16 @@ import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.discussion.SpaceChatCodeDiscussionComponentFactory
 import com.intellij.space.chat.ui.message.MessageTitleComponent
 import com.intellij.space.chat.ui.message.SpaceChatMessagePendingHeader
+import com.intellij.space.chat.ui.message.SpaceMCMessageComponent
+import com.intellij.space.chat.ui.message.SpaceStyledMessageComponent
 import com.intellij.space.chat.ui.thread.SpaceChatReplyActionFactory
 import com.intellij.space.chat.ui.thread.createThreadComponent
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
-import com.intellij.space.utils.SpaceUrls
-import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.codereview.SingleValueModelImpl
@@ -40,10 +39,8 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
-import org.jetbrains.annotations.Nls
 import runtime.Ui
 import runtime.reactive.awaitLoaded
-import java.awt.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -85,26 +82,18 @@ internal class SpaceChatItemComponentFactory(
             }
           }
         }
-        is ReviewRevisionsChangedEvent -> {
-          val review = details.review?.resolve()
-          if (review == null) {
-            EventMessagePanel(createSimpleMessageComponent(item))
-          }
-          else {
-            details.createComponent(review)
-          }
-        }
-        is ReviewCompletionStateChangedEvent -> EventMessagePanel(createSimpleMessageComponent(item))
+        is ReviewCompletionStateChangedEvent -> SpaceStyledMessageComponent(createSimpleMessageComponent(item))
         is ReviewerChangedEvent -> {
           val user = details.uid.resolve().link()
           val text = when (details.changeType) {
             ReviewerChangedType.Joined -> SpaceBundle.message("chat.reviewer.added", user)
             ReviewerChangedType.Left -> SpaceBundle.message("chat.reviewer.removed", user)
           }
-          EventMessagePanel(createSimpleMessageComponent(text))
+          SpaceStyledMessageComponent(SpaceChatMarkdownTextComponent(server, text))
         }
-        is MergeRequestMergedEvent -> EventMessagePanel(
-          createSimpleMessageComponent(
+        is MergeRequestMergedEvent -> SpaceStyledMessageComponent(
+          SpaceChatMarkdownTextComponent(
+            server,
             HtmlChunk.raw(
               SpaceBundle.message(
                 "chat.review.merged",
@@ -114,15 +103,17 @@ internal class SpaceChatItemComponentFactory(
             ).wrapWith(html()).toString()
           )
         )
-        is MergeRequestBranchDeletedEvent -> EventMessagePanel(
-          createSimpleMessageComponent(
+        is MergeRequestBranchDeletedEvent -> SpaceStyledMessageComponent(
+          SpaceChatMarkdownTextComponent(
+            server,
             HtmlChunk.raw(
               SpaceBundle.message("chat.review.deleted.branch", HtmlChunk.text(details.branch).bold()) // NON-NLS
             ).wrapWith(html()).toString()
           )
         )
-        is ReviewTitleChangedEvent -> EventMessagePanel(
-          createSimpleMessageComponent(
+        is ReviewTitleChangedEvent -> SpaceStyledMessageComponent(
+          SpaceChatMarkdownTextComponent(
+            server,
             HtmlChunk.raw(
               SpaceBundle.message(
                 "chat.review.title.changed",
@@ -132,7 +123,10 @@ internal class SpaceChatItemComponentFactory(
             ).wrapWith(html()).toString()
           )
         )
-        is MCMessage -> EventMessagePanel(createSimpleMessageComponent(item.text))
+        is MCMessage -> when (val chatMessage = details.toMessage()) {
+          is ChatMessage.Text -> SpaceChatMarkdownTextComponent(server, item.text)
+          is ChatMessage.Block -> SpaceMCMessageComponent(server, chatMessage)
+        }
         else -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
@@ -141,41 +135,6 @@ internal class SpaceChatItemComponentFactory(
       SpaceChatMessagePendingHeader(item),
       createEditableContent(component, item)
     )
-  }
-
-  private fun ReviewRevisionsChangedEvent.createComponent(review: CodeReviewRecord): JComponent {
-    val commitsCount = commits.size
-    @Nls val text = when (changeType) {
-      ReviewRevisionsChangedType.Created -> SpaceBundle.message("chat.code.review.created.message", commitsCount)
-      ReviewRevisionsChangedType.Added -> SpaceBundle.message("chat.commits.added.message", commitsCount)
-      ReviewRevisionsChangedType.Removed -> SpaceBundle.message("chat.commits.removed.message", commitsCount)
-    }
-
-    val message = createSimpleMessageComponent(text)
-
-    val content = JPanel(VerticalLayout(JBUI.scale(5))).apply {
-      isOpaque = false
-      add(message)
-      commits.resolveAll().forEach { commit ->
-        val location = when (changeType) {
-          ReviewRevisionsChangedType.Removed -> {
-            SpaceUrls.revision(review.project, commit.repositoryName, commit.revision)
-          }
-          else -> {
-            SpaceUrls.reviewFiles(review.project, review.number, listOf(commit.revision))
-          }
-        }
-        add(LinkLabel<Any?>(
-          commit.message?.let { getCommitMessageSubject(it) } ?: SpaceBundle.message("chat.untitled.commit.label"), // NON-NLS
-          AllIcons.Vcs.CommitNode,
-          LinkListener { _, _ ->
-            BrowserUtil.browse(location)
-          }
-        ))
-      }
-    }
-
-    return EventMessagePanel(content)
   }
 
   private fun createUnsupportedMessageTypePanel(messageLink: String?): JComponent {
@@ -226,42 +185,8 @@ internal class SpaceChatItemComponentFactory(
     })
   }
 
-  private fun createSimpleMessageComponent(message: SpaceChatItem): HtmlEditorPane =
-    createSimpleMessageComponent(message.text, message.isEdited)
-
-  private fun createSimpleMessageComponent(@Nls text: String, isEdited: Boolean = false): HtmlEditorPane = HtmlEditorPane().apply {
-    setBody(processItemText(server, text, isEdited))
-  }
-
-  private class EventMessagePanel(content: JComponent) : BorderLayoutPanel() {
-    private val lineColor = Color(22, 125, 255, 51)
-
-    private val lineWidth
-      get() = JBUI.scale(6)
-    private val lineCenterX
-      get() = lineWidth / 2
-    private val yRoundOffset
-      get() = lineWidth / 2
-
-    init {
-      addToCenter(content)
-      isOpaque = false
-      border = JBUI.Borders.empty(yRoundOffset, 15, yRoundOffset, 0)
-    }
-
-    override fun paint(g: Graphics?) {
-      super.paint(g)
-
-      with(g as Graphics2D) {
-        setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-
-        color = lineColor
-        stroke = BasicStroke(lineWidth.toFloat() / 2 + 1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
-
-        drawLine(lineCenterX, yRoundOffset, lineCenterX, height - yRoundOffset)
-      }
-    }
-  }
+  private fun createSimpleMessageComponent(message: SpaceChatItem): SpaceChatMarkdownTextComponent =
+    SpaceChatMarkdownTextComponent(server, message.text, message.isEdited)
 
   internal class Item(
     avatar: Icon,
