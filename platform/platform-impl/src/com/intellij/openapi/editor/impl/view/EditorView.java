@@ -274,6 +274,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     myPainter.repaintCarets();
   }
 
+  @NotNull
   public Dimension getPreferredSize() {
     assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
@@ -697,7 +698,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   @Override
-  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, Color color, FontInfo fontInfo) {
+  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, @NotNull Color color, @NotNull FontInfo fontInfo) {
     myPainter.drawChars(g, data, start, end, x, y, color, fontInfo);
   }
 

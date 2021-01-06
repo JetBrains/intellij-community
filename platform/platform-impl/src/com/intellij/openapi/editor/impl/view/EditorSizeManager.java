@@ -245,6 +245,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     }
   }
 
+  @NotNull
   Dimension getPreferredSize() {
     Insets insets = myView.getInsets();
     int widthWithoutCaret = getTextPreferredWidth() + insets.left;

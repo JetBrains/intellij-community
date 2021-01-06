@@ -96,6 +96,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return a new instance of {@link ScrollBarUI}
    */
   @SuppressWarnings("UnusedParameters")
+  @NotNull
   public static ScrollBarUI createUI(JComponent c) {
     return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
   }

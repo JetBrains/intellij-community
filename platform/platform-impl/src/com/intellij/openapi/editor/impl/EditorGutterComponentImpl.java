@@ -314,7 +314,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Graphics2D g = (Graphics2D)getComponentGraphics(g_);
 
     if (myEditor.isDisposed()) {
-      g.setColor(myEditor.getDisposedBackground());
+      g.setColor(EditorImpl.getDisposedBackground());
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       return;
     }
@@ -1008,7 +1008,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       if (myHasInlaysWithGutterIcons) {
         Rectangle clip = g.getClipBounds();
         int curY = y;
-        for (Inlay inlay : visLinesIterator.getBlockInlaysAbove()) {
+        for (Inlay<?> inlay : visLinesIterator.getBlockInlaysAbove()) {
           if (curY <= clip.y) break;
           int height = inlay.getHeightInPixels();
           if (height > 0) {
@@ -1018,7 +1018,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           }
         }
         curY = y + myEditor.getLineHeight();
-        for (Inlay inlay : visLinesIterator.getBlockInlaysBelow()) {
+        for (Inlay<?> inlay : visLinesIterator.getBlockInlaysBelow()) {
           if (curY >= clip.y + clip.height) break;
           int height = inlay.getHeightInPixels();
           if (height > 0) {
@@ -1032,7 +1032,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private void paintInlayIcon(Inlay inlay, Graphics2D g, int y) {
+  private void paintInlayIcon(Inlay<?> inlay, Graphics2D g, int y) {
     GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
     if (shouldBeShown(iconRenderer) && checkDumbAware(iconRenderer)) {
       Icon icon = scaleIcon(iconRenderer.getIcon());
@@ -1198,7 +1198,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private int getTextAlignmentShiftForInlayIcon(Icon icon, Inlay inlay) {
+  private int getTextAlignmentShiftForInlayIcon(Icon icon, Inlay<?> inlay) {
     return Math.min(getTextAlignmentShift(icon), inlay.getHeightInPixels() - icon.getIconHeight());
   }
 
@@ -2226,7 +2226,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, true);
         int yDiff = startY - p.y;
         for (int i = inlays.size() - 1; i >= 0; i--) {
-          Inlay inlay = inlays.get(i);
+          Inlay<?> inlay = inlays.get(i);
           int height = inlay.getHeightInPixels();
           if (yDiff <= height) {
             return getPointInfo(inlay, p.y + yDiff - height, cX, p.y);
@@ -2237,7 +2237,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       else {
         List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, false);
         int yDiff = p.y - endY;
-        for (Inlay inlay : inlays) {
+        for (Inlay<?> inlay : inlays) {
           int height = inlay.getHeightInPixels();
           if (yDiff < height) {
             return getPointInfo(inlay, p.y - yDiff, cX, p.y);
@@ -2250,7 +2250,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Nullable
-  private PointInfo getPointInfo(@NotNull Inlay inlay, int inlayY, int x, int y) {
+  private PointInfo getPointInfo(@NotNull Inlay<?> inlay, int inlayY, int x, int y) {
     GutterIconRenderer renderer = inlay.getGutterIconRenderer();
     if (!shouldBeShown(renderer) || !checkDumbAware(renderer)) return null;
     Icon icon = scaleIcon(renderer.getIcon());

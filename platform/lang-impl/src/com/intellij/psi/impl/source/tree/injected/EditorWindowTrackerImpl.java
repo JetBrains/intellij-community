@@ -739,22 +739,22 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     }
 
     @Override
-    public CopyProvider getCopyProvider() {
+    public @NotNull CopyProvider getCopyProvider() {
       return myDelegate.getCopyProvider();
     }
 
     @Override
-    public CutProvider getCutProvider() {
+    public @NotNull CutProvider getCutProvider() {
       return myDelegate.getCutProvider();
     }
 
     @Override
-    public PasteProvider getPasteProvider() {
+    public @NotNull PasteProvider getPasteProvider() {
       return myDelegate.getPasteProvider();
     }
 
     @Override
-    public DeleteProvider getDeleteProvider() {
+    public @NotNull DeleteProvider getDeleteProvider() {
       return myDelegate.getDeleteProvider();
     }
 
@@ -864,7 +864,7 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
     }
 
     @Override
-    public void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter) {
+    public void registerLineExtensionPainter(@NotNull IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>> lineExtensionPainter) {
       throw new UnsupportedOperationException();
     }
 
