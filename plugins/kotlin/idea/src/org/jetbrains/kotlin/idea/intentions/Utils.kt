@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.OperatorChecks
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 fun KtContainerNode.description(): String? {
     when (node.elementType) {
@@ -392,3 +393,6 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
         else -> false
     }
 }
+
+val CallableDescriptor.isInvokeOperator: Boolean
+    get() = this is FunctionDescriptor && isOperator && name == OperatorNameConventions.INVOKE
