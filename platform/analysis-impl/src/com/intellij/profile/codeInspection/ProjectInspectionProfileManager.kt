@@ -195,11 +195,9 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
 
   @Synchronized
   override fun setRootProfile(name: String?) {
-    if (name != state.projectProfile) {
-      state.useProjectProfile = name != null
-      if (name != null) {
-        state.projectProfile = name
-      }
+    state.useProjectProfile = name != null
+    if (name != null) {
+      state.projectProfile = name
     }
     schemeManager.setCurrentSchemeName(name, true)
   }
