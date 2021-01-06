@@ -40,6 +40,10 @@ class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclar
             if (typeArgumentList != null) addTypeArgumentsIfNeeded(initializer, typeArgumentList)
         }
 
+        fun isApplicableTo(element: KtCallableDeclaration): Boolean {
+            return getRange(element) != null
+        }
+
         fun getRange(element: KtCallableDeclaration): TextRange? {
             if (element.containingFile is KtCodeFragment) return null
             val typeReference = element.typeReference ?: return null
