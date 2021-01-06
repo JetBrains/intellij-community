@@ -651,7 +651,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(actionId, editor, getProject());
   }
   public static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor, Project project) {
-    CommandProcessor.getInstance().executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId), "", null, editor.getDocument());
+    CommandProcessor.getInstance().executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId, true), "", null, editor.getDocument());
   }
 
   @NotNull
