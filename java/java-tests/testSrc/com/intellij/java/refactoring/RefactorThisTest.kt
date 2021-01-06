@@ -71,6 +71,18 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertTrue(doActionExists<ReplaceConstructorWithFactoryAction>())
   }
 
+  fun testUseInterfaceWherePossibleOnDeclaration() {
+    assertTrue(doActionExists<TurnRefsToSuperAction>())
+  }
+
+  fun testUseInterfaceWherePossibleOnReference() {
+    assertTrue(doActionExists<TurnRefsToSuperAction>())
+  }
+
+  fun testUseInterfaceWherePossibleIsFiltered() {
+    assertFalse(doActionExists<TurnRefsToSuperAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     return findAvailableActions().any { action -> action is A }
