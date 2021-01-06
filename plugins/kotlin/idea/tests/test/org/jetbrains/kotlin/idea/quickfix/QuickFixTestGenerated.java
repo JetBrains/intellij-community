@@ -13010,6 +13010,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/typeMismatch/variableInitializedWithNull4.kt");
         }
 
+        @TestMetadata("variableInitializedWithNullProperty.kt")
+        public void testVariableInitializedWithNullProperty() throws Exception {
+            runTest("idea/testData/quickfix/typeMismatch/variableInitializedWithNullProperty.kt");
+        }
+
         @TestMetadata("when.kt")
         public void testWhen() throws Exception {
             runTest("testData/quickfix/typeMismatch/when.kt");
