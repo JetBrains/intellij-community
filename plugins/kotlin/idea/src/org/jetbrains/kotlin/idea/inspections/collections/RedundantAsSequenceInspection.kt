@@ -31,19 +31,24 @@ class RedundantAsSequenceInspection : AbstractKotlinInspection() {
     companion object {
         private val asSequenceFqName = FqName("kotlin.collections.asSequence")
         private val terminations = collectionTerminationFunctionNames.associateWith { FqName("kotlin.sequences.$it") }
+        private val transformationsAndTerminations =
+            collectionTransformationFunctionNames.associateWith { FqName("kotlin.sequences.$it") } + terminations
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = qualifiedExpressionVisitor(fun(qualified) {
         val call = qualified.callExpression ?: return
         val callee = call.calleeExpression ?: return
         if (callee.text != "asSequence") return
-        val parentCall = qualified.getQualifiedExpressionForReceiver()?.callExpression ?: return
+        val parent = qualified.getQualifiedExpressionForReceiver()
+        val parentCall = parent?.callExpression ?: return
 
         val context = qualified.analyze(BodyResolveMode.PARTIAL)
         val receiverType = qualified.receiverExpression.getType(context) ?: return
         if (!receiverType.isIterable(DefaultBuiltIns.Instance)) return
         if (call.getResolvedCall(context)?.isCalling(asSequenceFqName) != true) return
         if (!parentCall.isTermination(context)) return
+        val grandParentCall = parent.getQualifiedExpressionForReceiver()?.callExpression
+        if (grandParentCall?.isTransformationOrTermination(context) == true) return
 
         holder.registerProblem(
             qualified,
@@ -55,6 +60,11 @@ class RedundantAsSequenceInspection : AbstractKotlinInspection() {
 
     private fun KtCallExpression.isTermination(context: BindingContext): Boolean {
         val fqName = terminations[calleeExpression?.text] ?: return false
+        return isCalling(fqName, context)
+    }
+
+    private fun KtCallExpression.isTransformationOrTermination(context: BindingContext): Boolean {
+        val fqName = transformationsAndTerminations[calleeExpression?.text] ?: return false
         return isCalling(fqName, context)
     }
 

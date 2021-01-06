@@ -200,8 +200,7 @@ private fun KtCallExpression.isLazyTermination(context: BindingContext): Boolean
     return isCalling(fqName, context)
 }
 
-@NonNls
-private val transformations = listOf(
+internal val collectionTransformationFunctionNames = listOf(
     "chunked",
     "distinct",
     "distinctBy",
@@ -234,7 +233,10 @@ private val transformations = listOf(
     "windowed",
     "withIndex",
     "zipWithNext"
-).associateWith { FqName("kotlin.collections.$it") }
+)
+
+@NonNls
+private val transformations = collectionTransformationFunctionNames.associateWith { FqName("kotlin.collections.$it") }
 
 internal val collectionTerminationFunctionNames = listOf(
     "all",
