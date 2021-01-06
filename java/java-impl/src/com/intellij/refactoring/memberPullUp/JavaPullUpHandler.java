@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -29,7 +30,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -49,16 +49,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     if (elements.isEmpty()) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
     if (psiClass == null) return false;
-    return psiClass instanceof PsiAnonymousClass || isClassWithExtendsOrImplements(psiClass);
-  }
-
-  public static boolean isClassWithExtendsOrImplements(@Nullable PsiClass psiClass) {
-    if (psiClass == null) return false;
-    return isNotEmpty(psiClass.getExtendsList()) || isNotEmpty(psiClass.getImplementsList());
-  }
-
-  private static boolean isNotEmpty(@Nullable PsiReferenceList referenceList){
-    return referenceList != null && referenceList.getReferenceElements().length > 0;
+    return psiClass instanceof PsiAnonymousClass || RefactoringActionContextUtil.isClassWithExtendsOrImplements(psiClass);
   }
 
   @Override

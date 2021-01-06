@@ -43,4 +43,13 @@ public final class RefactoringActionContextUtil {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     return PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class) == null;
   }
+
+  public static boolean isClassWithExtendsOrImplements(@Nullable PsiClass psiClass) {
+    if (psiClass == null) return false;
+    return isNotEmpty(psiClass.getExtendsList()) || isNotEmpty(psiClass.getImplementsList());
+  }
+
+  private static boolean isNotEmpty(@Nullable PsiReferenceList referenceList){
+    return referenceList != null && referenceList.getReferenceElements().length > 0;
+  }
 }
