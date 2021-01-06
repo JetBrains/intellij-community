@@ -14,6 +14,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.isSizeOrLength
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -40,20 +41,25 @@ class ReplaceManualRangeWithIndicesCallsInspection : AbstractKotlinInspection() 
     }
 
     private fun visitRange(holder: ProblemsHolder, expression: KtExpression, left: KtExpression, right: KtExpression, method: String) {
-        if ((method == "until" && left.toIntConstant() == 0 && right.receiverIfIsSizeOrLengthCall() != null) ||
-            (method == "rangeTo" && left.toIntConstant() == 0 && right.receiverIfIsSizeOrLengthMinusOneCall() != null)
-        ) {
-            visitIndicesRange(holder, expression)
-        }
+        if (left.toIntConstant() != 0) return
+        val collection = when(method) {
+            "until" -> right.receiverIfIsSizeOrLengthCall()
+            "rangeTo" -> right.receiverIfIsSizeOrLengthMinusOneCall()
+            else -> null
+        } as? KtSimpleNameExpression ?: return
+        visitIndicesRange(holder, expression, collection)
     }
 
-    private fun visitIndicesRange(holder: ProblemsHolder, range: KtExpression) {
+    private fun visitIndicesRange(holder: ProblemsHolder, range: KtExpression, collection: KtSimpleNameExpression) {
         val parent = range.parent.parent
         if (parent is KtForExpression) {
             val paramElement = parent.loopParameter?.originalElement ?: return
             val usageElement = ReferencesSearch.search(paramElement).singleOrNull()?.element
             val arrayAccess = usageElement?.parent?.parent as? KtArrayAccessExpression
-            if (arrayAccess != null && arrayAccess.indexExpressions.singleOrNull() == usageElement) {
+            if (arrayAccess != null &&
+                arrayAccess.indexExpressions.singleOrNull() == usageElement &&
+                (arrayAccess.arrayExpression as? KtSimpleNameExpression)?.mainReference?.resolve() == collection.mainReference.resolve()
+            ) {
                 val arrayAccessParent = arrayAccess.parent
                 if (arrayAccessParent !is KtBinaryExpression ||
                     arrayAccessParent.left != arrayAccess ||

@@ -10865,6 +10865,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
         }
 
+        @TestMetadata("multidimensionalArray.kt")
+        public void testMultidimensionalArray() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray.kt");
+        }
+
+        @TestMetadata("multidimensionalArray2.kt")
+        public void testMultidimensionalArray2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray2.kt");
+        }
+
         @TestMetadata("notUsedAsIndex.kt")
         public void testNotUsedAsIndex() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/notUsedAsIndex.kt");
@@ -10883,6 +10893,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("simpleFor.kt")
         public void testSimpleFor() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleFor.kt");
+        }
+
+        @TestMetadata("usedForOtherArray.kt")
+        public void testUsedForOtherArray() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/usedForOtherArray.kt");
         }
     }
 
