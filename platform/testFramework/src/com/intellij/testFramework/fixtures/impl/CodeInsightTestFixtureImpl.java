@@ -60,6 +60,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -255,7 +256,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
           infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
           if (readEditorMarkupModel) {
-            infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor, null, project));
+            MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
+            DaemonCodeAnalyzerEx.processHighlights(markupModel, project, null, 0, editor.getDocument().getTextLength(),
+                                                   Processors.cancelableCollectProcessor(infos));
           }
         });
         infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
