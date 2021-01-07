@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation
 
 import com.intellij.ide.util.PsiElementListCellRenderer
@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Font
 import javax.swing.Icon
@@ -29,7 +30,7 @@ class PsiElementTargetPopupPresentation(private val myElement: PsiElement) : Tar
   private val myProject: Project = myElement.project
   private val myVirtualFile: VirtualFile? = myElement.containingFile?.virtualFile
   private val myItemPresentation: ItemPresentation? = (myElement as? NavigationItem)?.presentation
-  private val myModuleRendererData: Pair<String, Icon?>? = run {
+  private val myModuleRendererData: Pair<@Nls String, Icon?>? = run {
     val renderer = PsiElementListCellRenderer.getModuleRenderer(myElement)
     val component = renderer?.getListCellRendererComponent(JList<PsiElement>(), myElement, -1, false, false) as? JLabel
     component?.let {
@@ -77,6 +78,7 @@ class PsiElementTargetPopupPresentation(private val myElement: PsiElement) : Tar
     }
   }
 
+  @Suppress("HardCodedStringLiteral") // inspection doesn't support type annotations in Kotlin
   override fun getRightText(): String? = myModuleRendererData?.first
 
   override fun getRightIcon(): Icon? = myModuleRendererData?.second
