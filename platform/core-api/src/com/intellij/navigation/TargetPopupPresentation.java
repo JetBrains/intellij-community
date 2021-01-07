@@ -3,6 +3,7 @@ package com.intellij.navigation;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public interface TargetPopupPresentation {
     return null;
   }
 
-  @NotNull String getPresentableText();
+  @Nls @NotNull String getPresentableText();
 
   /**
    * Note that returned instance's {@link TextAttributes#getBackgroundColor()} is used for the whole item background.
@@ -31,7 +32,7 @@ public interface TargetPopupPresentation {
     return null;
   }
 
-  default @Nullable String getLocationText() {
+  default @Nls @Nullable String getLocationText() {
     return null;
   }
 
@@ -42,7 +43,7 @@ public interface TargetPopupPresentation {
     return null;
   }
 
-  default @Nullable String getRightText() {
+  default @Nls @Nullable String getRightText() {
     return null;
   }
 
