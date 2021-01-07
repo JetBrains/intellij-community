@@ -12,17 +12,18 @@ Compile bytecode for outerMyFun()
 Compile bytecode for bMyFun()
 KotlinStackFrame (frameExtFunExtFun.kt:24)
     JavaValue[this] this: Outer$foo$LocalClass$test$1@uniqueID = Function0<kotlin.Unit>
-        JavaValue[field] this$0: frameExtFunExtFun.Outer$foo$LocalClass
+        JavaValue[field] this$0: frameExtFunExtFun.Outer$foo$LocalClass = frameExtFunExtFun.Outer$foo$LocalClass@hashCode
             JavaValue[field] lcProp: int = 1 (frameExtFunExtFun.kt:19)
-            JavaValue[field] this$0: frameExtFunExtFun.Outer
+            JavaValue[field] this$0: frameExtFunExtFun.Outer = frameExtFunExtFun.Outer@hashCode
                 JavaValue[field] outerProp: int = 1 (frameExtFunExtFun.kt:13)
-            JavaValue[field] $this_foo: frameExtFunExtFun.A
+            JavaValue[field] $this_foo: frameExtFunExtFun.A = frameExtFunExtFun.A@hashCode
                 JavaValue[field] aProp: int = 1 (frameExtFunExtFun.kt:8)
             JavaValue[field] $valFoo: int = 1
-        JavaValue[field] $this_test: frameExtFunExtFun.B
+        JavaValue[field] $this_test: frameExtFunExtFun.B = frameExtFunExtFun.B@hashCode
             JavaValue[field] bProp: int = 1 (frameExtFunExtFun.kt:41)
         JavaValue[field] $valTest: int = 1
         JavaValue[field] arity: int = 0 (Lambda.!EXT!)
+        JavaValue[getter] arity
 Disconnected from the target VM
 
 Process finished with exit code 0

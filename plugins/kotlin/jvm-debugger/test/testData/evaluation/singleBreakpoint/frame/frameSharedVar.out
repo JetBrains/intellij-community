@@ -8,6 +8,7 @@ KotlinStackFrame (frameSharedVar.kt:7)
         JavaValue[field] $var1: kotlin.jvm.internal.Ref$IntRef = 1
             JavaValue[field] element: int = 1 (Ref.!EXT!)
         JavaValue[field] arity: int = 0 (Lambda.!EXT!)
+        JavaValue[getter] arity
 Disconnected from the target VM
 
 Process finished with exit code 0

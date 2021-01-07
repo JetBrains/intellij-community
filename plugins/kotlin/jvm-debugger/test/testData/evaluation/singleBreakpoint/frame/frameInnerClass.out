@@ -7,9 +7,9 @@ Compile bytecode for prop2
 Compile bytecode for myFun1()
 Compile bytecode for myFun2()
 KotlinStackFrame (frameInnerClass.kt:17)
-    JavaValue[this] this: A$Inner@uniqueID
+    JavaValue[this] this: A$Inner@uniqueID = frameInnerClass.A$Inner@hashCode
         JavaValue[field] prop2: int = 1 (frameInnerClass.kt:12)
-        JavaValue[field] this$0: frameInnerClass.A
+        JavaValue[field] this$0: frameInnerClass.A = frameInnerClass.A@hashCode
             JavaValue[field] prop1: int = 1 (frameInnerClass.kt:8)
 Disconnected from the target VM
 

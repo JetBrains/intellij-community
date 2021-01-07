@@ -3,7 +3,7 @@ Run Java
 Connected to the target VM
 evFunctionDeclaration.kt:5
 KotlinStackFrame (evFunctionDeclaration.kt:5)
-    JavaValue[this] this: A@uniqueID
+    JavaValue[this] this: A@uniqueID = evFunctionDeclaration.A@hashCode
         JavaValue[field] a: int = 1 (evFunctionDeclaration.kt:3)
 Disconnected from the target VM
 

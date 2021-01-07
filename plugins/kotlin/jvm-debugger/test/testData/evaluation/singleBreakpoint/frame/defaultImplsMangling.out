@@ -4,8 +4,9 @@ Connected to the target VM
 defaultImplsMangling.kt:8
 Compile bytecode for x
 KotlinStackFrame (defaultImplsMangling.kt:8)
-    JavaValue[local] this: defaultImplsMangling.IFoo
+    JavaValue[local] this: defaultImplsMangling.IFoo = defaultImplsMangling.Foo@hashCode
         JavaValue[field] x: int = 1 (defaultImplsMangling.kt:13)
+        JavaValue[getter] x
 Disconnected from the target VM
 
 Process finished with exit code 0

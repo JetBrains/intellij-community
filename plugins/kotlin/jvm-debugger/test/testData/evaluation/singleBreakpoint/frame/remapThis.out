@@ -3,8 +3,8 @@ Run Java
 Connected to the target VM
 remapThis.kt:14
 KotlinStackFrame (remapThis.kt:14)
-    JavaValue[this] this: Bar@uniqueID
-        DummyMessageValueNode = Class has no fields
+    JavaValue[this] this: Bar@uniqueID = remapThis.Bar@hashCode
+        DummyMessageValueNode = Class has no properties
     JavaValue[local] this: java.lang.String = a
         JavaValue[field] value: byte[] (String.!EXT!)
             JavaValue[element] 0 = 97

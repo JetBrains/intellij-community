@@ -7,6 +7,7 @@ Compile bytecode for y
 KotlinStackFrame (destructuringParam.kt:12)
     JavaValue[this] this: DestructuringParamKt$main$1@uniqueID = Function1<destructuringParam.A, java.lang.String>
         JavaValue[field] arity: int = 1 (Lambda.!EXT!)
+        JavaValue[getter] arity
     JavaValue[local] $dstr$x$y: destructuringParam.A = A(x=O, y=K)
         JavaValue[field] x: java.lang.String = O (destructuringParam.kt:2)
             JavaValue[field] value: byte[] (String.!EXT!)
