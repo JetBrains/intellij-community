@@ -80,6 +80,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
   protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
 
+  @NotNull
   protected final Project myProject;
   protected final PerFileMappingsEx<T> myMappings;
 

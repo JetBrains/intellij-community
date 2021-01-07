@@ -385,8 +385,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                               @NotNull ActionGroup group,
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
+    DataContext context = myProject == null ? DataContext.EMPTY_CONTEXT : SimpleDataContext.getProjectContext(myProject);
     AnAction[] actions = group
-      .getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, SimpleDataContext.getProjectContext(myProject)));
+      .getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, context));
 
     boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasMeaningfulChildren) {

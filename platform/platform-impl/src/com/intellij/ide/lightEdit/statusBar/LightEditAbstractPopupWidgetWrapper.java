@@ -32,7 +32,7 @@ public abstract class LightEditAbstractPopupWidgetWrapper
   }
 
   protected DataContext getEditorDataContext(@NotNull DataContext originalContext) {
-    return SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR.getName(), myEditor, originalContext);
+    return myEditor == null ? originalContext : SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR.getName(), myEditor, originalContext);
   }
 
   @Nullable

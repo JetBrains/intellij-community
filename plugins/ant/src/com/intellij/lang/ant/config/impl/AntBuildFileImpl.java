@@ -146,6 +146,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   private final VirtualFile myVFile;
+  @NotNull
   private final Project myProject;
   private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
@@ -154,7 +155,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   private final ClassLoaderHolder myClassloaderHolder;
   private boolean myShouldExpand = true;
 
-  public AntBuildFileImpl(PsiFile antFile, final AntConfigurationBase configuration) {
+  public AntBuildFileImpl(@NotNull PsiFile antFile, final AntConfigurationBase configuration) {
     myVFile = antFile.getOriginalFile().getVirtualFile();
     myProject = antFile.getProject();
     myAntConfiguration = configuration;

@@ -32,6 +32,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
   private final ConfigurationFactory myFactory;
   private Element myStoredElement;
   private String myName;
+  @NotNull
   private final Project myProject;
 
   private static final AtomicInteger myUniqueName = new AtomicInteger(1);

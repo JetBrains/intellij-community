@@ -1913,7 +1913,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
-    SearchEverywhereContributor<Object> contributor = createMockContributor(contextForSorting, searchEverywhere);
+    SearchEverywhereContributor<Object> contributor = createMockContributor(searchEverywhere);
     final ArrayList<Object> results = new ArrayList<>();
     contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
     return results;
@@ -1925,9 +1925,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myEditorTestFixture.getBreadcrumbsAtCaret();
   }
 
-  private SearchEverywhereContributor<Object> createMockContributor(@Nullable PsiElement context, boolean everywhere) {
-    DataContext dataContext = SimpleDataContext.getSimpleContext(
-      CommonDataKeys.PSI_FILE.getName(), ObjectUtils.tryCast(context, PsiFile.class), SimpleDataContext.getProjectContext(getProject()));
+  private SearchEverywhereContributor<Object> createMockContributor(boolean everywhere) {
+    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
     ClassSearchEverywhereContributor contributor = new ClassSearchEverywhereContributor(event) {{
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));

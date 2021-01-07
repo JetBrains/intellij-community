@@ -373,7 +373,8 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       @NotNull
       @Override
       public DataContext enhanceDataContext(DataContext context) {
-        return SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), myUsageClass.getElement(), context);
+        PsiClass element = myUsageClass.getElement();
+        return element == null ? context : SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), element, context);
       }
     }
 

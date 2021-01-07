@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_CHECKIN_PROJECT
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -105,7 +105,7 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
         SwitchToCommitDialogHint.install(commitDialog.project)
 
         val commitAction = ActionManager.getInstance().getAction(ACTION_CHECKIN_PROJECT) ?: return@addHyperlinkListener
-        invokeAction(commitAction, getProjectContext(commitDialog.project), ActionPlaces.UNKNOWN, null, null)
+        invokeAction(commitAction, SimpleDataContext.getProjectContext(commitDialog.project), ActionPlaces.UNKNOWN, null, null)
       }
     }
 

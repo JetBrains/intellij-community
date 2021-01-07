@@ -348,11 +348,11 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
+    static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, @NotNull Project project) {
       DataContext parent = DataManager.getInstance().getDataContext(component);
-      DataContext context = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent);
+      DataContext context = editor == null ? parent : SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor.getComponent(), parent);
       DataContext projectContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), project, context);
-      return SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
+      return selectedFile == null ? projectContext : SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
     }
   }
 }

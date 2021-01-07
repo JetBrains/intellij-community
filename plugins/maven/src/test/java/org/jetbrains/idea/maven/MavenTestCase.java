@@ -58,6 +58,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected IdeaProjectTestFixture myTestFixture;
 
+  @NotNull
   protected Project myProject;
 
   protected File myDir;

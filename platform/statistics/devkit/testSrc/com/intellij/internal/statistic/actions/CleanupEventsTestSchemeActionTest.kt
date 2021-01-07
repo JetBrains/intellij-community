@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTest
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import org.junit.Test
@@ -21,7 +21,7 @@ class CleanupEventsTestSchemeActionTest : BasePlatformTestCase() {
 
     SensitiveDataValidator.getInstance(recorderId)
     ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!.addTestGroup(GroupValidationTestRule("groupId", false))
-    val dataContext = getProjectContext(myFixture.project)
+    val dataContext = SimpleDataContext.getProjectContext(myFixture.project)
     val e = AnActionEvent(null, dataContext, "test", Presentation(), ActionManager.getInstance(), 0)
     CleanupEventsTestSchemeAction(recorderId).actionPerformed(e)
 
