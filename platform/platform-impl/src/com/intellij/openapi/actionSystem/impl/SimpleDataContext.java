@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Map;
 
 public final class SimpleDataContext implements DataContext {
@@ -47,7 +48,7 @@ public final class SimpleDataContext implements DataContext {
 
   @NotNull
   public static DataContext getSimpleContext(@NotNull String dataId, Object data, DataContext parent) {
-    return new SimpleDataContext(Map.of(dataId, data), parent);
+    return new SimpleDataContext(data == null ? Collections.emptyMap() : Map.of(dataId, data), parent);
   }
 
   @NotNull
