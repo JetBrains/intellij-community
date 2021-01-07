@@ -42,7 +42,7 @@ public final class VfsRootAccess {
     System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null && System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
   // we don't want test subclasses to accidentally remove allowed files, added by base classes
-  private static final Set<String> ourAdditionalRoots = Collections.synchronizedSet(CollectionFactory.createFilePathSet());
+  private static final Set<String> ourAdditionalRoots = CollectionFactory.createFilePathSet(); // guarded by ourAdditionalRoots
   private static boolean insideGettingRoots;
 
   @TestOnly
@@ -146,7 +146,9 @@ public final class VfsRootAccess {
       // sometimes library.getRoots() may crash if called from inside library modification
     }
 
-    allowed.addAll(ourAdditionalRoots);
+    synchronized (ourAdditionalRoots) {
+      allowed.addAll(ourAdditionalRoots);
+    }
 
     return allowed;
   }
@@ -203,19 +205,23 @@ public final class VfsRootAccess {
   }
 
   private static void doAllow(String @NotNull ... roots) {
-    for (String root : roots) {
-      String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
-      if (path.isEmpty()) {
-        throw new IllegalArgumentException("Must not pass empty pat but got: '" + Arrays.toString(roots) + "'");
+    synchronized (ourAdditionalRoots) {
+      for (String root : roots) {
+        String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
+        if (path.isEmpty()) {
+          throw new IllegalArgumentException("Must not pass empty pat but got: '" + Arrays.toString(roots) + "'");
+        }
+        ourAdditionalRoots.add(path);
       }
-      ourAdditionalRoots.add(path);
     }
   }
 
   @TestOnly
   private static void disallowRootAccess(String @NotNull ... roots) {
-    for (String root : roots) {
-      ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+    synchronized (ourAdditionalRoots) {
+      for (String root : roots) {
+        ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+      }
     }
   }
 }
