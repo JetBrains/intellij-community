@@ -21,20 +21,20 @@ object Parceler2 : Parceler<List<String>> {
     }
 }
 
-<warning descr="[DEPRECATED_ANNOTATION] Parcelize annotations from package 'kotlinx.android.parcel' are deprecated. Change package to 'kotlin.parcelize'">@Parcelize</warning>
+<warning descr="[DEPRECATED_ANNOTATION] Parcelize annotations from package 'kotlinx.android.parcel' are deprecated. Change package to 'kotlinx.parcelize'">@Parcelize</warning>
 <error descr="[FORBIDDEN_DEPRECATED_ANNOTATION] Parceler-related annotations from package 'kotlinx.android.parcel' are forbidden. Change package to 'kotlinx.parcelize'">@TypeParceler<String, <error descr="[UPPER_BOUND_VIOLATED] Type argument is not within its bounds: should be subtype of 'Parceler<in String>'">Parceler2</error>></error>
 data class Test(
     val a: String,
     val b: <error descr="[FORBIDDEN_DEPRECATED_ANNOTATION] Parceler-related annotations from package 'kotlinx.android.parcel' are forbidden. Change package to 'kotlinx.parcelize'">@WriteWith<Parceler1></error> String,
     val c: <error descr="[FORBIDDEN_DEPRECATED_ANNOTATION] Parceler-related annotations from package 'kotlinx.android.parcel' are forbidden. Change package to 'kotlinx.parcelize'">@WriteWith<Parceler2></error> List<<error descr="[FORBIDDEN_DEPRECATED_ANNOTATION] Parceler-related annotations from package 'kotlinx.android.parcel' are forbidden. Change package to 'kotlinx.parcelize'">@WriteWith<Parceler1></error> String>
 ) : Parcelable {
-    <warning descr="[DEPRECATED_ANNOTATION] Parcelize annotations from package 'kotlinx.android.parcel' are deprecated. Change package to 'kotlin.parcelize'">@IgnoredOnParcel</warning>
+    <warning descr="[DEPRECATED_ANNOTATION] Parcelize annotations from package 'kotlinx.android.parcel' are deprecated. Change package to 'kotlinx.parcelize'">@IgnoredOnParcel</warning>
     val x by lazy { "foo" }
 }
 
 interface ParcelerForUser: Parceler<User>
 
-<warning descr="[DEPRECATED_ANNOTATION] Parcelize annotations from package 'kotlinx.android.parcel' are deprecated. Change package to 'kotlin.parcelize'">@Parcelize</warning>
+<warning descr="[DEPRECATED_ANNOTATION] Parcelize annotations from package 'kotlinx.android.parcel' are deprecated. Change package to 'kotlinx.parcelize'">@Parcelize</warning>
 class User(val name: String) : Parcelable {
     private companion <error descr="[DEPRECATED_PARCELER] 'kotlinx.android.parcel.Parceler' is deprecated. Use 'kotlinx.parcelize.Parceler' instead">object</error> : ParcelerForUser {
         override fun User.write(parcel: Parcel, flags: Int) {
