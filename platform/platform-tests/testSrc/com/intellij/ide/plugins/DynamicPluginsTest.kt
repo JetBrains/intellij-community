@@ -35,7 +35,6 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.ClassRule
@@ -363,7 +362,7 @@ class DynamicPluginsTest {
       Disposer.dispose(pluginOneDisposable)
     }
     finally {
-      pluginTwoDisposable.dispose()
+      Disposer.dispose(pluginTwoDisposable)
     }
   }
 
@@ -507,18 +506,16 @@ class DynamicPluginsTest {
     val quuxBuilder = PluginBuilder().randomId("quux")
 
     val quuxDependencyDescriptor = PluginBuilder().extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
-    val barDependencyDescriptor = PluginBuilder().depends(quuxBuilder.id, "quux.xml")
-    val mainDescriptor = PluginBuilder().randomId("main").depends(barBuilder.id, "bar.xml")
+    val barDependencyDescriptor = PluginBuilder().depends(quuxBuilder.id, quuxDependencyDescriptor)
+    val mainDescriptor = PluginBuilder().randomId("main").depends(barBuilder.id, barDependencyDescriptor)
 
     val barDisposable = loadPluginWithText(barBuilder)
     try {
       val quuxDisposable = loadPluginWithText(quuxBuilder)
       try {
-        val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin/META-INF")
-        directory.resolve("bar.xml").write(barDependencyDescriptor.text(requireId = false))
-        directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
-        directory.resolve("plugin.xml").write(mainDescriptor.text())
-        val descriptor = loadDescriptorInTest(directory.parent)
+        val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin")
+        mainDescriptor.build(directory)
+        val descriptor = loadDescriptorInTest(directory)
         setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo(
           "Plugin ${mainDescriptor.id} is not unload-safe because of extension to non-dynamic EP foo.barExtension in optional dependency on ${quuxBuilder.id} in optional dependency on ${barBuilder.id}")
@@ -537,18 +534,17 @@ class DynamicPluginsTest {
     val barBuilder = PluginBuilder().randomId("bar")
     val quuxBuilder = PluginBuilder().randomId("quux")
 
-    val quuxDependencyDescriptor = PluginBuilder().extensions("""<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>""")
-    val barDependencyDescriptor = PluginBuilder().depends(quuxBuilder.id, "quux.xml")
-    val mainDescriptor = PluginBuilder().depends(barBuilder.id, "bar.xml")
+    val quuxDependencyDescriptor = PluginBuilder().extensions(
+      """<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>""")
+    val barDependencyDescriptor = PluginBuilder().depends(quuxBuilder.id, quuxDependencyDescriptor)
+    val mainDescriptor = PluginBuilder().depends(barBuilder.id, barDependencyDescriptor)
     val barDisposable = loadPluginWithText(barBuilder)
     try {
       val quuxDisposable = loadPluginWithText(quuxBuilder)
       try {
-        val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin/META-INF")
-        directory.resolve("bar.xml").write(barDependencyDescriptor.text(requireId = false))
-        directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
-        directory.resolve("plugin.xml").write(mainDescriptor.text())
-        val descriptor = loadDescriptorInTest(directory.parent)
+        val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin")
+        mainDescriptor.build(directory)
+        val descriptor = loadDescriptorInTest(directory)
         setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
@@ -557,7 +553,7 @@ class DynamicPluginsTest {
           assertThat(ApplicationManager.getApplication().getService(MyPersistentComponent::class.java)).isNotNull()
         }
         finally {
-          val unloadDescriptor = loadDescriptorInTest(directory.parent)
+          val unloadDescriptor = loadDescriptorInTest(directory)
           val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
           DynamicPlugins.unloadPlugin(unloadDescriptor)
           assertThat(canBeUnloaded).isTrue()
@@ -575,20 +571,21 @@ class DynamicPluginsTest {
 
   @Test
   fun unloadNestedOptionalDependency() {
+    val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin")
+
     val barBuilder = PluginBuilder().randomId("bar")
     val quuxBuilder = PluginBuilder().randomId("quux")
 
-    val quuxDependencyDescriptor = PluginBuilder().extensions("""<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>""")
-    val barDependencyDescriptor = PluginBuilder().depends(quuxBuilder.id, "quux.xml")
-    val mainDescriptor = PluginBuilder().depends(barBuilder.id, "bar.xml")
+    val quuxDependencyDescriptor = PluginBuilder().extensions(
+      """<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>""")
+    val barDependencyDescriptor = PluginBuilder().depends(quuxBuilder.id, quuxDependencyDescriptor)
+    val mainDescriptor = PluginBuilder().depends(barBuilder.id, barDependencyDescriptor)
+
     val barDisposable = loadPluginWithText(barBuilder)
     try {
       val quuxDisposable = loadPluginWithText(quuxBuilder)
-      val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin/META-INF")
-      directory.resolve("bar.xml").write(barDependencyDescriptor.text(requireId = false))
-      directory.resolve("quux.xml").write(quuxDependencyDescriptor.text(requireId = false))
-      directory.resolve("plugin.xml").write(mainDescriptor.text())
-      val descriptor = loadDescriptorInTest(directory.parent)
+      mainDescriptor.build(directory)
+      val descriptor = loadDescriptorInTest(directory)
       setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
       assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
@@ -599,7 +596,7 @@ class DynamicPluginsTest {
         assertThat(ApplicationManager.getApplication().getService(MyPersistentComponent::class.java)).isNull()
       }
       finally {
-        val unloadDescriptor = loadDescriptorInTest(directory.parent)
+        val unloadDescriptor = loadDescriptorInTest(directory)
         val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
         DynamicPlugins.unloadPlugin(unloadDescriptor)
         assertThat(canBeUnloaded).isTrue()
@@ -613,20 +610,17 @@ class DynamicPluginsTest {
   private fun loadPluginWithOptionalDependency(pluginDescriptor: PluginBuilder,
                                                optionalDependencyDescriptor: PluginBuilder,
                                                dependsOn: PluginBuilder): Disposable {
-    val directory = inMemoryFs.fs.getPath("/").resolve(Ksuid.generate()).resolve("plugin/META-INF")
-    val plugin = directory.resolve("plugin.xml")
-    pluginDescriptor.depends(dependsOn.id, "bar.xml")
-    plugin.write(pluginDescriptor.text().trimIndent())
-    directory.resolve("bar.xml").write(optionalDependencyDescriptor.text(requireId = false))
+    val directory = inMemoryFs.fs.getPath("/").resolve(Ksuid.generate()).resolve("plugin")
+    pluginDescriptor.depends(dependsOn.id, optionalDependencyDescriptor).build(directory)
 
-    val descriptor = loadDescriptorInTest(plugin.parent.parent)
+    val descriptor = loadDescriptorInTest(directory)
     setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
     assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
 
     DynamicPlugins.loadPlugin(descriptor)
 
     return Disposable {
-      val unloadDescriptor = loadDescriptorInTest(plugin.parent.parent)
+      val unloadDescriptor = loadDescriptorInTest(directory)
       val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
       DynamicPlugins.unloadPlugin(unloadDescriptor)
       assertThat(canBeUnloaded).isTrue()

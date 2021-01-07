@@ -31,6 +31,8 @@ class PluginBuilder {
   private var untilBuild: String? = null
   private var version: String? = null
 
+  private val subDescriptors = mutableMapOf<String, PluginBuilder>()
+
   init {
     depends("com.intellij.modules.lang")
   }
@@ -65,9 +67,9 @@ class PluginBuilder {
     return this
   }
 
-  fun depends(pluginId: String, subDescriptor: PluginBuilder, parentDir: Path): PluginBuilder {
+  fun depends(pluginId: String, subDescriptor: PluginBuilder): PluginBuilder {
     val fileName = "dep_${pluginIdCounter.incrementAndGet()}.xml"
-    parentDir.resolve(id).resolve("META-INF").resolve(fileName).write(subDescriptor.text(requireId = false))
+    subDescriptors[fileName] = subDescriptor
     depends(pluginId, fileName)
     return this
   }
@@ -156,7 +158,15 @@ class PluginBuilder {
 
   fun build(path: Path): PluginBuilder {
     path.resolve("META-INF/plugin.xml").write(text())
+    writeSubDescriptors(path)
     return this
+  }
+
+  fun writeSubDescriptors(path: Path) {
+    for ((fileName, subDescriptor) in subDescriptors) {
+      path.resolve("META-INF/$fileName").write(subDescriptor.text(requireId = false))
+      subDescriptor.writeSubDescriptors(path)
+    }
   }
 
   fun buildJar(path: Path): PluginBuilder {
