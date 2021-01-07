@@ -156,7 +156,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
                 builder.append(" ")
                   .append(attributes.getQName(i))
                   .append("=\"")
-                  .append(attributes.getValue(i))
+                  .append(JDOMUtil.escapeText(attributes.getValue(i)))
                   .append("\"");
               }
               builder.append(">");
