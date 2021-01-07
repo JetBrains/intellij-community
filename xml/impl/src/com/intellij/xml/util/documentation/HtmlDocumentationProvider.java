@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -73,21 +74,17 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    String result = generateDocForHtml(element, originalElement);
+    String result = generateDocForHtml(element, originalElement, false);
     if (result != null) return result;
+    return generateDocFromStyleOrScript(element, originalElement);
+  }
 
-    DocumentationProvider styleProvider = getStyleProvider();
-    if (styleProvider != null) {
-      result = styleProvider.generateDoc(element, originalElement);
-      if (result != null) return result;
-    }
-
-    DocumentationProvider scriptProvider = getScriptDocumentationProvider();
-    if (scriptProvider != null) {
-      result = scriptProvider.generateDoc(element, originalElement);
-    }
-
-    return result;
+  @Override
+  public @Nullable String generateHoverDoc(@NotNull PsiElement element,
+                                           @Nullable PsiElement originalElement) {
+    String result = generateDocForHtml(element, originalElement, true);
+    if (result != null) return result;
+    return generateDocFromStyleOrScript(element, originalElement);
   }
 
   @Override
@@ -132,6 +129,22 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result;
   }
 
+  private String generateDocFromStyleOrScript(PsiElement element, PsiElement originalElement) {
+    DocumentationProvider styleProvider = getStyleProvider();
+    if (styleProvider != null) {
+      String result = styleProvider.generateDoc(element, originalElement);
+      if (result != null) return result;
+    }
+
+    DocumentationProvider scriptProvider = getScriptDocumentationProvider();
+    if (scriptProvider != null) {
+      String result = scriptProvider.generateDoc(element, originalElement);
+      if (result != null) return result;
+    }
+
+    return null;
+  }
+
   private String getUrlForHtml(PsiElement element, PsiElement originalElement) {
     return doIfNotNull(getDocumentation(element, originalElement), MdnSymbolDocumentation::getUrl);
   }
@@ -158,10 +171,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return attributeDescriptor;
   }
 
-  private String generateDocForHtml(PsiElement element, PsiElement originalElement) {
+  private String generateDocForHtml(PsiElement element, PsiElement originalElement, boolean quickDoc) {
     MdnSymbolDocumentation documentation = getDocumentation(element, originalElement);
     if (documentation != null) {
-      return documentation.getDocumentation();
+      return quickDoc ? documentation.getQuickDocumentation() : documentation.getDocumentation();
     }
 
     if (element instanceof XmlEntityDecl) {

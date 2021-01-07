@@ -10,7 +10,6 @@ import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.psi.PsiElement
-import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
@@ -88,6 +87,7 @@ interface MdnSymbolDocumentation {
   val url: String
   val isDeprecated: Boolean
   val documentation: String
+  val quickDocumentation: String
 }
 
 class MdnSymbolDocumentationAdapter(val name: String, private val doc: MdnHtmlSymbolDocumentation) : MdnSymbolDocumentation {
@@ -98,7 +98,10 @@ class MdnSymbolDocumentationAdapter(val name: String, private val doc: MdnHtmlSy
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
 
   override val documentation: String
-    get() = buildDoc(name, doc)
+    get() = buildDoc(name, doc, false)
+
+  override val quickDocumentation: String
+    get() = buildDoc(name, doc, true)
 
 }
 
@@ -167,7 +170,7 @@ private fun loadDocumentation(namespace: MdnApiNamespace): MdnHtmlDocumentation 
   MdnHtmlDocumentation::class.java.getResource("mdn-${namespace.name.toLowerCase()}.json")!!
     .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
 
-private fun buildDoc(name: String, doc: MdnHtmlSymbolDocumentation): String {
+private fun buildDoc(name: String, doc: MdnHtmlSymbolDocumentation, quickDoc: Boolean): String {
   val buf = StringBuilder()
 
   buf.append(DocumentationMarkup.DEFINITION_START).append(name).append(DocumentationMarkup.DEFINITION_END)
@@ -175,7 +178,7 @@ private fun buildDoc(name: String, doc: MdnHtmlSymbolDocumentation): String {
     .append(StringUtil.capitalize(doc.doc ?: ""))
     .append(DocumentationMarkup.CONTENT_END)
 
-  if (!doc.sections.isNullOrEmpty()) {
+  if (!doc.sections.isNullOrEmpty() && !quickDoc) {
     buf.append(DocumentationMarkup.SECTIONS_START)
     for (entry in doc.sections ?: emptyMap()) {
       buf.append(DocumentationMarkup.SECTION_HEADER_START).append(entry.key)
