@@ -273,6 +273,11 @@ public class ReferenceResolveTestGenerated extends AbstractReferenceResolveTest 
         runTest("testData/resolve/references/PackageReferenceInImport.kt");
     }
 
+    @TestMetadata("parameterByName.kt")
+    public void testParameterByName() throws Exception {
+        runTest("idea/testData/resolve/references/parameterByName.kt");
+    }
+
     @TestMetadata("PropertyPlaceInClassObjectInObject.kt")
     public void testPropertyPlaceInClassObjectInObject() throws Exception {
         runTest("testData/resolve/references/PropertyPlaceInClassObjectInObject.kt");
