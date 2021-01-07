@@ -229,7 +229,8 @@ object DynamicPlugins {
     }
 
     val isSubDescriptor = baseDescriptor != null && descriptor !== baseDescriptor
-    checkExtensionsCanUnloadWithoutRestart(descriptor, baseDescriptor, isSubDescriptor, app, optionalDependencyPluginId, context)?.let {
+    checkExtensionsCanUnloadWithoutRestart(descriptor, baseDescriptor, isSubDescriptor, app, optionalDependencyPluginId, context,
+                                           pluginStateChecker)?.let {
       return it
     }
 
@@ -1137,13 +1138,15 @@ private fun checkExtensionsCanUnloadWithoutRestart(descriptor: IdeaPluginDescrip
                                                    isSubDescriptor: Boolean,
                                                    app: Application,
                                                    optionalDependencyPluginId: PluginId?,
-                                                   context: List<IdeaPluginDescriptorImpl>): String? {
+                                                   context: List<IdeaPluginDescriptorImpl>,
+                                                   pluginStateChecker: PluginStateChecker): String? {
   for (extensions in listOf(descriptor.unsortedEpNameToExtensionElements,
                             descriptor.app.extensions,
                             descriptor.project.extensions,
                             descriptor.module.extensions)) {
     if (extensions != null && !extensions.isEmpty()) {
-      doCheckExtensionsCanUnloadWithoutRestart(extensions, descriptor, baseDescriptor, isSubDescriptor, app, optionalDependencyPluginId, context)?.let {
+      doCheckExtensionsCanUnloadWithoutRestart(extensions, descriptor, baseDescriptor, isSubDescriptor, app, optionalDependencyPluginId,
+                                               context, pluginStateChecker)?.let {
         return it
       }
     }
@@ -1157,13 +1160,14 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
                                                      isSubDescriptor: Boolean,
                                                      app: Application,
                                                      optionalDependencyPluginId: PluginId?,
-                                                     context: List<IdeaPluginDescriptorImpl>): String? {
+                                                     context: List<IdeaPluginDescriptorImpl>,
+                                                     pluginStateChecker: PluginStateChecker): String? {
   val openedProjects = ProjectUtil.getOpenProjects()
   val anyProject = openedProjects.firstOrNull() ?: ProjectManager.getInstance().defaultProject
   val anyModule = openedProjects.firstOrNull()?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
   for (epName in extensions.keys) {
-    val pluginExtensionPoint = findPluginExtensionPoint(baseDescriptor ?: descriptor, epName)
+    val pluginExtensionPoint = findPluginExtensionPointRecursive(baseDescriptor ?: descriptor, epName, pluginStateChecker)
     if (pluginExtensionPoint != null) {
       // descriptor.pluginId is null when we check the optional dependencies of the plugin which is being loaded
       // if an optional dependency of a plugin extends a non-dynamic EP of that plugin, it shouldn't prevent plugin loading
@@ -1191,24 +1195,6 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
       continue
     }
 
-    val pluginEP = findPluginExtensionPoint(descriptor, epName)
-    if (pluginEP != null) {
-      if (!pluginEP.isDynamic) {
-        return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it"
-      }
-      continue
-    }
-
-    if (baseDescriptor != null) {
-      val baseEP = findPluginExtensionPoint(baseDescriptor, epName)
-      if (baseEP != null) {
-        if (!baseEP.isDynamic) {
-          return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it"
-        }
-        continue
-      }
-    }
-
     val contextEP = context.asSequence().mapNotNull { contextPlugin -> findPluginExtensionPoint(contextPlugin, epName) }.firstOrNull()
     if (contextEP != null) {
       if (!contextEP.isDynamic) {
@@ -1226,6 +1212,22 @@ private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl,
   return findContainerExtensionPoint(pluginDescriptor.app, epName)
          ?: findContainerExtensionPoint(pluginDescriptor.project, epName)
          ?: findContainerExtensionPoint(pluginDescriptor.module, epName)
+}
+
+private fun findPluginExtensionPointRecursive(pluginDescriptor: IdeaPluginDescriptorImpl,
+                                              epName: String,
+                                              pluginStateChecker: PluginStateChecker): ExtensionPointImpl<*>? {
+  findPluginExtensionPoint(pluginDescriptor, epName)?.let { return it }
+  pluginDescriptor.pluginDependencies?.let { pluginDependencies ->
+    for (dependency in pluginDependencies) {
+      if (pluginStateChecker.isPluginOrModuleLoaded(dependency.id)) {
+        dependency.subDescriptor?.let { subDescriptor ->
+          findPluginExtensionPointRecursive(subDescriptor, epName, pluginStateChecker)?.let { return it }
+        }
+      }
+    }
+  }
+  return null
 }
 
 private fun findContainerExtensionPoint(containerDescriptor: ContainerDescriptor, epName: String): ExtensionPointImpl<*>? {

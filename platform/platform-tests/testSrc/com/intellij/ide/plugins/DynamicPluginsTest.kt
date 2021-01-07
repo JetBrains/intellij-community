@@ -367,6 +367,30 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun loadOptionalDependencyEPAdjacentDescriptor() {
+    val pluginTwoBuilder = PluginBuilder().randomId("optionalDependencyListener-two")
+    val pluginThreeBuilder = PluginBuilder().randomId("optionalDependencyListener-three")
+    val pluginTwoDisposable = loadPluginWithText(pluginTwoBuilder)
+    val pluginThreeDisposable = loadPluginWithText(pluginThreeBuilder)
+    try {
+      val pluginDescriptor = PluginBuilder().randomId("optionalDependencyListener-one")
+      pluginDescriptor.depends(
+        pluginTwoBuilder.id,
+        PluginBuilder().extensionPoints("""<extensionPoint qualifiedName="one.foo" interface="java.lang.Runnable" dynamic="true"/>"""))
+      pluginDescriptor.depends(
+        pluginThreeBuilder.id,
+        PluginBuilder().extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
+      )
+      val pluginOneDisposable = loadPluginWithText(pluginDescriptor)
+      Disposer.dispose(pluginOneDisposable)
+    }
+    finally {
+      Disposer.dispose(pluginTwoDisposable)
+      Disposer.dispose(pluginThreeDisposable)
+    }
+  }
+
+  @Test
   fun testProjectService() {
     val project = projectRule.project
     val disposable = loadExtensionWithText("""
