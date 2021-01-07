@@ -22,8 +22,11 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.module.ModuleConfigurationEditor
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
@@ -470,14 +473,23 @@ class DynamicPluginsTest {
                                            DynamicPlugins::class.java.classLoader)
     try {
       assertThat(checked.get()).isEqualTo(1)
-      assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isTrue()
+      assertThat(
+        Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isTrue()
     }
     finally {
       Disposer.dispose(disposable)
       Disposer.dispose(listenerDisposable)
     }
     assertThat(checked.get()).isEqualTo(2)
-    assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isFalse()
+    assertThat(
+      Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isFalse()
+  }
+
+  @Test
+  fun unloadModuleEP() {
+    val disposable = loadExtensionWithText(
+      """<moduleConfigurationEditorProvider implementation="${MyModuleConfigurationEditorProvider::class.java.name}"/>""")
+    Disposer.dispose(disposable)
   }
 
   @Test
@@ -697,5 +709,11 @@ private class MyIntentionAction : IntentionAction {
 
 private class MyRunnable : Runnable {
   override fun run() {
+  }
+}
+
+private class MyModuleConfigurationEditorProvider : ModuleConfigurationEditorProvider {
+  override fun createEditors(state: ModuleConfigurationState?): Array<ModuleConfigurationEditor> {
+    return arrayOf()
   }
 }

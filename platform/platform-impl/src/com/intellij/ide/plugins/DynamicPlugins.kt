@@ -1185,14 +1185,21 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
       ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
     if (ep != null) {
       if (!ep.isDynamic) {
-        if (optionalDependencyPluginId != null) {
-          return "Plugin ${baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in plugin $optionalDependencyPluginId that optionally depends on it"
-        }
-        else {
-          return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
-        }
+        return getNonDynamicUnloadError(epName, baseDescriptor, descriptor, optionalDependencyPluginId)
       }
       continue
+    }
+    if (anyModule == null) {
+      val corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
+      if (corePlugin != null) {
+        val coreEP = findPluginExtensionPoint(corePlugin as IdeaPluginDescriptorImpl, epName)
+        if (coreEP != null) {
+          if (!coreEP.isDynamic) {
+            return getNonDynamicUnloadError(epName, baseDescriptor, descriptor, optionalDependencyPluginId)
+          }
+          continue
+        }
+      }
     }
 
     val contextEP = context.asSequence().mapNotNull { contextPlugin -> findPluginExtensionPoint(contextPlugin, epName) }.firstOrNull()
@@ -1206,6 +1213,18 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
     return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of unresolved extension $epName"
   }
   return null
+}
+
+private fun getNonDynamicUnloadError(epName: String,
+                                     baseDescriptor: IdeaPluginDescriptorImpl?,
+                                     descriptor: IdeaPluginDescriptorImpl,
+                                     optionalDependencyPluginId: PluginId?): String {
+  if (optionalDependencyPluginId != null) {
+    return "Plugin ${baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in plugin $optionalDependencyPluginId that optionally depends on it"
+  }
+  else {
+    return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
+  }
 }
 
 private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): ExtensionPointImpl<*>? {
