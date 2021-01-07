@@ -8,11 +8,14 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.debugger.ui.tree.DebuggerTreeNode
 import com.intellij.debugger.ui.tree.NodeManager
+import com.intellij.debugger.ui.tree.ValueDescriptor
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder
 import com.intellij.debugger.ui.tree.render.ClassRenderer
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
 import java.util.*
@@ -46,6 +49,15 @@ class KotlinClassRenderer : ClassRenderer() {
                     builder.setChildren(mergeNodesLists(nodesToShow, getterNodes))
                 }
         }
+    }
+
+    override fun calcLabel(
+        descriptor: ValueDescriptor,
+        evaluationContext: EvaluationContext?,
+        labelListener: DescriptorLabelListener
+    ): String {
+        val renderer = NodeRendererSettings.getInstance().toStringRenderer
+        return renderer.calcLabel(descriptor, evaluationContext, labelListener)
     }
 
     override fun isApplicable(type: Type?): Boolean =
