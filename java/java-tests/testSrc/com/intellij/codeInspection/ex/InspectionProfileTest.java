@@ -168,6 +168,28 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     }
   }
 
+  public void testSetProfileWithSameName() {
+    final InspectionProfileImpl applicationProfile = createProfile();
+    final BaseInspectionProfileManager applicationProfileManager = getApplicationProfileManager();
+    applicationProfileManager.addProfile(applicationProfile);
+
+    ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(getProject());
+    try {
+      applicationProfileManager.setRootProfile(PROFILE);
+      projectProfileManager.useApplicationProfile(PROFILE); // see ProjectInspectionToolsConfigurable.applyRootProfile()
+      assertEquals(applicationProfile, projectProfileManager.getCurrentProfile());
+
+      final InspectionProfileImpl projectProfile = createProfile();
+      projectProfileManager.addProfile(projectProfile);
+      projectProfileManager.setRootProfile(PROFILE);
+
+      assertSame(projectProfile, projectProfileManager.getCurrentProfile());
+    }
+    finally {
+      projectProfileManager.deleteProfile(PROFILE);
+    }
+  }
+
   private static void updateProfile(BaseInspectionProfileManager profileManager, InspectionProfileImpl localProfile) {
     profileManager.addProfile(localProfile);
     profileManager.fireProfileChanged(localProfile);
