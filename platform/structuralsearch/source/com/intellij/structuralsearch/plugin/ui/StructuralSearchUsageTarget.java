@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.navigation.ItemPresentation;
@@ -34,11 +34,6 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
   @Override
   public String getPresentableText() {
     return myConfiguration.getMatchOptions().getSearchPattern();
-  }
-
-  @Override
-  public String getLocationString() {
-    return null;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.hint.HintManager
@@ -578,7 +578,6 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
 
   override fun getPresentation(): ItemPresentation? {
     return object : ItemPresentation {
-      override fun getLocationString(): String? = null
 
       override fun getIcon(unused: Boolean): Icon? = field.getIcon(0)
 
@@ -616,7 +615,6 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
 private class DummyUsageTarget(@Nls val text: String) : UsageTarget {
   override fun getPresentation(): ItemPresentation? {
     return object : ItemPresentation {
-      override fun getLocationString(): String? = null
 
       override fun getIcon(unused: Boolean): Icon? = null
 

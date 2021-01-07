@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -21,12 +22,6 @@ public class MarkdownHtmlBlockImpl extends ASTWrapperPsiElement implements Markd
       @Override
       public String getPresentableText() {
         return "HTML block";
-      }
-
-      @Nullable
-      @Override
-      public String getLocationString() {
-        return null;
       }
     };
   }

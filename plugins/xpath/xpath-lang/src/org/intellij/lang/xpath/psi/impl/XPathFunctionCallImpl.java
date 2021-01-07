@@ -213,12 +213,6 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
 
       @Override
       @Nullable
-      public String getLocationString() {
-        return null;
-      }
-
-      @Override
-      @Nullable
       public @NlsSafe String getPresentableText() {
         return myFunctionDecl != null ? myFunctionDecl.buildSignature() +
                 ": " + myFunctionDecl.getReturnType().getName() : null;

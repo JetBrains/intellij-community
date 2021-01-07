@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.structureView;
 
 import com.intellij.ide.structureView.StructureViewBundle;
@@ -28,12 +28,6 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
     @Nullable
     @Override
     public String getPresentableText() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String getLocationString() {
       return null;
     }
   };

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.structureView.impl;
 
@@ -124,8 +124,7 @@ public class StructureViewComposite implements StructureView {
       @NotNull @Override public ItemPresentation getPresentation() { return this;} 
       @Override public TreeElement @NotNull [] getChildren() { return EMPTY_ARRAY;} 
       @Nullable @Override public String getPresentableText() { return null;} 
-      @Nullable @Override public String getLocationString() { return null;} 
-      @Nullable @Override public Icon getIcon(boolean unused) { return null;} 
+      @Nullable @Override public Icon getIcon(boolean unused) { return null;}
       @Override public void navigate(boolean requestFocus) {} 
       @Override public boolean canNavigate() { return false;} 
       @Override public boolean canNavigateToSource() { return false;}

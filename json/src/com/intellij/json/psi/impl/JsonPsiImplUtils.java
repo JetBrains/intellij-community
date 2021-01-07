@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.psi.impl;
 
 import com.intellij.icons.AllIcons;
@@ -98,12 +98,6 @@ public final class JsonPsiImplUtils {
 
       @Nullable
       @Override
-      public String getLocationString() {
-        return null;
-      }
-
-      @Nullable
-      @Override
       public Icon getIcon(boolean unused) {
         return AllIcons.Json.Array;
       }
@@ -117,12 +111,6 @@ public final class JsonPsiImplUtils {
       @Override
       public String getPresentableText() {
         return JsonBundle.message("json.object");
-      }
-
-      @Nullable
-      @Override
-      public String getLocationString() {
-        return null;
       }
 
       @Nullable
