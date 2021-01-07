@@ -171,6 +171,14 @@ internal object UpdateInstaller {
       val javaCopy = File(tempDir, "jre")
       if (javaCopy.exists()) FileUtil.delete(javaCopy)
       FileUtil.copyDir(File(java), javaCopy)
+
+      val jnf = File(java, "../Frameworks/JavaNativeFoundation.framework")
+      if (jnf.isDirectory) {
+        val jnfCopy = File(tempDir, "Frameworks/JavaNativeFoundation.framework")
+        if (jnfCopy.exists()) FileUtil.delete(jnfCopy)
+        FileUtil.copyDir(jnf, jnfCopy)
+      }
+
       java = javaCopy.path
     }
 
