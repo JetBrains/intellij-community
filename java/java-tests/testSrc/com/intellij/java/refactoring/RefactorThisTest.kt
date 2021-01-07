@@ -87,6 +87,22 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<SafeDeleteAction>())
   }
 
+  fun testMoveIsFilteredOnStatement() {
+    assertFalse(doActionExists<MoveAction>())
+  }
+
+  fun testMoveIsFilteredOnMethodReference() {
+    assertFalse(doActionExists<MoveAction>())
+  }
+
+  fun testMoveIsFilteredOnConstructor() {
+    assertFalse(doActionExists<MoveAction>())
+  }
+
+  fun testMoveOnMethodDeclaration() {
+    assertTrue(doActionExists<MoveAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     return findAvailableActions().any { action -> action is A }
