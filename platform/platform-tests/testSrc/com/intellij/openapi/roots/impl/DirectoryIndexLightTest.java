@@ -61,7 +61,7 @@ public class DirectoryIndexLightTest extends BasePlatformTestCase {
           assertFalse(index.isInLibrary(file));
         }
       }
-    }).reattemptUntilJitSettlesDown().assertTiming();
+    }).assertTiming();
   }
 
 }

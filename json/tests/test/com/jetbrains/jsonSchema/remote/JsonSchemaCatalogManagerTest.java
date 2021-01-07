@@ -60,7 +60,7 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
         VirtualFile result = myCatalogManager.getSchemaFileForFile(file);
         Assert.assertNull(result);
       }
-    }).reattemptUntilJitSettlesDown().usesAllCPUCores().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
   private void doTest(@NotNull String filePath, @Nullable String expectedSchemaUrl) {

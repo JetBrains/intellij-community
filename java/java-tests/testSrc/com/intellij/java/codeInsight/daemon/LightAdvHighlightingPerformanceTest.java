@@ -74,7 +74,6 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
     PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
-      .reattemptUntilJitSettlesDown()
       .usesAllCPUCores().assertTiming();
 
     return highlightErrors();

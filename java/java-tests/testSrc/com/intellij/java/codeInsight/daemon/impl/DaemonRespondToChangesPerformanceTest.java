@@ -56,7 +56,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       type("k");
       assertNotEmpty(highlightErrors());
       backspace();
-    }).usesAllCPUCores().reattemptUntilJitSettlesDown().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
@@ -75,7 +75,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       assertNotEmpty(highlightErrors());
 
       backspace();
-    }).usesAllCPUCores().reattemptUntilJitSettlesDown().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
   public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
@@ -97,7 +97,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       assertNotEmpty(highlightErrors());
 
       backspace();
-    }).usesAllCPUCores().reattemptUntilJitSettlesDown().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
   public void testReactivityPerformance() throws Throwable {

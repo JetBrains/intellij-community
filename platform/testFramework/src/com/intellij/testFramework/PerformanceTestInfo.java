@@ -18,8 +18,7 @@ public class PerformanceTestInfo {
   private final int expectedMs;           // millis the test is expected to run
   private ThrowableRunnable<?> setup;      // to run before each test
   private int usedReferenceCpuCores = 1;
-  private int attempts = 4;             // number of retries if performance failed
-  private boolean waitForJit;
+  private int maxRetries = 4;             // number of retries if performance failed
   private final String what;         // to print on fail
   private boolean adjustForIO;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
   private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
@@ -73,13 +72,7 @@ public class PerformanceTestInfo {
 
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo attempts(int attempts) {
-    this.attempts = attempts;
-    return this;
-  }
-
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo reattemptUntilJitSettlesDown() {
-    this.waitForJit = true;
+    this.maxRetries = attempts;
     return this;
   }
 
@@ -98,12 +91,9 @@ public class PerformanceTestInfo {
   public void assertTiming() {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
-    if (waitForJit) {
-      attempts = 100;
-      updateJitUsage();
-    }
+    updateJitUsage();
 
-    if (attempts == 1) {
+    if (maxRetries == 1) {
       //noinspection CallToSystemGC
       System.gc();
     }
@@ -111,7 +101,7 @@ public class PerformanceTestInfo {
     boolean testPassed = false;
     String logMessage;
 
-    for (int attempt = 1; attempt <= attempts; attempt++) {
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
       CpuUsageData data;
       try {
         if (setup != null) setup.run();
@@ -140,13 +130,13 @@ public class PerformanceTestInfo {
         System.out.println("\nWARNING: " + logMessage);
       }
 
-      JitUsageResult jitUsage = null;
-      if (attempt == attempts || waitForJit && (jitUsage = updateJitUsage()) == JitUsageResult.DEFINITELY_LOW) {
+      JitUsageResult jitUsage = updateJitUsage();
+      if (attempt == maxRetries && jitUsage == JitUsageResult.DEFINITELY_LOW) {
         if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
-      if (iterationResult == IterationResult.DISTRACTED && attempt < 20) attempts++;
-      String s = "  " + (attempts - attempt) + " " + StringUtil.pluralize("attempt", attempts - attempt) + " remain" + (waitForJit ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
+      if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < 30) maxRetries++;
+      String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" + (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         System.out.println(s);
