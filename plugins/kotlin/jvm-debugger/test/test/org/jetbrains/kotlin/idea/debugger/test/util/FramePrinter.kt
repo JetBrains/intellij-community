@@ -1,11 +1,11 @@
 package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SourcePositionProvider
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.ui.impl.watch.*
 import com.intellij.debugger.ui.tree.*
 import com.intellij.openapi.roots.JdkOrderEntry
@@ -16,6 +16,7 @@ import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.XTestValueNode
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
+import org.jetbrains.kotlin.idea.debugger.GetterDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
@@ -23,7 +24,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.lang.Appendable
 import java.util.concurrent.TimeUnit
 
-class FramePrinter(private val debugProcess: DebugProcessImpl, private val stackFrame: StackFrameProxyImpl) {
+class FramePrinter(private val suspendContext: SuspendContextImpl) {
     fun print(frame: XStackFrame): String {
         return buildString { append(frame, 0) }
     }
@@ -79,7 +80,7 @@ class FramePrinter(private val debugProcess: DebugProcessImpl, private val stack
                 return ValueInfo(name, kind, type, value, sourcePosition, mightHaveChildren)
             }
             is XStackFrame -> {
-                val sourcePosition = DebuggerUtilsEx.toSourcePosition(container.sourcePosition, debugProcess.project)
+                val sourcePosition = DebuggerUtilsEx.toSourcePosition(container.sourcePosition, suspendContext.debugProcess.project)
                 return ValueInfo(name, kind = null, type = null, value = null, sourcePosition, mightHaveChildren = true)
             }
             else -> {
@@ -90,26 +91,46 @@ class FramePrinter(private val debugProcess: DebugProcessImpl, private val stack
 
     private fun computeValue(descriptor: NodeDescriptorImpl?): String? {
         val valueDescriptor = descriptor as? ValueDescriptorImpl ?: return null
-
-        val renderer = debugProcess
-            .invokeInManagerThread { debuggerContext -> valueDescriptor.getRenderer(debuggerContext.debugProcess) }
-            ?.get(XDebuggerTestUtil.TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
-            ?: return null
+        if (valueDescriptor is GetterDescriptor) {
+            return null
+        }
 
         val semaphore = Semaphore()
         semaphore.down()
 
-        val immediateValue = debugProcess.invokeInManagerThread { debuggerContext ->
-            val suspendContext = debuggerContext.suspendContext ?: error("Can't get suspend context")
-            val evaluationContext = EvaluationContextImpl(suspendContext, stackFrame)
-            renderer.calcLabel(descriptor, evaluationContext) { semaphore.up() }
+        var result: String? = null
+
+        fun updateResult(value: String) {
+            result = patchHashCode(value)
+            semaphore.up()
         }
 
-        return when {
-            immediateValue != XDebuggerUIConstants.getCollectingDataMessage() -> immediateValue
-            semaphore.waitFor(XDebuggerTestUtil.TIMEOUT_MS.toLong()) -> descriptor.valueText
-            else -> null
-        }
+        suspendContext.debugProcess.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+            override fun contextAction(suspendContext: SuspendContextImpl) {
+                val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
+                valueDescriptor.setContext(evaluationContext)
+                val renderer = valueDescriptor.getRenderer(suspendContext.debugProcess)
+                    ?.get(XDebuggerTestUtil.TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+
+                if (renderer == null) {
+                    semaphore.up()
+                    return
+                }
+
+                val immediateValue = renderer.calcLabel(descriptor, evaluationContext) { updateResult(descriptor.valueText) }
+
+                if (immediateValue != XDebuggerUIConstants.getCollectingDataMessage()) {
+                    updateResult(immediateValue)
+                }
+            }
+
+            override fun commandCancelled() {
+                semaphore.up()
+            }
+        })
+
+        semaphore.waitFor(XDebuggerTestUtil.TIMEOUT_MS.toLong())
+        return result
     }
 
     private fun computeSourcePosition(descriptor: NodeDescriptorImpl?): SourcePosition? {
@@ -117,6 +138,7 @@ class FramePrinter(private val debugProcess: DebugProcessImpl, private val stack
             return null
         }
 
+        val debugProcess = suspendContext.debugProcess
         return debugProcess.invokeInManagerThread { debuggerContext ->
             SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debuggerContext)
         }
@@ -124,6 +146,7 @@ class FramePrinter(private val debugProcess: DebugProcessImpl, private val stack
 
     private fun getLabel(descriptor: NodeDescriptorImpl?): String? {
         return when (descriptor) {
+            is GetterDescriptor -> "getter"
             is StackFrameDescriptor -> "frame"
             is WatchItemDescriptor -> "watch"
             is LocalVariableDescriptor -> "local"
@@ -170,4 +193,11 @@ fun SourcePosition.render(): String {
 private fun SourcePosition.isInCompiledFile(): Boolean {
     val ktFile = file as? KtFile ?: return false
     return ktFile.isCompiled
+}
+
+private val HASH_CODE_REGEX = "^(.*@)[0-9a-f]+$".toRegex()
+
+private fun patchHashCode(value: String): String {
+    val match = HASH_CODE_REGEX.matchEntire(value) ?: return value
+    return match.groupValues[1] + "hashCode"
 }

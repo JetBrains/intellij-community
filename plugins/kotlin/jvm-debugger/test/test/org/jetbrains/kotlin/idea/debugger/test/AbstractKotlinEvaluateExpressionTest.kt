@@ -102,7 +102,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
                 }
             }
 
-            printFrame {
+            printFrame(this) {
                 resume(this)
                 checkExceptions(exceptions)
             }
@@ -120,7 +120,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
                     try {
                         evaluate(this, expression, CodeFragmentKind.EXPRESSION, expected)
                     } finally {
-                        printFrame { resume(this) }
+                        printFrame(this) { resume(this) }
                     }
                 }
             }
@@ -130,7 +130,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         finish()
     }
 
-    private fun printFrame(completion: () -> Unit) {
+    private fun printFrame(suspendContext: SuspendContextImpl, completion: () -> Unit) {
         if (!isFrameTest) {
             completion()
             return
@@ -143,7 +143,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         val stackFrame = debugProcess.positionManager.createStackFrame(descriptor) ?: error("Can't create stack frame for $descriptor")
 
         ApplicationManager.getApplication().executeOnPooledThread {
-            val result = FramePrinter(debugProcess, frameProxy).print(stackFrame)
+            val result = FramePrinter(suspendContext).print(stackFrame)
             print(result, ProcessOutputTypes.SYSTEM)
 
             assert(descriptor.debugProcess.isAttached)
