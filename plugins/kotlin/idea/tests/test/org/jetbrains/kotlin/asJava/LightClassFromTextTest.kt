@@ -143,7 +143,6 @@ class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private fun classesFromText(text: String, fileName: String = "A.kt"): Array<out PsiClass> {
         val file = KtPsiFactory(project).createFileWithLightClassSupport(fileName, text, myFixture.file)
-        val classes = file.classes
-        return classes
+        return file.classes
     }
 }
