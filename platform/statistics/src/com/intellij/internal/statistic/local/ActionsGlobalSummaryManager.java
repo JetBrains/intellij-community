@@ -36,16 +36,16 @@ public class ActionsGlobalSummaryManager {
   private final static String DEFAULT_SEPARATOR = ",";
   private Map<String, ActionGlobalUsageInfo> loadStatistics() {
     Map<String, ActionGlobalUsageInfo> res = new HashMap<>();
-    try (InputStream stream = getClass().getResourceAsStream("/statistics/actionsGlobalStatistics.csv");
+    try (InputStream stream = getClass().getResourceAsStream("/statistics/actionsUsages.csv");
          BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       String line = reader.readLine();
       while (line != null) {
         String[] items = line.split(DEFAULT_SEPARATOR);
 
-        String id = StringUtil.trim(items[1], QUOTE_FILTER);
-        long users = Long.parseLong(StringUtil.trim(items[4], QUOTE_FILTER));
-        long allUsers = Long.parseLong(StringUtil.trim(items[6], QUOTE_FILTER));
-        long usages = Long.parseLong(StringUtil.trim(items[5], QUOTE_FILTER));
+        String id = StringUtil.trim(items[0], QUOTE_FILTER);
+        long users = Long.parseLong(StringUtil.trim(items[3], QUOTE_FILTER));
+        long allUsers = Long.parseLong(StringUtil.trim(items[5], QUOTE_FILTER));
+        long usages = Long.parseLong(StringUtil.trim(items[4], QUOTE_FILTER));
         res.put(id, new ActionGlobalUsageInfo(users, allUsers, usages));
 
         line = reader.readLine();
