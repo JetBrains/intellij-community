@@ -154,4 +154,22 @@
     <problem_class severity="INFO" attribute_key="INFO_ATTRIBUTES">If-Then foldable to '?.'</problem_class>
     <description>Foldable if-then</description>
   </problem>
+  <problem>
+    <file>callVariable2.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <package>callVariable2</package>
+    <entry_point TYPE="method" FQNAME="callVariable2.CallVariable2Kt void test(callVariable2.Foo foo)" />
+    <problem_class id="IfThenToSafeAccess" severity="INFO" attribute_key="INFO_ATTRIBUTES">If-Then foldable to '?.'</problem_class>
+    <description>Foldable if-then</description>
+  </problem>
+  <problem>
+    <file>callInvokeOperator2.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>callInvokeOperator2</package>
+    <entry_point TYPE="method" FQNAME="callInvokeOperator2.CallInvokeOperator2Kt void test(callInvokeOperator2.Foo foo)" />
+    <problem_class id="IfThenToSafeAccess" severity="INFO" attribute_key="INFO_ATTRIBUTES">If-Then foldable to '?.'</problem_class>
+    <description>Foldable if-then</description>
+  </problem>
 </problems>
