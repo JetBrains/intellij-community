@@ -26,7 +26,7 @@ fun getMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumen
       getTagDocumentation(getApiNamespace(element.namespace, element, symbolName), symbolName)
     }
     // TODO support special documentation for attribute values
-    element is XmlAttribute || element is XmlAttributeValue || element.parent is XmlAttributeValue -> {
+    element is XmlAttribute || element is XmlAttributeValue -> {
       PsiTreeUtil.getParentOfType(element, XmlAttribute::class.java, false)?.let { attr ->
         symbolName = attr.localName.let { if (attr.parent.isCaseSensitive) it else toLowerCase(it) }
         getAttributeDocumentation(getApiNamespace(attr.namespace, attr, symbolName!!), attr.parent.localName, symbolName!!)
