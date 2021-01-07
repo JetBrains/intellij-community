@@ -121,7 +121,7 @@ public class ImportFromExistingAction implements QuestionAction {
     if (manager.isInjectedFragment(file)) {
       file = manager.getTopLevelFile(myTarget);
     }
-    // We are trying to import top-level module or package which thus cannot be qualified
+    // A root-level module or package cannot be imported with a "from" import.
     if (PyUtil.isRoot(item.getFile())) {
       if (myImportLocally) {
         AddImportHelper.addLocalImportStatement(myTarget, item.getImportableName());
@@ -143,7 +143,9 @@ public class ImportFromExistingAction implements QuestionAction {
         else {
           AddImportHelper.addImportStatement(file, nameToImport, item.getAsName(), priority, myTarget);
         }
-        myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
+        if (item.getAsName() == null) {
+          myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
+        }
       }
       else {
         if (myImportLocally) {

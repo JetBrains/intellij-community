@@ -25,6 +25,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
@@ -294,6 +295,24 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testCommonPackageAlias() {
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-46356
+  public void testCommonSubModuleAliasPlainImport() {
+    PyCodeInsightSettings codeInsightSettings = PyCodeInsightSettings.getInstance();
+    boolean oldPreferFromImport = codeInsightSettings.PREFER_FROM_IMPORT;
+    codeInsightSettings.PREFER_FROM_IMPORT = false;
+    try {
+      doMultiFileAutoImportTest("Qualify with an imported module");
+    }
+    finally {
+      codeInsightSettings.PREFER_FROM_IMPORT = oldPreferFromImport;
+    }
+  }
+
+  // PY-46356
+  public void testCommonSubModuleAliasFromImport() {
     doMultiFileAutoImportTest("Import");
   }
 

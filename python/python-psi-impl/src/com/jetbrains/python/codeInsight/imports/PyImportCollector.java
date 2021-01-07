@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.*;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -18,7 +17,9 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -115,10 +116,10 @@ public class PyImportCollector {
     }
     symbols.addAll(PyVariableNameIndex.find(myRefText, project, scope));
     if (isPossibleModuleReference()) {
-      symbols.addAll(findImportableModules(myRefText, false, project, scope));
+      symbols.addAll(findImportableModules(myRefText, false, scope));
       String packageQName = PyPackageAliasesProvider.commonImportAliases.get(myRefText);
       if (packageQName != null) {
-        symbols.addAll(findImportableModules(packageQName, true, project, scope));
+        symbols.addAll(findImportableModules(packageQName, true, scope));
       }
     }
     for (PsiNamedElement symbol : symbols) {
@@ -190,36 +191,20 @@ public class PyImportCollector {
     return true;
   }
 
-  private Collection<PsiFileSystemItem> findImportableModules(String name,
+  @NotNull
+  private Collection<PsiFileSystemItem> findImportableModules(@NotNull String name,
                                                               boolean matchQualifiedName,
-                                                              Project project,
-                                                              GlobalSearchScope scope) {
+                                                              @NotNull GlobalSearchScope scope) {
     List<PsiFileSystemItem> result = new ArrayList<>();
-    // Add packages
     QualifiedName qualifiedName = QualifiedName.fromDottedString(name);
-    FilenameIndex.processFilesByName(name, true, item -> {
-      ProgressManager.checkCanceled();
-      final PsiDirectory candidatePackageDir = as(item, PsiDirectory.class);
-      if (candidatePackageDir != null && candidatePackageDir.findFile(PyNames.INIT_DOT_PY) != null) {
-        QualifiedName shortestName = QualifiedNameFinder.findShortestImportableQName(candidatePackageDir);
-        if (!matchQualifiedName || qualifiedName.equals(shortestName)) {
-          result.add(candidatePackageDir);
-        }
+    List<PyFile> matchingModules = matchQualifiedName ? PyModuleNameIndex.findByQualifiedName(qualifiedName, myNode.getProject(), scope)
+                                                      : PyModuleNameIndex.findByShortName(name, myNode.getProject(), scope);
+    for (PyFile module : matchingModules) {
+      PsiFileSystemItem candidate = as(PyUtil.turnInitIntoDir(module), PsiFileSystemItem.class);
+      if (candidate != null && PyUtil.isImportable(myNode.getContainingFile(), candidate)) {
+        result.add(candidate);
       }
-      return true;
-    }, scope, project, null);
-    // Add modules
-    FilenameIndex.processFilesByName(name + ".py", false, true, item -> {
-      ProgressManager.checkCanceled();
-      if (PyUtil.isImportable(myNode.getContainingFile(), item)) {
-        QualifiedName shortestName = QualifiedNameFinder.findShortestImportableQName(item);
-        if (!matchQualifiedName || qualifiedName.equals(shortestName)) {
-          result.add(item);
-        }
-      }
-      return true;
-    }, scope, project, null);
-
+    }
     return result;
   }
 
