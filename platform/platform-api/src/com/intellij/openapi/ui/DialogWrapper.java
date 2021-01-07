@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -332,6 +332,16 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * Allow to disable continuous validation.
+   * When disabled {@link #initValidation()} needs to be invoked after every change of the dialog to validate.
+   *
+   * @return {@code false} to disable continuous validation
+   */
+  protected boolean continuousValidation() {
+    return true;
+  }
+
+  /**
    * Validates user input and returns {@code null} if everything is fine
    * or validation description with component where problem has been found.
    *
@@ -382,7 +392,7 @@ public abstract class DialogWrapper {
   private void installErrorPainter() {
     if (myErrorPainterInstalled) return;
     myErrorPainterInstalled = true;
-    UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
+    IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable);
   }
 
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
@@ -390,6 +400,10 @@ public abstract class DialogWrapper {
     if (updateNeeded) {
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
+        if (!info.isEmpty()) {
+          installErrorPainter();
+        }
+        myErrorPainter.setValidationInfo(info);
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
         getOKAction().setEnabled(info.isEmpty() || info.stream().allMatch(info1 -> info1.okEnabled));
@@ -1413,6 +1427,7 @@ public abstract class DialogWrapper {
   }
 
   protected void startTrackingValidation() {
+    if (!continuousValidation()) return;
     SwingUtilities.invokeLater(() -> {
       if (!myValidationStarted && !myDisposed) {
         myValidationStarted = true;
@@ -1425,14 +1440,9 @@ public abstract class DialogWrapper {
     myValidationAlarm.cancelAllRequests();
     final Runnable validateRequest = () -> {
       if (myDisposed) return;
-      List<ValidationInfo> result = doValidateAll();
-      if (!result.isEmpty()) {
-        installErrorPainter();
-      }
-      myErrorPainter.setValidationInfo(result);
-      updateErrorInfo(result);
+      updateErrorInfo(doValidateAll());
 
-      if (!myDisposed) {
+      if (!myDisposed && continuousValidation()) {
         initValidation();
       }
     };
@@ -1889,7 +1899,7 @@ public abstract class DialogWrapper {
         if (!isInplaceValidationToolTipEnabled()) {
           DialogEarthquakeShaker.shake(getPeer().getWindow());
         }
-
+        updateErrorInfo(infoList);
         startTrackingValidation();
         if(infoList.stream().anyMatch(info1 -> !info1.okEnabled)) return;
       }
