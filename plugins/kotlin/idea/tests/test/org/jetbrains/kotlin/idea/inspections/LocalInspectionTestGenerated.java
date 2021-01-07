@@ -1842,6 +1842,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNullWithSuspendFunctionCall.kt");
             }
 
+            @TestMetadata("mapToMap.kt")
+            public void testMapToMap() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap.kt");
+            }
+
+            @TestMetadata("mapToMap2.kt")
+            public void testMapToMap2() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap2.kt");
+            }
+
+            @TestMetadata("mapToMap3.kt")
+            public void testMapToMap3() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap3.kt");
+            }
+
+            @TestMetadata("mapToMap4.kt")
+            public void testMapToMap4() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap4.kt");
+            }
+
             @TestMetadata("mapWithReturn.kt")
             public void testMapWithReturn() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapWithReturn.kt");
