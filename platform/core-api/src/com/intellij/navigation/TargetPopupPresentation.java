@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Represents presentation in target popup as follows:<br/>
@@ -17,6 +18,10 @@ import javax.swing.*;
 @Experimental
 public interface TargetPopupPresentation {
 
+  default @Nullable Color getBackgroundColor() {
+    return null;
+  }
+
   default @Nullable Icon getIcon() {
     return null;
   }
@@ -24,8 +29,6 @@ public interface TargetPopupPresentation {
   @Nls @NotNull String getPresentableText();
 
   /**
-   * Note that returned instance's {@link TextAttributes#getBackgroundColor()} is used for the whole item background.
-   *
    * @return attributes to highlight {@link #getPresentableText()}
    */
   default @Nullable TextAttributes getPresentableAttributes() {

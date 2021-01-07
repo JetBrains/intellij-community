@@ -38,6 +38,11 @@ class PsiElementTargetPopupPresentation(private val myElement: PsiElement) : Tar
     }
   }
 
+  override fun getBackgroundColor(): Color? {
+    val virtualFile = myVirtualFile ?: return null
+    return EditorTabPresentationUtil.getFileBackgroundColor(myProject, virtualFile)
+  }
+
   override fun getIcon(): Icon? = myElement.getIcon(Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
 
   override fun getPresentableText(): String {
@@ -46,24 +51,7 @@ class PsiElementTargetPopupPresentation(private val myElement: PsiElement) : Tar
            ?: myElement.text
   }
 
-  private fun getFileBackgroundColor(): Color? {
-    val virtualFile = myVirtualFile ?: return null
-    return EditorTabPresentationUtil.getFileBackgroundColor(myProject, virtualFile)
-  }
-
-  override fun getPresentableAttributes(): TextAttributes? {
-    val textAttributes = myItemPresentation?.getColoredAttributes()
-    if (textAttributes?.backgroundColor != null) {
-      return textAttributes
-    }
-    val fileColor = getFileBackgroundColor()
-    if (fileColor == null) {
-      return textAttributes
-    }
-    val result = textAttributes?.clone() ?: TextAttributes()
-    result.backgroundColor = fileColor
-    return result
-  }
+  override fun getPresentableAttributes(): TextAttributes? = myItemPresentation?.getColoredAttributes()
 
   override fun getLocationText(): String? = myItemPresentation?.getLocationText()
 

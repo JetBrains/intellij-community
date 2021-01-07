@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.lang.LangBundle
@@ -28,13 +28,12 @@ abstract class TargetPresentationMainRenderer<T> : ColoredListCellRenderer<T>(),
       append(LangBundle.message("target.presentation.invalid.target"), ERROR_ATTRIBUTES)
       return
     }
-    val attributes = presentation.presentableAttributes
-    val bgColor = attributes?.backgroundColor ?: UIUtil.getListBackground()
+    val bgColor = presentation.backgroundColor ?: UIUtil.getListBackground()
 
     icon = presentation.icon
     background = if (selected) UIUtil.getListSelectionBackground(hasFocus) else bgColor
 
-    val nameAttributes = attributes?.let(::fromTextAttributes)
+    val nameAttributes = presentation.presentableAttributes?.let(::fromTextAttributes)
                          ?: SimpleTextAttributes(STYLE_PLAIN, list.foreground)
     val matcher = MatcherHolder.getAssociatedMatcher(list)
     appendColoredFragmentForMatcher(presentation.presentableText, this, nameAttributes, matcher, bgColor, selected)
