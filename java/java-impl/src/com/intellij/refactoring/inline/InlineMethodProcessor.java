@@ -45,6 +45,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -55,7 +56,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -80,6 +80,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final String myDescriptiveName;
   private Map<PsiField, PsiClassInitializer> myAddedClassInitializers;
   private PsiMethod myMethodCopy;
+  @SuppressWarnings("LeakableMapKey") //short living refactoring
   private Map<Language,InlineHandler.Inliner> myInliners;
 
   public InlineMethodProcessor(@NotNull Project project,
@@ -235,7 +236,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.javadoc"));
         }
         if (element instanceof PsiLiteralExpression &&
-            Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
+            ContainerUtil.or(element.getReferences(), JavaLangClassMemberReference.class::isInstance)) {
           conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.reflection"));
         }
         if (element instanceof PsiMethodReferenceExpression) {
