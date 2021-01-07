@@ -234,10 +234,10 @@ public class PyAddImportTest extends PyTestCase {
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
       if (qualifier != null) {
-        AddImportHelper.addLocalFromImportStatement(reference.getElement(), qualifier, name);
+        AddImportHelper.addLocalFromImportStatement(reference.getElement(), qualifier, name, null);
       }
       else {
-        AddImportHelper.addLocalImportStatement(reference.getElement(), name);
+        AddImportHelper.addLocalImportStatement(reference.getElement(), name, null);
       }
     });
     myFixture.checkResultByFile(getTestName(true) + ".after.py");

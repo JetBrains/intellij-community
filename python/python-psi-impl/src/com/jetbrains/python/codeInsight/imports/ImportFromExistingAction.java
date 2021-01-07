@@ -124,7 +124,7 @@ public class ImportFromExistingAction implements QuestionAction {
     // A root-level module or package cannot be imported with a "from" import.
     if (PyUtil.isRoot(item.getFile())) {
       if (myImportLocally) {
-        AddImportHelper.addLocalImportStatement(myTarget, item.getImportableName());
+        AddImportHelper.addLocalImportStatement(myTarget, item.getImportableName(), item.getAsName());
       }
       else {
         AddImportHelper.addImportStatement(file, item.getImportableName(), item.getAsName(), priority, myTarget);
@@ -138,7 +138,7 @@ public class ImportFromExistingAction implements QuestionAction {
           nameToImport += "." + item.getImportableName();
         }
         if (myImportLocally) {
-          AddImportHelper.addLocalImportStatement(myTarget, nameToImport);
+          AddImportHelper.addLocalImportStatement(myTarget, nameToImport, item.getAsName());
         }
         else {
           AddImportHelper.addImportStatement(file, nameToImport, item.getAsName(), priority, myTarget);
@@ -149,7 +149,7 @@ public class ImportFromExistingAction implements QuestionAction {
       }
       else {
         if (myImportLocally) {
-          AddImportHelper.addLocalFromImportStatement(myTarget, qualifiedName, item.getImportableName());
+          AddImportHelper.addLocalFromImportStatement(myTarget, qualifiedName, item.getImportableName(), item.getAsName());
         }
         else {
           // "Update" scenario takes place inside injected fragments, for normal AST addToExistingImport() will be used instead

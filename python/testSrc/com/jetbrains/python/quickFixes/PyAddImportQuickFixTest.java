@@ -316,6 +316,16 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import");
   }
 
+  // PY-46358
+  public void testLocalPlainImportForCommonPackageAlias() {
+    doMultiFileAutoImportTest("Import 'numpy as np' locally");
+  }
+
+  // PY-46358
+  public void testLocalFromImportForCommonPackageAlias() {
+    doMultiFileAutoImportTest("Import 'matplotlib.pyplot as plt' locally");
+  }
+
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());
