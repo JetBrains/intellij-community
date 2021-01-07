@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -16,44 +16,37 @@ import javax.swing.*;
 @Experimental
 public interface TargetPopupPresentation {
 
-  @Nullable
-  default Icon getIcon() {
+  default @Nullable Icon getIcon() {
     return null;
   }
 
-  @NotNull
-  String getPresentableText();
+  @NotNull String getPresentableText();
 
   /**
    * Note that returned instance's {@link TextAttributes#getBackgroundColor()} is used for the whole item background.
    *
    * @return attributes to highlight {@link #getPresentableText()}
    */
-  @Nullable
-  default TextAttributes getPresentableAttributes() {
+  default @Nullable TextAttributes getPresentableAttributes() {
     return null;
   }
 
-  @Nullable
-  default String getLocationText() {
+  default @Nullable String getLocationText() {
     return null;
   }
 
   /**
    * @return attributes to highlight {@link #getLocationText()}
    */
-  @Nullable
-  default TextAttributes getLocationAttributes() {
+  default @Nullable TextAttributes getLocationAttributes() {
     return null;
   }
 
-  @Nullable
-  default String getRightText() {
+  default @Nullable String getRightText() {
     return null;
   }
 
-  @Nullable
-  default Icon getRightIcon() {
+  default @Nullable Icon getRightIcon() {
     return null;
   }
 }
