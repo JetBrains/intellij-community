@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.SystemProperties
+import java.io.File
 
 /**
  * @author yole
@@ -30,11 +31,14 @@ class DynamicPluginVfsListener : AsyncFileListener {
     if (SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
       val pluginsPath = PathManager.getPluginsPath()
       LocalFileSystem.getInstance().addRootToWatch(pluginsPath, true)
-      val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(pluginsPath)
+      val pluginsRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(pluginsPath))
       if (pluginsRoot != null) {
         // ensure all plugins are in VFS
         VfsUtilCore.processFilesRecursively(pluginsRoot) { true }
         RefreshQueue.getInstance().refresh(true, true, Runnable { initialRefreshDone = true }, pluginsRoot)
+      }
+      else {
+        LOG.info("Dynamic plugin VFS listener not active, couldn't find plugins root in VFS")
       }
     }
   }
