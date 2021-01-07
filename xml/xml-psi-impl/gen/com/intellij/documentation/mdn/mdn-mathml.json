@@ -10,7 +10,7 @@
   "attrs": {
     "values": {
       "url": "$MDN_URL$/web/mathml/attribute/values",
-      "doc": "<div></div>"
+      "doc": ""
     }
   },
   "tags": {
@@ -19,7 +19,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<div class=\"summary\">\n<p>The MathML <strong><code>&lt;maction&gt;</code></strong> element provides a possibility to bind actions to (sub-) expressions. The action itself is specified by the <code>actiontype</code> attribute, which accepts several values. To specify which child elements are addressed by the action, you can make use of the <code>selection</code> attribute.</p>\n</div>",
+      "doc": "<div class=\"summary\">\n<p>The MathML <strong><code>&lt;maction&gt;</code></strong> element provides a possibility to bind actions to (sub-) expressions. The action itself is specified by the <code>actiontype</code> attribute, which accepts several values. To specify which child elements are addressed by the action, you can make use of the <code>selection</code> attribute.</p>\n</div>",
       "attrs": {
         "actiontype": {
           "url": "$MDN_URL$/web/mathml/element/maction#attr-actiontype",
@@ -71,7 +71,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The top-level element in MathML is <code>&lt;math&gt;</code>. Every valid MathML instance must be wrapped in <code>&lt;math&gt;</code> tags. In addition you must not nest a second <code>&lt;math&gt;</code> element in another, but you can have an arbitrary number of other child elements in it.</p>",
+      "doc": "<p class=\"summary\">The top-level element in MathML is <code>&lt;math&gt;</code>. Every valid MathML instance must be wrapped in <code>&lt;math&gt;</code> tags. In addition you must not nest a second <code>&lt;math&gt;</code> element in another, but you can have an arbitrary number of other child elements in it.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/math#attr-class, id, style",
@@ -134,7 +134,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;menclose&gt;</code> element renders its content inside an enclosing notation specified by the <code>notation</code> attribute.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;menclose&gt;</code> element renders its content inside an enclosing notation specified by the <code>notation</code> attribute.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/menclose#attr-class, id, style",
@@ -179,7 +179,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;merror&gt;</code> element is used to display contents as error messages. In Firefox this error message is rendered similar to the typical XML error message. Note that this error is<strong> not</strong> thrown when your MathML markup is wrong or not well-formed XML. You will still get an XML parsing error (in case of the XHTML notation of MathML), which has nothing to do with <code>&lt;merror&gt;</code>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;merror&gt;</code> element is used to display contents as error messages. In Firefox this error message is rendered similar to the typical XML error message. Note that this error is<strong> not</strong> thrown when your MathML markup is wrong or not well-formed XML. You will still get an XML parsing error (in case of the XHTML notation of MathML), which has nothing to do with <code>&lt;merror&gt;</code>.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/merror#attr-class, id, style",
@@ -220,7 +220,7 @@
       "status": [
         "Deprecated"
       ],
-      "doc": "<div></div>\n<p><span class=\"seoSummary\">The deprecated MathML <code>&lt;mfenced&gt;</code> element used to provide the possibility to add custom opening and closing parentheses (such as brackets) and separators (such as commas or semicolons) to an expression. It has been removed from the latest MathML standard and modern browsers no longer support it.</span> Use the <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" title=\"&lt;mrow&gt;\">&lt;mrow&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code> elements instead.</p>",
+      "doc": "<p><span class=\"seoSummary\">The deprecated MathML <code>&lt;mfenced&gt;</code> element used to provide the possibility to add custom opening and closing parentheses (such as brackets) and separators (such as commas or semicolons) to an expression. It has been removed from the latest MathML standard and modern browsers no longer support it.</span> Use the <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" title=\"&lt;mrow&gt;\">&lt;mrow&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code> elements instead.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/mfenced#attr-class",
@@ -266,7 +266,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mfrac&gt;</code> element is used to display fractions.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mfrac&gt;</code> element is used to display fractions.</p>",
       "attrs": {
         "bevelled": {
           "url": "$MDN_URL$/web/mathml/element/mfrac#attr-bevelled",
@@ -337,7 +337,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mglyph&gt;</code> element is used to display non-standard symbols where existing Unicode characters are not available. It may be used within <a href=\"$MDN_URL$/tag/MathML:Token%20Elements\" data-flaw=\"link1\">token elements</a>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mglyph&gt;</code> element is used to display non-standard symbols where existing Unicode characters are not available. It may be used within <a href=\"$MDN_URL$/tag/MathML:Token%20Elements\" data-flaw=\"link1\">token elements</a>.</p>",
       "attrs": {
         "alt": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-alt",
@@ -378,7 +378,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mi&gt;</code> element indicates that the content should be rendered as an <strong>identifier</strong> such as function names, variables or symbolic constants. You can also have arbitrary text in it to mark up terms.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mi&gt;</code> element indicates that the content should be rendered as an <strong>identifier</strong> such as function names, variables or symbolic constants. You can also have arbitrary text in it to mark up terms.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mi#attr-class, id, style",
@@ -434,7 +434,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mlabeledtr&gt;</code> element is used to represent a label in a row either on the left or on the right side (determined using the <code>side</code> attribute on the <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code> element). Child elements of <code>&lt;mlabeledtr&gt;</code> must be <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" title=\"&lt;mtd&gt;\">&lt;mtd&gt;</a></code> elements. The first child is the label whereas all other children are representing row contents and are treated identically to children of <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> elements.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mlabeledtr&gt;</code> element is used to represent a label in a row either on the left or on the right side (determined using the <code>side</code> attribute on the <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code> element). Child elements of <code>&lt;mlabeledtr&gt;</code> must be <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" title=\"&lt;mtd&gt;\">&lt;mtd&gt;</a></code> elements. The first child is the label whereas all other children are representing row contents and are treated identically to children of <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> elements.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-class, id, style",
@@ -467,7 +467,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mmultiscripts&gt;</code> element allows you to create tensor-like objects. In a descriptive way <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" title=\"http://en.wikipedia.org/wiki/Tensor\">tensors</a> are multidimensional matrices (mathematical imprecise but exemplified). The degree of a tensor depends on the dimensionality of a representative array. For example, a number is a 0-dimensional array, or a 0th-order tensor. A 1-dimensional array (e.g. vectors) is a 1st-order tensor and so 2nd-order tensors are needed to represent square matrices. To learn more about the mathematical background of tensors refer to the <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" title=\"http://en.wikipedia.org/wiki/Tensor\">entry on Wikipedia</a>.</p>\n<p>MathML uses a special syntax to describe subscripts and superscripts for both, postscripts and prescripts, attached to a base expression:</p>\n<pre class=\"syntaxbox notranslate\">&lt;mmultiscripts&gt;\n<em>base</em>\n(<em>subscript superscript</em>)*\n[ &lt;mprescripts/&gt; (<em>presubscript presuperscript</em>)* ]\n&lt;/mmultiscripts&gt;\n</pre>\n<p>After the base expression you can specify a postsubscript and a postsuperscript. Prescripts are optional and are separated by the empty tag <code>&lt;mprescripts/&gt;</code> (only one &lt;mprescripts /&gt; element is allowed, otherwise you will get an <code>DuplicateMprescripts</code> error in the <a href=\"$MDN_URL$/Error_Console\" title=\"$MDN_URL$/Error_Console\" data-flaw=\"link1\">Error Console</a> and \"invalid-markup\" in your rendering). In addition you are able to use <code>&lt;none/&gt;</code> as a placeholder for empty scripts (not for the base). See the examples section for a correct usage.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mmultiscripts&gt;</code> element allows you to create tensor-like objects. In a descriptive way <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" title=\"http://en.wikipedia.org/wiki/Tensor\">tensors</a> are multidimensional matrices (mathematical imprecise but exemplified). The degree of a tensor depends on the dimensionality of a representative array. For example, a number is a 0-dimensional array, or a 0th-order tensor. A 1-dimensional array (e.g. vectors) is a 1st-order tensor and so 2nd-order tensors are needed to represent square matrices. To learn more about the mathematical background of tensors refer to the <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" title=\"http://en.wikipedia.org/wiki/Tensor\">entry on Wikipedia</a>.</p>\n<p>MathML uses a special syntax to describe subscripts and superscripts for both, postscripts and prescripts, attached to a base expression:</p>\n<pre class=\"syntaxbox notranslate\">&lt;mmultiscripts&gt;\n<em>base</em>\n(<em>subscript superscript</em>)*\n[ &lt;mprescripts/&gt; (<em>presubscript presuperscript</em>)* ]\n&lt;/mmultiscripts&gt;\n</pre>\n<p>After the base expression you can specify a postsubscript and a postsuperscript. Prescripts are optional and are separated by the empty tag <code>&lt;mprescripts/&gt;</code> (only one &lt;mprescripts /&gt; element is allowed, otherwise you will get an <code>DuplicateMprescripts</code> error in the <a href=\"$MDN_URL$/Error_Console\" title=\"$MDN_URL$/Error_Console\" data-flaw=\"link1\">Error Console</a> and \"invalid-markup\" in your rendering). In addition you are able to use <code>&lt;none/&gt;</code> as a placeholder for empty scripts (not for the base). See the examples section for a correct usage.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-class",
@@ -525,7 +525,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mn&gt;</code> element represents a numeric literal which is normally a sequence of digits with a possible separator (a dot or a comma). However,  it is also allowed to have arbitrary text in it which is actually a numeric quantity, for example \"eleven\".</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mn&gt;</code> element represents a numeric literal which is normally a sequence of digits with a possible separator (a dot or a comma). However,  it is also allowed to have arbitrary text in it which is actually a numeric quantity, for example \"eleven\".</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mn#attr-class, id, style",
@@ -581,7 +581,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mo&gt;</code> element represents an operator in a broad sense. Besides operators in strict mathematical meaning, this element also includes \"operators\" like parentheses, separators like comma and semicolon, or \"absolute value\" bars.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mo&gt;</code> element represents an operator in a broad sense. Besides operators in strict mathematical meaning, this element also includes \"operators\" like parentheses, separators like comma and semicolon, or \"absolute value\" bars.</p>",
       "attrs": {
         "accent": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-accent",
@@ -718,7 +718,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mover&gt;</code> element is used to attach an accent or a limit over an expression. Use the following syntax: <code>&lt;mover&gt; <em>base overscript</em> &lt;/mover&gt;</code></p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mover&gt;</code> element is used to attach an accent or a limit over an expression. Use the following syntax: <code>&lt;mover&gt; <em>base overscript</em> &lt;/mover&gt;</code></p>",
       "attrs": {
         "accent": {
           "url": "$MDN_URL$/web/mathml/element/mover#attr-accent",
@@ -774,7 +774,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mpadded&gt;</code> element is used to add extra padding and to set the general adjustment of position and size of enclosed contents.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mpadded&gt;</code> element is used to add extra padding and to set the general adjustment of position and size of enclosed contents.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-class, id, style",
@@ -847,7 +847,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mphantom&gt;</code> element is rendered invisibly, but dimensions (such as height, width, and baseline position) are still kept.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mphantom&gt;</code> element is rendered invisibly, but dimensions (such as height, width, and baseline position) are still kept.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mphantom#attr-class, id, style",
@@ -874,7 +874,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mroot&gt;</code> element is used to display roots with an explicit index. Two arguments are accepted, which leads to the syntax: <code>&lt;mroot&gt; <em>base index</em> &lt;/mroot&gt;</code>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mroot&gt;</code> element is used to display roots with an explicit index. Two arguments are accepted, which leads to the syntax: <code>&lt;mroot&gt; <em>base index</em> &lt;/mroot&gt;</code>.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mroot#attr-class, id, style",
@@ -915,7 +915,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mrow&gt;</code> element is used to group sub-expressions, which usually contain one or more <a href=\"$MDN_URL$/Web/MathML/Element/mo\" data-flaw=\"link1\">operators</a> with their respective operands (such as <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" title=\"&lt;mi&gt;\">&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mn\" title=\"&lt;mn&gt;\">&lt;mn&gt;</a></code>). This element renders as a horizontal row containing its arguments.</p>\n<p>When writing a MathML expression, you should group elements within an <code>&lt;mrow&gt;</code> in the same way as they are grouped in the mathematical interpretation of the expression. Proper grouping helps the rendering of the expression in several ways:</p>\n<ul>\n<li>It can improve the display by possibly affecting spacing.</li>\n<li>It allows for more intelligent line-breaking and indentation.</li>\n<li>It simplifies the interpretation of the expression by automated systems such as computer algebra systems and audio renderers.</li>\n</ul>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mrow&gt;</code> element is used to group sub-expressions, which usually contain one or more <a href=\"$MDN_URL$/Web/MathML/Element/mo\" data-flaw=\"link1\">operators</a> with their respective operands (such as <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" title=\"&lt;mi&gt;\">&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mn\" title=\"&lt;mn&gt;\">&lt;mn&gt;</a></code>). This element renders as a horizontal row containing its arguments.</p>\n<p>When writing a MathML expression, you should group elements within an <code>&lt;mrow&gt;</code> in the same way as they are grouped in the mathematical interpretation of the expression. Proper grouping helps the rendering of the expression in several ways:</p>\n<ul>\n<li>It can improve the display by possibly affecting spacing.</li>\n<li>It allows for more intelligent line-breaking and indentation.</li>\n<li>It simplifies the interpretation of the expression by automated systems such as computer algebra systems and audio renderers.</li>\n</ul>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mrow#attr-class, id, style",
@@ -963,7 +963,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;ms&gt;</code> element represents a <em>string literal</em> meant to be interpreted by programming languages and computer algebra systems. By default, string literals are displayed as enclosed by double quotes (<code>&amp;quot;</code>); by using the <code>lquote</code> and <code>rquote</code> attributes, you can set custom characters to display. Note that quotation marks should not be specified unless they are part of the string literal. The content of an <code>&lt;ms&gt;</code> element is not an ASCII string per se, but rather a sequence of characters and <code><a href=\"$MDN_URL$/Web/MathML/Element/mglyph\" title=\"&lt;mglyph&gt;\">&lt;mglyph&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/malignmark\" title=\"&lt;malignmark&gt;\">&lt;malignmark&gt;</a></code> elements.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;ms&gt;</code> element represents a <em>string literal</em> meant to be interpreted by programming languages and computer algebra systems. By default, string literals are displayed as enclosed by double quotes (<code>&amp;quot;</code>); by using the <code>lquote</code> and <code>rquote</code> attributes, you can set custom characters to display. Note that quotation marks should not be specified unless they are part of the string literal. The content of an <code>&lt;ms&gt;</code> element is not an ASCII string per se, but rather a sequence of characters and <code><a href=\"$MDN_URL$/Web/MathML/Element/mglyph\" title=\"&lt;mglyph&gt;\">&lt;mglyph&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/malignmark\" title=\"&lt;malignmark&gt;\">&lt;malignmark&gt;</a></code> elements.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/ms#attr-class, id, style",
@@ -1027,7 +1027,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mspace&gt;</code> element is used to display a blank space, whose size is set by its attributes.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mspace&gt;</code> element is used to display a blank space, whose size is set by its attributes.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-class, id, style",
@@ -1079,7 +1079,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;msqrt&gt;</code> element is used to display square roots (no index is displayed). The square root accepts only one argument, which leads to the following syntax: <code>&lt;msqrt&gt; <em>base</em> &lt;/msqrt&gt;</code>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;msqrt&gt;</code> element is used to display square roots (no index is displayed). The square root accepts only one argument, which leads to the following syntax: <code>&lt;msqrt&gt; <em>base</em> &lt;/msqrt&gt;</code>.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/msqrt#attr-class, id, style",
@@ -1120,7 +1120,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mstyle&gt;</code> element is used change the style of its children. It accepts all attributes of all MathML presentation elements with some exceptions and additional attributes listed below.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mstyle&gt;</code> element is used change the style of its children. It accepts all attributes of all MathML presentation elements with some exceptions and additional attributes listed below.</p>",
       "attrs": {
         "decimalpoint": {
           "url": "$MDN_URL$/web/mathml/element/mstyle#attr-decimalpoint",
@@ -1181,7 +1181,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p><span class=\"seoSummary\">The MathML <code>&lt;msub&gt;</code> element is used to attach a subscript to an expression.</span></p>\n<p>It uses the following syntax: <code>&lt;msub&gt; <em>base subscript</em> &lt;/msub&gt;</code>.</p>",
+      "doc": "<p><span class=\"seoSummary\">The MathML <code>&lt;msub&gt;</code> element is used to attach a subscript to an expression.</span></p>\n<p>It uses the following syntax: <code>&lt;msub&gt; <em>base subscript</em> &lt;/msub&gt;</code>.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/msub#attr-class",
@@ -1229,7 +1229,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p><span class=\"seoSummary\">The MathML <code>&lt;msubsup&gt;</code> element is used to attach both a subscript and a superscript, together, to an expression.</span></p>\n<p>It uses the following syntax: <code>&lt;msubsup&gt; <em>base subscript superscript</em> &lt;/msubsup&gt;</code>.</p>",
+      "doc": "<p><span class=\"seoSummary\">The MathML <code>&lt;msubsup&gt;</code> element is used to attach both a subscript and a superscript, together, to an expression.</span></p>\n<p>It uses the following syntax: <code>&lt;msubsup&gt; <em>base subscript superscript</em> &lt;/msubsup&gt;</code>.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/msubsup#attr-class",
@@ -1284,7 +1284,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p><span class=\"seoSummary\">The MathML <code>&lt;msup&gt;</code> element is used to attach a superscript to an expression.</span></p>\n<p>It uses the following syntax: <code>&lt;msup&gt; <em>base superscript</em> &lt;/msup&gt;</code>.</p>",
+      "doc": "<p><span class=\"seoSummary\">The MathML <code>&lt;msup&gt;</code> element is used to attach a superscript to an expression.</span></p>\n<p>It uses the following syntax: <code>&lt;msup&gt; <em>base superscript</em> &lt;/msup&gt;</code>.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/msup#attr-class",
@@ -1332,7 +1332,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mtable&gt;</code> element allows you to create tables or matrices. Inside a <code>&lt;mtable&gt;</code> only <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" title=\"&lt;mtd&gt;\">&lt;mtd&gt;</a></code> elements may appear. These elements are similar to <a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a> , <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>\n<div class=\"note notecard\">\n<p><strong>Note: </strong>The <code>&lt;mtable&gt;</code> element resets the <code>displaystyle</code> attribute to <code>false</code>. If you want to use this element as an inline-block, you might want to set <code>&lt;mtable displaystyle=\"true\"&gt;...&lt;/mtable&gt;</code>.</p>\n</div>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mtable&gt;</code> element allows you to create tables or matrices. Inside a <code>&lt;mtable&gt;</code> only <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" title=\"&lt;mtd&gt;\">&lt;mtd&gt;</a></code> elements may appear. These elements are similar to <a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a> , <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>\n<div class=\"note notecard\">\n<p><strong>Note: </strong>The <code>&lt;mtable&gt;</code> element resets the <code>displaystyle</code> attribute to <code>false</code>. If you want to use this element as an inline-block, you might want to set <code>&lt;mtable displaystyle=\"true\"&gt;...&lt;/mtable&gt;</code>.</p>\n</div>",
       "attrs": {
         "align": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-align",
@@ -1345,8 +1345,7 @@
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-alignmentscope",
           "status": [
             "StandardTrack"
-          ],
-          "doc": ""
+          ]
         },
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-class, id, style",
@@ -1419,8 +1418,7 @@
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-groupalign",
           "status": [
             "StandardTrack"
-          ],
-          "doc": ""
+          ]
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-href",
@@ -1492,7 +1490,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mtd&gt;</code> element represents a cell in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mtd&gt;</code> element represents a cell in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-class, id, style",
@@ -1523,8 +1521,7 @@
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-groupalign",
           "status": [
             "StandardTrack"
-          ],
-          "doc": ""
+          ]
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-href",
@@ -1562,7 +1559,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p><span class=\"seoSummary\">The MathML &lt;mtext&gt; element is used to render arbitrary text with <em>no</em> notational meaning, such as comments or annotations.</span></p>\n<p>To display text <em>with</em> notational meaning, use <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" title=\"&lt;mi&gt;\">&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code> instead.</p>",
+      "doc": "<p><span class=\"seoSummary\">The MathML &lt;mtext&gt; element is used to render arbitrary text with <em>no</em> notational meaning, such as comments or annotations.</span></p>\n<p>To display text <em>with</em> notational meaning, use <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" title=\"&lt;mi&gt;\">&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code> instead.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mtext#attr-class, id, style",
@@ -1618,7 +1615,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;mtr&gt;</code> element represents a row in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mtr&gt;</code> element represents a row in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>",
       "attrs": {
         "class, id, style": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-class, id, style",
@@ -1642,8 +1639,7 @@
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-groupalign",
           "status": [
             "StandardTrack"
-          ],
-          "doc": ""
+          ]
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-href",
@@ -1674,7 +1670,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">The MathML <code>&lt;munder&gt;</code> element is used to attach an accent or a limit under an expression. It uses the following syntax: <code>&lt;munder&gt; <em>base underscript</em> &lt;/munder&gt;</code></p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;munder&gt;</code> element is used to attach an accent or a limit under an expression. It uses the following syntax: <code>&lt;munder&gt; <em>base underscript</em> &lt;/munder&gt;</code></p>",
       "attrs": {
         "accentunder": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-accentunder",
@@ -1730,7 +1726,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p><span class=\"seoSummary\">The MathML <code>&lt;munderover&gt;</code> element is used to attach accents or limits both under and over an expression.</span></p>\n<p>It uses the following syntax: <code>&lt;munderover&gt; <em>base underscript overscript</em> &lt;/munderover&gt;</code></p>",
+      "doc": "<p><span class=\"seoSummary\">The MathML <code>&lt;munderover&gt;</code> element is used to attach accents or limits both under and over an expression.</span></p>\n<p>It uses the following syntax: <code>&lt;munderover&gt; <em>base underscript overscript</em> &lt;/munderover&gt;</code></p>",
       "attrs": {
         "accent": {
           "url": "$MDN_URL$/web/mathml/element/munderover#attr-accent",
@@ -1793,7 +1789,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<div></div>\n<p class=\"summary\">In MathML there are two ways to mark up mathematics: <em>Presentation</em> MathML is used to control the layout of equations, whereas <em>Content</em> MathML is designed to encode the semantic mathematical meaning and to make expressions understandable to computer algebra systems. The MathML elements <code>&lt;semantics&gt;</code>, <code>&lt;annotation&gt;</code> and <code>&lt;annotation-xml&gt;</code> are used to combine presentation and content markup and to provide both, layout information and semantic meaning of mathematical expressions.</p>\n<p>The <code>&lt;semantics&gt;</code> element acts as a container element associating annotations and must have child elements (it will raise an <em>invalid markup </em>error otherwise). The <code>&lt;annotation&gt;</code> element is the container element containing semantic information in a non-XML format, whereas the <code>&lt;annotation-xml&gt;</code> element contains content in an XML format, e.g. Content MathML or OpenMath.</p>\n<p>The rules of determining the visible child in a <code>&lt;semantics&gt;</code> element are the following:</p>\n<ul>\n<li>If no rule other rule applies: By default only the first child is rendered, which is supposed to be presentation markup.</li>\n<li>If the first child is a presentation MathML element other than <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code>, render the first child.</li>\n<li>If no Presentation MathML is found, render the first <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> child element of <code>&lt;semantics&gt;</code>.<br>\nBeware that <code>&lt;annotation-xml&gt;</code> elements are only recognized, if the encoding attribute is set to one of the following:\n<ul>\n<li><code><span id=\"the-code\"><span class=\"s\">\"application/mathml-presentation+xml</span></span></code>\"</li>\n<li><code><span id=\"the-code\"><span class=\"s\">\"MathML-Presentation</span></span></code>\"</li>\n<li><span id=\"the-code\"><span class=\"s\"><code>\"SVG1.1</code></span></span>\"</li>\n<li><code>\"text/html\"</code></li>\n<li><code>\"image/svg+xml\"</code></li>\n<li><code><span class=\"st\">\"application/xml</span></code>\".</li>\n</ul>\nNote that<span id=\"the-code\"><span class=\"c\"> \"application/mathml+xml</span></span>\" is <em>not</em> mentioned here as it does not distinguish between Content or Presentation MathML.</li>\n</ul>",
+      "doc": "<p class=\"summary\">In MathML there are two ways to mark up mathematics: <em>Presentation</em> MathML is used to control the layout of equations, whereas <em>Content</em> MathML is designed to encode the semantic mathematical meaning and to make expressions understandable to computer algebra systems. The MathML elements <code>&lt;semantics&gt;</code>, <code>&lt;annotation&gt;</code> and <code>&lt;annotation-xml&gt;</code> are used to combine presentation and content markup and to provide both, layout information and semantic meaning of mathematical expressions.</p>\n<p>The <code>&lt;semantics&gt;</code> element acts as a container element associating annotations and must have child elements (it will raise an <em>invalid markup </em>error otherwise). The <code>&lt;annotation&gt;</code> element is the container element containing semantic information in a non-XML format, whereas the <code>&lt;annotation-xml&gt;</code> element contains content in an XML format, e.g. Content MathML or OpenMath.</p>\n<p>The rules of determining the visible child in a <code>&lt;semantics&gt;</code> element are the following:</p>\n<ul>\n<li>If no rule other rule applies: By default only the first child is rendered, which is supposed to be presentation markup.</li>\n<li>If the first child is a presentation MathML element other than <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code>, render the first child.</li>\n<li>If no Presentation MathML is found, render the first <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> child element of <code>&lt;semantics&gt;</code>.<br>\nBeware that <code>&lt;annotation-xml&gt;</code> elements are only recognized, if the encoding attribute is set to one of the following:\n<ul>\n<li><code><span id=\"the-code\"><span class=\"s\">\"application/mathml-presentation+xml</span></span></code>\"</li>\n<li><code><span id=\"the-code\"><span class=\"s\">\"MathML-Presentation</span></span></code>\"</li>\n<li><span id=\"the-code\"><span class=\"s\"><code>\"SVG1.1</code></span></span>\"</li>\n<li><code>\"text/html\"</code></li>\n<li><code>\"image/svg+xml\"</code></li>\n<li><code><span class=\"st\">\"application/xml</span></code>\".</li>\n</ul>\nNote that<span id=\"the-code\"><span class=\"c\"> \"application/mathml+xml</span></span>\" is <em>not</em> mentioned here as it does not distinguish between Content or Presentation MathML.</li>\n</ul>",
       "attrs": {
         "cd": {
           "url": "$MDN_URL$/web/mathml/element/semantics#attr-cd",

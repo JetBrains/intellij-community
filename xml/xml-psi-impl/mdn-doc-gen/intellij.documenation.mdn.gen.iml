@@ -13,6 +13,6 @@
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.relaxng" />
-    <orderEntry type="test" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
   </component>
 </module>

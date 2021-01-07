@@ -10,21 +10,18 @@ import com.intellij.documentation.mdn.MdnHtmlElementDocumentation
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.XmlRecursiveElementVisitor
 import com.intellij.psi.impl.source.html.HtmlFileImpl
+import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.castSafelyTo
 import com.intellij.util.text.NameUtilCore
-import junit.framework.TestCase
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Suite
 import java.io.File
 import java.io.FileReader
 import java.nio.file.Path
@@ -104,7 +101,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun <T> extractInformation(path: String, specialDirs: Set<String>, extractor: (File) -> T): Map<String, T> =
     Path.of(YARI_BUILD_PATH, BUILT_LANG, WEB_DOCS, path).toFile().listFiles()!!
       .asSequence()
-      .filter { it.isDirectory && (!it.name.contains('-') || specialDirs.contains(it.name.toLowerCase(Locale.US))) && File(it, "index.json").exists() }
+      .filter {
+        it.isDirectory && (!it.name.contains('-')
+        || specialDirs.contains(it.name.toLowerCase(Locale.US))) && File(it,      "index.json").exists()
+      }
       .map { docDir ->
         try {
           Pair(docDir.name, extractor(docDir))
@@ -185,7 +185,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 
   private fun reversedAliasesMap(specialMappings: Map<String, Set<String>>): Map<String, String> =
-    specialMappings.entries.asSequence().flatMap {mapping -> mapping.value.asSequence().map { Pair(it, mapping.key) } }.toMap()
+    specialMappings.entries.asSequence().flatMap { mapping -> mapping.value.asSequence().map { Pair(it, mapping.key) } }.toMap()
 
   private fun getMdnDocsUrl(dir: File): String =
     MDN_DOCS_URL_PREFIX + dir.path.replace('\\', '/').let { it.substring(it.indexOf("/docs/") + 5) }
@@ -350,9 +350,21 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun removeEmptyTags(htmlFile: PsiFile) {
     val toRemove = mutableSetOf<XmlTag>()
     htmlFile.acceptChildren(object : XmlRecursiveElementVisitor() {
-      visi
+      override fun visitXmlTag(tag: XmlTag) {
+        if (isEmptyTag(tag)) {
+          toRemove.add(tag)
+        }
+        else {
+          super.visitXmlTag(tag)
+        }
+      }
     })
+    toRemove.forEach { it.delete() }
   }
+
+  private fun isEmptyTag(tag: XmlTag): Boolean =
+    tag.name.let { it != "br" && it != "hr" }
+    && !tag.children.map { it is XmlAttribute || (it is XmlText && it.text.isNotBlank()) || (it is XmlTag && !isEmptyTag(it)) }.any { it }
 
   private fun extractStatus(compatData: JsonObject?): Set<MdnApiStatus>? =
     compatData?.get("__compat")
