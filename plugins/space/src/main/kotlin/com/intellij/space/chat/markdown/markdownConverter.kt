@@ -21,10 +21,14 @@ import org.jetbrains.annotations.Contract
 import java.net.URI
 
 @Contract(pure = true)
-internal fun convertToHtml(markdownText: String): String {
+internal fun convertToHtml(markdownText: String, server: String? = null): String {
   val flavour = SpaceFlavourDescriptor()
   val parsedTree = MarkdownParser(flavour).buildMarkdownTreeFromString(markdownText)
-  val htmlText = HtmlGenerator(markdownText, parsedTree, flavour, false).generateHtml()
+  val providers = flavour.createHtmlGeneratingProviders(
+    linkMap = LinkMap.buildLinkMap(parsedTree, markdownText),
+    baseURI = server?.let { URI(it) }
+  )
+  val htmlText = HtmlGenerator(markdownText, parsedTree, providers, false).generateHtml()
   return htmlText.removePrefix("<body>").removeSuffix("</body>")
 }
 

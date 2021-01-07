@@ -125,7 +125,7 @@ internal class SpaceChatItemComponentFactory(
         )
         is MCMessage -> when (val chatMessage = details.toMessage()) {
           is ChatMessage.Text -> SpaceChatMarkdownTextComponent(server, item.text)
-          is ChatMessage.Block -> SpaceMCMessageComponent(server, chatMessage)
+          is ChatMessage.Block -> SpaceMCMessageComponent(server, chatMessage, item.attachments)
         }
         else -> createUnsupportedMessageTypePanel(item.link)
       }

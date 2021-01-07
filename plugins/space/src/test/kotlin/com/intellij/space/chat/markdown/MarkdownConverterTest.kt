@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.markdown
 
 import org.junit.Test
@@ -65,6 +65,13 @@ internal class MarkdownConverterTest {
   @Test
   fun `inline link`() {
     "https://hello.world.com" shouldBe """<p><a href="https://hello.world.com">https://hello.world.com</a></p>"""
+  }
+
+  @Test
+  fun `relative link`() {
+    val markdownText = "[1 commit](/p/pr)"
+    val htmlText = """<p><a href="https://jetbrains.com/p/pr">1 commit</a></p>"""
+    assertEquals(htmlText, convertToHtml(markdownText, "https://jetbrains.com"))
   }
 
 
