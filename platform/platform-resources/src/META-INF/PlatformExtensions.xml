@@ -1058,6 +1058,7 @@
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.SuperUserSuffixTitleInfoProvider"/>
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ConfigFolderTitleInfoProvider"/>
 
+    <preloadingActivity implementation="com.intellij.ide.plugins.DynamicPluginVfsListenerInitializer"/>
     <vfs.asyncListener implementation="com.intellij.ide.plugins.DynamicPluginVfsListener"/>
 
     <intentionMenuContributor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringIntentionContributor"/>
