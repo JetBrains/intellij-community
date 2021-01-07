@@ -83,6 +83,10 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<TurnRefsToSuperAction>())
   }
 
+  fun testSafeDeleteIsFiltered() {
+    assertFalse(doActionExists<SafeDeleteAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     return findAvailableActions().any { action -> action is A }
