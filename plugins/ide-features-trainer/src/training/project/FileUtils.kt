@@ -29,16 +29,14 @@ object FileUtils {
         if (destinationFilter != null && !destinationFilter.accept(f)) continue
 
         if (!entry.isDirectory) {
+          if (!ensureDirectoryExists(f.parentFile)) {
+            LOG.error("Cannot create directory: " + f.parentFile)
+          }
           val entryInputStream = jarFile.getInputStream(entry)
           if (!copyStream(entryInputStream, f)) {
             return false
           }
           entryInputStream.close()
-        }
-        else {
-          if (!ensureDirectoryExists(f)) {
-            throw IOException("Could not create directory: " + f.absolutePath)
-          }
         }
       }
     }
@@ -110,5 +108,5 @@ object FileUtils {
     return false
   }
 
-  fun ensureDirectoryExists(f: File): Boolean = f.exists() || f.mkdir()
+  fun ensureDirectoryExists(f: File): Boolean = f.exists() || f.mkdirs()
 }
