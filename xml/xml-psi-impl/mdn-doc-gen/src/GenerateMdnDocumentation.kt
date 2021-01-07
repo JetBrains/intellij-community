@@ -338,12 +338,20 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       }
     })
     toRemove.forEach { it.delete() }
+    removeEmptyTags(htmlFile)
     val text = fixSpaces(htmlFile.text)
     if (text.contains("The source for this interact"))
       throw Exception("Unhidden stuff!")
     return PsiFileFactory.getInstance(project)
       .createFileFromText("dummy.html", HTMLLanguage.INSTANCE, text, false, true)
       as HtmlFileImpl
+  }
+
+  private fun removeEmptyTags(htmlFile: PsiFile) {
+    val toRemove = mutableSetOf<XmlTag>()
+    htmlFile.acceptChildren(object : XmlRecursiveElementVisitor() {
+      visi
+    })
   }
 
   private fun extractStatus(compatData: JsonObject?): Set<MdnApiStatus>? =

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.FakePsiElement
+import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.util.castSafelyTo
@@ -44,17 +45,15 @@ fun getMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumen
         }
         // DTD
         is XmlElementDecl -> {
-          symbolName = element.nameElement.text.let { toLowerCase(it) }
+          symbolName = toLowerCase(element.name)
         }
         is XmlAttributeDecl -> {
           isTag = false
           symbolName = element.nameElement.text.let { toLowerCase(it) }
         }
-        // RncLocationPsiElement
-        is FakePsiElement -> {
-          val definition = element.navigationElement
-          isTag = definition.prevSibling?.prevSibling?.text == "element"
-          symbolName = toLowerCase(definition.text)
+        is HtmlSymbolDeclaration -> {
+          isTag = element.kind == HtmlSymbolDeclaration.Kind.ELEMENT
+          symbolName = toLowerCase(element.name)
         }
       }
       symbolName?.let {
