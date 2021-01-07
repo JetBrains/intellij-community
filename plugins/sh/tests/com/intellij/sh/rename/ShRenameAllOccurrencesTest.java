@@ -62,7 +62,7 @@ public class ShRenameAllOccurrencesTest extends LightPlatformCodeInsightTestCase
   private void doTest(@Nullable String newName) {
     configureByFile(getTestName(true) + "-before.sh");
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    executeAction(IdeActions.ACTION_RENAME);
+    executeRenameAction(newName != null);
     TemplateState templateState = TemplateManagerImpl.getTemplateState(getEditor());
     if (newName != null) {
       assertNotNull(templateState);
@@ -76,6 +76,17 @@ public class ShRenameAllOccurrencesTest extends LightPlatformCodeInsightTestCase
     templateState.gotoEnd();
     checkResultByFile(getTestName(true) + "-after.sh");
     doTestWithPlainTextRenamer(newName);
+  }
+
+  private void executeRenameAction(boolean expectEnabled) {
+    try {
+      executeAction(IdeActions.ACTION_RENAME);
+    }
+    catch (AssertionError e) {
+      if (expectEnabled) {
+        throw e;
+      }
+    }
   }
 
   private void doTestWithPlainTextRenamer(@NotNull String newName) {
