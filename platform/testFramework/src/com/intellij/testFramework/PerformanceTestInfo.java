@@ -145,7 +145,7 @@ public class PerformanceTestInfo {
         if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
-      if (waitForJit && iterationResult == IterationResult.DISTRACTED && attempt < 20) attempts++;
+      if (iterationResult == IterationResult.DISTRACTED && attempt < 20) attempts++;
       String s = "  " + (attempts - attempt) + " " + StringUtil.pluralize("attempt", attempts - attempt) + " remain" + (waitForJit ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
