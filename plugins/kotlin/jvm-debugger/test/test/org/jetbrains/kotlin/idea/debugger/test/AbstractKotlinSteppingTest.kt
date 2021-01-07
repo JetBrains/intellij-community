@@ -14,7 +14,6 @@ abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping
         StepInto(SteppingInstructionKind.StepInto),
         StepOut(SteppingInstructionKind.StepOut),
         StepOver(SteppingInstructionKind.StepOver),
-        ForceStepOver(SteppingInstructionKind.ForceStepOver),
         SmartStepInto(SteppingInstructionKind.SmartStepInto),
         Custom(null)
     }
@@ -24,7 +23,6 @@ abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping
     protected fun doStepIntoTest(path: String) = doTest(path, Category.StepInto)
     protected fun doStepOutTest(path: String) = doTest(path, Category.StepOut)
     protected fun doStepOverTest(path: String) = doTest(path, Category.StepOver)
-    protected fun doStepOverForceTest(path: String) = doTest(path, Category.ForceStepOver)
     protected fun doSmartStepIntoTest(path: String) = doTest(path, Category.SmartStepInto)
     protected fun doCustomTest(path: String) = doTest(path, Category.Custom)
 
