@@ -103,6 +103,10 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertTrue(doActionExists<MoveAction>())
   }
 
+  fun testMoveOnClassDeclaration() {
+    assertTrue(doActionExists<MoveAction>())
+  }
+
   private inline fun <reified A> doActionExists(): Boolean {
     configureByFile("$BASE_PATH/${getTestName(false)}.java")
     return findAvailableActions().any { action -> action is A }
