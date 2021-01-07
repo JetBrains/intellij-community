@@ -7095,9 +7095,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToIndexedFunctionCall/extension.kt");
         }
 
+        @TestMetadata("hasIndexParameter.kt")
+        public void testHasIndexParameter() throws Exception {
+            runTest("testData/intentions/convertToIndexedFunctionCall/hasIndexParameter.kt");
+        }
+
         @TestMetadata("hasIndexVariable.kt")
         public void testHasIndexVariable() throws Exception {
             runTest("testData/intentions/convertToIndexedFunctionCall/hasIndexVariable.kt");
+        }
+
+        @TestMetadata("hasIndexVariableInLambda.kt")
+        public void testHasIndexVariableInLambda() throws Exception {
+            runTest("testData/intentions/convertToIndexedFunctionCall/hasIndexVariableInLambda.kt");
         }
 
         @TestMetadata("labeledReturn.kt")

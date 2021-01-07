@@ -9,12 +9,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
-import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
@@ -23,7 +22,6 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCallExpression>(
@@ -63,10 +61,10 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
 
         val parameterList = functionLiteral.getOrCreateParameterList()
         val parameters = parameterList.parameters
-        val resolutionScope = functionLiteral.getResolutionScope()
-        val indexParameterName = KotlinNameSuggester.suggestNameByName("index") { name ->
-            resolutionScope.findVariable(Name.identifier(name), NoLookupLocation.FROM_IDE) == null
-        }
+        val nameValidator = CollectingNameValidator(
+            filter = NewDeclarationNameValidator(functionLiteral, null, NewDeclarationNameValidator.Target.VARIABLES)
+        )
+        val indexParameterName = KotlinNameSuggester.suggestNameByName("index", nameValidator)
         val indexParameter = psiFactory.createParameter(indexParameterName)
         if (parameters.isEmpty()) {
             parameterList.addParameter(indexParameter)
