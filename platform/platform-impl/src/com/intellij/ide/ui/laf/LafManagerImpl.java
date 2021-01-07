@@ -122,13 +122,22 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static final String WINDOW_ALPHA = "Window.alpha";
 
   private static final Map<String, String> ourLafClassesAliases = Map.of("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
-  private static final Map<String, Integer> lafNameOrder = Map.of(
-    "IntelliJ Light", 0,
-    "macOS Light", 1,
-    "Windows 10 Light", 1,
-    "Darcula", 2,
-    "High contrast", 3
-  );
+  private static final HashMap<String, Integer> lafNameOrder = new HashMap<>() {
+    {
+      put("IntelliJ Light", 0);
+      put("macOS Light", 1);
+      put("Windows 10 Light", 1);
+      put("Darcula", 2);
+      put("High contrast", 3);
+    }
+  };
+
+  //allowing other plugins to change the order of the lafs
+  @NotNull
+  public static HashMap<String, Integer> getLafNameOrder() {
+    return lafNameOrder;
+  }
+
   private static final int maxNameOrder = Collections.max(lafNameOrder.values());
 
   private final SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> myLafComboBoxModel =
