@@ -67,7 +67,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
   @Override
   public boolean isCollapsedByDefault(@NotNull FoldingDescriptor foldingDescriptor) {
     final FoldingBuilder builder = ((FoldingDescriptorWrapper) foldingDescriptor).myBuilder;
-    return mayUseBuilder(foldingDescriptor.getElement(), builder) && builder.isCollapsedByDefault(foldingDescriptor.getElement());
+    return mayUseBuilder(foldingDescriptor.getElement(), builder) && builder.isCollapsedByDefault(foldingDescriptor);
   }
 
   private static boolean mayUseBuilder(@NotNull ASTNode node, @Nullable FoldingBuilder builder) {
