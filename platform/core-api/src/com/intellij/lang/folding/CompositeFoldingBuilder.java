@@ -134,13 +134,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
       // getPlaceholderText() will be delegate to the folding builder, which we achieve by not storing any cached text.
       String textFromGetText = foldingDescriptor.getPlaceholderText();
       boolean placeholderTextIsFallback = Objects.equals(textFromGetText, foldingDescriptor.getElement().getText());
-      if (cachedText == null && placeholderTextIsFallback) {
-        return null;
-      }
-      if (!placeholderTextIsFallback) {
-        return textFromGetText;
-      }
-      return cachedText;
+      return placeholderTextIsFallback ? cachedText : textFromGetText;
     }
 
     @NotNull
