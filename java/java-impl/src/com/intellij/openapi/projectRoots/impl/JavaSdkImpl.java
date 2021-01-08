@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -95,7 +94,7 @@ public final class JavaSdkImpl extends JavaSdk {
     });
   }
 
-  private void updateCache(@NotNull VFileEvent event, @NotNull String fileName) {
+  private void updateCache(VFileEvent event, String fileName) {
     if (ArchiveFileType.INSTANCE.equals(FileTypeManager.getInstance().getFileTypeByFileName(fileName))) {
       String filePath = event.getPath();
       if (myCachedSdkHomeToInfo.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
@@ -104,9 +103,8 @@ public final class JavaSdkImpl extends JavaSdk {
     }
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return ProjectBundle.message("sdk.java.name");
   }
 
@@ -115,21 +113,18 @@ public final class JavaSdkImpl extends JavaSdk {
     return AllIcons.Nodes.PpJdk;
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.project.structure.sdk.java";
   }
 
-  @NotNull
   @Override
-  public Icon getIconForAddAction() {
+  public @NotNull Icon getIconForAddAction() {
     return AllIcons.General.AddJdk;
   }
 
   @Override
-  @Nullable
-  public String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
+  public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;
     if (release > LanguageLevel.HIGHEST.toJavaVersion().feature) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
@@ -139,9 +134,8 @@ public final class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getDownloadSdkUrl() {
+  public @NotNull String getDownloadSdkUrl() {
     return "https://www.oracle.com/technetwork/java/javase/downloads/index.html";
   }
 
@@ -153,9 +147,8 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) { }
 
-  @NotNull
   @Override
-  public Comparator<Sdk> versionComparator() {
+  public @NotNull Comparator<Sdk> versionComparator() {
     return (sdk1, sdk2) -> {
       assert sdk1.getSdkType() == this : sdk1;
       assert sdk2.getSdkType() == this : sdk2;
@@ -163,9 +156,8 @@ public final class JavaSdkImpl extends JavaSdk {
     };
   }
 
-  @NotNull
   @Override
-  public Comparator<String> versionStringComparator() {
+  public @NotNull Comparator<String> versionStringComparator() {
     return (sdk1, sdk2) -> Comparing.compare(getJavaVersion(sdk1), getJavaVersion(sdk2));
   }
 
@@ -205,23 +197,20 @@ public final class JavaSdkImpl extends JavaSdk {
     return JavaHomeFinder.defaultJavaLocation();
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths() {
+  public @NotNull Collection<String> suggestHomePaths() {
     return JavaHomeFinder.suggestHomePaths();
   }
 
-  @NotNull
   @Override
-  public FileChooserDescriptor getHomeChooserDescriptor() {
+  public @NotNull FileChooserDescriptor getHomeChooserDescriptor() {
     FileChooserDescriptor descriptor = super.getHomeChooserDescriptor();
     descriptor.putUserData(KEY, Boolean.TRUE);
     return descriptor;
   }
 
-  @NotNull
   @Override
-  public String adjustSelectedSdkHome(@NotNull String homePath) {
+  public @NotNull String adjustSelectedSdkHome(@NotNull String homePath) {
     if (SystemInfo.isMac) {
       Path home = Path.of(homePath, "/Home");
       if (Files.exists(home)) return home.toString();
@@ -246,9 +235,8 @@ public final class JavaSdkImpl extends JavaSdk {
     return super.getInvalidHomeMessage(path);
   }
 
-  @NotNull
   @Override
-  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
+  public @NotNull String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
     var info = getInfo(sdkHome);
     if (info == null) return currentSdkName != null ? currentSdkName : "";
 
@@ -314,13 +302,15 @@ public final class JavaSdkImpl extends JavaSdk {
       root = null;
     }
     if (root == null) {
-      String msg = "Paths checked:\n";
-      for (String p : pathsChecked) {
-        File f = new File(p);
-        File parentFile = f.getParentFile();
-        msg += p + "; exists: " + f.exists() + (parentFile == null ? null : "; siblings: " + Arrays.toString(parentFile.list())) + "\n";
+      StringBuilder msg = new StringBuilder("Paths checked:\n");
+      for (String path : pathsChecked) {
+        File file = new File(path), parentFile = file.getParentFile();
+        msg.append(path).append("; exists: ").append(file.exists());
+        if (parentFile != null) {
+          msg.append("; siblings: ").append(Arrays.toString(parentFile.list())).append('\n');
+        }
       }
-      LOG.error("JDK annotations not found", msg);
+      LOG.error("JDK annotations not found", msg.toString());
       return false;
     }
 
@@ -333,26 +323,21 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   // does this file look like the genuine root for all correct annotations.xml
-  private static boolean isInternalJdkAnnotationRootCorrect(@NotNull VirtualFile root) {
+  private static boolean isInternalJdkAnnotationRootCorrect(VirtualFile root) {
     String relPath = "java/awt/event/annotations.xml";
     VirtualFile xml = root.findFileByRelativePath(relPath);
     if (xml == null) {
-      reportCorruptedJdkAnnotations(root, "there's no file " + root.getPath() + "/" + relPath);
+      LOG.warn("Internal JDK annotation root " + root + " seems corrupted: there's no file " + root.getPath() + '/' + relPath);
       return false;
     }
-    MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> loaded = BaseExternalAnnotationsManager.loadData(xml, LoadTextUtil.loadText(xml), null);
+    MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> loaded =
+      BaseExternalAnnotationsManager.loadData(xml, LoadTextUtil.loadText(xml), null);
     Iterable<BaseExternalAnnotationsManager.AnnotationData> data = loaded.get("java.awt.event.InputEvent int getModifiers()");
-
-    BaseExternalAnnotationsManager.AnnotationData magicAnno = ContainerUtil.find(data, ann -> ann.toString().equals(MagicConstant.class.getName() + "(flagsFromClass=java.awt.event.InputEvent.class)"));
-    if (magicAnno != null) {
-      return true;
-    }
-    reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: "+data);
+    BaseExternalAnnotationsManager.AnnotationData magicAnno =
+      ContainerUtil.find(data, ann -> ann.toString().equals(MagicConstant.class.getName() + "(flagsFromClass=java.awt.event.InputEvent.class)"));
+    if (magicAnno != null) return true;
+    LOG.warn("Internal JDK annotation root " + root + " seems corrupted: java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: " + data);
     return false;
-  }
-
-  private static void reportCorruptedJdkAnnotations(@NotNull VirtualFile root, @NotNull @NlsSafe String reason) {
-    LOG.warn("Internal jdk annotation root " + root + " seems corrupted: " + reason);
   }
 
   static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
@@ -394,11 +379,8 @@ public final class JavaSdkImpl extends JavaSdk {
     return root;
   }
 
-  @Nullable
-  private JdkVersionDetector.JdkVersionInfo getInfo(String sdkHome) {
-    return myCachedSdkHomeToInfo.computeIfAbsent(sdkHome, homePath -> {
-      return SdkVersionUtil.getJdkVersionInfo(homePath);
-    });
+  private @Nullable JdkVersionDetector.JdkVersionInfo getInfo(String sdkHome) {
+    return myCachedSdkHomeToInfo.computeIfAbsent(sdkHome, homePath -> SdkVersionUtil.getJdkVersionInfo(homePath));
   }
 
   @Override
@@ -414,22 +396,16 @@ public final class JavaSdkImpl extends JavaSdk {
     return version != null ? JavaSdkVersion.fromJavaVersion(version) : null;
   }
 
-  @Nullable
-  public JavaVersion getJavaVersion(@NotNull Sdk sdk) {
-    String versionString = sdk.getVersionString();
-    return getJavaVersion(versionString);
+  public @Nullable JavaVersion getJavaVersion(@NotNull Sdk sdk) {
+    return getJavaVersion(sdk.getVersionString());
   }
 
-  @Nullable
-  private JavaVersion getJavaVersion(@Nullable String versionString) {
-    return versionString != null
-           ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse)
-           : null;
+  private @Nullable JavaVersion getJavaVersion(@Nullable String versionString) {
+    return versionString != null ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse) : null;
   }
 
   @Override
-  @Nullable
-  public JavaSdkVersion getVersion(@NotNull String versionString) {
+  public @Nullable JavaSdkVersion getVersion(@NotNull String versionString) {
     return JavaSdkVersion.fromVersionString(versionString);
   }
 
@@ -439,9 +415,8 @@ public final class JavaSdkImpl extends JavaSdk {
     return sdkVersion != null && sdkVersion.isAtLeast(version);
   }
 
-  @NotNull
   @Override
-  public Sdk createJdk(@NotNull String jdkName, @NotNull String home, boolean isJre) {
+  public @NotNull Sdk createJdk(@NotNull String jdkName, @NotNull String home, boolean isJre) {
     Path jdkHomePath = Path.of(home);
     if (!Files.exists(jdkHomePath)) {
       throw new IllegalArgumentException(jdkHomePath.toAbsolutePath() + " doesn't exist");
@@ -475,27 +450,22 @@ public final class JavaSdkImpl extends JavaSdk {
    * Tries to load the list of modules in the JDK from the 'release' file. Returns null if the 'release' file is not there
    * or doesn't contain the expected information.
    */
-  @Nullable
-  private static List<String> readModulesFromReleaseFile(Path jrtBaseDir) {
-    Path releaseFile = jrtBaseDir.resolve("release");
-    if (Files.isRegularFile(releaseFile)) {
-      try (InputStream stream = Files.newInputStream(releaseFile)) {
-        Properties p = new Properties();
-        p.load(stream);
-        String modules = p.getProperty("MODULES");
-        if (modules != null) {
-          return StringUtil.split(StringUtil.unquoteString(modules), " ");
-        }
+  private static @Nullable List<String> readModulesFromReleaseFile(Path jrtBaseDir) {
+    try (InputStream stream = Files.newInputStream(jrtBaseDir.resolve("release"))) {
+      Properties p = new Properties();
+      p.load(stream);
+      String modules = p.getProperty("MODULES");
+      if (modules != null) {
+        return StringUtil.split(StringUtil.unquoteString(modules), " ");
       }
-      catch (IOException | IllegalArgumentException e) {
-        LOG.info(e);
-      }
+    }
+    catch (IOException | IllegalArgumentException e) {
+      LOG.info(e);
     }
     return null;
   }
 
-  @NotNull
-  private static List<String> findClasses(@NotNull Path jdkHome, boolean isJre) {
+  private static List<String> findClasses(Path jdkHome, boolean isJre) {
     List<String> result = new ArrayList<>();
 
     if (JdkUtil.isExplodedModularRuntime(jdkHome)) {
@@ -555,8 +525,7 @@ public final class JavaSdkImpl extends JavaSdk {
     }
   }
 
-  @Nullable
-  private static VirtualFile findSources(Path jdkHome, String srcName) {
+  private static @Nullable VirtualFile findSources(Path jdkHome, String srcName) {
     Path srcArc = jdkHome.resolve(srcName + ".jar");
     if (!Files.exists(srcArc)) srcArc = jdkHome.resolve(srcName + ".zip");
     if (!Files.exists(srcArc)) srcArc = jdkHome.resolve("lib").resolve(srcName + ".zip");
@@ -611,13 +580,12 @@ public final class JavaSdkImpl extends JavaSdk {
     }
   }
 
-  @Nullable
-  private static VirtualFile findDocs(@NotNull Path jdkHome, @NotNull String relativePath) {
+  private static @Nullable VirtualFile findDocs(Path jdkHome, String relativePath) {
     Path docDir = jdkHome.resolve(relativePath);
     return Files.isDirectory(docDir) ? LocalFileSystem.getInstance().findFileByNioFile(docDir) : null;
   }
 
-  private static VirtualFile findInJar(Path jarFile, String relativePath) {
+  private static @Nullable VirtualFile findInJar(Path jarFile, String relativePath) {
     if (!Files.exists(jarFile)) return null;
     String url = JarFileSystem.PROTOCOL_PREFIX + vfsPath(jarFile) + JarFileSystem.JAR_SEPARATOR + relativePath;
     return VirtualFileManager.getInstance().findFileByUrl(url);

@@ -18,17 +18,13 @@ import java.util.List;
 import java.util.Set;
 
 public final class JavaSdkUtil {
-  /**
-   * @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead
-   */
+  /** @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead */
   @Deprecated
-  @NotNull
-  public static List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
+  public static @NotNull List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);
   }
 
-  @NotNull
-  public static List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
+  public static @NotNull List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
     Path[] jarDirs;
     if (SystemInfo.isMac && !home.getFileName().startsWith("mockJDK")) {
       Path openJdkRtJar = home.resolve("jre/lib/rt.jar");
@@ -117,8 +113,7 @@ public final class JavaSdkUtil {
     return rootFiles;
   }
 
-  @Nullable
-  private static String getCanonicalPath(Path file) {
+  private static @Nullable String getCanonicalPath(Path file) {
     try {
       return file.toRealPath().toString();
     }
