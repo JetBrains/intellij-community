@@ -1,6 +1,7 @@
-package d
+package d;
 
 import org.jetbrains.annotations.*;
+import kotlin.annotations.jvm.*;
 
 public abstract class JavaClass {
     @NotNull
