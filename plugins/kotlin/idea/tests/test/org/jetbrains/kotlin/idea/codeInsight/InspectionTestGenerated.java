@@ -76,11 +76,6 @@ public class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/allOpenSimple/inspectionData/inspections.test");
         }
 
-        @TestMetadata("androidIllegalIdentifiers/inspectionData/inspections.test")
-        public void testAndroidIllegalIdentifiers_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/androidIllegalIdentifiers/inspectionData/inspections.test");
-        }
-
         @TestMetadata("arrayInDataClass/inspectionData/inspections.test")
         public void testArrayInDataClass_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/arrayInDataClass/inspectionData/inspections.test");
