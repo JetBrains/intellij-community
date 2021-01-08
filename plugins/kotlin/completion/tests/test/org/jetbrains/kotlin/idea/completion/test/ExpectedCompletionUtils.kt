@@ -320,23 +320,33 @@ object ExpectedCompletionUtils {
         }
 
     private fun textAttributes(presentation: LookupElementPresentation): String {
+        fun StringBuilder.appendAttribute(text: String) {
+            if (this.isNotEmpty()) {
+                append(' ')
+            }
+            append(text)
+        }
+
         return buildString {
             if (presentation.isItemTextBold) {
-                append("bold")
+                appendAttribute("bold")
             }
+
             if (presentation.isItemTextUnderlined) {
-                if (length > 0) append(" ")
-                append("underlined")
+                appendAttribute("underlined")
             }
-            val foreground = presentation.itemTextForeground
-            if (foreground != JBColor.foreground()) {
-                assert(foreground == LookupElementFactory.CAST_REQUIRED_COLOR)
-                if (length > 0) append(" ")
-                append("grayed")
+
+            when (val foreground = presentation.itemTextForeground) {
+                JBColor.RED -> appendAttribute("red")
+                JBColor.foreground() -> {}
+                else -> {
+                    assert(foreground == LookupElementFactory.CAST_REQUIRED_COLOR)
+                    appendAttribute("grayed")
+                }
             }
+
             if (presentation.isStrikeout) {
-                if (length > 0) append(" ")
-                append("strikeout")
+                appendAttribute("strikeout")
             }
         }
     }
