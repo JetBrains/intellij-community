@@ -191,6 +191,7 @@ object ByDescriptorIndexer : DecompiledTextIndexer<String> {
 
     private val descriptorRendererForKeys = DescriptorRenderer.COMPACT_WITH_MODIFIERS.withOptions {
         modifiers = DescriptorRendererModifier.ALL
+        alwaysRenderModifiers = true
         withDefinedIn = true
     }
 }
