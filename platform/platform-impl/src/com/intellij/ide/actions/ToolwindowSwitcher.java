@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
@@ -27,6 +28,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +49,11 @@ public class ToolwindowSwitcher extends DumbAwareAction {
     invokePopup(project);
   }
 
-  private static void invokePopup(Project project) {
+  public static void invokePopup(Project project) {
+    invokePopup(project, null);
+  }
+
+  public static void invokePopup(Project project, @Nullable RelativePoint point) {
     if (popup != null) {
       gotoNextElement(popup);
       return;
@@ -81,7 +87,11 @@ public class ToolwindowSwitcher extends DumbAwareAction {
                 }).createPopup();
 
     Disposer.register(popup, () -> popup = null);
-    popup.showCenteredInCurrentWindow(project);
+    if (point != null) {
+      popup.show(point);
+    } else {
+      popup.showCenteredInCurrentWindow(project);
+    }
   }
 
   private static void gotoNextElement(JBPopup popup) {
