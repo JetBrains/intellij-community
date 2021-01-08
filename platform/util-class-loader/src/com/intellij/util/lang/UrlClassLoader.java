@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -301,19 +301,18 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       skipFindingResource.set(Boolean.TRUE);
       try {
         URL url = super.getResource(name);
-        try {
-          InputStream stream = url == null ? null : url.openStream();
-          if (stream != null) {
-            return stream;
+        if (url != null) {
+          try {
+            return url.openStream();
           }
-        }
-        catch (IOException ignore) {
+          catch (IOException ignore) { }
         }
       }
       finally {
         skipFindingResource.set(null);
       }
     }
+
     return null;
   }
 
