@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TextAccessor;
@@ -31,7 +32,6 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.*;
-import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,27 +258,15 @@ public final class TipUIUtil {
   }
 
   private static Trinity<String, BufferedImage, byte[]> read(@NotNull URL url) throws IOException {
-    byte[] bytes = readBytes(url);
-    Iterator<ImageReader> readers = ImageIO.getImageReaders(new ByteArrayImageInputStream(bytes));
-    String formatName = "png";
-    if (readers.hasNext()) {
-      formatName = readers.next().getFormatName();
+    byte[] bytes;
+    try (InputStream stream = url.openStream()) {
+      bytes = StreamUtil.readBytes(stream);
     }
-
+    Iterator<ImageReader> readers = ImageIO.getImageReaders(new ByteArrayInputStream(bytes));
+    String formatName = readers.hasNext() ? readers.next().getFormatName() : "png";
     BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
     if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
     return Trinity.create(formatName, image, bytes);
-  }
-
-  private static byte[] readBytes(@NotNull URL url) throws IOException{
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    byte[] buffer = new byte[16384];
-    try (InputStream stream = url.openStream()) {
-      for (int len = stream.read(buffer); len > 0; len = stream.read(buffer)) {
-        baos.write(buffer, 0, len);
-      }
-      return baos.toByteArray();
-    }
   }
 
   private static void updateShortcuts(StringBuilder text) {
