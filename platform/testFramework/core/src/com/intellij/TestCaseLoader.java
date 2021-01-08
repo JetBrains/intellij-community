@@ -369,7 +369,7 @@ public class TestCaseLoader {
     String message = "Number of test classes found: " + getClassesCount() + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
 
-    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0) {
+    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !"true".equals(System.getProperty("idea.tests.ignoreEmptySuite"))) {
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
       System.out.println("##teamcity[message text='Expected some tests to be executed, but no test classes were found.' status='ERROR']");
