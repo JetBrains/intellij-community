@@ -16,7 +16,6 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
@@ -89,11 +88,8 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
 
   @NotNull
   public static List<PyFile> find(@NotNull String shortName, @NotNull Project project, boolean includeNonProjectItems) {
-    final GlobalSearchScope baseScope = includeNonProjectItems
-                                    ? PySearchUtilBase.excludeSdkTestsScope(project)
-                                    : GlobalSearchScope.projectScope(project);
-    final GlobalSearchScope scope = baseScope
-      .intersectWith(GlobalSearchScope.notScope(PyUserSkeletonsUtil.getUserSkeletonsDirectoryScope(project)));
+    final GlobalSearchScope scope = includeNonProjectItems ? PySearchUtilBase.excludeSdkTestsScope(project)
+                                                           : GlobalSearchScope.projectScope(project);
     return findByShortName(shortName, project, scope);
   }
 
