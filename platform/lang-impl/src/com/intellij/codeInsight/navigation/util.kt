@@ -17,7 +17,7 @@ internal fun ItemPresentation.getColoredAttributes(): TextAttributes? {
 }
 
 @Nls
-internal fun ItemPresentation.getLocationText(): String? {
+internal fun ItemPresentation.getContainerText(): String? {
   val locationString = locationString ?: return null
   val matcher = CONTAINER_PATTERN.matcher(locationString)
   return if (matcher.matches()) matcher.group(2) else locationString

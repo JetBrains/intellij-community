@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.navigation.TargetPopupPresentation
@@ -28,7 +28,7 @@ internal abstract class TargetPresentationRightRenderer<T> : ListCellRenderer<T>
     horizontalAlignment = SwingConstants.RIGHT // align icon to the right
   }
 
-  final override fun getItemSearchString(item: T): String? = getPresentation(item)?.locationText
+  final override fun getItemSearchString(item: T): String? = getPresentation(item)?.containerText
 
   final override fun getListCellRendererComponent(list: JList<out T>,
                                                   value: T,

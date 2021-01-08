@@ -2,7 +2,7 @@
 package com.intellij.find.actions
 
 import com.intellij.codeInsight.navigation.getColoredAttributes
-import com.intellij.codeInsight.navigation.getLocationText
+import com.intellij.codeInsight.navigation.getContainerText
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -16,5 +16,5 @@ internal class Item2TargetPresentation(private val itemPresentation: ItemPresent
 
   override val presentableTextAttributes: TextAttributes? get() = itemPresentation.getColoredAttributes()
 
-  override val locationText: String? get() = itemPresentation.getLocationText()
+  override val containerText: String? get() = itemPresentation.getContainerText()
 }
