@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.io.File
 
 @TestRoot("idea")
 @TestMetadata("testData/search/definitions")
@@ -24,14 +23,16 @@ class DefinitionsSearchTest : AbstractSearcherTest() {
     }
 
     private fun doTest() {
-        myFixture.configureByFile(fileName)
-        val directives = InTextDirectivesUtils.findListWithPrefixes(FileUtil.loadFile(File(pathToFile), true), "// CLASS: ")
+        val testDataFile = testDataFile()
+
+        myFixture.configureByFile(testDataFile)
+        val directives = InTextDirectivesUtils.findListWithPrefixes(FileUtil.loadFile(testDataFile, true), "// CLASS: ")
         assertFalse("Specify CLASS directive in test file", directives.isEmpty())
         val superClassName = directives[0]
         val psiClass = getPsiClass(superClassName)
-        checkResult(getPathToFile(), DefinitionsScopedSearch.search(psiClass))
+        checkResult(testDataFile, DefinitionsScopedSearch.search(psiClass))
 
         val origin = (psiClass as? KtLightClass)?.kotlinOrigin!!
-        checkResult(getPathToFile(), DefinitionsScopedSearch.search(origin))
+        checkResult(testDataFile, DefinitionsScopedSearch.search(origin))
     }
 }

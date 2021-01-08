@@ -27,8 +27,10 @@ abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
     }
 
     fun doTest(unused: String) {
+        val testDataFile = testDataFile()
+
         myFixture.configureByFile(fileName())
-        val fileText = FileUtil.loadFile(testDataFile(), true)
+        val fileText = FileUtil.loadFile(testDataFile, true)
         val directives = InTextDirectivesUtils.findListWithPrefixes(fileText, "// ANNOTATION: ")
 
         TestCase.assertFalse("Specify ANNOTATION directive in test file", directives.isEmpty())
@@ -39,19 +41,19 @@ abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
             PsiBasedClassResolver.trueHits.set(0)
             PsiBasedClassResolver.falseHits.set(0)
 
-            checkResult(
-                testPath(),
-                AnnotatedElementsSearch.searchElements(
-                    psiClass,
-                    projectScope,
-                    PsiModifierListOwner::class.java
-                )
+            val actualResult = AnnotatedElementsSearch.searchElements(
+                psiClass,
+                projectScope,
+                PsiModifierListOwner::class.java
             )
+
+            checkResult(testDataFile, actualResult)
 
             val optimizedTrue = InTextDirectivesUtils.getPrefixedInt(fileText, "// OPTIMIZED_TRUE:")
             if (optimizedTrue != null) {
                 TestCase.assertEquals(optimizedTrue.toInt(), PsiBasedClassResolver.trueHits.get())
             }
+
             val optimizedFalse = InTextDirectivesUtils.getPrefixedInt(fileText, "// OPTIMIZED_FALSE:")
             if (optimizedFalse != null) {
                 TestCase.assertEquals(optimizedFalse.toInt(), PsiBasedClassResolver.falseHits.get())

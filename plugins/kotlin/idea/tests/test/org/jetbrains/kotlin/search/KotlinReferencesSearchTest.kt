@@ -60,7 +60,7 @@ class KotlinReferencesSearchTest : AbstractSearcherTest() {
     private val myFixtureProxy: JavaCodeInsightTestFixture get() = myFixture
 
     private inline fun <reified T : PsiElement> doTest(): List<PsiReference> {
-        val psiFile = myFixtureProxy.configureByFile(fileName)
+        val psiFile = myFixtureProxy.configureByFile(testDataFile())
         val func = myFixtureProxy.elementAtCaret.getParentOfType<T>(false)!!
         val refs = ReferencesSearch.search(func).findAll().sortedBy { it.element.textRange.startOffset }
 

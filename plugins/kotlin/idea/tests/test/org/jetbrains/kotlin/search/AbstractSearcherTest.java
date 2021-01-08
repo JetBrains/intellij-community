@@ -45,8 +45,8 @@ public abstract class AbstractSearcherTest extends KotlinLightCodeInsightFixture
         return GlobalSearchScope.projectScope(getProject());
     }
 
-    protected static void checkResult(@NotNull String path, Query<?> actual) throws IOException {
-        String text = FileUtil.loadFile(new File(path), true);
+    protected static void checkResult(@NotNull File file, Query<?> actual) throws IOException {
+        String text = FileUtil.loadFile(file, true);
 
         List<String> classFqnFilters = InTextDirectivesUtils.findListWithPrefixes(text, "// IGNORE_CLASSES: ");
 
@@ -76,13 +76,13 @@ public abstract class AbstractSearcherTest extends KotlinLightCodeInsightFixture
     }
 
     protected void checkClassWithDirectives(@NotNull String unused) throws IOException {
+        File testDataFile = testDataFile();
         myFixture.configureByFile(fileName());
-        List<String> directives = InTextDirectivesUtils.findListWithPrefixes(
-                FileUtil.loadFile(testDataFile(), true), "// CLASS: ");
+        List<String> directives = InTextDirectivesUtils.findListWithPrefixes(FileUtil.loadFile(testDataFile, true), "// CLASS: ");
         assertFalse("Specify CLASS directive in test file", directives.isEmpty());
         String superClassName = directives.get(0);
         PsiClass psiClass = getPsiClass(superClassName);
-        checkResult(testPath(), ClassInheritorsSearch.search(psiClass, getProjectScope(), false));
+        checkResult(testDataFile, ClassInheritorsSearch.search(psiClass, getProjectScope(), false));
     }
 
     private static String stringRepresentation(Object member) {
@@ -99,14 +99,6 @@ public abstract class AbstractSearcherTest extends KotlinLightCodeInsightFixture
             return "param:" + ((PsiParameter) member).getName();
         }
         throw new IllegalStateException("Do not know how to render member of type: " + member.getClass().getName());
-    }
-
-    protected String getPathToFile() {
-        return getTestDataPath() + File.separator + getName() + ".kt";
-    }
-
-    protected String getFileName() {
-        return getName() + ".kt";
     }
 
     @NotNull

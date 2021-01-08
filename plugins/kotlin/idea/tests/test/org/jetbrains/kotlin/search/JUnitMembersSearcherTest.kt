@@ -2,65 +2,58 @@
  * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
+package org.jetbrains.kotlin.search
 
-package org.jetbrains.kotlin.search;
+import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.utils.PathUtil.getResourcePathForClass
+import org.jetbrains.kotlin.test.TestMetadata
+import java.io.IOException
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import com.intellij.psi.search.searches.AnnotatedMembersSearch
+import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
+import org.jetbrains.kotlin.test.TestRoot
+import org.junit.Assert
+import org.junit.internal.runners.JUnit38ClassRunner
+import org.junit.runner.RunWith
+import java.io.File
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.searches.AnnotatedMembersSearch;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.internal.runners.JUnit38ClassRunner;
-import org.junit.runner.RunWith;
+@TestRoot("idea")
+@TestMetadata("testData/search/junit")
+@RunWith(JUnit38ClassRunner::class)
+class JUnitMembersSearcherTest : AbstractSearcherTest() {
+    override fun getProjectDescriptor() = KotlinJdkAndLibraryProjectDescriptor(getResourcePathForClass(Assert::class.java))
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
+    override val testDataDirectory: File
+        get() = super.testDataDirectory
 
-@TestMetadata("idea/testData/search/junit/")
-@RunWith(JUnit38ClassRunner.class)
-public class JUnitMembersSearcherTest extends AbstractSearcherTest {
-    private static final LightProjectDescriptor junitProjectDescriptor =
-            new KotlinJdkAndLibraryProjectDescriptor(new File(PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/junit-4.12.jar"));
-
-    @TestMetadata("testJunit3.kt")
-    public void testJunit3() throws IOException {
-        doJUnit3test();
+    fun testJunit3() {
+        doJUnit3test()
     }
 
-    public void testJunit4() throws IOException {
-        doJUnit4test();
+    fun testJunit4() {
+        doJUnit4test()
     }
 
-    public void testJunit4Alias() throws IOException {
-        doJUnit4test();
+    fun testJunit4Alias() {
+        doJUnit4test()
     }
 
-    public void testJunit4FancyAlias() throws IOException {
-        doJUnit4test();
+    fun testJunit4FancyAlias() {
+        doJUnit4test()
     }
 
-    private void doJUnit3test() throws IOException {
-        checkClassWithDirectives("idea/testData/search/junit/testJunit3.kt");
+    private fun doJUnit3test() {
+        checkClassWithDirectives("idea/testData/search/junit/testJunit3.kt")
     }
 
-    private void doJUnit4test() throws IOException {
-        myFixture.configureByFile(getFileName());
-        List<String> directives = InTextDirectivesUtils.findListWithPrefixes(FileUtil.loadFile(new File(getPathToFile()), true),
-                                                                             "// ANNOTATION: ");
-        assertFalse("Specify ANNOTATION directive in test file", directives.isEmpty());
-        String annotationClassName = directives.get(0);
-        PsiClass psiClass = getPsiClass(annotationClassName);
-        checkResult(getPathToFile(), AnnotatedMembersSearch.search(psiClass, getProjectScope()));
-    }
-
-    @NotNull
-    @Override
-    protected LightProjectDescriptor getProjectDescriptor() {
-        return junitProjectDescriptor;
+    @Throws(IOException::class)
+    private fun doJUnit4test() {
+        val testDataFile = testDataFile()
+        myFixture.configureByFile(testDataFile)
+        val directives = InTextDirectivesUtils.findListWithPrefixes(FileUtil.loadFile(testDataFile, true), "// ANNOTATION: ")
+        assertFalse("Specify ANNOTATION directive in test file", directives.isEmpty())
+        val annotationClassName = directives[0]
+        val psiClass = getPsiClass(annotationClassName)
+        checkResult(testDataFile, AnnotatedMembersSearch.search(psiClass, projectScope))
     }
 }

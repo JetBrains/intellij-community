@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -272,9 +273,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         return true
     }
 
-    fun JavaCodeInsightTestFixture.configureByFile(file: File) {
+    fun JavaCodeInsightTestFixture.configureByFile(file: File): PsiFile {
         val relativePath = file.toRelativeString(testDataDirectory)
-        configureByFile(relativePath)
+        return configureByFile(relativePath)
     }
 
     fun JavaCodeInsightTestFixture.checkResultByFile(file: File) {
