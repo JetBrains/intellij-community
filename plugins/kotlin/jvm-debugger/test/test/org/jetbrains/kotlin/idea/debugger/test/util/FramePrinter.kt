@@ -21,10 +21,15 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableVal
 import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.org.objectweb.asm.Type
 import java.lang.Appendable
 import java.util.concurrent.TimeUnit
 
 class FramePrinter(private val suspendContext: SuspendContextImpl) {
+    private companion object {
+        private val OPAQUE_TYPE_DESCRIPTORS = listOf(String::class.java).map { Type.getType(it).descriptor }
+    }
+
     fun print(frame: XStackFrame): String {
         return buildString { append(frame, 0) }
     }
@@ -61,6 +66,11 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
         val mightHaveChildren: Boolean
     )
 
+    private fun isOpaqueValue(descriptor: ValueDescriptorImpl): Boolean {
+        val type = descriptor.type ?: return false
+        return type.signature() in OPAQUE_TYPE_DESCRIPTORS
+    }
+
     private fun computeInfo(container: XValueContainer): ValueInfo {
         val name = if (container is XNamedValue) container.name.takeIf { it.isNotEmpty() } else null
 
@@ -75,7 +85,9 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
                 val type = (descriptor as? ValueDescriptorImpl)?.declaredType ?: node.myType?.takeIf { it.isNotEmpty() }
                 val value = (computeValue(descriptor) ?: node.myValue).takeIf { it.isNotEmpty() }
                 val sourcePosition = computeSourcePosition(descriptor)
-                val mightHaveChildren = node.myHasChildren && (descriptor == null || descriptor.isExpandable)
+                val mightHaveChildren = node.myHasChildren
+                    && (descriptor == null || descriptor.isExpandable)
+                    && !(descriptor is ValueDescriptorImpl && isOpaqueValue(descriptor))
 
                 return ValueInfo(name, kind, type, value, sourcePosition, mightHaveChildren)
             }
