@@ -10,7 +10,7 @@ import javax.swing.Icon
 /**
  * Represents presentation in target popup as follows:
  * ```
- * | $icon $presentable_text (in $container_text) spacer $right_text $right_icon |
+ * | $icon $presentable_text (in $container_text) spacer $location_text $location_icon |
  * ```
  * Elements before spacer are aligned to the left, right text and right icon are aligned to the right.
  */
@@ -46,10 +46,10 @@ interface TargetPopupPresentation {
     get() = null
 
   @JvmDefault
-  val rightText: @Nls String?
+  val locationText: @Nls String?
     get() = null
 
   @JvmDefault
-  val rightIcon: Icon?
+  val locationIcon: Icon?
     get() = null
 }

@@ -70,7 +70,7 @@ class PsiElementTargetPopupPresentation(private val myElement: PsiElement) : Tar
       }
     }
 
-  override val rightText: String? get() = myModuleRendererData?.first
+  override val locationText: String? get() = myModuleRendererData?.first
 
-  override val rightIcon: Icon? get() = myModuleRendererData?.second
+  override val locationIcon: Icon? get() = myModuleRendererData?.second
 }

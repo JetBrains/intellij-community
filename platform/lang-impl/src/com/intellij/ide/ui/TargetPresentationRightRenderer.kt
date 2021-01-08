@@ -43,9 +43,9 @@ internal abstract class TargetPresentationRightRenderer<T> : ListCellRenderer<T>
       font = list.font
     }
     getPresentation(value)?.let { presentation ->
-      presentation.rightText?.let { rightText ->
-        component.text = rightText
-        component.icon = presentation.rightIcon
+      presentation.locationText?.let { locationText ->
+        component.text = locationText
+        component.icon = presentation.locationIcon
       }
     }
     return component
