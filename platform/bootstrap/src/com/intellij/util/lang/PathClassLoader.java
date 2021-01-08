@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.ide.BytecodeTransformer;
@@ -12,7 +12,7 @@ import java.security.ProtectionDomain;
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
   private static final ClassPath.ResourceFileFactory RESOURCE_FILE_FACTORY =
-    Boolean.getBoolean("idea.use.lock.free.zip.impl") ? file -> new ZipResourceFile(file) : null;
+    Boolean.parseBoolean(System.getProperty("idea.use.lock.free.zip.impl", "true")) ? file -> new ZipResourceFile(file) : null;
 
   private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
   private static final ClassLoader appClassLoader = PathClassLoader.class.getClassLoader();
