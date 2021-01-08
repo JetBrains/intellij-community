@@ -182,7 +182,13 @@ object MarketplacePluginDownloadService {
 
   private fun getPluginFileUrl(connection: URLConnection): String {
     val url = connection.url
-    return "${url.protocol}://${url.host}${url.path}"
+    val port = url.port
+    return if (port == -1) {
+      "${url.protocol}://${url.host}${url.path}"
+    }
+    else {
+      "${url.protocol}://${url.host}:${port}${url.path}"
+    }
   }
 
   private data class GuessFileParameters(val contentDisposition: String?, val url: String)

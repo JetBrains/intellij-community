@@ -2,7 +2,6 @@
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.project.DumbAware;
@@ -98,7 +97,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   static boolean isProjectErrorsEnabled() {
-    return Experiments.getInstance().isFeatureEnabled("problems.view.project.errors.enabled");
+    return true; // TODO: use this method to disable Project Errors tab in other IDEs
   }
 
   @Override

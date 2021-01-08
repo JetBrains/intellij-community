@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,6 +55,12 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       fragments.add((SettingsEditorFragment<Settings, ?>)wrapper);
     }
     addRunnerSettingsEditors(fragments);
+//    dump fragment ids for FUS
+//    String ids = StringUtil.join(ContainerUtil.sorted(ContainerUtil.map(fragments, (f) -> "\"" + f.getId() + "\"")), ",");
+    String configId = mySettings.getType().getId();
+    for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
+      fragment.setConfigId(configId);
+    }
     return fragments;
   }
 

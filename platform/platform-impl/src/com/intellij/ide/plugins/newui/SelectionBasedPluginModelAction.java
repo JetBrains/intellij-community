@@ -5,10 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginEnabledState;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,13 +50,17 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      Project project = e.getProject();
-
-      getAllDescriptors()
+      List<PluginEnabledState> states = getAllDescriptors()
         .map(myPluginModel::getState)
-        .map(oldState -> !isInvisible(oldState, project))
-        .forEach(presentation::setVisible);
+        .collect(Collectors.toList());
+
+      boolean isForceEnableAll = myNewState == PluginEnabledState.ENABLED &&
+                                 !states.stream().allMatch(PluginEnabledState.ENABLED::equals);
+      boolean disabled = states.isEmpty() ||
+                         myNewState.isPerProject() && (e.getProject() == null || !PluginEnabledState.isPerProjectEnabled()) ||
+                         states.stream().anyMatch(this::isInvisible);
+
+      e.getPresentation().setEnabledAndVisible(isForceEnableAll || !disabled);
     }
 
     @Override
@@ -70,10 +71,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       );
     }
 
-    protected boolean isInvisible(@NotNull PluginEnabledState oldState,
-                                  @Nullable Project project) {
-      return myNewState == oldState ||
-             myNewState.isPerProject() && (!isPerProjectEnabled() || project == null);
+    protected boolean isInvisible(@NotNull PluginEnabledState oldState) {
+      return myNewState == oldState;
     }
 
     private @NotNull Stream<? extends IdeaPluginDescriptor> getAllDescriptors() {
@@ -88,18 +87,18 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         case ENABLED_FOR_PROJECT:
           return "plugins.configurable.enable.for.current.project";
         case ENABLED:
-          return "plugins.configurable.enable.for.all.projects";
+          return PluginEnabledState.isPerProjectEnabled() ?
+                 "plugins.configurable.enable.for.all.projects" :
+                 "plugins.configurable.enable.button";
         case DISABLED_FOR_PROJECT:
           return "plugins.configurable.disable.for.current.project";
         case DISABLED:
-          return "plugins.configurable.disable.for.all.projects";
+          return PluginEnabledState.isPerProjectEnabled() ?
+                 "plugins.configurable.disable.for.all.projects" :
+                 "plugins.configurable.disable.button";
         default:
           throw new IllegalArgumentException();
       }
-    }
-
-    private static boolean isPerProjectEnabled() {
-      return Registry.is("ide.plugins.per.project", false);
     }
   }
 

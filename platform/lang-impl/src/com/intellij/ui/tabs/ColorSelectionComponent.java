@@ -8,7 +8,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,8 +101,8 @@ public class ColorSelectionComponent extends JPanel {
   }
 
   public void initDefault(@NotNull FileColorManager manager, @Nullable @NlsContexts.Button String selectedColorName) {
-    for (@Nls String name : manager.getColorNames()) {
-      addColorButton(name, Objects.requireNonNull(manager.getColor(name)));
+    for (String id : manager.getColorIDs()) {
+      addColorButton(manager.getColorName(id), Objects.requireNonNull(manager.getColor(id)));
     }
     addCustomColorButton();
     setSelectedColor(selectedColorName);

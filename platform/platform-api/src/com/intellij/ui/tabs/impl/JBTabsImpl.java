@@ -510,7 +510,7 @@ public class JBTabsImpl extends JComponent
           processFocusChange();
         }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
 
-        myDragHelper = new DragHelper(child, parentDisposable);
+        myDragHelper = createDragHelper(child, parentDisposable);
         myDragHelper.start();
 
         if (myProject != null && myFocusManager == getGlobalInstance()) {
@@ -524,6 +524,11 @@ public class JBTabsImpl extends JComponent
                                         .filter(Conditions.not(Conditions.is(mySelectedInfo)))
                                         .transform(info -> info.getComponent()).iterator();
                                     });
+  }
+
+  @NotNull
+  protected DragHelper createDragHelper(@NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
+    return new DragHelper(tabs, parentDisposable);
   }
 
   public boolean isMouseInsideTabsArea() {

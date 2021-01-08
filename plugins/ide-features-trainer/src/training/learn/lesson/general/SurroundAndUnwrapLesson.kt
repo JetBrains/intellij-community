@@ -10,6 +10,7 @@ import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
 
 abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
   : KLesson("Surround and unwrap", LessonsBundle.message("surround.and.unwrap.lesson.name"), module, lang) {
@@ -68,7 +69,9 @@ abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
         test { actions(it) }
       }
       task {
-        restoreByUi()
+        restoreAfterStateBecomeFalse {
+          previous.ui?.isShowing != true
+        }
         text(LessonsBundle.message("surround.and.unwrap.choose.unwrap.item",
                                    strong(LearnBundle.message("surround.and.unwrap.item", surroundItems[0]))))
         stateCheck {
@@ -97,7 +100,7 @@ abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
   private fun TaskContext.proposeIfModified(checkCaret: TaskRuntimeContext.() -> Boolean) {
     proposeRestore {
       checkExpectedStateOfEditor(previous.sample, false)
-      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, restorePreviousTaskCallback) else null
+      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback) else null
     }
   }
 }

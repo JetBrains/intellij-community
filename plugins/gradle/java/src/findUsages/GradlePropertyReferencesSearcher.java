@@ -41,8 +41,13 @@ public class GradlePropertyReferencesSearcher extends QueryExecutorBase<PsiRefer
         return;
       }
 
+      GlobalSearchScope effectiveSearchScope = (GlobalSearchScope)queryParameters.getEffectiveSearchScope();
+      if (effectiveSearchScope == GlobalSearchScope.EMPTY_SCOPE) {
+        return;
+      }
+
       final GlobalSearchScope gradleSearchScope =
-        new FileByExtensionSearchScope(((GlobalSearchScope)queryParameters.getEffectiveSearchScope()), GRADLE_DSL_EXTENSION);
+        new FileByExtensionSearchScope(effectiveSearchScope, GRADLE_DSL_EXTENSION);
       final short searchContext = (short)(UsageSearchContext.IN_CODE | UsageSearchContext.IN_STRINGS);
       final MyProcessor processor = new MyProcessor(property);
 

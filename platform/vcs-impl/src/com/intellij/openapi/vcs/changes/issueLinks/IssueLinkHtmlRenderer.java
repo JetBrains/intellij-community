@@ -41,11 +41,14 @@ public final class IssueLinkHtmlRenderer {
 
     @Nls StringBuilder commentBuilder = new StringBuilder();
     IssueNavigationConfiguration config = IssueNavigationConfiguration.getInstance(project);
-    final List<IssueNavigationConfiguration.LinkMatch> list = config.findIssueLinks(comment);
+    final List<IssueNavigationConfiguration.LinkMatch> matches = config.findIssueLinks(comment);
     int pos = 0;
-    for(IssueNavigationConfiguration.LinkMatch match: list) {
+    for (IssueNavigationConfiguration.LinkMatch match : matches) {
       TextRange range = match.getRange();
-      commentBuilder.append(convertor.convert(comment.substring(pos, range.getStartOffset()))).append("<a href=\"").append(match.getTargetUrl()).append("\">"); // NON-NLS
+      if (pos > range.getStartOffset()) continue;
+
+      commentBuilder.append(convertor.convert(comment.substring(pos, range.getStartOffset()))).append("<a href=\"")
+        .append(match.getTargetUrl()).append("\">"); // NON-NLS
       commentBuilder.append(range.substring(comment)).append("</a>"); // NON-NLS
       pos = range.getEndOffset();
     }

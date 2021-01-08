@@ -1296,8 +1296,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       };
       PsiElement physical = getPhysicalElement(expr);
       TreeMap<PsiElement, List<PsiExpression>> groupByBlock =
-        StreamEx.of(myOccurrences).groupingBy(e -> PsiTreeUtil.findCommonParent(e, physical),
-                                              () -> new TreeMap<>(treeOrder), Collectors.toList());
+        StreamEx.of(myOccurrences)
+          .map(place -> (PsiExpression)getPhysicalElement(place))
+          .groupingBy(e -> PsiTreeUtil.findCommonParent(e, physical),
+                      () -> new TreeMap<>(treeOrder), Collectors.toList());
       LOG.assertTrue(!groupByBlock.isEmpty());
       List<PsiExpression> currentOccurrences = new ArrayList<>();
       Map<String, Integer> counts = new HashMap<>();

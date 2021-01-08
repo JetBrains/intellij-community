@@ -115,7 +115,7 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
    * Get entity data that can be modified in a save manne
    */
   fun getEntityDataForModification(arrayId: Int): WorkspaceEntityData<E> {
-    val entity = entities[arrayId] ?: error("Nothing to modify")
+    val entity = entities.getOrNull(arrayId) ?: error("Nothing to modify")
     if (arrayId in copiedToModify) return entity
     startWrite()
 

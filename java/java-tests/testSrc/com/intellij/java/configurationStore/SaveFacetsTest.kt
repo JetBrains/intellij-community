@@ -14,10 +14,17 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import org.junit.*
+import org.junit.Assume.assumeTrue
 
 class SaveFacetsTest {
   companion object {
@@ -56,5 +63,27 @@ class SaveFacetsTest {
     }
     projectModel.saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-facet")))
+  }
+
+  @Test
+  fun `facet in module with custom storage`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    class SampleCustomModuleSource(override val internalSource: JpsFileEntitySource) : EntitySource, CustomModuleEntitySource
+    val moduleDir = projectModel.baseProjectDir.virtualFileRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
+    val source = SampleCustomModuleSource(JpsFileEntitySource.FileInDirectory(moduleDir, projectModel.project.configLocation!!))
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        val moduleEntity = it.addModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source, null)
+        it.addModuleCustomImlDataEntity(null, mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to "custom"), moduleEntity,
+                                        source)
+        moduleEntity
+      }
+    }
+    val module = projectModel.moduleManager.findModuleByName("foo")!!
+    runWithRegisteredFacetTypes(MockFacetType()) {
+      projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("my-data"))
+    }
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("facet-in-module-with-custom-storage")))
   }
 }

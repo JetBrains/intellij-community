@@ -1,10 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DialogTitleCapitalization")
+
 package com.intellij.openapi.progress.impl
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.progress.forEachWithProgress
+import com.intellij.openapi.progress.runUnderBoundCancellation
+import com.intellij.openapi.progress.runUnderNestedProgressAndRelayMessages
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import org.junit.Assert
 import org.junit.Test
+
+private fun fractionToText(fraction: Double) = "[" + (fraction * 1000).toLong().div(1000.0).toString() + "]"
+
+private fun ProgressIndicatorBase.assertStatus(expected: String) {
+
+  val progress = when {
+    isIndeterminate -> "[running]"
+    else -> {
+      fractionToText(fraction)
+    }
+  }
+
+  val status = (text ?: "<null>") + " / " + (text2 ?: "<null>")
+  val actual = "$progress $status"
+  Assert.assertEquals(expected, actual)
+}
 
 class ProgressIndicatorTestKt {
   private val parentProgress = ProgressIndicatorBase().apply {
@@ -12,20 +33,7 @@ class ProgressIndicatorTestKt {
     text2 = "b"
   }
 
-  private fun assertStatus(text: String) {
-    val progress = when {
-      parentProgress.isIndeterminate -> "[running]"
-      else -> {
-        fractionToText(parentProgress.fraction)
-      }
-    }
-
-    val status = (parentProgress.text ?: "<null>") + " / " + (parentProgress.text2 ?: "<null>")
-    val actual = "$progress $status"
-    Assert.assertEquals(text, actual)
-  }
-
-  private fun fractionToText(fraction: Double) = "[" + (fraction * 1000).toLong().div(1000.0).toString() + "]"
+  private fun assertStatus(expected: String) = parentProgress.assertStatus(expected)
 
   private val emptyList = listOf<String>()
   private val singleList = listOf("a")
@@ -123,5 +131,34 @@ class ProgressIndicatorTestKt {
         assertStatus("[0.333] A / b")
       }
     }
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-257352"])
+  fun testNestedProgressShouldKeepFraction() {
+    val indicatorProgress = ProgressIndicatorBase()
+
+    runUnderNestedProgressAndRelayMessages(parentProgress, indicatorProgress) {
+      parentProgress.text = "1"
+      parentProgress.text2 = "2"
+      indicatorProgress.assertStatus("[running] 1 / 2")
+
+      threeList.forEachWithProgress(parentProgress) { el, subProgress ->
+        subProgress.fraction = 0.5
+        subProgress.text = "e-$el"
+        subProgress.text2 = "2-$el"
+
+        indicatorProgress.assertStatus(when(el) {
+          "a" -> "[0.166] e-a / 2-a"
+          "b" -> "[0.5] e-b / 2-b"
+          "c" -> "[0.833] e-c / 2-c"
+          else -> error("Unexpected case")
+        })
+      }
+
+      indicatorProgress.assertStatus("[running] 1 / 2")
+    }
+
+    indicatorProgress.assertStatus("[running] 1 / 2")
   }
 }

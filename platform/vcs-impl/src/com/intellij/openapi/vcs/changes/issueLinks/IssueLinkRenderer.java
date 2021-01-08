@@ -55,6 +55,7 @@ public class IssueLinkRenderer {
     final SimpleTextAttributes linkAttributes = getLinkAttributes(baseStyle);
     for(IssueNavigationConfiguration.LinkMatch match: list) {
       final TextRange textRange = match.getRange();
+      if (pos > textRange.getStartOffset()) continue;
       if (textRange.getStartOffset() > pos) {
         final String piece = text.substring(pos, textRange.getStartOffset());
         pieces.add(piece);

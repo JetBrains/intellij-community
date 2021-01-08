@@ -4,7 +4,9 @@ package com.intellij.ui.components;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.ui.BackgroundSupplier;
+import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,6 +97,10 @@ public final class WideSelectionListUI extends BasicListUI {
 
   @Nullable
   private static Color getBackground(@NotNull JList<Object> list, @Nullable Object value, int row) {
+    if (row == ListHoverListener.getHoveredIndex(list)) {
+      Color background = RenderingUtil.getHoverBackground(list);
+      if (background != null) return background;
+    }
     if (value instanceof ColoredItem) {
       Color background = ((ColoredItem)value).getColor();
       if (background != null) return background;

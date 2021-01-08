@@ -5,6 +5,7 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -70,7 +71,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
   }
 
   @Override
-  public void toggle(boolean selected) {
+  public void toggle(boolean selected, AnActionEvent e) {
     super.setSelected(selected);
     if (selected) {
       myBeforeRunComponent.showPopup();

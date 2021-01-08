@@ -177,7 +177,7 @@ class ConflictingFileTypeMappingTracker {
 
   private static void showReassignedInfoNotification(@Nullable Project project, @NotNull @NlsContexts.NotificationContent String message) {
     Notification confirmNotification = new Notification(
-      NotificationGroup.createIdWithTitle("File type conflict", FileTypesBundle.message("dialog.title.pattern.reassigned")),
+      NotificationGroup.createIdWithTitle("dialog.title.pattern.reassigned", FileTypesBundle.message("dialog.title.pattern.reassigned")),
       FileTypesBundle.message("dialog.title.pattern.reassigned"),
       message,
       NotificationType.INFORMATION, null);

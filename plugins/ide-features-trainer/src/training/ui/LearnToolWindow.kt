@@ -22,14 +22,14 @@ import training.ui.views.LearnPanel
 import training.ui.views.ModulesPanel
 import java.util.concurrent.TimeUnit
 
-
-class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow) : SimpleToolWindowPanel(true, true), DataProvider {
+class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
+  : SimpleToolWindowPanel(true, true), DataProvider {
   val parentDisposable: Disposable = wholeToolWindow.disposable
 
   private var scrollPane: JBScrollPane
   var learnPanel: LearnPanel? = null
     private set
-  private val modulesPanel: ModulesPanel = ModulesPanel(this)
+  private val modulesPanel: ModulesPanel = ModulesPanel()
 
   init {
     setChooseLanguageButton()
@@ -90,13 +90,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     wholeToolWindow.setTitleActions(listOf(ChooseProgrammingLanguageForLearningAction(this)))
   }
 
-  fun setChooseLanguageView() {
-    scrollPane.setViewportView(LanguageChoosePanel(this))
-    scrollPane.revalidate()
-    scrollPane.repaint()
-  }
-
-  fun updateScrollPane() {
+  private fun updateScrollPane() {
     scrollPane.viewport.revalidate()
     scrollPane.viewport.repaint()
     scrollPane.revalidate()
@@ -106,10 +100,5 @@ class LearnToolWindow internal constructor(val project: Project, private val who
   fun reinitViews() {
     reinitViewsInternal()
     updateScrollPane()
-  }
-
-  fun scrollToTheEnd() {
-    val vertical = scrollPane.verticalScrollBar
-    vertical.value = vertical.maximum
   }
 }

@@ -35,6 +35,7 @@
     <extensionPoint name="executionEnvironmentProvider"
                     interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider" dynamic="true"/>
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
+    <extensionPoint name="targetConfigurationExtension" interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationMavenExtension" dynamic="true"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>

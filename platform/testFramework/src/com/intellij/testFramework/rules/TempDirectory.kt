@@ -42,7 +42,7 @@ class TempDirectory : ExternalResource() {
   val rootPath: Path
     get() = root.toPath()
 
-  private val virtualFileRoot: VirtualFile
+  val virtualFileRoot: VirtualFile
     get() {
       if (myVirtualFileRoot == null) {
         myVirtualFileRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root)

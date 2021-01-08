@@ -930,6 +930,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON38);
   }
 
+  // PY-33886, PY-36478
+  public void testInvalidNonParenthesizedAssignmentExpressions() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   // PY-33886
   public void testAssignmentExpressionsInFString() {
     doTest(LanguageLevel.PYTHON38);

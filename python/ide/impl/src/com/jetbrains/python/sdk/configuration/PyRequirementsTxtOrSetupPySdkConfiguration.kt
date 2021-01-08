@@ -26,6 +26,7 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerImpl
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.sdk.*
@@ -140,7 +141,15 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       LOGGER.debug("Installing packages")
 
       try {
-        PyPackageManagerImpl.getInstance(sdk).install(emptyList(), getCommandForPipInstall(requirementsTxtOrSetupPyFile))
+        val packageManager = PyPackageManager.getInstance(sdk)
+        val command = getCommandForPipInstall(requirementsTxtOrSetupPyFile)
+
+        if (packageManager is PyPackageManagerImpl) {
+          packageManager.install(emptyList(), command, basePath)
+        }
+        else {
+          packageManager.install(emptyList(), command)
+        }
       }
       catch (e: ExecutionException) {
         PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.INSTALLATION_FAILURE)

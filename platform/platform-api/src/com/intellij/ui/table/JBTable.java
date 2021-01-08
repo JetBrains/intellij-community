@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -41,6 +42,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.intellij.ui.TableUtil.stopEditing;
@@ -74,8 +76,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private TableCell rollOverCell;
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
-
-  private int myMouseHoveredRow = -1;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -115,20 +115,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
-    addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        if (!isStriped()) {
-          updateHoveredRow(rowAtPoint(e.getPoint()));
-        }
-      }
-    });
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseExited(MouseEvent e) {
-        updateHoveredRow(-1);
-      }
-    });
+    TableHoverListener.DEFAULT.addTo(this);
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
@@ -188,17 +175,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myUiUpdating = false;
 
     new MyCellEditorRemover();
-  }
-
-  public final int getHoveredRow() {
-    return isHoverPaintingDisabled(this) ? -1 : myMouseHoveredRow;
-  }
-
-  private void updateHoveredRow(int row) {
-    if (myMouseHoveredRow != row && !isHoverPaintingDisabled(this)) {
-      myMouseHoveredRow = row;
-      repaint();
-    }
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
@@ -679,21 +655,28 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @NotNull
   @Override
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
-    if (renderer instanceof DefaultTableCellRenderer) {
-      ((DefaultTableCellRenderer)renderer).setBackground(null);
-    }
-
     Component result = super.prepareRenderer(renderer, row, column);
 
-    if (result instanceof JComponent) {
+    if (result instanceof JComponent && !isCellSelected(row, column)) {
       JComponent component = (JComponent)result;
       if (isStriped()) {
         if (isTableDecorationSupported()) {
-          setRendererBackground(row, column, component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
+          setRendererBackground(component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
         }
       }
-      else if (row == getHoveredRow()) {
-        setRendererBackground(row, column, component, UIUtil.getTableHoverBackground(true));
+      else {
+        Color hovered = isHoverPaintingDisabled(this) ? null : getHoveredRowBackground();
+        if (hovered != null) {
+          if (row == TableHoverListener.getHoveredRow(this)) {
+            setRendererBackground(component, hovered);
+          }
+          else {
+            forEachComponent(component, child -> {
+              // reset hovered background only if it was not cleared properly
+              if (hovered == child.getBackground()) child.setBackground(getBackground());
+            });
+          }
+        }
       }
     }
 
@@ -707,13 +690,24 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return result;
   }
 
-  protected void setRendererBackground(int row, int column, JComponent renderer, Color color) {
-    if (!isCellSelected(row, column)) {
-      renderer.setOpaque(true);
-      renderer.setBackground(color);
-      for (Component child : renderer.getComponents()) {
-        child.setBackground(color);
-      }
+  /**
+   * This method is intended to override default hovered background.
+   *
+   * @return a background color for hovered row, or {@code null} to ignore
+   */
+  protected @Nullable Color getHoveredRowBackground() {
+    return UIUtil.getTableHoverBackground(true);
+  }
+
+  private static void setRendererBackground(@NotNull JComponent container, Color background) {
+    container.setOpaque(true);
+    forEachComponent(container, child -> child.setBackground(background));
+  }
+
+  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<Component> consumer) {
+    consumer.accept(container);
+    for (Component component : container.getComponents()) {
+      consumer.accept(component);
     }
   }
 

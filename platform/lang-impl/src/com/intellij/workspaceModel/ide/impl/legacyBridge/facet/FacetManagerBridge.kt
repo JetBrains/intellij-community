@@ -49,11 +49,10 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   override fun getModel(): FacetModel = model
   override fun getModule(): Module = module
   override fun createModifiableModel(): ModifiableFacetModel {
-    val diff = WorkspaceEntityStorageDiffBuilder.create(module.entityStorage.current)
-    return createModifiableModel(diff)
+    return createModifiableModel(module.entityStorage.current.toBuilder())
   }
 
-  fun createModifiableModel(diff: WorkspaceEntityStorageDiffBuilder): ModifiableFacetModel {
+  fun createModifiableModel(diff: WorkspaceEntityStorageBuilder): ModifiableFacetModel {
     return ModifiableFacetModelBridgeImpl(module.entityStorage.current, diff, module, this)
   }
 

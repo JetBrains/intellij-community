@@ -299,4 +299,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testImplicitUnboxingInMethodReference() {
     doTest();
   }
+  public void testGuavaFunction() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 }

@@ -5,6 +5,7 @@ import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,10 @@ public class FileSelectInContext implements SelectInContext {
 
   public FileSelectInContext(@NotNull Project project, @NotNull VirtualFile file) {
     this(project, file, getFileEditorProvider(project, file));
+  }
+
+  public FileSelectInContext(@NotNull PsiDirectory directory) {
+    this(directory.getProject(), directory.getVirtualFile(), null);
   }
 
   public FileSelectInContext(@NotNull Project project, @NotNull VirtualFile file, @Nullable FileEditorProvider provider) {

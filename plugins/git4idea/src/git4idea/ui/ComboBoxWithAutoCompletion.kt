@@ -51,6 +51,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
   override fun setSelectedItem(anObject: Any?) {
     selectingItem = true
     super.setSelectedItem(anObject)
+    editor.item = anObject
     selectingItem = false
   }
 

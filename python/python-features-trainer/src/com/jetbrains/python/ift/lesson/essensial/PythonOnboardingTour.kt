@@ -16,7 +16,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.ToolWindowManager
@@ -63,18 +62,6 @@ class PythonOnboardingTour(module: Module) :
 
     print("AVERAGE", find_average([5,6, 7, 8]))
   """.trimIndent())
-
-  override fun cleanUp(project: Project) {
-    val root = ProjectRootManager.getInstance(project).contentRoots[0]
-    root.findChild(demoFileName)?.let { file ->
-      invokeLater {
-        runWriteAction {
-          file.delete(this)
-        }
-      }
-    }
-  }
-
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {

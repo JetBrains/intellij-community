@@ -173,7 +173,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             SettingsEditorFragment<?, ?> fragment = ((ToggleFragmentAction)action).myFragment;
-            fragment.toggle(true); // show or set focus
+            fragment.toggle(true, e); // show or set focus
             IdeFocusManager.getGlobalInstance().requestFocus(fragment.getEditorComponent(), false);
           }
         }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane(), myDisposable);
@@ -193,7 +193,9 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         }
       });
     };
-    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
+    String title = myMain != null ? IdeBundle.message("popup.title.add.group.options", myMain.getGroup()) :
+                   IdeBundle.message("popup.title.add.run.options");
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(title,
                                                                           group,
                                                                           dataContext,
                                                                           JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
@@ -248,7 +250,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   }
 
   private DefaultActionGroup buildGroup(Ref<JComponent> lastSelected) {
-    return buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
+    DefaultActionGroup group = buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
+    if (myMain != null) {
+      group.add(Separator.create(), Constraints.FIRST);
+      group.add(new ToggleFragmentAction(myMain, lastSelected), Constraints.FIRST);
+    }
+    return group;
   }
 
   private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<SettingsEditorFragment<Settings, ?>> fragments) {
@@ -295,7 +302,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myFragment.toggle(state);
+      myFragment.toggle(state, e);
       if (state) {
         myLastSelected.set(myFragment.getEditorComponent());
       }

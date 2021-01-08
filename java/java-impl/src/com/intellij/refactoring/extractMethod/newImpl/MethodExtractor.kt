@@ -81,8 +81,9 @@ class MethodExtractor {
       val makeStaticAndPassFields = optionsWithStatic?.inputParameters?.size != options.inputParameters.size
       val showStatic = ! isStatic && optionsWithStatic != null
       val hasAnnotation = options.dataOutput.nullability != Nullability.UNKNOWN && options.dataOutput.type !is PsiPrimitiveType
+      val annotationAvailable = ExtractMethodHelper.isNullabilityAvailable(options)
       val defaultPanel = ExtractMethodPopupProvider(
-        annotateDefault = if (hasAnnotation) needsNullabilityAnnotations(options.project) else null,
+        annotateDefault = if (hasAnnotation && annotationAvailable) needsNullabilityAnnotations(options.project) else null,
         makeStaticDefault = if (showStatic) false else null,
         staticPassFields = makeStaticAndPassFields
       )
@@ -245,7 +246,7 @@ class MethodExtractor {
     }
     val formattedCallElements = callElements.map { styleManager.reformat(it) }
 
-    if (needsNullabilityAnnotations(dependencies.project)) {
+    if (needsNullabilityAnnotations(dependencies.project) && ExtractMethodHelper.isNullabilityAvailable(dependencies)) {
       updateMethodAnnotations(method, dependencies.inputParameters)
     }
 

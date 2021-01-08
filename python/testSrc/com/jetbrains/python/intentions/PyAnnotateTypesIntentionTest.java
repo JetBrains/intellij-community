@@ -46,6 +46,16 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
     doIntentionTest(PyPsiBundle.message("INTN.add.type.hints.for.function", "method"));
   }
 
+  // PY-41976
+  public void testFunctionKeywordContainerParameter() {
+    doTest();
+  }
+
+  // PY-41976
+  public void testFunctionPositionalAndKeywordContainerParameter() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"), LanguageLevel.PYTHON34);
   }

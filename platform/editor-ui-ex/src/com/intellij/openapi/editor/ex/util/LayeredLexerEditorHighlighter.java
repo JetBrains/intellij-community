@@ -386,6 +386,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     private final LazyLexerEditorHighlighter highlighter;
     private final String mySeparator;
     private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
+    private final Map<IElementType, TextAttributesKey[]> myKeysMap = new HashMap<>();
     @NotNull
     private final SyntaxHighlighter mySyntaxHighlighter;
     private final TextAttributesKey myBackground;
@@ -406,10 +407,17 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     public TextAttributes getAttributes(IElementType tokenType) {
       TextAttributes attrs = myAttributesMap.get(tokenType);
       if (attrs == null) {
-        attrs = convertAttributes(SyntaxHighlighterBase.pack(myBackground, mySyntaxHighlighter.getTokenHighlights(tokenType)));
+        TextAttributesKey[] keys = getAttributesKeys(tokenType);
+        attrs = convertAttributes(keys);
         myAttributesMap.put(tokenType, attrs);
       }
       return attrs;
+    }
+
+    private TextAttributesKey @NotNull [] getAttributesKeys(IElementType tokenType) {
+      return myKeysMap.computeIfAbsent(tokenType, type -> {
+        return SyntaxHighlighterBase.pack(myBackground, mySyntaxHighlighter.getTokenHighlights(type));
+      });
     }
 
     @NotNull
@@ -577,6 +585,15 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
 
       return myBaseIterator.getTextAttributes();
+    }
+
+    @Override
+    public TextAttributesKey @NotNull [] getTextAttributesKeys() {
+      if (myCurrentMapper != null) {
+        return myCurrentMapper.getAttributesKeys(getTokenType());
+      }
+
+      return myBaseIterator.getTextAttributesKeys();
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -79,6 +80,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (selected) {
       return RenderingUtil.getSelectionBackground(tree);
     }
+    if (row == TreeHoverListener.getHoveredRow(tree)) {
+      Color background = RenderingUtil.getHoverBackground(tree);
+      if (background != null) return background;
+    }
     Object node = TreeUtil.getLastUserObject(path);
     if (node instanceof ColoredItem) {
       Color background = ((ColoredItem)node).getColor();
@@ -95,6 +100,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
       if (background != null) return background;
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public static void setBackground(@NotNull JTree tree, @NotNull Component component, int row) {
+    TreePath path = tree.getPathForRow(row);
+    Color background = path == null ? null : getBackground(tree, path, row, tree.isRowSelected(row));
+    setBackground(tree, component, background, true);
   }
 
   private static void setBackground(@NotNull JTree tree, @NotNull Component component, @Nullable Color background, boolean opaque) {
@@ -250,10 +262,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
         }
       }
       paintDropLine(g);
-      rendererPane.removeAll();
     }
     finally {
       g.dispose();
+      // remove all renderers
+      rendererPane.removeAll();
     }
   }
 

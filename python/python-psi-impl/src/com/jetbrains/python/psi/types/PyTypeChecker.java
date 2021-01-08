@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.getReturnTypeToAnalyzeAsCallType;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
 /**
@@ -261,7 +262,7 @@ public final class PyTypeChecker {
 
     final TypeEvalContext context = matchContext.context;
 
-    if (expected.isDefinition() ^ actual.isDefinition()) {
+    if (expected.isDefinition() ^ actual.isDefinition() && !PyProtocolsKt.isProtocol(expected, context)) {
       if (!expected.isDefinition() && actual.isDefinition()) {
         final PyClassLikeType metaClass = actual.getMetaClassType(context, true);
         return Optional.of(metaClass != null && match((PyType)expected, metaClass.toInstance(), matchContext).orElse(true));
@@ -313,10 +314,7 @@ public final class PyTypeChecker {
           return Optional.of(false);
         }
 
-        final PyType protocolElementType = context.getType(pair.getFirst());
-        final PyType protocolFunctionTypeNoSelf = protocolElementType instanceof PyFunctionType
-                                                  ? ((PyFunctionType)protocolElementType).dropSelf(context)
-                                                  : null;
+        final PyType protocolElementType = dropSelfIfNeeded(expected, context.getType(pair.getFirst()), context);
 
         final boolean elementResult = StreamEx
           .of(subclassElements)
@@ -325,12 +323,8 @@ public final class PyTypeChecker {
           .map(context::getType)
           .anyMatch(
             subclassElementType -> {
-              if (subclassElementType instanceof PyFunctionType && protocolFunctionTypeNoSelf != null) {
-                final PyFunctionType subclassFunctionTypeNoSelf = ((PyFunctionType)subclassElementType).dropSelf(context);
-                return match(protocolFunctionTypeNoSelf, subclassFunctionTypeNoSelf, matchContext).orElse(true);
-              }
-
-              return match(protocolElementType, subclassElementType, matchContext).orElse(true);
+              return match(protocolElementType,
+                           dropSelfIfNeeded(actual, subclassElementType, context), matchContext).orElse(true);
             }
           );
 
@@ -358,6 +352,19 @@ public final class PyTypeChecker {
     }
     return Optional.empty();
   }
+
+  private static @Nullable PyType dropSelfIfNeeded(@NotNull PyClassType classType,
+                                                   @Nullable PyType elementType,
+                                                   @NotNull TypeEvalContext context) {
+    if (elementType instanceof PyFunctionType) {
+      PyFunctionType functionType = (PyFunctionType)elementType;
+      if (PyUtil.isInitOrNewMethod(functionType.getCallable()) || !classType.isDefinition()) {
+        return functionType.dropSelf(context);
+      }
+    }
+    return elementType;
+  }
+
 
   @NotNull
   private static Optional<Boolean> match(@NotNull PyTupleType expected, @NotNull PyTupleType actual, @NotNull MatchContext context) {
@@ -473,19 +480,46 @@ public final class PyTypeChecker {
             }
           }
           else {
+            final PyType actualParamType =
+              actualParam.isPositionalContainer() && couldBeMappedOntoPositionalContainer(expectedParam)
+              ? actualParam.getArgumentType(context)
+              : actualParam.getType(context);
+
             // actual callable type could accept more general parameter type
-            if (!match(actualParam.getType(context), expectedParam.getType(context), matchContext.reverseSubstitutions()).orElse(true)) {
+            if (!match(actualParamType, expectedParam.getType(context), matchContext.reverseSubstitutions()).orElse(true)) {
               return Optional.of(false);
             }
           }
         }
       }
-      if (!match(expected.getReturnType(context), actual.getReturnType(context), matchContext).orElse(true)) {
+      if (!match(expected.getReturnType(context), getActualReturnType(actual, context), matchContext).orElse(true)) {
         return Optional.of(false);
       }
       return Optional.of(true);
     }
     return Optional.empty();
+  }
+
+  private static boolean couldBeMappedOntoPositionalContainer(@NotNull PyCallableParameter parameter) {
+    if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) return false;
+
+    final var psi = parameter.getParameter();
+    if (psi != null) {
+      final var namedPsi = psi.getAsNamed();
+      if (namedPsi != null && namedPsi.isKeywordOnly()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static @Nullable PyType getActualReturnType(@NotNull PyCallableType actual, @NotNull TypeEvalContext context) {
+    PyCallable callable = actual.getCallable();
+    if (callable instanceof PyFunction) {
+      return getReturnTypeToAnalyzeAsCallType((PyFunction)callable, context);
+    }
+    return actual.getReturnType(context);
   }
 
   private static boolean consistsOfSameElementNumberTuples(@NotNull PyUnionType unionType, int elementCount) {

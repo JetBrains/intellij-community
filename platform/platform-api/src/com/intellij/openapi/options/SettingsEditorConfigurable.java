@@ -10,7 +10,6 @@ public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigura
   private SettingsEditor<Settings> myEditor;
   private final Settings mySettings;
   private final SettingsEditorListener<Settings> myListener;
-  private final JComponent myComponent;
 
   public SettingsEditorConfigurable(@NotNull SettingsEditor<Settings> editor, @NotNull Settings settings) {
     myEditor = editor;
@@ -22,12 +21,11 @@ public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigura
       }
     };
     myEditor.addSettingsEditorListener(myListener);
-    myComponent = myEditor.getComponent();
   }
 
   @Override
   public JComponent createComponent() {
-    return myComponent;
+    return myEditor.getComponent();
   }
 
   @Override

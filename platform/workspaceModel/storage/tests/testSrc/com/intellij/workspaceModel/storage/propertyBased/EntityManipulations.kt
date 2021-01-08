@@ -138,7 +138,7 @@ private object NamedEntityManipulation : EntityManipulation {
     return object : AddEntity(storage, "NamedEntity") {
       override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return try {
-          storage.addNamedEntity(someProperty, source) to "Set property for NamedEntity: $someProperty"
+          storage.addNamedEntity(someProperty, source = source) to "Set property for NamedEntity: $someProperty"
         }
         catch (e: PersistentIdAlreadyExistsException) {
           val persistentId = e.id as NameId

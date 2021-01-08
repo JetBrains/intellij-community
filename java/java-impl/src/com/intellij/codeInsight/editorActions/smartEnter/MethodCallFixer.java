@@ -93,7 +93,7 @@ public class MethodCallFixer implements Fixer {
     int paramCount = Integer.MAX_VALUE;
     for (CandidateInfo candidate : PsiResolveHelper.SERVICE.getInstance(call.getProject()).getReferencedMethodCandidates(call, false)) {
       PsiElement element = candidate.getElement();
-      if (element instanceof PsiMethod) {
+      if (element instanceof PsiMethod && !((PsiMethod)element).isVarArgs()) {
         paramCount = Math.min(paramCount, ((PsiMethod)element).getParameterList().getParametersCount());
       }
     }

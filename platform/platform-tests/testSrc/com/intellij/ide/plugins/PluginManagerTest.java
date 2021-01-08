@@ -5,14 +5,17 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.rules.TempDirectory;
 import org.easymock.EasyMock;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
@@ -20,12 +23,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadDescriptorInTest;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;
@@ -34,6 +40,8 @@ public class PluginManagerTest {
   private static String getTestDataPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort";
   }
+
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
   public void compatibilityBranchBased() {
@@ -117,6 +125,7 @@ public class PluginManagerTest {
 
   @Test
   public void testSimplePluginSort() throws Exception {
+    // muted failure, investigation is assigned
     doPluginSortTest("simplePluginSort", false);
   }
 
@@ -163,6 +172,16 @@ public class PluginManagerTest {
     resultInReverseOrder.add(descriptorInstalled, false);
     resultInReverseOrder.add(descriptorBundled, false);
     assertPluginPreInstalled(resultInReverseOrder, descriptorInstalled.getPluginId());
+  }
+
+  @Test
+  public void testSymlinkInConfigPath() throws IOException {
+    assumeSymLinkCreationIsSupported();
+
+    Path configPath = tempDir.getRoot().toPath().resolve("config-link");
+    IoTestUtil.createSymbolicLink(configPath, tempDir.newDirectory("config-target").toPath());
+    DisabledPluginsState.saveDisabledPlugins(configPath, List.of(PluginId.getId("a")), false);
+    assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }
 
   private static void assertPluginPreInstalled(@NotNull PluginLoadingResult loadingResult, PluginId pluginId) {

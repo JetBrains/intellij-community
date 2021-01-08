@@ -7,11 +7,16 @@ import java.io.OutputStream
 interface EntityStorageSerializer {
   val serializerDataFormatVersion: String
 
-  fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage)
+  fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage): SerializationResult
   fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder?
 }
 
 interface EntityTypesResolver {
   fun getPluginId(clazz: Class<*>): String?
   fun resolveClass(name: String, pluginId: String?): Class<*>
+}
+
+sealed class SerializationResult {
+  object Success : SerializationResult()
+  class Fail<T>(val info: T) : SerializationResult()
 }

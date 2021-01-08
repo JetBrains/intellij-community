@@ -480,4 +480,18 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                          "my_function(Union[int, str])")
     );
   }
+
+  // PY-44575
+  public void testArgsCallableAgainstOneParameterCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Any, Callable, Iterable, TypeVar\n" +
+                         "_T1 = TypeVar(\"_T1\")\n" +
+                         "def mymap(c: Callable[[_T1], Any], i: Iterable[_T1]) -> Iterable[_T1]:\n" +
+                         "  pass\n" +
+                         "def myfoo(*args: int) -> int:\n" +
+                         "  pass\n" +
+                         "mymap(myfoo, [1, 2, 3])\n")
+    );
+  }
 }

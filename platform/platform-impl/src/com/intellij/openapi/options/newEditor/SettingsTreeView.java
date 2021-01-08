@@ -62,6 +62,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
@@ -130,7 +132,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
           myHeader.setBorder(JBUI.Borders.empty(2, 10 + getLeftMargin(0), 0, 0));
         }
         myHeader.setFont(myTree.getFont());
-        myHeader.setIcon(getIcon(null));
+        myHeader.setIcon(getIcon(null, false));
         int height = myHeader.getPreferredSize().height;
         String group = findGroupNameAt(0, height + 3);
         if (group == null || !group.equals(findGroupNameAt(0, 0))) {
@@ -181,23 +183,25 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myControl = null;
   }
 
-  private Icon getIcon(@Nullable DefaultMutableTreeNode node) {
+  private Icon getIcon(@Nullable DefaultMutableTreeNode node, boolean selected) {
     if (myControl == null) myControl = new MyControl();
     if (node == null || 0 == node.getChildCount()) return myControl.empty;
-    return myTree.isExpanded(new TreePath(node.getPath())) ? myControl.expanded : myControl.collapsed;
+    return myTree.isExpanded(new TreePath(node.getPath())) ? myControl.expanded.apply(selected) : myControl.collapsed.apply(selected);
   }
 
   private static final class MyControl {
     private final Control control = new DefaultControl();
-    private final Icon collapsed = new MyIcon(false);
-    private final Icon expanded = new MyIcon(true);
-    private final Icon empty = new MyIcon(null);
+    private final Function<Boolean, Icon> collapsed = selected -> new MyIcon(false, () -> selected);
+    private final Function<Boolean, Icon> expanded = selected -> new MyIcon(true, () -> selected);
+    private final Icon empty = new MyIcon(null, () -> false);
 
     private final class MyIcon implements Icon {
       private final Boolean expanded;
+      private final Supplier<Boolean> selected;
 
-      private MyIcon(@Nullable Boolean expanded) {
+      private MyIcon(@Nullable Boolean expanded, Supplier<Boolean> selected) {
         this.expanded = expanded;
+        this.selected = selected;
       }
 
       @Override
@@ -212,7 +216,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (expanded != null) control.paint(c, g, x, y, getIconWidth(), getIconHeight(), expanded, false);
+        if (expanded != null) control.paint(c, g, x, y, getIconWidth(), getIconHeight(), expanded, selected.get());
       }
     }
   }
@@ -645,7 +649,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       // configure node icon
       Icon nodeIcon = null;
       if (value instanceof DefaultMutableTreeNode) {
-        nodeIcon = getIcon((DefaultMutableTreeNode)value);
+        nodeIcon = getIcon((DefaultMutableTreeNode)value, selected);
       }
       myNodeIcon.setIcon(nodeIcon);
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {

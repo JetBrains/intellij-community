@@ -19,8 +19,7 @@ import com.intellij.util.ui.StatusText
 class ActivateHierarchyToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.HIERARCHY, AllIcons.Toolwindows.ToolWindowHierarchy) {
   override fun setupEmptyText(project: Project, text: StatusText) {
     text.clear()
-    text.appendLine(LangBundle.message("hierarchy.empty.text.1"))
-    text.appendLine(LangBundle.message("hierarchy.empty.text.2"))
+    text.appendLine(LangBundle.message("hierarchy.empty.text"))
     if (LanguageTypeHierarchy.INSTANCE.hasAnyExtensions()) {
       text.appendLine(LangBundle.message("hierarchy.empty.text.type", KeymapUtil.getShortcutText(IdeActions.ACTION_TYPE_HIERARCHY)))
     }
@@ -31,7 +30,7 @@ class ActivateHierarchyToolWindowAction : ToolWindowEmptyStateAction(ToolWindowI
       text.appendLine(LangBundle.message("hierarchy.empty.text.method", KeymapUtil.getShortcutText(IdeActions.ACTION_METHOD_HIERARCHY)))
     }
     text.appendLine("")
-    text.appendLine(AllIcons.General.ContextHelp, LangBundle.message("hierarchy.empty.text.help"), SimpleTextAttributes.LINK_ATTRIBUTES) {
+    text.appendLine(AllIcons.General.ContextHelp, LangBundle.message("hierarchy.empty.text.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       HelpManager.getInstance().invokeHelp("procedures.viewinghierarchy")
     }
   }

@@ -21,8 +21,7 @@ public class AbstractTestNGSuiteConfigurationProducer extends TestNGConfiguratio
     final PsiElement element = context.getPsiLocation();
     final PsiFile containingFile = element != null ? element.getContainingFile() : null;
     if (containingFile == null) return false;
-    if (JavaPsiFacade.getInstance(configuration.project)
-          .findClass(TestNGUtil.TEST_ANNOTATION_FQN, containingFile.getResolveScope()) != null) {
+    if (JavaPsiFacade.getInstance(configuration.project).findPackage(TestNGUtil.TESTNG_PACKAGE) == null) {
       return false;
     }
     final VirtualFile virtualFile = containingFile.getVirtualFile();

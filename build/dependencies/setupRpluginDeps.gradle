@@ -22,7 +22,9 @@ task setupRkernel {
         src "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/rplugin/$rkernelVersion-$artifact.name"
         tempAndMove true
         dest artifact
-        timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+        connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+        readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+        retries 10
       }
     }
   }

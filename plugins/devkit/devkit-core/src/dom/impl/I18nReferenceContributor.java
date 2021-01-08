@@ -197,7 +197,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
         public boolean accepts(@NotNull Extension extension,
                                ProcessingContext context) {
           final ExtensionPoint extensionPoint = extension.getExtensionPoint();
-          assert extensionPoint != null;
+          if (extensionPoint == null) return false;
+          
           final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
           for (String name : extensionPointClassNames) {
             if (InheritanceUtil.isInheritor(beanClass, name)) return true;

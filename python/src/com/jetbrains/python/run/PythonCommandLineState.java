@@ -74,6 +74,8 @@ import java.util.*;
 import java.util.function.Function;
 
 /**
+ * Since this state is async, any method could be called on any thread
+ *
  * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {

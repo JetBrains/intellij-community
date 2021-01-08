@@ -204,3 +204,8 @@ public class ConditionCoveredByFurtherCondition {
     }
 }
 enum X {A, B, C}
+class UnterminatedLiteral {
+  void test(Object obj) {
+    boolean b = obj instanceof String && """foo
+  }
+}<EOLError descr="Unclosed text block"></EOLError><EOLError descr="'}' expected"></EOLError><EOLError descr="'}' expected"></EOLError><EOLError descr="';' expected"></EOLError>

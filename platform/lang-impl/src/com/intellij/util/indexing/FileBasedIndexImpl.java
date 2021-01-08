@@ -1880,13 +1880,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void setUpFlusher() {
     myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
-      private final SerializationManagerEx mySerializationManager = SerializationManagerEx.getInstanceEx();
       private int lastModCount;
 
       @Override
       public void run() {
-        mySerializationManager.flushNameStorage();
-
         int currentModCount = myLocalModCount.get();
         if (lastModCount == currentModCount) {
           flushAllIndices(lastModCount);

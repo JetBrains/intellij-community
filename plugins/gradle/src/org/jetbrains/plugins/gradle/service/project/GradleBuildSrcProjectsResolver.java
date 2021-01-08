@@ -93,10 +93,10 @@ public final class GradleBuildSrcProjectsResolver {
     }
 
     MultiMap<Path, DataNode<BuildScriptClasspathData>> buildClasspathNodesMap = new MultiMap<>();
-    Map<String, ModuleData> includedModulesPaths = new HashMap<>();
+    Map<String, DataNode<ModuleData>> includedModulesPaths = new HashMap<>();
     for (DataNode<ModuleData> moduleDataNode : findAll(mainBuildProjectDataNode, ProjectKeys.MODULE)) {
       String path = moduleDataNode.getData().getLinkedExternalProjectPath();
-      includedModulesPaths.put(path, moduleDataNode.getData());
+      includedModulesPaths.put(path, moduleDataNode);
       DataNode<BuildScriptClasspathData> scriptClasspathDataNode = find(moduleDataNode, BuildScriptClasspathData.KEY);
       if (scriptClasspathDataNode != null) {
         String rootPath = includedBuildsPaths.get(path);
@@ -193,7 +193,7 @@ public final class GradleBuildSrcProjectsResolver {
   private void handleBuildSrcProject(@NotNull DataNode<ProjectData> resultProjectDataNode,
                                      @Nullable String buildName,
                                      @NotNull Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes,
-                                     @NotNull Map<String, ModuleData> includedModulesPaths,
+                                     @NotNull Map<String, DataNode<ModuleData>> includedModulesPaths,
                                      @NotNull DefaultProjectResolverContext buildSrcResolverCtx,
                                      @NotNull Function<ProjectConnection, DataNode<ProjectData>> projectConnectionDataNodeFunction) {
     final String projectPath = buildSrcResolverCtx.getProjectPath();
@@ -248,26 +248,24 @@ public final class GradleBuildSrcProjectsResolver {
         }
       }
 
-      ModuleData includedModule = includedModulesPaths.get(moduleData.getLinkedExternalProjectPath());
+      DataNode<ModuleData> includedModule = includedModulesPaths.get(moduleData.getLinkedExternalProjectPath());
       if (includedModule == null) {
         moduleData.setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
         resultProjectDataNode.addChild(moduleNode);
-        if (!buildSrcResolverCtx.isUseQualifiedModuleNames()) {
-          // adjust ide module group
-          if (moduleData.getIdeModuleGroup() != null) {
-            String[] moduleGroup = ArrayUtil.prepend(
-              isNotEmpty(buildName) ? buildName : resultProjectDataNode.getData().getInternalName(),
-              moduleData.getIdeModuleGroup());
-            moduleData.setIdeModuleGroup(moduleGroup);
-
-            for (DataNode<GradleSourceSetData> sourceSetNode : getChildren(moduleNode, GradleSourceSetData.KEY)) {
-              sourceSetNode.getData().setIdeModuleGroup(moduleGroup);
-            }
+        String[] moduleGroup = getModuleGroup(resultProjectDataNode, buildName, buildSrcResolverCtx, moduleData);
+        if (moduleGroup != null) {
+          moduleData.setIdeModuleGroup(moduleGroup);
+        }
+        for (DataNode<GradleSourceSetData> sourceSetNode : getChildren(moduleNode, GradleSourceSetData.KEY)) {
+          if (moduleGroup != null) {
+            sourceSetNode.getData().setIdeModuleGroup(moduleGroup);
           }
+          getChildren(sourceSetNode, ProjectKeys.MODULE_DEPENDENCY).forEach(
+            node -> maybeUpdateNonBuildSrcModuleDependencies(includedModulesPaths, node.getData()));
         }
       }
       else {
-        includedModule.setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
+        includedModule.getData().setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
       }
     }
     if (buildSrcModuleNode != null) {
@@ -318,6 +316,31 @@ public final class GradleBuildSrcProjectsResolver {
         });
       }
     }
+  }
+
+  private static void maybeUpdateNonBuildSrcModuleDependencies(@NotNull Map<String, DataNode<ModuleData>> includedModulesPaths,
+                                                               @NotNull ModuleDependencyData moduleDependencyData) {
+    ModuleData target = moduleDependencyData.getTarget();
+    DataNode<ModuleData> moduleDataResolvedForMainBuild = includedModulesPaths.get(target.getLinkedExternalProjectPath());
+    if (moduleDataResolvedForMainBuild != null && target instanceof GradleSourceSetData) {
+      String targetModuleName = target.getModuleName();
+      DataNode<GradleSourceSetData> nonBuildSrcModule = find(moduleDataResolvedForMainBuild, GradleSourceSetData.KEY,
+                                                 node -> targetModuleName.equals(node.getData().getModuleName()));
+      if (nonBuildSrcModule != null) {
+        moduleDependencyData.setTarget(nonBuildSrcModule.getData());
+      }
+    }
+  }
+
+  private static String @Nullable [] getModuleGroup(@NotNull DataNode<ProjectData> resultProjectDataNode,
+                                                    @Nullable String buildName,
+                                                    @NotNull DefaultProjectResolverContext buildSrcResolverCtx,
+                                                    ModuleData moduleData) {
+    if (!buildSrcResolverCtx.isUseQualifiedModuleNames() && moduleData.getIdeModuleGroup() != null) {
+      String buildNamePrefix = isNotEmpty(buildName) ? buildName : resultProjectDataNode.getData().getInternalName();
+      return ArrayUtil.prepend(buildNamePrefix, moduleData.getIdeModuleGroup());
+    }
+    return null;
   }
 
   private static void addSourcePaths(Set<String> paths, DataNode<? extends ModuleData> moduleNode) {

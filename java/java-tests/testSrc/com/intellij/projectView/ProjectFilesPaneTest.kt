@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView
 
+import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.NodeOptions
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
@@ -13,6 +15,12 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
   override fun setUp() {
     super.setUp()
     selectProjectFilesPane()
+  }
+
+  private fun allowed(any: Any?): Boolean {
+    val node = any as? ProjectViewNode<*> ?: return true
+    val file = node.virtualFile ?: return true
+    return ProjectFileIndex.getInstance(project).isInContent(file)
   }
 
   fun `test default settings`() {
@@ -183,5 +191,37 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Scope view
     state.showLibraryContents = !defaultShowLibraryContents
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Scope view
+  }
+
+  fun `test node collapse on sibling add`() {
+    with(ProjectViewState.getInstance(project)) {
+      showExcludedFiles = false
+      showModules = false
+    }
+    val test = createTreeTest().setFilter { allowed(it.lastPathComponent) }
+    val temp = getOrCreateModuleDir(module)
+    val root = createChildDirectory(temp, "module")
+    PsiTestUtil.addSourceRoot(module, root)
+
+    val parent = createChildDirectory(root, "parent")
+    val folder = createChildDirectory(parent, "folder")
+
+    selectFile(folder)
+    test.assertStructure("  -module\n" +
+                         "   -parent\n" +
+                         "    folder\n")
+
+    selectFile(createChildDirectory(folder, "child"))
+    test.assertStructure("  -module\n" +
+                         "   -parent\n" +
+                         "    -folder\n" +
+                         "     child\n")
+
+    selectFile(createChildDirectory(parent, "sibling"))
+    test.assertStructure("  -module\n" +
+                         "   -parent\n" +
+                         "    -folder\n" +
+                         "     child\n" +
+                         "    sibling\n")
   }
 }

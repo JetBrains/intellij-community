@@ -28,6 +28,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -297,6 +298,7 @@ public class DataManagerImpl extends DataManager {
    * @deprecated use {@link DataManager#getDataContext(Component)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into

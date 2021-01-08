@@ -235,7 +235,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
 
   @NotNull
   private static String toStringListLiteral(@NotNull List<String> strings, @NotNull String separator) {
-    final List<String> quotedStrings = ContainerUtil.map(strings, s -> toStringLiteral(s));
+    final List<String> quotedStrings = ContainerUtil.map(strings, s -> StringUtil.escapeChar(toStringLiteral(s), '$'));
     return StringUtil.join(quotedStrings, separator);
   }
 

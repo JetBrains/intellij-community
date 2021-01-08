@@ -9,7 +9,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -18,10 +17,6 @@ public class BuildViewManager extends AbstractViewManager {
 
   public BuildViewManager(Project project) {
     super(project);
-    @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
-    if (buildViewProblemsService != null) {
-      buildViewProblemsService.listenToBuildView(this);
-    }
   }
 
   @NotNull

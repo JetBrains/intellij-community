@@ -3,6 +3,7 @@ package org.jetbrains.plugins.emojipicker.ui;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,11 +29,12 @@ import java.util.List;
 import java.util.Objects;
 
 class EmojiListPanel extends JBScrollPane {
-  private static final Image NO_EMOJI_FOUND_IMAGE = ImageLoader.scaleImage(Objects.requireNonNull(
-    ImageLoader.loadFromStream(EmojiListPanel.class.getResourceAsStream("/icons/NoEmojiFound.png"))), 40);
+  private static final Image NO_EMOJI_FOUND_IMAGE =
+    ImageLoader.loadFromStream(EmojiListPanel.class.getResourceAsStream("/icons/NoEmojiFound.png"));
+  private static final int HORIZONTAL_PADDING = 8;
   private final Dimension myCellSize = new Dimension(JBUIScale.scale(40), JBUIScale.scale(40));
   private final Dimension myCellGaps = new Dimension(JBUIScale.scale(3), JBUIScale.scale(3));
-  private final int myHorizontalPadding = JBUIScale.scale(8);
+  private final Image myNoEmojiFoundImage = ImageLoader.scaleImage(Objects.requireNonNull(NO_EMOJI_FOUND_IMAGE), JBUIScale.scale(40));
 
   private final EmojiPicker myEmojiPicker;
   private final EmojiPickerStyle myStyle;
@@ -54,7 +56,7 @@ class EmojiListPanel extends JBScrollPane {
     addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        myItemsPerRow = (getWidth() - myHorizontalPadding * 2 + myCellGaps.width) / (myCellSize.width + myCellGaps.width);
+        myItemsPerRow = (getWidth() - JBUIScale.scale(HORIZONTAL_PADDING) * 2 + myCellGaps.width) / (myCellSize.width + myCellGaps.width);
         myCurrentPanel.updateLayout(getWidth());
         setViewportView(myCurrentPanel);
       }
@@ -154,9 +156,9 @@ class EmojiListPanel extends JBScrollPane {
     int overscrollDown = Math.max(overscroll, 0);
     myCurrentItemCategory.scrollRectToVisible(new Rectangle(
       myCurrentItemCategory.xGridToVisible(x),
-      myCurrentItemCategory.yGridToVisible(y) - Category.LABEL_HEIGHT - overscrollUp,
+      myCurrentItemCategory.yGridToVisible(y) - JBUIScale.scale(Category.LABEL_HEIGHT) - overscrollUp,
       myCellSize.width,
-      myCellSize.height + Category.LABEL_HEIGHT + overscrollUp + overscrollDown
+      myCellSize.height + JBUIScale.scale(Category.LABEL_HEIGHT) + overscrollUp + overscrollDown
     ));
   }
 
@@ -189,7 +191,7 @@ class EmojiListPanel extends JBScrollPane {
     private CategoriesListPanel(List<Category> categories) {
       myCategories = categories;
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-      add(Box.createRigidArea(new Dimension(0, 15)));
+      add(Box.createRigidArea(new Dimension(0, JBUIScale.scale(15))));
       for (Category c : categories) add(c);
     }
 
@@ -218,7 +220,7 @@ class EmojiListPanel extends JBScrollPane {
     private Category(EmojiCategory category) {
       myCategory = category;
       myName = EmojiCategoriesBundle.findNameForCategory(category);
-      myPadding = JBUI.insets(myName == null ? NO_LABEL_PADDING : LABEL_HEIGHT, myHorizontalPadding, 8, myHorizontalPadding);
+      myPadding = JBUI.insets(myName == null ? NO_LABEL_PADDING : LABEL_HEIGHT, HORIZONTAL_PADDING, 8, HORIZONTAL_PADDING);
       MouseAdapter mouseAdapter = new MouseAdapter() {
         private int getItemIndexUnderCursor(Point point) {
           if (point.x < myPadding.left || point.y < myPadding.top) return -1;
@@ -304,19 +306,19 @@ class EmojiListPanel extends JBScrollPane {
 
     private void paintNoEmojiFound(Graphics g) {
       if (g instanceof Graphics2D) {
-        int x = (getWidth() - NO_EMOJI_FOUND_IMAGE.getWidth(this)) / 2;
-        int y = (getHeight() - NO_EMOJI_FOUND_IMAGE.getHeight(this)) / 2;
+        int x = (getWidth() - myNoEmojiFoundImage.getWidth(this)) / 2;
+        int y = (getHeight() - myNoEmojiFoundImage.getHeight(this)) / 2;
         Graphics2D g2 = (Graphics2D)g;
         final Composite saveComposite = g2.getComposite();
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5F));
-        StartupUiUtil.drawImage(g, NO_EMOJI_FOUND_IMAGE, x, y, null);
+        StartupUiUtil.drawImage(g, myNoEmojiFoundImage, x, y, null);
         g2.setComposite(saveComposite);
       }
       g.setColor(myStyle.myNoEmojiFoundTextColor);
       g.setFont(myStyle.myFont);
       @Nls String message = EmojipickerBundle.message("message.EmojiPicker.NoEmojiFound");
       int x = (getWidth() - g.getFontMetrics().stringWidth(message)) / 2;
-      int y = (getHeight() + NO_EMOJI_FOUND_IMAGE.getHeight(this)) / 2 + 25;
+      int y = (getHeight() + myNoEmojiFoundImage.getHeight(this)) / 2 + JBUIScale.scale(25);
       g.drawString(message, x, y);
     }
 
@@ -325,7 +327,7 @@ class EmojiListPanel extends JBScrollPane {
         int x = xGridToVisible(myCurrentItemIndex % myItemsPerRow);
         int y = yGridToVisible(myCurrentItemIndex / myItemsPerRow);
         g.setColor(myStyle.myHoverBackgroundColor);
-        g.fillRoundRect(x, y, myCellSize.width, myCellSize.height, 6, 6);
+        RectanglePainter2D.FILL.paint((Graphics2D)g, x, y, myCellSize.width, myCellSize.height, 6.0);
       }
     }
 
@@ -348,12 +350,12 @@ class EmojiListPanel extends JBScrollPane {
     }
 
     private void paintCategoryLabel(Graphics g) {
-      int offset = Math.min(g.getClipBounds().y, getHeight() - LABEL_HEIGHT);
+      int offset = Math.min(g.getClipBounds().y, getHeight() - JBUIScale.scale(LABEL_HEIGHT));
       g.setColor(myStyle.myBackgroundColor);
-      g.fillRect(0, offset, getWidth(), LABEL_HEIGHT);
+      RectanglePainter2D.FILL.paint((Graphics2D)g, 0, offset, getWidth(), JBUIScale.scale(LABEL_HEIGHT));
       g.setFont(myStyle.myFont);
       g.setColor(myStyle.myTextColor);
-      g.drawString(myName, 16, offset + 20);
+      g.drawString(myName, JBUIScale.scale(16), offset + JBUIScale.scale(20));
     }
   }
 }

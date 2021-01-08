@@ -15,12 +15,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
-import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
-import com.intellij.openapi.projectRoots.impl.UnknownSdkTrackerQueue
+import com.intellij.openapi.projectRoots.impl.*
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
@@ -28,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.VersionComparatorUtil
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -61,6 +60,9 @@ internal class JdkUpdaterStartup : StartupActivity.Background {
 }
 
 private val LOG = logger<JdkUpdatesCollector>()
+
+@Service // project
+private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue(7_000)
 
 @Service
 internal class JdkUpdatesCollector(
@@ -96,11 +98,20 @@ internal class JdkUpdatesCollector(
     )
     Disposer.register(this, Disposable { future.cancel(false) })
 
+    val myLastKnownModificationId = AtomicLong(-100_500)
+
     project.messageBus
       .connect(this)
       .subscribe(
         ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
+          if (event.isCausedByFileTypesChange) return
+
+          //an optimization - we do not scan for JDKs if there we no ProjectRootManager modifications change
+          //this avoids VirtualFilePointers invalidation
+          val newCounterValue = ProjectRootManager.getInstance(project).modificationCount
+          if (myLastKnownModificationId.getAndSet(newCounterValue) == newCounterValue) return
+
           updateNotifications()
         }
       })
@@ -109,7 +120,7 @@ internal class JdkUpdatesCollector(
   fun updateNotifications() {
     if (!isEnabled()) return
 
-    UnknownSdkTrackerQueue.getInstance(project).queue { updateNotificationsDebounced() }
+    project.service<JdkUpdatesCollectorQueue>().queue { updateNotificationsDebounced() }
   }
 
   private fun updateNotificationsDebounced() {
@@ -147,7 +158,6 @@ internal class JdkUpdatesCollector(
       JdkListDownloader
         .getInstance()
         .downloadModelForJdkInstaller(progress = indicator)
-        .associateBy { it.suggestedSdkName }
     }
 
     val notifications = service<JdkUpdaterNotifications>()
@@ -157,7 +167,9 @@ internal class JdkUpdatesCollector(
 
     for (jdk in jdksToTest) {
       val actualItem = JdkInstaller.getInstance().findJdkItemForInstalledJdk(jdk.homePath) ?: continue
-      val feedItem = jdkFeed[actualItem.suggestedSdkName] ?: continue
+      val feedItem = jdkFeed.firstOrNull {
+        it.suggestedSdkName == actualItem.suggestedSdkName && it.arch == actualItem.arch
+      } ?: continue
 
       if (!service<JdkUpdaterState>().isAllowed(jdk, feedItem)) continue
 

@@ -10,7 +10,20 @@ import javax.swing.Icon
 object LearningUiManager {
   var learnProject: Project? by WeakReferenceDelegator()
 
-  var activeToolWindow: LearnToolWindow? by WeakReferenceDelegator()
+  private var activeToolWindowWeakRef: LearnToolWindow? by WeakReferenceDelegator()
+
+  var activeToolWindow: LearnToolWindow?
+    get() {
+      val res = activeToolWindowWeakRef
+      if (res != null && res.project.isDisposed) {
+        activeToolWindowWeakRef = null
+        return null
+      }
+      return res
+    }
+    set(value) {
+      activeToolWindowWeakRef = value
+    }
 
   val iconMap = BidirectionalMap<String, Icon>()
 

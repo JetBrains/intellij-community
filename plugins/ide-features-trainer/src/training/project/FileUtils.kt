@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.project
 
+import com.intellij.UtilBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import org.apache.commons.lang.StringUtils
@@ -13,7 +14,8 @@ object FileUtils {
 
   @Throws(IOException::class)
   fun copyJarResourcesRecursively(destDir: File,
-                                  jarConnection: JarURLConnection): Boolean {
+                                  jarConnection: JarURLConnection,
+                                  destinationFilter: FileFilter? = null): Boolean {
     val jarFile = jarConnection.jarFile
 
     val entries = jarFile.entries()
@@ -23,6 +25,9 @@ object FileUtils {
         val filename = StringUtils.removeStart(entry.name, jarConnection.entryName)
 
         val f = File(destDir, filename)
+
+        if (destinationFilter != null && !destinationFilter.accept(f)) continue
+
         if (!entry.isDirectory) {
           val entryInputStream = jarFile.getInputStream(entry)
           if (!copyStream(entryInputStream, f)) {
@@ -40,19 +45,41 @@ object FileUtils {
     return true
   }
 
-  fun copyResourcesRecursively(originUrl: URL, destination: File): Boolean {
+  fun copyResourcesRecursively(originUrl: URL, destination: File, destinationFilter: FileFilter? = null): Boolean {
     try {
       val urlConnection = originUrl.openConnection()
       if (urlConnection is JarURLConnection)
-        copyJarResourcesRecursively(destination, urlConnection)
+        copyJarResourcesRecursively(destination, urlConnection, destinationFilter)
       else
-        FileUtil.copyDirContent(File(originUrl.path), destination)
+        copyDirWithDestFilter(File(originUrl.path), destination, destinationFilter)
       return true
     }
     catch (e: IOException) {
       LOG.error(e)
     }
     return false
+  }
+
+  // Copied from FileUtil#copyDir but with filter for destination instead of source
+  private fun copyDirWithDestFilter(fromDir: File, toDir: File, destinationFilter: FileFilter?) {
+    FileUtil.ensureExists(toDir)
+    if (FileUtil.isAncestor(fromDir, toDir, true)) {
+      LOG.error(fromDir.absolutePath + " is ancestor of " + toDir + ". Can't copy to itself.")
+      return
+    }
+    val files = fromDir.listFiles() ?: throw IOException(UtilBundle.message("exception.directory.is.invalid", fromDir.path))
+    if (!fromDir.canRead()) throw IOException(UtilBundle.message("exception.directory.is.not.readable", fromDir.path))
+    for (file in files) {
+      val destinationFile = File(toDir, file.name)
+      if (file.isDirectory) {
+        copyDirWithDestFilter(file, destinationFile, destinationFilter)
+      }
+      else {
+        if (destinationFilter == null || destinationFilter.accept(destinationFile)) {
+          FileUtil.copy(file, destinationFile)
+        }
+      }
+    }
   }
 
   private fun copyStream(inputStream: InputStream, f: File): Boolean {

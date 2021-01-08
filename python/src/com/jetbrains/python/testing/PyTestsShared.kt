@@ -1,15 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.Location
-import com.intellij.execution.PsiLocation
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -20,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -36,10 +34,6 @@ import com.intellij.remote.PathMappingProvider
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.*
-import com.jetbrains.extensions.ModuleBasedContextAnchor
-import com.jetbrains.extensions.QNameResolveContext
-import com.jetbrains.extensions.getElementAndResolvableName
-import com.jetbrains.extensions.resolveToElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFile
@@ -421,7 +415,13 @@ abstract class PyAbstractTestConfiguration(project: Project,
                                            configurationFactory: ConfigurationFactory,
                                            private val runnerName: String)
   : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
-    RefactoringListenerProvider {
+    RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
+
+  override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties =
+    PythonTRunnerConsoleProperties(this, executor, true, PyTestsLocator).also {properties ->
+      if (isIdTestBased) properties.makeIdTestBased()
+    }
+
 
   /**
    * Args after it passed to test runner itself

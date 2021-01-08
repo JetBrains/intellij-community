@@ -15,6 +15,8 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -25,7 +27,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.run.PythonScriptExecution;
+import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +131,14 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
     @NotNull
     @Override
-    protected List<String> getTestSpecs() {
+    protected final List<String> getTestSpecs() {
+       // Method could be called on any thread (as any method of this class), and we need read action
+      return ReadAction.compute(() -> getTestSpecImpl());
+    }
+
+    @NotNull
+    private List<String> getTestSpecImpl() {
+      assert ApplicationManager.getApplication().isReadAccessAllowed();
       final List<Pair<Location<?>, AbstractTestProxy>> failedTestLocations = new ArrayList<>();
       final List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (final AbstractTestProxy failedTest : failedTests) {

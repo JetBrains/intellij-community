@@ -7,6 +7,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -15,6 +16,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,6 +46,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -294,7 +297,16 @@ public final class DeleteHandler {
     LocalFilesDeleteTask task = new LocalFilesDeleteTask(project, fileElements);
     ProgressManager.getInstance().run(task);
     if (task.error != null) {
-      Messages.showMessageDialog(project, task.error.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      String file = task.error instanceof FileSystemException ? ((FileSystemException)task.error).getFile() : null;
+      if (file != null) {
+        String message = IoErrorText.message(task.error), yes = RevealFileAction.getActionName(), no = CommonBundle.getCloseButtonText();
+        if (Messages.showYesNoDialog(project, message, CommonBundle.getErrorTitle(), yes, no, Messages.getErrorIcon()) == Messages.YES) {
+          RevealFileAction.openFile(Paths.get(file));
+        }
+      }
+      else {
+        Messages.showMessageDialog(project, IoErrorText.message(task.error), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      }
     }
     if (task.aborted != null) {
       VfsUtil.markDirtyAndRefresh(true, true, false, task.aborted);
@@ -347,9 +359,10 @@ public final class DeleteHandler {
 
   private static class LocalFilesDeleteTask extends Task.Modal {
     private final PsiElement[] myFileElements;
+
     List<PsiElement> processed = new ArrayList<>();
     VirtualFile aborted = null;
-    IOException error = null;
+    Throwable error = null;
 
     LocalFilesDeleteTask(Project project, PsiElement[] fileElements) {
       super(project, IdeBundle.message("progress.deleting"), true);
@@ -366,7 +379,7 @@ public final class DeleteHandler {
 
           VirtualFile file = ((PsiFileSystemItem)e).getVirtualFile();
           aborted = file;
-          Path path = Paths.get(file.getPath());
+          Path path = file.toNioPath();
           indicator.setText(path.toString());
 
           Files.walkFileTree(path, new SimpleFileVisitor<>() {
@@ -400,8 +413,9 @@ public final class DeleteHandler {
           }
         }
       }
-      catch (IOException e) {
-        error = e;
+      catch (Throwable t) {
+        Logger.getInstance(getClass()).info(t);
+        error = t;
       }
     }
   }

@@ -39,12 +39,30 @@ public interface SMTRunnerEventsListener {
   void onTestsCountInSuite(int count);
 
   void onTestStarted(@NotNull SMTestProxy test);
+  default void onTestStarted(@NotNull SMTestProxy test, @Nullable String nodeId, @Nullable String parentNodeId) {
+    onTestStarted(test);
+  }
   void onTestFinished(@NotNull SMTestProxy test);
+  default void onTestFinished(@NotNull SMTestProxy test, @Nullable String nodeId) {
+    onTestFinished(test);
+  }
   void onTestFailed(@NotNull SMTestProxy test);
+  default void onTestFailed(@NotNull SMTestProxy test, @Nullable String nodeId) {
+    onTestFailed(test);
+  }
   void onTestIgnored(@NotNull SMTestProxy test);
+  default void onTestIgnored(@NotNull SMTestProxy test, @Nullable String nodeId) {
+    onTestIgnored(test);
+  }
 
   void onSuiteFinished(@NotNull SMTestProxy suite);
+  default void onSuiteFinished(@NotNull SMTestProxy suite, @Nullable String nodeId) {
+    onSuiteFinished(suite);
+  }
   void onSuiteStarted(@NotNull SMTestProxy suite);
+  default void onSuiteStarted(@NotNull SMTestProxy suite, @Nullable String nodeId, @Nullable String parentNodeId) {
+    onSuiteStarted(suite);
+  } 
 
   // Custom progress statistics
 
@@ -59,7 +77,13 @@ public interface SMTRunnerEventsListener {
   void onCustomProgressTestFinished();
 
   void onSuiteTreeNodeAdded(SMTestProxy testProxy);
+  default void onSuiteTreeNodeAdded(SMTestProxy testProxy, @Nullable String nodeId, @Nullable String parentNodeId) {
+    onSuiteTreeNodeAdded(testProxy);
+  }
   void onSuiteTreeStarted(SMTestProxy suite);
+  default void onSuiteTreeStarted(SMTestProxy suite, @Nullable String nodeId, @Nullable String parentNodeId) {
+    onSuiteTreeStarted(suite);
+  }
   default void onRootPresentationAdded(@NotNull SMTestProxy.SMRootTestProxy testsRoot, String rootName, String comment, String rootLocation) {}
 
   default void onTestOutput(@NotNull SMTestProxy proxy, @NotNull TestOutputEvent event) {}

@@ -19,6 +19,7 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
@@ -346,20 +347,73 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
     });
   }
 
-  private <T extends PsiElement> void assertResolvesInsideProjectTo(@NotNull Class<T> cls) {
-    PsiManager psiManager = myFixture.getPsiManager();
-    assertTrue(psiManager.isInProject(assertResolvesToElementOfClass(cls)));
+  // PY-45776
+  public void testPlainDirectoryImportResolveSameDirectoryModuleNotThrowsException() {
+    myTestFileName = "not-valid-identifier/script.py";
+    assertResolvesInsideProjectTo(PyFile.class);
   }
 
-  private <T extends PsiElement> void assertResolvesOutsideProjectTo(@NotNull Class<T> cls) {
+  // PY-45776
+  public void testPlainDirectoryImportResolveExcludedDirectoryModuleNotThrowsException() {
+    myTestFileName = PLAIN_DIR + "/script.py";
+    PsiFile currentFile = prepareFile();
+    PsiTestUtil.addExcludedRoot(myFixture.getModule(), myFixture.findFileInTempDir("excluded"));
+    PsiElement element = doResolve(currentFile);
+    assertInstanceOf(element, PyFile.class);
+    assertEquals(myFixture.findFileInTempDir(PLAIN_DIR + "/excluded.py"), ((PyFile)element).getVirtualFile());
+  }
+
+  // PY-45776
+  public void testOrdinaryPackageInvalidNameImportPrioritizeModuleInRootOverSameDirectoryModule() {
+    myTestFileName = "ordinary package/main.py";
+    PsiFile file = assertResolvesInsideProjectTo(PyFile.class);
+    assertEquals(myFixture.findFileInTempDir("mod.py"), file.getVirtualFile());
+  }
+
+  // PY-45776
+  public void testPlainDirectoryInvalidNameImportPrioritizeSameDirectoryModuleOverModuleInRoot() {
+    myTestFileName = "plain directory/main.py";
+    PsiFile file = assertResolvesInsideProjectTo(PyFile.class);
+    assertEquals(myFixture.findFileInTempDir("plain directory/mod.py"), file.getVirtualFile());
+  }
+
+  // PY-45776
+  public void testOrdinaryPackageImportPrioritizeExcludedDirectoryInRootOverSameDirectoryModule() {
+    myTestFileName = ORDINARY_PACK_DIR + "/script.py";
+    PsiFile currentFile = prepareFile();
+    PsiTestUtil.addExcludedRoot(myFixture.getModule(), myFixture.findFileInTempDir("excluded"));
+    PsiElement element = doResolve(currentFile);
+    assertInstanceOf(element, PsiDirectory.class);
+    assertEquals(myFixture.findFileInTempDir("excluded"), ((PsiDirectory)element).getVirtualFile());
+  }
+
+  // PY-45776
+  public void testOrdinaryPackageImportPrioritizeModuleInRootOverSameDirectoryExcludedDirectory() {
+    myTestFileName = ORDINARY_PACK_DIR + "/script.py";
+    PsiFile currentFile = prepareFile();
+    PsiTestUtil.addExcludedRoot(myFixture.getModule(), myFixture.findFileInTempDir(ORDINARY_PACK_DIR + "/excluded"));
+    PsiElement element = doResolve(currentFile);
+    assertInstanceOf(element, PyFile.class);
+    assertEquals(myFixture.findFileInTempDir("excluded.py"), ((PyFile)element).getVirtualFile());
+  }
+
+  private <T extends PsiElement> T assertResolvesInsideProjectTo(@NotNull Class<T> cls) {
     PsiManager psiManager = myFixture.getPsiManager();
-    assertFalse(psiManager.isInProject(assertResolvesToElementOfClass(cls)));
+    T resolved = assertResolvesToElementOfClass(cls);
+    assertTrue(psiManager.isInProject(resolved));
+    return resolved;
+  }
+
+  private <T extends PsiElement> T assertResolvesOutsideProjectTo(@NotNull Class<T> cls) {
+    PsiManager psiManager = myFixture.getPsiManager();
+    T resolved = assertResolvesToElementOfClass(cls);
+    assertFalse(psiManager.isInProject(resolved));
+    return resolved;
   }
 
   private <T extends PsiElement> @NotNull T assertResolvesToElementOfClass(@NotNull Class<T> cls) {
     PsiElement resolved = doResolve();
-    assertInstanceOf(resolved, cls);
-    return (T) resolved;
+    return assertInstanceOf(resolved, cls);
   }
 
   private void toggleNamespacePackageDirectory(@NotNull String directory) {

@@ -26,7 +26,6 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
-import kotlin.collections.ArrayList
 
 @NonNls internal const val PROJECT_FILE = "\$PROJECT_FILE$"
 @NonNls internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
@@ -138,7 +137,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
 
     val presentableUrl = (if (dotIdea == null) file else projectBasePath)
-    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, presentableUrl.fileName.toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
+    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, (presentableUrl.fileName ?: "").toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
     macros.add(Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve(cacheFileName)))
 
     storageManager.setMacros(macros)

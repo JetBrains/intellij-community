@@ -1232,9 +1232,9 @@ Android Studio: This attempts to read a non-existent file. */
         }
       }
       text = text.replaceFirst(
-              "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
+              "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"", //we leave element unclosed to allow other attributes
               !toPublish ? "" :
-              "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\" $eapAttribute />")
+              "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\" $eapAttribute ")
       buildContext.messages.info("        ${toPublish ? "Patching" : "Skipping"} ${pluginXmlFile.parentFile.parentFile.name} <product-descriptor/>")
     }
 

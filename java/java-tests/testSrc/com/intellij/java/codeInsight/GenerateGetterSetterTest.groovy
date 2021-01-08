@@ -1,19 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight
 
-import com.intellij.codeInsight.generation.ClassMember
-import com.intellij.codeInsight.generation.GenerateGetterHandler
-import com.intellij.codeInsight.generation.GenerateSetterHandler
-import com.intellij.codeInsight.generation.SetterTemplatesManager
+import com.intellij.codeInsight.generation.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.psi.impl.light.LightFieldBuilder
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.NotNullFunction
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.Nullable
+import org.jetbrains.annotations.Nullable 
 /**
  * @author peter
  */
@@ -184,6 +190,54 @@ class Foo {
     @NotNull
     public String getMyName() {
         return myName;
+    }
+}
+'''
+  }
+
+  void "test lombok generated fields without containing file"() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), GenerateAccessorProviderRegistrar.EP_NAME, new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
+      @Override
+      Collection<EncapsulatableClassMember> fun(PsiClass dom) {
+        final List<EncapsulatableClassMember> result = new ArrayList<>();
+        def builder = new LightFieldBuilder(PsiManager.getInstance(project), "lombokGenerated", PsiType.INT)
+        builder.setContainingClass(dom)
+        result.add(new PsiFieldMember(builder))
+        return result
+      }
+    }, getTestRootDisposable())
+    myFixture.configureByText 'a.java', '''
+class A {   
+    private String myName;
+
+    <caret>
+}
+'''
+    new GenerateGetterHandler() {
+      
+      @Override
+      protected ClassMember[] chooseMembers(
+        ClassMember[] members,
+        boolean allowEmptySelection,
+        boolean copyJavadocCheckbox,
+        Project project,
+        @Nullable Editor editor) {
+        def chooser = super.createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project)
+        Disposer.register(getTestRootDisposable(), { chooser.close(DialogWrapper.OK_EXIT_CODE)} )
+        return members
+      }
+    }.invoke(project, myFixture.editor, myFixture.file)
+    UIUtil.dispatchAllInvocationEvents()
+    myFixture.checkResult '''
+class A {   
+    private String myName;
+
+    public String getMyName() {
+        return myName;
+    }
+
+    public int getLombokGenerated() {
+        return lombokGenerated;
     }
 }
 '''

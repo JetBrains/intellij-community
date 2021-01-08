@@ -2,6 +2,7 @@
 package training.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.Language
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import training.lang.LangManager
@@ -24,11 +26,14 @@ import training.learn.lesson.LessonManager
 import training.learn.lesson.LessonStateManager
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
+import java.awt.BorderLayout
 import java.awt.Desktop
 import java.net.URI
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import javax.swing.Icon
+import javax.swing.BoxLayout
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 fun createNamedSingleThreadExecutor(name: String): ExecutorService =
   Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())
@@ -59,15 +64,6 @@ const val trainerPluginConfigName: String = "ide-features-trainer.xml"
 val featureTrainerVersion: String by lazy {
   val featureTrainerPluginId = PluginManagerCore.getPluginByClassName(CourseManager::class.java.name)
   PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
-}
-
-fun createAnAction(icon: Icon, action: (AnActionEvent) -> Unit): AnAction {
-  return object : AnAction(icon) {
-    override fun isDumbAware() = true
-    override fun actionPerformed(e: AnActionEvent) {
-      action(e)
-    }
-  }
 }
 
 fun clearTrainingProgress() {
@@ -103,8 +99,11 @@ fun isLearningProject(project: Project, langSupport: LangSupport): Boolean {
   return FileUtil.pathsEqual(project.basePath, LangManager.getInstance().getLearningProjectPath(langSupport))
 }
 
-val useNewLearningUi: Boolean
-  get() = Registry.`is`("ide.features.trainer.new.ui", false)
+fun getFeedbackLink(langSupport: LangSupport, ownRegistry: Boolean): String? {
+  val suffix = langSupport.primaryLanguage.toLowerCase()
+  val needToShow = Registry.`is`("ift.show.feedback.link" + if (ownRegistry) ".$suffix" else "", false)
+  return if (needToShow) "https://surveys.jetbrains.com/s3/features-trainer-feedback-$suffix" else null
+}
 
 val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
@@ -123,6 +122,17 @@ fun openLinkInBrowser(link: String) {
   if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
     desktop.browse(URI(link))
   }
+}
+
+fun LinkLabel<Any>.wrapWithUrlPanel(): JPanel {
+  val jPanel = JPanel()
+  jPanel.isOpaque = false
+  jPanel.layout = BoxLayout(jPanel, BoxLayout.LINE_AXIS)
+  jPanel.add(this, BorderLayout.CENTER)
+  jPanel.add(JLabel(AllIcons.Ide.External_link_arrow), BorderLayout.EAST)
+  jPanel.maximumSize = jPanel.preferredSize
+  jPanel.alignmentX = JPanel.LEFT_ALIGNMENT
+  return jPanel
 }
 
 fun lessonOpenedInProject(project: Project?): Lesson? {

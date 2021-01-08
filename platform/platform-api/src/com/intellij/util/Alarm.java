@@ -308,7 +308,11 @@ public class Alarm implements Disposable {
         future = request.myFuture;
       }
       if (future != null) {
-        future.get(timeout, unit);
+        try {
+          future.get(timeout, unit);
+        }
+        catch (CancellationException ignored) {
+        }
       }
     }
   }

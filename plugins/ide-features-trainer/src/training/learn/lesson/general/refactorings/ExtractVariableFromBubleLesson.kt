@@ -2,12 +2,10 @@
 package training.learn.lesson.general.refactorings
 
 import com.intellij.testGuiFramework.impl.jList
+import com.intellij.ui.components.JBList
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
 class ExtractVariableFromBubbleLesson(module: Module, lang: String, private val sample: LessonSample)
@@ -30,6 +28,7 @@ class ExtractVariableFromBubbleLesson(module: Module, lang: String, private val 
         stateCheck {
           editor.document.text.split("i + 1").size == 2
         }
+        restoreAfterStateBecomeFalse { focusOwner !is JBList<*> }
         test {
           ideFrame {
             val item = "Replace all 3 occurrences"

@@ -198,7 +198,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
     val presentableName = if (isComputePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else ""
     val path = getRelativePath(storage, storageManager)
-    val fileSpec = FileSpec(path, looksLikeDirectory(path))
+    val fileSpec = FileSpec(path, looksLikeDirectory(storage))
     result.putValue(fileSpec, ExportableItem(fileSpec, presentableName, stateAnnotation.name, storage.roamingType))
 
     val additionalExportFile = getAdditionalExportFile(stateAnnotation)
@@ -219,6 +219,10 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     }
   }
   return result
+}
+
+fun looksLikeDirectory(storage: Storage): Boolean {
+  return storage.stateSplitter.java != StateSplitterEx::class.java
 }
 
 private fun looksLikeDirectory(fileSpec: String) = !fileSpec.endsWith(PathManager.DEFAULT_EXT)

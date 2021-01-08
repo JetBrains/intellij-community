@@ -244,7 +244,9 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     return module;
   }
 
-  /** The method is expected to be called on roots obtained from JavaAutoModuleNameIndex/JavaSourceModuleNameIndex */
+  /** @deprecated caching problems; please consider using {@code JavaModuleGraphUtil} methods instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static @Nullable LightJavaModule findModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
     PsiElement directory = manager.findDirectory(root);
     if (directory == null) return null;
@@ -290,6 +292,14 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
       Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
       return null;
     }
+  }
+
+  /**
+   * The method should be called on roots obtained from JavaAutoModuleNameIndex/JavaSourceModuleNameIndex.
+   */
+  @ApiStatus.Internal
+  public static @NotNull LightJavaModule create(@NotNull PsiManager manager, @NotNull VirtualFile root, @NotNull String name) {
+    return new LightJavaModule(manager, root, name);
   }
 
   /**

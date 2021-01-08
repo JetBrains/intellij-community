@@ -404,7 +404,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       // add temporary value to avoid repeated requests for the same expression
       myPrevNameToDescription = Pair.create(text, "");
     }
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
       throw new PyDebuggerException("Documentation in Python Console shouldn't be called from Dispatch Thread!");
     }
 

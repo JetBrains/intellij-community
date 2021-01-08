@@ -4,7 +4,7 @@ buildscript {
     maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
   }
   dependencies {
-    classpath "de.undercouch:gradle-download-task:3.4.2"
+    classpath "de.undercouch:gradle-download-task:4.1.1"
     classpath "gradle.plugin.org.jetbrains.gradle.plugin.idea-ext:gradle-idea-ext:0.9"
   }
 }

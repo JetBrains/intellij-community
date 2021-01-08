@@ -5,6 +5,8 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.paint.RectanglePainter2D;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
 import org.jetbrains.plugins.emojipicker.service.EmojiService;
 
@@ -15,11 +17,11 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class EmojiSkinTonesPanel extends JPanel {
-  private static final int ITEM_SIZE = 34;
   @NlsSafe private static final String ITEM_EMOJI = "🖐";
 
   private final EmojiPickerStyle myStyle;
   private final Map<EmojiSkinTone, Item> myItemMap = new EnumMap<>(EmojiSkinTone.class);
+  private final int myItemSize = JBUIScale.scale(34);
   private EmojiSkinTone myCurrentSkinTone = EmojiService.getInstance().getCurrentSkinTone();
   private int myFocusedItem = -1;
 
@@ -36,9 +38,9 @@ public class EmojiSkinTonesPanel extends JPanel {
   @Override
   protected void paintComponent(Graphics g) {
     g.setColor(myStyle.myBorderColor);
-    g.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
+    RectanglePainter2D.FILL.paint((Graphics2D)g, 0, 0, getWidth(), getHeight(), 6.0);
     g.setColor(myStyle.myBackgroundColor);
-    g.fillRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 6, 6);
+    RectanglePainter2D.FILL.paint((Graphics2D)g, 1, 1, getWidth() - 2, getHeight() - 2, 6.0);
   }
 
   @Override
@@ -46,7 +48,7 @@ public class EmojiSkinTonesPanel extends JPanel {
     super.paint(g);
     if (myFocusedItem != -1) {
       g.setColor(myStyle.myFocusBorderColor);
-      g.drawRoundRect(3, myFocusedItem * ITEM_SIZE + 3, ITEM_SIZE - 4, ITEM_SIZE - 4, 6, 6);
+      RectanglePainter2D.DRAW.paint((Graphics2D)g, 3, myFocusedItem * myItemSize + 3, myItemSize - 4, myItemSize - 4, 6.0);
     }
   }
 
@@ -64,6 +66,7 @@ public class EmojiSkinTonesPanel extends JPanel {
   }
 
   void setCurrentItemFromFocus() {
+    if (myFocusedItem < 0) return;
     Component c = getComponent(myFocusedItem);
     for (Item item : myItemMap.values()) {
       if (item.myButton == c) {
@@ -73,12 +76,12 @@ public class EmojiSkinTonesPanel extends JPanel {
     }
   }
 
-  void open(JComponent textField) {
+  void open(EmojiSearchField searchField) {
     myFocusedItem = -1;
-    Insets i = textField.getInsets();
-    setBounds(textField.getX() + textField.getWidth() - i.right - ITEM_SIZE - 1 - 6,
-              textField.getY() + textField.getHeight() / 2 - ITEM_SIZE / 2 - 1,
-              ITEM_SIZE + 2, ITEM_SIZE * myItemMap.size() + 2);
+    Point center = searchField.getSkinToneIconCenter();
+    setBounds(searchField.getX() + center.x - myItemSize / 2 - 1,
+              searchField.getY() + center.y - myItemSize / 2 - 1,
+              myItemSize + 2, myItemSize * myItemMap.size() + 2);
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = 0;
     removeAll();
@@ -121,7 +124,7 @@ public class EmojiSkinTonesPanel extends JPanel {
         ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
         if (myHover) {
           g.setColor(myStyle.myHoverBackgroundColor);
-          g.fillRoundRect(x, y, getIconWidth(), getIconHeight(), 6, 6);
+          RectanglePainter2D.FILL.paint((Graphics2D)g, x, y, getIconWidth(), getIconHeight(), 6.0);
         }
 
         @NlsSafe String emoji = ITEM_EMOJI + myTone.getStringValue();
@@ -134,12 +137,12 @@ public class EmojiSkinTonesPanel extends JPanel {
 
       @Override
       public int getIconWidth() {
-        return ITEM_SIZE;
+        return myItemSize;
       }
 
       @Override
       public int getIconHeight() {
-        return ITEM_SIZE;
+        return myItemSize;
       }
     }
   }

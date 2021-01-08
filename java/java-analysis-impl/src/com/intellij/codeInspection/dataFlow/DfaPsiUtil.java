@@ -29,6 +29,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +107,7 @@ public final class DfaPsiUtil {
   private static Nullability getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
-    if (info == null) {
+    if (info == null || shouldIgnoreAnnotation(info.getAnnotation())) {
       return Nullability.UNKNOWN;
     }
     if (ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
@@ -184,7 +185,7 @@ public final class DfaPsiUtil {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
-      if (nnn.getNullables().contains(qualifiedName)) {
+      if (nnn.getNullables().contains(qualifiedName) && !shouldIgnoreAnnotation(annotation)) {
         return new NullabilityAnnotationInfo(annotation, Nullability.NULLABLE, false);
       }
       if (nnn.getNotNulls().contains(qualifiedName)) {
@@ -198,6 +199,15 @@ public final class DfaPsiUtil {
       }
     }
     return null;
+  }
+
+  private static boolean shouldIgnoreAnnotation(PsiAnnotation annotation) {
+    PsiClass containingClass = ClassUtils.getContainingClass(annotation);
+    if (containingClass == null) return false;
+    String qualifiedName = containingClass.getQualifiedName();
+    // We deliberately ignore nullability annotations on Guava functional interfaces to avoid noise warnings
+    // See IDEA-170548 for details
+    return "com.google.common.base.Predicate".equals(qualifiedName) || "com.google.common.base.Function".equals(qualifiedName);
   }
 
   /**

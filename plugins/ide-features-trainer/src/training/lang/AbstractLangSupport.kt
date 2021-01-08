@@ -4,17 +4,20 @@ package training.lang
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vfs.LocalFileSystem
 import training.learn.exceptons.NoSdkException
+import training.project.FileUtils
 import training.project.ProjectUtils
+import training.project.ReadMeCreator
 import java.io.File
+import java.io.FileFilter
+import java.io.PrintWriter
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
 abstract class AbstractLangSupport : LangSupport {
@@ -28,17 +31,31 @@ abstract class AbstractLangSupport : LangSupport {
   override fun installAndOpenLearningProject(projectPath: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
-    val copied = ProjectUtils.copyLearningProjectFiles(projectPath, this)
-    if (!copied) return
-    ProjectUtils.createVersionFile(projectPath)
-    val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectPath)
-                                      ?: error("Copied Learn project folder is null")
-    invokeLater {
-      val project = ProjectUtil.openOrImport(projectDirectoryVirtualFile.toNioPath(), OpenProjectTask(projectToClose = projectToClose))
-                    ?: error("Could not create project for $primaryLanguage")
-      postInitCallback(project)
+    ProjectUtils.simpleInstallAndOpenLearningProject(projectPath, this,
+                                                     OpenProjectTask(projectToClose = projectToClose),
+                                                     postInitCallback)
+  }
+
+  override fun copyLearningProjectFiles(projectDirectory: File, destinationFilter: FileFilter?): Boolean {
+    val inputUrl = ProjectUtils.learningProjectUrl(this)
+    return FileUtils.copyResourcesRecursively(inputUrl, projectDirectory, destinationFilter).also {
+      if (it) copyGeneratedFiles(projectDirectory, destinationFilter)
     }
   }
+
+  private fun copyGeneratedFiles(projectDirectory: File, destinationFilter: FileFilter?) {
+    val generator = readMeCreator
+    if (generator != null) {
+      val readme = File(projectDirectory, "README.md")
+      if (destinationFilter == null || destinationFilter.accept(readme)) {
+        PrintWriter(readme, StandardCharsets.UTF_8).use {
+          it.print(generator.createReadmeMdText())
+        }
+      }
+    }
+  }
+
+  open val readMeCreator: ReadMeCreator? = null
 
   override fun getSdkForProject(project: Project): Sdk? {
     try {
@@ -71,6 +88,10 @@ abstract class AbstractLangSupport : LangSupport {
         rootManager.projectSdk = sdk
       }
     }, null, null)
+  }
+
+  override fun cleanupBeforeLessons(project: Project) {
+    ProjectUtils.restoreProject(this, project)
   }
 
   override fun toString(): String = primaryLanguage

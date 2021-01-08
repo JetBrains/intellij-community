@@ -17,8 +17,8 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.testRunner" />
-    <orderEntry type="module" module-name="intellij.platform.smRunner" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" exported="" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
@@ -39,14 +39,12 @@
     <orderEntry type="module" module-name="intellij.python.sdk" exported="" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.1.3" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.1.3/completion-ranking-python-0.1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.2/completion-ranking-python-0.2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.1.3/completion-ranking-python-0.1.3-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="library" name="StreamEx" level="project" />

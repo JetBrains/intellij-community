@@ -52,16 +52,17 @@ class JavaBasicCompletionLesson(module: Module)
       }
     }
     caret(19, 36)
-    actionTask("CodeCompletion") {
+    task("CodeCompletion") {
+      text(JavaLessonsBundle.message("java.basic.completion.activate", action(it)))
+      triggerByListItemAndHighlight(false, false) { item -> item.toString() == "i" }
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.basic.completion.activate", action(it))
     }
     task("EditorChooseLookupItem") {
       text(JavaLessonsBundle.message("java.basic.completion.choose.item", code("i"), action(it)))
       trigger(it) {
         editor.document.charsSequence.contains("Random(i)")
       }
-      restoreIfModifiedOrMoved()
+      restoreByUi()
     }
     actionTask("EditorCompleteStatement") {
       restoreIfModifiedOrMoved()

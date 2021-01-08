@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
@@ -40,6 +41,9 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlExtension;
@@ -51,12 +55,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public final class XmlTagNameSynchronizer implements EditorFactoryListener {
   private static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<Language> SUPPORTED_LANGUAGES = Set.of(HTMLLanguage.INSTANCE,
-                                                                             XMLLanguage.INSTANCE,
-                                                                             XHTMLLanguage.INSTANCE);
+                                                                  XMLLanguage.INSTANCE,
+                                                                  XHTMLLanguage.INSTANCE);
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
 
@@ -330,7 +337,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
         support = findSupportRange(element);
       }
 
-      if (!isSupportRangeValid(document, leaderRange, support)) return findSupportForTagList(leader, element, document);
+      if (!isSupportRangeValid(document, leaderRange, support)) return findSupportForEmptyTag(leader, element, document);
       return document.createRangeMarker(support.getStartOffset(), support.getEndOffset(), true);
     }
 
@@ -356,25 +363,70 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       return XmlExtension.getExtension(psiFile);
     }
 
-    private static RangeMarker findSupportForTagList(RangeMarker leader, PsiElement element, Document document) {
-      if (leader.getStartOffset() != leader.getEndOffset() || element == null) return null;
+    private static RangeMarker findSupportForEmptyTag(RangeMarker leader, PsiElement element, Document document) {
+      int offset = leader.getStartOffset();
+      if (offset != leader.getEndOffset() || element == null || offset == 0) return null;
 
-      PsiElement support = null;
-      if ("<>".equals(element.getText())) {
-        PsiElement last = element.getParent().getLastChild();
-        if ("</>".equals(last.getText())) {
-          support = last;
+      XmlTag tag = tryCast(element.getParent(), XmlTag.class);
+      CharSequence contents = document.getCharsSequence();
+      if (tag != null && tag.getName().isEmpty()) {
+        // Support JSX empty tags
+        PsiElement startTag = tag.getFirstChild();
+        PsiElement endTag = tag.getLastChild();
+        if (endTag instanceof XmlToken && endTag.getNode ().getElementType() == XmlTokenType.XML_TAG_END) {
+          endTag = PsiTreeUtil.skipWhitespacesBackward(endTag);
+        }
+        if (startTag != endTag && startTag != null && endTag != null) {
+          int startTagOffset = startTag.getNode().getStartOffset();
+          int endTagOffset = endTag.getNode().getStartOffset();
+          if (startTagOffset + 1 == offset) {
+            return contents.charAt(endTagOffset) == '<' && contents.charAt(endTagOffset + 1) == '/'
+                   ? document.createRangeMarker(endTagOffset + 2, endTagOffset + 2, true)
+                   : null;
+          }
+          else if (endTagOffset + 2 == offset) {
+            return contents.charAt(startTagOffset) == '<'
+                   ? document.createRangeMarker(startTagOffset + 1, startTagOffset + 1, true)
+                   : null;
+          }
+        }
+        return null;
+      }
+      TextRange range = doIfNotNull(doIfNotNull(element.getParent(), PsiElement::getParent), PsiElement::getTextRange);
+      if (range == null) return null;
+      int length = contents.length();
+      char prev = contents.charAt(offset - 1);
+      if (prev == '<') {
+        int nextCharPos = StringUtil.skipWhitespaceForward(contents, offset);
+        if (nextCharPos >= 0 && nextCharPos < length && contents.charAt(nextCharPos) == '>') {
+          // Try to find matching empty closing tag
+          int endTagStart = StringUtil.indexOf(contents, '<', nextCharPos, range.getEndOffset());
+          int endTagEnd = endTagStart > 0 && endTagStart < length - 1 && contents.charAt(endTagStart + 1) == '/'
+                          ? StringUtil.skipWhitespaceForward(contents, endTagStart + 2) : -1;
+          if (endTagEnd > 0 && endTagEnd < length && contents.charAt(endTagEnd) == '>') {
+            // Sync with it
+            return document.createRangeMarker(endTagStart + 2, endTagStart + 2, true);
+          }
+          else {
+            // Otherwise create a self pointing sync to avoid code destruction
+            return document.createRangeMarker(offset, offset, true);
+          }
         }
       }
-      if ("</>".equals(element.getText())) {
-        PsiElement first = element.getParent().getFirstChild();
-        if ("<>".equals(first.getText())) {
-          support = first;
+      else if (prev == '/' && offset >= 2 && contents.charAt(offset - 2) == '<') {
+        int nextCharPos = StringUtil.skipWhitespaceForward(contents, offset);
+        if (nextCharPos >= 0 && nextCharPos < length && contents.charAt(nextCharPos) == '>') {
+          // Try to find matching empty opening tag
+          int startTagEnd = StringUtil.lastIndexOf(contents, '>', range.getStartOffset(), offset - 2);
+          int startTagStart = startTagEnd > 0 ? StringUtil.skipWhitespaceBackward(contents, startTagEnd) - 1 : -1;
+          if (startTagStart > 0 && startTagStart < length && contents.charAt(startTagStart) == '<') {
+            return document.createRangeMarker(startTagStart + 1, startTagStart + 1, true);
+          }
+          else {
+            // Otherwise create a self pointing sync to avoid code destruction
+            return document.createRangeMarker(offset, offset, true);
+          }
         }
-      }
-      if (support != null) {
-        TextRange range = support.getTextRange();
-        return document.createRangeMarker(range.getEndOffset() - 1, range.getEndOffset() - 1, true);
       }
       return null;
     }

@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author yole
+ * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
 public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
   final PsiFileSystemItem myElement;

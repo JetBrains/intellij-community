@@ -63,7 +63,7 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     else {
       int prevLineEndOffset = document.getLineEndOffset(logicalPosition.line - 1);
       myStartOffset = CharArrayUtil.shiftBackward(charSequence, prevLineEndOffset - 1, " \t") + 1;
-      if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1)) {
+      if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1) || myStartOffset == 0) {
         int spacing = codeStyleFacade.getJoinedLinesSpacing(editor, file.getLanguage(), endOffset, true);
         if (spacing < 0) {
           LOG.error("The call `codeStyleFacade.getJoinedLinesSpacing` should not return the negative value");

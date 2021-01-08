@@ -246,6 +246,7 @@
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
+    <action id="Git.OpenExcludeFile" class="git4idea.ignore.actions.OpenGitExcludeAction"/>
     <group id="Git.Ignore.File" class="git4idea.ignore.actions.GitIgnoreFileActionGroup">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
       <add-to-group group-id="Git.FileActions" anchor="after" relative-to-action="Git.Add"/>

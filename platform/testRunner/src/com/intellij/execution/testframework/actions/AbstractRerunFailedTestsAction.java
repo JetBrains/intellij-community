@@ -234,7 +234,8 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
   }
 
   protected static abstract class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
-                                                                                                WrappingRunConfiguration<RunConfigurationBase<?>> {
+                                                                                                WrappingRunConfiguration<RunConfigurationBase<?>>,
+                                                                                                ConsolePropertiesProvider {
     @Deprecated
     public RunConfigurationBase<?> getConfiguration() {
       return getPeer();
@@ -253,6 +254,12 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
     }
 
     public void clear() {
+    }
+
+    @Override
+    public @Nullable TestConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
+      return myConfiguration instanceof ConsolePropertiesProvider ? 
+             ((ConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor) : null;
     }
 
     ///////////////////////////////////Delegates

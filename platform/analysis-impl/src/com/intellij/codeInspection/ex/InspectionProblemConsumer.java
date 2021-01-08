@@ -5,5 +5,5 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public interface InspectionProblemConsumer {
-  void consume(@NotNull Element element);
+  void consume(@NotNull Element element, @NotNull InspectionToolWrapper<?, ?> toolWrapper);
 }

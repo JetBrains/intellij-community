@@ -33,13 +33,25 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) && profile instanceof AbstractPythonRunConfiguration;
   }
 
+  /**
+   * {@link PythonCommandLineState} inheritors must be ready to be called on any thread, so we can run then on the background thread.
+   * Any other state must be invoked on EDT only
+   */
+  private static void execute(@NotNull RunProfileState profileState, @NotNull Runnable runnable) {
+    if (profileState instanceof PythonCommandLineState) {
+      AppExecutorUtil.getAppExecutorService().execute(runnable);
+    } else {
+      ApplicationManager.getApplication().invokeAndWait(runnable);
+    }
+  }
+
   @NotNull
   @Override
   protected Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment env, @NotNull RunProfileState state) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
+    execute(state, () -> {
       try {
         boolean useTargetsAPI = Experiments.getInstance().isFeatureEnabled("python.use.targets.api.for.run.configurations");
 

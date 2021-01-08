@@ -4,19 +4,26 @@ package org.jetbrains.plugins.emojipicker.ui;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 
 import java.awt.*;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 
 class EmojiPickerStyle {
-  final Font myFont = JBUI.Fonts.label().deriveFont(Font.PLAIN, JBUIScale.scale(13F));
-  final Font myEmojiFont = Stream.of(GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts())
+  private static final Font EMOJI_FONT = Stream.of(GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts())
     .filter(f -> f.getName().toLowerCase(Locale.ENGLISH).contains("emoji"))
     .findFirst()
-    .orElse(JBUI.Fonts.label())
-    .deriveFont(JBUIScale.scale(22F));
+    .orElse(null);
+
+  static boolean isEmojiFontAvailable() {
+    return EMOJI_FONT != null;
+  }
+
+  final Font myFont = JBUI.Fonts.label().deriveFont(Font.PLAIN, JBUIScale.scale(13F));
+  final Font myEmojiFont = Objects.requireNonNull(EMOJI_FONT, "No emoji font available").deriveFont(JBUIScale.scale(22F));
 
   final Color myBackgroundColor = JBUI.CurrentTheme.BigPopup.searchFieldBackground();
   final Color myToolbarColor = JBColor.namedColor("ToolTip.background", JBUI.CurrentTheme.Popup.toolbarPanelColor());
@@ -26,4 +33,6 @@ class EmojiPickerStyle {
   final Color myFocusBorderColor = new JBColor(0x97C3F3, 0x97C3F3);
   final Color myTextColor = JBUI.CurrentTheme.Label.foreground();
   final Color myNoEmojiFoundTextColor = new JBColor(0x808080, 0xBBBBBB);
+
+  final JBValue myBorder = new JBValue.Float(1);
 }

@@ -68,6 +68,7 @@ import java.beans.PropertyChangeEvent;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
@@ -624,7 +625,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
-    if (!selected && row == getHoveredRow()) {
+    if (!selected && row == getHoveredRow(this)) {
       Color background = Objects.requireNonNull(style.getBackground());
       VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(getHoveredBackgroundColor(background));
       style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));
@@ -634,8 +635,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @Override
-  protected void setRendererBackground(int row, int column, JComponent renderer, Color color) {
-    // do not overwrite renderer background
+  protected @Nullable Color getHoveredRowBackground() {
+    return null; // do not overwrite renderer background
   }
 
   public void viewportSet(JViewport viewport) {

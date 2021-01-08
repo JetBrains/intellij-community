@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
@@ -874,9 +873,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
 
     @Override
-    protected boolean isInvisible(@NotNull PluginEnabledState oldState,
-                                  @Nullable Project project) {
-      return super.isInvisible(oldState, project) ||
+    protected boolean isInvisible(@NotNull PluginEnabledState oldState) {
+      return super.isInvisible(oldState) ||
              myNewState.isPerProject() && myRequiresRestart ||
              !myNewState.isEnabled() && myPluginIsRequired;
     }

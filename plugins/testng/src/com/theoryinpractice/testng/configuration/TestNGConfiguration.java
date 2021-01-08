@@ -5,6 +5,7 @@ package com.theoryinpractice.testng.configuration;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
@@ -218,12 +219,15 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
    @Override
    @Nullable
    public String getAlternativeJrePath() {
-     return ALTERNATIVE_JRE_PATH;
+     return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) : null;
    }
 
    @Override
    public void setAlternativeJrePath(String path) {
-     this.ALTERNATIVE_JRE_PATH = path;
+     String collapsedPath = path != null ? new AlternativeJrePathConverter().toString(path) : null;
+     boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, collapsedPath);
+     this.ALTERNATIVE_JRE_PATH = collapsedPath;
+     ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
    }
 
   @Override

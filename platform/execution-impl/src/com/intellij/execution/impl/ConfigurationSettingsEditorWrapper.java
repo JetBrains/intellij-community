@@ -202,7 +202,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
   private void createUIComponents() {
     myDisclaimerLabel = new JLabel(ExecutionBundle.message("template.disclaimer"), AllIcons.General.Warning, SwingConstants.LEADING);
     myDisclaimerLabel.setBorder(JBUI.Borders.emptyBottom(2));
-    myCreateNewRCLabel = new LinkLabel(ExecutionBundle.message("create.configuration"), null, new LinkListener() {
+    myCreateNewRCLabel = new LinkLabel<>(ExecutionBundle.message("create.configuration"), null, new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         RunConfigurationCreator creator =
@@ -214,12 +214,20 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     });
   }
 
+  private static void createConfiguration(JComponent component, RunnerAndConfigurationSettings settings) {
+    RunConfigurationCreator creator = DataManager.getInstance().getDataContext(component).getData(RunConfigurationCreator.KEY);
+    if (creator != null) {
+      creator.createNewConfiguration(settings.getFactory());
+    }
+  }
+
   public static SettingsEditor<RunnerAndConfigurationSettings> createWrapper(@NotNull RunnerAndConfigurationSettings settings) {
     SettingsEditor<?> configurationEditor = settings.getConfiguration().getConfigurationEditor();
     //noinspection unchecked
     return configurationEditor instanceof RunConfigurationFragmentedEditor<?>
            ? new RunnerAndConfigurationSettingsEditor(settings,
-                                                      (RunConfigurationFragmentedEditor<RunConfigurationBase<?>>)configurationEditor)
+                                                      (RunConfigurationFragmentedEditor<RunConfigurationBase<?>>)configurationEditor,
+                                                      (component) -> createConfiguration(component, settings))
            : new ConfigurationSettingsEditorWrapper(settings, (SettingsEditor<RunConfiguration>)configurationEditor);
   }
 }

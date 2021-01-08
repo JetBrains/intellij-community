@@ -95,7 +95,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(STRING_BUILDER_APPEND, this::getAppendProblem)
       .register(STRING_BUILDER_TO_STRING, this::getRedundantStringBuilderToStringProblem)
       .register(STRING_INTERN, this::getInternProblem)
-      .register(PRINTSTREAM_PRINTLN, call -> getRedundantArgumentProblem(getSingleEmptyStringArgument(call)))
+      .register(PRINTSTREAM_PRINTLN, call ->
+        getRedundantArgumentProblem(getSingleEmptyStringArgument(call), "inspection.redundant.empty.string.argument.message"))
       .register(METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER, this::getRedundantZeroAsSecondParameterProblem)
       .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem)
       .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem)
@@ -125,7 +126,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiJavaCodeReferenceElement classRef = expression.getClassReference();
       ProblemDescriptor descriptor = null;
       if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING_BUILDER, JAVA_LANG_STRING_BUFFER)) {
-        descriptor = getRedundantArgumentProblem(getSingleEmptyStringArgument(expression));
+        String key = "inspection.redundant.empty.string.argument.message";
+        descriptor = getRedundantArgumentProblem(getSingleEmptyStringArgument(expression), key);
       }
       else if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING) && !myInspection.ignoreStringConstructor) {
         descriptor = getStringConstructorProblem(expression);
@@ -211,7 +213,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           if (anchor == null) {
             return null;
           }
-          return createProblem(equalsToCallExpression, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.RIGHT);
+          return createChangeCaseProblem(equalsToCallExpression, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.RIGHT);
         }
       }
 
@@ -230,14 +232,14 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         }
         //case: text1.toLowerCase().equals("test2")
         if (PsiUtil.isConstantExpression(equalTo)) {
-          return createProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
+          return createChangeCaseProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
         }
 
         //case: text1.toLowerCase().equals(text2.toLowerCase())
         if (equalTo instanceof PsiMethodCallExpression) {
           PsiMethodCallExpression secondCall = (PsiMethodCallExpression)equalTo;
           if (isEqualChangeCaseCall(qualifierCall, secondCall)) {
-            return createProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
+            return createChangeCaseProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
           }
         }
       }
@@ -246,15 +248,16 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     @Nullable
-    private ProblemDescriptor createProblem(PsiMethodCallExpression equalsToCallExpression,
-                                            PsiElement anchor,
-                                            RemoveRedundantChangeCaseFix.PlaceCaseEqualType type) {
+    private ProblemDescriptor createChangeCaseProblem(PsiMethodCallExpression equalsToCallExpression,
+                                                      PsiElement anchor,
+                                                      RemoveRedundantChangeCaseFix.PlaceCaseEqualType type) {
       String nameMethod = equalsToCallExpression.getMethodExpression().getReferenceName();
       if (nameMethod == null) {
         return null;
       }
       return myManager.createProblemDescriptor(anchor, (TextRange)null,
-                                               InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                               InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y",
+                                                                               nameMethod, EQUALS_IGNORE_CASE),
                                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
                                                new RemoveRedundantChangeCaseFix(nameMethod, type));
     }
@@ -421,26 +424,28 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           stripped = binOp.getLOperand();
         }
       }
-      return isLengthOf(stripped, call.getMethodExpression().getQualifierExpression()) ? getRedundantArgumentProblem(secondArg) : null;
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (!isLengthOf(stripped, qualifier)) return null;
+      return getRedundantArgumentProblem(secondArg, "inspection.redundant.string.length.argument.message");
     }
 
     @Nullable
     private ProblemDescriptor getRedundantZeroAsSecondParameterProblem(PsiMethodCallExpression call) {
       PsiExpression secondArg = call.getArgumentList().getExpressions()[1];
       if (ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(secondArg), 0)) {
-        return getRedundantArgumentProblem(secondArg);
+        return getRedundantArgumentProblem(secondArg, "inspection.redundant.zero.argument.message");
       }
       return null;
     }
 
     @Nullable
-    private ProblemDescriptor getRedundantArgumentProblem(@Nullable PsiExpression argument) {
+    private ProblemDescriptor getRedundantArgumentProblem(@Nullable PsiExpression argument,
+                                                          @NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
       if (argument == null) return null;
       LocalQuickFix fix =
         new DeleteElementFix(argument, InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
       return myManager.createProblemDescriptor(argument,
-                                               InspectionGadgetsBundle.message(
-                                                 "inspection.redundant.string.argument.message"),
+                                               InspectionGadgetsBundle.message(key),
                                                myIsOnTheFly,
                                                new LocalQuickFix[]{fix},
                                                ProblemHighlightType.LIKE_UNUSED_SYMBOL);
@@ -469,8 +474,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         }
         DeleteElementFix fix =
           new DeleteElementFix(args[1], InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
+        final String message = InspectionGadgetsBundle.message("inspection.redundant.string.length.argument.message");
         return myManager.createProblemDescriptor(args[1],
-                                                 InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                                 message,
                                                  fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly);
       }
 
@@ -709,7 +715,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("inspection.redundant.string.fix.family.name");
+      return InspectionGadgetsBundle.message("use.equalsignorecase.for.case.insensitive.comparison");
     }
 
     @Override

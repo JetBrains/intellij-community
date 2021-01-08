@@ -37,18 +37,22 @@ abstract class TaskContext : LearningDslBase {
    *                      It is a hack solution because of possible race conditions.
    * @param [restoreRequired] returns true iff restore is needed
    */
-  open fun restoreState(restoreId: TaskId? = null, delayMillis: Int = 0, restoreRequired: TaskRuntimeContext.() -> Boolean)= Unit
+  open fun restoreState(restoreId: TaskId? = null, delayMillis: Int = 0, restoreRequired: TaskRuntimeContext.() -> Boolean) = Unit
 
   /** Shortcut */
-  fun restoreByUi(delayMillis: Int = 0) {
-    restoreState(delayMillis = delayMillis) {
+  fun restoreByUi(restoreId: TaskId? = null, delayMillis: Int = 0) {
+    restoreState(restoreId, delayMillis) {
       previous.ui?.isShowing?.not() ?: true
     }
   }
 
-  data class RestoreNotification(@Nls val message: String, val callback: () -> Unit)
+  data class RestoreNotification(@Nls val message: String,
+                                 @Nls val restoreLinkText: String = LearnBundle.message("learn.restore.default.link.text"),
+                                 val callback: () -> Unit)
 
   open fun proposeRestore(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) = Unit
+
+  open fun showWarning(@Language("HTML") @Nls text: String, warningRequired: TaskRuntimeContext.() -> Boolean) = Unit
 
   /**
    * Write a text to the learn panel (panel with a learning tasks).

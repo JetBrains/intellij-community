@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.containers.reverse
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.io.File
 
@@ -62,7 +61,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           //   with this id. But there is a case when some different entity from source builder will get this id if there was a gup before.
           //   So we should check if entity at this id was added in this transaction. If replaceMap has a value with this entity id
           //   this means that this entity was added in this transaction and there was a gup before and we should not remove anything.
-          if (sourceEntityId !in replaceMap.reverse()) {
+          if (!replaceMap.containsValue(sourceEntityId)) {
             target.indexes.removeFromIndices(sourceEntityId)
             if (target.entityDataById(sourceEntityId) != null) {
               target.removeEntity(sourceEntityId)
@@ -74,22 +73,11 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           replaceOperation(change)
         }
         is ChangeEntry.ChangeEntitySource<out WorkspaceEntity> -> {
-          change as ChangeEntry.ChangeEntitySource<WorkspaceEntity>
-
-          val outdatedId = change.newData.createEntityId()
-          val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
-
-          // We don't modify entity that isn't exist in target version of storage
-          val existingEntityData = target.entityDataById(usedPid)
-          if (existingEntityData != null) {
-            val newEntitySource = change.newData.entitySource
-            existingEntityData.entitySource = newEntitySource
-            target.indexes.entitySourceIndex.index(usedPid, newEntitySource)
-            target.changeLog.addChangeSourceEvent(usedPid, existingEntityData)
-          }
+          replaceSourceOperation(change.newData)
         }
         is ChangeEntry.ReplaceAndChangeSource<out WorkspaceEntity> -> {
           replaceOperation(change.dataChange)
+          replaceSourceOperation(change.sourceChange.newData)
         }
       }
     }
@@ -97,6 +85,20 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
     // Assert consistency
     target.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, target)
+  }
+
+  private fun replaceSourceOperation(data: WorkspaceEntityData<out WorkspaceEntity>) {
+    val outdatedId = data.createEntityId()
+    val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
+
+    // We don't modify entity that isn't exist in target version of storage
+    val existingEntityData = target.entityDataById(usedPid)
+    if (existingEntityData != null) {
+      val newEntitySource = data.entitySource
+      existingEntityData.entitySource = newEntitySource
+      target.indexes.entitySourceIndex.index(usedPid, newEntitySource)
+      target.changeLog.addChangeSourceEvent(usedPid, existingEntityData)
+    }
   }
 
   private fun addRestoreParents(sourceEntityId: EntityId, targetEntityId: EntityId) {
@@ -236,9 +238,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
       val removedChildrenSet = removedChildrenMap[connectionId] ?: emptySet()
       for (removedChild in removedChildrenSet) {
-        val removed = mutableChildren.remove(removedChild)
-        if (!removed) target.addDiffAndReport("Trying to remove child that isn't present", initialStorage,
-                                              diff, target)
+        // This method may return false if this child is already removed
+        mutableChildren.remove(removedChild)
       }
 
       // .... Update if something changed
@@ -249,9 +250,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
       removedChildrenMap.removeAll(connectionId)
     }
 
-    // Do we have more children to remove? target should not happen
-    if (!removedChildrenMap.isEmpty) target.addDiffAndReport("Trying to remove children that aren't present", initialStorage,
-                                                             diff, target)
+    // N.B: removedChildrenMap may contain some entities, but this means that these entities was already removed
 
     // Do we have more children to add? Add them
     for ((connectionId, children) in addedChildrenMap.asMap()) {

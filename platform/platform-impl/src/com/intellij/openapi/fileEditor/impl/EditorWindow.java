@@ -627,6 +627,8 @@ public final class EditorWindow {
 
       VirtualFile nextFile = virtualFile == null ? file : virtualFile;
       HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
+      VirtualFile currentStateFile = currentState.getFile();
+      if (currentStateFile == null || !currentStateFile.equals(nextFile)) currentState = null;
       FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
                                                                    new FileEditorOpenOptions()
                                                                      .withCurrentTab(true)

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.VisibleAreaListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
@@ -25,6 +26,7 @@ class EditorCodePreview private constructor(val editor: Editor): Disposable {
       require(getActivePreview(editor) == null)
       val codePreview = EditorCodePreview(editor)
       editor.putUserData(EDITOR_PREVIEW_KEY, codePreview)
+      EditorUtil.disposeWithEditor(editor, codePreview)
       return codePreview
     }
 
@@ -39,8 +41,10 @@ class EditorCodePreview private constructor(val editor: Editor): Disposable {
 
   private val documentListener = object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
-      popups.forEach(CodeFragmentPopup::updateCodePreview)
-      updatePopupPositions()
+      if (!editor.isDisposed && !event.document.isInBulkUpdate) {
+        popups.forEach(CodeFragmentPopup::updateCodePreview)
+        updatePopupPositions()
+      }
     }
   }
 

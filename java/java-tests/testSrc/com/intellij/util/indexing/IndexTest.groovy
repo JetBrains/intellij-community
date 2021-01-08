@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.java.index.StringIndex
 import com.intellij.lang.Language
@@ -1439,7 +1440,21 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       }
       assert null == stubQuery.getValue()
     }
+  }
 
+  void 'test indexes should be wiped after scratch removal'() {
+    def file = ScratchRootType.getInstance().createScratchFile(project, "Foo.java", JavaLanguage.INSTANCE, "class Foo {}")
+    def fileId = ((VirtualFileWithId)file).getId()
+
+    def fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.instance
+    def trigramId = TrigramIndex.INDEX_ID
+
+    fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
+    assertNotEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
+
+    file.delete(null)
+    fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
+    assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
   }
 
 }

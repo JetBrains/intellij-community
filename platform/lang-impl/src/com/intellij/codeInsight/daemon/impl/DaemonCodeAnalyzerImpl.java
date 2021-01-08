@@ -926,7 +926,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
     for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
-      if (importer.autoImportReferenceAtCursor(editor, file)) break;
+      if (importer.isAddUnambiguousImportsOnTheFlyEnabled(file) && importer.autoImportReferenceAtCursor(editor, file)) break;
     }
   }
 

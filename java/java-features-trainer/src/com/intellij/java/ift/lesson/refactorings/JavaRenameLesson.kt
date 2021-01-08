@@ -107,7 +107,7 @@ class JavaRenameLesson(module: Module)
         val shouldBe = fieldName?.let { replaceTemplate(it).replace("<caret>", "").replace("<caret id=2/>", "") }
         fieldName != initialName && editor.document.text == shouldBe
       }
-      restoreAfterStateBecomeFalse(startId) {
+      restoreAfterStateBecomeFalse(restoreId = startId) {
         !Thread.currentThread().stackTrace.any {
           it.className.contains(RenameProcessor::class.simpleName!!)
         }

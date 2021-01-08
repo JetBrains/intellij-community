@@ -6,6 +6,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.Color;
@@ -156,6 +157,23 @@ public final class RenderingUtil {
   @ApiStatus.Internal
   public static boolean isHoverPaintingDisabled(@NotNull JComponent component) {
     return Boolean.FALSE.equals(component.getClientProperty(PAINT_HOVERED_BACKGROUND));
+  }
+
+  public static @Nullable Color getHoverBackground(@NotNull JList<?> list) {
+    if (isHoverPaintingDisabled(list)) return null;
+    return UIUtil.getListHoverBackground(isFocused(list));
+  }
+
+  public static @Nullable Color getHoverBackground(@NotNull JTable table) {
+    if (isHoverPaintingDisabled(table)) return null;
+    return UIUtil.getTableHoverBackground(isFocused(table));
+  }
+
+  public static @Nullable Color getHoverBackground(@NotNull JTree tree) {
+    JTable table = getTableFor(tree);
+    if (table != null) return getHoverBackground(table); // tree table
+    if (isHoverPaintingDisabled(tree)) return null;
+    return UIUtil.getTreeHoverBackground(isFocused(tree));
   }
 
 

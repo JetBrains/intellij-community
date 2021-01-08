@@ -2,23 +2,30 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
+import training.learn.interfaces.LessonType
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
+import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
 
 abstract class FileStructureLesson(module: Module, lang: String)
   : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name"), module, lang) {
   abstract override val existedFile: String
-  abstract val searchSubstring: String
-  abstract val firstWord: String
-  abstract val secondWord: String
+  abstract val methodToFindPosition: LogicalPosition
+
+  private val searchSubstring: String = "hosa"
+  private val firstWord: String = "homo"
+  private val secondWord: String = "sapience"
+
+  override val lessonType = LessonType.SINGLE_EDITOR
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
@@ -30,6 +37,7 @@ abstract class FileStructureLesson(module: Module, lang: String)
       task(searchSubstring) {
         text(LessonsBundle.message("file.structure.request.prefixes", strong(firstWord), strong(secondWord), code(searchSubstring)))
         stateCheck { checkWordInSearch(it) }
+        restoreAfterStateBecomeFalse { focusOwner is EditorComponentImpl }
         test {
           ideFrame {
             waitComponent(DnDAwareTree::class.java, "FileStructurePopup")
@@ -39,7 +47,8 @@ abstract class FileStructureLesson(module: Module, lang: String)
       }
       task {
         text(LessonsBundle.message("file.structure.navigate", LessonUtil.rawEnter()))
-        stateCheck { focusOwner is EditorComponentImpl }
+        stateCheck { editor.caretModel.logicalPosition == methodToFindPosition }
+        restoreState { !checkWordInSearch(searchSubstring) }
         test { GuiTestUtil.shortcut(Key.ENTER) }
       }
       task("ActivateStructureToolWindow") {

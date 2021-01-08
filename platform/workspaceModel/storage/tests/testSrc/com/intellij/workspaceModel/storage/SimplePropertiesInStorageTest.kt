@@ -2,13 +2,9 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.openapi.util.Ref
+import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
-import com.intellij.workspaceModel.storage.entities.ModifiableSecondSampleEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntitySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
 import org.junit.Before
@@ -147,5 +143,15 @@ class SimplePropertiesInStorageTest {
       intProperty = 10
     }
     thief.get().intProperty = 30
+  }
+
+  @Test(expected = IllegalStateException::class)
+  fun `test trying to modify non-existing entity`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val sampleEntity = builder.addSampleEntity("Prop")
+    val anotherBuilder = WorkspaceEntityStorageBuilderImpl.create()
+    anotherBuilder.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
+      this.stringProperty = "Another prop"
+    }
   }
 }

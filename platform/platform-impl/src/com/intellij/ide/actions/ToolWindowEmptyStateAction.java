@@ -37,6 +37,7 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
     ContentManagerImpl manager = (ContentManagerImpl) toolWindow.getContentManager();
     manager.rebuildContentUi();
     toolWindow.show();
+    toolWindow.activate(null, true);
   }
 
   protected abstract void setupEmptyText(@NotNull Project project, @NotNull StatusText text);

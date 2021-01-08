@@ -12,7 +12,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.jList
 import com.intellij.testGuiFramework.util.Key
+import com.intellij.util.ui.UIUtil
 import training.commands.kotlin.TaskContext
+import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.interfaces.Module
@@ -41,13 +43,16 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
         text(LessonsBundle.message("goto.action.use.find.action.2",
                                    LessonUtil.actionName("SearchEverywhere"), LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))
 
-        searchEverywhereCheck()
+        stateCheck { checkInsideSearchEverywhere() }
         test { actions(it) }
       }
+
       actionTask("About") {
+        showWarningIfSearchPopupClosed()
         LessonsBundle.message("goto.action.invoke.about.action",
                               LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter())
       }
+
       task {
         text(LessonsBundle.message("goto.action.to.return.to.the.editor", action("EditorEscape")))
         var aboutHasBeenFocused = false
@@ -66,12 +71,14 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
           }
         }
       }
+
       task("GotoAction") {
         text(LessonsBundle.message("goto.action.invoke.again",
                                    action(it), LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))
-        searchEverywhereCheck()
+        stateCheck { checkInsideSearchEverywhere() }
         test { actions(it) }
       }
+
       val showLineNumbersName = ActionsBundle.message("action.EditorGutterToggleGlobalLineNumbers.text")
       task(LearnBundle.message("show.line.number.prefix.to.show.first")) {
         text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(it), strong(showLineNumbersName)))
@@ -81,6 +88,7 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
           val action = actionWrapper?.action
           action is ToggleShowLineNumbersGloballyAction
         }
+        restoreState { !checkInsideSearchEverywhere() }
         test {
           waitComponent(SearchEverywhereUI::class.java)
           type(it)
@@ -91,30 +99,38 @@ class GotoActionLesson(module: Module, lang: String, private val sample: LessonS
       task {
         text(LessonsBundle.message("goto.action.first.lines.toggle", if (lineNumbersShown) 0 else 1))
         stateCheck { isLineNumbersShown() == !lineNumbersShown }
-        restoreByUi()
+        showWarningIfSearchPopupClosed()
         test {
           ideFrame {
             jList(showLineNumbersName).item(showLineNumbersName).click()
           }
         }
       }
+
       task {
         text(LessonsBundle.message("goto.action.second.lines.toggle", if (lineNumbersShown) 0 else 1))
         stateCheck { isLineNumbersShown() == lineNumbersShown }
+        showWarningIfSearchPopupClosed()
         test {
           ideFrame {
             jList(showLineNumbersName).item(showLineNumbersName).click()
           }
         }
       }
+
       if (firstLesson) {
         firstLessonCompletedMessage()
       }
     }
 
-  private fun TaskContext.searchEverywhereCheck() {
-    stateCheck {
-      focusOwner?.javaClass?.name?.contains("SearchEverywhereUI") ?: false
+  private fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
+    return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
+  }
+
+  private fun TaskContext.showWarningIfSearchPopupClosed() {
+    showWarning(LessonsBundle.message("goto.action.popup.closed.warning.message", action("GotoAction"),
+                                      LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT))) {
+      !checkInsideSearchEverywhere()
     }
   }
 

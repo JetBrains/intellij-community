@@ -29,6 +29,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
+import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.*
 import org.jetbrains.annotations.NotNull
@@ -87,11 +88,12 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
       else -> "-k $keywords"
     }
 
-  override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
+  override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> =
     // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
-    return target.generateArgumentsLine(this) + listOf(rawArgumentsSeparator, "--last-failed", additionalArguments)
+    target.generateArgumentsLine(this) +
+    listOf(rawArgumentsSeparator, "--last-failed") +
+    ParametersListUtil.parse(additionalArguments)
       .filter(String::isNotEmpty)
-  }
 
   override fun getTestSpec(): List<String> {
     // Parametrized test must add parameter to target.

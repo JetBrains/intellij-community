@@ -4,22 +4,21 @@ package training.project
 import com.intellij.CommonBundle
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
@@ -29,13 +28,16 @@ import training.lang.LangSupport
 import training.learn.LearnBundle
 import training.util.featureTrainerVersion
 import java.io.File
+import java.io.FileFilter
 import java.io.PrintWriter
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
 object ProjectUtils {
+  private const val LEARNING_PROJECT_MODIFICATION = "LEARNING_PROJECT_MODIFICATION"
+  private const val FEATURE_TRAINER_VERSION = "feature-trainer-version.txt"
+
   private val ideProjectsBasePath by lazy {
     val ideaProjectsPath = WizardContext(null, null).projectFileDirectory
     val ideaProjects = File(ideaProjectsPath)
@@ -102,16 +104,30 @@ object ProjectUtils {
     }
   }
 
-  fun copyLearningProjectFiles(newProjectDirectory: Path, langSupport: LangSupport): Boolean {
+  fun simpleInstallAndOpenLearningProject(projectPath: Path,
+                                          langSupport: LangSupport,
+                                          openProjectTask: OpenProjectTask,
+                                          postInitCallback: (learnProject: Project) -> Unit) {
+    val copied = copyLearningProjectFiles(projectPath, langSupport)
+    if (!copied) return
+    createVersionFile(projectPath)
+    val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectPath)
+                                      ?: error("Copied Learn project folder is null")
+    invokeLater {
+      val project = ProjectUtil.openOrImport(projectDirectoryVirtualFile.toNioPath(), openProjectTask)
+                    ?: error("Could not create project for ${langSupport.primaryLanguage}")
+      PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
+      postInitCallback(project)
+    }
+  }
+
+  private fun copyLearningProjectFiles(newProjectDirectory: Path, langSupport: LangSupport): Boolean {
     var targetDirectory = newProjectDirectory
-    val inputUrl: URL = langSupport.javaClass.classLoader.getResource(langSupport.projectResourcePath)
-                        ?: throw IllegalArgumentException(
-                          "No project ${langSupport.projectResourcePath} in resources for ${langSupport.primaryLanguage} IDE learning course")
-    if (!FileUtils.copyResourcesRecursively(inputUrl, targetDirectory.toFile())) {
+    if (!langSupport.copyLearningProjectFiles(targetDirectory.toFile())) {
       targetDirectory = invokeAndWaitIfNeeded {
         chooseParentDirectoryForLearningProject(langSupport)
       } ?: return false
-      if (!FileUtils.copyResourcesRecursively(inputUrl, targetDirectory.toFile())) {
+      if (!langSupport.copyLearningProjectFiles(targetDirectory.toFile())) {
         invokeLater {
           Messages.showInfoMessage(LearnBundle.message("learn.project.initializing.cannot.create.message"),
                                    LearnBundle.message("learn.project.initializing.cannot.create.title"))
@@ -122,6 +138,10 @@ object ProjectUtils {
     LangManager.getInstance().setLearningProjectPath(langSupport, targetDirectory.toAbsolutePath().toString())
     return true
   }
+
+  fun learningProjectUrl(langSupport: LangSupport) =
+    langSupport.javaClass.classLoader.getResource(langSupport.projectResourcePath)
+    ?: throw IllegalArgumentException("No project ${langSupport.projectResourcePath} in resources for ${langSupport.primaryLanguage} IDE learning course")
 
   private fun chooseParentDirectoryForLearningProject(langSupport: LangSupport): Path? {
     val descriptor = FileChooserDescriptor(false, true, false, false, false, false)
@@ -146,8 +166,8 @@ object ProjectUtils {
     FileUtils.copyResourcesRecursively(iconUrl, ideaDir)
   }
 
-  fun createVersionFile(newProjectDirectory: Path) {
-    PrintWriter(newProjectDirectory.resolve("feature-trainer-version.txt").toFile(), "UTF-8").use {
+  private fun createVersionFile(newProjectDirectory: Path) {
+    PrintWriter(newProjectDirectory.resolve(FEATURE_TRAINER_VERSION).toFile(), "UTF-8").use {
       it.println(featureTrainerVersion)
     }
   }
@@ -160,7 +180,7 @@ object ProjectUtils {
     return false
   }
 
-  private fun versionFile(dest: Path) = dest.resolve("feature-trainer-version.txt")
+  private fun versionFile(dest: Path) = dest.resolve(FEATURE_TRAINER_VERSION)
 
   fun createSdkDownloadingNotification(): Notification {
     val notificationGroup = NotificationGroup.findRegisteredGroup("IDE Features Trainer")
@@ -173,6 +193,58 @@ object ProjectUtils {
   fun closeAllEditorsInProject(project: Project) {
     FileEditorManagerEx.getInstanceEx(project).windows.forEach {
       it.files.forEach { file -> it.closeFile(file) }
+    }
+  }
+
+  fun restoreProject(languageSupport: LangSupport, project: Project) {
+    val stamp = PropertiesComponent.getInstance(project).getValue(LEARNING_PROJECT_MODIFICATION)?.toLong() ?: 0
+    val needReplace = mutableListOf<Path>()
+    val validContent = mutableListOf<Path>()
+    val root = ProjectRootManager.getInstance(project).contentRoots[0]
+    invokeAndWaitIfNeeded {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
+
+    runReadAction {
+      VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Void>() {
+        override fun visitFile(file: VirtualFile): Boolean {
+          if(file.name == ".idea" ||
+             file.name == "venv" ||
+             file.name == FEATURE_TRAINER_VERSION ||
+             file.name.endsWith(".iml")) return false
+
+          if (file.isDirectory) return true
+
+          val path = file.toNioPath()
+          if (file.timeStamp > stamp) {
+            needReplace.add(path)
+          }
+          else {
+            validContent.add(path)
+          }
+          return true
+        }
+      })
+    }
+
+    var modified = false
+
+    for (path in needReplace) {
+      path.delete()
+      modified = true
+    }
+
+    val pathname = project.basePath ?: throw IllegalStateException("No Base Path in Learning project")
+    languageSupport.copyLearningProjectFiles(File(pathname), FileFilter {
+      val path = it.toPath()
+      val needCopy = needReplace.contains(path) || !validContent.contains(path)
+      modified = needCopy || modified
+      needCopy
+    })
+
+    if (modified) {
+      VfsUtil.markDirtyAndRefresh(false, true, true, root)
+      PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
     }
   }
 }

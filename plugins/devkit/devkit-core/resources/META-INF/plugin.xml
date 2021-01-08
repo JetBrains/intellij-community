@@ -99,11 +99,6 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"
                      key="inspection.plugin.xml.validity.display.name"/>
-    <localInspection language="XML" shortName="PluginXmlCapitalization" applyToDialects="false"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlCapitalizationInspection"
-                     key="inspection.plugin.xml.capitalization.display.name"/>
     <localInspection language="XML" applyToDialects="false"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"

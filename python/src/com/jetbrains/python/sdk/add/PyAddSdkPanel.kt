@@ -26,12 +26,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
+import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
 import icons.PythonIcons
 import java.awt.Component
 import java.io.File
@@ -162,14 +162,12 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
     { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
     {
       sdkComboBox.apply {
-        val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk.takeIf(FileUtil::exists)
-        val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
-        selectedSdk = when {
-          detectedPreferredSdk != null -> detectedPreferredSdk
-          preferredSdkPath != null -> PyDetectedSdk(preferredSdkPath).apply {
-            childComponent.insertItemAt(this, 0)
+        val preferredSdk = PyProjectVirtualEnvConfiguration.findPreferredVirtualEnvBaseSdk(items)
+        if (preferredSdk != null) {
+          if (items.find { it.homePath == preferredSdk.homePath } == null) {
+            childComponent.insertItemAt(preferredSdk, 0)
           }
-          else -> items.getOrNull(0)
+          selectedSdk = preferredSdk
         }
       }
       callback()

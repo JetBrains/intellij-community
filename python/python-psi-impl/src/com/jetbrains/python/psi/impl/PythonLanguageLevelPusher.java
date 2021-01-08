@@ -221,7 +221,6 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, distinctSdks);
-    guessLanguageLevelWithCaching(project, distinctSdks);
 
     if (needToReparseOpenFiles) {
       ApplicationManager.getApplication().invokeLater(() -> {

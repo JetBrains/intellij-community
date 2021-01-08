@@ -56,11 +56,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
@@ -103,7 +105,6 @@ import java.util.regex.PatternSyntaxException;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
-import static com.intellij.ui.render.RenderingUtil.PAINT_HOVERED_BACKGROUND;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
@@ -156,7 +157,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private SimpleColoredComponent myUsagePreviewTitle;
   private UsagePreviewPanel myUsagePreviewPanel;
   private DialogWrapper myDialog;
-  private LoadingDecorator myLoadingDecorator;
+  private JLabel myLoadingIcon;
   private int myLoadingHash;
   private final AtomicBoolean myNeedReset = new AtomicBoolean(true);
   private JPanel myTitlePanel;
@@ -431,8 +432,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myTitleLabel = new JBLabel(FindBundle.message("find.in.path.dialog.title"), UIUtil.ComponentStyle.REGULAR);
     RelativeFont.BOLD.install(myTitleLabel);
     myInfoLabel = new JBLabel("", UIUtil.ComponentStyle.SMALL);
-    myLoadingDecorator = new LoadingDecorator(new JLabel(EmptyIcon.ICON_16), getDisposable(), 250, true, new AsyncProcessIcon("FindInPathLoading"));
-    myLoadingDecorator.setLoadingText("");
+    myLoadingIcon = new JLabel(EmptyIcon.ICON_16);
     ItemListener liveResultsPreviewUpdateListener = __ -> scheduleResultsUpdate();
     myCbFileFilter = createCheckBox();
     myCbFileFilter.addItemListener(__ -> {
@@ -667,7 +667,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myResultsPreviewTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myResultsPreviewTable.setShowGrid(false);
     myResultsPreviewTable.setIntercellSpacing(JBUI.emptySize());
-    myResultsPreviewTable.putClientProperty(PAINT_HOVERED_BACKGROUND, false);
+    TableHoverListener.DEFAULT.removeFrom(myResultsPreviewTable);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
@@ -829,7 +829,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myTitlePanel = new JPanel(new MigLayout("flowx, ins 0, gap 0, fillx, filly"));
     myTitlePanel.add(myTitleLabel, "gapright 4");
     myTitlePanel.add(myInfoLabel);
-    myTitlePanel.add(myLoadingDecorator.getComponent(), "w 24, wmin 24");
+    myTitlePanel.add(myLoadingIcon, "w 24, wmin 24");
     myTitlePanel.add(Box.createHorizontalGlue(), "growx, pushx");
 
     add(myTitlePanel, "sx 2, growx, growx, growy");
@@ -1483,7 +1483,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private void onStart(int hash) {
     myNeedReset.set(true);
     myLoadingHash = hash;
-    myLoadingDecorator.startLoading(false);
+    myLoadingIcon.setIcon(AnimatedIcon.Default.INSTANCE);
     myResultsPreviewTable.getEmptyText().setText(FindBundle.message("empty.text.searching"));
   }
 
@@ -1498,7 +1498,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
     UIUtil.invokeLaterIfNeeded(() -> {
       showEmptyText(message);
-      myLoadingDecorator.stopLoading();
+      myLoadingIcon.setIcon(EmptyIcon.ICON_16);
     });
   }
 

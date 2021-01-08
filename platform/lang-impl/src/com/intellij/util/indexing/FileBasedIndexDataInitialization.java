@@ -93,12 +93,15 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
 
     PersistentIndicesConfiguration.loadConfiguration();
 
-    currentVersionCorrupted = CorruptionMarker.invalidateIndexesIfNeeded();
-
+    currentVersionCorrupted = CorruptionMarker.requireInvalidation();
     for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
       FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize();
-      currentVersionCorrupted = currentVersionCorrupted &&
+      currentVersionCorrupted = currentVersionCorrupted ||
                                 result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
+    }
+
+    if (currentVersionCorrupted) {
+      CorruptionMarker.dropIndexes();
     }
   }
 

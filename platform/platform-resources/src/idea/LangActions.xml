@@ -774,7 +774,7 @@
 
     <group id="EditorLangPopupMenu">
       <separator/>
-      <group id="EditorPopupMenu.GoTo" popup="true" class="com.intellij.ide.actions.EditorPopupNoSelectionGroup">
+      <group id="EditorPopupMenu.GoTo" popup="true">
         <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
         <reference ref="GotoImplementation"/>

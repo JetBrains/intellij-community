@@ -48,6 +48,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private int myTextStartXCoordinate;
   public static final String INDENT = "  ";
   public static final String NAME_VALUE_SEPARATION = XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
+  boolean myPopupIsShown = false;
 
   InlineDebugRenderer(SimpleColoredText text,
                       XValueNodeImpl valueNode,

@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
@@ -14,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -37,7 +40,7 @@ import java.util.Set;
  * @author gregsh
  */
 final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
-  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 4);
+  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 5);
 
   private final EventId1<Integer> MODULES_TOTAL = GROUP.registerEvent("modules.total", EventFields.Count);
   private final EventId1<Integer> CONTENT_ROOTS_TOTAL = GROUP.registerEvent("content.roots.total", EventFields.Count);
@@ -57,6 +60,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
   private final EventId1<Integer> PACKAGE_PREFIX = GROUP.registerEvent("package.prefix", EventFields.Count);
   private final EventId1<Integer> NAMED_SCOPES_TOTAL_LOCAL = GROUP.registerEvent("named.scopes.total.local", EventFields.Count);
   private final EventId1<Integer> NAMED_SCOPES_TOTAL_SHARED = GROUP.registerEvent("named.scopes.total.shared", EventFields.Count);
+  private final EventId PROJECT_IN_WSL = GROUP.registerEvent("project.in.wsl");
 
   @Override
   public EventLogGroup getGroup() {
@@ -111,6 +115,11 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
     result.add(NAMED_SCOPES_TOTAL_LOCAL.metric(localScopes.length));
     NamedScope[] sharedScopes = DependencyValidationManager.getInstance(project).getEditableScopes();
     result.add(NAMED_SCOPES_TOTAL_SHARED.metric(sharedScopes.length));
+
+    String basePath = project.getBasePath();
+    if (basePath != null && FileUtil.toSystemDependentName(basePath).startsWith(WSLDistribution.UNC_PREFIX)) {
+      result.add(PROJECT_IN_WSL.metric());
+    }
 
     return result;
   }

@@ -213,7 +213,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
     }
 
     private void addUpdateRequest(final Runnable updateRequest) {
-      myUpdateAlarm.addRequest(updateRequest, 500, ModalityState.stateForComponent(getWindow()));
+      Window window = getWindow();
+      myUpdateAlarm.addRequest(updateRequest, 500, window == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(window));
     }
 
     @Override

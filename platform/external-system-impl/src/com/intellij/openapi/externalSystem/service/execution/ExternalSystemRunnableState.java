@@ -328,18 +328,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   }
 
   private BuildView createBuildView(DefaultBuildDescriptor buildDescriptor, ExecutionConsole executionConsole) {
-    return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state",
-                         new ViewManager() {
-                           @Override
-                           public boolean isConsoleEnabledByDefault() {
-                             return true;
-                           }
-
-                           @Override
-                           public boolean isBuildContentView() {
-                             return false;
-                           }
-                         });
+    ExternalSystemRunConfigurationViewManager viewManager = myProject.getService(ExternalSystemRunConfigurationViewManager.class);
+    return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state", viewManager) {
+      @Override
+      public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+        super.onEvent(buildId, event);
+        viewManager.onEvent(buildId, event);
+      }
+    };
   }
 
   public void setContentDescriptor(@Nullable RunContentDescriptor contentDescriptor) {

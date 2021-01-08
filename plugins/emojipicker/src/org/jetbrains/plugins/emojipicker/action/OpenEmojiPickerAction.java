@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.emojipicker.ui.EmojiPicker;
 import org.jetbrains.plugins.emojipicker.ui.EmojiSearchField;
@@ -85,7 +86,8 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(getContext(e, true) == Context.FOUND);
+    boolean enabled = SystemInfo.isLinux && EmojiPicker.isAvailable() && getContext(e, true) == Context.FOUND;
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override

@@ -33,6 +33,14 @@ object ExtractMethodHelper {
     return if (selectionModel.hasSelection()) TextRange(selectionModel.selectionStart, selectionModel.selectionEnd) else null
   }
 
+  fun isNullabilityAvailable(extractOptions: ExtractOptions): Boolean {
+    val project = extractOptions.project
+    val scope = extractOptions.elements.first().resolveScope
+    val defaultNullable = NullableNotNullManager.getInstance(project).defaultNullable
+    val annotationClass = JavaPsiFacade.getInstance(project).findClass(defaultNullable, scope)
+    return annotationClass != null
+  }
+
   fun wrapWithCodeBlock(elements: List<PsiElement>): List<PsiCodeBlock> {
     require(elements.isNotEmpty())
     val codeBlock = PsiElementFactory.getInstance(elements.first().project).createCodeBlock()

@@ -9,7 +9,6 @@ import com.intellij.execution.ui.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.rt.execution.junit.RepeatCount;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,11 +21,6 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
 
   public JUnitSettingsEditor(JUnitConfiguration runConfiguration) {
     super(runConfiguration);
-  }
-
-  @Override
-  protected @NotNull SettingsEditorFragment<JUnitConfiguration, ModuleClasspathCombo> createClasspathCombo() {
-    return CommonJavaFragments.moduleClasspath(null, null, null);
   }
 
   @Override

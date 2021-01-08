@@ -103,7 +103,7 @@ public class FunctionParsing extends Parsing {
    * Parses decorator expression after {@code @} according to PEP-614
    */
   public void parseDecoratorExpression() {
-    if (!getExpressionParser().parseSingleExpression(false)) {
+    if (!getExpressionParser().parseNamedTestExpression(false, false)) {
       myBuilder.error(message("PARSE.expected.expression"));
     }
   }

@@ -1,30 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions
-import com.intellij.openapi.keymap.impl.ui.KeymapPanel
-import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
-import training.keymap.KeymapUtil
-import training.learn.LearnBundle
-import training.util.invokeActionForFocusContext
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.RoundRectangle2D
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JTextPane
 import javax.swing.text.AttributeSet
 import javax.swing.text.BadLocationException
 import javax.swing.text.SimpleAttributeSet
@@ -40,7 +30,7 @@ class LessonMessagePane : JTextPane() {
     var end: Int = 0
   )
 
-  private data class RangeData(var range: IntRange, val action: (Point) -> Unit)
+  private data class RangeData(var range: IntRange, val action: (Point, Int) -> Unit)
 
   private val activeMessages = mutableListOf<LessonMessage>()
   private val restoreMessages = mutableListOf<LessonMessage>()
@@ -64,7 +54,7 @@ class LessonMessagePane : JTextPane() {
         val rangeData = getRangeDataForMouse(me) ?: return
         val middle = (rangeData.range.first + rangeData.range.last) / 2
         val rectangle = modelToView(middle)
-        rangeData.action(Point(rectangle.x, (rectangle.y + rectangle.height)))
+        rangeData.action(Point(rectangle.x, (rectangle.y + rectangle.height/2)), rectangle.height)
       }
 
       override fun mouseMoved(me: MouseEvent) {
@@ -201,7 +191,7 @@ class LessonMessagePane : JTextPane() {
         when (part.type) {
           MessagePart.MessageType.TEXT_REGULAR -> insertText(part.text, REGULAR)
           MessagePart.MessageType.TEXT_BOLD -> insertText(part.text, BOLD)
-          MessagePart.MessageType.SHORTCUT -> appendShortcut(part).let { ranges.add(it) }
+          MessagePart.MessageType.SHORTCUT -> appendShortcut(part)?.let { ranges.add(it) }
           MessagePart.MessageType.CODE -> insertText(" ${part.text} ", CODE)
           MessagePart.MessageType.CHECK -> insertText(part.text, ROBOTO)
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
@@ -254,47 +244,19 @@ class LessonMessagePane : JTextPane() {
   private fun appendLink(messagePart: MessagePart): RangeData? {
     val clickRange = appendClickableRange(messagePart.text, LINK)
     val runnable = messagePart.runnable ?: return null
-    return RangeData(clickRange) { runnable.run() }
+    return RangeData(clickRange) { _, _ -> runnable.run() }
   }
 
-  private fun appendShortcut(messagePart: MessagePart): RangeData {
+  private fun appendShortcut(messagePart: MessagePart): RangeData? {
     val range = appendClickableRange(" ${messagePart.text} ", SHORTCUT)
+    val actionId = messagePart.link ?: return null
     val clickRange = IntRange(range.first + 1, range.last - 1) // exclude around spaces
-    return RangeData(clickRange) { showShortcutBalloon(it, messagePart.link, messagePart.text) }
+    return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId) }
   }
 
-  private fun showShortcutBalloon(it: Point, actionName: String?, shortcut: String) {
-    lateinit var balloon: Balloon
-    val jPanel = JPanel()
-    jPanel.layout = BoxLayout(jPanel, BoxLayout.Y_AXIS)
-    if (SystemInfo.isMac) {
-      jPanel.add(JLabel(KeymapUtil.decryptMacShortcut(shortcut)))
-    }
-    val action = actionName?.let { ActionManager.getInstance().getAction(it) }
-    if (action != null) {
-      jPanel.add(JLabel(action.templatePresentation.text))
-      jPanel.add(LinkLabel<Any>(LearnBundle.message("shortcut.balloon.apply.this.action"), null) { _, _ ->
-        invokeActionForFocusContext(action)
-        balloon.hide()
-      })
-      jPanel.add(LinkLabel<Any>(LearnBundle.message("shortcut.balloon.add.shortcut"), null) { _, _ ->
-        KeymapPanel.addKeyboardShortcut(actionName, ActionShortcutRestrictions.getInstance().getForActionId(actionName),
-                                        KeymapManager.getInstance().activeKeymap, this)
-        balloon.hide()
-        repaint()
-      })
-    }
-    val builder = JBPopupFactory.getInstance()
-      .createDialogBalloonBuilder(jPanel, null)
-      //.setRequestFocus(true)
-      .setHideOnClickOutside(true)
-      .setCloseButtonEnabled(true)
-      .setAnimationCycle(0)
-      .setBlockClicksThroughBalloon(true)
-    //.setContentInsets(Insets(0, 0, 0, 0))
-    builder.setBorderColor(JBColor(Color.BLACK, Color.WHITE))
-    balloon = builder.createBalloon()
-    balloon.show(RelativePoint(this, it), Balloon.Position.below)
+  private fun showShortcutBalloon(point: Point, height: Int, actionName: String?) {
+    if (actionName == null) return
+    showActionKeyPopup(this, point, height, actionName)
   }
 
   private fun appendClickableRange(clickable: String, attributeSet: SimpleAttributeSet): IntRange {

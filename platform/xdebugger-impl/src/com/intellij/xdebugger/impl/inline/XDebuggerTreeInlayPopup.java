@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -116,11 +117,13 @@ public class XDebuggerTreeInlayPopup<D> {
   private JComponent createToolbar(JPanel mainPanel, Tree tree) {
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.addAll(getCustomizedActionGroup(XDebuggerActions.WATCHES_INLINE_POPUP_GROUP));
-    AnAction watchAction = myValueNode instanceof InlineWatchNodeImpl
-                           ? new EditInlineWatch()
-                           : new AddInlineWatch();
+    if (Registry.is("debugger.watches.inline.enabled")) {
+      AnAction watchAction = myValueNode instanceof InlineWatchNodeImpl
+                             ? new EditInlineWatch()
+                             : new AddInlineWatch();
 
-    toolbarActions.add(watchAction, Constraints.LAST);
+      toolbarActions.add(watchAction, Constraints.LAST);
+    }
 
     DefaultActionGroup wrappedActions = new DefaultActionGroup();
     for (AnAction action : toolbarActions.getChildren(null)) {

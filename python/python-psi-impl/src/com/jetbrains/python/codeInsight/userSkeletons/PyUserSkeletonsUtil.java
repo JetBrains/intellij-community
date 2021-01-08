@@ -227,7 +227,7 @@ public class PyUserSkeletonsUtil {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
       if (moduleName != null) {
         final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
-        final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(qName, null);
+        final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(file, qName, null);
         if (restored != null) {
           moduleName = restored.toString();
         }

@@ -26,6 +26,12 @@ class Normal14CompletionTest extends NormalCompletionTestCase {
     myFixture.checkResult("record X() cla")
   }
 
+  void testRecordComponentName() {
+    myFixture.configureByText("a.java", "record FooBar(FooBar fo<caret>)")
+    myFixture.completeBasic()
+    myFixture.checkResult("record FooBar(FooBar fooBar)")
+  }
+
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters generation)")
   void testRecordAccessorDeclaration() {
     doTest()
