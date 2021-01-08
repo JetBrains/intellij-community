@@ -150,22 +150,22 @@ public final class UpdateRequestsQueue {
                                 @NotNull InvokeAfterUpdateMode mode,
                                 @Nullable String title) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final InvokeAfterUpdateCallback.CallbackData data = InvokeAfterUpdateCallback.create(myProject, mode, afterUpdate, title);
+    InvokeAfterUpdateCallback.Callback callback = InvokeAfterUpdateCallback.create(myProject, mode, afterUpdate, title);
 
     boolean stopped;
     synchronized (myLock) {
       stopped = myStopped;
       if (!stopped) {
-        myWaitingUpdateCompletionQueue.add(data::endProgress);
+        myWaitingUpdateCompletionQueue.add(callback::endProgress);
         schedule();
       }
     }
     if (stopped) {
       LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
-      data.handleStoppedQueue();
+      callback.handleStoppedQueue();
     }
     else {
-      data.startProgress();
+      callback.startProgress();
       LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
     }
   }

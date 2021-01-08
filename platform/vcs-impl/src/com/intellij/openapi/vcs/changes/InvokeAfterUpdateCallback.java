@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 class InvokeAfterUpdateCallback {
   private final static Logger LOG = Logger.getInstance(InvokeAfterUpdateCallback.class);
 
-  interface CallbackData {
+  interface Callback {
     void startProgress();
 
     void endProgress();
@@ -39,23 +39,23 @@ class InvokeAfterUpdateCallback {
   }
 
   @NotNull
-  public static CallbackData create(@NotNull Project project,
-                                    @NotNull InvokeAfterUpdateMode mode,
-                                    @NotNull Runnable afterUpdate,
-                                    @Nullable String title) {
+  public static Callback create(@NotNull Project project,
+                                @NotNull InvokeAfterUpdateMode mode,
+                                @NotNull Runnable afterUpdate,
+                                @Nullable String title) {
     if (mode.isSilent()) {
-      return new SilentCallbackData(project, afterUpdate, mode.isCallbackOnAwt());
+      return new SilentCallback(project, afterUpdate, mode.isCallbackOnAwt());
     }
     else {
-      return new TaskCallbackData(project, afterUpdate, mode.isSynchronous(), mode.isCancellable(), title);
+      return new ProgressCallback(project, afterUpdate, mode.isSynchronous(), mode.isCancellable(), title);
     }
   }
 
-  private abstract static class CallbackDataBase implements CallbackData {
+  private abstract static class CallbackBase implements Callback {
     protected final Project myProject;
     private final Runnable myAfterUpdate;
 
-    CallbackDataBase(@NotNull Project project, @NotNull Runnable afterUpdate) {
+    CallbackBase(@NotNull Project project, @NotNull Runnable afterUpdate) {
       myProject = project;
       myAfterUpdate = afterUpdate;
     }
@@ -66,12 +66,12 @@ class InvokeAfterUpdateCallback {
     }
   }
 
-  private static class SilentCallbackData extends CallbackDataBase {
+  private static class SilentCallback extends CallbackBase {
     private final boolean myCallbackOnAwt;
 
-    SilentCallbackData(@NotNull Project project,
-                       @NotNull Runnable afterUpdate,
-                       boolean callbackOnAwt) {
+    SilentCallback(@NotNull Project project,
+                   @NotNull Runnable afterUpdate,
+                   boolean callbackOnAwt) {
       super(project, afterUpdate);
       myCallbackOnAwt = callbackOnAwt;
     }
@@ -100,14 +100,14 @@ class InvokeAfterUpdateCallback {
     }
   }
 
-  private static class TaskCallbackData extends CallbackDataBase {
+  private static class ProgressCallback extends CallbackBase {
     private final boolean mySynchronous;
     private final boolean myCanBeCancelled;
     private final @NlsContexts.ProgressTitle String myTaskTitle;
 
     @NotNull private final Semaphore mySemaphore = new Semaphore(1);
 
-    TaskCallbackData(@NotNull Project project,
+    ProgressCallback(@NotNull Project project,
                      @NotNull Runnable afterUpdate,
                      boolean synchronous,
                      boolean canBeCancelled,
@@ -121,10 +121,10 @@ class InvokeAfterUpdateCallback {
     @Override
     public void startProgress() {
       if (mySynchronous) {
-        new ModalWaiterTask().queue();
+        new ModalWaiter().queue();
       }
       else {
-        new BackgroundableWaiterTask().queue();
+        new BackgroundableWaiter().queue();
       }
     }
 
@@ -144,9 +144,9 @@ class InvokeAfterUpdateCallback {
       ProgressIndicatorUtils.awaitWithCheckCanceled(mySemaphore, indicator);
     }
 
-    private class ModalWaiterTask extends Task.Modal {
-      ModalWaiterTask() {
-        super(TaskCallbackData.this.myProject, myTaskTitle, myCanBeCancelled);
+    private class ModalWaiter extends Task.Modal {
+      ModalWaiter() {
+        super(ProgressCallback.this.myProject, myTaskTitle, myCanBeCancelled);
         setCancelText(VcsBundle.message("button.skip"));
       }
 
@@ -161,9 +161,9 @@ class InvokeAfterUpdateCallback {
       }
     }
 
-    private class BackgroundableWaiterTask extends Task.Backgroundable {
-      BackgroundableWaiterTask() {
-        super(TaskCallbackData.this.myProject, myTaskTitle, myCanBeCancelled);
+    private class BackgroundableWaiter extends Task.Backgroundable {
+      BackgroundableWaiter() {
+        super(ProgressCallback.this.myProject, myTaskTitle, myCanBeCancelled);
       }
 
       @Override
