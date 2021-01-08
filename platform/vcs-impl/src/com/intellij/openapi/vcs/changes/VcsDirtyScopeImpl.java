@@ -381,19 +381,26 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       if (isInDirtyFiles(path, vcsRoot)) return true;
 
       FilePath parent = path.getParentPath();
-      if (parent != null && isInDirtyFiles(parent, !pathIsRoot ? vcsRoot : null)) return true;
+      if (parent != null) {
+        if (pathIsRoot) {
+          if (isInDirtyFiles(parent)) return true;
+        }
+        else {
+          if (isInDirtyFiles(parent, vcsRoot)) return true;
+        }
+      }
     }
 
     return false;
   }
 
-  private boolean isInDirtyFiles(@NotNull FilePath path, @Nullable VirtualFile vcsRoot) {
-    if (vcsRoot == null) {
-      VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
-      if (rootObject == null || !myVcs.equals(rootObject.getVcs())) return false;
-      vcsRoot = rootObject.getPath();
-    }
+  private boolean isInDirtyFiles(@NotNull FilePath path) {
+    VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
+    if (rootObject == null || !myVcs.equals(rootObject.getVcs())) return false;
+    return isInDirtyFiles(path, rootObject.getPath());
+  }
 
+  private boolean isInDirtyFiles(@NotNull FilePath path, @NotNull VirtualFile vcsRoot) {
     final Set<FilePath> files = myDirtyFiles.get(vcsRoot);
     return files != null && files.contains(path);
   }
