@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -106,8 +107,10 @@ public class PyImportCollector {
 
   private void addSymbolImportCandidates(PsiFile existingImportFile) {
     Project project = myNode.getProject();
-    List<PsiNamedElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, true));
-    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(myNode);
+    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(myNode)
+      .intersectWith(GlobalSearchScope.notScope(PyUserSkeletonsUtil.getUserSkeletonsDirectoryScope(project)));
+
+    List<PsiNamedElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, scope));
     if (!isQualifier()) {
       symbols.addAll(PyFunctionNameIndex.find(myRefText, project, scope));
     }
