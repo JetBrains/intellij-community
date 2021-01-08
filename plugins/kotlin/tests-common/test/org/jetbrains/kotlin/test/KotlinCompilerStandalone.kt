@@ -34,6 +34,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.reflect.KClass
 import org.jetbrains.kotlin.test.KotlinCompilerStandalone.Platform.Jvm
 import org.jetbrains.kotlin.test.KotlinCompilerStandalone.Platform.JavaScript
+import java.nio.charset.StandardCharsets
 
 class KotlinCompilerStandalone @JvmOverloads constructor(
     private val sources: List<File>,
@@ -242,10 +243,10 @@ object KotlinCliCompilerFacade {
     // Runs compiler in custom class loader to avoid effects caused by replacing Application with another one created in compiler.
     private fun runCompiler(compilerClass: Class<*>, args: List<String>) {
         val outStream = ByteArrayOutputStream()
-        val compiler = compilerClass.newInstance()
+        val compiler = compilerClass.getDeclaredConstructor().newInstance()
         val execMethod = compilerClass.getMethod("exec", PrintStream::class.java, Array<String>::class.java)
         val invocationResult = execMethod.invoke(compiler, PrintStream(outStream), args.toTypedArray()) as Enum<*>
-        assertEquals(String(outStream.toByteArray()), ExitCode.OK.name, invocationResult.name)
+        assertEquals(String(outStream.toByteArray(), StandardCharsets.UTF_8), ExitCode.OK.name, invocationResult.name)
     }
 
     @Synchronized
