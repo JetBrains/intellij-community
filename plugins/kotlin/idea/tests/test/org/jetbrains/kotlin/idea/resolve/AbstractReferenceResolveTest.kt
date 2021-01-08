@@ -43,7 +43,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 
-    protected fun doSingleResolveTest() {
+    private fun doSingleResolveTest() {
         forEachCaret { index, offset ->
             val expectedResolveData = readResolveData(myFixture.file.text, index, refMarkerText)
             val psiReference = wrapReference(myFixture.file.findReferenceAt(offset))
@@ -58,7 +58,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
     open fun wrapReference(reference: PsiReference?): PsiReference? = reference
     open fun wrapReference(reference: PsiPolyVariantReference): PsiPolyVariantReference = reference
 
-    protected fun doMultiResolveTest() {
+    private fun doMultiResolveTest() {
         forEachCaret { index, offset ->
             val expectedReferences = getExpectedReferences(myFixture.file.text, index, refMarkerText)
 
