@@ -33,13 +33,13 @@ abstract class TargetPresentationMainRenderer<T> : ColoredListCellRenderer<T>(),
     icon = presentation.icon
     background = if (selected) UIUtil.getListSelectionBackground(hasFocus) else bgColor
 
-    val nameAttributes = presentation.presentableAttributes?.let(::fromTextAttributes)
+    val nameAttributes = presentation.presentableTextAttributes?.let(::fromTextAttributes)
                          ?: SimpleTextAttributes(STYLE_PLAIN, list.foreground)
     val matcher = MatcherHolder.getAssociatedMatcher(list)
     appendColoredFragmentForMatcher(presentation.presentableText, this, nameAttributes, matcher, bgColor, selected)
 
     presentation.locationText?.let { locationText ->
-      val locationAttributes = presentation.locationAttributes?.let {
+      val locationAttributes = presentation.locationTextAttributes?.let {
         merge(defaultLocationAttributes, fromTextAttributes(it))
       } ?: defaultLocationAttributes
       append(DEFAULT_LOCATION_PREFIX, defaultLocationAttributes)

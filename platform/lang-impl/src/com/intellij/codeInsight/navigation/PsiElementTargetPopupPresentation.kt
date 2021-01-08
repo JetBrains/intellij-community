@@ -52,13 +52,13 @@ class PsiElementTargetPopupPresentation(private val myElement: PsiElement) : Tar
             ?: (myElement as? PsiNamedElement)?.name
             ?: myElement.text
 
-  override val presentableAttributes: TextAttributes?
+  override val presentableTextAttributes: TextAttributes?
     get() = myItemPresentation?.getColoredAttributes()
 
   override val locationText: String?
     get() = myItemPresentation?.getLocationText()
 
-  override val locationAttributes: TextAttributes?
+  override val locationTextAttributes: TextAttributes?
     get() {
       val virtualFile = myVirtualFile ?: return null
       val locationColor = FileStatusManager.getInstance(myProject).getStatus(virtualFile)?.color

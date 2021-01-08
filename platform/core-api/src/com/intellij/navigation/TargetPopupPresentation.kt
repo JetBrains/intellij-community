@@ -31,7 +31,7 @@ interface TargetPopupPresentation {
    * Attributes to highlight [presentableText]
    */
   @JvmDefault
-  val presentableAttributes: TextAttributes?
+  val presentableTextAttributes: TextAttributes?
     get() = null
 
   @JvmDefault
@@ -42,7 +42,7 @@ interface TargetPopupPresentation {
    * Attributes to highlight [locationText]
    */
   @JvmDefault
-  val locationAttributes: TextAttributes?
+  val locationTextAttributes: TextAttributes?
     get() = null
 
   @JvmDefault

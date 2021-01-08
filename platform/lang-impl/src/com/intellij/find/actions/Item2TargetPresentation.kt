@@ -14,7 +14,7 @@ internal class Item2TargetPresentation(private val itemPresentation: ItemPresent
 
   override val presentableText: String get() = itemPresentation.presentableText ?: ""
 
-  override val presentableAttributes: TextAttributes? get() = itemPresentation.getColoredAttributes()
+  override val presentableTextAttributes: TextAttributes? get() = itemPresentation.getColoredAttributes()
 
   override val locationText: String? get() = itemPresentation.getLocationText()
 }
