@@ -10,11 +10,14 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 
-abstract class AbstractNavigateFromLibrarySourcesTest : LightJavaCodeInsightFixtureTestCase() {
+abstract class AbstractNavigateFromLibrarySourcesTest : KotlinLightCodeInsightFixtureTestCase() {
     protected fun navigationElementForReferenceInLibrarySource(filePath: String, referenceText: String): PsiElement {
-        val libraryOrderEntry = ModuleRootManager.getInstance(module).orderEntries.first { it is LibraryOrderEntry }
+        val libraryOrderEntry = ModuleRootManager.getInstance(module).orderEntries
+            .first { it is LibraryOrderEntry && it.libraryName == MockLibraryFacility.MOCK_LIBRARY_NAME }
+
         val libSourcesRoot = libraryOrderEntry.getUrls(OrderRootType.SOURCES)[0]
         val libUrl = "$libSourcesRoot/$filePath"
         val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(libUrl) ?: error("Can't find library: $libUrl")
