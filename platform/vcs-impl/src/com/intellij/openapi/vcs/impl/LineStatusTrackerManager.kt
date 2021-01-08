@@ -924,7 +924,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
 
   internal fun collectPartiallyChangedFilesStates(): List<ChangelistsLocalLineStatusTracker.FullState> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ApplicationManager.getApplication().assertIsDispatchThread()
     val result = mutableListOf<ChangelistsLocalLineStatusTracker.FullState>()
     synchronized(LOCK) {
       for (data in trackers.values) {

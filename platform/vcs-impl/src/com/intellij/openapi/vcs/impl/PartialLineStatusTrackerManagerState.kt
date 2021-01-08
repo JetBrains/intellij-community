@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker.RangeState
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
@@ -60,21 +61,30 @@ class PartialLineStatusTrackerManagerState(private val project: Project) : Persi
     @JvmStatic
     fun restoreState(project: Project) {
       val states = project.service<PartialLineStatusTrackerManagerState>().getStatesAndClear()
+      if (states.isEmpty()) return
+
       restoreState(project, states)
     }
 
+    @RequiresEdt
     @JvmStatic
     fun restoreState(project: Project, element: Element) {
-      val states = parseStates(element)
-      restoreState(project, states)
+      val fileStates = parseStates(element)
+      if (fileStates.isEmpty()) return
+
+      val stateService = project.service<PartialLineStatusTrackerManagerState>()
+      if (!stateService.wasLoaded) {
+        stateService.storedFileStates = fileStates
+      }
+      else {
+        restoreState(project, fileStates)
+      }
     }
 
     @JvmStatic
-    private fun restoreState(project: Project, states: List<TrackerState>) {
-      if (states.isNotEmpty()) {
-        ChangeListManager.getInstance(project).invokeAfterUpdate(true) {
-          LineStatusTrackerManager.getInstanceImpl(project).restoreTrackersForPartiallyChangedFiles(states)
-        }
+    private fun restoreState(project: Project, fileStates: List<TrackerState>) {
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true) {
+        LineStatusTrackerManager.getInstanceImpl(project).restoreTrackersForPartiallyChangedFiles(fileStates)
       }
     }
 

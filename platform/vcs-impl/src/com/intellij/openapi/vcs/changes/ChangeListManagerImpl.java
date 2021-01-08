@@ -308,8 +308,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   private void startUpdater() {
-    updateChangeListAvailability();
-
     myUpdater.initialized();
     BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeListsCopy());
 
@@ -1230,8 +1228,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
 
     synchronized (myDataLock) {
-      ChangeListManagerSerialization.readExternal(element, myWorker);
+      boolean isEnabled = shouldEnableChangeLists();
+      myWorker.setChangeListsEnabled(isEnabled);
+
       myDisabledChangeListsState = ChangeListManagerSerialization.readDisabledChangeLists(element);
+      if (isEnabled && myDisabledChangeListsState != null) {
+        ChangeListManagerSerialization.loadDisabledChangeLists(myDisabledChangeListsState, myWorker);
+        myDisabledChangeListsState = null;
+      }
+      else {
+        ChangeListManagerSerialization.readExternal(element, myWorker);
+      }
     }
     myConflictTracker.loadState(element);
   }
@@ -1417,38 +1424,30 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return true;
   }
 
+  @RequiresEdt
   private void updateChangeListAvailability() {
-    // Save state immediately, before LSTM trackers were replaced
-    Element currentChangeListState = !shouldEnableChangeLists() ? ReadAction.compute(() -> {
-      synchronized (myDataLock) {
-        return ChangeListManagerSerialization.saveDisabledChangeLists(myWorker);
+    boolean enabled = shouldEnableChangeLists();
+
+    Element currentChangeListState = !enabled ? ChangeListManagerSerialization.saveDisabledChangeLists(myWorker) : null;
+
+    synchronized (myDataLock) {
+      if (enabled == myWorker.areChangeListsEnabled()) return;
+
+      if (!enabled && myDisabledChangeListsState == null) {
+        myDisabledChangeListsState = currentChangeListState;
       }
-    }) : null;
 
-    myScheduler.submit(() -> {
-      ReadAction.run(() -> {
-        if (Disposer.isDisposed(this)) return;
+      myWorker.setChangeListsEnabled(enabled);
 
-        boolean enabled = shouldEnableChangeLists();
-        synchronized (myDataLock) {
-          if (enabled == myWorker.areChangeListsEnabled()) return;
+      if (enabled && myDisabledChangeListsState != null) {
+        // Schedule refresh to ensure that invokeAfterUpdate in LSTM will receive up-to-date changes
+        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+        ChangesViewManager.getInstance(myProject).scheduleRefresh();
 
-          if (!enabled && myDisabledChangeListsState == null) {
-            myDisabledChangeListsState = currentChangeListState;
-          }
-
-          myWorker.setChangeListsEnabled(enabled);
-
-          if (enabled && myDisabledChangeListsState != null) {
-            // Refresh to ensure that invokeAfterUpdate in LSTM will receive up-to-date changes
-            VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-            ChangeListManagerSerialization.loadDisabledChangeLists(myDisabledChangeListsState, myWorker);
-            ChangesViewManager.getInstance(myProject).scheduleRefresh();
-            myDisabledChangeListsState = null;
-          }
-        }
-      });
-    });
+        ChangeListManagerSerialization.loadDisabledChangeLists(myDisabledChangeListsState, myWorker);
+        myDisabledChangeListsState = null;
+      }
+    }
   }
 
   private boolean shouldEnableChangeLists() {
