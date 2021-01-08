@@ -31,6 +31,11 @@ public final class SearchEverywhereUsageTriggerCollector {
   public static final String SELECTED_ITEM_NUMBER = "selectedItemNumber";
   public static final String TYPED_SYMBOL_KEYS = "typedSymbolKeys";
   public static final String TYPED_NAVIGATION_KEYS = "typedNavigationKeys";
+  public static final String TYPED_BACKSPACES_DATA_KEY = "typedBackspaces";
+  public static final String SESSION_ID_LOG_DATA_KEY = "sessionId";
+  public static final String COLLECTED_RESULTS_DATA_KEY = "collectedResults";
+  public static final String SELECTED_INDEXES_DATA_KEY = "selectedIndexes";
+  public static final String TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount";
 
   public static void trigger(@Nullable Project project, @NotNull String feature) {
     trigger(project, feature, new FeatureUsageData());
