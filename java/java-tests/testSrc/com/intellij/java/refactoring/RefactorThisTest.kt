@@ -83,8 +83,28 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertFalse(doActionExists<TurnRefsToSuperAction>())
   }
 
-  fun testSafeDeleteIsFiltered() {
+  fun testSafeDeleteIsFilteredOnClassReference() {
     assertFalse(doActionExists<SafeDeleteAction>())
+  }
+
+  fun testSafeDeleteIsFilteredOnMethodReference() {
+    assertFalse(doActionExists<SafeDeleteAction>())
+  }
+
+  fun testSafeDeleteIsFilteredOnVariableReference() {
+    assertFalse(doActionExists<SafeDeleteAction>())
+  }
+
+  fun testSafeDeleteOnClassDeclaration() {
+    assertTrue(doActionExists<SafeDeleteAction>())
+  }
+
+  fun testSafeDeleteOnMethodDeclaration() {
+    assertTrue(doActionExists<SafeDeleteAction>())
+  }
+
+  fun testSafeDeleteOnVariableDeclaration() {
+    assertTrue(doActionExists<SafeDeleteAction>())
   }
 
   fun testMoveIsFilteredOnStatement() {

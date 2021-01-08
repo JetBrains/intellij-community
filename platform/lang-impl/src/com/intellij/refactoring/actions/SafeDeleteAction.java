@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
@@ -61,8 +62,14 @@ public class SafeDeleteAction extends BaseRefactoringAction {
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
-    if (place.equals(ActionPlaces.REFACTORING_QUICKLIST)) return false;
-    return isAvailableOnElementInEditorAndFile(element, editor, file, context);
+    PsiElement targetElement = element;
+    if (place.equals(ActionPlaces.REFACTORING_QUICKLIST)) {
+      PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);
+      if (! PsiTreeUtil.isAncestor(element, caretElement, false)) {
+        targetElement = caretElement;
+      }
+    }
+    return isAvailableOnElementInEditorAndFile(targetElement, editor, file, context);
   }
 
   @Override
