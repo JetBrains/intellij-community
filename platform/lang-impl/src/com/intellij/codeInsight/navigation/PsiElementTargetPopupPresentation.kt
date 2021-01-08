@@ -38,36 +38,39 @@ class PsiElementTargetPopupPresentation(private val myElement: PsiElement) : Tar
     }
   }
 
-  override fun getBackgroundColor(): Color? {
-    val virtualFile = myVirtualFile ?: return null
-    return EditorTabPresentationUtil.getFileBackgroundColor(myProject, virtualFile)
-  }
-
-  override fun getIcon(): Icon? = myElement.getIcon(Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
-
-  override fun getPresentableText(): String {
-    return myItemPresentation?.presentableText
-           ?: (myElement as? PsiNamedElement)?.name
-           ?: myElement.text
-  }
-
-  override fun getPresentableAttributes(): TextAttributes? = myItemPresentation?.getColoredAttributes()
-
-  override fun getLocationText(): String? = myItemPresentation?.getLocationText()
-
-  override fun getLocationAttributes(): TextAttributes? {
-    val virtualFile = myVirtualFile ?: return null
-    val locationColor = FileStatusManager.getInstance(myProject).getStatus(virtualFile)?.color
-    val hasProblem = WolfTheProblemSolver.getInstance(myProject).isProblemFile(virtualFile)
-    return when {
-      hasProblem -> TextAttributes(locationColor, null, JBColor.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN)
-      locationColor != null -> TextAttributes(locationColor, null, null, null, Font.PLAIN)
-      else -> null
+  override val backgroundColor: Color?
+    get() {
+      val virtualFile = myVirtualFile ?: return null
+      return EditorTabPresentationUtil.getFileBackgroundColor(myProject, virtualFile)
     }
-  }
 
-  @Suppress("HardCodedStringLiteral") // inspection doesn't support type annotations in Kotlin
-  override fun getRightText(): String? = myModuleRendererData?.first
+  override val icon: Icon?
+    get() = myElement.getIcon(Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
 
-  override fun getRightIcon(): Icon? = myModuleRendererData?.second
+  override val presentableText: String
+    get() = myItemPresentation?.presentableText
+            ?: (myElement as? PsiNamedElement)?.name
+            ?: myElement.text
+
+  override val presentableAttributes: TextAttributes?
+    get() = myItemPresentation?.getColoredAttributes()
+
+  override val locationText: String?
+    get() = myItemPresentation?.getLocationText()
+
+  override val locationAttributes: TextAttributes?
+    get() {
+      val virtualFile = myVirtualFile ?: return null
+      val locationColor = FileStatusManager.getInstance(myProject).getStatus(virtualFile)?.color
+      val hasProblem = WolfTheProblemSolver.getInstance(myProject).isProblemFile(virtualFile)
+      return when {
+        hasProblem -> TextAttributes(locationColor, null, JBColor.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN)
+        locationColor != null -> TextAttributes(locationColor, null, null, null, Font.PLAIN)
+        else -> null
+      }
+    }
+
+  override val rightText: String? get() = myModuleRendererData?.first
+
+  override val rightIcon: Icon? get() = myModuleRendererData?.second
 }

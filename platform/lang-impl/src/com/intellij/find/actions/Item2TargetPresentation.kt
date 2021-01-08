@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions
 
 import com.intellij.codeInsight.navigation.getColoredAttributes
@@ -10,11 +10,11 @@ import javax.swing.Icon
 
 internal class Item2TargetPresentation(private val itemPresentation: ItemPresentation) : TargetPopupPresentation {
 
-  override fun getIcon(): Icon? = itemPresentation.getIcon(false)
+  override val icon: Icon? get() = itemPresentation.getIcon(false)
 
-  override fun getPresentableText(): String = itemPresentation.presentableText ?: ""
+  override val presentableText: String get() = itemPresentation.presentableText ?: ""
 
-  override fun getPresentableAttributes(): TextAttributes? = itemPresentation.getColoredAttributes()
+  override val presentableAttributes: TextAttributes? get() = itemPresentation.getColoredAttributes()
 
-  override fun getLocationText(): String? = itemPresentation.getLocationText()
+  override val locationText: String? get() = itemPresentation.getLocationText()
 }
