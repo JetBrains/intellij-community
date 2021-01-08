@@ -105,6 +105,7 @@ public class AllIcons {
     /** 16x16 */ public static final @Deprecated @NotNull Icon Menu_saveall = MenuSaveall;
     /** 16x16 */ public static final @NotNull Icon ModuleDirectory = load("actions/moduleDirectory.svg", -2537657051916062475L, 2);
     /** 16x16 */ public static final @NotNull Icon More = load("actions/more.svg", 2471097429083150951L, 2);
+    /** 16x16 */ public static final @NotNull Icon MoreHorizontal = load("actions/moreHorizontal.svg", -536130783500281121L, 2);
     /** 12x12 */ public static final @NotNull Icon MoveToButton = load("actions/move-to-button.svg", 7258801418676609324L, 2);
     /** 16x16 */ public static final @NotNull Icon MoveDown = load("actions/moveDown.svg", 6019790359720881156L, 2);
     /** 16x16 */ public static final @NotNull Icon MoveTo2 = load("actions/MoveTo2.svg", 3303221477623645841L, 2);
