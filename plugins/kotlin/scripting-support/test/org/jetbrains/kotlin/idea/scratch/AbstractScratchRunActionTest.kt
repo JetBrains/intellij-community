@@ -109,11 +109,6 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         val outputDir = FileUtil.createTempDirectory(dirName, "")
 
-        if (javaFiles.isNotEmpty()) {
-            val options = listOf("-d", outputDir.path)
-            compileJavaFiles(javaFiles, options)
-        }
-
         val kotlinArtifacts = KotlinArtifacts.instance
         KotlinCompilerStandalone(
             listOf(baseDir),
