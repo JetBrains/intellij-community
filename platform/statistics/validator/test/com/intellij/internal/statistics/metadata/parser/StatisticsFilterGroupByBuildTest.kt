@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.parser
 
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import org.junit.Assert
 import org.junit.Test
 
 class StatisticsFilterGroupByBuildTest {
 
   private fun doTestAccepted(content: String, build: String, vararg expected: String) {
-    val actual = EventLogMetadataUtils.parseGroupFilterRules(content)
+    val actual = EventGroupsFilterRules.create(content)
     for (e in expected) {
       Assert.assertTrue(actual.accepts(e, "4", build))
     }
@@ -19,7 +19,7 @@ class StatisticsFilterGroupByBuildTest {
   }
 
   private fun doTestRejectedWithVersion(content: String, build: String, version: String?, vararg expected: String) {
-    val actual = EventLogMetadataUtils.parseGroupFilterRules(content)
+    val actual = EventGroupsFilterRules.create(content)
     for (e in expected) {
       Assert.assertFalse(actual.accepts(e, version, build))
     }

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
+import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 import static java.util.Collections.emptyList;
 
 public class EventGroupFilterRules {
@@ -104,8 +104,8 @@ public class EventGroupFilterRules {
     @NotNull
     public static BuildRange create(@Nullable String from, @Nullable String to) {
       return new BuildRange(
-        isNotEmpty(from) ? EventLogBuild.fromString(from) : null,
-        isNotEmpty(to) ? EventLogBuild.fromString(to) : null
+        !ValidatorStringUtil.isEmpty(from) ? EventLogBuild.fromString(from) : null,
+        !ValidatorStringUtil.isEmpty(to) ? EventLogBuild.fromString(to) : null
       );
     }
 

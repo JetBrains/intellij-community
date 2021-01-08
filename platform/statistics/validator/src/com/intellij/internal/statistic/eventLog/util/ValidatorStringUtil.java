@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.util;
 
 import org.jetbrains.annotations.Contract;
@@ -86,6 +86,27 @@ public final class ValidatorStringUtil {
     }
     if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
       result.add(s.subSequence(pos, s.length()));
+    }
+    return result;
+  }
+
+  @NotNull
+  public static List<String> split(@NotNull String text, char separator) {
+    List<String> result = new ArrayList<>();
+    int pos = 0;
+    int index = text.indexOf(separator, pos);
+    while (index >= 0) {
+      final int nextPos = index + 1;
+      String token = text.substring(pos, index);
+      if (token.length() != 0) {
+        result.add(token);
+      }
+      pos = nextPos;
+      index = text.indexOf(separator, pos);
+    }
+
+    if (pos < text.length()) {
+      result.add(text.substring(pos));
     }
     return result;
   }

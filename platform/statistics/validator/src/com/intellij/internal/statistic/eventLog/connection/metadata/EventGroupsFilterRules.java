@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -70,5 +71,15 @@ public final class EventGroupsFilterRules {
   @Override
   public int hashCode() {
     return Objects.hash(myGroups);
+  }
+
+  @NotNull
+  public static EventGroupsFilterRules create(@Nullable String metadataContent) throws EventLogMetadataParseException {
+    EventGroupRemoteDescriptors groups = EventGroupRemoteDescriptors.create(metadataContent);
+    Map<String, EventGroupFilterRules> groupToCondition = new HashMap<>();
+    for (EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group : groups.groups) {
+      groupToCondition.put(group.id, EventGroupFilterRules.create(group));
+    }
+    return create(groupToCondition);
   }
 }

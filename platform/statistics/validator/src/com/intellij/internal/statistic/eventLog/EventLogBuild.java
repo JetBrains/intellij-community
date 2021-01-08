@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
+import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpaces;
-import static com.intellij.internal.statistic.StatisticsStringUtil.split;
 
 public final class EventLogBuild implements Comparable<EventLogBuild> {
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
@@ -25,14 +23,14 @@ public final class EventLogBuild implements Comparable<EventLogBuild> {
 
   @Nullable
   public static EventLogBuild fromString(@Nullable String version) {
-    if (version == null || isEmptyOrSpaces(version)) {
+    if (version == null || ValidatorStringUtil.isEmptyOrSpaces(version)) {
       return null;
     }
 
     String versionWithoutCode = removeProductCode(version);
     int separator = versionWithoutCode.indexOf('.');
     if (separator > 0) {
-      List<String> components = split(versionWithoutCode , '.');
+      List<String> components = ValidatorStringUtil.split(versionWithoutCode, '.');
       return new EventLogBuild(toIntArray(components));
     }
     return new EventLogBuild(tryParseInt(versionWithoutCode), 0);

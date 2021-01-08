@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpaces;
 
@@ -33,21 +31,11 @@ public final class EventLogMetadataUtils {
   public static EventGroupsFilterRules loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     try {
       String content = loadMetadataFromServer(serviceUrl, settings);
-      return parseGroupFilterRules(content);
+      return EventGroupsFilterRules.create(content);
     }
     catch (EventLogMetadataParseException | EventLogMetadataLoadException e) {
       return EventGroupsFilterRules.empty();
     }
-  }
-
-  @NotNull
-  public static EventGroupsFilterRules parseGroupFilterRules(@Nullable String content) throws EventLogMetadataParseException {
-    EventGroupRemoteDescriptors groups = EventGroupRemoteDescriptors.create(content);
-    Map<String, EventGroupFilterRules> groupToCondition = new HashMap<>();
-    for (EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group : groups.groups) {
-      groupToCondition.put(group.id, EventGroupFilterRules.create(group));
-    }
-    return EventGroupsFilterRules.create(groupToCondition);
   }
 
   @NotNull

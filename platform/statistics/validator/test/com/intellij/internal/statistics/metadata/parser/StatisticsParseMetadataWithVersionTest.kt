@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.parser
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils
 import com.intellij.internal.statistics.metadata.TestGroupFilterRulesBuilder
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -11,7 +10,7 @@ import kotlin.test.assertEquals
 class StatisticsParseMetadataWithVersionTest {
 
   private fun doTest(content: String, expected: EventGroupsFilterRules) {
-    val actual = EventLogMetadataUtils.parseGroupFilterRules(content)
+    val actual = EventGroupsFilterRules.create(content)
     assertEquals(expected.size, actual.size)
     assertEquals(expected, actual)
   }
