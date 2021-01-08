@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.CompositeNodeFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler;
@@ -58,17 +59,21 @@ public class GlobalCompilingVisitor {
         context.getPattern().isRealTypedVar(element) &&
         context.getPattern().getHandlerSimple(element) == null
       ) {
-      String name = context.getPattern().getTypedVarString(element);
+      final CompiledPattern pattern = context.getPattern();
+      String name = pattern.getTypedVarString(element);
       // name is the same for named element (clazz,methods, etc) and token (name of ... itself)
       // @todo need fix this
 
-      final SubstitutionHandler handler = (SubstitutionHandler)context.getPattern().getHandler(name);
+      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(name);
       if (handler == null) return;
-      context.getPattern().setHandler(element, handler);
+      pattern.setHandler(element, handler);
 
       if (context.getOptions().getVariableConstraint(handler.getName()).isPartOfSearchResults()) {
         handler.setTarget(true);
-        context.getPattern().setTargetNode(element);
+        final PsiElement targetNode = pattern.getTargetNode();
+        if (targetNode == null || targetNode == element.getParent()) {
+          pattern.setTargetNode(element);
+        }
       }
     }
   }

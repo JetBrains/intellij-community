@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.JavaCompilingVisitor;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.FormalArgTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
@@ -566,31 +567,22 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final LanguageFileType fileType = matchOptions.getFileType();
     final Language dialect = matchOptions.getDialect();
     final PatternContext patternContext = matchOptions.getPatternContext();
-    final PsiElement[] statements =
-      createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, dialect, patternContext.getId(), project, false);
-    final boolean searchIsExpression = isExpressionTemplate(statements);
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, false);
+    final PsiElement targetNode = compiledPattern.getTargetNode();
+    final boolean searchIsExpression = targetNode != null
+                                       ? getPresentableElement(targetNode) instanceof PsiExpression
+                                       : isExpressionTemplate(compiledPattern.getVariableNodes(Configuration.CONTEXT_VAR_NAME));
 
-    final PsiElement[] statements2 =
+    final PsiElement[] statements =
       createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, dialect, patternContext.getId(), project, false);
-    final boolean replaceIsExpression = isExpressionTemplate(statements2);
+    final boolean replaceIsExpression = isExpressionTemplate(Arrays.asList(statements));
 
     final ValidatingVisitor visitor = new ValidatingVisitor();
-    for (PsiElement statement : statements2) {
+    for (PsiElement statement : statements) {
       statement.accept(visitor);
     }
 
-    if (searchIsExpression && statements[0].getFirstChild() instanceof PsiModifierList && statements2.length == 0) {
-      return;
-    }
-    boolean targetFound = false;
-    for (final String name : matchOptions.getVariableConstraintNames()) {
-      final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
-      if (constraint.isPartOfSearchResults() && !Configuration.CONTEXT_VAR_NAME.equals(constraint.getName())) {
-        targetFound = true;
-        break;
-      }
-    }
-    if (!targetFound && searchIsExpression != replaceIsExpression) {
+    if (searchIsExpression != replaceIsExpression) {
       throw new UnsupportedPatternException(
         searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
         SSRBundle.message("search.template.is.not.expression.error.message")
@@ -598,12 +590,13 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
-  private static boolean isExpressionTemplate(PsiElement[] elements) {
-    if (elements.length != 1) {
+  private static boolean isExpressionTemplate(List<PsiElement> elements) {
+    if (elements.size() != 1) {
       return false;
     }
-    final PsiElement element = elements[0];
-    return element instanceof PsiExpression || element.getLastChild() instanceof PsiErrorElement;
+    final PsiElement element = elements.get(0);
+    return element instanceof PsiExpression ||
+           element instanceof PsiExpressionStatement && element.getLastChild() instanceof PsiErrorElement;
   }
 
   class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {
