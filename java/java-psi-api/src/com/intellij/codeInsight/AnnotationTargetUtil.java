@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -247,5 +248,21 @@ public final class AnnotationTargetUtil {
       if (type != null && !type.getType().equals(PsiType.VOID)) return type;
     }
     return list;
+  }
+  
+  public static void collectStrictlyTypeUseAnnotations(PsiModifierList modifierList, List<? super PsiAnnotation> annotations) {
+    if (modifierList == null) return;
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      PsiClass annotationClass = annotation.resolveAnnotationType();
+      if (annotationClass != null) {
+        Set<PsiAnnotation.TargetType> targets = getAnnotationTargets(annotationClass);
+        if (targets != null && targets.contains(PsiAnnotation.TargetType.TYPE_USE) &&
+            (targets.size() == 1 ||
+             !ContainerUtil.exists(getTargetsForLocation(modifierList),
+                                   target -> target != PsiAnnotation.TargetType.TYPE_USE && targets.contains(target)))) {
+          annotations.add(annotation);
+        }
+      }
+    }
   }
 }

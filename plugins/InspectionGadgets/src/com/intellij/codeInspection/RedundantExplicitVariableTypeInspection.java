@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -10,6 +11,8 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -42,19 +45,23 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
         }
       }
 
-       private void doCheck(PsiVariable variable,
-                            PsiVariable copyVariable,
-                            PsiTypeElement element2Highlight) {
-         PsiTypeElement typeElementCopy = copyVariable.getTypeElement();
-         if (typeElementCopy != null) {
-           IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
-           if (variable.getType().equals(getNormalizedType(copyVariable))) {
-             holder.registerProblem(element2Highlight,
-                                    InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"),
-                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                    new ReplaceWithVarFix());
-           }
-         }
+      private void doCheck(PsiVariable variable,
+                           PsiVariable copyVariable,
+                           PsiTypeElement element2Highlight) {
+        ArrayList<PsiAnnotation> typeUseAnnotations = new ArrayList<>();
+        AnnotationTargetUtil.collectStrictlyTypeUseAnnotations(copyVariable.getModifierList(), typeUseAnnotations);
+        if (!typeUseAnnotations.isEmpty()) return;
+
+        PsiTypeElement typeElementCopy = copyVariable.getTypeElement();
+        if (typeElementCopy != null) {
+          IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
+          if (variable.getType().equals(getNormalizedType(copyVariable))) {
+            holder.registerProblem(element2Highlight,
+                                   InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"),
+                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                   new ReplaceWithVarFix());
+          }
+        }
        }
 
       private PsiType getNormalizedType(PsiVariable copyVariable) {
