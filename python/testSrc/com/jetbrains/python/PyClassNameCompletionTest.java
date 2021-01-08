@@ -195,6 +195,44 @@ public class PyClassNameCompletionTest extends PyTestCase {
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(ndarrayUserSkeleton.getContainingFile()));
   }
 
+  // PY-46381
+  public void testThirdPartyPackageTestsNotSuggested() {
+    runWithAdditionalClassEntryInSdkRoots(getTestName(true) + "/site-packages", () -> {
+      myFixture.copyDirectoryToProject(getTestName(true) + "/src", "");
+      myFixture.configureByFile("main.py");
+      LookupElement[] variants = myFixture.complete(CompletionType.BASIC, 2);
+      assertNotNull(variants);
+      List<String> variantQNames = ContainerUtil.mapNotNull(variants, PyClassNameCompletionTest::getElementQualifiedName);
+      assertDoesntContain(variantQNames, "mypkg.test.test_mod.test_func");
+      assertContainsElements(variantQNames, "mod.func", "tests.test_func", "mypkg.mod.func");
+    });
+  }
+
+  // PY-46381
+  public void testThirdPartyPackageBundledDependenciesNotSuggested() {
+    runWithAdditionalClassEntryInSdkRoots(getTestName(true) + "/site-packages", () -> {
+      myFixture.copyDirectoryToProject(getTestName(true) + "/src", "");
+      myFixture.configureByFile("main.py");
+      LookupElement[] variants = myFixture.complete(CompletionType.BASIC, 2);
+      assertNotNull(variants);
+      List<String> variantQNames = ContainerUtil.mapNotNull(variants, PyClassNameCompletionTest::getElementQualifiedName);
+      assertDoesntContain(variantQNames, "pip._vendor.requests", "pip._vendor.requests.request");
+      assertContainsElements(variantQNames, "requests", "requests.request");
+    });
+  }
+
+  @Nullable
+  private static String getElementQualifiedName(@NotNull LookupElement le) {
+    PsiElement element = le.getPsiElement();
+    if (element instanceof PyQualifiedNameOwner) {
+      return ((PyQualifiedNameOwner)element).getQualifiedName();
+    }
+    else if (element instanceof PsiFileSystemItem) {
+      return Objects.toString(QualifiedNameFinder.findShortestImportableQName((PsiFileSystemItem)element));
+    }
+    return null;
+  }
+
   private void doTest() {
     LookupElement[] lookupElements = doExtendedCompletion();
     if (lookupElements != null) {
