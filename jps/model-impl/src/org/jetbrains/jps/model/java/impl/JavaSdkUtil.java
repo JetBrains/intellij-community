@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -11,16 +10,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 
 public final class JavaSdkUtil {
-  private static final Path[] EMPTY_PATH_ARRAY = new Path[0];
-
   /**
    * @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead
    */
@@ -51,7 +48,7 @@ public final class JavaSdkUtil {
       }
     }
     else if (Files.exists(home.resolve("lib/jrt-fs.jar"))) {
-      jarDirs = EMPTY_PATH_ARRAY;
+      jarDirs = new Path[0];
     }
     else {
       Path libDir = home.resolve(isJre ? "lib" : "jre/lib");
@@ -60,7 +57,6 @@ public final class JavaSdkUtil {
       jarDirs = new Path[]{libEndorsedDir, libDir, libExtDir};
     }
 
-    Predicate<Path> jarFileFilter = path -> FileUtilRt.extensionEquals(path.toString(), "jar");
     Set<String> pathFilter = CollectionFactory.createFilePathSet();
     List<Path> rootFiles = new ArrayList<>();
     if (Registry.is("project.structure.add.tools.jar.to.new.jdk", false)) {
@@ -71,31 +67,39 @@ public final class JavaSdkUtil {
     }
     for (Path jarDir : jarDirs) {
       if (jarDir != null && Files.isDirectory(jarDir)) {
-        for (Path jarFile : listFiles(jarDir, jarFileFilter)) {
-          String jarFileName = jarFile.getFileName().toString();
-          if (jarFileName.equals("alt-rt.jar") || jarFileName.equals("alt-string.jar")) {
-            continue;  // filter out alternative implementations
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(jarDir, "*.jar")) {
+          for (Path jarFile : stream) {
+            String jarFileName = jarFile.getFileName().toString();
+            if (jarFileName.equals("alt-rt.jar") || jarFileName.equals("alt-string.jar")) {
+              continue;  // filter out alternative implementations
+            }
+            String canonicalPath = getCanonicalPath(jarFile);
+            if (canonicalPath == null || !pathFilter.add(canonicalPath)) {
+              continue;  // filter out duplicate (symbolically linked) .jar files commonly found in OS X JDK distributions
+            }
+            rootFiles.add(jarFile);
           }
-          String canonicalPath = getCanonicalPath(jarFile);
-          if (canonicalPath == null || !pathFilter.add(canonicalPath)) {
-            continue;  // filter out duplicate (symbolically linked) .jar files commonly found in OS X JDK distributions
-          }
-          rootFiles.add(jarFile);
         }
+        catch (IOException ignored) { }
       }
     }
 
-    List<Path> ibmJdkLookupDirs = ContainerUtil.newArrayList(home.resolve(isJre ? "bin" : "jre/bin"));
-    ContainerUtil.addAll(ibmJdkLookupDirs, listFiles(home.resolve(isJre ? "lib" : "jre/lib"), path -> Files.isDirectory(path)));
+    List<Path> ibmJdkLookupDirs = new ArrayList<>();
+    ibmJdkLookupDirs.add(home.resolve(isJre ? "bin" : "jre/bin"));
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(home.resolve(isJre ? "lib" : "jre/lib"), Files::isDirectory)) {
+      for (Path path : stream) ibmJdkLookupDirs.add(path);
+    }
+    catch (IOException ignored) { }
     for (Path candidate : ibmJdkLookupDirs) {
-      Path[] vmJarDirs =
-        listFiles(candidate.resolve("default"), f -> f.getFileName().toString().startsWith("jclSC") && Files.isDirectory(f));
-      for (Path dir : vmJarDirs) {
-        Path vmJar = dir.resolve("vm.jar");
-        if (Files.isRegularFile(vmJar)) {
-          rootFiles.add(vmJar);
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(candidate, p -> p.getFileName().toString().startsWith("jclSC") && Files.isDirectory(p))) {
+        for (Path dir : stream) {
+          Path vmJar = dir.resolve("vm.jar");
+          if (Files.isRegularFile(vmJar)) {
+            rootFiles.add(vmJar);
+          }
         }
       }
+      catch (IOException ignored) { }
     }
 
     Path classesZip = home.resolve("lib/classes.zip");
@@ -111,15 +115,6 @@ public final class JavaSdkUtil {
     }
 
     return rootFiles;
-  }
-
-  private static Path[] listFiles(Path dir, Predicate<Path> filter) {
-    try {
-      return Files.list(dir).filter(filter).toArray(Path[]::new);
-    }
-    catch (IOException e) {
-      return EMPTY_PATH_ARRAY;
-    }
   }
 
   @Nullable

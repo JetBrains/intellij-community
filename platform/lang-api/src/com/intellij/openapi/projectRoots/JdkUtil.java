@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.Attributes;
@@ -93,43 +92,36 @@ public final class JdkUtil {
   }
 
   public static boolean checkForJdk(@NotNull String homePath) {
-    return checkForJdk(Paths.get(homePath));
+    return checkForJdk(Path.of(homePath));
   }
 
   public static boolean checkForJdk(@NotNull Path homePath) {
-    Path bin = homePath.resolve("bin");
-    return (Files.exists(bin.resolve("javac")) || Files.exists(bin.resolve("javac.exe"))) &&
-           checkForRuntime(homePath.toAbsolutePath().toString());
+    return (Files.exists(homePath.resolve("bin/javac")) || Files.exists(homePath.resolve("bin/javac.exe"))) &&
+           (isModularRuntime(homePath) ||                              // Jigsaw JDK/JRE
+            Files.exists(homePath.resolve("jre/lib/rt.jar")) ||        // pre-modular JDK
+            Files.isDirectory(homePath.resolve("classes")) ||          // custom build
+            Files.exists(homePath.resolve("jre/lib/vm.jar")) ||        // IBM JDK
+            Files.exists(homePath.resolve("../Classes/classes.jar")));  // Apple JDK
   }
 
   public static boolean checkForJre(@NotNull String homePath) {
-    return checkForJre(Paths.get(homePath));
+    return checkForJre(Path.of(homePath));
   }
 
   public static boolean checkForJre(@NotNull Path homePath) {
-    Path bin = homePath.resolve("bin");
-    return Files.exists(bin.resolve("java")) || Files.exists(bin.resolve("java.exe"));
-  }
-
-  public static boolean checkForRuntime(@NotNull String homePath) {
-    return new File(homePath, "jre/lib/rt.jar").exists() ||          // JDK
-           new File(homePath, "lib/rt.jar").exists() ||              // JRE
-           isModularRuntime(homePath) ||                             // Jigsaw JDK/JRE
-           new File(homePath, "../Classes/classes.jar").exists() ||  // Apple JDK
-           new File(homePath, "jre/lib/vm.jar").exists() ||          // IBM JDK
-           new File(homePath, "classes").isDirectory();              // custom build
+    return Files.exists(homePath.resolve("bin/java")) || Files.exists(homePath.resolve("bin/java.exe"));
   }
 
   public static boolean isModularRuntime(@NotNull String homePath) {
-    return isModularRuntime(Paths.get(FileUtil.toSystemDependentName(homePath)));
+    return isModularRuntime(Path.of(homePath));
   }
 
   public static boolean isModularRuntime(@NotNull Path homePath) {
-    return Files.isRegularFile(homePath.resolve("lib/jrt-fs.jar")) || isExplodedModularRuntime(homePath.toString());
+    return Files.isRegularFile(homePath.resolve("lib/jrt-fs.jar")) || isExplodedModularRuntime(homePath);
   }
 
-  public static boolean isExplodedModularRuntime(@NotNull String homePath) {
-    return Files.isDirectory(Paths.get(homePath, "modules/java.base"));
+  public static boolean isExplodedModularRuntime(@NotNull Path homePath) {
+    return Files.isDirectory(homePath.resolve("modules/java.base"));
   }
 
   @ApiStatus.Internal

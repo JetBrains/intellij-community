@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -26,7 +26,6 @@ import org.junit.Assume;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,9 +89,6 @@ public final class IdeaTestUtil {
                                "classes are included into classpath and that the plugin isn't disabled by using 'idea.load.plugins', 'idea.load.plugins.id', 'idea.load.plugins.category' system properties");
     }
 
-    String homePath = PathUtil.toSystemIndependentName(path);
-    Path jdkHomeFile = Paths.get(homePath);
-
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
     SdkModificator sdkModificator = new SdkModificator() {
       @NotNull
@@ -117,11 +113,12 @@ public final class IdeaTestUtil {
       }
     };
 
+    Path jdkHomeFile = Path.of(path);
     JavaSdkImpl.addClasses(jdkHomeFile, sdkModificator, isJre);
     JavaSdkImpl.addSources(jdkHomeFile, sdkModificator);
     JavaSdkImpl.attachJdkAnnotations(sdkModificator);
 
-    return new MockSdk(name, homePath, name, roots, () -> JavaSdk.getInstance());
+    return new MockSdk(name, PathUtil.toSystemIndependentName(path), name, roots, () -> JavaSdk.getInstance());
   }
 
   public static @NotNull Sdk getMockJdk14() {
