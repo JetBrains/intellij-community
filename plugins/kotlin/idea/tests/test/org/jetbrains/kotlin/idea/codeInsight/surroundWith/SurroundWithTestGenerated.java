@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class SurroundWithTestGenerated extends AbstractSurroundWithTest {
+public abstract class SurroundWithTestGenerated extends AbstractSurroundWithTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/surroundWith/if")
     public static class If extends AbstractSurroundWithTest {

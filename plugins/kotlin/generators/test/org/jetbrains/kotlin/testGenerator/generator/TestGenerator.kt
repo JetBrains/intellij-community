@@ -47,7 +47,7 @@ object TestGenerator {
                 append(SuiteElement.create(group, suite, singleModel, rootModelName, isNested = false))
             } else {
                 appendAnnotation(TAnnotation<RunWith>(JUnit3RunnerWithInners::class.java))
-                appendBlock("public class $rootModelName extends ${suite.abstractTestClass.simpleName}") {
+                appendBlock("public abstract class $rootModelName extends ${suite.abstractTestClass.simpleName}") {
                     val children = suite.models
                         .map { SuiteElement.create(group, suite, it, it.testClassName, isNested = true) }
                     appendList(children, separator = "\n\n")

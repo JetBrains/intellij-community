@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class InsertImportOnPasteTestGenerated extends AbstractInsertImportOnPasteTest {
+public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImportOnPasteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/copyPaste/imports")
     public static class Copy extends AbstractInsertImportOnPasteTest {

@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("jvm-debugger/test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class KotlinSteppingTestGenerated extends AbstractKotlinSteppingTest {
+public abstract class KotlinSteppingTestGenerated extends AbstractKotlinSteppingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepIntoAndSmartStepInto")
     public static class StepInto extends AbstractKotlinSteppingTest {

@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
+public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker")
     public static class Checker extends AbstractPsiCheckerTest {

@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class ScriptConfigurationHighlightingTestGenerated extends AbstractScriptConfigurationHighlightingTest {
+public abstract class ScriptConfigurationHighlightingTestGenerated extends AbstractScriptConfigurationHighlightingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/script/definition/highlighting")
     public static class Highlighting extends AbstractScriptConfigurationHighlightingTest {

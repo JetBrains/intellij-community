@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class ReferenceResolveInJavaTestGenerated extends AbstractReferenceResolveInJavaTest {
+public abstract class ReferenceResolveInJavaTestGenerated extends AbstractReferenceResolveInJavaTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/referenceInJava/binaryAndSource")
     public static class BinaryAndSource extends AbstractReferenceResolveInJavaTest {

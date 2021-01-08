@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTest {
+public abstract class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/folding/noCollapse")
     public static class NoCollapse extends AbstractKotlinFoldingTest {

@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("maven")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMavenConfigureProjectByChangingFileTest {
+public abstract class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMavenConfigureProjectByChangingFileTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/configurator/jvm")
     public static class Jvm extends AbstractMavenConfigureProjectByChangingFileTest {

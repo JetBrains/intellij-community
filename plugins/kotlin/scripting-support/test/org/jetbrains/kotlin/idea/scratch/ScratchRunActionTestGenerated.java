@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("scripting-support")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class ScratchRunActionTestGenerated extends AbstractScratchRunActionTest {
+public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunActionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/scratch")
     public static class ScratchCompiling extends AbstractScratchRunActionTest {

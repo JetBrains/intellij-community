@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("jps/jps-plugin")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class IncrementalLazyCachesTestGenerated extends AbstractIncrementalLazyCachesTest {
+public abstract class IncrementalLazyCachesTestGenerated extends AbstractIncrementalLazyCachesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/lazyKotlinCaches")
     public static class LazyKotlinCaches extends AbstractIncrementalLazyCachesTest {

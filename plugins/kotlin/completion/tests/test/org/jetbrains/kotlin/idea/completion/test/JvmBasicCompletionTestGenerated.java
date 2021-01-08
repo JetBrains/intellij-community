@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("completion")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCompletionTest {
+public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/basic/common")
     public static class Common extends AbstractJvmBasicCompletionTest {

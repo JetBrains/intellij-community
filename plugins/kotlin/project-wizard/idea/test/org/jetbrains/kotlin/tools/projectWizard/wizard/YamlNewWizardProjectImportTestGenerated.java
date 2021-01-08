@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("project-wizard/idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class YamlNewWizardProjectImportTestGenerated extends AbstractYamlNewWizardProjectImportTest {
+public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYamlNewWizardProjectImportTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../cli/testData/buildFileGeneration")
     public static class GradleKts extends AbstractYamlNewWizardProjectImportTest {

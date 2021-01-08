@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class HierarchyTestGenerated extends AbstractHierarchyTest {
+public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/hierarchy/class/type")
     public static class Type extends AbstractHierarchyTest {

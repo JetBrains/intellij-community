@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("jvm-debugger/test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class SelectExpressionForDebuggerTestGenerated extends AbstractSelectExpressionForDebuggerTest {
+public abstract class SelectExpressionForDebuggerTestGenerated extends AbstractSelectExpressionForDebuggerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/selectExpression")
     public static class SelectExpression extends AbstractSelectExpressionForDebuggerTest {

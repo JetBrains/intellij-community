@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class MoveStatementTestGenerated extends AbstractMoveStatementTest {
+public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/moveUpDown/classBodyDeclarations")
     public abstract static class ClassBodyDeclarations extends AbstractMoveStatementTest {

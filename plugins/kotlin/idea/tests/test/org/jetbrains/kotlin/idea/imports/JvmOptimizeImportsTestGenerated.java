@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsTest {
+public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/optimizeImports/jvm")
     public static class Jvm extends AbstractJvmOptimizeImportsTest {

@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("project-wizard/idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class ProjectTemplateNewWizardProjectImportTestGenerated extends AbstractProjectTemplateNewWizardProjectImportTest {
+public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends AbstractProjectTemplateNewWizardProjectImportTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
     public static class GradleKts extends AbstractProjectTemplateNewWizardProjectImportTest {

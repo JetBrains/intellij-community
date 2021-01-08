@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class CodeFragmentHighlightingTestGenerated extends AbstractCodeFragmentHighlightingTest {
+public abstract class CodeFragmentHighlightingTestGenerated extends AbstractCodeFragmentHighlightingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/codeFragments")
     public static class CodeFragments extends AbstractCodeFragmentHighlightingTest {

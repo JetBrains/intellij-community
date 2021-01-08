@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
+public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteClass/kotlinClass")
     public static class KotlinClass extends AbstractSafeDeleteTest {

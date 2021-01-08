@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("jps/jps-plugin")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class IncrementalJvmJpsTestGenerated extends AbstractIncrementalJvmJpsTest {
+public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncrementalJvmJpsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/multiModule/common")
     public static class Common extends AbstractIncrementalJvmJpsTest {

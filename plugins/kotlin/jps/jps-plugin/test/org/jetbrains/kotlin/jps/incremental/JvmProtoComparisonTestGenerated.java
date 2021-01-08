@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("jps/jps-plugin")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class JvmProtoComparisonTestGenerated extends AbstractJvmProtoComparisonTest {
+public abstract class JvmProtoComparisonTestGenerated extends AbstractJvmProtoComparisonTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/comparison/classSignatureChange")
     public static class ClassSignatureChange extends AbstractJvmProtoComparisonTest {

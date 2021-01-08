@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class InspectionTestGenerated extends AbstractInspectionTest {
+public abstract class InspectionTestGenerated extends AbstractInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions")
     public static class Intentions extends AbstractInspectionTest {

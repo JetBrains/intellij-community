@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class JavaAgainstKotlinSourceCheckerTestGenerated extends AbstractJavaAgainstKotlinSourceCheckerTest {
+public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends AbstractJavaAgainstKotlinSourceCheckerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kotlinAndJavaChecker/javaAgainstKotlin")
     public static class JavaAgainstKotlin extends AbstractJavaAgainstKotlinSourceCheckerTest {

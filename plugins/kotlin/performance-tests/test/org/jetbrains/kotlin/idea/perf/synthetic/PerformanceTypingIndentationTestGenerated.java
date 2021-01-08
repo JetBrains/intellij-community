@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("performance-tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class PerformanceTypingIndentationTestGenerated extends AbstractPerformanceTypingIndentationTest {
+public abstract class PerformanceTypingIndentationTestGenerated extends AbstractPerformanceTypingIndentationTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/testData/indentationOnNewline")
     public static class DirectSettings extends AbstractPerformanceTypingIndentationTest {

@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class FormatterTestGenerated extends AbstractFormatterTest {
+public abstract class FormatterTestGenerated extends AbstractFormatterTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/formatter")
     public static class Formatter extends AbstractFormatterTest {
