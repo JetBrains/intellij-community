@@ -8,7 +8,11 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -46,8 +50,9 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.invokeLater
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -146,11 +151,15 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
     }
 
     private fun doMove(
+        progressIndicator: ProgressIndicator,
         element: KtNamedDeclaration,
         externalUsages: SmartList<UsageInfo>,
         outerInstanceUsages: SmartList<UsageInfo>,
         editor: Editor?
     ) {
+        progressIndicator.isIndeterminate = false
+        progressIndicator.text = KotlinBundle.message("moving.to.companion.object")
+        val totalCount = externalUsages.size + outerInstanceUsages.size + 1
         val project = element.project
         val containingClass = element.containingClassOrObject as KtClass
 
@@ -167,6 +176,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         val elementsToShorten = SmartList<KtElement>()
 
         val nameSuggestions: List<String>
+        progressIndicator.checkCanceled()
         if (outerInstanceUsages.isNotEmpty() && element is KtNamedFunction) {
             val parameterList = element.valueParameterList!!
             val parameters = parameterList.parameters
@@ -183,7 +193,9 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
             )
 
             val newOuterInstanceRef = ktPsiFactory.createExpression(newParam.name!!)
-            for (usage in outerInstanceUsages) {
+            for ((index, usage) in outerInstanceUsages.withIndex()) {
+                progressIndicator.checkCanceled()
+                progressIndicator.fraction = index * 1.0 / totalCount
                 when (usage) {
                     is OuterInstanceReferenceUsageInfo.ExplicitThis -> {
                         usage.expression?.replace(newOuterInstanceRef)
@@ -204,8 +216,10 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         element.removeModifier(KtTokens.FINAL_KEYWORD)
 
         val newDeclaration = Mover.Default(element, companionObject)
-
-        for (usage in externalUsages) {
+        progressIndicator.checkCanceled()
+        for ((index, usage) in externalUsages.withIndex()) {
+            progressIndicator.checkCanceled()
+            progressIndicator.fraction = (outerInstanceUsages.size + index) * 1.0 / totalCount
             val usageElement = usage.element ?: continue
 
             if (hasInstanceArg) {
@@ -239,7 +253,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
                 }
             }
         }
-
+        progressIndicator.checkCanceled()
         ShortenReferences { ShortenReferences.Options.ALL_ENABLED }.process(elementsToShorten)
 
         runTemplateForInstanceParam(newDeclaration, nameSuggestions, editor)
@@ -330,6 +344,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         project.runSynchronouslyWithProgress(KotlinBundle.message("searching.for.0", element.name.toString()), true) {
             runReadAction {
                 ReferencesSearch.search(element).mapNotNullTo(externalUsages) { ref ->
+                    ProgressManager.checkCanceled()
                     when (ref) {
                         is PsiReferenceExpression -> JavaUsageInfo(ref)
                         is KtSimpleNameReference -> {
@@ -343,7 +358,10 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
                             if (extensionReceiver != null && extensionReceiver !is ImplicitReceiver) {
                                 conflicts.putValue(
                                     callExpression,
-                                    KotlinBundle.message("calls.with.explicit.extension.receiver.won.t.be.processed.0", callExpression.text)
+                                    KotlinBundle.message(
+                                        "calls.with.explicit.extension.receiver.won.t.be.processed.0",
+                                        callExpression.text
+                                    )
                                 )
                                 return@mapNotNullTo null
                             }
@@ -359,14 +377,24 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
                     }
                 }
             }
-        }
+        }?.let { _ ->
+            project.checkConflictsInteractively(conflicts) {
+                fun performMove() {
+                    CommandProcessor.getInstance().executeCommand(project, {
+                        ApplicationManagerEx.getApplicationEx().runWriteActionWithNonCancellableProgressInDispatchThread(
+                            KotlinBundle.message("moving.to.companion.object"), project, null
+                        ) {
+                            doMove(it, element, externalUsages, outerInstanceUsages, editor)
+                        }
+                    }, KotlinBundle.message("move.to.companion.object"), null)
+                }
 
-        project.checkConflictsInteractively(conflicts) {
-            runWriteAction { doMove(element, externalUsages, outerInstanceUsages, editor) }
+                if (isUnitTestMode()) performMove() else invokeLater { performMove() }
+            }
         }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? = MoveMemberToCompanionObjectIntention()
+        override fun createAction(diagnostic: Diagnostic): IntentionAction = MoveMemberToCompanionObjectIntention()
     }
 }

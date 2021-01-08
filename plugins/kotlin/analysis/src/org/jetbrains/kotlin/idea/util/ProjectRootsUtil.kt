@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndex
 import com.intellij.openapi.roots.ModuleRootManager
@@ -113,8 +114,8 @@ object ProjectRootsUtil {
         includeScriptDependencies: Boolean, includeScriptsOutsideSourceRoots: Boolean,
         fileIndex: ProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
     ): Boolean {
-
-        if (includeProjectSource && fileIndex.isInSourceContentWithoutInjected(file)) return true
+        ProgressManager.checkCanceled()
+        if (fileIndex.isInSourceContentWithoutInjected(file)) return includeProjectSource
 
         if (includeScriptsOutsideSourceRoots) {
             if (ProjectRootManager.getInstance(project).fileIndex.isInContent(file) || ScratchUtil.isScratch(file)) {
