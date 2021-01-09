@@ -47,8 +47,8 @@ public class PatchRenameRootTest extends PatchTestCase {
 
   @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
     myPatchFile = getTempFile("patch.zip");
     myPatchApplyOldDir = getTempFile(Paths.get("applyPatch", myOlderDir.getName()).toString());
     myPatchApplyNewDir = getTempFile(Paths.get("applyPatch", myNewerDir.getName()).toString());

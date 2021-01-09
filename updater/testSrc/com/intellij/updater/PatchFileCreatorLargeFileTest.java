@@ -17,8 +17,8 @@ package com.intellij.updater;
 
 public class PatchFileCreatorLargeFileTest extends PatchApplyingRevertingTest {
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
     myPatchSpec.setLargeFileCutoff(1);
   }
 }
