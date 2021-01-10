@@ -3,10 +3,10 @@ package org.intellij.plugins.markdown.highlighting
 
 import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.intellij.plugins.markdown.highlighting.ner.Entities
 
-class MarkdownNumberHighlightingTest: BasePlatformTestCase() {
+class MarkdownNumberHighlightingTest : BaseNERTest() {
   override fun getTestDataPath() = MarkdownTestingUtil.TEST_DATA_PATH + "/highlighting/numbers/"
 
   fun testIntegralNumbers() = doTest()
@@ -16,6 +16,8 @@ class MarkdownNumberHighlightingTest: BasePlatformTestCase() {
   fun testSeparators() = doTest()
 
   fun testNumberIsolation() = doTest()
+
+  fun testWords() = doTestNER(Entities::numbers, 0..2, 44..48, 87..98, 100..126, 146..181)
 
   private fun doTest() {
     (IntentionManager.getInstance() as IntentionManagerImpl).withDisabledIntentions<Nothing> { // see IDEA-228789 and MarkdownSpellcheckerTest.testAll
