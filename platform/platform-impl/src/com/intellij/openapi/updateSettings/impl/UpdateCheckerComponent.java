@@ -277,7 +277,8 @@ final class UpdateCheckerComponent {
       .appendWithSeparators(HtmlChunk.text(", "), ContainerUtil.map(descriptors, d -> HtmlChunk.link(d.getPluginId().getIdString(), d.getName())))
       .wrapWith("html").toString();
 
-    UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, (notification, event) -> {
+    UpdateChecker.getNotificationGroupForUpdateResults().createNotification(title, message, NotificationType.INFORMATION,
+                                                                            (notification, event) -> {
       String id = event.getDescription();
       if (id == null) return;
 

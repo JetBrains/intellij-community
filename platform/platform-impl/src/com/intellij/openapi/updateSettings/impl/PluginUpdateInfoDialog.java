@@ -86,7 +86,7 @@ final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
                 }
                 else {
                   String message = notificationText(result);
-                  UpdateChecker.getNotificationGroup()
+                  UpdateChecker.getNotificationGroupForUpdateResults()
                     .createNotification(message, NotificationType.INFORMATION, "plugins.updated.without.restart")
                     .notify(myProject);
                 }

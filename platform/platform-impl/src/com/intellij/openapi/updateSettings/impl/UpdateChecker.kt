@@ -95,6 +95,10 @@ object UpdateChecker {
   @JvmStatic
   fun getNotificationGroup(): NotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
+  @JvmStatic
+  fun getNotificationGroupForUpdateResults(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
+
   /**
    * For scheduled update checks.
    */
