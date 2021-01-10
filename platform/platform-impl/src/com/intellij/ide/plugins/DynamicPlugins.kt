@@ -117,7 +117,7 @@ object DynamicPlugins {
     ) ?: return false
 
     val loader = lazy(LazyThreadSafetyMode.NONE) { OptionalDependencyDescriptorLoader() }
-    return descriptorsToLoad.all {
+    return descriptorsToLoad.allWithLogging(load = true) {
       loadPlugin(it, checkImplementationDetailDependencies = true, loader = loader)
     }
   }
@@ -138,14 +138,14 @@ object DynamicPlugins {
       load = false,
     ) ?: return false
 
-    return descriptorsToUnload.reversed().all {
+    return descriptorsToUnload.reversed().allWithLogging(load = false) {
       unloadPluginWithProgress(project, parentComponent, it, options)
     }
   }
 
   private fun loadFullDescriptorsWithoutRestart(
     plugins: Collection<IdeaPluginDescriptor>,
-    load: Boolean
+    load: Boolean,
   ): List<IdeaPluginDescriptorImpl>? {
     val loadedPlugins = PluginManagerCore.getLoadedPlugins()
     val descriptors = plugins
@@ -156,7 +156,7 @@ object DynamicPlugins {
       .toList()
 
     val message = descriptors.joinToString(
-      prefix = "Plugins to ${if (load) "load" else "unload"}: [",
+      prefix = "Plugins to ${operationText(load)}: [",
       postfix = "]"
     ) {
       it.pluginId.idString
@@ -168,6 +168,19 @@ object DynamicPlugins {
     else
       null
   }
+
+  private fun Collection<IdeaPluginDescriptorImpl>.allWithLogging(
+    load: Boolean,
+    predicate: (IdeaPluginDescriptorImpl) -> Boolean,
+  ): Boolean {
+    return firstOrNull {
+      predicate.invoke(it).not()
+    }?.also {
+      LOG.info("Failed to ${operationText(load)}: $it")
+    } == null
+  }
+
+  private fun operationText(load: Boolean) = if (load) "load" else "unload"
 
   /**
    * @param context Plugins which are being loaded at the same time as [descriptor]
