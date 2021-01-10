@@ -140,8 +140,10 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   @NlsContexts.Button
   private fun getRestartActionName(): String =
-    if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
-    else IdeBundle.message("ide.shutdown.action")
+    if (ApplicationManager.getApplication().isRestartCapable)
+      ConfigurationStoreBundle.message("import.settings.confirmation.button.restart")
+    else
+      ConfigurationStoreBundle.message("import.default.settings.confirmation.button.shutdown")
 
   private fun doImportFromDirectory(saveFile: Path) {
     val confirmationMessage = ConfigurationStoreBundle.message("restore.default.settings.confirmation.message",
