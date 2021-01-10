@@ -132,7 +132,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   private fun confirmRestart(@NlsContexts.DialogMessage message: String): Boolean =
     (Messages.OK == showOkCancelDialog(
-      title = IdeBundle.message("title.restart.needed"),
+      title = ConfigurationStoreBundle.message("import.settings.confirmation.title"),
       message = message,
       okText = getRestartActionName(),
       icon = Messages.getQuestionIcon()
@@ -144,11 +144,8 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     else IdeBundle.message("ide.shutdown.action")
 
   private fun doImportFromDirectory(saveFile: Path) {
-    val confirmationMessage =
-      ConfigurationStoreBundle.message("import.settings.confirmation.message", saveFile) + "\n\n" +
-      ConfigurationStoreBundle.message("restore.default.settings.confirmation.message", ConfigBackup.getNextBackupPath(
-        PathManager.getConfigDir()))
-
+    val confirmationMessage = ConfigurationStoreBundle.message("restore.default.settings.confirmation.message",
+                                                               ConfigBackup.getNextBackupPath(PathManager.getConfigDir()))
     if (confirmRestart(confirmationMessage)) {
       CustomConfigMigrationOption.MigrateFromCustomPlace(saveFile).writeConfigMarkerFile()
       restart()
