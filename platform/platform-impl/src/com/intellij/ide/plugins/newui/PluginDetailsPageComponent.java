@@ -46,6 +46,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -290,6 +291,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myAuthor = new LinkPanel(panel1, false, true, null, TextHorizontalLayout.FIX_LABEL);
 
     myEnabledForProject = new JLabel();
+    myEnabledForProject.add(createDescriptionComponent(null));
     myEnabledForProject.setHorizontalTextPosition(SwingConstants.LEFT);
     myEnabledForProject.setForeground(ListPluginComponent.GRAY_COLOR);
     setFont(myEnabledForProject);
@@ -808,7 +810,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateEnabledForProject() {
-    ProjectDependentPluginEnabledState state = myPluginModel.getProjectDependentState(myPlugin);
+    ProjectDependentPluginEnabledState state = myPluginModel.getProjectDependentState(Objects.requireNonNull(myPlugin));
     myEnabledForProject.setText(state.toString());
     myEnabledForProject.setIcon(state.getIcon());
   }
