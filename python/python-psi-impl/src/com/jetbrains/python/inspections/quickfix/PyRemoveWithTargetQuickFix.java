@@ -25,11 +25,11 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithItem;
 import org.jetbrains.annotations.NotNull;
 
-public class PyRemoveWithPartQuickFix implements LocalQuickFix {
+public class PyRemoveWithTargetQuickFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.NAME.remove.target.expr");
+    return PyPsiBundle.message("QFIX.NAME.remove.with.target");
   }
 
   @Override

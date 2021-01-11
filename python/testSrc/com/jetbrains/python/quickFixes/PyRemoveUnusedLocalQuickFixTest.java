@@ -27,18 +27,18 @@ import org.jetbrains.annotations.NotNull;
 public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   // PY-20893
   public void testExcept() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.exception.target"));
   }
 
   // PY-20893
   public void testExcept2() {
     runWithLanguageLevel(LanguageLevel.PYTHON27,
-                         () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr")));
+                         () -> doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.exception.target")));
   }
 
   // PY-26418
   public void testWithOneTarget() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
   }
 
   // PY-26418
@@ -50,35 +50,35 @@ public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   // TODO: PY-43505
   public void _testTwoWithItemsFirstUnused() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
     });
   }
 
   // PY-26418
   public void testTwoWithItemsSecondUnused() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
     });
   }
 
   // PY-17901
   public void testRemoveAssignmentStatementTarget() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
     });
   }
 
   // PY-28782
   public void testRemoveChainedAssignmentStatementFirstTarget() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
     });
   }
 
   // PY-28782
   public void testRemoveChainedAssignmentStatementSecondTarget() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.target.expr"));
+      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
     });
   }
 

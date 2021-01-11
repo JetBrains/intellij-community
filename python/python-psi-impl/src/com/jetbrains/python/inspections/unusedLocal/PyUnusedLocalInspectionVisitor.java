@@ -415,7 +415,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           final PyWithItem withItem = PsiTreeUtil.getParentOfType(element, PyWithItem.class);
           if (withItem != null && PsiTreeUtil.isAncestor(withItem.getTarget(), element, false)) {
             if (withItem.getTarget() == element) {
-              registerWarning(element, warningMsg, new PyRemoveWithPartQuickFix());
+              registerWarning(element, warningMsg, new PyRemoveWithTargetQuickFix());
             }
             else {
               registerWarning(element, warningMsg, new ReplaceWithWildCard());
