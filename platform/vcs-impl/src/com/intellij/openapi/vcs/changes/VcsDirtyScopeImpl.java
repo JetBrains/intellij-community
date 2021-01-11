@@ -26,6 +26,7 @@ import java.util.*;
 public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   private final Map<VirtualFile, Set<FilePath>> myDirtyFiles = new HashMap<>();
   private final Map<VirtualFile, RecursiveFilePathSet> myDirtyDirectoriesRecursively = new HashMap<>();
+  private final Set<FilePath> myAllVcsRoots = new HashSet<>();
   private final Set<VirtualFile> myAffectedVcsRoots = new HashSet<>();
   @NotNull private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
@@ -46,6 +47,7 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     myWasEverythingDirty = wasEverythingDirty;
     myHashingStrategy = VcsDirtyScopeManagerImpl.getDirtyScopeHashingStrategy(myVcs);
     myCaseSensitive = myVcs.needsCaseSensitiveDirtyScope() || SystemInfo.isFileSystemCaseSensitive;
+    myAllVcsRoots.addAll(ContainerUtil.map(myVcsManager.getRootsUnderVcsWithoutFiltering(myVcs), root -> VcsUtil.getFilePath(root)));
   }
 
   @Override
@@ -362,7 +364,7 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     }
 
     final VirtualFile vcsRoot = rootObject.getPath();
-    boolean pathIsRoot = vcsRoot.equals(path.getVirtualFile());
+    boolean pathIsRoot = myAllVcsRoots.contains(path);
     for (VirtualFile otherRoot : myDirtyDirectoriesRecursively.keySet()) {
       // since we don't know exact dirty mechanics, maybe we have 3 nested mappings like:
       // /root -> vcs1, /root/child -> vcs2, /root/child/inner -> vcs1, and we have file /root/child/inner/file,
