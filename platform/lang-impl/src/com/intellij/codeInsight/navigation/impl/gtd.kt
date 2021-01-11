@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
@@ -26,7 +26,7 @@ fun gotoDeclaration(file: PsiFile, offset: Int): GTDActionData? {
 @ApiStatus.Internal
 interface GTDActionData {
 
-  fun ctrlMouseInfo(): CtrlMouseInfo
+  fun ctrlMouseInfo(): CtrlMouseInfo?
 
   fun result(): GTDActionResult?
 }
@@ -73,7 +73,7 @@ internal fun TargetData.toGTDActionData(project: Project): GTDActionData {
 
 private class TargetGTDActionData(private val project: Project, private val targetData: TargetData) : GTDActionData {
 
-  override fun ctrlMouseInfo(): CtrlMouseInfo = targetData.ctrlMouseInfo()
+  override fun ctrlMouseInfo(): CtrlMouseInfo? = targetData.ctrlMouseInfo()
 
   override fun result(): GTDActionResult? {
     //old behaviour: use gtd target provider if element has only a single target

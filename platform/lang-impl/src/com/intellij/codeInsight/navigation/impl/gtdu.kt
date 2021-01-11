@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
@@ -24,7 +24,7 @@ internal fun gotoDeclarationOrUsages(file: PsiFile, offset: Int): GTDUActionData
  */
 internal interface GTDUActionData {
 
-  fun ctrlMouseInfo(): CtrlMouseInfo
+  fun ctrlMouseInfo(): CtrlMouseInfo?
 
   fun result(): GTDUActionResult?
 }
@@ -64,14 +64,14 @@ private fun fromTargetData(file: PsiFile, offset: Int): GTDUActionData? {
 internal fun GTDActionData.toGTDUActionData(): GTDUActionData? {
   val gtdActionResult = result() ?: return null                           // nowhere to navigate
   return object : GTDUActionData {
-    override fun ctrlMouseInfo(): CtrlMouseInfo = this@toGTDUActionData.ctrlMouseInfo()
+    override fun ctrlMouseInfo(): CtrlMouseInfo? = this@toGTDUActionData.ctrlMouseInfo()
     override fun result(): GTDUActionResult = GTDUActionResult.GTD(gtdActionResult)
   }
 }
 
 private class ShowUsagesGTDUActionData(private val project: Project, private val targetData: TargetData) : GTDUActionData {
 
-  override fun ctrlMouseInfo(): CtrlMouseInfo = targetData.ctrlMouseInfo()
+  override fun ctrlMouseInfo(): CtrlMouseInfo? = targetData.ctrlMouseInfo()
 
   override fun result(): GTDUActionResult? = searchTargetVariants(project, targetData).let { targets ->
     if (targets.isEmpty()) {
