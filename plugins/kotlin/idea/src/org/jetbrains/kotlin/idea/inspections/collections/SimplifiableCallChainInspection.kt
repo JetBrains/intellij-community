@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -52,6 +53,10 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                 if (conversion.replacement == "maxBy" || conversion.replacement == "minBy") {
                     val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
                     if (functionalArgumentReturnType.isNullable()) return@check false
+                }
+                if (conversion.firstName == "map" && conversion.secondName in listOf("max", "maxOrNull", "min", "minOrNull")) {
+                    val parent = expression.parent
+                    if (parent !is KtPostfixExpression || parent.operationToken != KtTokens.EXCLEXCL) return@check false
                 }
                 return@check conversion.enableSuspendFunctionCall || !containsSuspendFunctionCall(firstResolvedCall, context)
             } ?: return
@@ -140,14 +145,14 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             Conversion("kotlin.collections.sortedBy", "kotlin.collections.lastOrNull", "maxBy"),
             Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.firstOrNull", "maxBy"),
             Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.lastOrNull", "minBy"),
-            Conversion("kotlin.collections.sorted", "kotlin.collections.first", "min", withNotNullAssertion = true),
-            Conversion("kotlin.collections.sorted", "kotlin.collections.last", "max", withNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedDescending", "kotlin.collections.first", "max", withNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedDescending", "kotlin.collections.last", "min", withNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedBy", "kotlin.collections.first", "minBy", withNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedBy", "kotlin.collections.last", "maxBy", withNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.first", "maxBy", withNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.last", "minBy", withNotNullAssertion = true),
+            Conversion("kotlin.collections.sorted", "kotlin.collections.first", "min", addNotNullAssertion = true),
+            Conversion("kotlin.collections.sorted", "kotlin.collections.last", "max", addNotNullAssertion = true),
+            Conversion("kotlin.collections.sortedDescending", "kotlin.collections.first", "max", addNotNullAssertion = true),
+            Conversion("kotlin.collections.sortedDescending", "kotlin.collections.last", "min", addNotNullAssertion = true),
+            Conversion("kotlin.collections.sortedBy", "kotlin.collections.first", "minBy", addNotNullAssertion = true),
+            Conversion("kotlin.collections.sortedBy", "kotlin.collections.last", "maxBy", addNotNullAssertion = true),
+            Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.first", "maxBy", addNotNullAssertion = true),
+            Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.last", "minBy", addNotNullAssertion = true),
 
             Conversion("kotlin.text.filter", "kotlin.text.first", "first"),
             Conversion("kotlin.text.filter", "kotlin.text.firstOrNull", "firstOrNull"),
@@ -164,6 +169,22 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associate"),
             Conversion(
                 "kotlin.collections.map", "kotlin.collections.sum", "sumOf", replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+            ),
+            Conversion(
+                "kotlin.collections.map", "kotlin.collections.max", "maxOf",
+                removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+            ),
+            Conversion(
+                "kotlin.collections.map", "kotlin.collections.maxOrNull", "maxOf",
+                removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+            ),
+            Conversion(
+                "kotlin.collections.map", "kotlin.collections.min", "minOf",
+                removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+            ),
+            Conversion(
+                "kotlin.collections.map", "kotlin.collections.minOrNull", "minOf",
+                removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
             ),
 
             Conversion("kotlin.collections.listOf", "kotlin.collections.filterNotNull", "listOfNotNull")
