@@ -67,7 +67,6 @@ public class PluginStartupActivity implements StartupActivity {
 
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
             NewCodeStyleNotificationKt.notifyKotlinStyleUpdateIfNeeded(project);
-            LegacyIsResolveModulePerSourceSetNotificationKt.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(project);
         }
 
         //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
