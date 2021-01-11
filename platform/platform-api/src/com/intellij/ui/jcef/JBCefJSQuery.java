@@ -66,6 +66,14 @@ public final class JBCefJSQuery implements JBCefDisposable {
   }
 
   /**
+   * @deprecated use {@link #create(JBCefBrowserBase)}
+   */
+  @Deprecated
+  public static JBCefJSQuery create(@NotNull JBCefBrowser browser) {
+    return create((JBCefBrowserBase)browser);
+  }
+
+  /**
    * Returns the query callback to inject into JS code
    *
    * @param queryResult the result (JS variable name, or JS value in single quotes) that will be passed to the java handler {@link #addHandler(Function)}
