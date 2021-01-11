@@ -58,7 +58,7 @@ internal class ApplicationDispatcher(disposable: Disposable, private val applica
     val invoke = java.lang.Runnable {
       application.invokeLater(fn, ModalityState.any())
     }
-    val disposable = executor.scheduleAtFixedRate(invoke, delay.toLong(), interval.toLong(), TimeUnit.MILLISECONDS)
+    val disposable = executor.scheduleWithFixedDelay(invoke, delay.toLong(), interval.toLong(), TimeUnit.MILLISECONDS)
 
     return TaskCancellable(disposable)
   }
