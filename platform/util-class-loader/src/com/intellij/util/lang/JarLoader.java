@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -32,7 +31,6 @@ public class JarLoader extends Loader {
 
   protected final ClassPath configuration;
   final URL url;
-  private final SoftReference<JarMemoryLoader> memoryLoader;
   protected final ResourceFile zipFile;
   private volatile Map<Loader.Attribute, String> attributes;
 
@@ -42,22 +40,6 @@ public class JarLoader extends Loader {
     this.configuration = configuration;
     this.zipFile = zipFile;
     url = new URL("jar", "", -1, fileToUri(file) + "!/");
-
-    SoftReference<JarMemoryLoader> memoryLoader = null;
-    if (configuration.preloadJarContents) {
-      // IOException from opening is propagated to caller if zip file isn't valid
-      try {
-        JarMemoryLoader loader = zipFile.preload(path);
-        if (loader != null) {
-          loadManifestAttributes(zipFile);
-          memoryLoader = new SoftReference<>(loader);
-        }
-      }
-      finally {
-        releaseZipFile(zipFile);
-      }
-    }
-    this.memoryLoader = memoryLoader;
   }
 
   @Override
@@ -67,13 +49,6 @@ public class JarLoader extends Loader {
 
   @Override
   final @Nullable Class<?> findClass(String fileName, String className, @NotNull ClassPath.ClassDataConsumer classConsumer) throws IOException {
-    JarMemoryLoader memoryLoader = this.memoryLoader == null ? null : this.memoryLoader.get();
-    if (memoryLoader != null) {
-      byte[] data = memoryLoader.getBytes(fileName);
-      if (data != null) {
-        return classConsumer.consumeClassData(className, data, this, null);
-      }
-    }
     return zipFile.findClass(fileName, className, this, classConsumer);
   }
 
@@ -147,14 +122,6 @@ public class JarLoader extends Loader {
 
   @Override
   final @Nullable Resource getResource(@NotNull String name) {
-    JarMemoryLoader loader = memoryLoader == null ? null : memoryLoader.get();
-    if (loader != null) {
-      Resource resource = loader.getResource(name);
-      if (resource != null) {
-        return resource;
-      }
-    }
-
     try {
       return zipFile.getResource(name, this);
     }

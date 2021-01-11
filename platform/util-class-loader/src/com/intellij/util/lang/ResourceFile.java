@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,12 +6,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.jar.Attributes;
 
 public interface ResourceFile extends Closeable {
-  @Nullable JarMemoryLoader preload(@NotNull Path basePath) throws IOException;
-
   @Nullable Attributes loadManifestAttributes() throws IOException;
 
   @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() throws IOException;

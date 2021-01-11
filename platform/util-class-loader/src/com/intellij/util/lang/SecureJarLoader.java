@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ final class SecureJarLoader extends JarLoader {
   private final Object protectionDomainMonitor = new Object();
 
   SecureJarLoader(@NotNull Path file, @NotNull ClassPath configuration) throws IOException {
-    super(file, configuration, new JdkZipResourceFile(file, configuration.lockJars, true));
+    super(file, configuration, new JdkZipResourceFile(file, configuration.lockJars, configuration.preloadJarContents, true));
   }
 
   ProtectionDomain getProtectionDomain(@NotNull JarEntry entry, URL url) {

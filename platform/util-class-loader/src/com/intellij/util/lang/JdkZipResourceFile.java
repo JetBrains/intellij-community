@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -25,6 +25,8 @@ import java.util.zip.ZipFile;
 @ApiStatus.Internal
 // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
 public final class JdkZipResourceFile implements ResourceFile {
+  private final SoftReference<JarMemoryLoader> memoryLoader;
+
   private volatile SoftReference<ZipFile> zipFileSoftReference;
   private final boolean lockJars;
   private final File file;
@@ -32,10 +34,27 @@ public final class JdkZipResourceFile implements ResourceFile {
 
   private static final Object lock = new Object();
 
-  public JdkZipResourceFile(@NotNull Path path, boolean lockJars, boolean isSecureLoader) {
+  public JdkZipResourceFile(@NotNull Path path, boolean lockJars, boolean preloadJarContents, boolean isSecureLoader) throws IOException {
     this.lockJars = lockJars;
     this.file = path.toFile();
     this.isSecureLoader = isSecureLoader;
+
+    SoftReference<JarMemoryLoader> memoryLoader = null;
+    if (preloadJarContents) {
+      // IOException from opening is propagated to caller if zip file isn't valid
+      try {
+        JarMemoryLoader loader = preload(path);
+        if (loader != null) {
+          memoryLoader = new SoftReference<>(loader);
+        }
+      }
+      finally {
+        if (!lockJars) {
+          close();
+        }
+      }
+    }
+    this.memoryLoader = memoryLoader;
   }
 
   @SuppressWarnings("DuplicatedCode")
@@ -93,6 +112,14 @@ public final class JdkZipResourceFile implements ResourceFile {
   @Override
   public @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException {
+    JarMemoryLoader memoryLoader = this.memoryLoader == null ? null : this.memoryLoader.get();
+    if (memoryLoader != null) {
+      byte[] data = memoryLoader.getBytes(fileName);
+      if (data != null) {
+        return classConsumer.consumeClassData(className, data, jarLoader, null);
+      }
+    }
+
     ZipFile zipFile = getZipFile();
     ZipEntry entry = zipFile.getEntry(fileName);
     if (entry == null) {
@@ -121,6 +148,14 @@ public final class JdkZipResourceFile implements ResourceFile {
 
   @Override
   public @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) throws IOException {
+    JarMemoryLoader loader = memoryLoader == null ? null : memoryLoader.get();
+    if (loader != null) {
+      Resource resource = loader.getResource(name);
+      if (resource != null) {
+        return resource;
+      }
+    }
+
     try {
       ZipEntry entry = getZipFile().getEntry(name);
       if (entry == null) {
@@ -140,7 +175,6 @@ public final class JdkZipResourceFile implements ResourceFile {
     }
   }
 
-  @Override
   public @Nullable JarMemoryLoader preload(@NotNull Path basePath) throws IOException {
     ZipFile zipFile = getZipFile();
     Enumeration<? extends ZipEntry> entries = zipFile.entries();

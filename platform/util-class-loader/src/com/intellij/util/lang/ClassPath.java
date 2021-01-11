@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -392,8 +392,14 @@ public final class ClassPath {
       loader = new SecureJarLoader(file, this);
     }
     else {
-      loader = new JarLoader(file, this,
-                             resourceFileFactory == null ? new JdkZipResourceFile(file, lockJars, false) : resourceFileFactory.create(file));
+      ResourceFile zipFile;
+      if (resourceFileFactory == null) {
+        zipFile = new JdkZipResourceFile(file, lockJars, preloadJarContents, false);
+      }
+      else {
+        zipFile = resourceFileFactory.create(file);
+      }
+      loader = new JarLoader(file, this, zipFile);
     }
 
     String filePath = file.toString();

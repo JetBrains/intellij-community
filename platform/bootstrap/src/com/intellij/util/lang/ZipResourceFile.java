@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.util.io.DirectByteBufferPool;
@@ -44,32 +44,6 @@ public final class ZipResourceFile implements ResourceFile {
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-  }
-
-  @Override
-  public @Nullable JarMemoryLoader preload(@NotNull Path basePath) throws IOException {
-    if (entryCountToPreload == -1) {
-      return null;
-    }
-
-    Object[] table = new Object[((entryCountToPreload * 4) + 1) & ~1];
-    String baseUrl = JarLoader.fileToUri(basePath).toString();
-    ImmutableZipEntry[] entries = zipFile.getEntries();
-    // skip size entry - it is still added for old implementation
-    for (int entryIndex = 1, n = entryCountToPreload + 1; entryIndex < n; entryIndex++) {
-      ImmutableZipEntry entry = entries[entryIndex];
-      String name = entry.getName();
-      int index = JarMemoryLoader.probePlain(name, table);
-      if (index >= 0) {
-        throw new IllegalArgumentException("duplicate name: " + name);
-      }
-      else {
-        int dest = -(index + 1);
-        table[dest] = name;
-        table[dest + 1] = new MemoryResource(baseUrl, entry.getData(zipFile), name);
-      }
-    }
-    return new JarMemoryLoader(table);
   }
 
   @Override

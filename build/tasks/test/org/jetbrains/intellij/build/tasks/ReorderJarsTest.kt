@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
 package org.jetbrains.intellij.build.tasks
 
@@ -7,7 +7,6 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.lang.JarMemoryLoader
 import com.intellij.util.lang.JdkZipResourceFile
-import com.intellij.util.lang.ZipResourceFile
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.io.zip
@@ -91,22 +90,10 @@ class ReorderJarsTest {
     }
 
     testOldJarResourceImpl(file, data)
-    testNewJarResourceImpl(file, data)
   }
 
   private fun testOldJarResourceImpl(file: Path, data: ByteArray) {
-    val loader = JdkZipResourceFile(file, true, false).preload(file)
-    assertThat(loader).isNotNull()
-    val bytes = loader!!.getBytes("org/jetbrains/annotations/Nullable.class")
-    assertThat(bytes).isNotNull()
-    assertThat(bytes).hasSize(548)
-    assertThat(data.contentEquals(bytes)).isTrue()
-  }
-
-  private fun testNewJarResourceImpl(file: Path, data: ByteArray) {
-    val resourceFile = ZipResourceFile(file)
-    resourceFile.buildClassPathCacheData()
-    val loader = resourceFile.preload(file)
+    val loader = JdkZipResourceFile(file, true, false, false).preload(file)
     assertThat(loader).isNotNull()
     val bytes = loader!!.getBytes("org/jetbrains/annotations/Nullable.class")
     assertThat(bytes).isNotNull()
