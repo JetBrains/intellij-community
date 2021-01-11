@@ -201,7 +201,7 @@ object DynamicPlugins {
     }
 
     if (InstalledPluginsState.getInstance().isRestartRequired) {
-      return "Not allowing load/unload without restart because of pending restart operation"
+      return InstalledPluginsState.RESTART_REQUIRED_MESSAGE
     }
     if (classloadersFromUnloadedPlugins[descriptor.pluginId] != null) {
       return "Not allowing load/unload of ${descriptor.pluginId} because of incomplete previous unload operation for that plugin"
