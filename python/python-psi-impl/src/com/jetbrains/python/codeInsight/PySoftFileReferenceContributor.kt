@@ -98,15 +98,6 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
 
       return callExpr.multiResolveCallee(PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext))
         .asSequence()
-        // Fail-fast check
-        .filter { callableType ->
-          val parameters = callableType.getParameters(typeEvalContext) ?: return@filter false
-          parameters
-            .mapNotNull { it.getArgumentType(typeEvalContext) }
-            .any {
-              PyTypeChecker.match(bytesOrUnicodeType, it, typeEvalContext) || PyTypeChecker.match(osPathLikeType, it, typeEvalContext)
-            }
-        }
         .mapNotNull {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
