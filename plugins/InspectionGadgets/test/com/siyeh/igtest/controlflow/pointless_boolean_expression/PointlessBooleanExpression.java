@@ -82,6 +82,22 @@ class PointlessBooleanExpression {
       System.out.println("well");
     }
   }
+
+  static int i = 1;
+  public static void main(String[] args) {
+    boolean b = false;
+    if (i == 1 && (<warning descr="'b |= true' can be simplified to 'b=true'">b |= true</warning>)) // side-effects
+      System.out.println("i == 1");
+    if (i == 1 && (<warning descr="'b |= false' can be simplified to 'b'">b |= false</warning>))
+      System.out.println("i == 1");
+    if (<warning descr="'b |= false' can be simplified to 'b'">b |= false</warning>)
+      System.out.println("i == 1");
+    if (<warning descr="'b |= true' can be simplified to 'b=true'">b |= true</warning>)
+      System.out.println("i == 1");
+    if (b = true)
+      System.out.println("i == 1");
+    System.out.println(b);
+  }
 }
 class Presley {
   void elvis(Object king) {
