@@ -14,10 +14,8 @@ KotlinStackFrame (frameThis0This0.kt:17)
                 JavaValue[field] prop1: int = 1 (frameThis0This0.kt:8)
             JavaValue[field] $val1: int = 1
             JavaValue[field] arity: int = 0 (Lambda.!EXT!)
-            JavaValue[getter] arity
         JavaValue[field] $val2: int = 1
         JavaValue[field] arity: int = 0 (Lambda.!EXT!)
-        JavaValue[getter] arity
 Disconnected from the target VM
 
 Process finished with exit code 0

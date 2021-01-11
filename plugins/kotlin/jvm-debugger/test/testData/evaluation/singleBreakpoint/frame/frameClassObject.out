@@ -7,7 +7,6 @@ Compile bytecode for myFun()
 KotlinStackFrame (frameClassObject.kt:16)
     JavaValue[this] this: A$test$1@uniqueID = Function0<kotlin.Unit>
         JavaValue[field] arity: int = 0 (Lambda.!EXT!)
-        JavaValue[getter] arity
 Disconnected from the target VM
 
 Process finished with exit code 0

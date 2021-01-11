@@ -23,7 +23,6 @@ KotlinStackFrame (frameExtFunExtFun.kt:24)
             JavaValue[field] bProp: int = 1 (frameExtFunExtFun.kt:41)
         JavaValue[field] $valTest: int = 1
         JavaValue[field] arity: int = 0 (Lambda.!EXT!)
-        JavaValue[getter] arity
 Disconnected from the target VM
 
 Process finished with exit code 0

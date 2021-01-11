@@ -18,6 +18,7 @@ import com.intellij.psi.PsiExpression
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.Type
 
 class GetterDescriptor(
     private val parentObject: ObjectReference,
@@ -26,18 +27,16 @@ class GetterDescriptor(
 ) : ValueDescriptorImpl(project), DescriptorWithParentObject {
     companion object {
         val GETTER_PREFIXES = arrayOf("get", "is")
-
-        private val defaultGetterOnDemandPresentationProvider = OnDemandPresentationProvider { node ->
-            node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(KotlinDebuggerCoreBundle.message("message.variables.property.get")))
-            node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", null, ""), false)
-        }
     }
 
     private val name = getter.name().removeGetterPrefix().decapitalize()
 
     init {
         OnDemandRenderer.ON_DEMAND_CALCULATED.set(this, false)
-        setOnDemandPresentationProvider(defaultGetterOnDemandPresentationProvider)
+        setOnDemandPresentationProvider { node ->
+            node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(KotlinDebuggerCoreBundle.message("message.variables.property.get")))
+            node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", type.name(), " "), false)
+        }
     }
 
     private fun String.removeGetterPrefix(): String {
@@ -53,6 +52,8 @@ class GetterDescriptor(
     override fun getDescriptorEvaluation(context: DebuggerContext): PsiExpression = throw EvaluateException("Getter evaluation is not supported")
 
     override fun getName() = name
+
+    override fun getType(): Type = getter.returnType()
 
     override fun calcValue(evaluationContext: EvaluationContextImpl?) =
         evaluationContext?.debugProcess?.invokeMethod(evaluationContext, parentObject, getter, emptyList())
