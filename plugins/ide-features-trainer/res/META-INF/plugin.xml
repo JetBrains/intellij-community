@@ -100,7 +100,7 @@
                  restartRequired="false"/>
     <registryKey key="ift.show.feedback.link"
                  description="Whether IFT show feedback link in the modules panel."
-                 defaultValue="FALSE"
+                 defaultValue="TRUE"
                  restartRequired="false"/>
   </extensions>
 </idea-plugin>
