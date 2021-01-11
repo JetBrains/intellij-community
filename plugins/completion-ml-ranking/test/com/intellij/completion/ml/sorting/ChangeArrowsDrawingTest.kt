@@ -38,7 +38,7 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     Disposer.register(testRootDisposable, Disposable { settingsStateBefore.restore(CompletionMLRankingSettings.getInstance()) })
     project.messageBus.connect(testRootDisposable).subscribe(
       LookupManagerListener.TOPIC,
-      PositionDiffArrowInitializer()
+      ItemsDecoratorInitializer()
     )
     project.messageBus.connect(testRootDisposable).subscribe(
       LookupManagerListener.TOPIC,
@@ -76,7 +76,7 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     override fun lookupCreated(lookup: LookupImpl, storage: MutableLookupStorage) {
       lookup.addPresentationCustomizer { _, presentation ->
         invokedCount += 1
-        arrowsFound = arrowsFound || presentation.icon is PositionDiffArrowInitializer.ArrowDecoratedIcon
+        arrowsFound = arrowsFound || presentation.icon is ItemsDecoratorInitializer.LeftDecoratedIcon
 
         presentation
       }

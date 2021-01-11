@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -173,8 +174,12 @@ class MLSorter : CompletionFinalSorter() {
 
     if (shouldSort) {
       lookupStorage.fireReorderedUsingMLScores()
+      val decoratingItemsPolicy = lookupStorage.model?.decoratingPolicy() ?: DecoratingItemsPolicy.DISABLED
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
-      return items.reorderByMLScores(element2score, topItemsCount).addDiagnosticsIfNeeded(positionsBefore, topItemsCount, lookup)
+      return items
+        .reorderByMLScores(element2score, topItemsCount)
+        .markRelevantItemsIfNeeded(element2score, lookup, decoratingItemsPolicy)
+        .addDiagnosticsIfNeeded(positionsBefore, topItemsCount, lookup)
     }
 
     return items
@@ -220,12 +225,24 @@ class MLSorter : CompletionFinalSorter() {
         if (before < reordered || position < reordered) {
           val diff = position - before
           positionChanged = positionChanged || diff != 0
-          PositionDiffArrowInitializer.itemPositionChanged(element, diff)
+          ItemsDecoratorInitializer.itemPositionChanged(element, diff)
         }
       }
-      PositionDiffArrowInitializer.markAsReordered(lookup, positionChanged)
+      ItemsDecoratorInitializer.markAsReordered(lookup, positionChanged)
     }
 
+    return this
+  }
+
+  private fun Iterable<LookupElement>.markRelevantItemsIfNeeded(element2score: Map<LookupElement, Double?>,
+                                                                lookup: LookupImpl,
+                                                                decoratingItemsPolicy: DecoratingItemsPolicy): Iterable<LookupElement> {
+    if (CompletionMLRankingSettings.getInstance().isDecorateRelevantEnabled) {
+      val relevantItems = decoratingItemsPolicy.itemsToDecorate(this.map { element2score[it] ?: 0.0 })
+      for (index in relevantItems) {
+        ItemsDecoratorInitializer.markAsRelevant(lookup, this.elementAt(index))
+      }
+    }
     return this
   }
 

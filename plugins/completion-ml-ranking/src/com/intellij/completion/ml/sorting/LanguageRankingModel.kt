@@ -2,8 +2,9 @@
 package com.intellij.completion.ml.sorting
 
 import com.intellij.internal.ml.DecisionFunction
+import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 
-class LanguageRankingModel(private val model: DecisionFunction) : RankingModelWrapper {
+class LanguageRankingModel(private val model: DecisionFunction, private val decoratingPolicy: DecoratingItemsPolicy) : RankingModelWrapper {
   private val featuresArrayBuilder = CachingFeaturesArrayBuilder(model.featuresOrder)
   override fun canScore(features: RankingFeatures): Boolean {
     return model.requiredFeatures.all { features.hasFeature(it) }
@@ -15,4 +16,6 @@ class LanguageRankingModel(private val model: DecisionFunction) : RankingModelWr
   override fun score(features: RankingFeatures): Double? {
     return model.predict(featuresArrayBuilder.buildArray(features))
   }
+
+  override fun decoratingPolicy(): DecoratingItemsPolicy = decoratingPolicy
 }

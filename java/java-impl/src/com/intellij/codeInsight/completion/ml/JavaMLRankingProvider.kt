@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.ml
 
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
+import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
@@ -14,4 +15,9 @@ class JavaMLRankingProvider : CatBoostJarCompletionModelProvider(JavaBundle.mess
   override fun isEnabledByDefault(): Boolean {
     return true
   }
+
+  override fun getDecoratingPolicy(): DecoratingItemsPolicy = DecoratingItemsPolicy.Composite(
+    DecoratingItemsPolicy.ByAbsoluteThreshold(3.0),
+    DecoratingItemsPolicy.ByRelativeThreshold(2.0)
+  )
 }

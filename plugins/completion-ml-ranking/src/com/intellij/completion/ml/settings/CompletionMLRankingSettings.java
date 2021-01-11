@@ -5,6 +5,7 @@ import com.intellij.completion.ml.experiment.ExperimentInfo;
 import com.intellij.completion.ml.experiment.ExperimentStatus;
 import com.intellij.completion.ml.ranker.ExperimentModelProvider;
 import com.intellij.completion.ml.sorting.RankingSupport;
+import com.intellij.internal.ml.completion.DecoratingItemsPolicy;
 import com.intellij.internal.ml.completion.RankingModelProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -42,6 +43,10 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     return myState.showDiff;
   }
 
+  public boolean isDecorateRelevantEnabled() {
+    return myState.decorateRelevant;
+  }
+
   public void setRankingEnabled(boolean value) {
     if (value == isRankingEnabled()) return;
     myState.rankingEnabled = value;
@@ -69,6 +74,10 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     myState.showDiff = isEnabled;
     disableExperiment();
     MLCompletionSettingsCollector.decorationSettingChanged(isEnabled);
+  }
+
+  public void setDecorateRelevantEnabled(boolean isEnabled) {
+    myState.decorateRelevant = isEnabled;
   }
 
   @ApiStatus.Internal
@@ -125,6 +134,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   public static final class State {
     public boolean rankingEnabled;
     public boolean showDiff = isShowDiffEnabledByDefault();
+    public boolean decorateRelevant;
     public final Map<String, Boolean> language2state = new HashMap<>();
 
     public State() {
@@ -138,6 +148,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
           } else {
             language2state.put(ranker.getId(), ranker.isEnabledByDefault());
           }
+          decorateRelevant |= ranker.getDecoratingPolicy() != DecoratingItemsPolicy.Companion.getDISABLED();
         }
       }
       rankingEnabled = language2state.containsValue(true);

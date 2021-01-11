@@ -13,6 +13,7 @@ public final class CompletionMlRankingIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, CompletionMlRankingIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 8x10 */ public static final @NotNull Icon ProposalDown = load("icons/proposalDown.svg", 4938150508761188205L, 0);
-  /** 8x10 */ public static final @NotNull Icon ProposalUp = load("icons/proposalUp.svg", -973126954918550549L, 0);
+  /** 16x16 */ public static final @NotNull Icon ProposalDown = load("icons/proposalDown.svg", -5014187718559589845L, 0);
+  /** 16x16 */ public static final @NotNull Icon ProposalUp = load("icons/proposalUp.svg", 8296240436494267062L, 0);
+  /** 16x16 */ public static final @NotNull Icon RelevantProposal = load("icons/relevantProposal.svg", 9084502045002108567L, 0);
 }

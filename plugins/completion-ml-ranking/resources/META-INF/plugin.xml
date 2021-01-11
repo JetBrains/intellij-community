@@ -106,7 +106,7 @@
               topic="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener"/>
     <listener class="com.intellij.completion.ml.tracker.CompletionFactorsInitializer"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener" />
-    <listener class="com.intellij.completion.ml.sorting.PositionDiffArrowInitializer"
+    <listener class="com.intellij.completion.ml.sorting.ItemsDecoratorInitializer"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"
               activeInTestMode="false"/>
     <listener class="com.intellij.completion.ml.ngram.NGramFileListener"

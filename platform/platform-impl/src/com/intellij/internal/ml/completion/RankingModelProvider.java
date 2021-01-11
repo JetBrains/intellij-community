@@ -27,4 +27,8 @@ public interface RankingModelProvider {
   default boolean isEnabledByDefault() {
     return false;
   }
+
+  default DecoratingItemsPolicy getDecoratingPolicy() {
+    return DecoratingItemsPolicy.Companion.getDISABLED();
+  }
 }

@@ -15,6 +15,7 @@ import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.completion.ml.tracker.LookupTracker
 import com.intellij.completion.ml.util.language
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -27,21 +28,26 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
 import icons.CompletionMlRankingIcons
-import java.awt.Component
-import java.awt.Graphics
+import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 
-class PositionDiffArrowInitializer : LookupTracker() {
+class ItemsDecoratorInitializer : LookupTracker() {
   companion object {
-    private const val DIFF_ICON_RIGHT_MARGIN = 4
     private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.ml.show.arrows.notification"
     private const val ARROWS_NOTIFICATION_SHOWN_KEY = "completion.ml.arrows.notification.shown"
     private const val ARROWS_NOTIFICATION_AFTER_SESSIONS = 50
+    private val sessionsWithArrowsCounter = AtomicInteger()
+
     private val POSITION_DIFF_KEY = Key.create<AtomicInteger>("PositionDiffArrowInitializer.POSITION_DIFF_KEY")
     private val POSITION_CHANGED_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.POSITION_CHANGED_KEY")
-    private val EMPTY_DIFF_ICON = IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.ProposalUp)
-    private val sessionsWithArrowsCounter = AtomicInteger()
+    private val HAS_RELEVANT_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.HAS_RELEVANT_KEY")
+    private val IS_RELEVANT_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.IS_RELEVANT_KEY")
+
+    private val EMPTY_ICON = prepareIcon(IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.RelevantProposal))
+    private val RELEVANT_ICON = prepareIcon(CompletionMlRankingIcons.RelevantProposal)
+    private val DOWN_ICON = prepareIcon(CompletionMlRankingIcons.ProposalDown)
+    private val UP_ICON = prepareIcon(CompletionMlRankingIcons.ProposalUp)
 
     fun markAsReordered(lookup: LookupImpl, value: Boolean) {
       val changed = lookup.getUserData(POSITION_CHANGED_KEY)
@@ -61,6 +67,11 @@ class PositionDiffArrowInitializer : LookupTracker() {
       diff.set(diffValue)
     }
 
+    fun markAsRelevant(lookup: LookupImpl, element: LookupElement) {
+      lookup.putUserData(HAS_RELEVANT_KEY, true)
+      element.putUserData(IS_RELEVANT_KEY, true)
+    }
+
     private fun shouldShowArrowsNotification(): Boolean = Registry.`is`(SHOW_ARROWS_NOTIFICATION_REGISTRY, true)
 
     private fun showArrowsNotificationIfNeeded(language: Language) {
@@ -77,29 +88,34 @@ class PositionDiffArrowInitializer : LookupTracker() {
         }
       }
     }
+
+    private fun prepareIcon(icon: Icon) = IconUtil.cropIcon(icon, Rectangle(4,0, 12,16))
   }
 
   override fun lookupCreated(lookup: LookupImpl, storage: MutableLookupStorage) {
-    if (!shouldShowDiff(storage)) return
+    if (shouldShowDiff(storage) || shouldShowRelevant(storage)) {
+      lookup.addPresentationCustomizer(object : LookupCellRenderer.ItemPresentationCustomizer {
+        override fun customizePresentation(item: LookupElement,
+                                           presentation: LookupElementPresentation): LookupElementPresentation {
+          val shouldShowRelevant = lookup.getUserData(HAS_RELEVANT_KEY) == true && shouldShowRelevant(storage)
+          val shouldShowDiff = lookup.getUserData(POSITION_CHANGED_KEY) == true && shouldShowDiff(storage)
+          if (!shouldShowRelevant && !shouldShowDiff) return presentation
 
-    lookup.addPresentationCustomizer(object : LookupCellRenderer.ItemPresentationCustomizer {
-      override fun customizePresentation(item: LookupElement,
-                                         presentation: LookupElementPresentation): LookupElementPresentation {
-        val positionChanged = lookup.getUserData(POSITION_CHANGED_KEY)
-        if (positionChanged == null || !positionChanged) return presentation
-        val newPresentation = LookupElementPresentation()
-        newPresentation.copyFrom(presentation)
-        val diff = item.getUserData(POSITION_DIFF_KEY)?.get()
-        val diffIcon = when {
-          diff == null || diff == 0 -> EMPTY_DIFF_ICON
-          diff < 0 -> CompletionMlRankingIcons.ProposalUp
-          else -> CompletionMlRankingIcons.ProposalDown
+          val isRelevant = item.getUserData(IS_RELEVANT_KEY) ?: false
+          val diff = item.getUserData(POSITION_DIFF_KEY)?.get() ?: 0
+          val newPresentation = LookupElementPresentation()
+          newPresentation.copyFrom(presentation)
+          val decorationIcon = when {
+            shouldShowRelevant && isRelevant -> RELEVANT_ICON
+            shouldShowDiff && diff < 0 -> UP_ICON
+            shouldShowDiff && diff > 0 -> DOWN_ICON
+            else -> EMPTY_ICON
+          }
+          newPresentation.icon = LeftDecoratedIcon(decorationIcon, newPresentation.icon)
+          return newPresentation
         }
-        val diffIconWithMargin = iconWithRightMargin(diffIcon)
-        newPresentation.icon = ArrowDecoratedIcon(diffIconWithMargin, newPresentation.icon)
-        return newPresentation
-      }
-    })
+      })
+    }
   }
 
   private fun shouldShowDiff(lookupStorage: LookupStorage): Boolean {
@@ -107,16 +123,22 @@ class PositionDiffArrowInitializer : LookupTracker() {
     return lookupStorage.model != null && mlRankingSettings.isShowDiffEnabled
   }
 
-  class ArrowDecoratedIcon(private val arrowIcon: Icon, private val baseIcon: Icon?) :
+  private fun shouldShowRelevant(lookupStorage: LookupStorage): Boolean {
+    val mlRankingSettings = CompletionMLRankingSettings.getInstance()
+    val model = lookupStorage.model ?: return false
+    return mlRankingSettings.isDecorateRelevantEnabled && model.decoratingPolicy() != DecoratingItemsPolicy.DISABLED
+  }
+
+  class LeftDecoratedIcon(private val leftIcon: Icon, private val baseIcon: Icon?) :
     com.intellij.ui.RowIcon(2, RowIcon.Alignment.CENTER), LookupCellRenderer.IconDecorator {
 
     init {
-      super.setIcon(arrowIcon, 0)
+      super.setIcon(leftIcon, 0)
       super.setIcon(baseIcon, 1)
     }
 
     override fun getDelegate(): Icon? = baseIcon
-    override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = ArrowDecoratedIcon(arrowIcon, icon)
+    override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = LeftDecoratedIcon(leftIcon, icon)
   }
 
   private class ArrowsOpinionNotification : Notification(
@@ -162,15 +184,6 @@ class PositionDiffArrowInitializer : LookupTracker() {
           notification.expire()
         }
       })
-    }
-  }
-
-  private fun iconWithRightMargin(icon: Icon, margin: Int = DIFF_ICON_RIGHT_MARGIN): IconUtil.IconSizeWrapper {
-    return object : IconUtil.IconSizeWrapper(icon, icon.iconWidth + margin, icon.iconHeight) {
-      override fun paintIcon(icon: Icon?, c: Component?, g: Graphics?, x: Int, y: Int) {
-        if (icon == null) return
-        icon.paintIcon(c, g, x, y)
-      }
     }
   }
 }
