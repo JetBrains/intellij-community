@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
-import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.StripeButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -471,7 +470,7 @@ class PythonOnboardingTour(module: Module) :
       text("Suppose we want to make ${code("AVERAGE")} string to be lower case. Let's look for the corresponding action. " +
            "Type ${strong("case")} into this search string.")
       triggerByListItemAndHighlight { item ->
-        item.toString().contains(toggleCase)
+        str(item)?.contains(toggleCase) == true
       }
       restoreIfModifiedOrMoved()
     }
@@ -486,6 +485,10 @@ class PythonOnboardingTour(module: Module) :
       text("You may want to look for some <ide/> feature without any interference with you own or library code entities. " +
            "You can pass ${strong(LessonsBundle.message("goto.action.lesson.name"))} lesson to learn how to do it and more.")
     }
+  }
+
+  fun str(item: Any?): String? {
+    return item?.toString()
   }
 
   private fun TaskRuntimeContext.checkWordInSearch(expected: String): Boolean =
