@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.PsiElementTargetPopupPresentation
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.codeInsight.navigation.targetPopupPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
@@ -74,7 +74,7 @@ private class GTDProviderData(
       0 -> null
       1 -> GTDActionResult.SingleTarget(result.single().first, navigationProvider)
       else -> GTDActionResult.MultipleTargets(result.map { (navigatable, targetElement) ->
-        GTDTarget(navigatable, PsiElementTargetPopupPresentation(targetElement), navigationProvider)
+        GTDTarget(navigatable, targetPopupPresentation(targetElement), navigationProvider)
       })
     }
   }

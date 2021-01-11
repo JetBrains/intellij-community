@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation
 
 import com.intellij.ide.util.EditSourceUtil
@@ -15,15 +15,11 @@ class PsiElementNavigationTarget(private val myElement: PsiElement) : Navigation
     if (myElement is Navigatable) myElement else EditSourceUtil.getDescriptor(myElement)
   }
 
-  private val myPresentation by lazy {
-    PsiElementTargetPopupPresentation(myElement)
-  }
-
   override fun isValid(): Boolean = myElement.isValid
 
   override fun getNavigatable(): Navigatable? = myNavigatable
 
-  override fun getTargetPresentation(): TargetPopupPresentation = myPresentation
+  override fun getTargetPresentation(): TargetPopupPresentation = targetPopupPresentation(myElement)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

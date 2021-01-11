@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Internal
 
 package com.intellij.find.actions
@@ -6,7 +6,7 @@ package com.intellij.find.actions
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.navigation.PsiElementTargetPopupPresentation
+import com.intellij.codeInsight.navigation.targetPopupPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.find.usages.api.SearchTarget
@@ -104,11 +104,11 @@ internal class SearchTargetVariant(private val target: SearchTarget) : TargetVar
 }
 
 internal class PsiTargetVariant(private val element: PsiElement) : TargetVariant() {
-  override val presentation: TargetPopupPresentation get() = PsiElementTargetPopupPresentation(element)
+  override val presentation: TargetPopupPresentation get() = targetPopupPresentation(element)
   override fun handle(handler: UsageVariantHandler): Unit = handler.handlePsi(element)
 }
 
 private class CustomTargetVariant(private val target: UsageTarget) : TargetVariant() {
-  override val presentation: TargetPopupPresentation get() = Item2TargetPresentation(target.presentation!!)
+  override val presentation: TargetPopupPresentation get() = targetPopupPresentation(target.presentation!!)
   override fun handle(handler: UsageVariantHandler): Unit = target.findUsages()
 }

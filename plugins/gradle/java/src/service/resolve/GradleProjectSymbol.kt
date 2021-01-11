@@ -16,7 +16,6 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
-import javax.swing.Icon
 
 @Internal
 abstract class GradleProjectSymbol(
@@ -56,10 +55,10 @@ abstract class GradleProjectSymbol(
   override val presentation: TargetPopupPresentation
     get() {
       val presentation = symbolPresentation
-      return object : TargetPopupPresentation {
-        override val icon: Icon? get() = presentation.icon
-        override val presentableText: String get() = presentation.longDescription
-      }
+      return TargetPopupPresentation
+        .builder(presentation.longDescription)
+        .icon(presentation.icon)
+        .presentation()
     }
 
   override fun equals(other: Any?): Boolean {

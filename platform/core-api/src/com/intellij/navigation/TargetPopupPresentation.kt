@@ -15,41 +15,36 @@ import javax.swing.Icon
  * Elements before spacer are aligned to the left, right text and right icon are aligned to the right.
  */
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface TargetPopupPresentation {
 
-  @JvmDefault
-  val backgroundColor: Color?
-    get() = null
+  companion object {
 
-  @JvmDefault
+    @JvmStatic
+    fun builder(@Nls presentableText: String): TargetPopupPresentationBuilder {
+      return SymbolNavigationService.getInstance().presentationBuilder(presentableText)
+    }
+  }
+
+  val backgroundColor: Color?
+
   val icon: Icon?
-    get() = null
 
   val presentableText: @Nls String
 
   /**
    * Attributes to highlight [presentableText]
    */
-  @JvmDefault
   val presentableTextAttributes: TextAttributes?
-    get() = null
 
-  @JvmDefault
   val containerText: @Nls String?
-    get() = null
 
   /**
    * Attributes to highlight [containerText]
    */
-  @JvmDefault
   val containerTextAttributes: TextAttributes?
-    get() = null
 
-  @JvmDefault
   val locationText: @Nls String?
-    get() = null
 
-  @JvmDefault
   val locationIcon: Icon?
-    get() = null
 }
