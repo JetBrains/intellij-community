@@ -10,7 +10,6 @@ import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
@@ -18,7 +17,16 @@ import com.intellij.util.castSafelyTo
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-fun getMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumentation? {
+fun getJsMdnDocumentation(qualifiedName: String, namespace: MdnApiNamespace): MdnSymbolDocumentation? {
+  assert(namespace == MdnApiNamespace.WebApi && namespace == MdnApiNamespace.GlobalObjects)
+  val documentation = documentationCache[
+    Pair(namespace, if (namespace == MdnApiNamespace.WebApi) getWebApiFragment(qualifiedName) else null)
+  ] as? MdnJsDocumentation ?: return null
+  return documentation.symbols[qualifiedName]
+    ?.let { MdnSymbolDocumentationAdapter(qualifiedName, it) }
+}
+
+fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumentation? {
   var symbolName: String? = null
   return when {
     // Directly from the file
@@ -72,12 +80,12 @@ fun getMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumen
 }
 
 private fun getTagDocumentation(namespace: MdnApiNamespace, tagName: String): MdnHtmlElementDocumentation? {
-  val documentation = documentationCache[namespace] ?: return null
+  val documentation = documentationCache[Pair(namespace, null)] as? MdnHtmlDocumentation ?: return null
   return documentation.tags[tagName.let { documentation.tagAliases[it] ?: it }]
 }
 
 private fun getAttributeDocumentation(namespace: MdnApiNamespace, tagName: String?, attributeName: String): MdnHtmlAttributeDocumentation? {
-  val documentation = documentationCache[namespace] ?: return null
+  val documentation = documentationCache[Pair(namespace, null)] as? MdnHtmlDocumentation ?: return null
   return tagName?.let { getTagDocumentation(namespace, it)?.attrs?.get(attributeName) }
          ?: documentation.attrs[attributeName]
 }
@@ -85,51 +93,58 @@ private fun getAttributeDocumentation(namespace: MdnApiNamespace, tagName: Strin
 interface MdnSymbolDocumentation {
   val url: String
   val isDeprecated: Boolean
-  val documentation: String
-  val quickDocumentation: String
+  fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean): String
 }
 
-class MdnSymbolDocumentationAdapter(val name: String, private val doc: MdnHtmlSymbolDocumentation) : MdnSymbolDocumentation {
+class MdnSymbolDocumentationAdapter(private val name: String, private val doc: MdnRawSymbolDocumentation) : MdnSymbolDocumentation {
   override val url: String
     get() = fixMdnUrls(doc.url)
 
   override val isDeprecated: Boolean
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
 
-  override val documentation: String
-    get() = buildDoc(name, doc, false)
-
-  override val quickDocumentation: String
-    get() = buildDoc(name, doc, true)
+  override fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean) =
+    buildDoc(doc, name, withDefinition, quickDoc)
 
 }
 
-interface MdnHtmlSymbolDocumentation {
+interface MdnRawSymbolDocumentation {
   val url: String
   val status: Set<MdnApiStatus>?
   val doc: String?
   val sections: Map<String, String>?
 }
 
+interface MdnDocumentation
+
 data class MdnHtmlDocumentation(val attrs: Map<String, MdnHtmlAttributeDocumentation>,
                                 val tags: Map<String, MdnHtmlElementDocumentation>,
-                                val tagAliases: Map<String, String> = emptyMap())
+                                val tagAliases: Map<String, String> = emptyMap()) : MdnDocumentation
+
+data class MdnJsDocumentation(val symbols: Map<String, MdnJsSymbolDocumentation>) : MdnDocumentation
 
 data class MdnHtmlElementDocumentation(override val url: String,
                                        override val status: Set<MdnApiStatus>?,
                                        override val doc: String,
                                        override val sections: Map<String, String>?,
-                                       val attrs: Map<String, MdnHtmlAttributeDocumentation>?) : MdnHtmlSymbolDocumentation
+                                       val attrs: Map<String, MdnHtmlAttributeDocumentation>?) : MdnRawSymbolDocumentation
 
 data class MdnHtmlAttributeDocumentation(override val url: String,
                                          override val status: Set<MdnApiStatus>?,
                                          override val doc: String?,
-                                         override val sections: Map<String, String>?) : MdnHtmlSymbolDocumentation
+                                         override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
+
+data class MdnJsSymbolDocumentation(override val url: String,
+                                    override val status: Set<MdnApiStatus>?,
+                                    override val doc: String?,
+                                    override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
 
 enum class MdnApiNamespace {
   Html,
   Svg,
-  MathML
+  MathML,
+  WebApi,
+  GlobalObjects;
 }
 
 enum class MdnApiStatus {
@@ -138,11 +153,16 @@ enum class MdnApiStatus {
   Deprecated
 }
 
+val webApiFragmentStarts = arrayOf('a', 'e', 'l', 'r', 'u')
+
+private fun getWebApiFragment(name: String): Char =
+  webApiFragmentStarts.findLast { it <= name[0].toLowerCase() }!!
+
 private const val MDN_DOCS_URL_PREFIX = "\$MDN_URL\$"
 
-private val documentationCache: LoadingCache<MdnApiNamespace, MdnHtmlDocumentation> = Caffeine.newBuilder()
+private val documentationCache: LoadingCache<Pair<MdnApiNamespace, Char?>, MdnDocumentation> = Caffeine.newBuilder()
   .expireAfterAccess(10, TimeUnit.MINUTES)
-  .build { loadDocumentation(it) }
+  .build { (namespace, segment) -> loadDocumentation(namespace, segment) }
 
 private fun fixMdnUrls(content: String): String =
   content.replace("$MDN_DOCS_URL_PREFIX/", "https://developer.mozilla.org/docs/")
@@ -165,15 +185,29 @@ private fun getApiNamespace(namespace: String?, element: PsiElement?, symbolName
     } ?: MdnApiNamespace.Html
   }
 
-private fun loadDocumentation(namespace: MdnApiNamespace): MdnHtmlDocumentation =
-  MdnHtmlDocumentation::class.java.getResource("mdn-${namespace.name.toLowerCase()}.json")!!
+
+private fun loadDocumentation(namespace: MdnApiNamespace, segment: Char?): MdnDocumentation =
+  if (namespace == MdnApiNamespace.WebApi || namespace == MdnApiNamespace.GlobalObjects)
+    loadJavaScriptDocumentation(namespace, segment)
+  else
+    loadHtmlDocumentation(namespace)
+
+private fun loadJavaScriptDocumentation(namespace: MdnApiNamespace, segment: Char?): MdnJsDocumentation =
+  MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}.json")!!
     .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
 
-private fun buildDoc(name: String, doc: MdnHtmlSymbolDocumentation, quickDoc: Boolean): String {
-  val buf = StringBuilder()
+private fun loadHtmlDocumentation(namespace: MdnApiNamespace): MdnHtmlDocumentation =
+  MdnHtmlDocumentation::class.java.getResource("${namespace.name}.json")!!
+    .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
 
-  buf.append(DocumentationMarkup.DEFINITION_START).append(name).append(DocumentationMarkup.DEFINITION_END)
-    .append(DocumentationMarkup.CONTENT_START)
+private fun buildDoc(doc: MdnRawSymbolDocumentation, name: String, withDefinition: Boolean, quickDoc: Boolean): String {
+  val buf = StringBuilder()
+  if (withDefinition)
+    buf.append(DocumentationMarkup.DEFINITION_START)
+      .append(name)
+      .append(DocumentationMarkup.DEFINITION_END)
+
+  buf.append(DocumentationMarkup.CONTENT_START)
     .append(StringUtil.capitalize(doc.doc ?: ""))
     .append(DocumentationMarkup.CONTENT_END)
 

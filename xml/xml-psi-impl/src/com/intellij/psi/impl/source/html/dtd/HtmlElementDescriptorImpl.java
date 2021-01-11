@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.documentation.mdn.MdnHtmlDocumentationKt;
+import com.intellij.documentation.mdn.MdnDocumentationKt;
 import com.intellij.documentation.mdn.MdnSymbolDocumentation;
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -241,7 +241,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   public boolean isDeprecated() {
     boolean html4Deprecated = ourHtml4DeprecatedTags.contains(myDelegate.getName());
     MdnSymbolDocumentation documentation = doIfNotNull(
-      myDelegate.getDeclaration(), declaration -> MdnHtmlDocumentationKt.getMdnDocumentation(declaration, null));
+      myDelegate.getDeclaration(), declaration -> MdnDocumentationKt.getHtmlMdnDocumentation(declaration, null));
     boolean deprecatedInHtml5 = documentation != null && documentation.isDeprecated();
     if (!html4Deprecated && !deprecatedInHtml5) {
       return false;

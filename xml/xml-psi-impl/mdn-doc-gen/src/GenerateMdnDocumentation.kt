@@ -4,9 +4,8 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import com.google.gson.stream.JsonReader
-import com.intellij.documentation.mdn.MdnApiStatus
-import com.intellij.documentation.mdn.MdnHtmlAttributeDocumentation
-import com.intellij.documentation.mdn.MdnHtmlElementDocumentation
+import com.intellij.documentation.mdn.*
+import com.intellij.ide.highlighter.HtmlFileType
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
@@ -54,6 +53,8 @@ val htmlSpecialMappings = mapOf(
   "heading_elements" to setOf("h1", "h2", "h3", "h4", "h5", "h6")
 )
 
+val webApiBlockList = setOf("index")
+
 const val YARI_BUILD_PATH = "/Users/piotr.tomiak/WebstormProjects/yari/client/build"
 const val BUILT_LANG = "en-us"
 const val WEB_DOCS = "docs/web"
@@ -65,55 +66,91 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   /* Run these tests to generate documentation */
   fun testGenHtml() {
-    val attributes = extractInformation("html/global_attributes", this::extractAttributeDocumentation)
-    outputJson("mdn-html.json", mapOf(
+    val attributes = extractInformationSimple("html/global_attributes", this::extractAttributeDocumentation)
+    outputJson(MdnApiNamespace.Html.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformation("html/element", htmlSpecialMappings.keys) { this.extractElementDocumentation(it, attributes) },
+      "tags" to extractInformationSimple("html/element", allowList = htmlSpecialMappings.keys) {
+        this.extractElementDocumentation(it, attributes)
+      },
       "tagAliases" to reversedAliasesMap(htmlSpecialMappings)
     ))
   }
 
   fun testGenMathML() {
-    val attributes = extractInformation("mathml/attribute", this::extractAttributeDocumentation)
-    outputJson("mdn-mathml.json", mapOf(
+    val attributes = extractInformationSimple("mathml/attribute", this::extractAttributeDocumentation)
+    outputJson(MdnApiNamespace.MathML.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformation("mathml/element") { this.extractElementDocumentation(it, attributes) }
+      "tags" to extractInformationSimple("mathml/element") { this.extractElementDocumentation(it, attributes) }
     ))
   }
 
   fun testGenSvg() {
-    val attributes = extractInformation("svg/attribute", this::extractAttributeDocumentation)
-    outputJson("mdn-svg.json", mapOf(
+    val attributes = extractInformationSimple("svg/attribute", this::extractAttributeDocumentation)
+    outputJson(MdnApiNamespace.Svg.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformation("svg/element") { this.extractElementDocumentation(it, attributes) }
+      "tags" to extractInformationSimple("svg/element") { this.extractElementDocumentation(it, attributes) }
+    ))
+  }
+
+  fun testGenJsWebApi() {
+    val symbols = extractInformation("api", blockList = webApiBlockList) { extractJavascriptDocumentation(it, it.name) }
+    val fragments = webApiFragmentStarts.map { Pair(it, sortedMapOf<String, MdnJsSymbolDocumentation>()) }.toMap(TreeMap())
+    symbols.forEach{(name, doc) ->
+      fragments.floorEntry(name[0]).value[name] = doc
+    }
+    fragments.forEach{(prefix, symbols) ->
+      outputJson("${MdnApiNamespace.WebApi.name}-$prefix", mapOf(
+        "symbols" to symbols
+      ))
+    }
+  }
+
+  fun testGenJsGlobalObjects() {
+    outputJson(MdnApiNamespace.GlobalObjects.name, mapOf(
+      "symbols" to extractInformation("javascript/reference/global_objects") { extractJavascriptDocumentation(it, it.name) }
     ))
   }
 
   private fun outputJson(outputFile: String, data: Map<String, Any>) {
-    FileUtil.writeToFile(Path.of(PathManager.getCommunityHomePath(), OUTPUT_DIR, outputFile).toFile(),
+    FileUtil.writeToFile(Path.of(PathManager.getCommunityHomePath(), OUTPUT_DIR, "$outputFile.json").toFile(),
                          GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
                            .toJson(licenseAndAttribution() + data))
   }
 
-  private fun <T> extractInformation(path: String, extractor: (File) -> T): Map<String, T> =
-    extractInformation(path, emptySet(), extractor)
+  private fun <T> extractInformationSimple(mdnPath: String, extractor: (File) -> T): Map<String, T> =
+    extractInformationSimple(mdnPath, emptySet(), extractor)
 
-  private fun <T> extractInformation(path: String, specialDirs: Set<String>, extractor: (File) -> T): Map<String, T> =
-    Path.of(YARI_BUILD_PATH, BUILT_LANG, WEB_DOCS, path).toFile().listFiles()!!
-      .asSequence()
-      .filter {
-        it.isDirectory && (!it.name.contains('-')
-        || specialDirs.contains(it.name.toLowerCase(Locale.US))) && File(it,      "index.json").exists()
+  private fun <T> extractInformationSimple(mdnPath: String, allowList: Set<String>, extractor: (File) -> T): Map<String, T> =
+    extractInformation(mdnPath, allowList) { docDir ->
+      try {
+        listOf(Pair(docDir.name, extractor(docDir)))
       }
-      .map { docDir ->
-        try {
-          Pair(docDir.name, extractor(docDir))
-        }
-        catch (e: Exception) {
-          System.err.println("Error for $docDir: ${e.message}")
-          throw e
-        }
+      catch (e: Exception) {
+        System.err.println("Error for $docDir: ${e.message}")
+        throw e
       }
+    }
+
+  private fun <T> extractInformation(mdnPath: String,
+                                     allowList: Set<String> = emptySet(),
+                                     blockList: Set<String> = emptySet(),
+                                     extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
+    extractInformationFull(Path.of(YARI_BUILD_PATH, BUILT_LANG, WEB_DOCS, mdnPath).toFile(), allowList, blockList, extractor)
+
+  private fun <T> extractInformationFull(dir: File,
+                                         allowList: Set<String> = emptySet(),
+                                         blockList: Set<String> = emptySet(),
+                                         extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
+    dir.listFiles()!!.asSequence()
+      .filter { file ->
+        file.isDirectory
+        && file.name.toLowerCase(Locale.US).let {
+          ((!it.contains('-') && !it.contains('_')) || allowList.contains(it)) && !blockList.contains(it)
+        }
+        && File(file, "index.json").exists()
+      }
+      .flatMap(extractor)
+      .distinct()
       .sortedBy { it.first }
       .toMap()
 
@@ -132,7 +169,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   private fun extractElementDocumentation(dir: File,
                                           commonAttributes: Map<String, MdnHtmlAttributeDocumentation>): MdnHtmlElementDocumentation {
-    val (compatData, indexDataProseValues) = getDataAndProseValues(dir)
+    val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
 
     val elementDoc = indexDataProseValues.first()
       .getAsJsonPrimitive("content").asString
@@ -176,12 +213,29 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 
   private fun extractAttributeDocumentation(dir: File): MdnHtmlAttributeDocumentation {
-    val (compatData, indexDataProseValues) = getDataAndProseValues(dir)
+    val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     return MdnHtmlAttributeDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
                                          indexDataProseValues.first()
                                            .getAsJsonPrimitive("content").asString
                                            .let { patchProse(it) }
                                            .let { createHtmlFile(it).text }, null)
+  }
+
+  private fun extractJavascriptDocumentation(dir: File, name: String): List<Pair<String, MdnJsSymbolDocumentation>> {
+    try {
+      val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
+      return extractInformationFull(dir, blockList = webApiBlockList) { subDir ->
+        extractJavascriptDocumentation(subDir, "$name.${subDir.name}")
+      }.toList() + Pair(name, MdnJsSymbolDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
+                                                       indexDataProseValues.first()
+                                                         .getAsJsonPrimitive("content").asString
+                                                         .let { patchProse(it) }
+                                                         .let { createHtmlFile(it).text }, null))
+    }
+    catch (e: Exception) {
+      System.err.println("Error for $dir: ${e.message}")
+      throw e
+    }
   }
 
   private fun reversedAliasesMap(specialMappings: Map<String, Set<String>>): Map<String, String> =
@@ -190,7 +244,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun getMdnDocsUrl(dir: File): String =
     MDN_DOCS_URL_PREFIX + dir.path.replace('\\', '/').let { it.substring(it.indexOf("/docs/") + 5) }
 
-  private fun getDataAndProseValues(dir: File): Pair<JsonObject?, List<JsonObject>> =
+  private fun getCompatDataAndProseValues(dir: File): Pair<JsonObject?, List<JsonObject>> =
     Pair(
       File(dir, "bcd.json").takeIf { it.exists() }?.let { file ->
         JsonParser.parseReader(JsonReader(FileReader(file)).also { it.isLenient = true })
@@ -305,13 +359,19 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val htmlFile = PsiFileFactory.getInstance(project)
       .createFileFromText("dummy.html", HTMLLanguage.INSTANCE, contents, false, true)
     val toRemove = mutableSetOf<XmlTag>()
+    val toSimplify = mutableSetOf<XmlTag>()
     htmlFile.acceptChildren(object : XmlRecursiveElementVisitor() {
       override fun visitXmlTag(tag: XmlTag) {
-        if ((tag.getAttributeValue("class")?.contains("hidden", true) == true)
-            || tag.getAttributeValue("id")
-              .let { it == "topExample" || it == "Exeemple" || it == "Example" || it == "Exemple" || it == "LiveSample" }
-            || (tag.name == "span" && tag.getAttributeValue("class") == "notecard inline warning")
-            || tag.name == "iframe") {
+        if (tag.name == "pre"
+            && tag.getAttributeValue("class")?.matches(Regex("brush: ?(js|html|css|xml)[a-z0-9-;\\[\\] ]*")) == true) {
+          tag.findSubTag("code")?.let { toSimplify.add(it) }
+        }
+        else if ((tag.getAttributeValue("class")?.contains("hidden", true) == true)
+                 || tag.getAttributeValue("id")
+                   .let { it == "topExample" || it == "Exeemple" || it == "Example" || it == "Exemple" || it == "LiveSample" }
+                 || (tag.name == "span" && tag.getAttributeValue("class") == "notecard inline warning")
+                 || (tag.name == "p" && tag.innerHtml().trim().startsWith("The source for this interact"))
+                 || tag.name == "iframe") {
           toRemove.add(tag)
         }
         else if (tag.name == "svg") {
@@ -339,11 +399,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     })
     toRemove.forEach { it.delete() }
     removeEmptyTags(htmlFile)
+    toSimplify.forEach(::simplifyTag)
     val text = fixSpaces(htmlFile.text)
     if (text.contains("The source for this interact"))
       throw Exception("Unhidden stuff!")
+    if (text.contains("class=\"token punctuation\""))
+      throw Exception("Code fragment")
     return PsiFileFactory.getInstance(project)
-      .createFileFromText("dummy.html", HTMLLanguage.INSTANCE, text, false, true)
+      .createFileFromText("dummy.html", HtmlFileType.INSTANCE, text, System.currentTimeMillis(), false, true)
       as HtmlFileImpl
   }
 
@@ -362,9 +425,24 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     toRemove.forEach { it.delete() }
   }
 
+  private fun simplifyTag(tag: XmlTag) {
+    val result = StringBuilder()
+    tag.acceptChildren(object : XmlRecursiveElementVisitor() {
+      override fun visitXmlText(text: XmlText) {
+        result.append(text.text.replace(' ', ' '))
+      }
+    })
+    tag.replace(
+      XmlElementFactory.getInstance(tag.project).createTagFromText("""<${tag.name}>$result</${tag.name}>""", HTMLLanguage.INSTANCE))
+  }
+
   private fun isEmptyTag(tag: XmlTag): Boolean =
     tag.name.let { it != "br" && it != "hr" }
-    && !tag.children.map { it is XmlAttribute || (it is XmlText && it.text.isNotBlank()) || (it is XmlTag && !isEmptyTag(it)) }.any { it }
+    && !tag.children.map {
+      (it is XmlAttribute && it.name != "class")
+      || (it is XmlText && it.text.isNotBlank())
+      || (it is XmlTag && !isEmptyTag(it))
+    }.any { it }
 
   private fun extractStatus(compatData: JsonObject?): Set<MdnApiStatus>? =
     compatData?.get("__compat")

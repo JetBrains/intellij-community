@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.documentation.mdn.MdnHtmlDocumentationKt.getMdnDocumentation;
+import static com.intellij.documentation.mdn.MdnDocumentationKt.getHtmlMdnDocumentation;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 /**
@@ -151,12 +151,12 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   private MdnSymbolDocumentation getDocumentation(PsiElement element, PsiElement originalElement) {
     XmlTag tagContext = findTagContext(originalElement);
-    MdnSymbolDocumentation result = getMdnDocumentation(element, tagContext);
+    MdnSymbolDocumentation result = getHtmlMdnDocumentation(element, tagContext);
     if (result == null && tagContext == null) {
       PsiElement declaration =
         doIfNotNull(findDescriptor(element.getManager(), element.getText(), originalElement), PsiMetaData::getDeclaration);
       if (declaration != null) {
-        result = getMdnDocumentation(declaration, null);
+        result = getHtmlMdnDocumentation(declaration, null);
       }
     }
     return result;
@@ -174,7 +174,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   private String generateDocForHtml(PsiElement element, PsiElement originalElement, boolean quickDoc) {
     MdnSymbolDocumentation documentation = getDocumentation(element, originalElement);
     if (documentation != null) {
-      return quickDoc ? documentation.getQuickDocumentation() : documentation.getDocumentation();
+      return documentation.getDocumentation(true, quickDoc);
     }
 
     if (element instanceof XmlEntityDecl) {
