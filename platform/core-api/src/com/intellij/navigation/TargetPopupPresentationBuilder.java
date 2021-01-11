@@ -38,6 +38,9 @@ public interface TargetPopupPresentationBuilder {
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPopupPresentationBuilder locationText(@Nls @Nullable String text);
 
+  /**
+   * @see com.intellij.codeInsight.navigation.UtilKt#fileLocation
+   */
   @Contract(value = "_, _ -> new", pure = true)
   @NotNull TargetPopupPresentationBuilder locationText(@Nls @Nullable String text, @Nullable Icon icon);
 }

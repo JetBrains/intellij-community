@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.ide.util.PsiElementListCellRenderer
+import com.intellij.ide.util.PsiElementModuleRenderer
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
@@ -9,7 +10,9 @@ import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,10 +23,13 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NotNull
 import java.awt.Font
 import java.util.regex.Pattern
+import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JList
+import com.intellij.openapi.util.Pair as JBPair
 
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
@@ -77,5 +83,20 @@ fun fileStatusAttributes(project: Project, file: VirtualFile): TextAttributes? {
     hasProblem -> TextAttributes(fileColor, null, JBColor.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN)
     fileColor != null -> TextAttributes(fileColor, null, null, null, Font.PLAIN)
     else -> null
+  }
+}
+
+@ApiStatus.Experimental
+fun fileLocation(project: Project, file: VirtualFile): JBPair<@Nls @NotNull String, @NotNull Icon>? {
+  val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+  return if (fileIndex.isInLibrary(file)) {
+    PsiElementModuleRenderer().libraryLocation(fileIndex, file)
+  }
+  else {
+    val module = ModuleUtilCore.findModuleForFile(file, project)
+    if (module != null) {
+      PsiElementModuleRenderer.projectLocation(file, module, fileIndex)
+    }
+    else null
   }
 }

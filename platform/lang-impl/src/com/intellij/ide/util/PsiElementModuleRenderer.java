@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +54,11 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer {
     if (value instanceof PsiElement) {
       PsiElement element = (PsiElement)value;
       if (element.isValid()) {
-        showElementLocation(element);
+        var elementLocation = elementLocation(element);
+        if (elementLocation != null) {
+          myText = elementLocation.first;
+          setIcon(elementLocation.second);
+        }
       }
     }
 
@@ -64,58 +70,67 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer {
     setForeground(selected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
   }
 
-  private void showElementLocation(PsiElement element) {
+  private @Nullable Pair<@Nls @NotNull String, @NotNull Icon> elementLocation(@NotNull PsiElement element) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
     VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
     if (vFile != null && fileIndex.isInLibrary(vFile)) {
-      showLibraryLocation(fileIndex, vFile);
+      return libraryLocation(fileIndex, vFile);
     }
     else {
       Module module = ModuleUtilCore.findModuleForPsiElement(element);
       if (module != null) {
-        showProjectLocation(vFile, module, fileIndex);
+        return projectLocation(vFile, module, fileIndex);
       }
+      return null;
     }
   }
 
-  private void showProjectLocation(@Nullable VirtualFile vFile, @NotNull Module module, @NotNull ProjectFileIndex fileIndex) {
+  @ApiStatus.Internal
+  public static @NotNull Pair<@Nls @NotNull String, @NotNull Icon> projectLocation(@Nullable VirtualFile vFile,
+                                                                                   @NotNull Module module,
+                                                                                   @NotNull ProjectFileIndex fileIndex) {
     boolean inTestSource = vFile != null && fileIndex.isInTestSourceContent(vFile);
+    String text;
     if (Registry.is("ide.show.folder.name.instead.of.module.name")) {
       String path = ModuleUtilCore.getModuleDirPath(module);
-      myText = StringUtil.isEmpty(path) ? module.getName() : new File(path).getName();
+      text = StringUtil.isEmpty(path) ? module.getName() : new File(path).getName();
     }
     else {
-      myText = module.getName();
+      text = module.getName();
     }
+    Icon icon;
     if (inTestSource) {
-      setIcon(AllIcons.Nodes.TestSourceFolder);
+      icon = AllIcons.Nodes.TestSourceFolder;
     }
     else {
-      setIcon(ModuleType.get(module).getIcon());
+      icon = ModuleType.get(module).getIcon();
     }
+    return Pair.create(text, icon);
   }
 
-  private void showLibraryLocation(ProjectFileIndex fileIndex, VirtualFile vFile) {
-    setIcon(AllIcons.Nodes.PpLibFolder);
-    myText = orderEntryText(fileIndex, vFile);
+  @ApiStatus.Internal
+  public @NotNull Pair<@Nls @NotNull String, @NotNull Icon> libraryLocation(@NotNull ProjectFileIndex fileIndex,
+                                                                            @NotNull VirtualFile vFile) {
+    String text = orderEntryText(fileIndex, vFile);
 
-    if (StringUtil.isEmpty(myText) && Registry.is("index.run.configuration.jre")) {
+    if (StringUtil.isEmpty(text) && Registry.is("index.run.configuration.jre")) {
       for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
         Set<VirtualFile> roots = StreamEx.of(sdk.getRootProvider().getFiles(OrderRootType.CLASSES))
           .append(sdk.getRootProvider().getFiles(OrderRootType.SOURCES))
           .toSet();
         if (VfsUtilCore.isUnder(vFile, roots)) {
-          myText = "< " + sdk.getName() + " >";
+          text = "< " + sdk.getName() + " >";
           break;
         }
       }
     }
 
-    myText = myText.substring(myText.lastIndexOf(File.separatorChar) + 1);
+    text = text.substring(text.lastIndexOf(File.separatorChar) + 1);
     VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
-    if (jar != null && !myText.equals(jar.getName())) {
-      myText += " (" + jar.getName() + ")";
+    if (jar != null && !text.equals(jar.getName())) {
+      text += " (" + jar.getName() + ")";
     }
+    return Pair.create(text, AllIcons.Nodes.PpLibFolder);
   }
 
   private @Nls @NotNull String orderEntryText(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
