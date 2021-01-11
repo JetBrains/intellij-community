@@ -18,11 +18,10 @@ import java.nio.file.Paths
 object FileHistoryPersistence {
   private val LOG: Logger = Logger.getInstance(FileHistoryPersistence::class.java)
 
-  private const val HISTORY_FILE_NAME_SUFFIX = ".xml"
   private const val NGRAM_FILE_NAME_SUFFIX = "-ngram"
 
   fun saveFileHistory(project: Project, state: FilePredictionHistoryState) {
-    val path: Path? = getPathToStorage(project, HISTORY_FILE_NAME_SUFFIX)
+    val path: Path? = getPathToStorage(project, PathManager.DEFAULT_EXT)
     try {
       if (path != null) {
         JDOMUtil.write(state.serialize(), path)
@@ -39,7 +38,7 @@ object FileHistoryPersistence {
       return state
     }
 
-    val path: Path? = getPathToStorage(project, HISTORY_FILE_NAME_SUFFIX)
+    val path: Path? = getPathToStorage(project, PathManager.DEFAULT_EXT)
     try {
       if (path != null && path.exists()) {
         state.deserialize(JDOMUtil.load(path))
