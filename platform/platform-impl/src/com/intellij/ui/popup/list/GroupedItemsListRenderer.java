@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -46,7 +47,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
     if (hasSeparator) setSeparatorFont(list.getFont());
 
-    Icon icon = isSelected ? myDescriptor.getSelectedIconFor(value) : myDescriptor.getIconFor(value);
+    Icon icon = isSelected ? IconUtil.wrapToSelectionAwareIcon(myDescriptor.getSelectedIconFor(value)) : myDescriptor.getIconFor(value);
     final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
                                                  icon, icon, isSelected, hasSeparator,
                                                  caption, -1);
