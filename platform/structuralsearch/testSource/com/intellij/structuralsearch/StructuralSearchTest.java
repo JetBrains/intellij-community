@@ -2591,6 +2591,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                "}";
     assertEquals("don't throw exception during matching", 0,
                  findMatchesCount(s, "void '_Method('_ParameterType '_Parameter*, '_LastType[] '_lastParameter);"));
+
+    String s2 = "class X {" +
+                "  void x() {" +
+                "    x();" +
+                "  }" +
+                "}";
+    assertEquals("don't throw exception during matching", 0,
+                 findMatchesCount(s2, "void '_x() {\n" +
+                                     "  '_x;\n" +
+                                     "}"));
   }
 
   public void testNoUnexpectedException() {
