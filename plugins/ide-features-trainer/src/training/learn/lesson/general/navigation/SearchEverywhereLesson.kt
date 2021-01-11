@@ -73,17 +73,15 @@ abstract class SearchEverywhereLesson(module: Module, lang: String)
       test { type(it) }
     }
 
-    task {
-      triggerByUiComponentAndHighlight { _: ActionButtonWithText -> true }
-    }
-
     task(EverythingGlobalScope.getNameText()) {
       text(LessonsBundle.message("search.everywhere.use.all.places",
                                  strong(ProjectScope.getProjectFilesScopeName()), strong(it)))
+      triggerByUiComponentAndHighlight { _: ActionButtonWithText -> true }
       triggerByUiComponentAndHighlight(false, false) { button: ActionButtonWithText ->
         button.accessibleContext.accessibleName == it
       }
-      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
+      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass")),
+                  restoreTaskWhenResolved = true) {
         !checkInsideSearchEverywhere() && focusOwner !is JList<*>
       }
       test {
