@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -245,7 +246,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       if (param instanceof PsiParameter) {
         newParamInfos[i++] = ParameterInfoImpl.create(parameterList.getParameterIndex((PsiParameter)param))
           .withName(param.getName())
-          .withType(paramType)
+          .withType(AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(param.getModifierList(), paramType))
           .withDefaultValue(param.getName());
       } else {
         try {
@@ -254,7 +255,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
           usedFields.put((PsiField)param, uniqueParameterName);
           newParamInfos[i++] = ParameterInfoImpl.createNew()
             .withName(uniqueParameterName)
-            .withType(paramType)
+            .withType(AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(param.getModifierList(), paramType))
             .withDefaultValue(uniqueParameterName);
         }
         finally {

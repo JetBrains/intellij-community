@@ -113,13 +113,12 @@ public abstract class NullableNotNullManager {
         return null;
       }
 
+      PsiModifierList modifierList = target.getModifierList();
       // type annotations are part of target's type and should not to be copied explicitly to avoid duplication
-      if (!AnnotationTargetUtil.isTypeAnnotation(annotation)) {
-
-        PsiModifierList modifierList = target.getModifierList();
-        if (modifierList != null && !modifierList.hasAnnotation(qualifiedName)) {
-          return modifierList.addAnnotation(qualifiedName);
-        }
+      if (modifierList != null &&
+          !AnnotationTargetUtil.isStrictlyTypeUseAnnotation(modifierList, annotation) &&
+          !modifierList.hasAnnotation(qualifiedName)) {
+        return modifierList.addAnnotation(qualifiedName);
       }
     }
 

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.ide.util.MemberChooser;
@@ -274,8 +275,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
       parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);
-      PsiParameter parm = factory.createParameter(parmName, field.getType(), aClass);
-
+      PsiParameter parm = factory.createParameter(parmName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()), aClass);
       NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, parm);
 
       if (constructor.isVarArgs()) {

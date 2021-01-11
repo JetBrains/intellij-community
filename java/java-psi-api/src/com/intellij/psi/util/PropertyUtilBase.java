@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.project.Project;
@@ -467,7 +468,7 @@ public class PropertyUtilBase {
     Project project = field.getProject();
     String name = field.getName();
     String getName = suggestGetterName(field);
-    PsiMethod getMethod = factory.createMethod(getName, field.getType());
+    PsiMethod getMethod = factory.createMethod(getName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
     PsiUtil.setModifierProperty(getMethod, PsiModifier.PUBLIC, true);
     if (field.hasModifierProperty(PsiModifier.STATIC)) {
       PsiUtil.setModifierProperty(getMethod, PsiModifier.STATIC, true);
@@ -521,7 +522,7 @@ public class PropertyUtilBase {
       .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(),
                             field);
     String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
-    PsiParameter param = factory.createParameter(parameterName, field.getType());
+    PsiParameter param = factory.createParameter(parameterName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
 
     NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, param);
 

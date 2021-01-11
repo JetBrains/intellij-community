@@ -626,11 +626,7 @@ public final class PsiImplUtil {
   }
 
   public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<? super PsiAnnotation> annotations) {
-    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
-        annotations.add(annotation);
-      }
-    }
+    AnnotationTargetUtil.collectStrictlyTypeUseAnnotations(modifierList, annotations);
   }
 
   private static final Key<Boolean> TYPE_ANNO_MARK = Key.create("type.annotation.mark");

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
@@ -390,7 +391,7 @@ public final class GenerateMembersUtil {
         final PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiTypeParameter) {
           final PsiType type = factory.createType((PsiTypeParameter)resolve);
-          replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, type, sourceMethod)));
+          replacementMap.put(reference, factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, type, sourceMethod, null)));
         }
       }
     });
@@ -422,7 +423,7 @@ public final class GenerateMembersUtil {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
-      final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope());
+      final PsiType substituted = substituteType(substitutor, parameterType, (PsiMethod)parameter.getDeclarationScope(), parameter.getModifierList());
       String paramName = parameter.getName();
       boolean isBaseNameGenerated = true;
       final boolean isSubstituted = substituted.equals(parameterType);
@@ -460,7 +461,7 @@ public final class GenerateMembersUtil {
                                        @NotNull PsiMethod sourceMethod,
                                        @NotNull List<? extends PsiClassType> thrownTypes) {
     for (PsiClassType thrownType : thrownTypes) {
-      targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod)));
+      targetThrowsList.add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, sourceMethod, null)));
     }
   }
 
@@ -500,7 +501,7 @@ public final class GenerateMembersUtil {
     if (returnTypeElement == null || returnType == null) {
       return;
     }
-    final PsiType substitutedReturnType = substituteType(substitutor, returnType, method);
+    final PsiType substitutedReturnType = substituteType(substitutor, returnType, method, method.getModifierList());
 
     returnTypeElement.replace(new LightTypeElement(manager, substitutedReturnType instanceof PsiWildcardType ? TypeConversionUtil.erasure(substitutedReturnType) : substitutedReturnType));
   }
@@ -519,11 +520,11 @@ public final class GenerateMembersUtil {
            NameUtil.getSuggestionsByName(typeName, "", "", false, false, parameterType instanceof PsiArrayType).contains(paramName);
   }
 
-  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, @NotNull PsiTypeParameterListOwner owner) {
-    if (PsiUtil.isRawSubstitutor(owner, substitutor)) {
-      return TypeConversionUtil.erasure(type);
-    }
-    return GenericsUtil.eliminateWildcards(substitutor.substitute(type), false, true);
+  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, @NotNull PsiTypeParameterListOwner owner, PsiModifierList modifierList) {
+    PsiType substitutedType = PsiUtil.isRawSubstitutor(owner, substitutor)
+                    ? TypeConversionUtil.erasure(type)
+                    : GenericsUtil.eliminateWildcards(substitutor.substitute(type), false, true);
+    return substitutedType != null ? AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(modifierList, substitutedType) : null;
   }
 
   public static boolean isChildInRange(PsiElement child, PsiElement first, PsiElement last) {
