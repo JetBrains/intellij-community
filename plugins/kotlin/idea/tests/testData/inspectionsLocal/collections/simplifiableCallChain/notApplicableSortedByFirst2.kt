@@ -1,4 +1,5 @@
 // PROBLEM: none
+// LANGUAGE_VERSION: 1.3
 // WITH_RUNTIME
 data class Foo(val x: Int?)
 
