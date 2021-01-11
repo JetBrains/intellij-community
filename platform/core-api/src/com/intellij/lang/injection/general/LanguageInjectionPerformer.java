@@ -17,6 +17,15 @@ import org.jetbrains.annotations.NotNull;
 public interface LanguageInjectionPerformer {
 
   /**
+   * Determinate if this is a default {@code LanguageInjectionPerformer} for current language, and it handles most of {@link Injection}-s.
+   * If there were no <b>primary</b> {@link LanguageInjectionPerformer} found for the language then a fallback injection will be performed.
+   *
+   * @return <code>true</code> if it is an dedicated injector for current language,
+   * and <code>false</code> if it handles only specific cases
+   */
+  boolean isPrimary();
+
+  /**
    * Performs the injection into the {@code context} {@link PsiElement} and/or some elements around it if needed
    * in case if they are semantically connected (concatenation injection for instance).
    *

@@ -98,6 +98,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     myPlaces = places;
   }
 
+  @Override
   @NotNull
   public @NlsSafe String getSupportId() {
     return mySupportId;

@@ -18,15 +18,25 @@ final class LanguageInjectionPerformerAdapter implements MultiHostInjector {
 
     Language language = context.getLanguage();
     Injection injection = null;
-    for (LanguageInjectionContributor contributor : LanguageInjectionContributor.INJECTOR_EXTENSION.allForLanguage(language)) {
+    for (LanguageInjectionContributor contributor : LanguageInjectionContributor.INJECTOR_EXTENSION.allForLanguageOrAny(language)) {
       injection = contributor.getInjection(context);
       if (injection != null) break;
     }
 
     if (injection == null) return;
 
-    for (LanguageInjectionPerformer performer : LanguageInjectionPerformer.INJECTOR_EXTENSION.allForLanguage(language)) {
+    boolean primaryPerformerWasCalled = false;
+
+    for (LanguageInjectionPerformer performer : LanguageInjectionPerformer.INJECTOR_EXTENSION.allForLanguageOrAny(language)) {
+      primaryPerformerWasCalled = primaryPerformerWasCalled || performer.isPrimary();
       if (performer.performInjection(registrar, injection, context)) break;
+    }
+
+    if (!primaryPerformerWasCalled) {
+      FallbackInjectionPerformer fallbackInjectionPerformer = FallbackInjectionPerformer.getInstance();
+      if (fallbackInjectionPerformer != null) {
+        fallbackInjectionPerformer.performInjection(registrar, injection, context);
+      }
     }
   }
 

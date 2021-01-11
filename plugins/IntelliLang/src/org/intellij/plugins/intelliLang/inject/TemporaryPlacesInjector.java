@@ -4,11 +4,16 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.injection.general.Injection;
+import com.intellij.lang.injection.general.LanguageInjectionContributor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,19 +21,12 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public final class TemporaryPlacesInjector implements MultiHostInjector {
-  public static final Logger LOG = Logger.getInstance(TemporaryPlacesInjector.class);
+public final class TemporaryPlacesInjector implements LanguageInjectionContributor {
 
   @Override
-  @NotNull
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Collections.singletonList(PsiLanguageInjectionHost.class);
-  }
-
-  @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
+  public @Nullable Injection getInjection(@NotNull PsiElement context) {
     if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) {
-      return;
+      return null;
     }
 
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
@@ -37,13 +35,12 @@ public final class TemporaryPlacesInjector implements MultiHostInjector {
     PsiFile containingFile = context.getContainingFile();
     InjectedLanguage injectedLanguage = registry.getLanguageFor(host, containingFile);
     Language language = injectedLanguage != null ? injectedLanguage.getLanguage() : null;
-    if (language == null) return;
+    if (language == null) return null;
 
-    final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
-    if (manipulator == null) return;
-    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage,TextRange>> trinities =
-      Collections.singletonList(Trinity.create(host, injectedLanguage, manipulator.getRangeInElement(host)));
-    InjectorUtils.registerInjection(language, trinities, containingFile, registrar);
-    InjectorUtils.registerSupport(registry.getLanguageInjectionSupport(), false, context, language);
+    return new Injection.Data(language.getID(),
+                              injectedLanguage.getPrefix(),
+                              injectedLanguage.getSuffix(),
+                              registry.getLanguageInjectionSupport().getId());
   }
+
 }

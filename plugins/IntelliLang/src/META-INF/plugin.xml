@@ -47,12 +47,18 @@
                          dynamic="true" id="IntelliLang.Configuration" instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"
                          nonDefaultProject="true"/>
 
-    <multiHostInjector id="TemporaryPlacesInjector" implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" order="first"/>
-    <multiHostInjector id ="CommentLanguageInjector" implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector" order="after TemporaryPlacesInjector"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.FallbackInjectionPerformer"
+                        serviceImplementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjectionPerformer"/>
+
+    <languageInjectionContributor id="TemporaryPlacesInjector"
+                                  implementationClass="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" language=""
+                                  order="first"/>
+    <multiHostInjector id="CommentLanguageInjector" implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"
+                       order="after TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
 
     <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
-                    serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
+                        serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
 

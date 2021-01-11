@@ -2,7 +2,6 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
@@ -13,7 +12,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandlerKt;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.NotNull;
@@ -31,34 +29,7 @@ public final class TemporaryPlacesRegistry {
 
   private volatile long myPsiModificationCounter;
 
-  private final LanguageInjectionSupport myInjectorSupport = new AbstractLanguageInjectionSupport() {
-    @NotNull
-    @Override
-    public String getId() {
-      return "temp";
-    }
-
-    @Override
-    public boolean isApplicableTo(PsiLanguageInjectionHost host) {
-      return true;
-    }
-
-    @Override
-    public Class<?> @NotNull [] getPatternClasses() {
-      return ArrayUtil.EMPTY_CLASS_ARRAY;
-    }
-
-    @Override
-    public boolean addInjectionInPlace(Language language, PsiLanguageInjectionHost host) {
-      addHostWithUndo(host, InjectedLanguage.create(language.getID()));
-      return true;
-    }
-
-    @Override
-    public boolean removeInjectionInPlace(PsiLanguageInjectionHost psiElement) {
-      return removeHostWithUndo(myProject, psiElement);
-    }
-  };
+  public final static String SUPPORT_ID = "temp";
 
   public static TemporaryPlacesRegistry getInstance(@NotNull Project project) {
     return project.getService(TemporaryPlacesRegistry.class);
@@ -162,7 +133,7 @@ public final class TemporaryPlacesRegistry {
   }
 
   public LanguageInjectionSupport getLanguageInjectionSupport() {
-    return myInjectorSupport;
+    return InjectorUtils.findInjectionSupport(SUPPORT_ID);
   }
 
   @Nullable
