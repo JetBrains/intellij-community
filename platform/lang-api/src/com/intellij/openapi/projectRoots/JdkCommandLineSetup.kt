@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots
 
-import com.intellij.execution.CantRunException
-import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.Platform
+import com.intellij.execution.*
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
@@ -65,7 +62,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
   private val projectHomeOnTarget = VolumeDescriptor(VolumeType(JdkCommandLineSetup::class.java.simpleName + ":projectHomeOnTarget"),
                                                      "", "", "",
-                                                     request.projectPathOnTarget ?: "")
+                                                     request.projectPathOnTarget)
 
   /**
    * @param uploadPathIsFile
@@ -588,6 +585,13 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   }
 
   private fun joinPath(segments: Array<String>) = segments.joinTo(StringBuilder(), platform.fileSeparator.toString()).toString()
+
+  fun registerFilesToUpload(additionalFilesToUpload: Collection<File>) {
+    for (file in additionalFilesToUpload) {
+      val targetValue = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, file.absolutePath, null)
+      commandLine.addAdditionalFileToUpload(file, targetValue)
+    }
+  }
 
   companion object {
     private const val JAVAAGENT = "-javaagent"
