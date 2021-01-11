@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ class InvokeAfterUpdateCallback {
   public static Callback create(@NotNull Project project,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 @NotNull Runnable afterUpdate,
-                                @Nullable String title) {
+                                @Nullable @Nls String title) {
     if (mode.isSilent()) {
       return new SilentCallback(project, afterUpdate, mode.isCallbackOnAwt());
     }
@@ -103,7 +104,7 @@ class InvokeAfterUpdateCallback {
   private static class ProgressCallback extends CallbackBase {
     private final boolean mySynchronous;
     private final boolean myCanBeCancelled;
-    private final @NlsContexts.ProgressTitle String myTaskTitle;
+    private final @Nls String myTitle;
 
     @NotNull private final Semaphore mySemaphore = new Semaphore(1);
 
@@ -111,20 +112,24 @@ class InvokeAfterUpdateCallback {
                      @NotNull Runnable afterUpdate,
                      boolean synchronous,
                      boolean canBeCancelled,
-                     String title) {
+                     @Nullable @Nls String title) {
       super(project, afterUpdate);
       mySynchronous = synchronous;
       myCanBeCancelled = canBeCancelled;
-      myTaskTitle = VcsBundle.message("change.list.manager.wait.lists.synchronization", title);
+      myTitle = title;
     }
 
     @Override
     public void startProgress() {
       if (mySynchronous) {
-        new ModalWaiter().queue();
+        String dialogTitle = VcsBundle.message("change.list.manager.wait.lists.synchronization.modal",
+                                               myTitle, myTitle != null ? 1 : 0);
+        new ModalWaiter(myProject, dialogTitle, myCanBeCancelled).queue();
       }
       else {
-        new BackgroundableWaiter().queue();
+        String progressTitle = VcsBundle.message("change.list.manager.wait.lists.synchronization.background",
+                                                 myTitle, myTitle != null ? 1 : 0);
+        new BackgroundableWaiter(myProject, progressTitle, myCanBeCancelled).queue();
       }
     }
 
@@ -145,8 +150,8 @@ class InvokeAfterUpdateCallback {
     }
 
     private class ModalWaiter extends Task.Modal {
-      ModalWaiter() {
-        super(ProgressCallback.this.myProject, myTaskTitle, myCanBeCancelled);
+      ModalWaiter(@NotNull Project project, @NotNull @NlsContexts.DialogTitle String title, boolean canBeCancelled) {
+        super(project, title, canBeCancelled);
         setCancelText(VcsBundle.message("button.skip"));
       }
 
@@ -162,8 +167,8 @@ class InvokeAfterUpdateCallback {
     }
 
     private class BackgroundableWaiter extends Task.Backgroundable {
-      BackgroundableWaiter() {
-        super(ProgressCallback.this.myProject, myTaskTitle, myCanBeCancelled);
+      BackgroundableWaiter(@NotNull Project project, @NotNull @NlsContexts.ProgressTitle String title, boolean canBeCancelled) {
+        super(project, title, canBeCancelled);
       }
 
       @Override

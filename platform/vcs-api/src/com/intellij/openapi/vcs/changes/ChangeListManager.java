@@ -37,7 +37,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
-                                         @Nullable @NlsContexts.ProgressTitle String title,
+                                         @Nullable @Nls String title,
                                          @Nullable ModalityState state);
 
   /**
@@ -46,7 +46,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Deprecated
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
-                                         @Nullable @NlsContexts.ProgressTitle String title,
+                                         @Nullable @Nls String title,
                                          @Nullable Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
                                          @Nullable ModalityState state);
 
