@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
@@ -27,7 +26,8 @@ import java.awt.*;
 import java.io.File;
 import java.util.Set;
 
-public class PsiElementModuleRenderer extends DefaultListCellRenderer{
+public class PsiElementModuleRenderer extends DefaultListCellRenderer {
+
   private @Nls String myText;
 
   @Override
@@ -52,17 +52,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     if (value instanceof PsiElement) {
       PsiElement element = (PsiElement)value;
       if (element.isValid()) {
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-        VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
-        if (vFile != null && fileIndex.isInLibrary(vFile)){
-          showLibraryLocation(fileIndex, vFile);
-        }
-        else {
-          Module module = ModuleUtilCore.findModuleForPsiElement(element);
-          if (module != null) {
-            showProjectLocation(vFile, module, fileIndex);
-          }
-        }
+        showElementLocation(element);
       }
     }
 
@@ -74,12 +64,27 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     setForeground(selected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
   }
 
+  private void showElementLocation(PsiElement element) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
+    if (vFile != null && fileIndex.isInLibrary(vFile)) {
+      showLibraryLocation(fileIndex, vFile);
+    }
+    else {
+      Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      if (module != null) {
+        showProjectLocation(vFile, module, fileIndex);
+      }
+    }
+  }
+
   private void showProjectLocation(@Nullable VirtualFile vFile, @NotNull Module module, @NotNull ProjectFileIndex fileIndex) {
     boolean inTestSource = vFile != null && fileIndex.isInTestSourceContent(vFile);
     if (Registry.is("ide.show.folder.name.instead.of.module.name")) {
       String path = ModuleUtilCore.getModuleDirPath(module);
       myText = StringUtil.isEmpty(path) ? module.getName() : new File(path).getName();
-    } else {
+    }
+    else {
       myText = module.getName();
     }
     if (inTestSource) {
@@ -102,8 +107,8 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     if (StringUtil.isEmpty(myText) && Registry.is("index.run.configuration.jre")) {
       for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
         Set<VirtualFile> roots = StreamEx.of(sdk.getRootProvider().getFiles(OrderRootType.CLASSES))
-                                         .append(sdk.getRootProvider().getFiles(OrderRootType.SOURCES))
-                                         .toSet();
+          .append(sdk.getRootProvider().getFiles(OrderRootType.SOURCES))
+          .toSet();
         if (VfsUtilCore.isUnder(vFile, roots)) {
           myText = "< " + sdk.getName() + " >";
           break;
