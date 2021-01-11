@@ -90,7 +90,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val osPath = JpsPathUtil.urlToOsPath(factory.directoryUrl)
     val libPath = Paths.get(osPath)
     val files = when {
-      Files.exists(libPath) -> Files.list(libPath).use { stream ->
+      Files.isDirectory(libPath) -> Files.list(libPath).use { stream ->
         stream.filter { path: Path -> PathUtil.getFileExtension(path.toString()) == "xml" && Files.isRegularFile(path) }
           .toList()
       }
