@@ -97,10 +97,10 @@ public final class JdkUtil {
 
   public static boolean checkForJdk(@NotNull Path homePath) {
     return (Files.exists(homePath.resolve("bin/javac")) || Files.exists(homePath.resolve("bin/javac.exe"))) &&
-           (isModularRuntime(homePath) ||                              // Jigsaw JDK/JRE
-            Files.exists(homePath.resolve("jre/lib/rt.jar")) ||        // pre-modular JDK
-            Files.isDirectory(homePath.resolve("classes")) ||          // custom build
-            Files.exists(homePath.resolve("jre/lib/vm.jar")) ||        // IBM JDK
+           (isModularRuntime(homePath) ||                               // Jigsaw JDK/JRE
+            Files.exists(homePath.resolve("jre/lib/rt.jar")) ||         // pre-modular JDK
+            Files.isDirectory(homePath.resolve("classes")) ||           // custom build
+            Files.exists(homePath.resolve("jre/lib/vm.jar")) ||         // IBM JDK
             Files.exists(homePath.resolve("../Classes/classes.jar")));  // Apple JDK
   }
 
