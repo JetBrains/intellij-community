@@ -95,25 +95,29 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     return null
   }
 
-  override fun showWarning(text: String, warningRequired: TaskRuntimeContext.() -> Boolean) {
-    restoreState(delayMillis = defaultRestoreDelay) {
+  override fun showWarning(text: String, restoreTaskWhenResolved: Boolean, warningRequired: TaskRuntimeContext.() -> Boolean) {
+    restoreState(taskId, delayMillis = defaultRestoreDelay) {
       val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
         if (warningRequired()) RestoreNotification(text) {} else null
       }
-      this@TaskContextImpl.checkAndShowNotificationIfNeeded(notificationRequired) {
+      val warningResolved = this@TaskContextImpl.checkAndShowNotificationIfNeeded(notificationRequired) {
         LessonManager.instance.setWarningNotification(it)
       }
-      false
+      warningResolved && restoreTaskWhenResolved
     }
   }
 
+  /**
+   * Returns true if already shown notification has been cleared
+   */
   private fun checkAndShowNotificationIfNeeded(notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
-                                               setNotification: (RestoreNotification) -> Unit) {
+                                               setNotification: (RestoreNotification) -> Unit): Boolean {
     val file = lessonExecutor.virtualFile
     val proposal = checkEditor() ?: notificationRequired(runtimeContext)
     if (proposal == null) {
       if (LessonManager.instance.shownRestoreNotification != null) {
         LessonManager.instance.clearRestoreMessage()
+        return true
       }
     }
     else {
@@ -122,6 +126,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         setNotification(proposal)
       }
     }
+    return false
   }
 
   override fun text(@Language("HTML") text: String, useBalloon: LearningBalloonConfig?) {

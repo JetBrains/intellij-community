@@ -205,7 +205,8 @@ class FindInFilesLesson(module: Module, lang: String, override val existedFile: 
 
   private fun TaskContext.showWarningIfPopupClosed(isReplacePopup: Boolean) {
     val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
-    showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId))) {
+    showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId)),
+                restoreTaskWhenResolved = true) {
       getFindPopup()?.helper?.isReplaceState != isReplacePopup
     }
   }
