@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.utils
 
 import circlet.client.api.*
@@ -28,8 +28,8 @@ object SpaceUrls {
 
   fun issues(key: ProjectKey): String = p(key).issues().toUrl()
 
-  fun fileAnnotate(key: ProjectKey, repo: String, hash: String, relativePath: String): String =
-    p(key).fileAnnotate(repo, hash, relativePath).toUrl()
+  fun fileAnnotate(key: ProjectKey, repo: String, hash: String, relativePath: String, selectedLine: Int? = null): String =
+    p(key).fileAnnotate(repo, hash, relativePath, selectedLine).toUrl()
 
   // member
   fun member(profile: TD_MemberProfile): String = member(profile.username)

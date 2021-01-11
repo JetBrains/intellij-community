@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs
 
 import circlet.client.api.ProjectKey
@@ -145,8 +145,12 @@ class SpaceVcsOpenInBrowserActionGroup :
 
     val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-    return repoDescription.projectInfos.map { OpenData.File(project, it, repoDescription.name, virtualFile, gitRepository) }
+    val editor = dataContext.getData(CommonDataKeys.EDITOR)
+    val line = if (editor != null && editor.document.lineCount >= 1) {
+      editor.caretModel.currentCaret.logicalPosition.line
+    } else null
 
+    return repoDescription.projectInfos.map { OpenData.File(project, it, repoDescription.name, virtualFile, line, gitRepository) }
   }
 
   private fun getDataFromHistory(dataContext: DataContext, project: Project): List<OpenData>? {
@@ -221,13 +225,15 @@ class SpaceVcsOpenInBrowserActionGroup :
       class File(project: Project,
                  projectKey: SpaceProjectInfo,
                  repo: String,
-                 private val virtualFile: VirtualFile, private val gitRepository: GitRepository) : OpenData(project, projectKey, repo) {
+                 private val virtualFile: VirtualFile,
+                 private val selectedLine: Int? = null,
+                 private val gitRepository: GitRepository) : OpenData(project, projectKey, repo) {
         override val url: String?
           get() {
             val relativePath = VfsUtilCore.getRelativePath(virtualFile, gitRepository.root) ?: return null
             val hash = getCurrentFileRevisionHash(project, virtualFile) ?: return null
 
-            return SpaceUrls.fileAnnotate(info.key, repo, hash, relativePath)
+            return SpaceUrls.fileAnnotate(info.key, repo, hash, relativePath, selectedLine)
           }
 
         private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
