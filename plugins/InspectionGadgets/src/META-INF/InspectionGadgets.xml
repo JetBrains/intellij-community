@@ -1363,9 +1363,6 @@
                      key="assertequals.called.on.arrays.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.AssertEqualsCalledOnArrayInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnitRule" bundle="messages.InspectionGadgetsBundle"
-                     key="junit.rule.display.name" implementationClass="com.siyeh.ig.junit.JUnitRuleInspection"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JUnitDatapoint" bundle="messages.InspectionGadgetsBundle"
                      key="junit.datapoint.display.name" implementationClass="com.siyeh.ig.junit.JUnitDatapointInspection"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"/>
