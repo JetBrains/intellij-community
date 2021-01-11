@@ -3,10 +3,7 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
-import com.intellij.internal.statistic.eventLog.LogEventRecordRequest;
-import com.intellij.internal.statistic.eventLog.LogEventSerializer;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
@@ -192,7 +189,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     updateResultRequest("{}");
 
     try {
-      EventGroupsFilterRules scheme = EventGroupsFilterRules.create(myEventsSchemeEditor.getDocument().getText());
+      EventGroupsFilterRules<EventLogBuild> scheme = EventGroupsFilterRules.create(myEventsSchemeEditor.getDocument().getText());
       String parsed = parseLogAndFilter(new LogEventMetadataFilter(scheme), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());
     }

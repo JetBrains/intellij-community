@@ -4,13 +4,12 @@ package com.intellij.internal.statistics.metadata
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.BuildRange
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.VersionRange
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.*
 
 class TestGroupFilterRulesBuilder {
   private val groupIds: MutableSet<String> = HashSet()
   private val groupVersions: MutableMap<String, MutableList<VersionRange>> = HashMap()
-  private val groupBuilds: MutableMap<String, MutableList<BuildRange>> = HashMap()
+  private val groupBuilds: MutableMap<String, MutableList<BuildRange<EventLogBuild>>> = HashMap()
 
   fun addVersion(id: String, from: Int, to: Int): TestGroupFilterRulesBuilder {
     if (!groupVersions.containsKey(id)) {
@@ -44,7 +43,7 @@ class TestGroupFilterRulesBuilder {
       groupIds.add(id)
       groupBuilds[id] = mutableListOf()
     }
-    groupBuilds[id]!!.add(BuildRange.create(from, to))
+    groupBuilds[id]!!.add(BuildRange.create(from, to, EventLogBuild.EVENT_LOG_BUILD_PRODUCER))
     return this
   }
 
@@ -53,13 +52,13 @@ class TestGroupFilterRulesBuilder {
     return this
   }
 
-  fun build(): EventGroupsFilterRules {
-    val result = HashMap<String, EventGroupFilterRules>()
+  fun build(): EventGroupsFilterRules<EventLogBuild> {
+    val result = HashMap<String, EventGroupFilterRules<EventLogBuild>>()
     for (groupId in groupIds) {
-      val builds: List<BuildRange> = groupBuilds.getOrDefault(groupId, emptyList())
+      val builds: List<BuildRange<EventLogBuild>> = groupBuilds.getOrDefault(groupId, emptyList())
       val versions: List<VersionRange> = groupVersions.getOrDefault(groupId, emptyList())
       result[groupId] = EventGroupFilterRules(builds, versions)
     }
-    return EventGroupsFilterRules.create(result)
+    return EventGroupsFilterRules.create(result, EventLogBuild.EVENT_LOG_BUILD_PRODUCER)
   }
 }

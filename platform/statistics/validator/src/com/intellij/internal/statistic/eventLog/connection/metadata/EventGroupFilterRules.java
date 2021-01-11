@@ -12,32 +12,32 @@ import java.util.Objects;
 
 import static java.util.Collections.emptyList;
 
-public class EventGroupFilterRules {
-  private final List<BuildRange> builds;
+public class EventGroupFilterRules<T extends Comparable<T>> {
+  private final List<BuildRange<T>> builds;
   private final List<VersionRange> versions;
 
-  public EventGroupFilterRules(@NotNull List<BuildRange> builds, @NotNull List<VersionRange> versions) {
+  public EventGroupFilterRules(@NotNull List<BuildRange<T>> builds, @NotNull List<VersionRange> versions) {
     this.builds = builds;
     this.versions = versions;
   }
 
   @NotNull
-  public static EventGroupFilterRules create(@NotNull EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group) {
-    return create(group.builds, group.versions);
+  public static <P extends Comparable<P>> EventGroupFilterRules<P> create(@NotNull EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group, @NotNull EventLogBuildProducer<P> buildProducer) {
+    return create(group.builds, group.versions, buildProducer);
   }
 
   @NotNull
-  private static EventGroupFilterRules create(@Nullable List<EventGroupRemoteDescriptors.GroupBuildRange> builds, @Nullable List<EventGroupRemoteDescriptors.GroupVersionRange> versions) {
-    final List<BuildRange> buildRanges = builds != null && !builds.isEmpty() ? toBuildRanges(builds) : emptyList();
+  private static <P extends Comparable<P>> EventGroupFilterRules<P> create(@Nullable List<EventGroupRemoteDescriptors.GroupBuildRange> builds, @Nullable List<EventGroupRemoteDescriptors.GroupVersionRange> versions, @NotNull EventLogBuildProducer<P> buildProducer) {
+    final List<BuildRange<P>> buildRanges = builds != null && !builds.isEmpty() ? toBuildRanges(builds, buildProducer) : emptyList();
     final List<EventGroupFilterRules.VersionRange> versionRanges = versions != null && !versions.isEmpty() ? toVersionRanges(versions) : emptyList();
-    return new EventGroupFilterRules(buildRanges, versionRanges);
+    return new EventGroupFilterRules<>(buildRanges, versionRanges);
   }
 
   @NotNull
-  private static List<BuildRange> toBuildRanges(@NotNull List<EventGroupRemoteDescriptors.GroupBuildRange> builds) {
-    List<BuildRange> result = new ArrayList<>();
+  private static <P extends Comparable<P>> List<BuildRange<P>> toBuildRanges(@NotNull List<EventGroupRemoteDescriptors.GroupBuildRange> builds, @NotNull EventLogBuildProducer<P> buildProducer) {
+    List<BuildRange<P>> result = new ArrayList<>();
     for (EventGroupRemoteDescriptors.GroupBuildRange build : builds) {
-      result.add(EventGroupFilterRules.BuildRange.create(build.from, build.to));
+      result.add(EventGroupFilterRules.BuildRange.create(build.from, build.to, buildProducer));
     }
     return result;
   }
@@ -51,18 +51,18 @@ public class EventGroupFilterRules {
     return result;
   }
 
-  public boolean accepts(@Nullable EventLogBuild build, int version) {
+  public boolean accepts(@Nullable T build, int version) {
     return accepts(build) && acceptsVersion(version);
   }
 
-  public boolean accepts(@Nullable EventLogBuild build) {
+  public boolean accepts(@Nullable T build) {
     if (!isValid()) {
       return false;
     }
     return acceptsBuild(build);
   }
 
-  private boolean acceptsBuild(@Nullable EventLogBuild build) {
+  private boolean acceptsBuild(@Nullable T build) {
     if (builds.isEmpty()) return true;
 
     return build != null && builds.stream().anyMatch(b -> b.contains(build));
@@ -82,7 +82,7 @@ public class EventGroupFilterRules {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    EventGroupFilterRules condition = (EventGroupFilterRules)o;
+    EventGroupFilterRules<?> condition = (EventGroupFilterRules<?>)o;
     return Objects.equals(builds, condition.builds) &&
            Objects.equals(versions, condition.versions);
   }
@@ -92,24 +92,24 @@ public class EventGroupFilterRules {
     return Objects.hash(builds, versions);
   }
 
-  public static class BuildRange {
-    private final EventLogBuild myFrom;
-    private final EventLogBuild myTo;
+  public static class BuildRange<T extends Comparable<T>> {
+    private final T myFrom;
+    private final T myTo;
 
-    public BuildRange(@Nullable EventLogBuild from, @Nullable EventLogBuild to) {
+    public BuildRange(@Nullable T from, @Nullable T to) {
       myFrom = from;
       myTo = to;
     }
 
     @NotNull
-    public static BuildRange create(@Nullable String from, @Nullable String to) {
-      return new BuildRange(
-        !ValidatorStringUtil.isEmpty(from) ? EventLogBuild.fromString(from) : null,
-        !ValidatorStringUtil.isEmpty(to) ? EventLogBuild.fromString(to) : null
+    public static <P extends Comparable<P>> BuildRange<P> create(@Nullable String from, @Nullable String to, EventLogBuildProducer<? extends P> buildProducer) {
+      return new BuildRange<>(
+        !ValidatorStringUtil.isEmpty(from) ? buildProducer.create(from) : null,
+        !ValidatorStringUtil.isEmpty(to) ? buildProducer.create(to) : null
       );
     }
 
-    public boolean contains(@NotNull EventLogBuild build) {
+    public boolean contains(@NotNull T build) {
       if (myTo == null && myFrom == null) return false;
 
       return (myTo == null || myTo.compareTo(build) > 0) &&
@@ -120,7 +120,7 @@ public class EventGroupFilterRules {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      BuildRange range = (BuildRange)o;
+      BuildRange<?> range = (BuildRange<?>)o;
       return Objects.equals(myFrom, range.myFrom) &&
              Objects.equals(myTo, range.myTo);
     }

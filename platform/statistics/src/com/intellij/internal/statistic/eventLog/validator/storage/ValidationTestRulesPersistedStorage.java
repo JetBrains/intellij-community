@@ -33,13 +33,12 @@ public final class ValidationTestRulesPersistedStorage implements ValidationRule
   private final @NotNull String myRecorderId;
   private final @NotNull AtomicBoolean myIsInitialized;
 
-
   ValidationTestRulesPersistedStorage(@NotNull String recorderId) {
+    myIsInitialized = new AtomicBoolean(false);
     myTestMetadataPersistence = new EventLogTestMetadataPersistence(recorderId);
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     updateValidators();
     myRecorderId = recorderId;
-    myIsInitialized = new AtomicBoolean(false);
   }
 
   @Override
@@ -84,7 +83,7 @@ public final class ValidationTestRulesPersistedStorage implements ValidationRule
     final GroupRemoteRule rules = merge(groups.rules, productionRules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
-      filter(group -> EventGroupFilterRules.create(group).accepts(build)).
+      filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build)).
       collect(Collectors.toMap(group -> group.id, group -> EventGroupRules.create(group, new GlobalRulesHolder(rules),
                                                                                   new ValidationRuleFactory())));
   }

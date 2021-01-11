@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
+import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException.EventLogMetadataLoadErrorType;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpaces;
 
@@ -28,7 +30,7 @@ public final class EventLogMetadataUtils {
    * @return empty rules if error happened during groups fetching or parsing
    */
   @NotNull
-  public static EventGroupsFilterRules loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
+  public static EventGroupsFilterRules<EventLogBuild> loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     try {
       String content = loadMetadataFromServer(serviceUrl, settings);
       return EventGroupsFilterRules.create(content);

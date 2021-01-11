@@ -10,21 +10,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public final class EventGroupsFilterRules {
-  private final Map<String, EventGroupFilterRules> myGroups;
+public final class EventGroupsFilterRules<T extends Comparable<T>> {
+  private final Map<String, EventGroupFilterRules<T>> myGroups;
+  private final EventLogBuildProducer<T> myBuildProducer;
 
-  private EventGroupsFilterRules(@NotNull Map<String, EventGroupFilterRules> groups) {
+  private EventGroupsFilterRules(@NotNull Map<String, EventGroupFilterRules<T>> groups,
+                                 @NotNull EventLogBuildProducer<T> producer) {
     myGroups = groups;
+    myBuildProducer = producer;
   }
 
   @NotNull
-  public static EventGroupsFilterRules create(@NotNull Map<String, EventGroupFilterRules> groups) {
-    return new EventGroupsFilterRules(groups);
+  public static <P extends Comparable<P>> EventGroupsFilterRules<P> create(@NotNull Map<String, EventGroupFilterRules<P>> groups,
+                                                                           @NotNull EventLogBuildProducer<P> buildProducer) {
+    return new EventGroupsFilterRules<>(groups, buildProducer);
   }
 
   @NotNull
-  public static EventGroupsFilterRules empty() {
-    return new EventGroupsFilterRules(Collections.emptyMap());
+  public static EventGroupsFilterRules<EventLogBuild> empty() {
+    return new EventGroupsFilterRules<>(Collections.emptyMap(), EventLogBuild.EVENT_LOG_BUILD_PRODUCER);
   }
 
   public boolean accepts(@NotNull String groupId, @Nullable String version, @NotNull String build) {
@@ -36,8 +40,8 @@ public final class EventGroupsFilterRules {
     if (parsedVersion < 0) {
       return false;
     }
-    EventGroupFilterRules condition = myGroups.get(groupId);
-    return condition.accepts(EventLogBuild.fromString(build), parsedVersion);
+    EventGroupFilterRules<T> condition = myGroups.get(groupId);
+    return condition.accepts(myBuildProducer.create(build), parsedVersion);
   }
 
   public int getSize() {
@@ -64,7 +68,7 @@ public final class EventGroupsFilterRules {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    EventGroupsFilterRules rules = (EventGroupsFilterRules)o;
+    EventGroupsFilterRules<?> rules = (EventGroupsFilterRules<?>)o;
     return Objects.equals(myGroups, rules.myGroups);
   }
 
@@ -74,12 +78,18 @@ public final class EventGroupsFilterRules {
   }
 
   @NotNull
-  public static EventGroupsFilterRules create(@Nullable String metadataContent) throws EventLogMetadataParseException {
+  public static EventGroupsFilterRules<EventLogBuild> create(@Nullable String metadataContent) throws EventLogMetadataParseException {
     EventGroupRemoteDescriptors groups = EventGroupRemoteDescriptors.create(metadataContent);
-    Map<String, EventGroupFilterRules> groupToCondition = new HashMap<>();
+    return create(groups, EventLogBuild.EVENT_LOG_BUILD_PRODUCER);
+  }
+
+  @NotNull
+  public static <P extends Comparable<P>> EventGroupsFilterRules<P> create(@NotNull EventGroupRemoteDescriptors groups,
+                                                                           @NotNull EventLogBuildProducer<P> buildProducer) {
+    Map<String, EventGroupFilterRules<P>> groupToCondition = new HashMap<>();
     for (EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group : groups.groups) {
-      groupToCondition.put(group.id, EventGroupFilterRules.create(group));
+      groupToCondition.put(group.id, EventGroupFilterRules.create(group, buildProducer));
     }
-    return create(groupToCondition);
+    return create(groupToCondition, buildProducer);
   }
 }

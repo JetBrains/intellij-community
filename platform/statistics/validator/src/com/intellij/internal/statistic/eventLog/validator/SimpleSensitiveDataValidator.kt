@@ -4,35 +4,72 @@ package com.intellij.internal.statistic.eventLog.validator
 import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventAction
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogBuildProducer
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
-import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorage
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.UtilRuleProducer
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory
+import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder
 import org.jetbrains.annotations.NotNull
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
-class SimpleSensitiveDataValidator(private val myRulesStorage: ValidationRulesStorage) {
-  fun validateEvent(event: LogEvent): LogEvent {
-    val logEventAction = event.event
-    val context = EventContext.create(logEventAction.id, logEventAction.data)
-    val logEventGroup = event.group
-    val validatedEventId = guaranteeCorrectEventId(logEventGroup.id, context)
-    val validatedEventData = guaranteeCorrectEventData(logEventGroup.id, context)
-    val validatedEvent = LogEventAction(validatedEventId, logEventAction.state, logEventAction.count)
-    for (datum in validatedEventData) {
-      event.event.addData(datum.key, datum.value)
+class SimpleSensitiveDataValidator<T : Comparable<T>>(initialMetadataContent: String,
+                                                      private val buildProducer: EventLogBuildProducer<T>,
+                                                      utilRulesProducer: UtilRuleProducer = ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER) {
+
+  private val validationRuleFactory = ValidationSimpleRuleFactory(utilRulesProducer)
+  private val eventsValidators: ConcurrentMap<String, EventGroupRules> = ConcurrentHashMap() // guarded by lock
+  private lateinit var filterRules: EventGroupsFilterRules<T> // guarded by lock
+  private val lock = Any()
+
+  init {
+    updateEventGroupRules(initialMetadataContent)
+  }
+
+  fun update(metadataContent: String) {
+    updateEventGroupRules(metadataContent)
+  }
+
+  fun validateEvent(event: LogEvent): LogEvent? {
+    synchronized(lock) {
+      if (!filterRules.accepts(event.group.id, event.group.version, event.build)) {
+        return null
+      }
+      val logEventAction = event.event
+      val context = EventContext.create(logEventAction.id, logEventAction.data)
+      val logEventGroup = event.group
+      val groupRules = eventsValidators[logEventGroup.id]
+      val validatedEventId = guaranteeCorrectEventId(context, groupRules)
+      val validatedEventData = guaranteeCorrectEventData(context, groupRules)
+      val validatedEvent = LogEventAction(validatedEventId, logEventAction.state, logEventAction.count)
+      for (datum in validatedEventData) {
+        validatedEvent.addData(datum.key, datum.value)
+      }
+      return LogEvent(event.session, event.build, event.bucket, event.time, logEventGroup.id, logEventGroup.version, event.recorderVersion,
+                      validatedEvent)
     }
-    return LogEvent(event.session, event.build, event.bucket, event.time, logEventGroup.id, logEventGroup.version, event.recorderVersion,
-                    validatedEvent)
   }
 
-  fun guaranteeCorrectEventId(groupId: @NotNull String,
-                                       context: @NotNull EventContext): String {
-    return guaranteeCorrectEventId(context, myRulesStorage.getGroupRules(groupId))
+  private fun updateEventGroupRules(metadataContent: String?) {
+    synchronized(lock) {
+      eventsValidators.clear()
+      val descriptors = EventGroupRemoteDescriptors.create(metadataContent)
+      eventsValidators.putAll(createValidators(descriptors))
+      filterRules = EventGroupsFilterRules.create(descriptors, buildProducer)
+    }
   }
 
-  fun guaranteeCorrectEventData(groupId: @NotNull String,
-                                         context: @NotNull EventContext): MutableMap<String, Any> {
-    val groupRules = myRulesStorage.getGroupRules(groupId)
+  private fun createValidators(descriptors: EventGroupRemoteDescriptors): Map<String?, EventGroupRules> {
+    val globalRulesHolder = GlobalRulesHolder(descriptors.rules)
+    val groups = descriptors.groups
+    return groups.associate { it.id to EventGroupRules.create(it, globalRulesHolder, validationRuleFactory) }
+  }
+
+  private fun guaranteeCorrectEventData(context: @NotNull EventContext,
+                                        groupRules: EventGroupRules?): MutableMap<String, Any> {
     val validatedData: MutableMap<String, Any> = HashMap()
     for ((key, entryValue) in context.eventData) {
       validatedData[key] = validateEventData(context, groupRules, key, entryValue)

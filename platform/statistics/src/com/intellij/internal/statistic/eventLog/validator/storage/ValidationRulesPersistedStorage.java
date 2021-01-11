@@ -37,24 +37,24 @@ public class ValidationRulesPersistedStorage implements ValidationRulesStorage {
   private final @NotNull AtomicBoolean myIsInitialized;
 
   ValidationRulesPersistedStorage(@NotNull String recorderId) {
+    myIsInitialized = new AtomicBoolean(false);
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     myMetadataLoader = new EventLogServerMetadataLoader(recorderId);
     myVersion = loadValidatorsFromLocalCache(recorderId);
-    myIsInitialized = new AtomicBoolean(false);
   }
 
   @TestOnly
   protected ValidationRulesPersistedStorage(@NotNull String recorderId,
                                             @NotNull EventLogMetadataPersistence persistence,
                                             @NotNull EventLogMetadataLoader loader) {
+    myIsInitialized = new AtomicBoolean(false);
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myMetadataPersistence = persistence;
     myMetadataLoader = loader;
     myVersion = loadValidatorsFromLocalCache(recorderId);
-    myIsInitialized = new AtomicBoolean(false);
   }
 
   @Override
@@ -143,7 +143,7 @@ public class ValidationRulesPersistedStorage implements ValidationRulesStorage {
   protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
     return groups.groups.stream()
-      .filter(group -> EventGroupFilterRules.create(group).accepts(build))
+      .filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build))
       .collect(Collectors.toMap(group -> group.id, group -> {
         return EventGroupRules.create(group, globalRulesHolder, new ValidationRuleFactory());
       }));

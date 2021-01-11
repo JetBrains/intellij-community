@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 
 class StatisticsParseMetadataWithBuildTest {
 
-  private fun doTest(content: String, expected: EventGroupsFilterRules) {
+  private fun doTest(content: String, expected: EventGroupsFilterRules<EventLogBuild>) {
     val actual = EventGroupsFilterRules.create(content)
     assertEquals(expected.size, actual.size)
     assertEquals(expected, actual)
