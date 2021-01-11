@@ -222,8 +222,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     appendTextPadding(padding, SwingConstants.LEFT);
   }
 
-  public void appendHTML(@Nls String html, SimpleTextAttributes defaultAttributes) {
-    new HtmlToSimpleColoredComponentConverter().appendHtml(this, html, defaultAttributes);
+  /**
+   * Convert HTML text to colored fragments and add all this fragments to current component.
+   * @param html html string for supported html tags see {@link HtmlToSimpleColoredComponentConverter}
+   * @param baseAttributes attributes which will be base for parsed fragments
+   */
+  public void appendHTML(@Nls String html, SimpleTextAttributes baseAttributes) {
+    new HtmlToSimpleColoredComponentConverter().appendHtml(this, html, baseAttributes);
   }
 
   /**

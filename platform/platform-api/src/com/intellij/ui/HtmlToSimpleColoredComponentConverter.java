@@ -25,6 +25,26 @@ import static com.intellij.ui.SimpleTextAttributes.*;
 import static javax.swing.text.html.HTML.Attribute.STYLE;
 import static javax.swing.text.html.HTML.Tag.*;
 
+/**
+ * {@code HtmlToSimpleColoredComponentConverter} allows you to convert HTML-marked string to list of colored fragments and
+ * append this fragments to {@link SimpleColoredComponent}.
+ * <br>
+ * By default supports following HTML tags:
+ * <ul>
+ * <li><b>&lt;b&gt</b> tag shows text as bold</li>
+ * <li><b>&lt;i&gt</b> tag shows text as italic</li>
+ * <li><b>&lt;u&gt</b> tag shows text as underlined</li>
+ * <li><b>&lt;s&gt</b> tag shows text with strikethrough</li>
+ * <li><b>&lt;a&gt</b> tag shows text as a link. This tag only applies style, no actions will be performed when this text is clicked</li>
+ * <li>you also able to specify custom style for text using tags <b>&lt;div&gt</b> and <b>&lt;span&gt</b> with 'style' parameter. Following CSS attributes
+ * are supported for 'style': <ul>
+ *   <li>color</li>
+ *   <li>background-color</li>
+ * </ul></li>
+ * </ul>
+ *
+ * Supported tags list can be extended by using custom {@link StyleTagHandler}
+ */
 @ApiStatus.Experimental
 public class HtmlToSimpleColoredComponentConverter {
 
@@ -42,6 +62,12 @@ public class HtmlToSimpleColoredComponentConverter {
     this(DEFAULT_TAG_HANDLER);
   }
 
+  /**
+   * Calculate list of {@link Fragment} from given {@code htmlString} using {@code defaultAttributes} as base {@link SimpleTextAttributes}
+   * @param htmlString HTML string to parse
+   * @param defaultAttributes {@link SimpleTextAttributes} used as base style. Non-styled text (without tags) will be shown used this style
+   * @return list of {@link Fragment} which can be added to {@link SimpleColoredComponent}
+   */
   public List<Fragment> convert(@NotNull @Nls String htmlString, SimpleTextAttributes defaultAttributes) {
     TextAttributesStack attributesStack = new TextAttributesStack(defaultAttributes);
     List<Fragment> res = new ArrayList<>();
@@ -85,11 +111,20 @@ public class HtmlToSimpleColoredComponentConverter {
     return res;
   }
 
+  /**
+   * Convert given HTML string to list of {@link Fragment} and add them to specified {@link SimpleColoredComponent}
+   * @param component {@link SimpleColoredComponent} which parsed fragments should be appended to
+   * @param html HTML string to parse
+   * @param defaultAttributes {@link SimpleTextAttributes} used as base style. Non-styled text (without tags) will be shown used this style
+   */
   public void appendHtml(@NotNull SimpleColoredComponent component, @NotNull @Nls String html,
                                 @NotNull SimpleTextAttributes defaultAttributes) {
     convert(html, defaultAttributes).forEach(fragment -> component.append(fragment.myText, fragment.myAttributes));
   }
 
+  /**
+   * Describes colored fragment (part of {@link SimpleColoredComponent} component)
+   */
   public static class Fragment {
     @NotNull @Nls private final String myText;
     @NotNull private final SimpleTextAttributes myAttributes;
@@ -99,19 +134,37 @@ public class HtmlToSimpleColoredComponentConverter {
       myAttributes = attributes;
     }
 
+    /**
+     * @return fragment text
+     */
     public @NotNull @Nls String getText() {
       return myText;
     }
 
+    /**
+     * @return fragment style
+     */
     public @NotNull SimpleTextAttributes getAttributes() {
       return myAttributes;
     }
   }
 
+  /**
+   * Handler which converts HTML tag to {@link SimpleTextAttributes}
+   */
   public interface StyleTagHandler {
 
+    /**
+     * Convert HTML tag to {@link SimpleTextAttributes}
+     * @param t tag description
+     * @param a attributes description
+     * @return {@link SimpleTextAttributes} for given tag or {@code null} if tag is not supported
+     */
     SimpleTextAttributes calcAttributes(HTML.Tag t, MutableAttributeSet a);
 
+    /**
+     * Extend current {@code StyleTagHandler} with custom handler to support extra tags
+     */
     default StyleTagHandler extendWith(StyleTagHandler anotherMapper) {
       return (tag, attr) -> {
         SimpleTextAttributes anotherRes = anotherMapper.calcAttributes(tag, attr);
