@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.ui.UserActivityListener
 import com.intellij.ui.UserActivityWatcher
 import java.awt.Component
@@ -29,7 +30,10 @@ internal class MavenRCSettingsWatcherImpl(val project: Project,
     val settingId = "$nameSpace.useProjectSettings"
     val listener = UserActivityListener {
       useProjectSettings = component.isSelected
-      RunConfigurationOptionUsagesCollector.logModifyOption(project, settingId, configurationId, projectSettingsAvailable, useProjectSettings, FusInputEvent.from(event))
+      if (component.isFocusOwner) {
+        RunConfigurationOptionUsagesCollector.logModifyOption(project, settingId, configurationId, projectSettingsAvailable,
+                                                              useProjectSettings, FusInputEvent.from(event))
+      }
     }
 
     val watcher = UserActivityWatcher()
@@ -39,13 +43,21 @@ internal class MavenRCSettingsWatcherImpl(val project: Project,
 
   override fun registerComponent(settingId: String, component: Component) {
     val fqId = "$nameSpace.$settingId"
+    val focusableComponent = if (component is LabeledComponent<*>) {
+      component.component
+    } else {
+      component
+    }
     val listener = UserActivityListener {
-      RunConfigurationOptionUsagesCollector.logModifyOption(project, fqId, configurationId, projectSettingsAvailable, useProjectSettings, FusInputEvent.from(event))
+      if (focusableComponent.isFocusOwner) {
+        RunConfigurationOptionUsagesCollector.logModifyOption(project, fqId, configurationId, projectSettingsAvailable, useProjectSettings,
+                                                              FusInputEvent.from(event))
+      }
     }
 
     val watcher = UserActivityWatcher()
     watcher.addUserActivityListener(listener)
-    watcher.register(component)
+    watcher.register(focusableComponent)
   }
 
   override fun dispose() {
