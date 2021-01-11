@@ -379,6 +379,30 @@ public class IconUtil {
     }
   }
 
+  /**
+   * Use only for icons under selection
+   */
+  @NotNull
+  @ApiStatus.Internal
+  public static Icon wrapToSelectionAwareIcon(@NotNull Icon iconUnderSelection) {
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        SVGLoader.paintIconWithSelection(iconUnderSelection, c, g, x, y);
+      }
+
+      @Override
+      public int getIconWidth() {
+        return iconUnderSelection.getIconWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return iconUnderSelection.getIconHeight();
+      }
+    };
+  }
+
   public static class IconSizeWrapper implements Icon {
     private final Icon myIcon;
     private final int myWidth;
