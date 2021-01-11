@@ -65,7 +65,7 @@ public class PluginStartupActivity implements StartupActivity {
 
         KotlinReportSubmitter.Companion.setupReportingFromRelease();
 
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
             NewCodeStyleNotificationKt.notifyKotlinStyleUpdateIfNeeded(project);
             LegacyIsResolveModulePerSourceSetNotificationKt.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(project);
         }
