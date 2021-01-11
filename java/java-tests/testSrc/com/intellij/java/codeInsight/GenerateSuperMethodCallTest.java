@@ -37,6 +37,7 @@ public class GenerateSuperMethodCallTest extends LightJavaCodeInsightTestCase {
   public void testImplement() { doTest(); }
   public void testOverride() { doTest(); }
   public void testOverrideInNestedBlock() { doTest(); }
+  public void testDefaultMethod() { doTest(); }
 
 
   private void doTest() {
