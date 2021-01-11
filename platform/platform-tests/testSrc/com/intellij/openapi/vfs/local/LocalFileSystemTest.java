@@ -212,6 +212,19 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testFindFileSeparatorNormalization() {
+    tempDir.newFile("a/b/c/f");
+    VirtualFile file = myFS.refreshAndFindFileByPath(tempDir.getRoot() + "/a\\b//c\\f");
+    assertNotNull(file);
+    assertEquals("f", file.getName());
+    assertEquals("c", file.getParent().getName());
+    assertEquals("b", file.getParent().getParent().getName());
+    assertEquals("a", file.getParent().getParent().getParent().getName());
+    assertEquals(file, myFS.refreshAndFindFileByIoFile(new File(tempDir.getRoot(), "a\\b//c\\f")));
+    assertEquals(file, myFS.refreshAndFindFileByNioFile(tempDir.getRoot().toPath().resolve("a\\b//c\\f")));
+  }
+
+  @Test
   public void testCopyFile() throws IOException {
     runInEdtAndWait(() -> {
       File fromDir = tempDir.newDirectory("from");
