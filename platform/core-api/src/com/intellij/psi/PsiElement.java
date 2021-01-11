@@ -511,8 +511,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see #putCopyableUserData(Key, Object)
    */
   @Nullable
-  @Contract(pure=true)
-  <T> T getCopyableUserData(Key<T> key);
+  @Contract(pure = true)
+  <T> T getCopyableUserData(@NotNull Key<T> key);
 
   /**
    * Attaches a copyable user data object to this element. Copyable user data objects are copied
@@ -522,7 +522,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param value the user data object to attach.
    * @see #getCopyableUserData(Key)
    */
-  <T> void putCopyableUserData(Key<T> key, @Nullable T value);
+  <T> void putCopyableUserData(@NotNull Key<T> key, @Nullable T value);
 
   /**
    * Passes the declarations contained in this PSI element and its children
