@@ -85,6 +85,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   private static final ExtensionPointName<JUnitPatcher> JUNIT_PATCHER_EP = new ExtensionPointName<>("com.intellij.junitPatcher");
   private static final String JIGSAW_OPTIONS = "Jigsaw Options";
+  private static final String SOCKET_PARAMETER_PLACEHOLDER = "-socketXXXXX";
   private static final String WORK_DIR_PARAMETER_PLACEHOLDER = "@w@XXXXX";
   private static final String TEMP_FILE_PARAMETER_PLACEHOLDER = "-tempFileXXXX";
 
@@ -100,6 +101,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
 
   @Nullable private volatile TargetProgressIndicator myTargetProgressIndicator = null;
+  @Nullable private volatile TargetEnvironment.LocalPortBinding myPortBindingForSocket;
 
   public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
     this.remoteConnectionCreator = remoteConnectionCreator;
@@ -164,7 +166,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   private Function<String, List<String>> createParametersPatcher(TargetedCommandLineBuilder targetedCommandLineBuilder,
                                                                  TargetEnvironment remoteEnvironment) {
     boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
-
+    int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
     String workingDirsFilePath = myWorkingDirsFile.getAbsolutePath();
     if (!local) {
       try {
@@ -189,6 +191,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     String finalWorkingDirsFilePath = workingDirsFilePath;
     return s -> {
       switch (s) {
+        case SOCKET_PARAMETER_PLACEHOLDER:
+          return Collections.singletonList("-socket" + port);
         case TEMP_FILE_PARAMETER_PLACEHOLDER:
           ParametersList list = new ParametersList();
           passTempFile(list, finalTempFilePath);
@@ -621,7 +625,12 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void createServerSocket(JavaParameters javaParameters) {
     try {
       myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
-      javaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
+      javaParameters.getProgramParametersList().add(SOCKET_PARAMETER_PLACEHOLDER);
+      TargetEnvironmentRequest request = getTargetEnvironmentRequest();
+      if (request != null) {
+        myPortBindingForSocket = new TargetEnvironment.LocalPortBinding(myServerSocket.getLocalPort(), null);
+        request.getLocalPortBindings().add(myPortBindingForSocket);
+      }
     }
     catch (IOException e) {
       LOG.error(e);

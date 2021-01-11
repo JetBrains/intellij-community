@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +45,11 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
           promise.setResult(computationForAWT.compute());
         }
         catch (ProcessCanceledException e) {
-          promise.setError(e.getLocalizedMessage());
+          promise.setError(StringUtil.notNullize(e.getLocalizedMessage()));
         }
         catch (Throwable t) {
           logger.warn(logFailureMessage, t);
-          promise.setError(t.getLocalizedMessage());
+          promise.setError(StringUtil.notNullize(t.getLocalizedMessage()));
         }
       });
       return promise;

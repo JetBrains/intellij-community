@@ -108,11 +108,12 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
     targetProgressIndicator.addSystemLine(ExecutionBundle.message("progress.text.prepare.target.requirements"));
 
+    myTargetEnvironmentRequest = request;
+
     TargetDebuggerConnection targetDebuggerConnection =
       TargetDebuggerConnectionUtil.prepareDebuggerConnection(this, request, configuration);
     myTargetDebuggerConnection = targetDebuggerConnection;
 
-    myTargetEnvironmentRequest = request;
     Ref<TargetedCommandLineBuilder> commandLineRef = new Ref<>();
     Ref<ExecutionException> exceptionRef = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
