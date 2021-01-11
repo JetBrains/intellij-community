@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -2106,6 +2106,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "        '_t*:[ !regex( .*return.* ) ];\n" +
                 "    }});";
     assertEquals(0, findMatchesCount(s1,s2));
+  }
+
+  public void testSuperExpressionShouldNotMatch() {
+    String source = "class X {\n" +
+                    "  void x() {\n" +
+                    "     y();\n" +
+                    "  }\n" +
+                    "  void y() {}\n" +
+                    "}";
+    String pattern = "void '_a() {" +
+                     "  '_a();" +
+                     "}";
+    assertEquals(0, findMatchesCount(source, pattern));
   }
 
   public void testDownUpMatch() {

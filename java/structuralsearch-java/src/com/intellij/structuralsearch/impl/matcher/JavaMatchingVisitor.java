@@ -1783,15 +1783,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiIdentifier methodNameNode = method.getNameIdentifier();
     final MatchContext context = myMatchingVisitor.getMatchContext();
     final boolean isTypedVar = context.getPattern().isTypedVar(methodNameNode);
-    final PsiMethod other = (PsiMethod)myMatchingVisitor.getElement();
+    final PsiMethod other = getElement(PsiMethod.class);
+    if (other == null) return;
 
     context.pushResult();
-
     try {
       final PsiDocComment docComment = method.getDocComment();
       if (docComment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other))) return;
       if (method.hasTypeParameters() && !myMatchingVisitor.setResult(
-        myMatchingVisitor.match(method.getTypeParameterList(), ((PsiMethod)myMatchingVisitor.getElement()).getTypeParameterList()))) return;
+        myMatchingVisitor.match(method.getTypeParameterList(), other.getTypeParameterList()))) return;
 
       if (!myMatchingVisitor.setResult(checkHierarchy(other, method))) {
         return;
