@@ -797,7 +797,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>,
                                                                                     entityClass: Class<R>): Sequence<R> {
     val classId = entityClass.toClassId()
-    return indexes.softLinks.index.getKeys(id).asSequence()
+    return indexes.softLinks.getIdsByEntry(id).asSequence()
       .filter { it.clazz == classId }
       .map { entityDataByIdOrDie(it).createEntity(this) as R }
   }
