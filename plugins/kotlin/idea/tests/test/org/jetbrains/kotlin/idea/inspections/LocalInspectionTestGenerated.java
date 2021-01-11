@@ -1842,6 +1842,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNullWithSuspendFunctionCall.kt");
             }
 
+            @TestMetadata("mapSum.kt")
+            public void testMapSum() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSum.kt");
+            }
+
+            @TestMetadata("mapSum2.kt")
+            public void testMapSum2() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSum2.kt");
+            }
+
             @TestMetadata("mapToMap.kt")
             public void testMapToMap() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap.kt");
