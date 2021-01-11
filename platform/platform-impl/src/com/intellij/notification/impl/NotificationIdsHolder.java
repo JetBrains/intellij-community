@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.Notification;
@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * Class that provides constant list of possible notification ids.
- * If extension is registered in the platform or in a plugin bundled with IntelliJ Ultimate,
+ * If extension is registered in the platform or in a plugin built with IntelliJ Ultimate,
  * these ids will be registered in statistic metadata repository automatically.
  *
  * Otherwise, create a YT issue in FUS project or use com.intellij.notification.impl.NotificationGroupEP#notificationIds
