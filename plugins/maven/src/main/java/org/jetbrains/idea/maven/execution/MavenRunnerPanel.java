@@ -238,13 +238,13 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
 
   @Override
   public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("maven.runner.delegateToMaven", myDelegateToMavenCheckbox);
-    watcher.registerComponent("maven.runner.runInBackground", myRunInBackgroundCheckbox);
-    watcher.registerComponent("maven.runner.vmParameters", myVMParametersEditor);
-    watcher.registerComponent("maven.runner.envVariables", myEnvVariablesComponent);
-    watcher.registerComponent("maven.runner.jdk", myJdkCombo);
-    watcher.registerComponent("maven.runner.targetJdk", myTargetJdkCombo);
-    watcher.registerComponent("maven.runner.skipTests", mySkipTestsCheckBox);
-    watcher.registerComponent("maven.runner.properties", myPropertiesPanel);
+    watcher.registerComponent("delegateToMaven", myDelegateToMavenCheckbox);
+    watcher.registerComponent("runInBackground", myRunInBackgroundCheckbox);
+    watcher.registerComponent("vmParameters", myVMParametersEditor);
+    watcher.registerComponent("envVariables", myEnvVariablesComponent);
+    watcher.registerComponent("jdk", myJdkCombo);
+    watcher.registerComponent("targetJdk", myTargetJdkCombo);
+    watcher.registerComponent("skipTests", mySkipTestsCheckBox);
+    watcher.registerComponent("properties", myPropertiesPanel);
   }
 }

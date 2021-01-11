@@ -163,11 +163,11 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
 
   @Override
   public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("maven.mavenHome", mavenHomeField);
-    watcher.registerComponent("maven.settingsFileOverride.checkbox", userSettingsFileOverrider.checkBox);
-    watcher.registerComponent("maven.settingsFileOverride.text", userSettingsFileOverrider.component);
-    watcher.registerComponent("maven.localRepoOverride.checkbox", localRepositoryOverrider.checkBox);
-    watcher.registerComponent("maven.localRepoOverride.text", localRepositoryOverrider.component);
+    watcher.registerComponent("mavenHome", mavenHomeField);
+    watcher.registerComponent("settingsFileOverride.checkbox", userSettingsFileOverrider.checkBox);
+    watcher.registerComponent("settingsFileOverride.text", userSettingsFileOverrider.component);
+    watcher.registerComponent("localRepoOverride.checkbox", localRepositoryOverrider.checkBox);
+    watcher.registerComponent("localRepoOverride.text", localRepositoryOverrider.component);
   }
 
   @Nullable

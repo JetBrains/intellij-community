@@ -90,7 +90,7 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
   @Override
   public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
     getComponent(); // make sure controls are initialized
-    watcher.registerComponent("maven.general.useProjectSettings", myUseProjectSettings);
+    watcher.registerUseProjectSettingsCheckbox(myUseProjectSettings);
     myPanel.registerSettingsWatcher(watcher);
   }
 }
