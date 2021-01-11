@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -40,13 +40,13 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @Nullable String getBigIconUrl();
 
   /**
-   * Return path to an svg file containing icon of the current version of the product. The path is a relative path inside the product's JAR
-   * files. It may return special icon for EAP builds.
+   * Return path to an SVG file containing icon of the current version of the product. The path is a relative path inside the product's JAR
+   * files. It may return a special icon for EAP builds.
    */
   public abstract @Nullable String getApplicationSvgIconUrl();
 
   /**
-   * Return path to an svg file containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.
+   * Return path to an SVG file containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.
    */
   public abstract @Nullable String getSmallApplicationSvgIconUrl();
 
@@ -67,7 +67,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract boolean isEAP();
 
   /**
-   * Returns {@code true} only for EAP builds of "major" releases (i.e. for 2018.3, but not for 2018.3.1).
+   * Returns {@code true} only for EAP builds of "major" releases (i.e. for {@code 2018.3}, but not for {@code 2018.3.1}).
    */
   public abstract boolean isMajorEAP();
 
@@ -81,8 +81,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getFeedbackUrl();
 
-  /*
-   * Returns url to plugins repository without trailing slash
+  /**
+   * Returns URL to plugins repository without trailing slash.
    */
   public abstract String getPluginManagerUrl();
 
@@ -114,7 +114,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   }
 
   /**
-   * @return {@code true} if the specified plugin is an essential part of the IDE so it cannot be disabled and isn't shown in Settings | Plugins
+   * @return {@code true} if the specified plugin is an essential part of the IDE, so it cannot be disabled and isn't shown in <em>Settings | Plugins</em>.
    */
   public abstract boolean isEssentialPlugin(@NotNull String pluginId);
 
@@ -139,7 +139,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @Nullable String getSubscriptionAdditionalFormData();
 
   /**
-   * @return true if the product's vendor is JetBrains
+   * @return {@code true} if the product's vendor is JetBrains
    */
   public final boolean isVendorJetBrains() {
     return "JetBrains".equals(getShortCompanyName());
