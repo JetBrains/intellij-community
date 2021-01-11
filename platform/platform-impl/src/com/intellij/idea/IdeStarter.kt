@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea
 
 import com.intellij.diagnostic.LoadingState
@@ -181,30 +181,27 @@ open class IdeStarter : ApplicationStarter {
         lifecyclePublisher.welcomeScreenDisplayed()
       }
     }
-    //do not show Customize IDE Wizard [IDEA-249516]
+
+    // do not show Customize IDE Wizard [IDEA-249516]
     if (System.getProperty("idea.show.customize.ide.wizard")?.toBoolean() == true) {
-      val stepsDialogName = if (System.getProperty("idea.temp.change.ide.wizard") != null) {
-        System.getProperty("idea.temp.change.ide.wizard") // temporary until 211 release
-      }
-      else {
-        ApplicationInfoImpl.getShadowInstance().customizeIDEWizardDialog
-      }
+      // temporary until 211 release
+      val stepsDialogName = System.getProperty("idea.temp.change.ide.wizard") ?: ApplicationInfoImpl.getShadowInstance().customizeIDEWizardDialog
       wizardStepProvider?.let { wizardStepProvider ->
         var done = false
         runInEdt {
-          val wizardDialog = if (!stepsDialogName.isNullOrBlank()) {
+          val wizardDialog = if (stepsDialogName.isNullOrBlank()) {
+            CustomizeIDEWizardDialog(wizardStepProvider, null, false, true)
+          }
+          else {
             try {
-              val dialogClass = Class.forName(stepsDialogName)
-              val constr = dialogClass.getConstructor(StartupUtil.AppStarter::class.java)
+              val constr = Class.forName(stepsDialogName).getConstructor(StartupUtil.AppStarter::class.java)
               (constr.newInstance(null) as CommonCustomizeIDEWizardDialog)
-            } catch (e: Throwable) {
+            }
+            catch (e: Throwable) {
               Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
               done = false
               null
             }
-          }
-          else {
-            CustomizeIDEWizardDialog(wizardStepProvider, null, false, true)
           }
           wizardDialog?.setRunAfterOKAction {
             showWelcomeFrame?.run()
@@ -232,6 +229,7 @@ open class IdeStarter : ApplicationStarter {
 
 private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
   val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+  @Suppress("SSBasedInspection")
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
