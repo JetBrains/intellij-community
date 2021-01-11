@@ -184,9 +184,9 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor, MavenSetting
 
   @Override
   public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("maven.workingDir", workingDirComponent);
-    watcher.registerComponent("maven.goals", goalsComponent);
-    watcher.registerComponent("maven.profiles", profilesComponent);
-    watcher.registerComponent("maven.resolveToWorkspace", myResolveToWorkspaceCheckBox);
+    watcher.registerComponent("workingDir", workingDirComponent);
+    watcher.registerComponent("goals", goalsComponent);
+    watcher.registerComponent("profiles", profilesComponent);
+    watcher.registerComponent("resolveToWorkspace", myResolveToWorkspaceCheckBox);
   }
 }

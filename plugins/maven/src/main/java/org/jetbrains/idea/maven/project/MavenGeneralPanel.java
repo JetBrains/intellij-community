@@ -143,16 +143,16 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
 
   @Override
   public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("maven.general.workOffline", checkboxWorkOffline);
+    watcher.registerComponent("workOffline", checkboxWorkOffline);
     mavenPathsForm.registerSettingsWatcher(watcher);
-    watcher.registerComponent("maven.general.produceExceptionErrorMessages", checkboxProduceExceptionErrorMessages);
-    watcher.registerComponent("maven.general.usePluginRegistry", checkboxUsePluginRegistry);
-    watcher.registerComponent("maven.general.recursive", checkboxRecursive);
-    watcher.registerComponent("maven.general.alwaysUpdateSnapshots", alwaysUpdateSnapshotsCheckBox);
-    watcher.registerComponent("maven.general.threadsEditor", threadsEditor);
-    watcher.registerComponent("maven.general.outputLevel", outputLevelCombo);
-    watcher.registerComponent("maven.general.checksumPolicy", checksumPolicyCombo);
-    watcher.registerComponent("maven.general.failPolicy", failPolicyCombo);
-    watcher.registerComponent("maven.general.showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
+    watcher.registerComponent("produceExceptionErrorMessages", checkboxProduceExceptionErrorMessages);
+    watcher.registerComponent("usePluginRegistry", checkboxUsePluginRegistry);
+    watcher.registerComponent("recursive", checkboxRecursive);
+    watcher.registerComponent("alwaysUpdateSnapshots", alwaysUpdateSnapshotsCheckBox);
+    watcher.registerComponent("threadsEditor", threadsEditor);
+    watcher.registerComponent("outputLevel", outputLevelCombo);
+    watcher.registerComponent("checksumPolicy", checksumPolicyCombo);
+    watcher.registerComponent("failPolicy", failPolicyCombo);
+    watcher.registerComponent("showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
   }
 }

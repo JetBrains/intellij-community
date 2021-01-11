@@ -98,18 +98,17 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     MavenGeneralSettingsEditor generalSettingsEditor = new MavenGeneralSettingsEditor(getProject());
     MavenRunnerSettingsEditor runnerSettingsEditor = new MavenRunnerSettingsEditor(getProject());
 
-    MavenRCSettingsWatcher watcher = new MavenRCSettingsWatcherImpl(getProject(), "Maven_Configuration");
+    MavenRCSettingsWatcher logsWatcher = new MavenRCSettingsWatcherImpl(getProject(), "maven.logs", false);
 
-    runnerParamsEditor.registerSettingsWatcher(watcher);
-    generalSettingsEditor.registerSettingsWatcher(watcher);
-    runnerSettingsEditor.registerSettingsWatcher(watcher);
+    runnerParamsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.params", false));
+    generalSettingsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.general", true));
+    runnerSettingsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.runner", true));
 
     group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), runnerParamsEditor);
     group.addEditor(CommonBundle.message("tab.title.general"), generalSettingsEditor);
     group.addEditor(RunnerBundle.message("maven.tab.runner"), runnerSettingsEditor);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 
-    Disposer.register(group, watcher);
     return group;
   }
 
