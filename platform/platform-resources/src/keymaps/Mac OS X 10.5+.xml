@@ -744,4 +744,10 @@
   <action id="EditorScrollToCenter">
     <keyboard-shortcut first-keystroke="control L"/>
   </action>
+  <action id="ActivateUnitTestsToolWindow">
+    <keyboard-shortcut first-keystroke="meta alt 8"/>
+  </action>
+  <action id="ActivateNuGetToolWindow">
+    <keyboard-shortcut first-keystroke="meta alt 7"/>
+  </action>
 </keymap>

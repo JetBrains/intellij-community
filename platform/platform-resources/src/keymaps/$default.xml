@@ -1235,4 +1235,10 @@
   <action id="SwitchHeaderSource">
     <keyboard-shortcut first-keystroke="F10"/>
   </action>
+  <action id="ActivateUnitTestsToolWindow">
+    <keyboard-shortcut first-keystroke="alt shift 8"/>
+  </action>
+  <action id="ActivateNuGetToolWindow">
+    <keyboard-shortcut first-keystroke="alt shift 7"/>
+  </action>
 </keymap>
