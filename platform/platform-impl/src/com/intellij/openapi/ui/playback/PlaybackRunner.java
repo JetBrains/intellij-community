@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -186,6 +186,21 @@ public class PlaybackRunner {
               myRegistryValues.put(key, Registry.stringValue(key));
             }
           }
+
+          @Override
+          public void setProject(@Nullable Project project) {
+            myRunner.setProject(project);
+          }
+
+          @Override
+          @NotNull
+          public Project getProject() {
+            Project project = myRunner.getProject();
+            if (project == null) {
+              throw new IllegalStateException("Project is null. Use a project-aware runner and check if its project has been set up properly");
+            }
+            return project;
+          }
         };
       final Promise<Object> cmdCallback = cmd.execute(context);
       cmdCallback
@@ -208,6 +223,14 @@ public class PlaybackRunner {
       myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", StatusCallback.Type.message);
       myActionCallback.setDone();
     }
+  }
+
+  protected void setProject(@Nullable Project project) {
+  }
+
+  @Nullable
+  protected Project getProject() {
+    return null;
   }
 
   protected void subscribeListeners(MessageBusConnection connection) {
