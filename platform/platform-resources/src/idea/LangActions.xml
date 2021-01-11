@@ -512,14 +512,19 @@
       <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
+        <separator/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
-        <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
+        <action id="SegmentedSearchEverywhereAction" class="com.intellij.ide.navigationToolbar.experimental.SegmentedSearchEverywhereAction"/>
       </group>
       <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
         <action id="StateWidgetAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetAction"/>
       </group>
+    </group>
+
+    <group id="SegmentedSearchEverywhereGroup">
+      <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
     </group>
 
     <group id="StateWidgetPillActionGroup">
