@@ -44,6 +44,7 @@ class KotlinClassRenderer : ClassRenderer() {
                 .thenAccept { nodesToShow ->
                     if (nodesToShow.isEmpty()) {
                         setClassHasNoFieldsToDisplayMessage(builder, nodeManager)
+                        builder.setChildren(getterNodes)
                         return@thenAccept
                     }
                     builder.setChildren(mergeNodesLists(nodesToShow, getterNodes))
