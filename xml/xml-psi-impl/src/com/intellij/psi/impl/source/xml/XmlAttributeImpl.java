@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -54,21 +53,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @NotNull
   protected XmlAttributeDelegate createDelegate() {
     return new XmlAttributeImplDelegate();
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else if (i == XmlElementType.XML_ATTRIBUTE_VALUE) {
-      return XmlChildRole.XML_ATTRIBUTE_VALUE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 
   @Override

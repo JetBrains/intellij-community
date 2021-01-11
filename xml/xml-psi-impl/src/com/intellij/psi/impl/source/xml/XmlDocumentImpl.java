@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -16,7 +15,6 @@ import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -73,21 +71,6 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
     else {
       visitor.visitElement(this);
-    }
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlElementType.XML_PROLOG) {
-      return XmlChildRole.XML_PROLOG;
-    }
-    else if (i instanceof IXmlTagElementType) {
-      return XmlChildRole.XML_TAG;
-    }
-    else {
-      return ChildRoleBase.NONE;
     }
   }
 

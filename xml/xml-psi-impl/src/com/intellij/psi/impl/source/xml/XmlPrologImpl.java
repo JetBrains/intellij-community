@@ -1,12 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDoctype;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlProlog;
@@ -30,18 +27,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
   }
 
   @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    if (child.getElementType() == XML_DOCTYPE) {
-      return XmlChildRole.XML_DOCTYPE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
-  }
-
-  @Override
   public XmlDoctype getDoctype() {
-    return (XmlDoctype)findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE);
+    return (XmlDoctype)findElementByTokenType(XML_DOCTYPE);
   }
 }

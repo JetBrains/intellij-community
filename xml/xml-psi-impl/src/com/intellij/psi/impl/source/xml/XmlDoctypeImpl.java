@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -10,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -46,24 +44,6 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       }
     }
     return null;
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_DOCTYPE_PUBLIC) {
-      return XmlChildRole.XML_DOCTYPE_PUBLIC;
-    }
-    else if (i == XmlTokenType.XML_DOCTYPE_SYSTEM) {
-      return XmlChildRole.XML_DOCTYPE_SYSTEM;
-    }
-    else if (i == XmlTokenType.XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 
   @Override
@@ -108,7 +88,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   @Override
   @Nullable
   public PsiElement getDtdUrlElement() {
-    PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
+    PsiElement docTypePublic = findElementByTokenType(XmlTokenType.XML_DOCTYPE_PUBLIC);
 
     if (docTypePublic != null){
       PsiElement element = docTypePublic.getNextSibling();
@@ -131,7 +111,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       }
     }
 
-    PsiElement docTypeSystem = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_SYSTEM);
+    PsiElement docTypeSystem = findElementByTokenType(XmlTokenType.XML_DOCTYPE_SYSTEM);
 
     if (docTypeSystem != null){
       PsiElement element = docTypeSystem.getNextSibling();
@@ -151,22 +131,22 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
 
   @Override
   public XmlElement getNameElement() {
-    return (XmlElement)findChildByRoleAsPsiElement(XmlChildRole.XML_NAME);
+    return findElementByTokenType(XmlTokenType.XML_NAME);
   }
 
   @Override
   @Nullable
   public String getPublicId() {
-    return getSomeId(XmlChildRole.XML_DOCTYPE_PUBLIC);
+    return getSomeId(XmlTokenType.XML_DOCTYPE_PUBLIC);
   }
 
   @Override
   public String getSystemId() {
-    return getSomeId(XmlChildRole.XML_DOCTYPE_SYSTEM);
+    return getSomeId(XmlTokenType.XML_DOCTYPE_SYSTEM);
   }
 
-  private String getSomeId(final int role) {
-    PsiElement docTypeSystem = findChildByRoleAsPsiElement(role);
+  private String getSomeId(final IElementType elementType) {
+    PsiElement docTypeSystem = findElementByTokenType(elementType);
 
     if (docTypeSystem != null) {
       PsiElement element = docTypeSystem.getNextSibling();
