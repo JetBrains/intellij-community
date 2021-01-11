@@ -33,11 +33,11 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
   }
 
   override fun getWorkingDirectory(): String {
-    return myWslDistribution.userHome?: "/";
+    return myWslDistribution.userHome?: "/"
   }
 
   override fun createJavaParameters(): SimpleJavaParameters {
-    val parameters = super.createJavaParameters();
+    val parameters = super.createJavaParameters()
     val wslParams = toWslParameters(parameters)
     wslParams.vmParametersList.add("-D${RemoteServer.SERVER_HOSTNAME}=${remoteHost}")
     wslParams.vmParametersList.add("-Didea.maven.knownPort=true")
@@ -65,15 +65,15 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val myEnvFactory = WslTargetEnvironmentFactory(wslConfig)
 
     val wslParams = createJavaParameters()
-    val request = myEnvFactory.createRequest();
+    val request = myEnvFactory.createRequest()
     val languageRuntime = JavaLanguageRuntimeConfiguration()
-    languageRuntime.homePath = "/usr";
+    languageRuntime.homePath = "/usr"
     myEnvFactory.targetConfiguration.addLanguageRuntime(languageRuntime)
     val setup = JdkCommandLineSetup(request, myEnvFactory.targetConfiguration)
     setup.setupCommandLine(wslParams)
     setup.setupJavaExePath(wslParams)
 
-    val builder = wslParams.toCommandLine(myEnvFactory.createRequest(), wslConfig)
+    val builder = wslParams.toCommandLine(myEnvFactory.createRequest(), wslConfig, emptyList())
     builder.setWorkingDirectory(workingDirectory)
 
     val wslEnvironment = myEnvFactory.prepareRemoteEnvironment(request,

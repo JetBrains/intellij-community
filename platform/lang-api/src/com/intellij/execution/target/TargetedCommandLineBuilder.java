@@ -2,6 +2,7 @@
 package com.intellij.execution.target;
 
 import com.intellij.execution.target.value.TargetValue;
+import com.intellij.openapi.projectRoots.JdkCommandLineSetup;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   @NotNull private final List<TargetValue<String>> myParameters = new ArrayList<>();
   @NotNull private final Map<String, TargetValue<String>> myEnvironment = new HashMap<>();
   @NotNull private final Set<File> myFilesToDeleteOnTermination = new HashSet<>();
+  @NotNull private final Map<File, TargetValue<String>> myAdditionalUploadedFiles = new HashMap<>();
 
   @NotNull private final TargetEnvironmentRequest myRequest;
 
@@ -118,5 +120,22 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   @NotNull
   public Set<File> getFilesToDeleteOnTermination() {
     return myFilesToDeleteOnTermination;
+  }
+
+  /**
+   * @see JdkCommandLineSetup#registerFilesToUpload(Collection)
+   */
+  @NotNull
+  public TargetValue<String> getAdditionalUploadedFileValue(@NotNull File file) {
+    TargetValue<String> value = myAdditionalUploadedFiles.get(file);
+    if (value == null) {
+      throw new IllegalStateException(
+        "File '" + file + "' is not found among uploaded. Check JdkCommandLineSetup.registerFilesToUpload was invoked for this file");
+    }
+    return value;
+  }
+
+  public void addAdditionalFileToUpload(@NotNull File file, @NotNull TargetValue<String> value) {
+    myAdditionalUploadedFiles.put(file, value);
   }
 }

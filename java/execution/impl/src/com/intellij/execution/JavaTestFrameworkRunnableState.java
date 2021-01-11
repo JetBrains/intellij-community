@@ -11,6 +11,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -72,6 +73,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
@@ -82,6 +85,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   private static final ExtensionPointName<JUnitPatcher> JUNIT_PATCHER_EP = new ExtensionPointName<>("com.intellij.junitPatcher");
   private static final String JIGSAW_OPTIONS = "Jigsaw Options";
+  private static final String WORK_DIR_PARAMETER_PLACEHOLDER = "@w@XXXXX";
+  private static final String TEMP_FILE_PARAMETER_PLACEHOLDER = "-tempFileXXXX";
 
   public static ParamsGroup getJigsawOptions(JavaParameters parameters) {
     return parameters.getVMParametersList().getParamsGroup(JIGSAW_OPTIONS);
@@ -141,6 +146,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
+    targetedCommandLine.setParametersPatcher(createParametersPatcher(targetedCommandLineBuilder, remoteEnvironment));
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
 
     OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(process,
@@ -153,6 +159,46 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
     return processHandler;
+  }
+
+  private Function<String, List<String>> createParametersPatcher(TargetedCommandLineBuilder targetedCommandLineBuilder,
+                                                                 TargetEnvironment remoteEnvironment) {
+    boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
+
+    String workingDirsFilePath = myWorkingDirsFile.getAbsolutePath();
+    if (!local) {
+      try {
+        workingDirsFilePath = targetedCommandLineBuilder.getAdditionalUploadedFileValue(myWorkingDirsFile).getTargetValue().blockingGet(0);
+      }
+      catch (TimeoutException | java.util.concurrent.ExecutionException e) {
+        LOG.error("Failed to resolve target value for myWorkingDirsFile");
+      }
+    }
+
+    String tempFilePath = myTempFile.getAbsolutePath();
+    if (!local) {
+      try {
+        tempFilePath = targetedCommandLineBuilder.getAdditionalUploadedFileValue(myTempFile).getTargetValue().blockingGet(0);
+        LOG.assertTrue(tempFilePath != null);
+      }
+      catch (TimeoutException | java.util.concurrent.ExecutionException e) {
+        LOG.error("Failed to resolve target value for myTempFile");
+      }
+    }
+    String finalTempFilePath = tempFilePath;
+    String finalWorkingDirsFilePath = workingDirsFilePath;
+    return s -> {
+      switch (s) {
+        case TEMP_FILE_PARAMETER_PLACEHOLDER:
+          ParametersList list = new ParametersList();
+          passTempFile(list, finalTempFilePath);
+          return list.getParameters();
+        case WORK_DIR_PARAMETER_PLACEHOLDER:
+          return Collections.singletonList("@w@" + finalWorkingDirsFilePath);
+        default:
+          return Collections.singletonList(s);
+      }
+    };
   }
 
   public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
@@ -211,6 +257,12 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
     }
     return commandLineBuilder;
+  }
+
+  @NotNull
+  @Override
+  protected Collection<File> getAdditionalFilesToUpload() {
+    return Arrays.asList(myTempFile, myWorkingDirsFile);
   }
 
   @NotNull
@@ -619,10 +671,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
       myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
-      javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
+      javaParameters.getProgramParametersList().add(WORK_DIR_PARAMETER_PLACEHOLDER);
 
       myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp", true);
-      passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
+      javaParameters.getProgramParametersList().add(TEMP_FILE_PARAMETER_PLACEHOLDER);
     }
     catch (Exception e) {
       LOG.error(e);

@@ -14,10 +14,13 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Collection;
 
 /**
  * @author Gregory.Shrago
@@ -182,7 +185,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   /**
-   * Consider using {@link #toCommandLine(TargetEnvironmentRequest, TargetEnvironmentConfiguration)} instead with request created by {@link com.intellij.execution.target.local.LocalTargetEnvironmentFactory} as an argument
+   * Consider using {@link #toCommandLine(TargetEnvironmentRequest, TargetEnvironmentConfiguration, Collection)} instead
+   * with request created by {@link com.intellij.execution.target.local.LocalTargetEnvironmentFactory} as an argument
    *
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
@@ -196,10 +200,13 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
    */
+  @ApiStatus.Experimental
   @NotNull
-  public TargetedCommandLineBuilder toCommandLine(@NotNull TargetEnvironmentRequest request, @Nullable TargetEnvironmentConfiguration configuration)
+  public TargetedCommandLineBuilder toCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                  @Nullable TargetEnvironmentConfiguration configuration,
+                                                  @NotNull Collection<File> additionalFilesToUpload)
     throws CantRunException {
-    return JdkUtil.setupJVMCommandLine(this, request, configuration);
+    return JdkUtil.setupJVMCommandLine(this, request, configuration, additionalFilesToUpload);
   }
 
   @NotNull
