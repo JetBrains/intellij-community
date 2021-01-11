@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
@@ -125,13 +125,11 @@ public final class PerformanceWatcher implements Disposable {
               Attachment[] attachments = new Attachment[]{attachment};
 
               // look for extended crash logs
-              if (SystemInfo.isMac) {
-                File extraLog = new File("jbr_err_pid" + pid + ".log");
-                if (extraLog.isFile() && extraLog.lastModified() > appInfoFile.lastModified()) {
-                  Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
-                  extraAttachment.setIncluded(true);
-                  attachments = ArrayUtil.append(attachments, extraAttachment);
-                }
+              File extraLog = findExtraLogFile(pid, appInfoFile.lastModified());
+              if (extraLog != null) {
+                Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
+                extraAttachment.setIncluded(true);
+                attachments = ArrayUtil.append(attachments, extraAttachment);
               }
 
               String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
@@ -150,6 +148,16 @@ public final class PerformanceWatcher implements Disposable {
     catch (IOException e) {
       LOG.info(e);
     }
+  }
+
+  @Nullable
+  private static File findExtraLogFile(String pid, long lastModified) {
+    if (!SystemInfo.isMac) {
+      return null;
+    }
+    String logFileName = "jbr_err_pid" + pid + ".log";
+    List<File> candidates = List.of(new File(SystemProperties.getUserHome(), logFileName), new File(logFileName));
+    return ContainerUtil.find(candidates, file -> file.isFile() && file.lastModified() > lastModified);
   }
 
   private static @NotNull IdePerformanceListener getPublisher() {
