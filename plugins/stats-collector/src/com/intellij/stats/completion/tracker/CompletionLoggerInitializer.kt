@@ -11,6 +11,10 @@ import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.stats.completion.CompletionStatsPolicy
 import kotlin.random.Random
 
@@ -76,5 +80,53 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     val logSessionChance = LOGGED_SESSIONS_RATIO.getOrDefault(language.displayName.toLowerCase(), 1.0)
     return Random.nextDouble() < logSessionChance
+  }
+
+  private class LookupActionsListener private constructor(): AnActionListener {
+    companion object {
+      private val LOG = logger<LookupActionsListener>()
+      private val instance = LookupActionsListener()
+      private var subscribed = false
+
+      fun getInstance(): LookupActionsListener {
+        if (!subscribed) {
+          ApplicationManager.getApplication().messageBus.connect().subscribe(AnActionListener.TOPIC, instance)
+          subscribed = true
+        }
+        return instance
+      }
+    }
+
+    private val down by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+    private val up by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP) }
+    private val backspace by lazy { ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
+
+    var listener: CompletionPopupListener = CompletionPopupListener.DISABLED
+
+    override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      LOG.runAndLogException {
+        when (action) {
+          down -> listener.downPressed()
+          up -> listener.upPressed()
+          backspace -> listener.afterBackspacePressed()
+        }
+      }
+    }
+
+    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+      LOG.runAndLogException {
+        when (action) {
+          down -> listener.beforeDownPressed()
+          up -> listener.beforeUpPressed()
+          backspace -> listener.beforeBackspacePressed()
+        }
+      }
+    }
+
+    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
+      LOG.runAndLogException {
+        listener.beforeCharTyped(c)
+      }
+    }
   }
 }
