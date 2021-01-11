@@ -49,7 +49,7 @@ class DataExternalizerDataTypeConverter {
 
     @Override
     public ByteArraySequence read(ByteBuf buff) {
-      return new ByteArraySequence(ByteArrayDataType.INSTANCE.read(buff));
+      return ByteArraySequence.create(ByteArrayDataType.INSTANCE.read(buff));
     }
 
     @Override

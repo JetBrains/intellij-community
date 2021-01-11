@@ -16,7 +16,7 @@ public final class InMemoryForwardIndex implements ForwardIndex {
   @Override
   public @Nullable ByteArraySequence get(@NotNull Integer key) throws IOException {
     byte[] bytes = myMap.get(key);
-    return bytes == null ? null : new ByteArraySequence(bytes);
+    return bytes == null ? null : ByteArraySequence.create(bytes);
   }
 
   @Override

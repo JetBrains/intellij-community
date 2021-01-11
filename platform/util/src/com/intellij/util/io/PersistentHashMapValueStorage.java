@@ -616,7 +616,7 @@ public final class PersistentHashMapValueStorage {
       myChunksBytesAfterRemoval += stream.size();
     }
     else {
-      newValueOffset = appendBytes(new ByteArraySequence(result.buffer), 0);
+      newValueOffset = appendBytes(ByteArraySequence.create(result.buffer), 0);
       myChunksBytesAfterRemoval += result.buffer.length;
     }
 

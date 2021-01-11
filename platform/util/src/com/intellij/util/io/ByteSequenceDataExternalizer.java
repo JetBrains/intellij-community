@@ -24,6 +24,6 @@ public final class ByteSequenceDataExternalizer implements DataExternalizer<Byte
   public ByteArraySequence read(@NotNull DataInput in) throws IOException {
     byte[] buf = new byte[((InputStream)in).available()]; // todo fix double copying
     in.readFully(buf);
-    return new ByteArraySequence(buf);
+    return ByteArraySequence.create(buf);
   }
 }

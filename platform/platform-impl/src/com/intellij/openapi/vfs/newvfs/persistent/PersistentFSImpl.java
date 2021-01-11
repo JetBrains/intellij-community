@@ -599,7 +599,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         myInputLock.writeLock().lock();
         try {
-          writeContent(file, new ByteArraySequence(content), delegate.isReadOnly());
+          writeContent(file, ByteArraySequence.create(content), delegate.isReadOnly());
           setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
         }
         finally {

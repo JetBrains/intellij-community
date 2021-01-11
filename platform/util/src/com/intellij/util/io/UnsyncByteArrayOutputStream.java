@@ -86,7 +86,7 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
 
   @NotNull
   public ByteArraySequence toByteArraySequence() {
-    return new ByteArraySequence(myBuffer, 0, myCount);
+    return myCount == 0 ? ByteArraySequence.EMPTY : new ByteArraySequence(myBuffer, 0, myCount);
   }
 
   @NotNull
