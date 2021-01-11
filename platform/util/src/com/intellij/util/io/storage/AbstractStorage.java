@@ -300,7 +300,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         if (oldSize > 0) {
           final byte[] newbytes = new byte[newSize];
           System.arraycopy(readBytes(record), 0, newbytes, 0, oldSize);
-          System.arraycopy(bytes.getBytes(), bytes.getOffset(), newbytes, oldSize, delta);
+          System.arraycopy(bytes.getInternalBuffer(), bytes.getOffset(), newbytes, oldSize, delta);
           writeBytes(record, new ByteArraySequence(newbytes), false);
         }
         else {
@@ -309,7 +309,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       }
       else {
         long address = myRecordsTable.getAddress(record) + oldSize;
-        myDataTable.writeBytes(address, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+        myDataTable.writeBytes(address, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
         myRecordsTable.setSize(record, newSize);
       }
     });
@@ -339,7 +339,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         myRecordsTable.setCapacity(record, newCapacity);
       }
 
-      myDataTable.writeBytes(address, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+      myDataTable.writeBytes(address, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
       myRecordsTable.setSize(record, requiredLength);
     });
   }
@@ -379,7 +379,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
       final long address = myRecordsTable.getAddress(record);
 
-      myDataTable.writeBytes(address + offset, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+      myDataTable.writeBytes(address + offset, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
     });
   }
 

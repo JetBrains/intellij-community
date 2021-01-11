@@ -14,7 +14,7 @@ object ByteArraySequenceExternalizer : DataExternalizer<ByteArraySequence> {
 
   override fun save(out: DataOutput, value: ByteArraySequence) {
     writeINT(out, value.length)
-    out.write(value.bytes, value.offset, value.length)
+    out.write(value.internalBuffer, value.offset, value.length)
   }
 
   override fun read(input: DataInput): ByteArraySequence {

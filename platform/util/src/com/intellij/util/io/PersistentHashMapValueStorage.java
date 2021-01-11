@@ -174,7 +174,7 @@ public final class PersistentHashMapValueStorage {
   }
 
   public long appendBytes(ByteArraySequence data, long prevChunkAddress) throws IOException {
-    return appendBytes(data.getBytes(), data.getOffset(), data.getLength(), prevChunkAddress);
+    return appendBytes(data.getInternalBuffer(), data.getOffset(), data.getLength(), prevChunkAddress);
   }
 
   public long appendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {

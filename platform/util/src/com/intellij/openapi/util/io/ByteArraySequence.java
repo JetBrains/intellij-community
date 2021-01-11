@@ -14,6 +14,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -42,9 +43,10 @@ public class ByteArraySequence implements ByteSequence {
 
   /**
    * Implementation method.
-   * @return Internal buffer, irrespective myOffset or myLen. May be larger than length().
+   * @return Internal buffer, irrespective of myOffset or myLen. May be larger than length().
    */
-  public byte @NotNull [] getBytes() {
+  @ApiStatus.Internal
+  public byte @NotNull [] getInternalBuffer() {
     return myBytes;
   }
 

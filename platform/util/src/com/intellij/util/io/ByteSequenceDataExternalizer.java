@@ -17,7 +17,7 @@ public final class ByteSequenceDataExternalizer implements DataExternalizer<Byte
 
   @Override
   public void save(@NotNull DataOutput out, ByteArraySequence value) throws IOException {
-    out.write(value.getBytes(), value.getOffset(), value.getLength()); // todo fix double copying
+    out.write(value.getInternalBuffer(), value.getOffset(), value.getLength()); // todo fix double copying
   }
 
   @Override

@@ -68,7 +68,7 @@ public class PersistentFSContentAccessor {
 
     int page;
     if (myUseContentHashes) {
-      page = findOrCreateContentRecord(bytes.getBytes(), bytes.getOffset(), bytes.getLength(), connection);
+      page = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength(), connection);
 
       if (page < 0 || connection.getRecords().getContentRecordId(fileId) != page) {
         modified = true;
@@ -95,7 +95,7 @@ public class PersistentFSContentAccessor {
     if (FSRecords.useCompressionUtil) {
       BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
       try (DataOutputStream outputStream = new DataOutputStream(out)) {
-        CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+        CompressionUtil.writeCompressed(outputStream, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
       }
       newBytes = out.toByteArraySequence();
     }

@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.ByteArraySequenceExternalizer;
 
-import java.io.ByteArrayInputStream;
 import java.util.*;
 
 import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
@@ -180,7 +179,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     List<PsiMethod> result = new ArrayList<>();
     Stub root;
     try {
-      root = manager.deserialize(new ByteArrayInputStream(byteSequence.getBytes()));
+      root = manager.deserialize(byteSequence.toInputStream());
       ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)psiFile);
     }
     catch (SerializerNotFoundException e) {

@@ -8,12 +8,9 @@ import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 
 public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> implements ForwardIndexAccessor<Key, Value> {
@@ -69,7 +66,6 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
 
   public static <Data> Data deserializeFromByteSeq(@NotNull ByteArraySequence bytes,
                                                    @NotNull DataExternalizer<Data> externalizer) throws IOException {
-    DataInputStream stream = new DataInputStream(new UnsyncByteArrayInputStream(bytes.getBytes(), bytes.getOffset(), bytes.getLength()));
-    return externalizer.read(stream);
+    return externalizer.read(bytes.toInputStream());
   }
 }
