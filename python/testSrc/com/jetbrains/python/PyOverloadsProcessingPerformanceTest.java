@@ -62,27 +62,27 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   }
 
   public void testComputingResultTypeWithCodeAnalysisContext() {
-    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
+    PyCallExpression call = configureAndGetCallExprUnderCaret("mainQualified.py");
     TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
     assertType("int", call, context);
   }
 
   public void testComputingResultTypeWithUserInitiatedContext() {
-    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
+    PyCallExpression call = configureAndGetCallExprUnderCaret("mainQualified.py");
     TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile());
     assertType("int", call, context);
   }
 
   public void testNavigatingToDefinition() {
-    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
-    PsiElement element = GotoDeclarationAction.findTargetElement(myFixture.getProject(), myFixture.getEditor(), call.getTextOffset());
+    configureAndGetCallExprUnderCaret("mainQualified.py");
+    PsiElement element = GotoDeclarationAction.findTargetElement(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
     assertInstanceOf(element, PyFunction.class);
   }
 
   public void testQuickDocumentationRendering() {
-    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
+    configureAndGetCallExprUnderCaret("mainQualified.py");
     DocumentationProvider docProvider = new PythonDocumentationProvider();
-    PsiElement leaf = PsiTreeUtil.getDeepestFirst(call);
+    PsiElement leaf = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     DocumentationManager docManager = DocumentationManager.getInstance(myFixture.getProject());
     PsiElement docTarget = docManager.findTargetElement(myFixture.getEditor(), leaf.getTextOffset(), myFixture.getFile(), leaf);
     doPerformanceTestResettingCaches("Rendering Quick Documentation", 100, () -> {
@@ -96,13 +96,13 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     myFixture.copyDirectoryToProject("", "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     doPerformanceTestResettingCaches("Pass of Unresolved References inspection", 100, () -> {
-      myFixture.configureByFile("main.py");
+      myFixture.configureByFile("mainQualified.py");
       myFixture.checkHighlighting();
     });
   }
 
   public void testOverloadsNotDuplicatedInReferenceMultiResolveResults() {
-    PyCallExpression call = configureAndGetCallExprUnderCaret("main.py");
+    PyCallExpression call = configureAndGetCallExprUnderCaret("mainUnqualified.py");
     PyReferenceExpression refExpr = assertInstanceOf(call.getCallee(), PyReferenceExpression.class);
     ResolveResult[] resolveResults = refExpr.getReference().multiResolve(false);
     // Overloads, lower-priority imported name and the function itself.
@@ -110,7 +110,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   }
 
   public void testOverloadsNotDuplicatedInQualifiedReferenceMultiResolveResults() {
-    PyCallExpression call = configureAndGetCallExprUnderCaret(getTestName(true) + ".py");
+    PyCallExpression call = configureAndGetCallExprUnderCaret("mainQualified.py");
     PyReferenceExpression expr = assertInstanceOf(call.getCallee(), PyReferenceExpression.class);
     ResolveResult[] resolveResults = expr.getReference().multiResolve(false);
     // Overloads only.
