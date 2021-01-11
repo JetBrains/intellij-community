@@ -4,6 +4,7 @@ package com.intellij.execution.stateExecutionWidget
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 
 interface StateWidgetProcess {
@@ -38,4 +39,5 @@ interface StateWidgetProcess {
   val showInBar: Boolean
 
   fun rerunAvailable(): Boolean = false
+  fun getStopIcon(): Icon? = null
 }

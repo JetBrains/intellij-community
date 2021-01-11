@@ -49,7 +49,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   @Override
   public void update(@NotNull final AnActionEvent e) {
     boolean enable = false;
-    Icon icon = getTemplatePresentation().getIcon();
+    Icon icon = getActionIcon(e);
     String description = getTemplatePresentation().getDescription();
     Presentation presentation = e.getPresentation();
     if (isPlaceGlobal(e)) {
@@ -97,6 +97,10 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     presentation.setDescription(description);
   }
 
+  protected Icon getActionIcon(@NotNull final AnActionEvent e) {
+    return getTemplatePresentation().getIcon();
+  }
+
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
@@ -121,7 +125,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
 
       HandlerItem stopAllItem =
-        new HandlerItem(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop")), AllIcons.Actions.Suspend,
+        new HandlerItem(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop")), getActionIcon(e),
                         true) {
           @Override
           void stop() {

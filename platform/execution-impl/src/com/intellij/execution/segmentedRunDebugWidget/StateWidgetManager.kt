@@ -82,7 +82,6 @@ class StateWidgetManager(val project: Project) {
               terminatedBeforeStart.add(env.executionId)
 
               LOGGER.warn("processTerminated notification before processStarted notification. ${env.executionId} executor: $executorId")
-             // println("processTerminated notification before processStarted notification. ${env.executionId} executor: $executorId")
               return@invokeLater
             }
             stop(executorId, env, handler, exitCode)
@@ -117,7 +116,6 @@ class StateWidgetManager(val project: Project) {
       it.remove(env.executionId)
       if (it.isEmpty()) executionsByExecutorId.remove(executorId)
     }
-    processByExecutorId.remove(executorId)
     processIdByExecutionId.remove(env.executionId)
     executionByConfiguration[env.runnerAndConfigurationSettings]?.remove(env.executionId)
     update()

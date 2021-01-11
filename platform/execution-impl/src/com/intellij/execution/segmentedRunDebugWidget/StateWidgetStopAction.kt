@@ -7,6 +7,7 @@ import com.intellij.execution.actions.StopAction
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import javax.swing.Icon
 
 class StateWidgetStopAction : StopAction() {
   override fun update(e: AnActionEvent) {
@@ -21,6 +22,19 @@ class StateWidgetStopAction : StopAction() {
 
     super.update(e)
     e.presentation.isEnabledAndVisible = e.presentation.isEnabled && e.presentation.isVisible
+  }
+
+  override fun getActionIcon(e: AnActionEvent): Icon {
+    e.project?.let { project ->
+      val stateWidgetManager = StateWidgetManager.getInstance(project)
+      if(stateWidgetManager.getActiveProcesses().size == 1) {
+        stateWidgetManager.getActiveProcesses().firstOrNull()?.getStopIcon()?.let {
+          return it
+        }
+      }
+    }
+
+    return super.getActionIcon(e)
   }
 
   override fun getDisplayName(project: Project?, descriptor: RunContentDescriptor?): @BuildEventsNls.Title String? {

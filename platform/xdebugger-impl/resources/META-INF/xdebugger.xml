@@ -93,7 +93,7 @@
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
     </group>
 
-    <group id="StateWidgetDebugGroup">
+    <group id="StateWidgetDebugMoreActionGroup">
       <separator text="Debug"/>
       <reference ref="XDebugger.AttachGroup"/>
       <add-to-group group-id="StateWidgetMoreActionGroup"/>
