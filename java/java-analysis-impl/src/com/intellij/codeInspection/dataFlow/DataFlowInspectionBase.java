@@ -528,16 +528,22 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (context instanceof PsiForStatement && PsiTreeUtil.isAncestor(((PsiForStatement)context).getInitialization(), expr, true)) {
         return;
       }
-      if (context instanceof PsiClassInitializer && expr instanceof PsiReferenceExpression) {
-        if (assignment != null) {
-          Object constValue = ExpressionUtils.computeConstantExpression(assignment.getRExpression());
-          if (constValue == PsiTypesUtil.getDefaultValue(expr.getType())) {
-            PsiReferenceExpression ref = (PsiReferenceExpression)expr;
-            PsiElement target = ref.resolve();
-            if (target instanceof PsiField &&
-                (((PsiField)target).hasModifierProperty(PsiModifier.STATIC) || ExpressionUtil.isEffectivelyUnqualified(ref)) &&
-                ((PsiField)target).getContainingClass() == ((PsiClassInitializer)context).getContainingClass()) {
-              return;
+      if (expr instanceof PsiReferenceExpression) {
+        PsiReferenceExpression ref = (PsiReferenceExpression)expr;
+        PsiField field = tryCast(ref.resolve(), PsiField.class);
+        if (field != null) {
+          // Final field assignment: even if redundant according to DFA model (e.g. this.field = null),
+          // it's necessary due to language semantics
+          if (field.hasModifierProperty(PsiModifier.FINAL)) return;
+          if (context instanceof PsiClassInitializer) {
+            if (assignment != null) {
+              Object constValue = ExpressionUtils.computeConstantExpression(assignment.getRExpression());
+              if (constValue == PsiTypesUtil.getDefaultValue(expr.getType())) {
+                if ((field.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtil.isEffectivelyUnqualified(ref)) &&
+                    field.getContainingClass() == ((PsiClassInitializer)context).getContainingClass()) {
+                  return;
+                }
+              }
             }
           }
         }
