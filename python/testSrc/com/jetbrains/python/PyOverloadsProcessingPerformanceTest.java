@@ -18,6 +18,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyArgumentListInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
@@ -95,6 +96,15 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   public void testUnresolvedReferencesInspectionPass() {
     myFixture.copyDirectoryToProject("", "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    doPerformanceTestResettingCaches("Pass of Unresolved References inspection", 100, () -> {
+      myFixture.configureByFile("mainQualified.py");
+      myFixture.checkHighlighting();
+    });
+  }
+
+  public void testArgumentListInspectionPass() {
+    myFixture.copyDirectoryToProject("", "");
+    myFixture.enableInspections(PyArgumentListInspection.class);
     doPerformanceTestResettingCaches("Pass of Unresolved References inspection", 100, () -> {
       myFixture.configureByFile("mainQualified.py");
       myFixture.checkHighlighting();
