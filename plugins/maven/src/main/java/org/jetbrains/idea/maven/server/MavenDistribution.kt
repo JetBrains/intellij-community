@@ -23,28 +23,38 @@ interface MavenDistribution {
     }
   }
 
-
 }
 
 class LocalMavenDistribution(override val mavenHome: File, override val name: String) : MavenDistribution {
-  override val version = MavenUtil.getMavenVersion(mavenHome)
+  override val version: String? by lazy {
+    MavenUtil.getMavenVersion(mavenHome)
+  }
+
   override fun compatibleWith(mavenDistribution: MavenDistribution): Boolean {
     return mavenDistribution == this || FileUtil.filesEqual(mavenDistribution.mavenHome, mavenHome)
   }
+
   override fun isValid() = version != null
   override fun toString(): String {
     return name + "(" + mavenHome + ") v " + version
   }
 }
 
-class WslMavenDistribution(private val wslDistribution: WSLDistribution, val pathToMaven: String, override val name: String): MavenDistribution {
-  override val version = MavenUtil.getMavenVersion(wslDistribution.getWindowsPath(pathToMaven))
+class WslMavenDistribution(private val wslDistribution: WSLDistribution,
+                           val pathToMaven: String,
+                           override val name: String) : MavenDistribution {
+  override val version: String? by lazy {
+    MavenUtil.getMavenVersion(wslDistribution.getWindowsPath(pathToMaven))
+  }
+
   override val mavenHome = File(wslDistribution.getWindowsPath(pathToMaven)!!)
+
   override fun compatibleWith(mavenDistribution: MavenDistribution): Boolean {
-    if(mavenDistribution == this) return true
-    val another = mavenDistribution as? WslMavenDistribution?: return false;
+    if (mavenDistribution == this) return true
+    val another = mavenDistribution as? WslMavenDistribution ?: return false;
     return another.wslDistribution == wslDistribution && another.pathToMaven == pathToMaven
   }
+
   override fun isValid() = version != null
   override fun toString(): String {
     return name + "(" + mavenHome + ") v " + version
