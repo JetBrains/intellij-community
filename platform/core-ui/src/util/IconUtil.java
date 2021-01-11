@@ -382,9 +382,11 @@ public class IconUtil {
   /**
    * Use only for icons under selection
    */
-  @NotNull
+  @Nullable
   @ApiStatus.Internal
-  public static Icon wrapToSelectionAwareIcon(@NotNull Icon iconUnderSelection) {
+  @Contract("null -> null; !null -> !null")
+  public static Icon wrapToSelectionAwareIcon(@Nullable Icon iconUnderSelection) {
+    if (iconUnderSelection == null) return null;
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
