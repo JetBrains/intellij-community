@@ -6,6 +6,7 @@
         <dependency maven-id="junit:junit" />
         <dependency maven-id="org.slf4j:slf4j-api" />
         <dependency maven-id="org.apache.commons:commons-compress" />
+        <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
         <dependency maven-id="net.java.dev.jna:jna" />
       </exclude>
     </properties>
@@ -14,7 +15,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/visible-assertions/visible-assertions/2.1.2/visible-assertions-2.1.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.2.7/docker-java-api-3.2.7.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.10.3/jackson-annotations-2.10.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.2.7/docker-java-transport-zerodep-3.2.7.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.2.7/docker-java-transport-3.2.7.jar!/" />
     </CLASSES>
@@ -24,7 +24,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/visible-assertions/visible-assertions/2.1.2/visible-assertions-2.1.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.2.7/docker-java-api-3.2.7-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.10.3/jackson-annotations-2.10.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.2.7/docker-java-transport-zerodep-3.2.7-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.2.7/docker-java-transport-3.2.7-sources.jar!/" />
     </SOURCES>
