@@ -66,32 +66,42 @@ class StateWidgetManager(val project: Project) {
       ExecutionManager.EXECUTION_TOPIC.subscribe(project, object : ExecutionListener {
         override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
-
+            if(LOGGER.isTraceEnabled) {
+              LOGGER.trace("=============Execution started: ${env.executionId} executor: $executorId" +
+                          "${if(handler.isProcessTerminated) "terminated" else if(handler.isProcessTerminating) " terminating" else ""} ")
+            }
             if(terminatedBeforeStart.contains(env.executionId)) {
               LOGGER.warn("processStarted notification for a process that has already been terminated. ${env.executionId} executor: $executorId")
-                // println("processStarted notification for a process that has already been terminated. ${env.executionId} executor: $executorId")
               return@invokeLater
             }
-            start(executorId, env, handler)
+            start(executorId, env)
           }
         }
 
         override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
           ApplicationManager.getApplication().invokeLater {
+            if(LOGGER.isTraceEnabled) {
+              LOGGER.trace("=============Execution stopped: " +
+                           "${env.executionId}, " +
+                           "executor: $executorId, " +
+                           "exitCode: $exitCode, " +
+                           "${if(handler.isProcessTerminated) "terminated" else if(handler.isProcessTerminating) " terminating" else ""} ")
+            }
+
             if(executions[env.executionId] == null) {
               terminatedBeforeStart.add(env.executionId)
 
               LOGGER.warn("processTerminated notification before processStarted notification. ${env.executionId} executor: $executorId")
               return@invokeLater
             }
-            stop(executorId, env, handler, exitCode)
+            stop(executorId, env)
           }
         }
       })
     }
   }
 
-  private fun start(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+  private fun start(executorId: String, env: ExecutionEnvironment) {
     ExecutorGroup.getGroupIfProxy(env.executor)?.let { executorGroup ->
       processes.forEach { process ->
         if (process.executorId == executorGroup.id) {
@@ -110,15 +120,21 @@ class StateWidgetManager(val project: Project) {
     }
   }
 
-  private fun stop(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+  private fun stop(executorId: String, env: ExecutionEnvironment) {
     executions.remove(env.executionId)
-    executionsByExecutorId[executorId]?.let {
-      it.remove(env.executionId)
-      if (it.isEmpty()) executionsByExecutorId.remove(executorId)
-    }
     processIdByExecutionId.remove(env.executionId)
-    executionByConfiguration[env.runnerAndConfigurationSettings]?.remove(env.executionId)
+
+    remove(executionsByExecutorId, executorId, env.executionId)
+    remove(executionByConfiguration, env.runnerAndConfigurationSettings, env.executionId)
+
     update()
+  }
+
+  private fun <K> remove(map: MutableMap<K, MutableSet<Long>>, key: K, id: Long){
+    map[key]?.let{
+      it.remove(id)
+      if(it.isEmpty()) map.remove(key)
+    }
   }
 
   private fun collect(process: StateWidgetProcess, executorId: String, env: ExecutionEnvironment) {
@@ -133,6 +149,35 @@ class StateWidgetManager(val project: Project) {
   private fun update() {
     updateRunningConfiguration()
     fireConfigurationChanged()
+    logging()
+  }
+
+  private fun logging() {
+    if(LOGGER.isTraceEnabled) {
+      LOGGER.trace("executions:${if(executions.isEmpty()) "empty" else ""}")
+      executions.forEach {
+        LOGGER.trace("       ${it.value.executor.actionName}: settings ${it.value.runnerAndConfigurationSettings?.name}, id: ${it.key}")
+      }
+      LOGGER.trace("processIdByExecutionId:${if(processIdByExecutionId.isEmpty()) "empty" else ""}")
+      processIdByExecutionId.forEach {
+        LOGGER.trace("       ${it.key}: ${it.value}")
+      }
+
+      LOGGER.trace("executionsByExecutorId:${if(executionsByExecutorId.isEmpty()) "empty" else ""}")
+      executionsByExecutorId.forEach { entry ->
+        LOGGER.trace("       ${entry.key}: ${entry.value.joinToString ("|")}")
+      }
+
+      LOGGER.trace("activeProcessByConfiguration:${if(activeProcessByConfiguration.isEmpty()) "empty" else ""}")
+      activeProcessByConfiguration.forEach { entry ->
+        LOGGER.trace("       ${entry.key?.name}: ${entry.value.joinToString("|") { it.ID }}")
+      }
+
+      LOGGER.trace("executionByConfiguration:${if(executionByConfiguration.isEmpty()) "empty" else ""}")
+      executionByConfiguration.forEach { entry ->
+        LOGGER.trace("       ${entry.key?.name}: ${entry.value.joinToString ("|")}")
+      }
+    }
   }
 
   private fun updateRunningConfiguration() {
