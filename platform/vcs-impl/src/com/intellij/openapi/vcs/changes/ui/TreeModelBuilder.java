@@ -283,6 +283,15 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return createTagNode(new ChangesBrowserNode.TagImpl(tag));
   }
 
+  /**
+   * @deprecated Use {@link #createTagNode(ChangesBrowserNode.Tag)} instead.
+   */
+  @NotNull
+  @Deprecated
+  public ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
+    return createTagNode(ChangesBrowserNode.WrapperTag.wrap(tag));
+  }
+
   @NotNull
   public ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag) {
     return createTagNode(tag, true);
@@ -571,6 +580,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return myModel.getChildCount(myRoot) == 0;
   }
 
+  /**
+   * @deprecated Use {@link #setChanges(Collection, ChangeNodeDecorator)} directly.
+   */
   @NotNull
   @Deprecated
   public DefaultTreeModel buildModel(@NotNull List<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {

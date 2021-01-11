@@ -72,7 +72,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
 
           FilePath filePath = producer.getFilePath();
           FileStatus fileStatus = producer.getFileStatus();
-          ChangesBrowserNode.Tag tag = producer.getPopupTag();
+          ChangesBrowserNode.Tag tag = producer.getTag();
           groups.putValue(tag, new GenericChangesBrowserNode(filePath, fileStatus, i));
         }
 
@@ -104,9 +104,18 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
     @NotNull
     FileStatus getFileStatus();
 
+    /**
+     * @deprecated Use {@link #getTag()} instead.
+     */
+    @Deprecated
     @Nullable
-    default ChangesBrowserNode.Tag getPopupTag() {
+    default Object getPopupTag() {
       return null;
+    }
+
+    @Nullable
+    default ChangesBrowserNode.Tag getTag() {
+      return ChangesBrowserNode.WrapperTag.wrap(getPopupTag());
     }
   }
 

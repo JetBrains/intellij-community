@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
@@ -270,13 +271,19 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return getTextPresentation();
   }
 
+  /**
+   * Used by speedsearch, copy-to-clipboard and default renderer.
+   */
   @Nls
-  public abstract String getTextPresentation();
+  public String getTextPresentation() {
+    DeprecatedMethodException.report("Please implement `ChangesBrowserNode#getTextPresentation()` explicitly. " + this.getClass());
+    return userObject == null ? "" : userObject.toString(); //NON-NLS
+  }
 
   @Override
   public T getUserObject() {
     //noinspection unchecked
-    return (T) userObject;
+    return (T)userObject;
   }
 
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
@@ -392,6 +399,26 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     @Override
     public String toString() {
       return myValue;
+    }
+  }
+
+  public static class WrapperTag implements Tag {
+    public static Tag wrap(@Nullable Object object) {
+      if (object == null) return null;
+      if (object instanceof Tag) return (Tag)object;
+      return new WrapperTag(object);
+    }
+
+    private final @NotNull Object myValue;
+
+    public WrapperTag(@NotNull Object value) {
+      myValue = value;
+    }
+
+    @Nls
+    @Override
+    public String toString() {
+      return myValue.toString(); //NON-NLS
     }
   }
 
