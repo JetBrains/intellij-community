@@ -4,11 +4,20 @@ package com.intellij.jsonpath;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.json.JsonBundle;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
 import com.intellij.jsonpath.psi.JsonPathStringLiteral;
+import com.intellij.jsonpath.psi.JsonPathTypes;
+import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.intellij.jsonpath.JsonPathConstants.STANDARD_FUNCTIONS;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_DOT_NAVIGATION_SET;
@@ -20,6 +29,14 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
   // 2. todo completion for null, true and false inside object literals
 
   public JsonPathCompletionContributor() {
+    extend(CompletionType.BASIC,
+           psiElement().withParent(JsonPathStringLiteral.class)
+             .inside(psiElement().withElementType(JsonPathTypes.QUOTED_PATHS_LIST)),
+           new JsonKeysCompletionProvider(false));
+
+    extend(CompletionType.BASIC,
+           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)), new JsonKeysCompletionProvider(true));
+
     extend(CompletionType.BASIC,
            psiElement()
              .afterLeaf(psiElement().withElementType(JSONPATH_EQUALITY_OPERATOR_SET))
@@ -59,6 +76,44 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
       for (String keyword : KEYWORDS) {
         result.addElement(LookupElementBuilder.create(keyword).bold());
       }
+    }
+  }
+
+  private static class JsonKeysCompletionProvider extends CompletionProvider<CompletionParameters> {
+
+    private final boolean validIdentifiersOnly;
+    private static final Pattern VALID_IDENTIFIER_PATTERN = Pattern.compile("[\\w_][\\w_0-9]*", Pattern.UNICODE_CHARACTER_CLASS);
+
+    private JsonKeysCompletionProvider(boolean validIdentifiersOnly) {
+      this.validIdentifiersOnly = validIdentifiersOnly;
+    }
+
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  @NotNull ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+      DataContext dataContext = DataManager.getInstance().getDataContext(parameters.getEditor().getComponent());
+      JsonFile targetFile = dataContext.getData(JsonPathEvaluateManager.JSON_PATH_EVALUATE_SOURCE_KEY);
+
+      if (targetFile == null) return;
+
+      targetFile.accept(new JsonRecursiveElementVisitor() {
+        @Override
+        public void visitProperty(@NotNull JsonProperty o) {
+          super.visitProperty(o);
+
+          String propertyName = o.getName();
+          if (!propertyName.isBlank()) {
+            if (!validIdentifiersOnly || VALID_IDENTIFIER_PATTERN.matcher(propertyName).matches()) {
+              result.addElement(PrioritizedLookupElement.withPriority(
+                LookupElementBuilder.create(propertyName)
+                  .withIcon(AllIcons.Nodes.Field)
+                  .withTypeText(JsonBundle.message("jsonpath.completion.key")),
+                100));
+            }
+          }
+        }
+      });
     }
   }
 }

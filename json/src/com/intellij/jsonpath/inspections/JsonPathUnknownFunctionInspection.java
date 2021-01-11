@@ -2,6 +2,7 @@
 package com.intellij.jsonpath.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.json.JsonBundle;
 import com.intellij.jsonpath.JsonPathConstants;
@@ -9,6 +10,8 @@ import com.intellij.jsonpath.psi.JsonPathFunctionName;
 import com.intellij.jsonpath.psi.JsonPathVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.jsonpath.ui.JsonPathEvaluateManager.JSON_PATH_EVALUATE_EXPRESSION_KEY;
 
 final class JsonPathUnknownFunctionInspection extends LocalInspectionTool {
   @Override
@@ -18,10 +21,17 @@ final class JsonPathUnknownFunctionInspection extends LocalInspectionTool {
       public void visitFunctionName(@NotNull JsonPathFunctionName o) {
         super.visitFunctionName(o);
 
-        if (!JsonPathConstants.STANDARD_FUNCTIONS.containsKey(o.getText())) {
-          holder.registerProblem(o, null, JsonBundle.message("inspection.message.jsonpath.unknown.function.name", o.getText()));
+        boolean isEvaluateExpr = Boolean.TRUE.equals(holder.getFile().getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY));
 
-          // todo Suppress for name quick fix
+        if (!JsonPathConstants.STANDARD_FUNCTIONS.containsKey(o.getText())) {
+          if (isEvaluateExpr) {
+            holder.registerProblem(o, JsonBundle.message("inspection.message.jsonpath.unsupported.jayway.function", o.getText()),
+                                   ProblemHighlightType.ERROR);
+          }
+          else {
+            holder.registerProblem(o, null, JsonBundle.message("inspection.message.jsonpath.unknown.function.name", o.getText()));
+            // todo Suppress for name quick fix
+          }
         }
       }
     };

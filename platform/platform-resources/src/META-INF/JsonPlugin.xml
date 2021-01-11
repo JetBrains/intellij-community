@@ -8,6 +8,15 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CopyReference"/>
     </action>
+
+    <action id="JsonPathEvaluateAction" class="com.intellij.jsonpath.ui.JsonPathEvaluateAction" icon="AllIcons.FileTypes.Json">
+      <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchActions" />
+    </action>
+
+    <action id="JsonPathExportEvaluateResultAction" class="com.intellij.jsonpath.ui.JsonPathExportEvaluateResultAction"
+            use-shortcut-of="ExportToTextFile" icon="AllIcons.Actions.MenuSaveall">
+      <add-to-group group-id="EditorContextBarMenu"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -137,7 +146,15 @@
                      bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.function"
                      groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
                      level="WARNING" enabledByDefault="true"/>
+
+    <toolWindowAllowlist id="JSONPathEvaluate"/>
+
+    <intentionAction>
+      <className>com.intellij.jsonpath.ui.JsonPathEvaluateIntentionAction</className>
+      <category>JSON</category>
+    </intentionAction>
   </extensions>
+
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
