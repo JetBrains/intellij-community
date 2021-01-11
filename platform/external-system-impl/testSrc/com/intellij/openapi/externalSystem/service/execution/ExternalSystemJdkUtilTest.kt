@@ -146,7 +146,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
     val jdkDir = FileUtil.createTempDirectory(jdkVersionStr, null)
     listOf("bin/javac",
            "bin/java",
-           "lib/rt.jar")
+           "jre/lib/rt.jar")
       .forEach {
         File(jdkDir, it).apply {
           parentFile.mkdirs()
