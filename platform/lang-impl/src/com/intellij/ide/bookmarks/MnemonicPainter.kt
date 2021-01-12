@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks
 
 import com.intellij.ide.ui.UISettings
@@ -9,9 +9,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
-import com.intellij.util.ui.RegionPaintIcon
 import java.awt.Component
-import javax.swing.Icon
 
 private val FOREGROUND = EditorColorsUtil.createColorKey("MnemonicIcon.foreground", JBColor(0x000000, 0xBBBBBB))
 private val BACKGROUND = EditorColorsUtil.createColorKey("MnemonicIcon.background", JBColor(0xFEF7EC, 0x5B5341))
@@ -19,8 +17,6 @@ private val BORDER_COLOR = EditorColorsUtil.createColorKey("MnemonicIcon.borderC
 
 internal class MnemonicPainter(ch: Char) : RegionPainter<Component?> {
   private val string = ch.toString()
-
-  fun asIcon(size: Int): Icon = RegionPaintIcon(size, this).withIconPreScaled(false)
 
   override fun paint(g: Graphics2D, x: Int, y: Int, width: Int, height: Int, c: Component?) {
     val foreground = EditorColorsUtil.getColor(c, FOREGROUND)
