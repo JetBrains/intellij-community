@@ -236,7 +236,7 @@ public final class TerminalView {
     if (terminalWidget == null) {
       VirtualFile currentWorkingDir = getCurrentWorkingDir(tabState);
       terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir);
-      TerminalArrangementManager.getInstance(myProject).register(terminalWidget, tabState);
+      TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {

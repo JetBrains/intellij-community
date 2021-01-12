@@ -21,6 +21,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalProjectOptionsProviderOld"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
     <statistics.counterUsagesCollector groupId="terminalShell" version="3"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
