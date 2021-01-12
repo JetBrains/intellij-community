@@ -57,13 +57,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitComment(@NotNull PsiComment comment) {
     PsiComment other = null;
 
-    if (!(myMatchingVisitor.getElement() instanceof PsiComment)) {
-      if (myMatchingVisitor.getElement() instanceof PsiMember) {
-        other = ObjectUtils.tryCast(myMatchingVisitor.getElement().getFirstChild(), PsiComment.class);
+    final PsiElement element = myMatchingVisitor.getElement();
+    if (!(element instanceof PsiComment)) {
+      if (element instanceof PsiMember) {
+        other = ObjectUtils.tryCast(element.getFirstChild(), PsiComment.class);
       }
     }
     else {
-      other = (PsiComment)myMatchingVisitor.getElement();
+      other = (PsiComment)element;
     }
 
     if (!myMatchingVisitor.setResult(other != null)) {
@@ -363,7 +364,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitField(PsiField field) {
-    final PsiField other = getElement(PsiField.class);
+    final PsiField other = myMatchingVisitor.getElement(PsiField.class);
     if (other == null) return;
     final PsiDocComment comment = field.getDocComment();
     if (comment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other))) return;
@@ -373,7 +374,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
-    final PsiEnumConstant other = getElement(PsiEnumConstant.class);
+    final PsiEnumConstant other = myMatchingVisitor.getElement(PsiEnumConstant.class);
     if (other == null) return;
     final PsiExpressionList argumentList = enumConstant.getArgumentList();
     if (argumentList != null && !myMatchingVisitor.setResult(myMatchingVisitor.matchSons(argumentList, other.getArgumentList()))) return;
@@ -385,7 +386,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitAnonymousClass(PsiAnonymousClass clazz) {
-    final PsiAnonymousClass other = getElement(PsiAnonymousClass.class);
+    final PsiAnonymousClass other = myMatchingVisitor.getElement(PsiAnonymousClass.class);
     if (other == null) return;
     final PsiElement classReference = clazz.getBaseClassReference();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(classReference);
@@ -1731,7 +1732,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitClass(PsiClass clazz) {
-    final PsiClass other = (PsiClass)myMatchingVisitor.getElement();
+    final PsiClass other = myMatchingVisitor.getElement(PsiClass.class);
+    if (other == null) return;
     if (clazz.hasTypeParameters()) {
       if (!myMatchingVisitor.setResult(myMatchingVisitor.match(clazz.getTypeParameterList(), other.getTypeParameterList()))) return;
     }
@@ -1783,7 +1785,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiIdentifier methodNameNode = method.getNameIdentifier();
     final MatchContext context = myMatchingVisitor.getMatchContext();
     final boolean isTypedVar = context.getPattern().isTypedVar(methodNameNode);
-    final PsiMethod other = getElement(PsiMethod.class);
+    final PsiMethod other = myMatchingVisitor.getElement(PsiMethod.class);
     if (other == null) return;
 
     context.pushResult();
@@ -1836,18 +1838,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Nullable
   private <T extends PsiExpression> T getExpression(@NotNull Class<T> aClass, @NotNull PsiExpression patternExpression) {
-    PsiElement other = myMatchingVisitor.getElement();
-    if (!myMatchingVisitor.setResult(other instanceof PsiExpression)) {
-      return null;
-    }
+    PsiExpression expression = myMatchingVisitor.getElement(PsiExpression.class);
     if (!(patternExpression.getParent() instanceof PsiExpressionStatement)) {
-      other = PsiUtil.skipParenthesizedExprDown((PsiExpression)other);
+      expression = PsiUtil.skipParenthesizedExprDown(expression);
     }
-    return myMatchingVisitor.setResult(aClass.isInstance(other)) ? aClass.cast(other) : null;
-  }
-
-  private <T extends PsiElement> T getElement(@NotNull Class<T> aClass) {
-    final PsiElement other = myMatchingVisitor.getElement();
-    return myMatchingVisitor.setResult(aClass.isInstance(other)) ? aClass.cast(other) : null;
+    return myMatchingVisitor.setResult(aClass.isInstance(expression)) ? aClass.cast(expression) : null;
   }
 }

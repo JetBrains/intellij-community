@@ -53,7 +53,8 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
   }
 
   @Override public void visitXmlTag(XmlTag tag) {
-    final XmlTag another = (XmlTag)myMatchingVisitor.getElement();
+    final XmlTag another = myMatchingVisitor.getElement(XmlTag.class);
+    if (another == null) return;
     final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
     final XmlToken name = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_NAME);
     final boolean isTypedVar = pattern.isTypedVar(name);

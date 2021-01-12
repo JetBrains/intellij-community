@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -28,7 +28,7 @@ import java.util.List;
  * GlobalMatchingVisitor does the walking of the pattern tree, and invokes the language specific MatchingVisitor on elements.
  * It also stores the current code element to match. MatchingVisitor visits pattern elements, not code elements.
  * A language specific matching visitor can retrieve the current code element from the GlobalMatchingVisitor by calling
- * {@link #getElement()} from inside the visit methods.
+ * {@link #getElement(Class)} or {@link #getElement()} from inside the visit methods.
  */
 public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private static final Logger LOG = Logger.getInstance(GlobalMatchingVisitor.class);
@@ -53,10 +53,26 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return myElement;
   }
 
+  /**
+   * @return the current element cast to the specified type, null if cast was unsuccessful.
+   * Also sets result to false if the current element can't be cast.
+   */
+  public <T extends PsiElement> T getElement(@NotNull Class<T> aClass) {
+    return setResult(aClass.isInstance(myElement)) ? aClass.cast(myElement) : null;
+  }
+
+  /**
+   * @return the current result.
+   */
   public boolean getResult() {
     return myResult;
   }
 
+  /**
+   * Set the current result to the specified value.
+   * @param result  the new result value
+   * @return the current value of result, i.e. the value just set. To allow a call to this method used as an if condition.
+   */
   @Contract("true->true;false->false")
   public boolean setResult(boolean result) {
     return this.myResult = result;
@@ -259,8 +275,8 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     }
   }
 
-  private void copyResults(MatchResult ourResult) {
+  private void copyResults(MatchResult source) {
     final MatchResultImpl result = matchContext.getResult();
-    for (MatchResult son : ourResult.getChildren()) result.addChild(son);
+    for (MatchResult child : source.getChildren()) result.addChild(child);
   }
 }
