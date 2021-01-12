@@ -15,7 +15,8 @@ import java.awt.*;
 public final class IconHelper {
   private static final String MNEMONICS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   private static final char DEFAULT = 0;
-  private static final Icon NORMAL_ICON = createIcon(false, DEFAULT);
+  @VisibleForTesting
+  public static final Icon NORMAL_ICON = createIcon(false, DEFAULT);
   private static final Icon GUTTER_ICON = createIcon(true, DEFAULT);
   private static final Icon[] NORMAL_ICONS = new Icon[MNEMONICS.length()];
   private static final Icon[] GUTTER_ICONS = new Icon[MNEMONICS.length()];
