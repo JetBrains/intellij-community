@@ -1279,4 +1279,18 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
     }
   }
+
+  public void testDetectedAsTextMustNotStuckWithUnknownFileTypeWhenShrinkedToZeroLength() throws IOException {
+    File f = createTempFile("xx.lkjlkjlkjlj", "a");
+    VirtualFile virtualFile = getVirtualFile(f);
+    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
+
+    setBinaryContent(virtualFile, new byte[0]);
+    myFileTypeManager.drainReDetectQueue();
+    assertEquals(UnknownFileType.INSTANCE, virtualFile.getFileType());
+
+    setBinaryContent(virtualFile, "qwe\newq".getBytes(StandardCharsets.UTF_8));
+    myFileTypeManager.drainReDetectQueue();
+    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
+  }
 }
