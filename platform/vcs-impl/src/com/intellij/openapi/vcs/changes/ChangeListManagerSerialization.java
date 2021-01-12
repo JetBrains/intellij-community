@@ -36,13 +36,13 @@ final class ChangeListManagerSerialization {
   @NonNls private static final String NODE_WORKER_DISABLED = "disabled_changelists";
   @NonNls private static final String NODE_LSTM_DISABLED = "disabled_trackers";
 
-  public static void writeExternal(@NotNull Element element, @NotNull ChangeListWorker worker) {
+  static void writeExternal(@NotNull Element element, @NotNull ChangeListWorker worker) {
     for (LocalChangeList list : worker.getChangeLists()) {
       element.addContent(writeChangeList(list));
     }
   }
 
-  public static void readExternal(@NotNull Element element, @NotNull ChangeListWorker worker) {
+  static void readExternal(@NotNull Element element, @NotNull ChangeListWorker worker) {
     List<LocalChangeListImpl> lists = new ArrayList<>();
     for (Element listNode : element.getChildren(NODE_LIST)) {
       lists.add(readChangeList(listNode, worker.getProject()));
@@ -50,31 +50,41 @@ final class ChangeListManagerSerialization {
     worker.setChangeLists(removeDuplicatedLists(lists));
   }
 
-  public static void writeDisabledChangeLists(@NotNull Element element, @Nullable Element disabledLists) {
+  static void writeDisabledChangeLists(@NotNull Element element, @Nullable Element disabledLists) {
     if (disabledLists != null) element.addContent(disabledLists.clone());
   }
 
   @Nullable
-  public static Element readDisabledChangeLists(@NotNull Element element) {
+  static Element readDisabledChangeLists(@NotNull Element element) {
     return element.getChild(NODE_DISABLED);
   }
 
   @NotNull
-  public static Element saveDisabledChangeLists(@NotNull ChangeListWorker worker) {
-    Element element = new Element(NODE_DISABLED);
-
-    Element workerElement = new Element(NODE_WORKER_DISABLED);
-    element.addContent(workerElement);
-    writeExternal(workerElement, worker);
-
+  static Element createDisabledLineStatusTrackersState(@NotNull Project project) {
     Element lstmElement = new Element(NODE_LSTM_DISABLED);
-    element.addContent(lstmElement);
-    PartialLineStatusTrackerManagerState.writeState(worker.getProject(), lstmElement);
+    PartialLineStatusTrackerManagerState.writeState(project, lstmElement);
+    return lstmElement;
+  }
 
+  @NotNull
+  static Element createDisabledWorkerState(@NotNull ChangeListWorker worker) {
+    Element workerElement = new Element(NODE_WORKER_DISABLED);
+    writeExternal(workerElement, worker);
+    return workerElement;
+  }
+
+  @NotNull
+  static Element createDisabledChangeListsState(Element... elements) {
+    Element element = new Element(NODE_DISABLED);
+    for (Element childElement : elements) {
+      if (childElement != null) {
+        element.addContent(childElement);
+      }
+    }
     return element;
   }
 
-  public static void loadDisabledChangeLists(@NotNull Element element, @NotNull ChangeListWorker worker) {
+  static void restoreDisabledChangeListsState(@NotNull Element element, @NotNull Project project, @NotNull ChangeListWorker worker) {
     Element workerElement = element.getChild(NODE_WORKER_DISABLED);
     if (workerElement != null) {
       readExternal(workerElement, worker);
@@ -82,7 +92,7 @@ final class ChangeListManagerSerialization {
 
     Element lstmElement = element.getChild(NODE_LSTM_DISABLED);
     if (lstmElement != null) {
-      PartialLineStatusTrackerManagerState.restoreState(worker.getProject(), lstmElement);
+      PartialLineStatusTrackerManagerState.restoreState(project, lstmElement);
     }
   }
 

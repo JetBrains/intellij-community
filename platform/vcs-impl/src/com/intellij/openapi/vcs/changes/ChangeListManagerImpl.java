@@ -1233,7 +1233,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
       myDisabledChangeListsState = ChangeListManagerSerialization.readDisabledChangeLists(element);
       if (isEnabled && myDisabledChangeListsState != null) {
-        ChangeListManagerSerialization.loadDisabledChangeLists(myDisabledChangeListsState, myWorker);
+        ChangeListManagerSerialization.restoreDisabledChangeListsState(myDisabledChangeListsState, myProject, myWorker);
         myDisabledChangeListsState = null;
       }
       else {
@@ -1428,13 +1428,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   private void updateChangeListAvailability() {
     boolean enabled = shouldEnableChangeLists();
 
-    Element currentChangeListState = !enabled ? ChangeListManagerSerialization.saveDisabledChangeLists(myWorker) : null;
+    Element lstmState = null;
+    if (!enabled) {
+      // do not access LSTM under myDataLock
+      lstmState = ChangeListManagerSerialization.createDisabledLineStatusTrackersState(myProject);
+    }
 
     synchronized (myDataLock) {
       if (enabled == myWorker.areChangeListsEnabled()) return;
 
       if (!enabled && myDisabledChangeListsState == null) {
-        myDisabledChangeListsState = currentChangeListState;
+        Element workerState = ChangeListManagerSerialization.createDisabledWorkerState(myWorker);
+        myDisabledChangeListsState = ChangeListManagerSerialization.createDisabledChangeListsState(lstmState, workerState);
       }
 
       myWorker.setChangeListsEnabled(enabled);
@@ -1444,7 +1449,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
         VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
         ChangesViewManager.getInstance(myProject).scheduleRefresh();
 
-        ChangeListManagerSerialization.loadDisabledChangeLists(myDisabledChangeListsState, myWorker);
+        ChangeListManagerSerialization.restoreDisabledChangeListsState(myDisabledChangeListsState, myProject, myWorker);
         myDisabledChangeListsState = null;
       }
     }
