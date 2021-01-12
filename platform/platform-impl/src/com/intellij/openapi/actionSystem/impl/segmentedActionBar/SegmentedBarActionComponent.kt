@@ -57,12 +57,9 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
 
   protected var actionGroup: ActionGroup? = null
     set(value) {
-      val bla = field == null && value != null
-
+      if (field == value) return
       field = value
-      if (bla) {
-        ActionToolbarImpl.updateAllToolbarsImmediately()
-      }
+      ActionToolbarImpl.updateAllToolbarsImmediately()
     }
 
   private val buttonLook = object : ActionButtonLook() {

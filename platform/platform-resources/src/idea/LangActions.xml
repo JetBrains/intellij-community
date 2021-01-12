@@ -533,7 +533,7 @@
       <group id="StateWidgetAdditionalActions"/>
       <group id="StateWidgetProcessesActionGroup"/>
       <action id="StateWidgetStop" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetStopAction" icon="AllIcons.Actions.Suspend"/>
-      <group id="StateWidgetMoreActionGroup" icon="AllIcons.Actions.More" popup="true"/>
+      <group id="StateWidgetMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetMoreActionGroup"/>
     </group>
 
     <group id="Bookmarks">
