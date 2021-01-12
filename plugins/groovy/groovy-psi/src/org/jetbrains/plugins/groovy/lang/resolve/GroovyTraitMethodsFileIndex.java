@@ -23,13 +23,13 @@ import com.intellij.psi.stubs.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
+import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.ByteArraySequenceExternalizer;
 
 import java.util.*;
 
@@ -70,7 +70,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
   @Override
   public int getVersion() {
-    return ClassFileStubBuilder.STUB_VERSION + 2;
+    return ClassFileStubBuilder.STUB_VERSION + 3;
   }
 
   @NotNull
@@ -88,7 +88,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   @NotNull
   @Override
   public DataExternalizer<ByteArraySequence> getValueExternalizer() {
-    return ByteArraySequenceExternalizer.INSTANCE;
+    return ByteSequenceDataExternalizer.INSTANCE;
   }
 
   @Contract("null -> null")
