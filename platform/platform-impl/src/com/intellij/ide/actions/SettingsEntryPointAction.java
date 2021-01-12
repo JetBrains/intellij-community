@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -52,12 +53,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexander Lobas
  */
 public class SettingsEntryPointAction extends AnAction implements DumbAware, RightAlignedToolbarAction,
                                                                   AnAction.TransparentUpdate, TooltipDescriptionProvider {
+  private boolean myShowPopup = true;
+
   public SettingsEntryPointAction() {
     initPluginsListeners();
   }
@@ -66,7 +70,12 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    ListPopup popup = createMainPopup(e.getDataContext());
+    if (!myShowPopup) {
+      return;
+    }
+    myShowPopup = false;
+
+    ListPopup popup = createMainPopup(e.getDataContext(), () -> myShowPopup = true);
 
     InputEvent inputEvent = e.getInputEvent();
     if (inputEvent == null) {
@@ -101,7 +110,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
   }
 
   @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context) {
+  private static ListPopup createMainPopup(@NotNull DataContext context, @NotNull Runnable disposeCallback) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     if (myPlatformUpdateInfo != null) {
@@ -219,7 +228,11 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
       }
     }
 
-    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+    return JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true, () -> {
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(
+          () -> ApplicationManager.getApplication().invokeLater(disposeCallback, ModalityState.any()), 250, TimeUnit.MILLISECONDS);
+      }, -1);
   }
 
   private static PluginUpdatesService myUpdatesService;
@@ -309,9 +322,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
   }
 
   private static @NotNull @Nls String getActionTooltip() {
-    return myPlatformUpdateInfo == null && myUpdatedPlugins == null
-           ? IdeBundle.message("settings.entry.point.tooltip")
-           : IdeBundle.message("settings.entry.point.update.tooltip");
+    return IdeBundle.message("settings.entry.point.tooltip");
   }
 
   private static void resetActionIcon() {
@@ -398,6 +409,7 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
 
   private static class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
     private StatusBar myStatusBar;
+    private boolean myShowPopup = true;
 
     private MyStatusBarWidget() {
       initPluginsListeners();
@@ -429,8 +441,13 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
 
+        if (!myShowPopup) {
+          return;
+        }
+        myShowPopup = false;
+
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
+        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), () -> myShowPopup = true);
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {
