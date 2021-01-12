@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -88,7 +89,8 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   @Override
   @Nullable
   public PsiElement getDtdUrlElement() {
-    PsiElement docTypePublic = findElementByTokenType(XmlTokenType.XML_DOCTYPE_PUBLIC);
+    ASTNode child = getNode().findChildByType(XmlTokenType.XML_DOCTYPE_PUBLIC);
+    PsiElement docTypePublic = child != null ? child.getPsi() : null;
 
     if (docTypePublic != null){
       PsiElement element = docTypePublic.getNextSibling();
@@ -111,7 +113,8 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       }
     }
 
-    PsiElement docTypeSystem = findElementByTokenType(XmlTokenType.XML_DOCTYPE_SYSTEM);
+    child = getNode().findChildByType(XmlTokenType.XML_DOCTYPE_SYSTEM);
+    PsiElement docTypeSystem = child != null ? child.getPsi() : null;
 
     if (docTypeSystem != null){
       PsiElement element = docTypeSystem.getNextSibling();
@@ -131,7 +134,8 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
 
   @Override
   public XmlElement getNameElement() {
-    return findElementByTokenType(XmlTokenType.XML_NAME);
+    ASTNode child = getNode().findChildByType(XmlTokenType.XML_NAME);
+    return child != null ? child.getPsi(XmlElement.class) : null;
   }
 
   @Override
@@ -146,7 +150,8 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   private String getSomeId(final IElementType elementType) {
-    PsiElement docTypeSystem = findElementByTokenType(elementType);
+    ASTNode child = getNode().findChildByType(elementType);
+    PsiElement docTypeSystem = child != null ? child.getPsi() : null;
 
     if (docTypeSystem != null) {
       PsiElement element = docTypeSystem.getNextSibling();

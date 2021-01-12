@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlDoctype;
@@ -10,8 +10,6 @@ import com.intellij.psi.xml.XmlProlog;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlElementType {
-  private static final Logger LOG = Logger.getInstance(XmlPrologImpl.class);
-
   public XmlPrologImpl() {
     super(XML_PROLOG);
   }
@@ -28,6 +26,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
 
   @Override
   public XmlDoctype getDoctype() {
-    return (XmlDoctype)findElementByTokenType(XML_DOCTYPE);
+    ASTNode child = getNode().findChildByType(XML_DOCTYPE);
+    return child != null ? child.getPsi(XmlDoctype.class) : null;
   }
 }
