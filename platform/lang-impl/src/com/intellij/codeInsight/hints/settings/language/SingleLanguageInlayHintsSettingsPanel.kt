@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -13,7 +13,6 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -175,8 +174,7 @@ class SingleLanguageInlayHintsSettingsPanel(
         updateHints()
       }
     }
-    val scheme = EditorColorsManager.getInstance().globalScheme
-    editorField.font = scheme.getFont(EditorFontType.PLAIN)
+    editorField.font = EditorFontType.PLAIN.globalFont
     editorField.border = LineBorder(JBColor.border())
     editorField.addSettingsProvider { editor ->
       editor.setVerticalScrollbarVisible(true)

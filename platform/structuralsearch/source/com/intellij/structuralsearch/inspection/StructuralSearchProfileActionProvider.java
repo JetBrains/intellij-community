@@ -11,8 +11,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -202,8 +200,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       myProblemDescriptorTextField = new JTextField(configuration.getProblemDescriptor());
       myDescriptionTextArea = new EditorTextField(ObjectUtils.notNull(configuration.getDescription(), ""), project, HtmlFileType.INSTANCE);
       myDescriptionTextArea.setOneLineMode(false);
-      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      myDescriptionTextArea.setFont(scheme.getFont(EditorFontType.PLAIN));
+      myDescriptionTextArea.setFont(EditorFontType.PLAIN.getGlobalFont());
       myDescriptionTextArea.setPreferredSize(new Dimension(375, 125));
       myDescriptionTextArea.setMinimumSize(new Dimension(200, 50));
       mySuppressIdTextField = new JTextField(configuration.getSuppressId());
