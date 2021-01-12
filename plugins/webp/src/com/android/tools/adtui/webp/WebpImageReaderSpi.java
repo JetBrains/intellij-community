@@ -61,8 +61,9 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
 
   @Override
   public boolean canDecodeInput(@NotNull Object source) throws IOException {
-    assert source instanceof ImageInputStream;
-    ImageInputStream stream = (ImageInputStream) source;
+    if (!(source instanceof ImageInputStream)) return false;
+
+    ImageInputStream stream = (ImageInputStream)source;
     long length = stream.length();
     // The length may be -1 for files of unknown size.
     // Accept them for now and if needed, throw an IOException later.
