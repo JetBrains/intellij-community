@@ -16,14 +16,24 @@ import com.intellij.psi.xml.*
 import com.intellij.util.castSafelyTo
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
+import kotlin.text.Regex.Companion.escapeReplacement
 
 fun getJsMdnDocumentation(qualifiedName: String, namespace: MdnApiNamespace): MdnSymbolDocumentation? {
-  assert(namespace == MdnApiNamespace.WebApi && namespace == MdnApiNamespace.GlobalObjects)
+  assert(namespace == MdnApiNamespace.WebApi || namespace == MdnApiNamespace.GlobalObjects)
+  val mdnQualifiedName = qualifiedName.let {
+    when {
+      it.startsWith("HTMLDocument") -> it.removePrefix("HTML")
+      it.contains('.') -> it.replace("Constructor", "")
+      it.endsWith("Constructor") -> "$it.$it"
+      else -> it
+    }
+  }.toLowerCase(Locale.US).let { webApiIndex[it] ?: it }
   val documentation = documentationCache[
-    Pair(namespace, if (namespace == MdnApiNamespace.WebApi) getWebApiFragment(qualifiedName) else null)
+    Pair(namespace, if (namespace == MdnApiNamespace.WebApi) getWebApiFragment(mdnQualifiedName) else null)
   ] as? MdnJsDocumentation ?: return null
-  return documentation.symbols[qualifiedName]
-    ?.let { MdnSymbolDocumentationAdapter(qualifiedName, it) }
+  return documentation.symbols[mdnQualifiedName]
+    ?.let { MdnSymbolDocumentationAdapter(mdnQualifiedName, it) }
 }
 
 fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumentation? {
@@ -93,7 +103,13 @@ private fun getAttributeDocumentation(namespace: MdnApiNamespace, tagName: Strin
 interface MdnSymbolDocumentation {
   val url: String
   val isDeprecated: Boolean
-  fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean): String
+
+  fun getDocumentation(withDefinition: Boolean,
+                       quickDoc: Boolean): String
+
+  fun getDocumentation(withDefinition: Boolean,
+                       quickDoc: Boolean,
+                       additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String
 }
 
 class MdnSymbolDocumentationAdapter(private val name: String, private val doc: MdnRawSymbolDocumentation) : MdnSymbolDocumentation {
@@ -103,8 +119,11 @@ class MdnSymbolDocumentationAdapter(private val name: String, private val doc: M
   override val isDeprecated: Boolean
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
 
-  override fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean) =
-    buildDoc(doc, name, withDefinition, quickDoc)
+  override fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean): String =
+    getDocumentation(withDefinition, quickDoc, null)
+
+  override fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean, additionalSectionsContent: Consumer<java.lang.StringBuilder>?) =
+    buildDoc(doc, name, withDefinition, quickDoc, additionalSectionsContent)
 
 }
 
@@ -137,7 +156,22 @@ data class MdnHtmlAttributeDocumentation(override val url: String,
 data class MdnJsSymbolDocumentation(override val url: String,
                                     override val status: Set<MdnApiStatus>?,
                                     override val doc: String?,
-                                    override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
+                                    val parameters: Map<String, String>?,
+                                    val returns: String?,
+                                    val throws: Map<String, String>?) : MdnRawSymbolDocumentation {
+  override val sections: Map<String, String>?
+    get() {
+      val result = mutableMapOf<String, String>()
+      parameters?.takeIf { it.isNotEmpty() }?.let {
+        result.put("Params", buildSubSection(it))
+      }
+      returns?.let { result.put("Returns", it) }
+      throws?.takeIf { it.isNotEmpty() }?.let {
+        result.put("Throws", buildSubSection(it))
+      }
+      return result.takeIf { it.isNotEmpty() }
+    }
+}
 
 enum class MdnApiNamespace {
   Html,
@@ -164,9 +198,14 @@ private val documentationCache: LoadingCache<Pair<MdnApiNamespace, Char?>, MdnDo
   .expireAfterAccess(10, TimeUnit.MINUTES)
   .build { (namespace, segment) -> loadDocumentation(namespace, segment) }
 
+private val webApiIndex: Map<String, String> by lazy {
+  MdnHtmlDocumentation::class.java.getResource("WebApi-index.json")!!
+    .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
+}
+
 private fun fixMdnUrls(content: String): String =
-  content.replace("$MDN_DOCS_URL_PREFIX/", "https://developer.mozilla.org/docs/")
-    .replace(MDN_DOCS_URL_PREFIX, "https://developer.mozilla.org/docs")
+  content.replace("$MDN_DOCS_URL_PREFIX/", "https://developer.mozilla.org/en_us/docs/")
+    .replace(MDN_DOCS_URL_PREFIX, "https://developer.mozilla.org/en_us/docs")
 
 private fun getApiNamespace(namespace: String?, element: PsiElement?, symbolName: String): MdnApiNamespace =
   when {
@@ -200,7 +239,11 @@ private fun loadHtmlDocumentation(namespace: MdnApiNamespace): MdnHtmlDocumentat
   MdnHtmlDocumentation::class.java.getResource("${namespace.name}.json")!!
     .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
 
-private fun buildDoc(doc: MdnRawSymbolDocumentation, name: String, withDefinition: Boolean, quickDoc: Boolean): String {
+private fun buildDoc(doc: MdnRawSymbolDocumentation,
+                     name: String,
+                     withDefinition: Boolean,
+                     quickDoc: Boolean,
+                     additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String {
   val buf = StringBuilder()
   if (withDefinition)
     buf.append(DocumentationMarkup.DEFINITION_START)
@@ -211,13 +254,20 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation, name: String, withDefinitio
     .append(StringUtil.capitalize(doc.doc ?: ""))
     .append(DocumentationMarkup.CONTENT_END)
 
-  if (!doc.sections.isNullOrEmpty() && !quickDoc) {
+  val sections = doc.sections
+  if (!sections.isNullOrEmpty() && !quickDoc) {
     buf.append(DocumentationMarkup.SECTIONS_START)
-    for (entry in doc.sections ?: emptyMap()) {
+    for (entry in sections) {
       buf.append(DocumentationMarkup.SECTION_HEADER_START).append(entry.key)
         .append(DocumentationMarkup.SECTION_SEPARATOR).append(entry.value)
         .append(DocumentationMarkup.SECTION_END)
     }
+    additionalSectionsContent?.accept(buf)
+    buf.append(DocumentationMarkup.SECTIONS_END)
+  }
+  else if (additionalSectionsContent != null) {
+    buf.append(DocumentationMarkup.SECTIONS_START)
+    additionalSectionsContent.accept(buf)
     buf.append(DocumentationMarkup.SECTIONS_END)
   }
   buf.append(DocumentationMarkup.CONTENT_START)
@@ -225,6 +275,19 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation, name: String, withDefinitio
     .append(doc.url)
     .append("/contributors.txt'>Mozilla Contributors</a>, <a href='http://creativecommons.org/licenses/by-sa/2.5/'>CC BY-SA 2.5</a>")
     .append(DocumentationMarkup.CONTENT_END)
-  return fixMdnUrls(buf.toString())
+  // Expand MDN URL prefix and fix relative "#" references to point to external MDN docs
+  return fixMdnUrls(
+    buf.toString().replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url)}#$1\""))
+}
+
+private fun buildSubSection(items: Map<String, String>): String {
+  val result = StringBuilder()
+  items.forEach { (name, doc) ->
+    result.append("<p><code>")
+      .append(name)
+      .append("</code> &ndash; ")
+      .append(doc)
+  }
+  return result.toString()
 }
 

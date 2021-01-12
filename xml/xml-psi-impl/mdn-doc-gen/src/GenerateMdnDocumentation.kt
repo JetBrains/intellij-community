@@ -7,13 +7,18 @@ import com.google.gson.stream.JsonReader
 import com.intellij.documentation.mdn.*
 import com.intellij.ide.highlighter.HtmlFileType
 import com.intellij.lang.html.HTMLLanguage
+import com.intellij.lang.javascript.library.JSCorePredefinedLibrariesProvider
+import com.intellij.lang.javascript.psi.JSPsiElementBase
+import com.intellij.lang.javascript.psi.stubs.JSSymbolIndex2
+import com.intellij.lang.javascript.psi.types.JSNamedTypeFactory
+import com.intellij.lang.javascript.psi.types.JSTypeContext
+import com.intellij.lang.javascript.psi.types.JSTypeSourceFactory
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.XmlElementFactory
-import com.intellij.psi.XmlRecursiveElementVisitor
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.html.HtmlFileImpl
+import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
@@ -95,14 +100,19 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   fun testGenJsWebApi() {
     val symbols = extractInformation("api", blockList = webApiBlockList) { extractJavascriptDocumentation(it, it.name) }
     val fragments = webApiFragmentStarts.map { Pair(it, sortedMapOf<String, MdnJsSymbolDocumentation>()) }.toMap(TreeMap())
-    symbols.forEach{(name, doc) ->
+    symbols.forEach { (name, doc) ->
       fragments.floorEntry(name[0]).value[name] = doc
     }
-    fragments.forEach{(prefix, symbols) ->
+    fragments.forEach { (prefix, symbols) ->
       outputJson("${MdnApiNamespace.WebApi.name}-$prefix", mapOf(
         "symbols" to symbols
       ))
     }
+
+    val index = createDtsMdnIndex(symbols)
+    FileUtil.writeToFile(Path.of(PathManager.getCommunityHomePath(), OUTPUT_DIR, "${MdnApiNamespace.WebApi.name}-index.json").toFile(),
+                         GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
+                           .toJson(index))
   }
 
   fun testGenJsGlobalObjects() {
@@ -171,39 +181,20 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                                           commonAttributes: Map<String, MdnHtmlAttributeDocumentation>): MdnHtmlElementDocumentation {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
 
-    val elementDoc = indexDataProseValues.first()
-      .getAsJsonPrimitive("content").asString
-      .let { patchProse(it) }
+    val elementDoc = indexDataProseValues.first().getProseContent()
 
-    val attributesDoc = indexDataProseValues
-      .filter { value ->
-        value.get("id")
-          .takeIf { it is JsonPrimitive }
-          ?.asString?.toLowerCase(Locale.US)?.let {
-            it == "attributes"
-            || it == "attributes_for_form_submission"
-            || it == "deprecated_attributes"
-            || it == "obsolete_attributes"
-            || it == "non-standard_attributes"
-          } == true
-      }
-      .joinToString("\n") { it.getAsJsonPrimitive("content").asString }
-      .let { patchProse(it) }
+    val attributesDoc = filterProseById(indexDataProseValues, "attributes", "attributes_for_form_submission", "deprecated_attributes",
+                                        "obsolete_attributes", "non-standard_attributes")
+      .joinToString("\n") { it.getProseContent() }
 
     val status = extractStatus(compatData)
     val doc = processElementDocumentation(elementDoc)
 
     val documentation = doc.first
     val properties = doc.second.takeIf { it.isNotEmpty() }
-                     ?: indexDataProseValues.find { value ->
-                       value.get("id")
-                         .takeIf { it is JsonPrimitive }
-                         ?.asString?.toLowerCase(Locale.US)?.let {
-                           it == "properties"
-                         } == true
-                     }
-                       ?.getAsJsonPrimitive("content")?.asString
-                       ?.let { patchProse(it) }
+                     ?: filterProseById(indexDataProseValues, "properties")
+                       .firstOrNull()
+                       ?.getProseContent()
                        ?.let { processElementDocumentation(it) }
                        ?.second
                        ?.takeIf { it.isNotEmpty() }
@@ -216,8 +207,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     return MdnHtmlAttributeDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
                                          indexDataProseValues.first()
-                                           .getAsJsonPrimitive("content").asString
-                                           .let { patchProse(it) }
+                                           .getProseContent()
                                            .let { createHtmlFile(it).text }, null)
   }
 
@@ -227,16 +217,26 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       return extractInformationFull(dir, blockList = webApiBlockList) { subDir ->
         extractJavascriptDocumentation(subDir, "$name.${subDir.name}")
       }.toList() + Pair(name, MdnJsSymbolDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
-                                                       indexDataProseValues.first()
-                                                         .getAsJsonPrimitive("content").asString
-                                                         .let { patchProse(it) }
-                                                         .let { createHtmlFile(it).text }, null))
+                                                       indexDataProseValues.first().getProseContent()
+                                                         .let { createHtmlFile(it).text },
+                                                       extractParameters(indexDataProseValues),
+                                                       extractReturns(indexDataProseValues),
+                                                       extractThrows(indexDataProseValues)))
     }
     catch (e: Exception) {
       System.err.println("Error for $dir: ${e.message}")
       throw e
     }
   }
+
+  private fun filterProseById(sections: List<JsonObject>, vararg ids: String): Sequence<JsonObject> =
+    sections.asSequence().filter { value ->
+      value.get("id")
+        .takeIf { it is JsonPrimitive }
+        ?.asString?.toLowerCase(Locale.US)?.let { id ->
+          ids.any { id == it }
+        } == true
+    }
 
   private fun reversedAliasesMap(specialMappings: Map<String, Set<String>>): Map<String, String> =
     specialMappings.entries.asSequence().flatMap { mapping -> mapping.value.asSequence().map { Pair(it, mapping.key) } }.toMap()
@@ -261,6 +261,11 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         .toList()
     )
 
+
+  private fun JsonObject.getProseContent(): String =
+    this.getAsJsonPrimitive("content").asString
+      .let { patchProse(it) }
+
   private fun patchProse(prose: String): String =
     prose
       .replace("/en-US/docs", MDN_DOCS_URL_PREFIX, true)
@@ -276,30 +281,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                               attributesDoc: String?,
                               elementCompatData: JsonObject?,
                               commonAttributes: Map<String, MdnHtmlAttributeDocumentation>): Map<String, MdnHtmlAttributeDocumentation>? {
-    val docAttrs = mutableMapOf<String, String>()
-    if (!attributesDoc.isNullOrBlank()) {
-      var lastTitle = ""
-      createHtmlFile(attributesDoc)
-        .document?.children?.asSequence()
-        ?.filterIsInstance<XmlTag>()
-        ?.filter { it.name == "dl" }
-        ?.flatMap { it.subTags.asSequence() }
-        ?.forEach { data ->
-          @Suppress("RegExpDuplicateAlternationBranch")
-          when (data.name) {
-            "dt" -> lastTitle = data
-              .let { it.findSubTag("code") ?: it }
-              .let { it.findSubTag("a") ?: it }
-              .let { it.findSubTag("strong") ?: it }
-              .let { it.findSubTag("code") ?: it }
-              .innerHtml()
-              .also { if (it.contains('<')) throw Exception(it) }
-              .replace(Regex("\uD83D\uDDD1|\uD83D\uDC4E|⚠️|\uD83E\uDDEA"), "")
-              .toLowerCase().trim()
-            "dd" -> docAttrs[lastTitle] = docAttrs.getOrDefault(lastTitle, "") + data.innerHtml()
-          }
-        }
-    }
+    val docAttrs = processDataList(attributesDoc)
     val compatAttrs = elementCompatData?.entrySet()?.asSequence()
                         ?.filter { data -> !data.key.any { it == '_' || it == '-' } }
                         ?.map { Pair(it.key.toLowerCase(), extractStatus(it.value.asJsonObject)) }
@@ -314,6 +296,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val urlPrefix = getMdnDocsUrl(tagDir) + "#attr-"
     return docAttrs.keys.asSequence()
       .plus(compatAttrs.keys).distinct()
+      .map { StringUtil.toLowerCase(it) }
       .map { Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it], docAttrs[it], null)) }
       .sortedBy { it.first }
       .toMap()
@@ -444,6 +427,57 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       || (it is XmlTag && !isEmptyTag(it))
     }.any { it }
 
+  private fun extractParameters(sections: List<JsonObject>): Map<String, String>? =
+    processDataList(filterProseById(sections, "parameters")
+                      .firstOrNull()?.getProseContent())
+      .takeIf { it.isNotEmpty() }
+      ?.mapValues { (_, doc) -> doc.replace(Regex("<p>(.*)</p>"), "$1<br>") }
+
+  private fun extractReturns(sections: List<JsonObject>): String? =
+    filterProseById(sections, "return_value").firstOrNull()
+      ?.getProseContent()
+
+  private fun extractThrows(sections: List<JsonObject>): Map<String, String>? =
+    processDataList(filterProseById(sections, "exceptions")
+                      .firstOrNull()?.getProseContent())
+      .takeIf { it.isNotEmpty() }
+      ?.mapValues { (_, doc) -> doc.replace(Regex("<p>(.*)</p>"), "$1<br>") }
+
+  private fun processDataList(doc: String?): Map<String, String> {
+    val result = mutableMapOf<String, String>()
+    if (!doc.isNullOrBlank()) {
+      var lastTitle = ""
+      createHtmlFile(doc)
+        .document?.children?.asSequence()
+        ?.filterIsInstance<XmlTag>()
+        ?.filter { it.name == "dl" }
+        ?.flatMap { it.subTags.asSequence() }
+        ?.forEach { data ->
+          @Suppress("RegExpDuplicateAlternationBranch")
+          when (data.name) {
+            "dt" -> lastTitle = data
+              .let { it.findSubTag("p") ?: it }
+              .let { it.findSubTag("code") ?: it.findSubTag("var") ?: it.findSubTag("em") ?: it }
+              .let { it.findSubTag("a") ?: it }
+              .let { it.findSubTag("strong") ?: it }
+              .let { it.findSubTag("pre") ?: it }
+              .let { it.findSubTag("code") ?: it }
+              .innerHtml()
+              .replace(Regex("\n?<(em|var)>([^<]*)</(em|var)>\n?"), "$2")
+              .replace(Regex("\n?<(em|var)>([^<]*)</(em|var)>\n?"), "$2")
+              .replace(Regex("([a-zA-Z \n]+)<span .*</span>"), "$1")
+              .replace("<br>", "\n")
+              .let { if (it.contains("<table>")) "" else it }
+              .also { if (it.contains('<')) throw Exception(it) }
+              .replace(Regex("\uD83D\uDDD1|\uD83D\uDC4E|⚠️|\uD83E\uDDEA"), "")
+              .trim()
+            "dd" -> if (lastTitle.isNotBlank()) result[lastTitle] = result.getOrDefault(lastTitle, "") + data.innerHtml()
+          }
+        }
+    }
+    return result
+  }
+
   private fun extractStatus(compatData: JsonObject?): Set<MdnApiStatus>? =
     compatData?.get("__compat")
       ?.castSafelyTo<JsonObject>()
@@ -453,6 +487,38 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       ?.filter { it.value.asBoolean }
       ?.map { MdnApiStatus.valueOf(it.key.toPascalCase()) }
       ?.toSet()
+
+  private fun createDtsMdnIndex(symbols: Map<String, MdnJsSymbolDocumentation>): Map<String, String> {
+    val context = JSCorePredefinedLibrariesProvider.getAllJSPredefinedLibraryFiles()
+      .find { it.name == "lib.dom.d.ts" }
+      ?.let { PsiManager.getInstance(project).findFile(it) }
+
+    val realNameMap = StubIndex.getInstance().getAllKeys(JSSymbolIndex2.KEY, project)
+      .map { Pair(it.toLowerCase(Locale.US), it) }
+      .toMap()
+
+    return symbols.keys.asSequence()
+      .filter { it.contains('.') }
+      .mapNotNull { symbolName ->
+        val namespace = symbolName.takeWhile { it != '.' }
+        val member = symbolName.takeLastWhile { it != '.' }
+        val actualNamespace = realNameMap[namespace]
+                              ?: return@mapNotNull null
+        (JSNamedTypeFactory.createType(actualNamespace,
+                                       JSTypeSourceFactory.createTypeSource(context, false), JSTypeContext.INSTANCE)
+          .asRecordType()
+          .properties
+          .find { it.memberName.equals(member, true) })
+          ?.memberSource
+          ?.singleElement
+          ?.castSafelyTo<JSPsiElementBase>()
+          ?.qualifiedName
+          ?.takeIf { !it.equals(symbolName, true) }
+          ?.toLowerCase(Locale.US)
+          ?.let { Pair(it, symbolName) }
+      }
+      .toMap(TreeMap())
+  }
 }
 
 private fun XmlTag.innerHtml(): String = this.children.asSequence()

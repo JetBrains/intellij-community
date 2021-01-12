@@ -174,7 +174,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   private String generateDocForHtml(PsiElement element, PsiElement originalElement, boolean quickDoc) {
     MdnSymbolDocumentation documentation = getDocumentation(element, originalElement);
     if (documentation != null) {
-      return documentation.getDocumentation(true, quickDoc);
+      return documentation.getDocumentation(true, quickDoc, null);
     }
 
     if (element instanceof XmlEntityDecl) {

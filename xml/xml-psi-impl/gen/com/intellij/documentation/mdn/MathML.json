@@ -1796,8 +1796,7 @@
           "doc": "The content dictionary that contains the annotation key symbol."
         },
         "definitionurl": {
-          "url": "$MDN_URL$/web/mathml/element/semantics#attr-definitionurl",
-          "doc": "The location of the annotation key symbol."
+          "url": "$MDN_URL$/web/mathml/element/semantics#attr-definitionurl"
         },
         "displaystyle": {
           "url": "$MDN_URL$/web/mathml/element/semantics#attr-displaystyle",

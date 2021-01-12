@@ -1152,8 +1152,7 @@
           "status": [
             "StandardTrack",
             "Deprecated"
-          ],
-          "doc": "The glyph identifier, the format of which is dependent on the format defined by the\n<code>format</code>\nattribute of the given font.\n<br>\n<small><em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong></small>"
+          ]
         },
         "rotate": {
           "url": "$MDN_URL$/web/svg/element/altglyph#attr-rotate",
@@ -1293,8 +1292,7 @@
           "url": "$MDN_URL$/web/svg/element/animatemotion#attr-keypoints",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute indicate, in the range [0,1], how far is the object along the path for each\n<code><a href=\"$MDN_URL$/Web/SVG/Attribute/keyTimes\">keyTimes</a></code>\nassociated values.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link1\"><strong>&lt;number&gt;</strong></a>*; <em>Default value</em>: none; <em>Animatable</em>: <strong>no</strong></small>"
+          ]
         },
         "origin": {
           "url": "$MDN_URL$/web/svg/element/animatemotion#attr-origin",
@@ -1373,8 +1371,7 @@
           "doc": "The y-axis coordinate of the center of the circle.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link3\">&lt;length&gt;</a></strong>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link4\">&lt;percentage&gt;</a></strong> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong></small>"
         },
         "pathlength": {
-          "url": "$MDN_URL$/web/svg/element/circle#attr-pathlength",
-          "doc": "The total length for the circle's circumference, in user units.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link6\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/circle#attr-pathlength"
         },
         "r": {
           "url": "$MDN_URL$/web/svg/element/circle#attr-r",
@@ -1396,8 +1393,7 @@
           "url": "$MDN_URL$/web/svg/element/clippath#attr-clippathunits",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "Defines the coordinate system for the contents of the\n<code>&lt;clipPath&gt;</code>\nelement.\n<br>\n<small><em>Value type</em>: <code>userSpaceOnUse</code>|<code>objectBoundingBox</code> ; <em>Default value</em>: <code>userSpaceOnUse</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         }
       }
     },
@@ -1472,8 +1468,7 @@
           "doc": "The y position of the ellipse.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link3\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link4\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong></small>"
         },
         "pathlength": {
-          "url": "$MDN_URL$/web/svg/element/ellipse#attr-pathlength",
-          "doc": "This attribute lets specify the total length for the path, in user units.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link9\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/ellipse#attr-pathlength"
         },
         "rx": {
           "url": "$MDN_URL$/web/svg/element/ellipse#attr-rx",
@@ -1810,8 +1805,7 @@
           "url": "$MDN_URL$/web/svg/element/fedropshadow#attr-stddeviation",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the standard deviation for the blur operation in the drop shadow.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link3\"><strong>&lt;number&gt;</strong></a>; <em>Default value</em>: <code>2</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         }
       }
     },
@@ -2494,8 +2488,7 @@
       "doc": "<p>The <strong><code>&lt;line&gt;</code></strong> element is an SVG basic shape used to create a line connecting two points.</p>",
       "attrs": {
         "pathlength": {
-          "url": "$MDN_URL$/web/svg/element/line#attr-pathlength",
-          "doc": "Defines the total path length in user units.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link13\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/line#attr-pathlength"
         },
         "x1": {
           "url": "$MDN_URL$/web/svg/element/line#attr-x1",
@@ -2538,15 +2531,13 @@
           "url": "$MDN_URL$/web/svg/element/lineargradient#attr-gradienttransform",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute provides additional\n<a href=\"$MDN_URL$/Web/SVG/Attribute/transform\" data-flaw=\"link1\">transformation</a>\nto the gradient coordinate system.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Transform-list\" data-flaw=\"link2\">&lt;transform-list&gt;</a></strong> ; <em>Default value</em>: <em>identity transform</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "gradientunits": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#attr-gradientunits",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the coordinate system for attributes\n<code>x1</code>\n,\n<code>x2</code>\n,\n<code>y1</code>\n,\n<code>y2</code>\n<br>\n<small><em>Value type</em>: <code>userSpaceOnUse</code>|<code>objectBoundingBox</code> ; <em>Default value</em>: <code>objectBoundingBox</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "href": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#attr-href",
@@ -2556,8 +2547,7 @@
           "url": "$MDN_URL$/web/svg/element/lineargradient#attr-spreadmethod",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute indicates how the gradient behaves if it starts or ends inside the bounds of the shape containing the gradient.\n<br>\n<small><em>Value type</em>: <code>pad</code>|<code>reflect</code>|<code>repeat</code> ; <em>Default value</em>: <code>pad</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "x1": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#attr-x1",
@@ -2604,22 +2594,19 @@
           "url": "$MDN_URL$/web/svg/element/marker#attr-markerheight",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the height of the marker viewport.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link1\">&lt;length&gt;</a></strong> ; <em>Default value</em>: <code>3</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "markerunits": {
           "url": "$MDN_URL$/web/svg/element/marker#attr-markerunits",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the coordinate system for the attributes\n<code>markerWidth</code>\n,\n<code>markerHeight</code>\nand the contents of the\n<code>&lt;marker&gt;</code>\n.\n<br>\n<small><em>Value type</em>: <code>userSpaceOnUse</code>|<code>strokeWidth</code> ; <em>Default value</em>: <code>strokeWidth</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "markerwidth": {
           "url": "$MDN_URL$/web/svg/element/marker#attr-markerwidth",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the width of the marker viewport.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link2\">&lt;length&gt;</a></strong> ; <em>Default value</em>: <code>3</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "orient": {
           "url": "$MDN_URL$/web/svg/element/marker#attr-orient",
@@ -2629,29 +2616,25 @@
           "doc": "This attribute defines the orientation of the marker relative to the shape it is attached to.\n<br>\n<small><em>Value type</em>: <code>auto</code>|<code>auto-start-reverse</code>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Angle\" data-flaw=\"link3\">&lt;angle&gt;</a></strong> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong></small>"
         },
         "preserveaspectratio": {
-          "url": "$MDN_URL$/web/svg/element/marker#attr-preserveaspectratio",
-          "doc": "This attribute defines how the svg fragment must be deformed if it is embedded in a container with a different aspect ratio.\n<br>\n<small><em>Value type</em>: (<code>none</code>| <code>xMinYMin</code>| <code>xMidYMin</code>| <code>xMaxYMin</code>| <code>xMinYMid</code>| <code>xMidYMid</code>| <code>xMaxYMid</code>| <code>xMinYMax</code>| <code>xMidYMax</code>| <code>xMaxYMax</code>) (<code>meet</code>|<code>slice</code>)? ; <em>Default value</em>: <code>xMidYMid meet</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/marker#attr-preserveaspectratio"
         },
         "refx": {
           "url": "$MDN_URL$/web/svg/element/marker#attr-refx",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the x coordinate for the reference point of the marker.\n<br>\n<small><em>Value type</em>: <code>left</code>|<code>center</code>|<code>right</code>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Coordinate\" data-flaw=\"link4\">&lt;coordinate&gt;</a></strong> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "refy": {
           "url": "$MDN_URL$/web/svg/element/marker#attr-refy",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the y coordinate for the reference point of the marker.\n<br>\n<small><em>Value type</em>: <code>top</code>|<code>center</code>|<code>bottom</code>|<strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Coordinate\" data-flaw=\"link5\">&lt;coordinate&gt;</a></strong> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "viewbox": {
           "url": "$MDN_URL$/web/svg/element/marker#attr-viewbox",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the bound of the SVG viewport for the current SVG fragment.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#List-of-Ts\" data-flaw=\"link6\">&lt;list-of-numbers&gt;</a></strong> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         }
       }
     },
@@ -2673,15 +2656,13 @@
           "url": "$MDN_URL$/web/svg/element/mask#attr-maskcontentunits",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the coordinate system for the contents of the\n<code>&lt;mask&gt;</code>\n.\n<br>\n<small><em>Value type</em>: <code>userSpaceOnUse</code>|<code>objectBoundingBox</code> ; <em>Default value</em>: <code>userSpaceOnUse</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "maskunits": {
           "url": "$MDN_URL$/web/svg/element/mask#attr-maskunits",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the coordinate system for attributes\n<code><a href=\"$MDN_URL$/Web/SVG/Attribute/x\">x</a></code>\n,\n<code><a href=\"$MDN_URL$/Web/SVG/Attribute/y\">y</a></code>\n,\n<code><a href=\"$MDN_URL$/Web/SVG/Attribute/width\">width</a></code>\nand\n<code><a href=\"$MDN_URL$/Web/SVG/Attribute/height\">height</a></code>\non the\n<code>&lt;mask&gt;</code>\n.\n<br>\n<small><em>Value type</em>: <code>userSpaceOnUse</code>|<code>objectBoundingBox</code> ; <em>Default value</em>: <code>objectBoundingBox</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "width": {
           "url": "$MDN_URL$/web/svg/element/mask#attr-width",
@@ -2735,8 +2716,7 @@
           "doc": "This attribute defines the shape of the path.\n<br>\n<small><em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: <code>''</code>; <em>Animatable</em>: <strong>yes</strong></small>"
         },
         "pathlength": {
-          "url": "$MDN_URL$/web/svg/element/path#attr-pathlength",
-          "doc": "This attribute lets authors specify the total length for the path, in user units.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link1\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/path#attr-pathlength"
         }
       }
     },
@@ -2765,30 +2745,25 @@
           "url": "$MDN_URL$/web/svg/element/pattern#attr-patterncontentunits",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the coordinate system for the contents of the\n<a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a>\n.\n<br>\n<small><em>Value type</em>: <code>userSpaceOnUse</code>|<code>objectBoundingBox</code>; <em>Default value</em>: <code>userSpaceOnUse</code>; <em>Animatable</em>: <strong>yes</strong></small>\n<p class=\"note\"><strong>Note:</strong> This attribute has no effect if a <code>viewBox</code> attribute is specified on the <code>&lt;pattern&gt;</code> element.</p>"
+          ]
         },
         "patterntransform": {
           "url": "$MDN_URL$/web/svg/element/pattern#attr-patterntransform",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute contains the definition of an optional additional transformation from the pattern coordinate system onto the target coordinate system.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Transform-list\" data-flaw=\"link4\">&lt;transform-list&gt;</a></strong>; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "patternunits": {
           "url": "$MDN_URL$/web/svg/element/pattern#attr-patternunits",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the coordinate system for attributes\n<code>x</code>\n,\n<code>y</code>\n,\n<code>width</code>\n , and\n<code>height</code>\n.\n<br>\n<small><em>Value type</em>: <code>userSpaceOnUse</code>|<code>objectBoundingBox</code>; <em>Default value</em>: <code>objectBoundingBox</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "preserveaspectratio": {
-          "url": "$MDN_URL$/web/svg/element/pattern#attr-preserveaspectratio",
-          "doc": "This attribute defines how the SVG fragment must be deformed if it is embedded in a container with a different aspect ratio.\n<br>\n<small><em>Value type</em>: (<code>none</code>| <code>xMinYMin</code>| <code>xMidYMin</code>| <code>xMaxYMin</code>| <code>xMinYMid</code>| <code>xMidYMid</code>| <code>xMaxYMid</code>| <code>xMinYMax</code>| <code>xMidYMax</code>| <code>xMaxYMax</code>) (<code>meet</code>|<code>slice</code>)? ; <em>Default value</em>: <code>xMidYMid meet</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/pattern#attr-preserveaspectratio"
         },
         "viewbox": {
-          "url": "$MDN_URL$/web/svg/element/pattern#attr-viewbox",
-          "doc": "This attribute defines the bound of the SVG viewport for the pattern fragment.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#List-of-Ts\" data-flaw=\"link5\">&lt;list-of-numbers&gt;</a></strong> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/pattern#attr-viewbox"
         },
         "width": {
           "url": "$MDN_URL$/web/svg/element/pattern#attr-width",
@@ -2825,8 +2800,7 @@
       "doc": "<p>The <strong><code>&lt;polygon&gt;</code></strong> element defines a closed shape consisting of a set of connected straight line segments. The last point is connected to the first point.</p>\n<p>For open shapes, see the <a href=\"$MDN_URL$/Web/SVG/Element/polyline\"><code>&lt;polyline&gt;</code></a> element.</p>",
       "attrs": {
         "pathlength": {
-          "url": "$MDN_URL$/web/svg/element/polygon#attr-pathlength",
-          "doc": "This attribute lets specify the total length for the path, in user units.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link2\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/polygon#attr-pathlength"
         },
         "points": {
           "url": "$MDN_URL$/web/svg/element/polygon#attr-points",
@@ -2845,8 +2819,7 @@
       "doc": "<p>The <strong><code>&lt;polyline&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element is an SVG basic shape that creates straight lines connecting several points. Typically a <code>polyline</code> is used to create open shapes as the last point doesn't have to be connected to the first point. For closed shapes see the <a href=\"$MDN_URL$/Web/SVG/Element/polygon\"><code>&lt;polygon&gt;</code></a> element.</p>",
       "attrs": {
         "pathlength": {
-          "url": "$MDN_URL$/web/svg/element/polyline#attr-pathlength",
-          "doc": "This attribute lets specify the total length for the path, in user units.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link2\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/polyline#attr-pathlength"
         },
         "points": {
           "url": "$MDN_URL$/web/svg/element/polyline#attr-points",
@@ -2903,15 +2876,13 @@
           "url": "$MDN_URL$/web/svg/element/radialgradient#attr-gradienttransform",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute provides additional\n<a href=\"$MDN_URL$/Web/SVG/Attribute/transform\" data-flaw=\"link6\">transformation</a>\nto the gradient coordinate system.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#Transform-list\" data-flaw=\"link7\">&lt;transform-list&gt;</a></strong> ; <em>Default value</em>: <em>identity transform</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "gradientunits": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#attr-gradientunits",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the coordinate system for attributes\n<code>x1</code>\n,\n<code>x2</code>\n,\n<code>y1</code>\n,\n<code>y2</code>\n<br>\n<small><em>Value type</em>: <code>userSpaceOnUse</code>|<code>objectBoundingBox</code> ; <em>Default value</em>: <code>objectBoundingBox</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "href": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#attr-href",
@@ -2931,8 +2902,7 @@
           "url": "$MDN_URL$/web/svg/element/radialgradient#attr-spreadmethod",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute indicates how the gradient behaves if it starts or ends inside the bounds of the shape containing the gradient.\n<br>\n<small><em>Value type</em>: <code>pad</code>|<code>reflect</code>|<code>repeat</code> ; <em>Default value</em>: <code>pad</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#attr-xlink:href",
@@ -2955,8 +2925,7 @@
           "doc": "The height of the rect.\n<br>\n<small><em>Value type</em>: <code>auto</code>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link7\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link8\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <code>auto</code>; <em>Animatable</em>: <strong>yes</strong></small>"
         },
         "pathlength": {
-          "url": "$MDN_URL$/web/svg/element/rect#attr-pathlength",
-          "doc": "The total length of the rectangle's perimeter, in user units.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link13\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/rect#attr-pathlength"
         },
         "rx": {
           "url": "$MDN_URL$/web/svg/element/rect#attr-rx",
@@ -3113,24 +3082,21 @@
           "status": [
             "StandardTrack",
             "Deprecated"
-          ],
-          "doc": "The minimum SVG language profile that the document requires.\n<br>\n<small><em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>no</strong></small>"
+          ]
         },
         "contentscripttype": {
           "url": "$MDN_URL$/web/svg/element/svg#attr-contentscripttype",
           "status": [
             "StandardTrack",
             "Deprecated"
-          ],
-          "doc": "The default scripting language used by the SVG fragment.\n<br>\n<small><em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: <code>application/ecmascript</code>; <em>Animatable</em>: <strong>no</strong></small>"
+          ]
         },
         "contentstyletype": {
           "url": "$MDN_URL$/web/svg/element/svg#attr-contentstyletype",
           "status": [
             "StandardTrack",
             "Deprecated"
-          ],
-          "doc": "The default style sheet language used by the SVG fragment.\n<br>\n<small><em>Value type</em>: <strong>&lt;string&gt;</strong> ; <em>Default value</em>: <code>text/css</code>; <em>Animatable</em>: <strong>no</strong></small>"
+          ]
         },
         "height": {
           "url": "$MDN_URL$/web/svg/element/svg#attr-height",
@@ -3143,8 +3109,7 @@
           "url": "$MDN_URL$/web/svg/element/svg#attr-preserveaspectratio",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "How the\n<code>svg</code>\nfragment must be deformed if it is displayed with a different aspect ratio.\n<br>\n<small><em>Value type</em>: (<code>none</code>| <code>xMinYMin</code>| <code>xMidYMin</code>| <code>xMaxYMin</code>| <code>xMinYMid</code>| <code>xMidYMid</code>| <code>xMaxYMid</code>| <code>xMinYMax</code>| <code>xMidYMax</code>| <code>xMaxYMax</code>) (<code>meet</code>|<code>slice</code>)? ; <em>Default value</em>: <code>xMidYMid meet</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "version": {
           "url": "$MDN_URL$/web/svg/element/svg#attr-version",
@@ -3158,8 +3123,7 @@
           "url": "$MDN_URL$/web/svg/element/svg#attr-viewbox",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "The SVG viewport coordinates for the current SVG fragment.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#List-of-Ts\">&lt;list-of-numbers&gt;</a></strong> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "width": {
           "url": "$MDN_URL$/web/svg/element/svg#attr-width",
@@ -3220,23 +3184,19 @@
           "url": "$MDN_URL$/web/svg/element/symbol#attr-preserveaspectratio",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines how the svg fragment must be deformed if it is embedded in a container with a different aspect ratio.\n<br>\n<small><em>Value type</em>: (<code>none</code>| <code>xMinYMin</code>| <code>xMidYMin</code>| <code>xMaxYMin</code>| <code>xMinYMid</code>| <code>xMidYMid</code>| <code>xMaxYMid</code>| <code>xMinYMax</code>| <code>xMidYMax</code>| <code>xMaxYMax</code>) (<code>meet</code>|<code>slice</code>)? ; <em>Default value</em>: <code>xMidYMid meet</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "refx": {
-          "url": "$MDN_URL$/web/svg/element/symbol#attr-refx",
-          "doc": "This attribute determines the x coordinate of the reference point of the symbol.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link3\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link4\"><strong>&lt;percentage&gt;</strong></a>|<code>left</code>|<code>center</code>|<code>right</code> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/symbol#attr-refx"
         },
         "refy": {
-          "url": "$MDN_URL$/web/svg/element/symbol#attr-refy",
-          "doc": "This attribute determines the y coordinate of the reference point of the symbol.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link5\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link6\"><strong>&lt;percentage&gt;</strong></a>|<code>top</code>|<code>center</code>|<code>bottom</code> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/symbol#attr-refy"
         },
         "viewbox": {
           "url": "$MDN_URL$/web/svg/element/symbol#attr-viewbox",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "This attribute defines the bound of the SVG viewport for the current symbol.\n<br>\n<small><em>Value type</em>: <strong><a href=\"$MDN_URL$/Web/SVG/Content_type#List-of-Ts\" data-flaw=\"link7\">&lt;list-of-numbers&gt;</a></strong> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "width": {
           "url": "$MDN_URL$/web/svg/element/symbol#attr-width",
@@ -3277,8 +3237,7 @@
           "url": "$MDN_URL$/web/svg/element/text#attr-lengthadjust",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "How the text is stretched or compressed to fit the width defined by the\n<code>textLength</code>\nattribute.\n<br>\n<small><em>Value type</em>: <code>spacing</code>|<code>spacingAndGlyphs</code>; <em>Default value</em>: <code>spacing</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "rotate": {
           "url": "$MDN_URL$/web/svg/element/text#attr-rotate",
@@ -3291,8 +3250,7 @@
           "url": "$MDN_URL$/web/svg/element/text#attr-textlength",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "A width that the text should be scaled to fit.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link10\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link11\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/text#attr-x",
@@ -3325,8 +3283,7 @@
           "doc": "The URL to the path or basic shape on which to render the text. If the\n<code>path</code>\nattribute is set,\n<code>href</code>\nhas no effect.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#URL\" data-flaw=\"link1\"><strong>&lt;URL&gt;</strong></a> ; <em>Default value</em>: none; <em>Animatable</em>: <strong>yes</strong></small>"
         },
         "lengthadjust": {
-          "url": "$MDN_URL$/web/svg/element/textpath#attr-lengthadjust",
-          "doc": "Where length adjustment should be applied to the text: the space between glyphs, or both the space and the glyphs themselves.\n<br>\n<small><em>Value type</em>: <code>spacing</code>|<code>spacingAndGlyphs</code>; <em>Default value</em>: <code>spacing</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/textpath#attr-lengthadjust"
         },
         "method": {
           "url": "$MDN_URL$/web/svg/element/textpath#attr-method",
@@ -3362,12 +3319,10 @@
           "url": "$MDN_URL$/web/svg/element/textpath#attr-startoffset",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "How far the beginning of the text should be offset from the beginning of the path.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link3\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link4\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link5\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <code>0</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "textlength": {
-          "url": "$MDN_URL$/web/svg/element/textpath#attr-textlength",
-          "doc": "The width of the space into which the text will render.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link6\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link7\"><strong>&lt;percentage&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Number\" data-flaw=\"link8\"><strong>&lt;number&gt;</strong></a> ; <em>Default value</em>: <em>auto</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          "url": "$MDN_URL$/web/svg/element/textpath#attr-textlength"
         }
       }
     },
@@ -3411,8 +3366,7 @@
           "url": "$MDN_URL$/web/svg/element/tspan#attr-lengthadjust",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "How the text is stretched or compressed to fit the width defined by the\n<code>textLength</code>\nattribute.\n<br>\n<small><em>Value type</em>: <code>spacing</code>|<code>spacingAndGlyphs</code>; <em>Default value</em>: <code>spacing</code>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "rotate": {
           "url": "$MDN_URL$/web/svg/element/tspan#attr-rotate",
@@ -3425,8 +3379,7 @@
           "url": "$MDN_URL$/web/svg/element/tspan#attr-textlength",
           "status": [
             "StandardTrack"
-          ],
-          "doc": "A width that the text should be scaled to fit.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#Length\" data-flaw=\"link10\"><strong>&lt;length&gt;</strong></a>|<a href=\"$MDN_URL$/Web/SVG/Content_type#Percentage\" data-flaw=\"link11\"><strong>&lt;percentage&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes</strong></small>"
+          ]
         },
         "x": {
           "url": "$MDN_URL$/web/svg/element/tspan#attr-x",
