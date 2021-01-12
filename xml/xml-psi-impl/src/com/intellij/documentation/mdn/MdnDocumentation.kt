@@ -33,7 +33,16 @@ fun getJsMdnDocumentation(qualifiedName: String, namespace: MdnApiNamespace): Md
     Pair(namespace, if (namespace == MdnApiNamespace.WebApi) getWebApiFragment(mdnQualifiedName) else null)
   ] as? MdnJsDocumentation ?: return null
   return documentation.symbols[mdnQualifiedName]
-    ?.let { MdnSymbolDocumentationAdapter(mdnQualifiedName, documentation, it) }
+           ?.let { MdnSymbolDocumentationAdapter(mdnQualifiedName, documentation, it) }
+         ?: qualifiedName.takeIf { it.startsWith("CSSStyleDeclaration.") }
+           ?.let { getCssMdnDocumentation(it.substring("CSSStyleDeclaration.".length).toKebabCase(), MdnCssSymbolKind.Property) }
+}
+
+fun getCssMdnDocumentation(name: String, kind: MdnCssSymbolKind): MdnSymbolDocumentation? {
+  val documentation = documentationCache[Pair(MdnApiNamespace.Css, null)] as? MdnCssDocumentation ?: return null
+  return kind.getDocumentationMap(documentation)[name.toLowerCase(Locale.US)]?.let {
+    MdnSymbolDocumentationAdapter(kind.decorateName(name), documentation, it)
+  }
 }
 
 fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumentation? {
@@ -155,6 +164,14 @@ data class MdnHtmlDocumentation(override val lang: String,
 data class MdnJsDocumentation(override val lang: String,
                               val symbols: Map<String, MdnJsSymbolDocumentation>) : MdnDocumentation
 
+data class MdnCssDocumentation(override val lang: String,
+                               val atRules: Map<String, MdnCssSymbolDocumentation>,
+                               val properties: Map<String, MdnCssSymbolDocumentation>,
+                               val pseudoClasses: Map<String, MdnCssSymbolDocumentation>,
+                               val pseudoElements: Map<String, MdnCssSymbolDocumentation>,
+                               val functions: Map<String, MdnCssSymbolDocumentation>,
+                               val dataTypes: Map<String, MdnCssSymbolDocumentation>) : MdnDocumentation
+
 data class MdnHtmlElementDocumentation(override val url: String,
                                        override val status: Set<MdnApiStatus>?,
                                        override val doc: String,
@@ -186,18 +203,55 @@ data class MdnJsSymbolDocumentation(override val url: String,
     }
 }
 
+data class MdnCssSymbolDocumentation(override val url: String,
+                                     override val status: Set<MdnApiStatus>?,
+                                     override val doc: String?,
+                                     override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
+
 enum class MdnApiNamespace {
   Html,
   Svg,
   MathML,
   WebApi,
-  GlobalObjects;
+  GlobalObjects,
+  Css
 }
 
 enum class MdnApiStatus {
   Experimental,
   StandardTrack,
   Deprecated
+}
+
+enum class MdnCssSymbolKind {
+  AtRule {
+    override fun decorateName(name: String): String = "@$name"
+    override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.atRules
+  },
+  Property {
+    override fun decorateName(name: String): String = name
+    override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.properties
+  },
+  PseudoClass {
+    override fun decorateName(name: String): String = ":$name"
+    override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.pseudoClasses
+  },
+  PseudoElement {
+    override fun decorateName(name: String): String = "::$name"
+    override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.pseudoElements
+  },
+  Function {
+    override fun decorateName(name: String): String = "$name()"
+    override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.functions
+  },
+  DataType {
+    override fun decorateName(name: String): String = name
+    override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.dataTypes
+  }, ;
+
+  abstract fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation>
+
+  abstract fun decorateName(name: String): String
 }
 
 val webApiFragmentStarts = arrayOf('a', 'e', 'l', 'r', 'u')
@@ -239,18 +293,15 @@ private fun getApiNamespace(namespace: String?, element: PsiElement?, symbolName
 
 
 private fun loadDocumentation(namespace: MdnApiNamespace, segment: Char?): MdnDocumentation =
-  if (namespace == MdnApiNamespace.WebApi || namespace == MdnApiNamespace.GlobalObjects)
-    loadJavaScriptDocumentation(namespace, segment)
-  else
-    loadHtmlDocumentation(namespace)
+  loadDocumentation(namespace, segment, when (namespace) {
+    MdnApiNamespace.Css -> MdnCssDocumentation::class.java
+    MdnApiNamespace.WebApi, MdnApiNamespace.GlobalObjects -> MdnJsDocumentation::class.java
+    else -> MdnHtmlDocumentation::class.java
+  })
 
-private fun loadJavaScriptDocumentation(namespace: MdnApiNamespace, segment: Char?): MdnJsDocumentation =
+private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace, segment: Char?, clazz: Class<T>): T =
   MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}.json")!!
-    .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
-
-private fun loadHtmlDocumentation(namespace: MdnApiNamespace): MdnHtmlDocumentation =
-  MdnHtmlDocumentation::class.java.getResource("${namespace.name}.json")!!
-    .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
+    .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it, clazz) }
 
 private fun buildDoc(doc: MdnRawSymbolDocumentation,
                      name: String,
@@ -305,4 +356,9 @@ private fun buildSubSection(items: Map<String, String>): String {
   }
   return result.toString()
 }
+
+private val UPPER_CASE = Regex("(?=\\p{Upper})")
+
+private fun String.toKebabCase() =
+  this.split(UPPER_CASE).joinToString("-") { it.toLowerCase(Locale.US) }
 

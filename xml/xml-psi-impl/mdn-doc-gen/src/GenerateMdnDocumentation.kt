@@ -121,6 +121,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     ))
   }
 
+  fun testGenCss() {
+    outputJson(MdnApiNamespace.Css.name, buildCssDocs())
+  }
+
   private fun outputJson(outputFile: String, data: Map<String, Any>) {
     FileUtil.writeToFile(Path.of(PathManager.getCommunityHomePath(), OUTPUT_DIR, "$outputFile.json").toFile(),
                          GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
@@ -141,22 +145,29 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       }
     }
 
+  private fun getMdnDir(mdnPath: String): File =
+    Path.of(YARI_BUILD_PATH, BUILT_LANG, WEB_DOCS, mdnPath).toFile()
+
   private fun <T> extractInformation(mdnPath: String,
                                      allowList: Set<String> = emptySet(),
                                      blockList: Set<String> = emptySet(),
                                      extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
-    extractInformationFull(Path.of(YARI_BUILD_PATH, BUILT_LANG, WEB_DOCS, mdnPath).toFile(), allowList, blockList, extractor)
+    extractInformationFull(getMdnDir(mdnPath), allowList, blockList, extractor)
 
   private fun <T> extractInformationFull(dir: File,
                                          allowList: Set<String> = emptySet(),
                                          blockList: Set<String> = emptySet(),
                                          extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
+    extractInformationFull(dir, { ((!it.contains('-') && !it.contains('_')) || allowList.contains(it)) && !blockList.contains(it) },
+                           extractor)
+
+  private fun <T> extractInformationFull(dir: File,
+                                         nameFilter: (String) -> Boolean,
+                                         extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
     dir.listFiles()!!.asSequence()
       .filter { file ->
         file.isDirectory
-        && file.name.toLowerCase(Locale.US).let {
-          ((!it.contains('-') && !it.contains('_')) || allowList.contains(it)) && !blockList.contains(it)
-        }
+        && file.name.toLowerCase(Locale.US).let(nameFilter)
         && File(file, "index.json").exists()
       }
       .flatMap(extractor)
@@ -228,6 +239,54 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       System.err.println("Error for $dir: ${e.message}")
       throw e
     }
+  }
+
+  private fun buildCssDocs(): Map<String, Map<String, MdnCssSymbolDocumentation>> {
+    val result = TreeMap<String, MutableMap<String, MdnCssSymbolDocumentation>>()
+    val cssMdnDir = getMdnDir("CSS")
+    extractInformationFull(cssMdnDir,
+                           { it.startsWith("_colon_") || it.startsWith("_doublecolon_") || !it.contains('_') },
+                           { docDir ->
+                             try {
+                               listOf(Pair(docDir.name, extractCssElementDocumentation(docDir)))
+                             }
+                             catch (e: Exception) {
+                               System.err.println("Error for $docDir: ${e.message}")
+                               throw e
+                             }
+                           })
+      .forEach { (name, doc) ->
+        when {
+          name.startsWith("_colon_") -> Pair("pseudoClasses", name.substring("_colon_".length))
+          name.startsWith("_doublecolon_") -> Pair("pseudoElements", name.substring("_doublecolon_".length))
+          name.startsWith("@") -> Pair("atRules", name.substring(1))
+          name.endsWith("()") -> Pair("functions", name.substring(0, name.length - 2))
+          else -> {
+            if (File(cssMdnDir, "$name/bcd.json").takeIf { it.exists() }
+                ?.let { file ->
+                  JsonParser.parseReader(JsonReader(FileReader(file)).also { it.isLenient = true })
+                    .asJsonObject
+                    .getAsJsonPrimitive("query")
+                    ?.asString
+                    ?.startsWith("css.types.")
+                } == true)
+              Pair("dataTypes", name)
+            else
+              Pair("properties", name)
+          }
+        }.let { (kind, simpleName) ->
+          result.getOrPut(kind, ::TreeMap)[simpleName] = doc
+        }
+      }
+    return result
+  }
+
+  private fun extractCssElementDocumentation(dir: File): MdnCssSymbolDocumentation {
+    val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
+    return MdnCssSymbolDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
+                                     indexDataProseValues.first()
+                                       .getProseContent()
+                                       .let { createHtmlFile(it).text }, null)
   }
 
   private fun filterProseById(sections: List<JsonObject>, vararg ids: String): Sequence<JsonObject> =
