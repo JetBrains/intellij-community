@@ -71,7 +71,7 @@ public class DuplicateAction extends EditorAction {
       newOffset++;
       selectionStart++;
     }
-    document.insertString(end, s);
+    DocumentGuardedTextUtil.insertString(document, end, s);
 
     editor.getCaretModel().moveToOffset(newOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
