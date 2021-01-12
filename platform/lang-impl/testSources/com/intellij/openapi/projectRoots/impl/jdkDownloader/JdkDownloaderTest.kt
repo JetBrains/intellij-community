@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -15,7 +18,9 @@ import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
 import org.junit.Assume
+import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.concurrent.thread
 
 internal fun jdkItemForTest(url: String,
@@ -71,6 +76,20 @@ class JdkDownloaderTest : LightPlatformTestCase() {
                                        url = "https://repo.labs.intellij.net/idea-test-data/jdk-download-test-data.zip",
                                        size = 604,
                                        sha256 = "1cf15536c1525f413190fd53243f343511a17e6ce7439ccee4dc86f0d34f9e81")
+
+  private val mockWSL = object: JdkInstallerWSL.WSLDistributionForJdkInstaller {
+    override fun getWslPath(path: Path): String = path.toString()
+
+    override fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput {
+      val cmd = GeneralCommandLine(command)
+      cmd.workDirectory = File(dir)
+      return CapturingProcessHandler(cmd).runProcess(timeout)
+    }
+  }
+
+  private val mockWSLInstaller = object: JdkInstallerBase() {
+    override fun wslDistributionFromPath(targetDir: Path) = mockWSL
+  }
 
   fun `test reuse pending jdks`() {
     val home1 = createTempDir("h2342341").toPath()
@@ -149,6 +168,16 @@ class JdkDownloaderTest : LightPlatformTestCase() {
     assertThat(installDir.resolve("TheApp").resolve("QPCV").resolve("ggg.txt")).isRegularFile()
   }
 
+  fun `test unpacking tar gz in WSL`() {
+    if (SystemInfo.isWindows) return
+
+    testUnpacking(mockTarGZ.copy(os = "linux"), jdkInstaller = mockWSLInstaller) {
+      assertThat(installDir).isEqualTo(javaHome)
+      assertThat(installDir.resolve("TheApp").resolve("FooBar.app").resolve("theApp")).isRegularFile()
+      assertThat(installDir.resolve("TheApp").resolve("QPCV").resolve("ggg.txt")).isRegularFile()
+    }
+  }
+
   @TestFor(issues = ["IDEA-231609"])
   fun `test unpacking tar gz with root`() = testUnpacking(
     mockTarGZ.copy(
@@ -161,8 +190,36 @@ class JdkDownloaderTest : LightPlatformTestCase() {
     assertThat((installDir.resolve("QPCV")).resolve("ggg.txt")).isRegularFile()
   }
 
+  @TestFor(issues = ["IDEA-231609"])
+  fun `test unpacking tar gz with root WSL`() {
+    if (SystemInfo.isWindows) return
+
+    testUnpacking(
+      mockTarGZ.copy(
+        os = "linux",
+        packageRootPrefix = "TheApp",
+        packageToBinJavaPrefix = "QPCV"
+      ),
+      jdkInstaller = mockWSLInstaller) {
+      assertThat(javaHome.resolve("ggg.txt")).isRegularFile()
+
+      assertThat((installDir.resolve("FooBar.app")).resolve("theApp")).isRegularFile()
+      assertThat((installDir.resolve("QPCV")).resolve("ggg.txt")).isRegularFile()
+    }
+  }
+
   fun `test unpacking tar gz cut dirs`() {
     testUnpacking(mockTarGZ.copy(packageRootPrefix = "TheApp/FooBar.app")) {
+      assertThat(installDir).isEqualTo(javaHome)
+      assertThat(installDir.resolve("theApp")).isRegularFile()
+      assertThat(installDir.resolve("ggg.txt")).doesNotExist()
+    }
+  }
+
+  fun `test unpacking tar gz cut dirs WSL`() {
+    if (SystemInfo.isWindows) return
+
+    testUnpacking(mockTarGZ.copy(packageRootPrefix = "TheApp/FooBar.app", os = "linux"), jdkInstaller = mockWSLInstaller) {
       assertThat(installDir).isEqualTo(javaHome)
       assertThat(installDir.resolve("theApp")).isRegularFile()
       assertThat(installDir.resolve("ggg.txt")).doesNotExist()
@@ -215,6 +272,18 @@ class JdkDownloaderTest : LightPlatformTestCase() {
     assertThat(installDir.resolve("folder").resolve("file")).isRegularFile()
   }
 
+  @TestFor(issues = ["IDEA-231609"])
+  fun `test unpacking zip package path WSL`() {
+    if (SystemInfo.isWindows) return
+
+    testUnpacking(mockZip.copy(packageToBinJavaPrefix = "folder", os = "linux"), mockWSLInstaller) {
+      assertThat(javaHome.resolve("readme2")).isDirectory()
+      assertThat(javaHome.resolve("file")).isRegularFile()
+      assertThat((installDir.resolve("folder")).resolve("readme2")).isDirectory()
+      assertThat(installDir.resolve("folder").resolve("file")).isRegularFile()
+    }
+  }
+
   fun `test unpacking zip invalid size`() = expectsException {
     testUnpacking(mockZip.copy(archiveSize = 234))
   }
@@ -244,11 +313,27 @@ class JdkDownloaderTest : LightPlatformTestCase() {
     assertThat(installDir.resolve("folder").resolve("file")).doesNotExist()
   }
 
-  private fun testUnpacking(item: JdkItem, resultDir: JdkInstallRequest.() -> Unit = { error("must not reach here") }) {
+  fun `test unpacking zip and prefix WSL`() {
+    if (SystemInfo.isWindows) return
+
+    expectsException {
+      testUnpacking(
+        mockZip.copy(
+          os = "linux",
+          packageRootPrefix = "folder/file"),
+        mockWSLInstaller
+      ) {
+        assertThat(installDir.resolve("readme2")).doesNotExist()
+        assertThat(installDir.resolve("folder").resolve("file")).doesNotExist()
+      }
+    }
+  }
+
+  private fun testUnpacking(item: JdkItem, jdkInstaller: JdkInstallerBase = JdkInstaller.getInstance(), resultDir: JdkInstallRequest.() -> Unit = { error("must not reach here") }) {
     val dir = Files.createTempDirectory("")
     try {
-      val task = JdkInstaller.getInstance().prepareJdkInstallationDirect(item, dir)
-      JdkInstaller.getInstance().installJdk(task, null, null)
+      val task = jdkInstaller.prepareJdkInstallationDirect(item, dir)
+      jdkInstaller.installJdk(task, null, null)
 
       assertThat(task.installDir).isDirectory()
       assertThat(task.javaHome).isDirectory()
