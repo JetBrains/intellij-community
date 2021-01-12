@@ -155,7 +155,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
   companion object {
     fun openPreview(project: Project, file: PreviewDiffVirtualFile, focusEditor: Boolean): Array<out FileEditor> {
-      return EditorDiffPreviewFilesManager.getInstance().openFile(project, file, focusEditor)
+      return VcsEditorTabFilesManager.getInstance().openFile(project, file, focusEditor)
     }
 
     fun registerEscapeHandler(editor: FileEditor, handler: Runnable) {

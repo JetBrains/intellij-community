@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDataKeys.VIRTUAL_FILES
-import com.intellij.openapi.vcs.changes.EditorDiffPreviewFilesManager
+import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.util.containers.JBIterable
 import com.intellij.vcsUtil.VcsUtil
 
@@ -27,14 +27,14 @@ internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boole
     val project = e.project!!
     val diffPreviewFile = VcsUtil.getVirtualFiles(e).first()
 
-    EditorDiffPreviewFilesManager.getInstance().openFile(project, diffPreviewFile, true, openInNewWindow, true)
+    VcsEditorTabFilesManager.getInstance().openFile(project, diffPreviewFile, true, openInNewWindow, true)
   }
 }
 
 internal class MoveDiffPreviewToEditorAction : MoveDiffPreviewAction(false) {
-  override fun isEnabledAndVisible(project: Project): Boolean = EditorDiffPreviewFilesManager.getInstance().shouldOpenInNewWindow
+  override fun isEnabledAndVisible(project: Project): Boolean = VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow
 }
 
 internal class MoveDiffPreviewToNewWindowAction : MoveDiffPreviewAction(true) {
-  override fun isEnabledAndVisible(project: Project): Boolean = !EditorDiffPreviewFilesManager.getInstance().shouldOpenInNewWindow
+  override fun isEnabledAndVisible(project: Project): Boolean = !VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow
 }

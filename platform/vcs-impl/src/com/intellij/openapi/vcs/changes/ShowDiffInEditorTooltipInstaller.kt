@@ -23,7 +23,7 @@ class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCustomizer {
 
 private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
                                                private val diffProcessor: DiffRequestProcessor) :
-  EditorDiffPreviewFilesListener, Disposable {
+  VcsEditorTabFilesListener, Disposable {
 
   companion object {
     const val TOOLTIP_ID = "show.diff.in.editor"
@@ -36,7 +36,7 @@ private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
 
   init {
     Disposer.register(disposable, this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(EditorDiffPreviewFilesListener.TOPIC, this)
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(VcsEditorTabFilesListener.TOPIC, this)
   }
 
   override fun shouldOpenInNewWindowChanged(shouldOpenInNewWindow: Boolean) {

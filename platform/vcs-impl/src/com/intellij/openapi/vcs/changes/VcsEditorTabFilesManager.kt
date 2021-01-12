@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -17,9 +16,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 
 @Service(Service.Level.APP)
-@State(name = "EditorDiffPreview.Settings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
-class EditorDiffPreviewFilesManager :
-  SimplePersistentStateComponent<EditorDiffPreviewFilesManager.State>(State()),
+@State(name = "VcsEditorTab.Settings", storages = [(Storage(value = "vcs.xml"))])
+class VcsEditorTabFilesManager :
+  SimplePersistentStateComponent<VcsEditorTabFilesManager.State>(State()),
   Disposable {
 
   class State : BaseState() {
@@ -33,7 +32,7 @@ class EditorDiffPreviewFilesManager :
         if (source is FileEditorManagerEx) {
           val isOpenInNewWindow = source.findFloatingWindowForFile(file) != null
           shouldOpenInNewWindow = isOpenInNewWindow
-          messageBus.syncPublisher(EditorDiffPreviewFilesListener.TOPIC).shouldOpenInNewWindowChanged(isOpenInNewWindow)
+          messageBus.syncPublisher(VcsEditorTabFilesListener.TOPIC).shouldOpenInNewWindowChanged(isOpenInNewWindow)
         }
       }
     })
@@ -88,7 +87,7 @@ class EditorDiffPreviewFilesManager :
 
   companion object {
     @JvmStatic
-    fun getInstance(): EditorDiffPreviewFilesManager = service()
+    fun getInstance(): VcsEditorTabFilesManager = service()
 
     @JvmStatic
     fun FileEditorManagerEx.findFloatingWindowForFile(file: VirtualFile): EditorWindow? {
@@ -97,13 +96,13 @@ class EditorDiffPreviewFilesManager :
   }
 }
 
-interface EditorDiffPreviewFilesListener {
+interface VcsEditorTabFilesListener {
   @RequiresEdt
   fun shouldOpenInNewWindowChanged(shouldOpenInNewWindow: Boolean)
 
   companion object {
     @JvmField
-    val TOPIC: Topic<EditorDiffPreviewFilesListener> =
-      Topic(EditorDiffPreviewFilesListener::class.java, Topic.BroadcastDirection.NONE, true)
+    val TOPIC: Topic<VcsEditorTabFilesListener> =
+      Topic(VcsEditorTabFilesListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 }
