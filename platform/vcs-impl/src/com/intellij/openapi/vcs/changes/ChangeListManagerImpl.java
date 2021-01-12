@@ -493,6 +493,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
         if (!myInitialUpdate) invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
+        myInitialUpdate = false;
+
         try {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
             iterateScopes(dataHolder, scopes, vcsIndicator);
@@ -500,14 +502,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
         }
         catch (ProcessCanceledException ignore) {
         }
-
-        boolean wasCancelled;
-        boolean takeChanges;
-        synchronized (myDataLock) {
-          wasCancelled = vcsIndicator.isCanceled();
-          takeChanges = myUpdateException == null && !wasCancelled;
-        }
-        myInitialUpdate = false;
+        boolean wasCancelled = vcsIndicator.isCanceled();
 
         // for the case of project being closed we need a read action here -> to be more consistent
         ApplicationManager.getApplication().runReadAction(() -> {
@@ -515,6 +510,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
           clearCurrentRevisionsCache(invalidated);
 
           synchronized (myDataLock) {
+            boolean takeChanges = myUpdateException == null && !wasCancelled;
+
             // do same modifications to change lists as was done during update + do delayed notifications
             dataHolder.notifyEnd();
 
