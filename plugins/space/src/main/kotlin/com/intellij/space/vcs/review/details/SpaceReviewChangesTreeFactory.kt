@@ -6,11 +6,11 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
@@ -70,7 +70,7 @@ internal object SpaceReviewChangesTreeFactory {
       if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
 
       val spaceDiffFile = SpaceDiffFile(spaceDiffVm.value, changesVm)
-      FileEditorManager.getInstance(project).openFile(spaceDiffFile, true)
+      VcsEditorTabFilesManager.getInstance().openFile(project, spaceDiffFile, true)
       true
     }
 

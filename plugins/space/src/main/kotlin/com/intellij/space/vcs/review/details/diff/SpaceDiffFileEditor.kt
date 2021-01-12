@@ -15,9 +15,9 @@ import libraries.coroutines.extra.LifetimeSource
 import javax.swing.JComponent
 
 internal class SpaceDiffFileEditor(project: Project, spaceDiffFile: SpaceDiffFile) : FileEditorBase() {
-  private val editorLifetime = LifetimeSource()
+  internal val diffProcessor = SpaceDiffRequestProcessor(project)
 
-  private val diffProcessor = SpaceDiffRequestProcessor(project)
+  private val editorLifetime = LifetimeSource()
   private val chainBuilder = SpaceDiffRequestChainBuilder(editorLifetime, project, spaceDiffFile.diffVm, spaceDiffFile.changesVm)
 
   init {
