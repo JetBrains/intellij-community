@@ -52,6 +52,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   public ModuleClasspathCombo(Item... optionItems) {
     myOptionItems = optionItems;
     setRenderer(new ListRenderer());
+    setSwingPopup(false);
     ComboboxSpeedSearch.installSpeedSearch(this, item -> item.myModule == null ? "" : item.myModule.getName());
   }
 
