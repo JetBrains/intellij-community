@@ -22,8 +22,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class URLUtil {
-  private static final String PROTOCOL_DELIMITER = ":";
-
   public static final String SCHEME_SEPARATOR = "://";
   public static final String FILE_PROTOCOL = "file";
   public static final String HTTP_PROTOCOL = "http";
@@ -314,28 +312,6 @@ public final class URLUtil {
 
   public static @Nullable URL internProtocol(@NotNull URL url) {
     return UrlUtilRt.internProtocol(url);
-  }
-
-  public static @NotNull String convertFromUrl(@NotNull URL url) throws IOException {
-    String protocol = url.getProtocol();
-    String path = url.getPath();
-    if (protocol.equals(JAR_PROTOCOL)) {
-      if (StringUtil.startsWithConcatenation(path, FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
-        URL subURL = new URL(path);
-        path = subURL.getPath();
-      }
-      else {
-        throw new IOException(url.toExternalForm());
-      }
-    }
-    if (SystemInfoRt.isWindows) {
-      while (!path.isEmpty() && path.charAt(0) == '/') {
-        path = path.substring(1);
-      }
-    }
-
-    path = unescapePercentSequences(path);
-    return protocol + "://" + path;
   }
 
   public static @NotNull @NlsSafe String urlToPath(@Nullable String url) {
