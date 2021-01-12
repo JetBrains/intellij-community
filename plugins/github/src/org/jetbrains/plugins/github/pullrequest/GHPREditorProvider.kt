@@ -5,6 +5,7 @@ import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,6 +22,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(file.repository)!!
     return when (file) {
       is GHPRDiffVirtualFile -> GHPRDiffFileEditor(project, dataContext, file.pullRequest).also { editor ->
+        editor.putUserData(EditorWindow.HIDE_TABS, true)
         DiffRequestProcessorEditorCustomizer.customize(file, editor, editor.diffProcessor)
       }
       is GHPRTimelineVirtualFile -> GHPRTimelineFileEditor(project, dataContext, file.pullRequest)
