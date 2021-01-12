@@ -12,7 +12,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -164,9 +164,9 @@ public class TestAll implements Test {
   private static List<File> getClassRoots(URL[] urls) {
     List<File> classLoaderRoots = ContainerUtil.map(urls, url -> {
       try {
-        return new File(URLUtil.urlToPath(URLUtil.convertFromUrl(url)));
+        return new File(url.toURI());
       }
-      catch (IOException e) {
+      catch (URISyntaxException e) {
         throw new RuntimeException(e);
       }
     });
