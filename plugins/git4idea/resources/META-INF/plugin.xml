@@ -297,6 +297,7 @@
       <reference id="Git.Ignore.File"/>
       <separator/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="EditSource"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="ChangesView.CreatePatchToClipboard"/>
       <separator/>
