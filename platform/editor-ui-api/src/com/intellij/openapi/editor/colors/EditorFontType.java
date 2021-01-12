@@ -1,13 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Font;
-import java.util.HashMap;
-import java.util.Map;
 
 public enum EditorFontType {
   PLAIN,
@@ -19,16 +16,15 @@ public enum EditorFontType {
   CONSOLE_ITALIC,
   CONSOLE_BOLD_ITALIC;
 
-  private static final Map<EditorFontType, EditorFontType> ourConsoleTypes = new HashMap<>();
-  static {
-    ourConsoleTypes.put(PLAIN, CONSOLE_PLAIN);
-    ourConsoleTypes.put(ITALIC, CONSOLE_ITALIC);
-    ourConsoleTypes.put(BOLD_ITALIC, CONSOLE_BOLD_ITALIC);
-    ourConsoleTypes.put(BOLD, CONSOLE_BOLD);
-  }
-
-  public static EditorFontType getConsoleType(EditorFontType fontType) {
-    return ObjectUtils.chooseNotNull(ourConsoleTypes.get(fontType), fontType);
+  /**
+   * @param type a font type to convert
+   * @return a console variant of the specified font type
+   */
+  public static @Nullable EditorFontType getConsoleType(@Nullable EditorFontType type) {
+    return type == PLAIN ? CONSOLE_PLAIN :
+           type == ITALIC ? CONSOLE_ITALIC :
+           type == BOLD ? CONSOLE_BOLD :
+           type == BOLD_ITALIC ? CONSOLE_BOLD_ITALIC : type;
   }
 
   /**
