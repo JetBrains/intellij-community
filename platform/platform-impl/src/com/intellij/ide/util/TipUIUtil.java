@@ -17,10 +17,8 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TextAccessor;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -189,11 +186,11 @@ public final class TipUIUtil {
             boolean fallbackUpscale = false;
             boolean fallbackDownscale = false;
 
-            Trinity<String, BufferedImage, byte[]> trinity;
+            BufferedImage image;
             URL actualURL;
             try {
               actualURL = new URL(canonicalPath);
-              trinity = read(actualURL);
+              image = read(actualURL);
             }
             catch (IOException e) {
               if (hidpi) {
@@ -204,12 +201,11 @@ public final class TipUIUtil {
                 fallbackDownscale = true;
                 actualURL = new URL(getImageCanonicalPath(path2x, tipLoader, tipPath));
               }
-              trinity = read(actualURL);
+              image = read(actualURL);
             }
 
             String newImgTag;
             newImgTag = "<img src=\"" + actualURL.toExternalForm() + "\" ";
-            BufferedImage image = trinity.second;
             int w = image.getWidth();
             int h = image.getHeight();
             if (hidpi) {
@@ -257,16 +253,12 @@ public final class TipUIUtil {
     }
   }
 
-  private static Trinity<String, BufferedImage, byte[]> read(@NotNull URL url) throws IOException {
-    byte[] bytes;
+  private static BufferedImage read(@NotNull URL url) throws IOException {
     try (InputStream stream = url.openStream()) {
-      bytes = StreamUtil.readBytes(stream);
+      BufferedImage image = ImageIO.read(stream);
+      if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
+      return image;
     }
-    Iterator<ImageReader> readers = ImageIO.getImageReaders(new ByteArrayInputStream(bytes));
-    String formatName = readers.hasNext() ? readers.next().getFormatName() : "png";
-    BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
-    if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
-    return Trinity.create(formatName, image, bytes);
   }
 
   private static void updateShortcuts(StringBuilder text) {
