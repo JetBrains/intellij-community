@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -119,7 +120,7 @@ val switchOnExperimentalLessons: Boolean
 fun invokeActionForFocusContext(action: AnAction) {
   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
     invokeLater {
-      val event = AnActionEvent.createFromAnAction(action, null, "IDE Features Trainer", dataContext)
+      val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.LEARN_TOOLWINDOW, dataContext)
       ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext)
     }
   }
