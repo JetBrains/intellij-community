@@ -51,7 +51,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.jediterm.terminal.ProcessTtyConnector;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -419,8 +421,40 @@ public final class TerminalView {
     return result;
   }
 
+  /**
+   * @deprecated use {@link #closeTab(Content, JBTerminalWidget)} instead
+   * @param content
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
   public void closeTab(@NotNull Content content) {
-    myToolWindow.getContentManager().removeContent(content, true, true, true);
+    closeTab(content, null);
+  }
+
+  public void closeTab(@NotNull Content content, @Nullable JBTerminalWidget terminalWidget) {
+    if (TerminalOptionsProvider.getInstance().closeSessionOnLogout()) {
+      myToolWindow.getContentManager().removeContent(content, true, true, true);
+    }
+    else if (terminalWidget != null) {
+      String text = getSessionCompletedMessage(terminalWidget);
+      terminalWidget.writePlainMessage("\n" + text + "\n");
+      terminalWidget.getTerminalPanel().setCursorVisible(false);
+    }
+  }
+
+  private static @NotNull @Nls String getSessionCompletedMessage(@NotNull JBTerminalWidget widget) {
+    String text = "[" + TerminalBundle.message("session.terminated.text") + "]";
+    ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
+    if (connector != null) {
+      Integer exitCode = null;
+      try {
+        exitCode = connector.getProcess().exitValue();
+      }
+      catch (IllegalThreadStateException ignored) {
+      }
+      return text + "\n[" + IdeBundle.message("finished.with.exit.code.text.message", exitCode != null ? exitCode : "unknown") + "]";
+    }
+    return text;
   }
 
   @NotNull

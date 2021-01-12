@@ -11,10 +11,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
@@ -31,6 +33,7 @@ import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalPanel;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.Pair;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -325,5 +328,19 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       }
     }
     return null;
+  }
+
+  public void writePlainMessage(@NotNull @Nls String message) {
+    String str = StringUtil.convertLineSeparators(message, LineSeparator.LF.getSeparatorString());
+    List<String> lines = StringUtil.split(str, LineSeparator.LF.getSeparatorString(), true, false);
+    boolean first = true;
+    for (String line : lines) {
+      if (!first) {
+        myTerminal.carriageReturn();
+        myTerminal.newLine();
+      }
+      myTerminal.writeCharacters(line);
+      first = false;
+    }
   }
 }

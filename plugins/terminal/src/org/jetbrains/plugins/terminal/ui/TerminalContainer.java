@@ -130,7 +130,7 @@ public class TerminalContainer {
       Disposer.dispose(myTerminalWidget);
     }
     else {
-      myTerminalView.closeTab(myContent);
+      myTerminalView.closeTab(myContent, myTerminalWidget);
     }
     detachWidget();
   }
