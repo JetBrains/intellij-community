@@ -7,10 +7,14 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -19,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -32,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -60,7 +66,7 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment remoteEnvironment) throws ExecutionException {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Module module = getConfiguration().getConfigurationModule().getModule();
     final TestClassFilter classFilter = computeFilter(data);
@@ -95,7 +101,43 @@ public class TestPackage extends TestObject {
             addClassesListToJavaParameters(myClasses, CLASS_NAME_FUNCTION, packageName, createTempFiles(), getJavaParameters(), filters);
           }
         }
-        catch (Exception ignored) {}
+        catch (Exception ignored) {
+        }
+
+        TargetEnvironmentRequest request = getTargetEnvironmentRequest();
+        if (request != null && !(request instanceof LocalTargetEnvironmentRequest)) {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            Path parentPath = myTempFile.toPath().getParent();
+            for (TargetEnvironment.UploadRoot uploadRoot : request.getUploadVolumes()) {
+              if (parentPath.equals(uploadRoot.getLocalRootPath())) {
+                TargetProgressIndicator targetProgressIndicator = Objects.requireNonNull(getTargetProgressIndicator());
+                try {
+                  remoteEnvironment.getUploadVolumes().get(uploadRoot).upload(myTempFile.getName(), targetProgressIndicator);
+                }
+                catch (Throwable t) {
+                  LOG.warn(t);
+                  targetProgressIndicator.addSystemLine("");
+                  targetProgressIndicator.stopWithErrorMessage(
+                    JUnitBundle.message("dialog.message.failed.to.upload.list.tests", StringUtil.notNullize(t.getLocalizedMessage())));
+                }
+
+                ApplicationManager.getApplication().invokeLater(super::finish);
+                return;
+              }
+            }
+            LOG.error("Did not find upload volume for " + parentPath);
+            ApplicationManager.getApplication().invokeLater(super::finish);
+          });
+        }
+      }
+
+      @Override
+      public void finish() {
+        TargetEnvironmentRequest request = getTargetEnvironmentRequest();
+        if (!(request instanceof LocalTargetEnvironmentRequest)) {
+          return;
+        }
+        super.finish();
       }
 
       @Override

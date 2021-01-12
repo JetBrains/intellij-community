@@ -139,17 +139,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     appendForkInfo(executor);
     appendRepeatMode();
 
-    SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
-    if (searchForTestsTask != null) {
-      searchForTestsTask.arrangeForIndexAccess();
-      searchForTestsTask.setIncompleteIndexUsageCallback(() -> viewer.setIncompleteIndexUsed());
-    }
-
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
     targetedCommandLine.setParametersPatcher(createParametersPatcher(targetedCommandLineBuilder, remoteEnvironment));
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
+
+    SearchForTestsTask searchForTestsTask = createSearchingForTestsTask(remoteEnvironment);
+    if (searchForTestsTask != null) {
+      searchForTestsTask.arrangeForIndexAccess();
+      searchForTestsTask.setIncompleteIndexUsageCallback(() -> viewer.setIncompleteIndexUsed());
+    }
 
     OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(process,
                                                                                targetedCommandLine.getCommandPresentation(remoteEnvironment),
@@ -205,8 +205,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     };
   }
 
-  public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
+  /**
+   * @deprecated Use {@link #createSearchingForTestsTask(TargetEnvironment)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public @Nullable SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
+  }
+
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) throws ExecutionException {
+    return createSearchingForTestsTask();
   }
 
   protected boolean configureByModule(Module module) {
@@ -222,16 +231,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
                                               @Nullable TargetEnvironmentConfiguration configuration,
                                               @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
     myTargetProgressIndicator = targetProgressIndicator;
-    try {
-      T myConfiguration = getConfiguration();
-      if (myConfiguration.getProjectPathOnTarget() != null) {
-        request.setProjectPathOnTarget(myConfiguration.getProjectPathOnTarget());
-      }
-      super.prepareTargetEnvironmentRequest(request, configuration, targetProgressIndicator);
+    T myConfiguration = getConfiguration();
+    if (myConfiguration.getProjectPathOnTarget() != null) {
+      request.setProjectPathOnTarget(myConfiguration.getProjectPathOnTarget());
     }
-    finally {
-      myTargetProgressIndicator = null;
-    }
+    super.prepareTargetEnvironmentRequest(request, configuration, targetProgressIndicator);
   }
 
   /**

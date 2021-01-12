@@ -10,12 +10,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
@@ -63,7 +61,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
   interface TargetProgressIndicator {
     TargetProgressIndicator EMPTY = new TargetProgressIndicator() {
       @Override
-      public void addText(@NotNull String text, @NotNull Key<?> key) { }
+      public void addText(@Nls @NotNull String text, @NotNull Key<?> key) { }
 
       @Override
       public boolean isCanceled() {
@@ -79,9 +77,9 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
       }
     };
 
-    void addText(@NotNull String text, @NotNull Key<?> key);
+    void addText(@Nls @NotNull String text, @NotNull Key<?> key);
 
-    default void addSystemLine(@NotNull String message) {
+    default void addSystemLine(@Nls @NotNull String message) {
       addText(message + "\n", ProcessOutputType.SYSTEM);
     }
 
@@ -91,7 +89,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
 
     boolean isStopped();
 
-    default void stopWithErrorMessage(@NotNull String text) {
+    default void stopWithErrorMessage(@NlsContexts.DialogMessage @NotNull String text) {
       addText(text, ProcessOutputType.STDERR);
       addText("\n", ProcessOutputType.STDERR);
       stop();
