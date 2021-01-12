@@ -4,6 +4,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
@@ -17,6 +18,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,10 +70,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
 
   @Nullable private final Project myProject;
-  private final Component myContextComponent;
   @Nullable private final WeakReference<Editor> myEditor;
+  private final DataContext myDataContext;
 
-  protected final ActionManager myActionManager = ActionManager.getInstance();
+  private final ActionManager myActionManager = ActionManager.getInstance();
   private final ActionsGlobalSummaryManager myStatManager = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager.class);
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
@@ -95,15 +97,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
   private final ModalityState myModality;
 
-  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor) {
+  public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor) {
     this(project, component, editor, ModalityState.defaultModalityState());
   }
 
-  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
+  public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
-    myContextComponent = component;
     myEditor = new WeakReference<>(editor);
     myModality = modalityState;
+    myDataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
     buildActions();
   }
 
@@ -272,7 +274,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         if (value instanceof BooleanOptionDescription) return 1;
         return 3;
       }
-      throw new IllegalArgumentException(value.getClass() + " - " + value.toString());
+      throw new IllegalArgumentException(value.getClass() + " - " + value);
     }
 
     @Override
@@ -296,7 +298,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return new GotoActionListCellRenderer(this::getGroupName);
   }
 
-  protected String getActionId(@NotNull AnAction anAction) {
+  String getActionId(@NotNull AnAction anAction) {
     return myActionManager.getId(anAction);
   }
 
@@ -436,7 +438,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return ((MatchedValue)mv).getValueText();
   }
 
-  protected MatchMode actionMatches(@NotNull String pattern, com.intellij.util.text.Matcher matcher, @NotNull AnAction anAction) {
+  @NotNull
+  MatchMode actionMatches(@NotNull String pattern, com.intellij.util.text.Matcher matcher, @NotNull AnAction anAction) {
     Presentation presentation = anAction.getTemplatePresentation().clone();
     anAction.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
     String text = presentation.getText();
@@ -476,12 +479,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   @Nullable
-  protected Project getProject() {
+  Project getProject() {
     return myProject;
   }
 
-  protected Component getContextComponent() {
-    return myContextComponent;
+  @NotNull
+  DataContext getDataContext() {
+    // This data context can be reused because
+    // 1. it was reused before
+    // 2. context component shall not change much while SE popup is open
+    // 2. EDT event count check is not applied
+    return myDataContext;
   }
 
   @NotNull
@@ -637,7 +645,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @NotNull private final AnAction myAction;
     @NotNull private final MatchMode myMode;
     @Nullable private final GroupMapping myGroupMapping;
-    private final DataContext myDataContext;
     private final GotoActionModel myModel;
     private volatile Presentation myPresentation;
     private final String myActionText;
@@ -645,12 +652,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     public ActionWrapper(@NotNull AnAction action,
                          @Nullable GroupMapping groupMapping,
                          @NotNull MatchMode mode,
-                         DataContext dataContext,
                          GotoActionModel model) {
       myAction = action;
       myMode = mode;
       myGroupMapping = groupMapping;
-      myDataContext = dataContext;
       myModel = model;
 
       Presentation presentation = action.getTemplatePresentation().clone();
@@ -710,8 +715,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
       Runnable r = () -> {
-        myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
-        if (myGroupMapping != null) myGroupMapping.updateBeforeShow(myDataContext);
+        DataContext dataContext = myModel.getDataContext();
+        myPresentation = updateActionBeforeShow(myAction, dataContext).getPresentation();
+        if (myGroupMapping != null) myGroupMapping.updateBeforeShow(dataContext);
       };
       if (ApplicationManager.getApplication().isDispatchThread()) {
         try {
@@ -837,7 +843,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         }
 
         if (toggle) {
-          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((ActionWrapper)value).myDataContext);
+          DataContext dataContext = actionWithParentGroup.myModel.getDataContext();
+          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
           boolean selected = ((ToggleAction)anAction).isSelected(event);
           addOnOffButton(panel, selected);
         }
