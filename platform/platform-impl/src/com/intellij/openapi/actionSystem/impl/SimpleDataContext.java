@@ -26,7 +26,7 @@ public final class SimpleDataContext implements DataContext {
   public Object getData(@NotNull String dataId) {
     Object result = getDataFromSelfOrParent(dataId);
 
-    if (result == null && PlatformDataKeys.CONTEXT_COMPONENT.getName().equals(dataId)) {
+    if (result == null && PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
       result = IdeFocusManager.getGlobalInstance().getFocusOwner();
     }
 

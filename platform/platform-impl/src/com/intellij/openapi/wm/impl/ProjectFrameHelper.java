@@ -344,7 +344,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
     }
 
-    if (IdeFrame.KEY.getName().equals(dataId)) {
+    if (IdeFrame.KEY.is(dataId)) {
       return this;
     }
 

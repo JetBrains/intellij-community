@@ -23,10 +23,10 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
                     Presentation(),
                     object : DataContext {
                         override fun getData(dataId: String): Any? {
-                            if (dataId == XDebuggerTree.XDEBUGGER_TREE_KEY.name) {
+                            if (XDebuggerTree.XDEBUGGER_TREE_KEY.`is`(dataId)) {
                                 return node.tree
                             }
-                            if (dataId == CommonDataKeys.PROJECT.name) {
+                            if (CommonDataKeys.PROJECT.`is`(dataId)) {
                                 return node.tree.project
                             }
                             return null

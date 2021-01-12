@@ -281,7 +281,7 @@ public class Notification {
   }
 
   public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
-    DataManager.registerDataProvider(component, dataId -> KEY.getName().equals(dataId) ? notification : null);
+    DataManager.registerDataProvider(component, dataId -> KEY.is(dataId) ? notification : null);
   }
 
   @NotNull

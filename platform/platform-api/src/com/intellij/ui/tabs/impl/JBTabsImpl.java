@@ -2781,7 +2781,7 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
-    if (QuickActionProvider.KEY.getName().equals(dataId)) {
+    if (QuickActionProvider.KEY.is(dataId)) {
       return this;
     }
     if (MorePopupAware.KEY.is(dataId)) {
