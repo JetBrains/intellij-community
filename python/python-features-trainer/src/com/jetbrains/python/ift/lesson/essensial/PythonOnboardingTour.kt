@@ -6,6 +6,8 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
+import com.intellij.ide.util.gotoByName.GotoActionItemProvider
+import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -470,7 +472,7 @@ class PythonOnboardingTour(module: Module) :
       text("Suppose we want to make ${code("AVERAGE")} string to be lower case. Let's look for the corresponding action. " +
            "Type ${strong("case")} into this search string.")
       triggerByListItemAndHighlight { item ->
-        str(item)?.contains(toggleCase) == true
+        (item as? GotoActionModel.MatchedValue)?.value?.let { GotoActionItemProvider.getActionText(it) } == toggleCase
       }
       restoreIfModifiedOrMoved()
     }
@@ -485,10 +487,6 @@ class PythonOnboardingTour(module: Module) :
       text("You may want to look for some <ide/> feature without any interference with you own or library code entities. " +
            "You can pass ${strong(LessonsBundle.message("goto.action.lesson.name"))} lesson to learn how to do it and more.")
     }
-  }
-
-  fun str(item: Any?): String? {
-    return item?.toString()
   }
 
   private fun TaskRuntimeContext.checkWordInSearch(expected: String): Boolean =
