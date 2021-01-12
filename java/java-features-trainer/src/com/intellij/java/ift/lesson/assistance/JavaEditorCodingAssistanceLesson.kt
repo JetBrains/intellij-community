@@ -10,7 +10,7 @@ import training.learn.lesson.kimpl.LessonSample
 class JavaEditorCodingAssistanceLesson(module: Module, lang: String, sample: LessonSample) :
   EditorCodingAssistanceLesson(module, lang, sample) {
   override val errorIntentionText: String
-    get() = QuickFixBundle.message("add.exception.to.throws.family")
+    get() = QuickFixBundle.message("add.exception.to.throws.text", 1)
   override val warningIntentionText: String
     get() = InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero")
 
