@@ -11,20 +11,20 @@ import org.jetbrains.annotations.ApiStatus
 @Service
 @ApiStatus.Experimental
 class UastModificationTracker internal constructor(val project: Project) : ModificationTracker {
-  private val languagesTracker: ModificationTracker
+  private val languageTrackers: List<ModificationTracker>
 
   init {
-    val language = Language.findInstance(UastMetaLanguage::class.java)
+    val languages = Language.findInstance(UastMetaLanguage::class.java).matchingLanguages
     val psiManager = PsiManager.getInstance(project)
-    languagesTracker = psiManager.modificationTracker.forLanguages { language.matchesLanguage(it) }
+    languageTrackers = languages.map { psiManager.modificationTracker.forLanguage(it) }
   }
 
-  override fun getModificationCount(): Long = languagesTracker.modificationCount
+  override fun getModificationCount(): Long = languageTrackers.sumOf { it.modificationCount }
 
   companion object {
     @JvmStatic
     @ApiStatus.Experimental
-    fun getInstance(project: Project) : UastModificationTracker {
+    fun getInstance(project: Project): UastModificationTracker {
       return project.getService(UastModificationTracker::class.java)
     }
   }
