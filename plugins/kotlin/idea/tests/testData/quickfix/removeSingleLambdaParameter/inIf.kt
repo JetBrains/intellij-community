@@ -1,5 +1,6 @@
 // "Remove single lambda parameter declaration" "false"
 // ACTION: Add braces to 'if' statement
+// ACTION: Add braces to all 'if' statements
 // ACTION: Convert to multi-line lambda
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Remove explicit lambda parameter types (may break code)
