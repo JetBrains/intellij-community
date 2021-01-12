@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import training.keymap.KeymapUtil
 import training.learn.LearnBundle
+import training.statistic.StatisticBase
 import training.util.invokeActionForFocusContext
 import java.awt.Component
 import java.awt.Insets
@@ -24,7 +25,7 @@ import java.awt.Point
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String) {
+internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String, shortcutText: String) {
   val action = ActionManager.getInstance().getAction(actionId)
   if (action == null) return
 
@@ -70,4 +71,6 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
     .setShadow(true)
   balloon = builder.createBalloon()
   balloon.show(RelativePoint(parent, point), Balloon.Position.below)
+
+  StatisticBase.logShortcutClicked(shortcutText, actionId)
 }

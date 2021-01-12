@@ -25,6 +25,7 @@ import training.commands.kotlin.TaskTestContext
 import training.learn.ActionsRecorder
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
+import training.statistic.StatisticBase
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
@@ -62,7 +63,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   override fun proposeRestore(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) {
     restoreState {
       // restoreState is used to trigger by any IDE state change and check restore proposal is needed
-      this@TaskContextImpl.checkAndShowNotificationIfNeeded(restoreCheck) {
+      this@TaskContextImpl.checkAndShowNotificationIfNeeded(needToLog = true, restoreCheck) {
         LessonManager.instance.setRestoreNotification(it)
       }
       return@restoreState false
@@ -100,7 +101,8 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
         if (warningRequired()) RestoreNotification(text) {} else null
       }
-      val warningResolved = this@TaskContextImpl.checkAndShowNotificationIfNeeded(notificationRequired) {
+      val warningResolved = this@TaskContextImpl.checkAndShowNotificationIfNeeded(needToLog = !restoreTaskWhenResolved,
+                                                                                  notificationRequired) {
         LessonManager.instance.setWarningNotification(it)
       }
       warningResolved && restoreTaskWhenResolved
@@ -110,7 +112,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   /**
    * Returns true if already shown notification has been cleared
    */
-  private fun checkAndShowNotificationIfNeeded(notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
+  private fun checkAndShowNotificationIfNeeded(needToLog: Boolean, notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
                                                setNotification: (RestoreNotification) -> Unit): Boolean {
     val file = lessonExecutor.virtualFile
     val proposal = checkEditor() ?: notificationRequired(runtimeContext)
@@ -124,6 +126,9 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       if (proposal.message != LessonManager.instance.shownRestoreNotification?.message) {
         EditorNotifications.getInstance(runtimeContext.project).updateNotifications(file)
         setNotification(proposal)
+        if(needToLog) {
+          StatisticBase.logRestorePerformed(lessonExecutor.lesson, lessonExecutor.currentTaskIndex)
+        }
       }
     }
     return false

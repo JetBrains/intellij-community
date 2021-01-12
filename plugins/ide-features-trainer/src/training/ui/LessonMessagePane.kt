@@ -251,12 +251,12 @@ class LessonMessagePane : JTextPane() {
     val range = appendClickableRange(" ${messagePart.text} ", SHORTCUT)
     val actionId = messagePart.link ?: return null
     val clickRange = IntRange(range.first + 1, range.last - 1) // exclude around spaces
-    return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId) }
+    return RangeData(clickRange) { p, h -> showShortcutBalloon(p, h, actionId, messagePart.text.replace("\u00A0", " ")) }
   }
 
-  private fun showShortcutBalloon(point: Point, height: Int, actionName: String?) {
+  private fun showShortcutBalloon(point: Point, height: Int, actionName: String?, shortcut: String) {
     if (actionName == null) return
-    showActionKeyPopup(this, point, height, actionName)
+    showActionKeyPopup(this, point, height, actionName, shortcut)
   }
 
   private fun appendClickableRange(clickable: String, attributeSet: SimpleAttributeSet): IntRange {

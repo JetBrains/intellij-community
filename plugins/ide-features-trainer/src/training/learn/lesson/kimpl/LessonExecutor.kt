@@ -21,6 +21,7 @@ import training.commands.kotlin.TaskTestContext
 import training.learn.ActionsRecorder
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
+import training.statistic.StatisticBase
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
 import java.awt.Component
@@ -63,7 +64,8 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
 
   private var currentRecorder: ActionsRecorder? = null
   private var currentRestoreRecorder: ActionsRecorder? = null
-  private var currentTaskIndex = 0
+  internal var currentTaskIndex = 0
+    private set
 
   private val parentDisposable: Disposable = LearnToolWindowFactory.learnWindowPerProject[project]?.parentDisposable ?: project
 
@@ -216,6 +218,8 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     val restoreInfo = taskActions[restoreIndex]
     restoreInfo.rehighlightComponent?.let { it() }
     LessonManager.instance.resetMessagesNumber(restoreInfo.messagesNumberBeforeStart)
+
+    StatisticBase.logRestorePerformed(lesson, currentTaskIndex)
     processNextTask(restoreIndex)
   }
 
@@ -297,6 +301,9 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   }
 
   private fun isTaskCompleted(taskContext: TaskContextImpl) = taskContext.steps.all { it.isDone && it.get() }
+
+  internal val taskCount: Int
+    get() = taskActions.size
 
   private fun canBeRestored(taskContext: TaskContextImpl): Boolean {
     return !hasBeenStopped && taskContext.steps.any { !it.isCancelled && !it.isCompletedExceptionally && (!it.isDone || !it.get()) }
