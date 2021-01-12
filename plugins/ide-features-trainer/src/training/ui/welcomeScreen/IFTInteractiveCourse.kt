@@ -71,7 +71,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
       panel.add(rigid(16, 16))
     }
     panel.add(rigid(16, 15))
-    StatisticBase.instance.onExpandWelcomeScreenPanel()
+    StatisticBase.logWelcomeScreenPanelExpanded()
     return panel
   }
 
@@ -91,7 +91,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
     linkLabel.name = "linkLabel.${module.name}"
     linkLabel.setListener(
       { _, _ ->
-        StatisticBase.instance.onStartModuleAction(module)
+        StatisticBase.logModuleStarted(module)
         openLearningFromWelcomeScreen(module)
       }, null)
     return linkLabel

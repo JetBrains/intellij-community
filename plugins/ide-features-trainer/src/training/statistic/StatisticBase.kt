@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.TimeoutUtil
 import training.lang.LangManager
@@ -23,57 +26,56 @@ import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import java.util.concurrent.ConcurrentHashMap
 
-@Suppress("PropertyName")
-class StatisticBase {
+internal object StatisticBase : CounterUsagesCollector() {
+  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 6)
+
+  // FIELDS
+  private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
+  private val languageField = EventFields.StringValidatedByCustomRule(LANGUAGE, LANGUAGE)
+  private val completedCountField = EventFields.Int(COMPLETED_COUNT)
+  private val courseSizeField = EventFields.Int(COURSE_SIZE)
+  private val moduleNameField = EventFields.StringValidatedByCustomRule(MODULE_NAME, MODULE_NAME)
+
+  // EVENTS
+  private val lessonStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START, lessonIdField, languageField)
+  private val lessonPassedEvent: EventId3<String?, String?, Long> = GROUP.registerEvent(PASSED, lessonIdField, languageField,
+                                                                                        EventFields.Long(DURATION))
+  private val progressUpdatedEvent = GROUP.registerVarargEvent(PROGRESS, lessonIdField, completedCountField, courseSizeField, languageField)
+  private val moduleStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START_MODULE_ACTION, moduleNameField, languageField)
+  private val welcomeScreenPanelExpandedEvent: EventId1<String?> = GROUP.registerEvent(EXPAND_WELCOME_PANEL, languageField)
 
   private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
-  //should be the same as res/META-INF/plugin.xml <statistics.counterUsagesCollector groupId="ideFeaturesTrainer" .../>
-  private val GROUP_ID = "ideFeaturesTrainer"
+  private val LOG = logger<StatisticBase>()
 
-  companion object {
-    val instance: StatisticBase by lazy { ApplicationManager.getApplication().getService(StatisticBase::class.java) }
-    internal val LOG = logger<StatisticBase>()
+  override fun getGroup(): EventLogGroup {
+    return GROUP
   }
 
-  fun onStartLesson(lesson: Lesson) {
+  fun logLessonStarted(lesson: Lesson) {
     sessionLessonTimestamp[lesson.id] = System.nanoTime()
-    logEvent(START, FeatureUsageData()
-      .addData(LESSON_ID, lesson.id)
-      .addData(LANGUAGE, courseLanguage()))
+    lessonStartedEvent.log(lesson.id, courseLanguage())
   }
 
-  fun onPassLesson(lesson: Lesson) {
+  fun logLessonPassed(lesson: Lesson) {
     val timestamp = sessionLessonTimestamp[lesson.id]
     if (timestamp == null) {
       LOG.warn("Unable to find timestamp for a lesson: ${lesson.name}")
       return
     }
     val delta = TimeoutUtil.getDurationMillis(timestamp)
-    logEvent(PASSED, FeatureUsageData()
-      .addData(LESSON_ID, lesson.id)
-      .addData(LANGUAGE, courseLanguage())
-      .addData(DURATION, delta))
-
-    logEvent(PROGRESS, FeatureUsageData()
-      .addData(LESSON_ID, lesson.id)
-      .addData(COMPLETED_COUNT, completedCount())
-      .addData(COURSE_SIZE, CourseManager.instance.lessonsForModules.size)
-      .addData(LANGUAGE, courseLanguage()))
+    lessonPassedEvent.log(lesson.id, courseLanguage(), delta)
+    progressUpdatedEvent.log(lessonIdField with lesson.id,
+                             completedCountField with completedCount(),
+                             courseSizeField with CourseManager.instance.lessonsForModules.size,
+                             languageField with courseLanguage())
   }
 
-  private fun logEvent(event: String, featureUsageData: FeatureUsageData) {
-    FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, event, featureUsageData)
+  fun logModuleStarted(module: Module) {
+    moduleStartedEvent.log(module.name, courseLanguage())
   }
 
-  fun onStartModuleAction(module: Module) {
-    logEvent(START_MODULE_ACTION, FeatureUsageData()
-      .addData(MODULE_NAME, module.name)
-      .addData(LANGUAGE, courseLanguage()))
-  }
-
-  fun onExpandWelcomeScreenPanel() {
-    logEvent(EXPAND_WELCOME_PANEL, FeatureUsageData()
-      .addData(LANGUAGE, courseLanguage()))
+  fun logWelcomeScreenPanelExpanded() {
+    welcomeScreenPanelExpandedEvent.log(courseLanguage())
   }
 
   private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
