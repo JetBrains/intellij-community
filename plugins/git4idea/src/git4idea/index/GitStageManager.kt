@@ -13,17 +13,18 @@ import com.intellij.vcs.commit.CommitModeManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
 
-@RequiresEdt
-private fun onAvailabilityChanged(project: Project) {
-  ApplicationManager.getApplication().assertIsDispatchThread()
+internal class CommitModeListener(val project: Project) : CommitModeManager.CommitModeListener {
+  override fun commitModeChanged() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
 
-  if (isStagingAreaAvailable(project)) {
-    GitStageTracker.getInstance(project).updateTrackerState()
-  }
+    if (isStagingAreaAvailable(project)) {
+      GitStageTracker.getInstance(project).updateTrackerState()
+    }
 
-  invokeLater {
-    // Notify LSTM after CLM to let it save current partial changelists state
-    ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+    invokeLater {
+      // Notify LSTM after CLM to let it save current partial changelists state
+      ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
+    }
   }
 }
 
@@ -32,12 +33,6 @@ internal class GitStageStartupActivity : StartupActivity.Background {
     if (isStagingAreaAvailable(project)) {
       GitStageTracker.getInstance(project) // initialize tracker
     }
-  }
-}
-
-internal class CommitSettingsListener(val project: Project) : CommitModeManager.SettingsListener {
-  override fun settingsChanged() {
-    onAvailabilityChanged(project)
   }
 }
 

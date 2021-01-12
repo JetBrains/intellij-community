@@ -114,6 +114,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
     busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
+    busConnection.subscribe(ChangeListAvailabilityListener.TOPIC, MyChangeListAvailabilityListener())
 
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
@@ -781,11 +782,24 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
           .forEach { if (it is EditorEx) it.gutterComponentEx.repaint() }
       }
     }
+  }
 
-    override fun changeListAvailabilityChanged() {
-      runInEdt(ModalityState.any()) {
-        updatePartialChangeListsAvailability()
-        updateTrackingSettings()
+  private inner class MyChangeListAvailabilityListener : ChangeListAvailabilityListener {
+    override fun onBefore() {
+      if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+        val fileStates = LineStatusTrackerManager.getInstanceImpl(project).collectPartiallyChangedFilesStates()
+        if (fileStates.isNotEmpty()) {
+          PartialLineStatusTrackerManagerState.saveCurrentState(project, fileStates)
+        }
+      }
+    }
+
+    override fun onAfter() {
+      updatePartialChangeListsAvailability()
+      onEverythingChanged()
+
+      if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+        PartialLineStatusTrackerManagerState.restoreState(project)
       }
     }
   }
@@ -924,7 +938,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
 
   internal fun collectPartiallyChangedFilesStates(): List<ChangelistsLocalLineStatusTracker.FullState> {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     val result = mutableListOf<ChangelistsLocalLineStatusTracker.FullState>()
     synchronized(LOCK) {
       for (data in trackers.values) {
@@ -976,6 +990,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         })
       }
     }
+
+    onEverythingChanged()
   }
 
 

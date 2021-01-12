@@ -236,8 +236,8 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public List<LocalChangeList> getChangeLists() {
-    List<LocalChangeList> lists = ContainerUtil.map(myLists, this::toChangeList);
+  public List<LocalChangeListImpl> getChangeLists() {
+    List<LocalChangeListImpl> lists = ContainerUtil.map(myLists, this::toChangeList);
     ContainerUtil.sort(lists, ChangesUtil.CHANGELIST_COMPARATOR);
     return lists;
   }
@@ -1291,7 +1291,7 @@ public class ChangeListWorker {
     @NotNull
     @Override
     public List<LocalChangeList> getListsCopy() {
-      return myWorker.getChangeLists();
+      return Collections.unmodifiableList(myWorker.getChangeLists());
     }
 
     @Nullable

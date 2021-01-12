@@ -98,7 +98,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   private FileHolderComposite myComposite;
   private final ChangeListWorker myWorker;
 
-  @Nullable private Element myDisabledChangeListsState;
+  @Nullable private List<LocalChangeListImpl> myDisabledWorkerState;
 
   private boolean myInitialUpdate = true;
   private VcsException myUpdateException;
@@ -733,7 +733,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @NotNull
   public List<LocalChangeList> getChangeLists() {
     synchronized (myDataLock) {
-      return myWorker.getChangeLists();
+      return Collections.unmodifiableList(myWorker.getChangeLists());
     }
   }
 
@@ -1238,16 +1238,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
 
     synchronized (myDataLock) {
-      boolean isEnabled = shouldEnableChangeLists();
-      myWorker.setChangeListsEnabled(isEnabled);
+      boolean areChangeListsEnabled = shouldEnableChangeLists();
+      myWorker.setChangeListsEnabled(areChangeListsEnabled);
 
-      myDisabledChangeListsState = ChangeListManagerSerialization.readDisabledChangeLists(element);
-      if (isEnabled && myDisabledChangeListsState != null) {
-        ChangeListManagerSerialization.restoreDisabledChangeListsState(myDisabledChangeListsState, myProject, myWorker);
-        myDisabledChangeListsState = null;
+      List<LocalChangeListImpl> changeLists = ChangeListManagerSerialization.readExternal(element, myProject);
+      if (areChangeListsEnabled) {
+        myWorker.setChangeLists(changeLists);
       }
       else {
-        ChangeListManagerSerialization.readExternal(element, myWorker);
+        myDisabledWorkerState = changeLists;
       }
     }
     myConflictTracker.loadState(element);
@@ -1261,8 +1260,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
 
     synchronized (myDataLock) {
-      ChangeListManagerSerialization.writeExternal(element, myWorker);
-      ChangeListManagerSerialization.writeDisabledChangeLists(element, myDisabledChangeListsState);
+      boolean areChangeListsEnabled = myWorker.areChangeListsEnabled();
+      List<LocalChangeListImpl> changesToSave = areChangeListsEnabled ? myWorker.getChangeLists() : myDisabledWorkerState;
+      ChangeListManagerSerialization.writeExternal(element, changesToSave, areChangeListsEnabled);
     }
     myConflictTracker.saveState(element);
     return element;
@@ -1437,32 +1437,33 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @RequiresEdt
   private void updateChangeListAvailability() {
     boolean enabled = shouldEnableChangeLists();
-
-    Element lstmState = null;
-    if (!enabled) {
-      // do not access LSTM under myDataLock
-      lstmState = ChangeListManagerSerialization.createDisabledLineStatusTrackersState(myProject);
-    }
-
     synchronized (myDataLock) {
       if (enabled == myWorker.areChangeListsEnabled()) return;
+    }
 
-      if (!enabled && myDisabledChangeListsState == null) {
-        Element workerState = ChangeListManagerSerialization.createDisabledWorkerState(myWorker);
-        myDisabledChangeListsState = ChangeListManagerSerialization.createDisabledChangeListsState(lstmState, workerState);
+    myProject.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onBefore();
+
+    synchronized (myDataLock) {
+      assert enabled != myWorker.areChangeListsEnabled();
+
+      if (!enabled) {
+        myDisabledWorkerState = myWorker.getChangeLists();
       }
 
       myWorker.setChangeListsEnabled(enabled);
 
-      if (enabled && myDisabledChangeListsState != null) {
-        // Schedule refresh to ensure that invokeAfterUpdate in LSTM will receive up-to-date changes
+      if (enabled) {
+        if (myDisabledWorkerState != null) {
+          myWorker.setChangeLists(myDisabledWorkerState);
+        }
+
+        // Schedule refresh to replace FakeRevisions with actual changes
         VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
         ChangesViewManager.getInstance(myProject).scheduleRefresh();
-
-        ChangeListManagerSerialization.restoreDisabledChangeListsState(myDisabledChangeListsState, myProject, myWorker);
-        myDisabledChangeListsState = null;
       }
     }
+
+    myProject.getMessageBus().syncPublisher(ChangeListAvailabilityListener.TOPIC).onAfter();
   }
 
   private boolean shouldEnableChangeLists() {
