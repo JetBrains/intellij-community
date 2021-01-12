@@ -25,7 +25,7 @@ class SpaceReviewOpenDiffActionProvider : AnActionExtensionProvider {
 
     val chainBuilder = SpaceDiffRequestChainBuilder(LifetimeSource(),
                                                     project,
-                                                    detailsVm.spaceDiffVm.value,
+                                                    detailsVm.spaceDiffVm,
                                                     detailsVm.changesVm)
     val requestChain = chainBuilder.getRequestChain(detailsVm.changesVm.listSelection.value)
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)

@@ -7,7 +7,6 @@ import circlet.platform.client.KCircletClient
 import com.intellij.openapi.ListSelection
 import com.intellij.space.vcs.review.details.ReviewCommitListItem
 import com.intellij.space.vcs.review.details.SpaceReviewChange
-import runtime.reactive.MutableProperty
 import runtime.reactive.Property
 
 internal interface SpaceDiffVm {
@@ -17,7 +16,7 @@ internal interface SpaceDiffVm {
   val projectKey: ProjectKey
 
   val selectedCommits: Property<List<ReviewCommitListItem>>
-  val selectedChanges: MutableProperty<ListSelection<SpaceReviewChange>>
+  val selectedChanges: Property<ListSelection<SpaceReviewChange>>
 
   val spaceReviewDiffLoader: SpaceReviewDiffLoader
 }

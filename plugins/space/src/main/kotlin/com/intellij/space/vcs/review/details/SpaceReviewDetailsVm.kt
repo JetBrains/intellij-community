@@ -105,9 +105,13 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   private val spaceReviewChange: MutableProperty<ListSelection<SpaceReviewChange>> =
     mutableProperty(ListSelection.create(emptyList<SpaceReviewChange>(), null))
 
-  val spaceDiffVm: Property<SpaceDiffVm> = mutableProperty(
-    SpaceDiffVmImpl(client, reviewId, reviewKey as String, projectKey, selectedCommits, spaceReviewChange,
-                    SpaceReviewDiffLoader(lifetime, client)))
+  val spaceDiffVm: SpaceDiffVm = SpaceDiffVmImpl(client,
+                                                 reviewId,
+                                                 reviewKey as String,
+                                                 projectKey,
+                                                 selectedCommits,
+                                                 spaceReviewChange,
+                                                 SpaceReviewDiffLoader(lifetime, client))
 
   val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
     lifetime, client, projectKey, review.value.identifier,

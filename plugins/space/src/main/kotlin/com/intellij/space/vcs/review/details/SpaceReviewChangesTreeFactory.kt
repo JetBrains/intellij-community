@@ -21,14 +21,13 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nullable
-import runtime.reactive.Property
 import javax.swing.JComponent
 
 internal object SpaceReviewChangesTreeFactory {
   fun create(project: Project,
              parentPanel: JComponent,
              changesVm: SpaceReviewChangesVm,
-             spaceDiffVm: Property<SpaceDiffVm>): JComponent {
+             spaceDiffVm: SpaceDiffVm): JComponent {
 
     val tree = object : ChangesTree(project, false, false) {
       init {
@@ -68,8 +67,7 @@ internal object SpaceReviewChangesTreeFactory {
     }
     tree.doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
-
-      val spaceDiffFile = SpaceDiffFile(spaceDiffVm.value, changesVm)
+      val spaceDiffFile = SpaceDiffFile(spaceDiffVm, changesVm)
       VcsEditorTabFilesManager.getInstance().openFile(project, spaceDiffFile, true)
       true
     }
