@@ -118,7 +118,7 @@ public final class MavenServerManager implements Disposable {
     return connector;
   }
 
-  private static @NotNull String getMultimoduleDirectory(@NotNull Project project, @NotNull String directory) {
+  static @NotNull String getMultimoduleDirectory(@NotNull Project project, @NotNull String directory) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     if (!manager.isMavenizedProject()) {
       return FileUtil.toSystemIndependentName(calculateMultimoduleDirUpToFileTree(directory));
@@ -139,7 +139,7 @@ public final class MavenServerManager implements Disposable {
   private MavenServerConnector registerNewConnector(Project project,
                                                     Sdk jdk,
                                                     String multimoduleDirectory) {
-    MavenDistribution distribution = findMavenDistribution(project, multimoduleDirectory);
+    MavenDistribution distribution = MavenDistributionResolver.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = readVmOptions(project, multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector = new MavenServerConnector(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
@@ -178,76 +178,6 @@ public final class MavenServerManager implements Disposable {
     }
   }
 
-  private static String getWrapperUrl(Project project,
-                               String multimoduleDirectory) {
-    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-    if (useWrapper(settings)) {
-      return getWrapperDistributionUrl(multimoduleDirectory);
-    }
-    return null;
-  }
-
-  private static boolean useWrapper(MavenWorkspaceSettings settings) {
-    return WRAPPED_MAVEN.equals(settings.generalSettings.getMavenHome()) ||
-           StringUtil.equals(settings.generalSettings.getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
-  }
-
-  @NotNull
-  public static MavenDistribution findMavenDistribution(Project project,
-                                                        String multimoduleDirectory) {
-    MavenSyncConsole console = MavenProjectsManager.getInstance(project).getSyncConsole();
-
-    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-    if (useWrapper(settings)) {
-      String distributionUrl = getWrapperDistributionUrl(multimoduleDirectory);
-      if (distributionUrl == null) {
-        console.addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
-          .message("is.not.correct.maven.home.reverting.to.embedded", settings.generalSettings.getMavenHome()));
-        return resolveEmbeddedMavenHome();
-      }
-      else {
-        return doResolveMavenWrapper(console, distributionUrl, multimoduleDirectory);
-      }
-    }
-    else {
-      MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
-      if(distribution == null) {
-        console.addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
-          .message("is.not.correct.maven.home.reverting.to.embedded", settings.generalSettings.getMavenHome()));
-        return resolveEmbeddedMavenHome();
-      } else  {
-        return distribution;
-      }
-    }
-  }
-
-  @NotNull
-  private static MavenDistribution doResolveMavenWrapper(MavenSyncConsole console, String distributionUrl, String multimoduleDirectory) {
-    try {
-      console.startWrapperResolving();
-      MavenDistribution distribution =
-        new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, console.progressIndicatorForWrapper());
-      if (distributionUrl.toLowerCase(Locale.ENGLISH).startsWith("http:")) {
-        MavenWrapperSupport.showUnsecureWarning(console, LocalFileSystem.getInstance().findFileByPath(multimoduleDirectory));
-      }
-      console.finishWrapperResolving(null);
-      return distribution;
-    }
-    catch (Exception e) {
-      console.finishWrapperResolving(e);
-      LocalMavenDistribution distribution = resolveEmbeddedMavenHome();
-      return new LocalMavenDistribution(distribution.getMavenHome(), distributionUrl);
-    }
-  }
-
-  private static @Nullable String getWrapperDistributionUrl(String multimoduleDirectory) {
-    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(multimoduleDirectory);
-    if (baseDir == null) {
-      return null;
-    }
-    return MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
-  }
-
   private static Integer getDebugPort(Project project) {
     if ((project.isDefault() && Registry.is("maven.server.debug.default")) ||
         Registry.is("maven.server.debug")) {
@@ -282,17 +212,7 @@ public final class MavenServerManager implements Disposable {
                                               Sdk jdk,
                                               String multimoduleDirectory) {
 
-    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-    MavenDistribution distribution = null;
-    if (useWrapper(settings)) {//todo: this weird logic to avoid trying to resolve unresolved wrapper several times
-      String distributionUrl = getWrapperDistributionUrl(multimoduleDirectory);
-      if(connector.getMavenDistribution().getName().equals(distributionUrl)) {
-        distribution = connector.getMavenDistribution();
-      }
-    }
-    if(distribution == null){
-      distribution = findMavenDistribution(project, multimoduleDirectory);
-    }
+    MavenDistribution distribution = MavenDistributionResolver.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = readVmOptions(project, multimoduleDirectory);
     return connector.isCompatibleWith(jdk, vmOptions, distribution);
   }
@@ -427,7 +347,7 @@ public final class MavenServerManager implements Disposable {
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
-    File parentFile = getMavenPluginParentFile();
+    File parentFile = MavenUtil.getMavenPluginParentFile();
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
       classpath.add(new File(root, "intellij.maven.server.m2.impl"));
       addDir(classpath, new File(parentFile, "maven2-server-impl/lib"), f -> true);
@@ -448,10 +368,6 @@ public final class MavenServerManager implements Disposable {
     }
   }
 
-  private static File getMavenPluginParentFile() {
-    File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-    return luceneLib.getParentFile().getParentFile().getParentFile();
-  }
 
   private static void addMavenLibs(List<File> classpath, File mavenHome) {
     addDir(classpath, new File(mavenHome, "lib"), f -> !f.getName().contains("maven-slf4j-provider"));
@@ -555,16 +471,15 @@ public final class MavenServerManager implements Disposable {
   }
 
   public boolean isUseMaven2() {
-    final String version = getCurrentMavenVersion();
-    return version != null && StringUtil.compareVersionNumbers(version, "3") < 0 && StringUtil.compareVersionNumbers(version, "2") >= 0;
+    return  false;
   }
 
 
   @Nullable
-  @Deprecated
+  @ApiStatus.Internal
   /*
-    @deprecated do not use this method, as it is impossible to resolve correct version if maven home is set to wrapper
-   * @see findMavenDistribution
+    @do not use this method directly, as it is impossible to resolve correct version if maven home is set to wrapper
+   * @see MavenDistributionResolver
    */
   public static File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
@@ -574,7 +489,7 @@ public final class MavenServerManager implements Disposable {
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
         StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
-      return resolveEmbeddedMavenHome().getMavenHome();
+      return MavenDistributionResolver.resolveEmbeddedMavenHome().getMavenHome();
     }
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;
@@ -597,24 +512,6 @@ public final class MavenServerManager implements Disposable {
   public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
   }
 
-  @NotNull
-  public static LocalMavenDistribution resolveEmbeddedMavenHome() {
-    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final String root = pluginFileOrDir.getParent();
-    LocalMavenDistribution result;
-    if (pluginFileOrDir.isDirectory()) {
-      File parentFile = getMavenPluginParentFile();
-      File mavenFile = new File(parentFile, "maven36-server-impl/lib/maven3");
-      if(mavenFile.isDirectory()) {
-        return new LocalMavenDistribution(mavenFile, BUNDLED_MAVEN_3);
-      }
-    }
-    else {
-      return new LocalMavenDistribution(new File(root, "maven3"), BUNDLED_MAVEN_3);
-    }
-
-    throw new RuntimeException("run setupBundledMaven.gradle task. Cannot resolve embedded maven home without it");
-  }
 
   @NotNull
   private static LocalMavenDistribution resolveEmbeddedMaven2HomeForTests() {
@@ -624,7 +521,7 @@ public final class MavenServerManager implements Disposable {
 
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     if (pluginFileOrDir.isDirectory()) {
-      File parentFile = getMavenPluginParentFile();
+      File parentFile = MavenUtil.getMavenPluginParentFile();
       return new LocalMavenDistribution(new File(parentFile, "maven2-server-impl/lib/maven2"), BUNDLED_MAVEN_2);
     }
     else {
