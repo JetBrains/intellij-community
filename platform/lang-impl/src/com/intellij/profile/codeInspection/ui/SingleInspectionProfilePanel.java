@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -71,6 +72,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
@@ -567,7 +570,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-
     myTreeTable.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
@@ -581,6 +583,14 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
+    int modifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+
+    registerKeyboardAction(__ -> {
+      if (myTreeTable.getStrictlySelectedToolNode() != null) {
+        final Container parent = myTreeTable.getParent();
+        compoundPopup().show(parent, parent.getWidth() / 2,  parent.getHeight() / 2);
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_V, modifiers), WHEN_IN_FOCUSED_WINDOW);
 
     new TreeSpeedSearch(tree, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
