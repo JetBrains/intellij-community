@@ -48,6 +48,7 @@ abstract class AbstractWholeProjectPerformanceComparisonTest : AbstractPerforman
                 //    fileName = FILE_NAMES.REGEXP_FILE_LINK_FILTER,
                 //    marker = "fun applyFilter(line: String, entireLength: Int): Filter.Result? {",
                 //    insertString = "val a = l",
+                //    highlightFileBeforeStartTyping = true,
                 //    lookupElements = listOf("line"),
                 //    note = "in-method completion"
                 //)
@@ -57,6 +58,7 @@ abstract class AbstractWholeProjectPerformanceComparisonTest : AbstractPerforman
                 //    fileName = FILE_NAMES.NAME_RESOLUTION,
                 //    marker = "private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)",
                 //    insertString = "\nval a = ",
+                //    highlightFileBeforeStartTyping = true,
                 //    lookupElements = listOf("processAssocTypeVariants"),
                 //    note = "top-level completion"
                 //)
@@ -66,6 +68,7 @@ abstract class AbstractWholeProjectPerformanceComparisonTest : AbstractPerforman
                 //    fileName = FILE_NAMES.NAME_RESOLUTION,
                 //    marker = "testAssert { cameFrom.context == scope }",
                 //    insertString = "\nval a = s",
+                //    highlightFileBeforeStartTyping = true,
                 //    lookupElements = listOf("scope"),
                 //    note = "in big method in big file completion"
                 //)
