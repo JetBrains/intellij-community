@@ -15,6 +15,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -28,6 +29,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SkipSlowTestLocally
 public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   private static final int NUMBER_OF_OVERLOADS = 1000;
 
@@ -64,19 +66,23 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   public void testComputingResultTypeWithCodeAnalysisContext() {
     PyCallExpression call = configureAndGetCallExprUnderCaret("mainQualified.py");
-    TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-    assertType("int", call, context);
+    doPerformanceTestResettingCaches("Computing result type with code analysis context", 1200, () -> {
+      TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+      assertType("int", call, context);
+    });
   }
 
   public void testComputingResultTypeWithUserInitiatedContext() {
     PyCallExpression call = configureAndGetCallExprUnderCaret("mainQualified.py");
-    TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile());
-    assertType("int", call, context);
+    doPerformanceTestResettingCaches("Computing result type with user initiated context", 4000, () -> {
+      TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile());
+      assertType("int", call, context);
+    });
   }
 
   public void testNavigatingToDefinition() {
     configureAndGetCallExprUnderCaret("mainQualified.py");
-    doPerformanceTestResettingCaches("Navigating to definition", 100, () -> {
+    doPerformanceTestResettingCaches("Navigating to definition", 600, () -> {
       PsiElement element = GotoDeclarationAction.findTargetElement(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
       assertInstanceOf(element, PyFunction.class);
     });
@@ -98,7 +104,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   public void testUnresolvedReferencesInspectionPass() {
     myFixture.copyDirectoryToProject("", "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    doPerformanceTestResettingCaches("Pass of Unresolved References inspection", 100, () -> {
+    doPerformanceTestResettingCaches("Pass of Unresolved References inspection", 1200, () -> {
       myFixture.configureByFile("mainQualified.py");
       myFixture.checkHighlighting();
     });
@@ -107,7 +113,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   public void testArgumentListInspectionPass() {
     myFixture.copyDirectoryToProject("", "");
     myFixture.enableInspections(PyArgumentListInspection.class);
-    doPerformanceTestResettingCaches("Pass of Unresolved References inspection", 100, () -> {
+    doPerformanceTestResettingCaches("Pass of Incorrect Call Arguments inspection", 1200, () -> {
       myFixture.configureByFile("mainQualified.py");
       myFixture.checkHighlighting();
     });
