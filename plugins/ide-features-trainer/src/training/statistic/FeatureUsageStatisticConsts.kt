@@ -13,4 +13,11 @@ object FeatureUsageStatisticConsts {
   const val COMPLETED_COUNT = "completed_count"
   const val COURSE_SIZE = "course_size"
   const val EXPAND_WELCOME_PANEL = "expand_welcome_screen"
+  const val SHORTCUT_CLICKED = "shortcut_clicked"
+  const val RESTORE = "restore"
+  const val ACTION_ID = "action_id"
+  const val TASK_ID = "task_id"
+  const val KEYMAP_SCHEME = "keymap_scheme"
+  const val SHORTCUT = "shortcut"
+  const val SHORTCUT_RULE = "shortcut_or_none"
 }
