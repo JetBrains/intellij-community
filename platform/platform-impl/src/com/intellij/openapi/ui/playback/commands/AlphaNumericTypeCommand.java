@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
@@ -14,7 +15,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class AlphaNumericTypeCommand extends TypeCommand {
-
+  private static final Logger LOG = Logger.getInstance(AlphaNumericTypeCommand.class);
   public AlphaNumericTypeCommand(String text, int line) {
     super(text, line, true);
   }
@@ -87,6 +88,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     if (!context.isUseTypingTargets()) return null;
 
     Component each = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    LOG.debug("Name:"+ each.getName() + " Parent:" + each.getParent().toString() + "toString:" + each);
 
     while (each != null) {
       if (each instanceof TypingTarget) {
