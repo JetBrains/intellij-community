@@ -24,13 +24,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides host-language specific ways to configure language injections to some host-specific places
- * by adding comment, annotation (and so on) or configuring injection patterns in {@link org.intellij.plugins.intelliLang.InjectionsSettingsUI UI}
+ * by configuring injection patterns in {@link org.intellij.plugins.intelliLang.InjectionsSettingsUI UI}
  * and saving them in {@link Configuration}
  *
+ * @author Gregory.Shrago
  * @see DefaultLanguageInjector
  * @see Configuration
- *
- * @author Gregory.Shrago
  */
 public abstract class LanguageInjectionSupport {
   public static final ExtensionPointName<LanguageInjectionSupport> EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.languageSupport");
@@ -60,12 +59,31 @@ public abstract class LanguageInjectionSupport {
 
   /**
    * @return {@code true} if {@link DefaultLanguageInjector} should be used to perform the injection configured for this support,
-   * or {@code false} if there is another {@link MultiHostInjector} implementation that does it for current LanguageInjectionSupport
+   * or {@code false} if there is another {@link MultiHostInjector} or better a
+   * {@link com.intellij.lang.injection.general.LanguageInjectionPerformer LanguageInjectionPerformer}
+   * implementation that does it for current LanguageInjectionSupport
    */
   public abstract boolean useDefaultInjector(PsiLanguageInjectionHost host);
 
+  /**
+   * @deprecated implement the {@link com.intellij.lang.injection.general.LanguageInjectionPerformer LanguageInjectionPerformer}
+   * for your language instead of overriding this method.
+   *
+   * Returning {@code false} will make the {@link CommentLanguageInjector} not handle this {@link LanguageInjectionSupport},
+   * but it is better to handle comment-based injection in the language specific
+   * {@link com.intellij.lang.injection.general.LanguageInjectionContributor LanguageInjectionContributor}
+   * and not deal with the {@link LanguageInjectionSupport} at all
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public abstract boolean useDefaultCommentInjector();
 
+  /**
+   * @deprecated implement the {@link com.intellij.lang.injection.general.LanguageInjectionContributor LanguageInjectionContributor}
+   * for your language instead of implementing this method
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @Nullable
   public abstract BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef);
 
