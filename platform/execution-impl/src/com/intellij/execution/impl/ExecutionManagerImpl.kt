@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
@@ -51,10 +52,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -602,7 +600,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           @Volatile
           var stopped = false
 
-          override fun addText(text: String, key: Key<*>) {
+          override fun addText(text: @Nls String, key: Key<*>) {
             processHandler.notifyTextAvailable(text, key)
           }
 
@@ -621,7 +619,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       catch (t: Throwable) {
         LOG.warn(t)
         promise.setError(ExecutionBundle.message("message.error.happened.0", t.localizedMessage))
-        processHandler.notifyTextAvailable(t.localizedMessage, ProcessOutputType.STDERR)
+        processHandler.notifyTextAvailable(StringUtil.notNullize(t.localizedMessage), ProcessOutputType.STDERR)
         processHandler.notifyTextAvailable("\n", ProcessOutputType.STDERR)
       }
       finally {
