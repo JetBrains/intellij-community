@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -39,7 +40,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     diffFiles.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
       GHPRDiffVirtualFile(id, project, repository, pullRequest)
     }.let {
-      FileEditorManager.getInstance(project).openFile(it, requestFocus)
+      VcsEditorTabFilesManager.getInstance().openFile(project, it, requestFocus)
       GHPRStatisticsCollector.logDiffOpened(project)
     }
   }

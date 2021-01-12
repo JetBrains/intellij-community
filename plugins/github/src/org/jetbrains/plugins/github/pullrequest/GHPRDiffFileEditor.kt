@@ -20,8 +20,9 @@ internal class GHPRDiffFileEditor(project: Project,
                                   dataContext: GHPRDataContext,
                                   pullRequest: GHPRIdentifier) : FileEditorBase() {
 
+  internal val diffProcessor = MutableDiffRequestChainProcessor(project, null)
+
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, this)
-  private val diffProcessor = MutableDiffRequestChainProcessor(project, null)
   private val diffHelper = GHPRChangesDiffHelperImpl(project, dataProvider,
                                                      dataContext.avatarIconsProvider, dataContext.securityService.currentUser)
   private val diffChainUpdateQueue =
