@@ -24,39 +24,72 @@ object KotlinPluginCompatibilityVerifier {
 }
 
 interface KotlinPluginVersion {
+    val kotlinVersion: String // 1.2.3
+    val status: String?
     val platformVersion: PlatformVersion
     val buildNumber: String?
 
     companion object {
         fun parse(version: String): KotlinPluginVersion? {
-            return OldKotlinPluginVersion.parse(version) ?: KidKotlinPluginVersion.parse(version)
+            return OldKotlinPluginVersion.parse(version) ?: NewKotlinPluginVersion.parse(version)
         }
 
         fun getCurrent(): KotlinPluginVersion? = parse(KotlinPluginUtil.getPluginVersion())
     }
 }
 
-data class KidKotlinPluginVersion(
+data class NewKotlinPluginVersion(
+    override val kotlinVersion: String, // 1.2.3
+    override val status: String?, // release, eap, rc
+    val kotlinBuildNumber: String?,
     override val buildNumber: String?, // 53
     override val platformVersion: PlatformVersion,
+    val patchNumber: String?
 ) : KotlinPluginVersion {
     companion object {
-        private val KID_KOTLIN_VERSION_REGEX = "([\\d]{3}).([\\d]+)-kid".toRegex()
+        //203-1.4.20-dev-4575-IJ1234.45-1
+        private const val KID_KOTLIN_VERSION_REGEX_STRING =
+            "^(\\d{3})" +                            // IDEA_VERSION_ID, like '202'
+                    "-([\\d.]+)" +                   // COMPILER_VERSION name, like '1.4.10'
+                    "(?:-([A-Za-z]+))?" +            // (Optional) COMPILER_VERSION milestone, like 'eap/dev/release'
+                    "(?:-(\\d+))?" +                 // (Optional) COMPILER_VERSION build number, like '4242'
+                    "-([A-Z]{2})" +                  // Platform kind, like 'IJ'
+                    "(?:(\\d+)\\.)?" +               // (Optional) BRANCH_SUFFIX, like '1234'
+                    "(\\d*)" +                       // Build number, like '45'
+                    "(?:-(\\d+))?"                   // (Optional) Tooling update, like '-1'
 
-        fun parse(version: String): KidKotlinPluginVersion? {
+        private val KID_KOTLIN_VERSION_REGEX = KID_KOTLIN_VERSION_REGEX_STRING.toRegex()
+
+        fun parse(version: String): NewKotlinPluginVersion? {
             val matchResult = KID_KOTLIN_VERSION_REGEX.matchEntire(version) ?: return null
-            val (platformNumber, buildNumber) = matchResult.destructured
-            val platformVersionText = "20" + platformNumber.take(2) + "." + platformNumber.takeLast(1)
-            val platformVersion = PlatformVersion(PlatformVersion.Platform.IDEA, platformVersionText)
-            return KidKotlinPluginVersion(buildNumber, platformVersion)
+            val (ideaVersionId, kotlinVersion, kotlinMilestone, kotlinBuild, ideaKind, branchSuffix, buildNumber, update) = matchResult.destructured
+
+            val platformVersionString = buildString {
+                append(ideaKind)
+                append(ideaVersionId)
+                branchSuffix.nullize()?.let {
+                    append(".")
+                    append(it)
+                }
+            }
+            val platformVersion = PlatformVersion.parse(platformVersionString) ?: return null
+
+            return NewKotlinPluginVersion(
+                kotlinVersion,
+                kotlinMilestone.nullize(),
+                kotlinBuild.nullize(),
+                buildNumber.nullize(),
+                platformVersion,
+                update.nullize()
+            )
         }
     }
 }
 
 data class OldKotlinPluginVersion(
-    val kotlinVersion: String, // 1.2.3
+    override val kotlinVersion: String, // 1.2.3
     val milestone: String?, // M1
-    val status: String?, // release, eap, rc
+    override val status: String?, // release, eap, rc
     override val buildNumber: String?, // 53
     override val platformVersion: PlatformVersion,
     val patchNumber: String // usually '1'
@@ -79,7 +112,7 @@ data class OldKotlinPluginVersion(
             return OldKotlinPluginVersion(
                 kotlinVersion,
                 milestone.nullize(),
-                status,
+                status.nullize(),
                 buildNumber.nullize(),
                 platformVersion,
                 patchNumber

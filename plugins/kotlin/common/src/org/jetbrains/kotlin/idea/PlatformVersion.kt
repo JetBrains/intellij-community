@@ -7,8 +7,10 @@ data class PlatformVersion(val platform: Platform, val version: String /* 3.1 or
     companion object {
         fun parse(platformString: String): PlatformVersion? {
             for (platform in Platform.values()) {
-                if (platformString.startsWith(platform.qualifier)) {
-                    return PlatformVersion(platform, platformString.drop(platform.qualifier.length))
+                for (qualifier in platform.qualifiers) {
+                    if (platformString.startsWith(qualifier)) {
+                        return PlatformVersion(platform, platformString.drop(qualifier.length))
+                    }
                 }
             }
 
@@ -29,8 +31,9 @@ data class PlatformVersion(val platform: Platform, val version: String /* 3.1 or
         fun isAndroidStudio(): Boolean = getCurrent()?.platform == Platform.ANDROID_STUDIO
     }
 
-    enum class Platform(val qualifier: String, val presentableText: String) {
-        IDEA("IJ", "IDEA"), ANDROID_STUDIO("Studio", "Android Studio")
+    enum class Platform(val qualifiers: List<String>, val presentableText: String) {
+        IDEA(listOf("IJ"), "IDEA"),
+        ANDROID_STUDIO(listOf("Studio", "AS"), "Android Studio")
     }
 
     override fun toString() = platform.presentableText + " " + version
