@@ -34,12 +34,13 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- groupId should be same to StatisticBase.GROUP_ID and version to StatisticBase.VERSION -->
-    <statistics.counterUsagesCollector groupId="ideFeaturesTrainer" version="5"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerModuleRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.SupportedLanguageRuleValidator"/>
+    <statistics.counterUsagesCollector implementationClass="training.statistic.StatisticBase"/>
 
     <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
 
@@ -51,8 +52,6 @@
       serviceImplementation="training.ui.UISettings"/>
     <applicationService
       serviceImplementation="training.learn.lesson.LessonStateBase"/>
-    <applicationService
-      serviceImplementation="training.statistic.StatisticBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"
                 icon="FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"

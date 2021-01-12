@@ -9,10 +9,10 @@ import training.statistic.StatisticBase
 class StatisticLessonListener(val project: Project) : LessonListener {
 
   override fun lessonStarted(lesson: Lesson) {
-    StatisticBase.instance.onStartLesson(lesson)
+    StatisticBase.logLessonStarted(lesson)
   }
 
   override fun lessonPassed(lesson: Lesson) {
-    StatisticBase.instance.onPassLesson(lesson)
+    StatisticBase.logLessonPassed(lesson)
   }
 }
