@@ -325,7 +325,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
     private fun buildArtifact(
         executableName: String,
         linkTask: Task,
-        runConfiguration: KonanRunConfigurationModel
+        runConfiguration: KonanRunConfigurationModel,
+        exportDependencies: Array<KotlinDependencyId>
     ): KonanArtifactModel? {
         val outputKind = linkTask["getOutputKind"]["name"] as? String ?: return null
         val konanTargetName = linkTask["getTarget"] as? String ?: error("No arch target found")
@@ -338,6 +339,9 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val compilationTargetName = compilationTarget["getName"] as? String ?: return null
         val isTests = linkTask["getProcessTests"] as? Boolean ?: return null
 
+        @Suppress("UNCHECKED_CAST")
+        val freeCompilerArgs = (linkTask["getKotlinOptions"]["getFreeCompilerArgs"] as? List<String>).orEmpty().toTypedArray()
+
         return KonanArtifactModelImpl(
             compilationTargetName,
             executableName,
@@ -346,11 +350,15 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             outputFile,
             linkTask.path,
             runConfiguration,
-            isTests
+            isTests,
+            freeCompilerArgs,
+            exportDependencies
         )
     }
 
-    private fun konanArtifacts(target: Named): List<KonanArtifactModel> {
+    private fun konanArtifacts(
+        target: Named, dependencyResolver: DependencyResolver, project: Project, dependencyMapper: KotlinDependencyMapper
+    ): List<KonanArtifactModel> {
         val result = ArrayList<KonanArtifactModel>()
 
         val binaries = target["getBinaries"] as? Collection<*> ?: return result
@@ -358,7 +366,17 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             val executableName = binary["getBaseName"] as? String ?: ""
             val linkTask = binary["getLinkTask"] as? Task ?: return@forEach
             val runConfiguration = KonanRunConfigurationModelImpl(binary["getRunTask"] as? Exec)
-            buildArtifact(executableName, linkTask, runConfiguration)?.let { result.add(it) }
+            val exportDependencies = binary?.let {
+                val transformationBuilder = MetadataDependencyTransformationBuilder(it)
+                buildDependencies(it, dependencyResolver, "getExportConfigurationName", "COMPILE", project, transformationBuilder)
+            }
+
+            buildArtifact(
+                executableName,
+                linkTask,
+                runConfiguration,
+                exportDependencies?.map { dependencyMapper.getId(it) }?.distinct()?.toTypedArray() ?: emptyArray()
+            )?.let { result.add(it) }
         }
 
         return result
@@ -408,7 +426,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val nativeMainRunTasks =
             if (platform == KotlinPlatform.NATIVE) buildNativeMainRunTasks(gradleTarget)
             else emptyList()
-        val artifacts = konanArtifacts(gradleTarget)
+        val artifacts = konanArtifacts(gradleTarget, dependencyResolver, project, dependencyMapper)
         val target = KotlinTargetImpl(
             gradleTarget.name,
             targetPresetName,

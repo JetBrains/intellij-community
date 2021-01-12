@@ -285,7 +285,9 @@ data class KonanArtifactModelImpl(
     override val file: File,
     override val buildTaskPath: String,
     override val runConfiguration: KonanRunConfigurationModel,
-    override val isTests: Boolean
+    override val isTests: Boolean,
+    override val freeCompilerArgs: Array<String>? = emptyArray(), // nullable for backwards compatibility
+    override val exportDependencies: Array<KotlinDependencyId>? = emptyArray() // nullable for backwards compatibility
 ) : KonanArtifactModel {
     constructor(artifact: KonanArtifactModel) : this(
         artifact.targetName,
@@ -295,7 +297,9 @@ data class KonanArtifactModelImpl(
         artifact.file,
         artifact.buildTaskPath,
         KonanRunConfigurationModelImpl(artifact.runConfiguration),
-        artifact.isTests
+        artifact.isTests,
+        checkNotNull(artifact.freeCompilerArgs) { "free compiler arguments are unexpectedly null" },
+        checkNotNull(artifact.exportDependencies) { "export dependencies are unexpectedly null" }
     )
 }
 

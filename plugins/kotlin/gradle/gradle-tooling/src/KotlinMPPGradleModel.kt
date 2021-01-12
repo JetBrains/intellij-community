@@ -195,6 +195,8 @@ interface KonanArtifactModel : Serializable {
     val buildTaskPath: String
     val runConfiguration: KonanRunConfigurationModel
     val isTests: Boolean
+    val freeCompilerArgs: Array<String>?
+    val exportDependencies: Array<KotlinDependencyId>?
 }
 
 interface KonanRunConfigurationModel : Serializable {
