@@ -297,7 +297,7 @@ public final class TerminalView {
 
       @Override
       public void onSessionClosed() {
-        terminalWidget.terminateProcess();
+        terminalWidget.close();
       }
 
       @Override

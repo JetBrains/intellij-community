@@ -5,13 +5,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.terminal.JBTerminalPanel;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
@@ -19,7 +16,6 @@ import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
-import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
@@ -31,7 +27,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
@@ -200,26 +195,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return TerminalUtil.hasRunningCommands(processTtyConnector);
     }
     throw new IllegalStateException("Cannot determine if there are running processes for " + connector.getClass()); //NON-NLS
-  }
-
-  @Override
-  public void terminateProcess() {
-    TtyConnector connector = getTtyConnector();
-    ProcessTtyConnector processTtyConnector = getProcessTtyConnector(connector);
-    if (processTtyConnector != null) {
-      UnixPtyProcess process = ObjectUtils.tryCast((processTtyConnector).getProcess(), UnixPtyProcess.class);
-      if (process != null) {
-        process.hangup();
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-          if (process.isAlive()) {
-            LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination");
-            super.terminateProcess();
-          }
-        }, 1000, TimeUnit.MILLISECONDS);
-        return;
-      }
-    }
-    super.terminateProcess();
   }
 
   @Override

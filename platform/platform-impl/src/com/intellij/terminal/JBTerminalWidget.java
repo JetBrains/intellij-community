@@ -221,10 +221,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     close();
   }
 
-  public void terminateProcess() {
-    close();
-  }
-
   @Override
   protected SearchComponent createSearchComponent() {
     return new SearchComponent() {

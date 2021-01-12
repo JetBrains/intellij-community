@@ -16,10 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +24,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
+import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -200,8 +199,25 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected TtyConnector createTtyConnector(PtyProcess process) {
+  protected @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset) {
+
+      @Override
+      public void close() {
+        if (process instanceof UnixPtyProcess) {
+          ((UnixPtyProcess)process).hangup();
+          AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+            if (process.isAlive()) {
+              LOG.info("Terminal hasn't been terminated by SIGHUP, performing default termination");
+              process.destroy();
+            }
+          }, 1000, TimeUnit.MILLISECONDS);
+        }
+        else {
+          process.destroy();
+        }
+      }
+
       @Override
       protected void resizeImmediately() {
         if (LOG.isDebugEnabled()) {
