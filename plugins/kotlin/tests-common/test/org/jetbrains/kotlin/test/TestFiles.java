@@ -113,8 +113,6 @@ public class TestFiles {
                 assert oldValue == null : "Module with name " + supportModule.name + " already present in file";
             }
 
-            boolean isReleaseCoroutines = !isDirectiveDefined(expectedText, "!LANGUAGE: -ReleaseCoroutines");
-
             boolean checkStateMachine = isDirectiveDefined(expectedText, "CHECK_STATE_MACHINE");
             boolean checkTailCallOptimization = isDirectiveDefined(expectedText, "CHECK_TAIL_CALL_OPTIMIZATION");
 
@@ -122,8 +120,7 @@ public class TestFiles {
                     factory.createFile(
                             supportModule,
                             "CoroutineUtil.kt",
-                            TestHelperGeneratorKt.createTextForCoroutineHelpers(
-                                    isReleaseCoroutines, checkStateMachine, checkTailCallOptimization),
+                            TestHelperGeneratorKt.createTextForCoroutineHelpers(checkStateMachine, checkTailCallOptimization),
                             parseDirectives(commonPrefixOrWholeFile)
                     ));
         }
