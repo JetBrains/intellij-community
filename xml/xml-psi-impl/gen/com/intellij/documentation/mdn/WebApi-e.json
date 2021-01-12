@@ -7,6 +7,7 @@
     "name": "Mozzila Contributors",
     "url": "https://github.com/mdn/content"
   },
+  "lang": "en-us",
   "symbols": {
     "ecdhkeyderiveparams": {
       "url": "$MDN_URL$/web/api/ecdhkeyderiveparams",

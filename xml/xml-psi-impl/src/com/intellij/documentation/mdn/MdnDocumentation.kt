@@ -33,7 +33,7 @@ fun getJsMdnDocumentation(qualifiedName: String, namespace: MdnApiNamespace): Md
     Pair(namespace, if (namespace == MdnApiNamespace.WebApi) getWebApiFragment(mdnQualifiedName) else null)
   ] as? MdnJsDocumentation ?: return null
   return documentation.symbols[mdnQualifiedName]
-    ?.let { MdnSymbolDocumentationAdapter(mdnQualifiedName, it) }
+    ?.let { MdnSymbolDocumentationAdapter(mdnQualifiedName, documentation, it) }
 }
 
 fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumentation? {
@@ -86,18 +86,25 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
     }
   }
     ?.takeIf { symbolName != null }
-    ?.let { MdnSymbolDocumentationAdapter(symbolName!!.toLowerCase(Locale.US), it) }
+    ?.let { (source, doc) -> MdnSymbolDocumentationAdapter(symbolName!!.toLowerCase(Locale.US), source, doc) }
 }
 
-private fun getTagDocumentation(namespace: MdnApiNamespace, tagName: String): MdnHtmlElementDocumentation? {
+private fun getTagDocumentation(namespace: MdnApiNamespace, tagName: String): Pair<MdnHtmlDocumentation, MdnHtmlElementDocumentation>? {
   val documentation = documentationCache[Pair(namespace, null)] as? MdnHtmlDocumentation ?: return null
-  return documentation.tags[tagName.let { documentation.tagAliases[it] ?: it }]
+  return documentation.tags[tagName.let { documentation.tagAliases[it] ?: it }]?.let { Pair(documentation, it) }
 }
 
-private fun getAttributeDocumentation(namespace: MdnApiNamespace, tagName: String?, attributeName: String): MdnHtmlAttributeDocumentation? {
+private fun getAttributeDocumentation(namespace: MdnApiNamespace,
+                                      tagName: String?,
+                                      attributeName: String): Pair<MdnHtmlDocumentation, MdnHtmlAttributeDocumentation>? {
   val documentation = documentationCache[Pair(namespace, null)] as? MdnHtmlDocumentation ?: return null
-  return tagName?.let { getTagDocumentation(namespace, it)?.attrs?.get(attributeName) }
-         ?: documentation.attrs[attributeName]
+  return tagName
+           ?.let { name ->
+             getTagDocumentation(namespace, name)?.let { (source, tagDoc) ->
+               tagDoc.attrs?.get(attributeName)?.let { Pair(source, it) }
+             }
+           }
+         ?: documentation.attrs[attributeName]?.let { Pair(documentation, it) }
 }
 
 interface MdnSymbolDocumentation {
@@ -112,9 +119,11 @@ interface MdnSymbolDocumentation {
                        additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String
 }
 
-class MdnSymbolDocumentationAdapter(private val name: String, private val doc: MdnRawSymbolDocumentation) : MdnSymbolDocumentation {
+class MdnSymbolDocumentationAdapter(private val name: String,
+                                    private val source: MdnDocumentation,
+                                    private val doc: MdnRawSymbolDocumentation) : MdnSymbolDocumentation {
   override val url: String
-    get() = fixMdnUrls(doc.url)
+    get() = fixMdnUrls(doc.url, source.lang)
 
   override val isDeprecated: Boolean
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
@@ -123,7 +132,7 @@ class MdnSymbolDocumentationAdapter(private val name: String, private val doc: M
     getDocumentation(withDefinition, quickDoc, null)
 
   override fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean, additionalSectionsContent: Consumer<java.lang.StringBuilder>?) =
-    buildDoc(doc, name, withDefinition, quickDoc, additionalSectionsContent)
+    buildDoc(doc, name, source.lang, withDefinition, quickDoc, additionalSectionsContent)
 
 }
 
@@ -134,13 +143,17 @@ interface MdnRawSymbolDocumentation {
   val sections: Map<String, String>?
 }
 
-interface MdnDocumentation
+interface MdnDocumentation {
+  val lang: String
+}
 
-data class MdnHtmlDocumentation(val attrs: Map<String, MdnHtmlAttributeDocumentation>,
+data class MdnHtmlDocumentation(override val lang: String,
+                                val attrs: Map<String, MdnHtmlAttributeDocumentation>,
                                 val tags: Map<String, MdnHtmlElementDocumentation>,
                                 val tagAliases: Map<String, String> = emptyMap()) : MdnDocumentation
 
-data class MdnJsDocumentation(val symbols: Map<String, MdnJsSymbolDocumentation>) : MdnDocumentation
+data class MdnJsDocumentation(override val lang: String,
+                              val symbols: Map<String, MdnJsSymbolDocumentation>) : MdnDocumentation
 
 data class MdnHtmlElementDocumentation(override val url: String,
                                        override val status: Set<MdnApiStatus>?,
@@ -203,9 +216,9 @@ private val webApiIndex: Map<String, String> by lazy {
     .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
 }
 
-private fun fixMdnUrls(content: String): String =
-  content.replace("$MDN_DOCS_URL_PREFIX/", "https://developer.mozilla.org/en_us/docs/")
-    .replace(MDN_DOCS_URL_PREFIX, "https://developer.mozilla.org/en_us/docs")
+private fun fixMdnUrls(content: String, lang: String): String =
+  content.replace("$MDN_DOCS_URL_PREFIX/", "https://developer.mozilla.org/$lang/docs/")
+    .replace(MDN_DOCS_URL_PREFIX, "https://developer.mozilla.org/$lang/docs")
 
 private fun getApiNamespace(namespace: String?, element: PsiElement?, symbolName: String): MdnApiNamespace =
   when {
@@ -241,6 +254,7 @@ private fun loadHtmlDocumentation(namespace: MdnApiNamespace): MdnHtmlDocumentat
 
 private fun buildDoc(doc: MdnRawSymbolDocumentation,
                      name: String,
+                     lang: String,
                      withDefinition: Boolean,
                      quickDoc: Boolean,
                      additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String {
@@ -277,7 +291,8 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
     .append(DocumentationMarkup.CONTENT_END)
   // Expand MDN URL prefix and fix relative "#" references to point to external MDN docs
   return fixMdnUrls(
-    buf.toString().replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url)}#$1\""))
+    buf.toString().replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url)}#$1\""),
+    lang)
 }
 
 private fun buildSubSection(items: Map<String, String>): String {

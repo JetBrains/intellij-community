@@ -124,7 +124,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun outputJson(outputFile: String, data: Map<String, Any>) {
     FileUtil.writeToFile(Path.of(PathManager.getCommunityHomePath(), OUTPUT_DIR, "$outputFile.json").toFile(),
                          GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
-                           .toJson(licenseAndAttribution() + data))
+                           .toJson(additionalMetadata() + data))
   }
 
   private fun <T> extractInformationSimple(mdnPath: String, extractor: (File) -> T): Map<String, T> =
@@ -165,7 +165,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .toMap()
 
 
-  private fun licenseAndAttribution(): Map<String, Any> =
+  private fun additionalMetadata(): Map<String, Any> =
     mapOf(
       "license" to mapOf(
         "name" to "CC-BY-SA 2.5",
@@ -174,7 +174,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       "author" to mapOf(
         "name" to "Mozzila Contributors",
         "url" to "https://github.com/mdn/content"
-      )
+      ),
+      "lang" to BUILT_LANG,
     )
 
   private fun extractElementDocumentation(dir: File,

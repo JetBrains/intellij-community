@@ -31,9 +31,9 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "<bo<caret>dy onload=\"\">\n" +
            "</body>\n" +
            "</html>",
-           "<div class='definition'><pre>body</pre></div><div class='content'><div></div>\n" +
+           "<div class='definition'><pre>body</pre></div><div class='content'>" +
            "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;body&gt;</code> Element</strong> represents the content of",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/html/element/body"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body"));
   }
 
   public void testQuickDocumentationHtml5TagDialog() {
@@ -43,9 +43,9 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "<dia<caret>log></dialog\n" +
            "</body>\n" +
            "</html>",
-           "<div class='definition'><pre>dialog</pre></div><div class='content'><div></div>\n" +
+           "<div class='definition'><pre>dialog</pre></div><div class='content'>" +
            "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;dialog&gt;</code> element</strong> represents a dialog box",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/html/element/dialog"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/dialog"));
   }
 
   public void testQuickDocumentationHtml5Attr() {
@@ -55,7 +55,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</body>\n" +
            "</html>",
            "<div class='definition'><pre>onload</pre></div><div class='content'>Function to call when the document has finished loading.",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/html/element/body#attr-onload"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#attr-onload"));
   }
 
   public void testQuickDocumentationHtml5Svg() {
@@ -66,9 +66,9 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</svg>\n" +
            "</body>\n" +
            "</html>",
-           "<div class='definition'><pre>svg</pre></div><div class='content'><div></div>\n" +
+           "<div class='definition'><pre>svg</pre></div><div class='content'>" +
            "<p>The <code>svg</code> element is a container that defines a new coordinate system and",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/svg/element/svg"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/element/svg"));
   }
 
   public void testQuickDocumentationHtml5SvgImage() {
@@ -81,9 +81,9 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</svg>\n" +
            "</body>\n" +
            "</html>",
-           "<div class='definition'><pre>image</pre></div><div class='content'><div></div>\n" +
+           "<div class='definition'><pre>image</pre></div><div class='content'>" +
            "<p><span class=\"seoSummary\">The <strong><code>&lt;image&gt;</code></strong> SVG element includes images inside SVG documents.",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/svg/element/image"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/element/image"));
   }
 
   public void testQuickDocumentationHtml5Math() {
@@ -94,9 +94,9 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</math>\n" +
            "</body>\n" +
            "</html>",
-           "<div class='definition'><pre>math</pre></div><div class='content'><div></div>\n" +
+           "<div class='definition'><pre>math</pre></div><div class='content'>" +
            "<p class=\"summary\">The top-level element in MathML is <code>&lt;math&gt;</code>.",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/mathml/element/math"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/element/math"));
   }
 
   public void testQuickDocumentationHtml5MathMrow() {
@@ -109,9 +109,9 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</math>\n" +
            "</body>\n" +
            "</html>",
-           "<div class='definition'><pre>mrow</pre></div><div class='content'><div></div>\n" +
+           "<div class='definition'><pre>mrow</pre></div><div class='content'>" +
            "<p class=\"summary\">The MathML <code>&lt;mrow&gt;</code> element is used to group sub-expressions",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/mathml/element/mrow"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/element/mrow"));
   }
 
   public void testQuickDocumentationHtml4Tag() {
@@ -122,7 +122,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</body>\n" +
            "</html>",
            "Tag name:&nbsp;<b>body</b><br>Description  :&nbsp;=================== Document Body ====================================",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/html/element/body"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body"));
   }
 
   public void testQuickDocumentationHtml4Attr() {
@@ -133,14 +133,14 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</body>\n" +
            "</html>",
            "<div class='definition'><pre>onload</pre></div><div class='content'>Function to call when the document has finished loading.",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/html/element/body#attr-onload"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#attr-onload"));
   }
 
   public void testQuickDocumentationHtml5Script() {
     doTest("<scr<caret>ipt></script>",
-           "<div class='definition'><pre>script</pre></div><div class='content'><p></p><p></p>\n" +
+           "<div class='definition'><pre>script</pre></div><div class='content'>" +
            "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;script&gt;</code> element</strong> is used to embed executable",
-           Collections.singletonList("https://developer.mozilla.org/docs/web/html/element/script"));
+           Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/script"));
   }
 
   private void doTest(String text, String doc, List<String> url) {
