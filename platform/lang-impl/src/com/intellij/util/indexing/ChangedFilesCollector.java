@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +41,8 @@ import java.util.stream.Stream;
 @ApiStatus.Internal
 public final class ChangedFilesCollector extends IndexedFilesListener {
   private static final Logger LOG = Logger.getInstance(ChangedFilesCollector.class);
+  static final boolean CLEAR_NON_INDEXABLE_FILE_DATA =
+    SystemProperties.getBooleanProperty("idea.indexes.clear.non.indexable.file.data", true);
 
   private final IntObjectMap<VirtualFile> myFilesToUpdate =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
@@ -87,7 +90,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return myUpdatingFiles.get() > 0;
   }
 
-  void scheduleForUpdate(VirtualFile file) {
+  void scheduleForUpdate(@NotNull VirtualFile file) {
     if (VfsEventsMerger.LOG != null) {
       VfsEventsMerger.LOG.info("File " + file + " is scheduled for update");
     }
@@ -95,9 +98,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (!(file instanceof DeletedVirtualFileStub)) {
       IndexableFileSet setForFile = myManager.getIndexableSetForFile(file);
       if (setForFile == null) {
-        if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-          checkNotIndexedByContentBasedIndexes(file, fileId);
-        }
+        removeNonIndexableFileData(file, fileId);
         return;
       }
     }
@@ -105,7 +106,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   void removeScheduledFileFromUpdate(VirtualFile file) {
-    final int fileId = FileBasedIndexImpl.getFileId(file);
+    int fileId = FileBasedIndex.getFileId(file);
     VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
       myFilesToUpdate.remove(fileId);
@@ -172,6 +173,18 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         if (registeredIndexes != null && registeredIndexes.isInitialized()) ensureUpToDateAsync();
       }
     };
+  }
+
+  private void removeNonIndexableFileData(@NotNull VirtualFile file, int fileId) {
+    if (CLEAR_NON_INDEXABLE_FILE_DATA) {
+      List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
+      if (!extensions.isEmpty()) {
+        myManager.removeDataFromIndicesForFile(fileId, file);
+      }
+    }
+    else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      checkNotIndexedByContentBasedIndexes(file, fileId);
+    }
   }
 
   private static boolean memoryStorageCleaningNeeded(@NotNull VFileEvent event) {
@@ -293,7 +306,14 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  private void checkNotIndexedByContentBasedIndexes(VirtualFile file, int fileId) {
+  private void checkNotIndexedByContentBasedIndexes(@NotNull VirtualFile file, int fileId) {
+    List<ID<?, ?>> contentDependentIndexes = getIndexedContentDependentExtensions(fileId);
+    if (!contentDependentIndexes.isEmpty()) {
+      LOG.error("indexes " + contentDependentIndexes + " will not be updated for file = " + file + ", id = " + fileId);
+    }
+  }
+
+  private @NotNull List<ID<?, ?>> getIndexedContentDependentExtensions(int fileId) {
     List<ID<?, ?>> indexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
     RegisteredIndexes registeredIndexes = myManager.getRegisteredIndexes();
     List<ID<?, ?>> contentDependentIndexes;
@@ -312,9 +332,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         return registeredIndexes.isContentDependentIndex(id);
       });
     }
-    if (!contentDependentIndexes.isEmpty()) {
-      LOG.error("indexes " + contentDependentIndexes + " will not be updated for file = " + file + ", id = " + fileId);
-    }
+    return contentDependentIndexes;
   }
 
   @TestOnly

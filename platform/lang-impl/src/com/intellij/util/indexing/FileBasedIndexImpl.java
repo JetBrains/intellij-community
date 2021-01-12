@@ -533,7 +533,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  private void removeDataFromIndicesForFile(int fileId, VirtualFile file) {
+  protected void removeDataFromIndicesForFile(int fileId, VirtualFile file) {
     VirtualFile originalFile = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile() : file;
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
@@ -955,7 +955,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                               EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
           }
 
-          markFileIndexed(vFile);
+          markFileIndexed(vFile, newFc);
           try {
             getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc).compute();
           }
@@ -1375,7 +1375,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       IndexedHashesSupport.getOrInitIndexedHash((FileContentImpl)currentFC);
     }
 
-    markFileIndexed(file);
+    markFileIndexed(file, currentFC);
     try {
       Computable<Boolean> storageUpdate;
       long mapInputTime = System.nanoTime();
@@ -1435,8 +1435,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  private static void markFileIndexed(@Nullable VirtualFile file) {
-    if (ourIndexedFile.get() != null || ourFileToBeIndexed.get() != null) {
+  private static void markFileIndexed(@Nullable VirtualFile file,
+                                      @Nullable FileContent fc) {
+    // TODO restore original assertion
+    if (fc != null && (ourIndexedFile.get() != null || ourFileToBeIndexed.get() != null)) {
       throw new AssertionError("Reentrant indexing");
     }
     ourIndexedFile.set(file);
@@ -1725,7 +1727,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ChangedFilesCollector changedFilesCollector = getChangedFilesCollector();
     for (VirtualFile file : changedFilesCollector.getAllFilesToUpdate()) {
       final int fileId = getFileId(file);
-      if (!file.isValid()) {
+      if (!file.isValid() || ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA) {
         removeDataFromIndicesForFile(fileId, file);
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }

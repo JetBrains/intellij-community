@@ -1506,6 +1506,27 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(CountingFileBasedIndexExtension.COUNTER.get() > 0)
   }
 
+  void 'test modified excluded file not present in index'() {
+    // we don't update excluded file index data, so we should wipe it to be consistent
+    def file = myFixture.addFileToProject("src/to_be_excluded/A.java", "class A {}").virtualFile
+    assertNotNull(findClass("A"))
+
+    def fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.instance
+    def trigramId = TrigramIndex.INDEX_ID
+    def fileId = ((VirtualFileWithId)file).getId()
+
+    fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
+    assertNotEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
+
+    def parentDir = file.parent
+    PsiTestUtil.addExcludedRoot(myFixture.getModule(), parentDir)
+    VfsUtil.saveText(file, "class B {}")
+
+    fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
+    assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
+  }
+
+
   private <T> ThrowableComputable<T, RuntimeException> asComputable(CachedValue<T> cachedValue) {
     return new ThrowableComputable<T, RuntimeException>() {
       @Override
