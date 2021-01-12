@@ -87,7 +87,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
         return value;
       }
     });
-    severitiesColumn.setMaxWidth(JBUIScale.scale(20));
+    severitiesColumn.setMaxWidth(JBUIScale.scale(22));
 
     TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
     isEnabledColumn.setMaxWidth(JBUIScale.scale(22 + getAdditionalPadding()));
