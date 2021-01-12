@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentMap
 
 class SimpleSensitiveDataValidator<T : Comparable<T>>(initialMetadataContent: String,
                                                       private val buildProducer: EventLogBuildProducer<T>,
+                                                      private val excludeFields: List<String> = emptyList(),
                                                       utilRulesProducer: UtilRuleProducer = ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER) {
 
   private val validationRuleFactory = ValidationSimpleRuleFactory(utilRulesProducer)
@@ -65,7 +66,7 @@ class SimpleSensitiveDataValidator<T : Comparable<T>>(initialMetadataContent: St
   private fun createValidators(descriptors: EventGroupRemoteDescriptors): Map<String?, EventGroupRules> {
     val globalRulesHolder = GlobalRulesHolder(descriptors.rules)
     val groups = descriptors.groups
-    return groups.associate { it.id to EventGroupRules.create(it, globalRulesHolder, validationRuleFactory) }
+    return groups.associate { it.id to EventGroupRules.create(it, globalRulesHolder, validationRuleFactory, excludeFields) }
   }
 
   private fun guaranteeCorrectEventData(context: @NotNull EventContext,

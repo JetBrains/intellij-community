@@ -21,20 +21,29 @@ import static com.intellij.internal.statistic.eventLog.validator.rules.utils.Val
 public final class EventGroupRules {
   public static final EventGroupRules EMPTY =
     new EventGroupRules(Collections.emptySet(), Collections.emptyMap(), EventGroupContextData.EMPTY,
-                        new ValidationSimpleRuleFactory(REJECTING_UTIL_URL_PRODUCER));
+                        new ValidationSimpleRuleFactory(REJECTING_UTIL_URL_PRODUCER), Collections.emptyList());
 
   private final FUSRule[] eventIdRules;
   private final Map<String, FUSRule[]> eventDataRules = new ConcurrentHashMap<>();
+  private final List<String> VALIDATION_TYPES = Arrays.stream(values()).map(it -> it.getDescription()).collect(Collectors.toList());
+  private final List<String> myExcludedFields;
 
   private EventGroupRules(@Nullable Set<String> eventIdRules,
                           @Nullable Map<String, Set<String>> eventDataRules,
                           @NotNull EventGroupContextData contextData,
-                          @NotNull ValidationSimpleRuleFactory factory) {
-    this.eventIdRules = factory.getRules(null, eventIdRules, contextData);
+                          @NotNull ValidationSimpleRuleFactory factory,
+                          @NotNull List<String> excludedFields) {
+    myExcludedFields = excludedFields;
+    this.eventIdRules = factory.getRules(eventIdRules, contextData);
 
     if (eventDataRules != null) {
       for (Map.Entry<String, Set<String>> entry : eventDataRules.entrySet()) {
-        this.eventDataRules.put(entry.getKey(), factory.getRules(entry.getKey(), entry.getValue(), contextData));
+        if (myExcludedFields.contains(entry.getKey())) {
+          this.eventDataRules.put(entry.getKey(), new FUSRule[]{FUSRule.TRUE});
+        }
+        else {
+          this.eventDataRules.put(entry.getKey(), factory.getRules(entry.getValue(), contextData));
+        }
       }
     }
   }
@@ -57,6 +66,7 @@ public final class EventGroupRules {
 
   public ValidationResultType validateEventId(@NotNull EventContext context) {
     ValidationResultType prevResult = null;
+    if (VALIDATION_TYPES.contains(context.eventId)) return ACCEPTED;
     for (FUSRule rule : eventIdRules) {
       ValidationResultType resultType = rule.validate(context.eventId, context);
       if (resultType.isFinal()) return resultType;
@@ -66,11 +76,12 @@ public final class EventGroupRules {
   }
 
   /**
-   * @return validated data, incorrect values are replaced with ValidationResultType#description
+   * @return validated data, incorrect values are replaced with {@link ValidationResultType#getDescription()}
    */
   public Object validateEventData(@NotNull String key,
                                   @Nullable Object data,
                                   @NotNull EventContext context) {
+    if (VALIDATION_TYPES.contains(data) || myExcludedFields.contains(key)) return data;
     if (data == null) return REJECTED.getDescription();
 
     if (data instanceof Map<?, ?>) {
@@ -115,11 +126,12 @@ public final class EventGroupRules {
 
   public static @NotNull EventGroupRules create(@NotNull EventGroupRemoteDescriptor group,
                                                 @NotNull GlobalRulesHolder globalRulesHolder,
-                                                @NotNull ValidationSimpleRuleFactory factory) {
+                                                @NotNull ValidationSimpleRuleFactory factory,
+                                                @NotNull List<String> excludedFields) {
     GroupRemoteRule rules = group.rules;
     return rules == null
            ? EMPTY
            : new EventGroupRules(rules.event_id, rules.event_data,
-                                 new EventGroupContextData(rules.enums, rules.regexps, globalRulesHolder), factory);
+                                 new EventGroupContextData(rules.enums, rules.regexps, globalRulesHolder), factory, excludedFields);
   }
 }

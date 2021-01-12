@@ -35,7 +35,7 @@ public class ValidationSimpleRuleFactory {
     this(REJECTING_UTIL_URL_PRODUCER);
   }
 
-  public FUSRule @NotNull [] getRules(@Nullable String key, @Nullable Set<String> rules,
+  public FUSRule @NotNull [] getRules(@Nullable Set<String> rules,
                                       @NotNull EventGroupContextData contextData) {
     if (rules == null) return FUSRule.EMPTY_ARRAY;
     List<FUSRule> fusRules = new ArrayList<>();

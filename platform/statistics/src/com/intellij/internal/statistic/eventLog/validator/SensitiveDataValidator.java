@@ -183,7 +183,6 @@ public class SensitiveDataValidator {
                                    @NotNull Object entryValue) {
     if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
     if (groupRules == null) return UNDEFINED_RULE.getDescription();
-    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return entryValue;
     return groupRules.validateEventData(key, entryValue, context);
   }
 

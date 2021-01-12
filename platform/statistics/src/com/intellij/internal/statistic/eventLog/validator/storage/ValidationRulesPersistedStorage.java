@@ -1,17 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
-import com.intellij.internal.statistic.eventLog.EventLogBuild;
-import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService;
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
-import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
-import com.intellij.internal.statistic.eventLog.connection.metadata.*;
-import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationRuleFactory;
+import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -142,11 +140,18 @@ public class ValidationRulesPersistedStorage implements ValidationRulesStorage {
   @NotNull
   protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
+    return createValidators(build, groups, globalRulesHolder);
+  }
+
+  @NotNull
+  public static Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
+                                                               @NotNull EventGroupRemoteDescriptors groups,
+                                                               @NotNull GlobalRulesHolder globalRulesHolder) {
+    ValidationSimpleRuleFactory ruleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer());
     return groups.groups.stream()
       .filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build))
       .collect(Collectors.toMap(group -> group.id, group -> {
-        return EventGroupRules.create(group, globalRulesHolder, new ValidationRuleFactory());
+        return EventGroupRules.create(group, globalRulesHolder, ruleFactory, FeatureUsageData.Companion.getPlatformDataKeys());
       }));
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Used to validate events before recording it locally.
- *
- * @see SensitiveDataValidator
- * @see CustomValidationRule
  */
 public interface FUSRule {
     FUSRule[] EMPTY_ARRAY = new FUSRule[0];
@@ -21,7 +18,6 @@ public interface FUSRule {
      * <ul>
      *     <li>{@link ValidationResultType#ACCEPTED} - data is checked and should be recorded as is;</li>
      *     <li>{@link ValidationResultType#THIRD_PARTY} - data is correct but is implemented in an unknown third-party plugin, e.g. third-party file type<br/>
-     *     {@link PluginInfo#isDevelopedByJetBrains()}, {@link PluginInfo#isSafeToReport()};</li>
      *     <li>{@link ValidationResultType#REJECTED} - unexpected data, e.g. cannot find run-configuration by provided id;</li>
      * </ul>
      *
