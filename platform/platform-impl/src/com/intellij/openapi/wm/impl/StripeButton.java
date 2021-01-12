@@ -11,8 +11,10 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.RelativeFont;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,7 +328,10 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   @Override
   public void updateUI() {
     setUI(StripeButtonUI.createUI(this));
-    setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+
+    Font font = StartupUiUtil.getLabelFont();
+    RelativeFont relativeFont = RelativeFont.NORMAL.fromResource("StripeButton.fontSizeOffset", -2);
+    setFont(relativeFont.derive(font));
   }
 
   void updatePresentation() {

@@ -873,7 +873,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getContextHelpForeground() {
-    return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+    return JBUI.CurrentTheme.ContextHelp.foreground();
   }
 
   public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {

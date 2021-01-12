@@ -25,10 +25,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.GotItTooltip;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
@@ -380,7 +377,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private void tweakActionComponentUI(@NotNull Component actionComponent) {
     if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
       // tweak font & color for editor toolbar to match editor tabs style
-      actionComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      actionComponent.setFont(RelativeFont.NORMAL.fromResource("Toolbar.Component.fontSizeOffset", -2).derive(StartupUiUtil.getLabelFont()));
       actionComponent.setForeground(ColorUtil.dimmer(JBColor.BLACK));
     }
   }

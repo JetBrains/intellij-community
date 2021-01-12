@@ -184,10 +184,10 @@ public class TabLabel extends JPanel implements Accessible {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
       public Font getFont() {
-        if (isFontSet() || !myTabs.useSmallLabels()) {
-          return super.getFont();
-        }
-        return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
+        Font font = super.getFont();
+
+        return (isFontSet() || !myTabs.useSmallLabels()) ? font :
+               RelativeFont.NORMAL.fromResource("EditorTabs.fontSizeOffset", -2).derive(font);
       }
 
       @Override

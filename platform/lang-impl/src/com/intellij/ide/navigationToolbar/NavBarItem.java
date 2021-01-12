@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.DirtyUI;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
@@ -91,6 +92,8 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
       setFocusBorderAroundIcon(true);
     }
 
+    Font font = getFont();
+    setFont(RelativeFont.NORMAL.fromResource("NavBar.fontSizeOffset", 0).derive(font));
     update();
   }
 

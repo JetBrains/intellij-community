@@ -10,10 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.EditorTextComponent;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -346,7 +343,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private static class CommentLabel extends JBLabel {
     private CommentLabel(@NotNull @NlsContexts.Label String text) {
       super(text);
-      setForeground(UIUtil.getContextHelpForeground());
+      setForeground(JBUI.CurrentTheme.ContextHelp.foreground());
     }
 
     @Override
@@ -354,10 +351,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       super.setUI(ui);
 
       if (SystemInfo.isMac) {
-        Font font = getFont();
-        float size = font.getSize2D();
-        font = new FontUIResource(font.deriveFont(size - JBUIScale.scale(2))); // Allow to reset the font by UI
-        setFont(font);
+        setFont(new FontUIResource(RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(getFont())));
       }
     }
   }

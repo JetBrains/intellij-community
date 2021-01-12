@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.util.*;
-
 
 import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static com.intellij.util.ReflectionUtil.getDeclaredField;
@@ -51,7 +51,6 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   private boolean useSelectedRectBackup = false;
 
   private static final JBValue OFFSET = new JBValue.Float(1);
-  private static final JBValue FONT_SIZE_OFFSET = new JBValue.UIInteger("TabbedPane.fontSizeOffset", -1);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -107,7 +106,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   private void modifyFontSize() {
     if (SystemInfo.isMac || SystemInfo.isLinux) {
       Font font = UIManager.getFont("TabbedPane.font");
-      tabPane.setFont(tabPane.getFont().deriveFont((float)font.getSize() + FONT_SIZE_OFFSET.get()));
+      tabPane.setFont(RelativeFont.NORMAL.fromResource("TabbedPane.fontSizeOffset", -1).derive(font));
     }
   }
 

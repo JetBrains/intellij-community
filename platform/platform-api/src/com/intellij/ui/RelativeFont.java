@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
@@ -65,6 +69,19 @@ public final class RelativeFont implements PropertyChangeListener {
   public RelativeFont small() {
     float size = mySize == null ? 1f : mySize;
     return new RelativeFont(myFamily, myStyle, size / MULTIPLIER);
+  }
+
+  /**
+   * @return a new instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
+   * over the current instance.
+   */
+  public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset) {
+    int offset = JBUI.getInt(propertyName, defaultOffset);
+    if (offset == 0) return this;
+    else {
+      float multiplier = (float)Math.pow(MULTIPLIER, offset);
+      return new RelativeFont(myFamily, myStyle, mySize != null ? mySize * multiplier : multiplier);
+    }
   }
 
   /**

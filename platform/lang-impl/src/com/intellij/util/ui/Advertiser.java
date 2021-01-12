@@ -5,7 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.RelativeFont;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +90,8 @@ public class Advertiser {
 
   private static Font adFont() {
     Font font = UIUtil.getLabelFont();
-    return font.deriveFont((float)(font.getSize() - JBUIScale.scale(2)));
+    RelativeFont relativeFont = RelativeFont.NORMAL.fromResource("Popup.Advertiser.fontSizeOffset", -2);
+    return relativeFont.derive(font);
   }
 
   public void addAdvertisement(@PopupAdvertisement @NotNull String text, @Nullable Icon icon) {

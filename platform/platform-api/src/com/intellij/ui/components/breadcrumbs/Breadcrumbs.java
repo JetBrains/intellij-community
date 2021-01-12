@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
@@ -183,6 +184,12 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     font = font.deriveFont(style);
     cache[style] = font;
     return font;
+  }
+
+  @Override
+  public Font getFont() {
+    Font font = super.getFont();
+    return font != null ? RelativeFont.NORMAL.fromResource("Breadcrumbs.fontSizeOffset", 0).derive(font) : null;
   }
 
   @FontStyle

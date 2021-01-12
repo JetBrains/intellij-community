@@ -1004,6 +1004,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
           border = JBUI.Borders.merge(border, indent, true);
           cmp.setBorder(border);
+
+          Font font = cmp.getFont();
+          cmp.setFont(RelativeFont.NORMAL.fromResource("Table.Header.fontSizeOffset", 0).derive(font));
           return cmp;
         }
       };
