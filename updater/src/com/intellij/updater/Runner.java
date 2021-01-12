@@ -20,6 +20,7 @@ import java.util.zip.ZipInputStream;
 
 public class Runner {
   private static final String PATCH_FILE_NAME = "patch-file.zip";
+  private static final String LOG_FILE_NAME = "idea_updater.log";
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";  // must be equal to UpdateCheckerComponent.ERROR_LOG_FILE_NAME
 
   private static Logger logger = null;
@@ -56,7 +57,7 @@ public class Runner {
 
   private static void initLogger() {
     String logDirectory = Utils.findDirectory(1_000_000L);
-    logPath = new File(logDirectory, "idea_updater.log").getAbsolutePath();
+    logPath = new File(logDirectory, LOG_FILE_NAME).getAbsolutePath();
 
     FileAppender update = new FileAppender();
     update.setFile(logPath);

@@ -194,7 +194,6 @@ public final class Main {
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-
     isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || !isCommandLine && isFileAfterOptions(args);
   }
 
@@ -217,8 +216,8 @@ public final class Main {
   }
 
   @TestOnly
-  public static void setHeadlessInTestMode(boolean isHeadless) {
-    Main.isHeadless = isHeadless;
+  public static void setHeadlessInTestMode(boolean headless) {
+    isHeadless = headless;
     isCommandLine = true;
     isLightEdit = false;
   }
