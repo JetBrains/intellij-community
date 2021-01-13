@@ -22,16 +22,20 @@ import com.intellij.psi.search.searches.MethodReferencesSearch.SearchParameters
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.canBeResolvedWithFrontEnd
-import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
+import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallConstructorUsagesTask
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 
-class KotlinConstructorDelegationCallReferenceSearcher : QueryExecutorBase<PsiReference, SearchParameters>(true) {
+class KotlinConstructorDelegationCallReferenceSearcher : QueryExecutorBase<PsiReference, SearchParameters>() {
     override fun processQuery(queryParameters: SearchParameters, consumer: Processor<in PsiReference>) {
-        val method = queryParameters.method
-        if (!method.isConstructor) return
-        if (!method.canBeResolvedWithFrontEnd()) return
+        runReadAction {
+            val method = queryParameters.method
+            if (!method.isConstructor) return@runReadAction null
+            if (!method.canBeResolvedWithFrontEnd()) return@runReadAction null
+            val searchScope = method.useScope.intersectWith(queryParameters.effectiveSearchScope)
 
-        method.processDelegationCallConstructorUsages(method.useScope.intersectWith(queryParameters.effectiveSearchScope)) {
-            it.calleeExpression?.mainReference?.let { consumer.process(it) } ?: true
-        }
+            method.buildProcessDelegationCallConstructorUsagesTask(searchScope) {
+                it.calleeExpression?.mainReference?.let(consumer::process) ?: true
+            }
+        }?.invoke()
     }
 }

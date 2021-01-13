@@ -92,12 +92,12 @@ private fun processInheritorsDelegatingCallToSpecifiedConstructor(
 
 private fun processClassDelegationCallsToSpecifiedConstructor(
     klass: KtClass,
-    constructorCallHadle: KotlinSearchUsagesSupport.ConstructorCallHandle,
+    constructorCallHandle: KotlinSearchUsagesSupport.ConstructorCallHandle,
     process: (KtCallElement) -> Boolean
 ): Boolean {
     for (secondaryConstructor in klass.secondaryConstructors) {
         val delegationCall = secondaryConstructor.getDelegationCall()
-        if (constructorCallHadle.referencedTo(delegationCall)) {
+        if (constructorCallHandle.referencedTo(delegationCall)) {
             if (!process(delegationCall)) return false
         }
     }
@@ -108,7 +108,7 @@ private fun processClassDelegationCallsToSpecifiedConstructor(
                 declaration.superTypeListEntries.firstOrNull() as? KtSuperTypeCallEntry
                     ?: continue
 
-            if (constructorCallHadle.referencedTo(delegationCall.calleeExpression)) {
+            if (constructorCallHandle.referencedTo(delegationCall.calleeExpression)) {
                 if (!process(delegationCall)) return false
             }
         }

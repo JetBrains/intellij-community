@@ -75,12 +75,8 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
             consumer: Processor<in PsiReference>,
             optimizer: SearchRequestCollector,
             options: KotlinReferencesSearchOptions
-        ): OperatorReferenceSearcher<*>? {
-            return runReadAction {
-                declaration.isValid.ifTrue {
-                    createInReadAction(declaration, searchScope, consumer, optimizer, options)
-                }
-            }
+        ): OperatorReferenceSearcher<*>? = declaration.isValid.ifTrue {
+            createInReadAction(declaration, searchScope, consumer, optimizer, options)
         }
 
         private fun createInReadAction(

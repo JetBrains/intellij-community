@@ -22,19 +22,22 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.canBeResolvedWithFrontEnd
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReferenceSearcher
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 
-class KotlinConventionMethodReferencesSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>(true) {
+class KotlinConventionMethodReferencesSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>() {
     override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
-        val method = queryParameters.method
-        if (!method.canBeResolvedWithFrontEnd()) return
+        runReadAction {
+            val method = queryParameters.method
+            if (!method.canBeResolvedWithFrontEnd()) return@runReadAction null
 
-        val operatorSearcher = OperatorReferenceSearcher.create(
-            queryParameters.method,
-            queryParameters.effectiveSearchScope,
-            consumer,
-            queryParameters.optimizer,
-            KotlinReferencesSearchOptions(acceptCallableOverrides = true)
-        )
-        operatorSearcher?.run()
+            val operatorSearcher = OperatorReferenceSearcher.create(
+                queryParameters.method,
+                queryParameters.effectiveSearchScope,
+                consumer,
+                queryParameters.optimizer,
+                KotlinReferencesSearchOptions(acceptCallableOverrides = true)
+            )
+            operatorSearcher
+        }?.run()
     }
 }

@@ -35,7 +35,7 @@ data class KotlinTodoOccurrence(private val _file: PsiFile, private val _textRan
     override fun getTextRange() = _textRange
 }
 
-class KotlinTodoSearcher : QueryExecutorBase<IndexPatternOccurrence, IndexPatternSearch.SearchParameters>(true) {
+class KotlinTodoSearcher : QueryExecutorBase<IndexPatternOccurrence, IndexPatternSearch.SearchParameters>() {
     override fun processQuery(queryParameters: IndexPatternSearch.SearchParameters, consumer: Processor<in IndexPatternOccurrence>) {
         val file = queryParameters.file as? KtFile ?: return
         val virtualFile = file.virtualFile ?: return
