@@ -257,7 +257,7 @@ open class WrapLayout : FlowLayout {
       for (i in rowStart until rowEnd) {
         val m = target.getComponent(i)
         if (m.isVisible) {
-          sum += m.minimumSize.width
+          sum += max(m.preferredSize.width, m.minimumSize.width)
         }
       }
       expand = target.width.toDouble() / sum
@@ -272,7 +272,7 @@ open class WrapLayout : FlowLayout {
         else {
           y + (height - m.height) / 2
         }
-        val w = if (fillWidth) floor(m.minimumSize.width * expand).toInt() else m.width
+        val w = if (fillWidth) floor(max(m.preferredSize.width, m.minimumSize.width) * expand).toInt() else m.width
         if (ltr) {
           m.setBounds(x, cy, w, m.height)
         }
