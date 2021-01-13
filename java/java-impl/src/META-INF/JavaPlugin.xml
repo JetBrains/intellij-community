@@ -1689,11 +1689,10 @@
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.intermediaryVariable.ReturnSeparatedFromComputationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RawTypeCanBeGeneric" bundle="messages.JavaBundle"
-                     key="inspection.raw.variable.type.can.be.generic.name"
-                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.miscGenerics.RawTypeCanBeGenericInspection"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" suppressId="rawtypes" alternativeId="RawUseOfParameterized" shortName="RawUseOfParameterizedType" bundle="messages.InspectionGadgetsBundle"
+                     key="raw.use.of.parameterized.type.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantArrayCreation" bundle="messages.JavaBundle"
                      key="inspection.redundant.array.creation.display.name"
                      groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"

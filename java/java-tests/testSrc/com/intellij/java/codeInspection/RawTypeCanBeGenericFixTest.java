@@ -17,7 +17,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.miscGenerics.RawTypeCanBeGenericInspection;
+import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.module.Module;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class RawTypeCanBeGenericTest extends LightJavaCodeInsightFixtureTestCase {
+public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestCase {
   private static final ProjectDescriptor JDK_8_WITH_LEVEL_6 = new ProjectDescriptor(LanguageLevel.JDK_1_6) {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -49,7 +49,7 @@ public class RawTypeCanBeGenericTest extends LightJavaCodeInsightFixtureTestCase
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new RawTypeCanBeGenericInspection());
+    myFixture.enableInspections(new RawUseOfParameterizedTypeInspection());
   }
 
   public void testField() {
@@ -102,11 +102,11 @@ public class RawTypeCanBeGenericTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   private static String getMessage(String variable, String type) {
-    return JavaBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", variable, type);
+    return JavaBundle.message("raw.variable.type.can.be.generic.quickfix", variable, type);
   }
 
   private static String getMessagePrefix() {
-    String message = JavaBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", "@", "@");
+    String message = JavaBundle.message("raw.variable.type.can.be.generic.quickfix", "@", "@");
     return message.substring(0, message.indexOf("@"));
   }
 

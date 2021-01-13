@@ -1,5 +1,5 @@
 import java.util.*;
 
 public class F {
-  List list <caret>= new ArrayList<String>();
+  List<caret> list = new ArrayList<String>();
 }

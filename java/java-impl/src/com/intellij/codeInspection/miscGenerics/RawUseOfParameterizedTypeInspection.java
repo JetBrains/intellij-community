@@ -1,27 +1,22 @@
-/*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.siyeh.ig.migration;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.miscGenerics;
 
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -31,6 +26,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ *  @author dsl
+ */
 public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreObjectConstruction = false;
@@ -40,6 +38,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean ignoreUncompilable = true;
 
   @SuppressWarnings("PublicField") public boolean ignoreParametersOfOverridingMethods = false;
+
+  @SuppressWarnings("PublicField") public boolean ignoreWhenQuickFixNotAvailable = false;
 
   @Pattern(VALID_ID_PATTERN)
   @NotNull
@@ -57,7 +57,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("raw.use.of.parameterized.type.problem.descriptor");
+    return JavaBundle.message("inspection.raw.use.of.parameterized.type.problem.descriptor");
   }
 
   @Override
@@ -72,12 +72,22 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
                              "ignoreUncompilable");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.overridden.parameter.option"),
                              "ignoreParametersOfOverridingMethods");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.quickfix.not.available.option"),
+                             "ignoreWhenQuickFixNotAvailable");
     return optionsPanel;
   }
 
   @Override
   public boolean shouldInspect(PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    if (Boolean.FALSE.equals(infos[0])) {
+      return null;
+    }
+    return new RawTypeCanBeGenericFix((String)infos[1]);
   }
 
   @Override
@@ -93,6 +103,9 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (ignoreObjectConstruction) {
         return;
       }
+      if (ignoreWhenQuickFixNotAvailable) {
+        return;
+      }
       if (ignoreUncompilable && expression.isArrayCreation()) {
         //array creation can (almost) never be generic
         return;
@@ -103,6 +116,21 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
     @Override
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
+      if (typeElement.getParent() instanceof PsiVariable) {
+        PsiVariable variable = (PsiVariable)typeElement.getParent();
+        final PsiType type = getSuggestedType(variable);
+        if (type != null) {
+          final String typeText = type.getPresentableText();
+          final String message =
+            JavaBundle.message("raw.variable.type.can.be.generic.quickfix", variable.getName(), typeText);
+          final boolean isQuickFixAvailable = true;
+          registerError(typeElement, isQuickFixAvailable, message);
+          return;
+        }
+      }
+      if (ignoreWhenQuickFixNotAvailable) {
+        return;
+      }
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiClassType)) {
         return;
@@ -158,6 +186,9 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
+      if (ignoreWhenQuickFixNotAvailable) {
+        return;
+      }
       final PsiElement referenceParent = reference.getParent();
       if (!(referenceParent instanceof PsiReferenceList)) {
         return;
@@ -196,7 +227,71 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (!aClass.hasTypeParameters()) {
         return;
       }
-      registerError(reference);
+      registerError(reference, false, null);
+    }
+  }
+
+  @Nullable
+  private static PsiType getSuggestedType(@NotNull PsiVariable variable) {
+    final PsiExpression initializer = variable.getInitializer();
+    if (initializer == null) return null;
+    final PsiType variableType = variable.getType();
+    final PsiType initializerType = initializer.getType();
+    if (!(variableType instanceof PsiClassType)) return null;
+    final PsiClassType variableClassType = (PsiClassType) variableType;
+    if (!variableClassType.isRaw()) return null;
+    if (!(initializerType instanceof PsiClassType)) return null;
+    final PsiClassType initializerClassType = (PsiClassType) initializerType;
+    if (initializerClassType.isRaw()) return null;
+    final PsiClassType.ClassResolveResult variableResolveResult = variableClassType.resolveGenerics();
+    final PsiClassType.ClassResolveResult initializerResolveResult = initializerClassType.resolveGenerics();
+    if (initializerResolveResult.getElement() == null) return null;
+    PsiClass variableResolved = variableResolveResult.getElement();
+    if (variableResolved == null) return null;
+    PsiSubstitutor targetSubstitutor = TypeConversionUtil
+      .getClassSubstitutor(variableResolved, initializerResolveResult.getElement(), initializerResolveResult.getSubstitutor());
+    if (targetSubstitutor == null) return null;
+    PsiType type = JavaPsiFacade.getElementFactory(variable.getProject()).createType(variableResolved, targetSubstitutor);
+    if (variableType.equals(type)) return null;
+    return type;
+  }
+
+  private static class RawTypeCanBeGenericFix extends InspectionGadgetsFix {
+    private final @IntentionName String myName;
+
+    RawTypeCanBeGenericFix(@NotNull @IntentionName String name) {
+      myName = name;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return JavaBundle.message("raw.variable.type.can.be.generic.family.quickfix");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getStartElement().getParent();
+      if (element instanceof PsiVariable) {
+        final PsiVariable variable = (PsiVariable)element;
+        final PsiType type = getSuggestedType(variable);
+        if (type != null) {
+          final TypeMigrationRules rules = new TypeMigrationRules(project);
+          rules.setBoundScope(PsiSearchHelper.getInstance(project).getUseScope(variable));
+          TypeMigrationProcessor.runHighlightingTypeMigration(project, null, rules, variable, type, false, true);
+        }
+      }
     }
   }
 }
