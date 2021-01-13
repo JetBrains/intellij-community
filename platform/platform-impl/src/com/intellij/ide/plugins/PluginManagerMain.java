@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
@@ -26,6 +26,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,16 +44,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-
-/**
- * @author stathik
- * @author Konstantin Bulenkov
- */
-public abstract class PluginManagerMain {
+public final class PluginManagerMain {
   private static final String TEXT_SUFFIX = "</body></html>";
   private static final String HTML_PREFIX = "<a href=\"";
   private static final String HTML_SUFFIX = "</a>";
+
+  private PluginManagerMain() {
+  }
 
   private static @NlsSafe String getTextPrefix() {
     int fontSize = JBUIScale.scale(12);
@@ -134,15 +132,16 @@ public abstract class PluginManagerMain {
       header.getPanel().setVisible(false);
       return;
     }
+
     StringBuilder sb = new StringBuilder();
     header.setPlugin(plugin);
     String description = plugin.getDescription();
-    if (!isEmptyOrSpaces(description)) {
+    if (!Strings.isEmptyOrSpaces(description)) {
       sb.append(description);
     }
 
     String changeNotes = plugin.getChangeNotes();
-    if (!isEmptyOrSpaces(changeNotes)) {
+    if (!Strings.isEmptyOrSpaces(changeNotes)) {
       sb.append("<h4>Change Notes</h4>");
       sb.append(changeNotes);
     }
@@ -151,16 +150,16 @@ public abstract class PluginManagerMain {
       String vendor = plugin.getVendor();
       String vendorEmail = plugin.getVendorEmail();
       String vendorUrl = plugin.getVendorUrl();
-      if (!isEmptyOrSpaces(vendor) || !isEmptyOrSpaces(vendorEmail) || !isEmptyOrSpaces(vendorUrl)) {
+      if (!Strings.isEmptyOrSpaces(vendor) || !Strings.isEmptyOrSpaces(vendorEmail) || !Strings.isEmptyOrSpaces(vendorUrl)) {
         sb.append("<h4>Vendor</h4>");
 
-        if (!isEmptyOrSpaces(vendor)) {
+        if (!Strings.isEmptyOrSpaces(vendor)) {
           sb.append(vendor);
         }
-        if (!isEmptyOrSpaces(vendorUrl)) {
+        if (!Strings.isEmptyOrSpaces(vendorUrl)) {
           sb.append("<br>").append(composeHref(vendorUrl));
         }
-        if (!isEmptyOrSpaces(vendorEmail)) {
+        if (!Strings.isEmptyOrSpaces(vendorEmail)) {
           sb.append("<br>")
             .append(HTML_PREFIX)
             .append("mailto:").append(vendorEmail)
@@ -191,7 +190,7 @@ public abstract class PluginManagerMain {
       catch (IOException ignore) {}
 
       String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
-      if (!isEmptyOrSpaces(size)) {
+      if (!Strings.isEmptyOrSpaces(size)) {
         sb.append("<h4>Size</h4>").append(PluginManagerColumnInfo.getFormattedSize(size));
       }
     }
@@ -200,7 +199,7 @@ public abstract class PluginManagerMain {
   }
 
   private static void setPluginHomePage(String pluginDescriptorUrl, StringBuilder sb){
-    if (!isEmptyOrSpaces(pluginDescriptorUrl)) {
+    if (!Strings.isEmptyOrSpaces(pluginDescriptorUrl)) {
       sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
     }
   }
@@ -243,19 +242,33 @@ public abstract class PluginManagerMain {
   }
 
   public static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
-    if (StringUtil.isEmpty(filter)) return true;
-    if (StringUtil.containsIgnoreCase(descriptor.getName(), filter) || isAccepted(search, filter, descriptor.getName())) return true;
-    if (isAccepted(search, filter, descriptor.getDescription())) return true;
+    if (Strings.isEmpty(filter) ||
+        StringUtil.indexOfIgnoreCase(descriptor.getName(), filter, 0) >= 0 ||
+        isAccepted(search, filter, descriptor.getName())) {
+      return true;
+    }
+    if (isAccepted(search, filter, descriptor.getDescription())) {
+      return true;
+    }
+
     String category = descriptor.getCategory();
     return category != null && (StringUtil.containsIgnoreCase(category, filter) || isAccepted(search, filter, category));
   }
 
   public static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
-    if (StringUtil.isEmpty(description)) return false;
-    if (filter.length() <= 2) return false;
+    if (Strings.isEmpty(description) || filter.length() <= 2) {
+      return false;
+    }
+
     Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
-    if (words.contains(filter)) return true;
-    if (search.isEmpty()) return false;
+    if (words.contains(filter)) {
+      return true;
+    }
+
+    if (search.isEmpty()) {
+      return false;
+    }
+
     Set<String> descriptionSet = new HashSet<>(search);
     descriptionSet.removeAll(words);
     return descriptionSet.isEmpty();
@@ -385,7 +398,7 @@ public abstract class PluginManagerMain {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         notification.expire();
-        app.restart(true);
+        ApplicationManagerEx.getApplicationEx().restart(true);
       }
     });
     notification.notify(project);

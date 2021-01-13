@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.diagnostic.debug
@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
 import java.awt.Component
 import java.awt.KeyboardFocusManager
-import java.awt.Window
 import javax.swing.SwingUtilities
 
 private val LOG = logger<ToolWindowManagerImpl>()
@@ -93,21 +92,4 @@ private fun updateFocusedComponentForWatcher(c: Component) {
   if (focusWatcher != null && c.isFocusOwner) {
     focusWatcher.setFocusedComponentImpl(c)
   }
-}
-
-/**
- * @return first active window from hierarchy with specified roots. Returns `null`
- * if there is no active window in the hierarchy.
- */
-private fun getActiveWindow(windows: Array<Window>): Window? {
-  for (window in windows) {
-    if (window.isShowing && window.isActive) {
-      return window
-    }
-
-    getActiveWindow(window.ownedWindows)?.let {
-      return it
-    }
-  }
-  return null
 }

@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +131,9 @@ public final class MessagePool {
       for (int i = 1; i < myMessages.size(); i++) {
         AbstractMessage next = myMessages.get(i);
         stacktraces.append("\n\n\n").append(format.format(next.getDate())).append('\n');
-        if (!StringUtil.isEmptyOrSpaces(next.getMessage())) stacktraces.append(next.getMessage()).append('\n');
+        if (!Strings.isEmptyOrSpaces(next.getMessage())) {
+          stacktraces.append(next.getMessage()).append('\n');
+        }
         stacktraces.append(next.getThrowableText());
       }
       attachments.add(new Attachment("induced.txt", stacktraces.toString()));

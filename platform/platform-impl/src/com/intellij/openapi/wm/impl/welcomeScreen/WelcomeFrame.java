@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -43,10 +43,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
-
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
-  public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
+  public static final ExtensionPointName<WelcomeFrameProvider> EP = new ExtensionPointName<>("com.intellij.welcomeFrameProvider");
   @NonNls static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
   private static Disposable ourTouchbar;
@@ -156,8 +154,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     }
   }
 
-  @Nullable
-  public static Runnable prepareToShow() {
+  public static @Nullable Runnable prepareToShow() {
     if (ourInstance != null) {
       return null;
     }
@@ -187,18 +184,16 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
 
     ActionListener helpAction = e -> doHelpAction();
     ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp());
-    rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), WHEN_IN_FOCUSED_WINDOW);
+    rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   private static void doHelpAction() {
     String helpId = getHelpId();
-    if (helpId != null) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(WelcomeFrame.class.getName(), WelcomeFrame.class);
-      HelpManager.getInstance().invokeHelp(helpId);
-    }
+    FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(WelcomeFrame.class.getName(), WelcomeFrame.class);
+    HelpManager.getInstance().invokeHelp(helpId);
   }
 
-  protected static String getHelpId() {
+  private static String getHelpId() {
     return "welcome";
   }
 
