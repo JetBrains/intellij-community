@@ -170,12 +170,7 @@ public final class PluginManagerMain {
       String pluginDescriptorUrl = plugin.getUrl();
       try {
         List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
-        if (marketplacePlugins != null){
-          if (marketplacePlugins.contains(plugin.getPluginId().getIdString())){
-            // Prevent the link to the marketplace from showing to external plugins
-            setPluginHomePage(pluginDescriptorUrl, sb);
-          }
-        } else {
+        if (marketplacePlugins == null) {
           // There are no marketplace plugins in the cache, but we should show the title anyway.
           setPluginHomePage(pluginDescriptorUrl, sb);
           // will get the marketplace plugins ids next time
@@ -186,8 +181,13 @@ public final class PluginManagerMain {
             catch (IOException ignore) {}
           });
         }
+        else if (marketplacePlugins.contains(plugin.getPluginId().getIdString())) {
+          // Prevent the link to the marketplace from showing to external plugins
+          setPluginHomePage(pluginDescriptorUrl, sb);
+        }
       }
-      catch (IOException ignore) {}
+      catch (IOException ignore) {
+      }
 
       String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
       if (!Strings.isEmptyOrSpaces(size)) {
