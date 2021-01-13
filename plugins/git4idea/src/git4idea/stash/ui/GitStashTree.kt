@@ -126,7 +126,9 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
   }
 
   private fun TreeModelBuilder.insertErrorNode(error: VcsException, parent: ChangesBrowserNode<*>) {
-    insertSubtreeRoot(ChangesBrowserStringNode(error.localizedMessage), parent)
+    val errorNode = ChangesBrowserStringNode(error.localizedMessage)
+    errorNode.setAttributes(SimpleTextAttributes.ERROR_ATTRIBUTES)
+    insertSubtreeRoot(errorNode, parent)
   }
 
   override fun resetTreeState() {
