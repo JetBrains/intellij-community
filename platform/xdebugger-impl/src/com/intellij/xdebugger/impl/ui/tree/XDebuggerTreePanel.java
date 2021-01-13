@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ide.dnd.DnDAction;
@@ -67,7 +67,7 @@ public final class XDebuggerTreePanel implements DnDSource {
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(final DnDAction action, final Point dragOrigin) {
+  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     XValueNodeImpl[] nodes = getNodesToDrag();
     if (nodes.length == 1) {
       return DnDAwareTree.getDragImage(myTree, nodes[0].getPath(), dragOrigin);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -33,7 +33,7 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
       Class<?> connectorClass = Class.forName("sun.jvm.hotspot.jdi.SAPIDAttachingConnector",
                                               true,
                                               new JBSAJDIClassLoader(getBaseSAJDIClassLoader(saJarPath), saJarPath));
-      return (AttachingConnector)connectorClass.newInstance();
+      return (AttachingConnector)connectorClass.getDeclaredConstructor().newInstance();
     }
     catch (Exception e) {
       throw new ExecutionException(JavaDebuggerBundle.message("error.unable.to.create.sapidattachingconnector"), e);

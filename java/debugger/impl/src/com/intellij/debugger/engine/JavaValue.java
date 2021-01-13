@@ -89,7 +89,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Nullable
   @Override
-  public String getTypeName() {
+  public String getTag() {
     Type type = myValueDescriptor.getType();
     return type == null ? null : type.name();
   }

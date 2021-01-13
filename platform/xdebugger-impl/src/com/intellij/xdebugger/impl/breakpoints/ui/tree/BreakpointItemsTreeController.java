@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -175,7 +176,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     for (TreePath selectionPath : selectionPaths) {
       TreeNode startNode = (TreeNode)selectionPath.getLastPathComponent();
       if (traverse) {
-        TreeUtil.traverseDepth(startNode, node -> {
+        TreeUtil.treeNodeTraverser(startNode).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
           if (node instanceof BreakpointItemNode) {
             list.add(((BreakpointItemNode)node).getBreakpointItem());
           }
