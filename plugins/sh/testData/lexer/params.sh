@@ -96,3 +96,6 @@ ${parameter:-{}
 line="${line%'\r'}"
 line="${line%$'\r'}"
 line="${line%"\r"}"
+
+# IDEA-256714
+sp="${base##*[![:space:]]}"
