@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -18,7 +18,6 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -63,7 +62,10 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 import java.util.function.Function;
@@ -508,7 +510,7 @@ public final class HighlightUtil {
     if (rType == null) {
       rType = expression.getType();
     }
-    if (lType == PsiType.NULL) {
+    if (lType == null || lType == PsiType.NULL) {
       return null;
     }
     HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
@@ -653,7 +655,7 @@ public final class HighlightUtil {
       if (fieldByName != null && fieldByName != field) {
         oldVariable = fieldByName;
       } else {
-        oldVariable = ContainerUtil.find(aClass.getRecordComponents(), c -> c.getName().equals(field.getName()));
+        oldVariable = ContainerUtil.find(aClass.getRecordComponents(), c -> field.getName().equals(c.getName()));
       }
     }
     else {
@@ -1641,55 +1643,6 @@ public final class HighlightUtil {
   }
 
 
-  /**
-   * This method validates that the language level of the project where the context accesses
-   * the owner that is annotated with {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient
-   *
-   * @param context the expression to examine
-   * @param level the current language level
-   * @return an instance of HighlightInfo with a quickfix to set the appropriate language level
-   * if the current language level is not sufficient or null
-   */
-  @Nullable
-  @Contract(value = "null, _, _ -> null; _, null, _ -> null", pure = true)
-  static HighlightInfo checkPreviewFeatureElement(@Nullable final PsiElement context,
-                                                  @Nullable final PsiModifierListOwner owner,
-                                                  @NotNull final LanguageLevel level) {
-    if (context == null) return null;
-    if (owner == null) return null;
-
-    final PsiAnnotation annotation = getPreviewFeatureAnnotation(owner);
-    final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
-    if (feature == null) return null;
-
-    return checkFeature(context, feature, level, context.getContainingFile());
-  }
-
-  @Nullable
-  @Contract(value = "null -> null", pure = true)
-  public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable final PsiModifierListOwner owner) {
-    if (owner == null) return null;
-
-    final PsiAnnotation annotation = owner.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
-    if (annotation != null) return annotation;
-
-    if (owner instanceof PsiMember && !owner.hasModifier(JvmModifier.STATIC)) {
-      final PsiMember member = (PsiMember)owner;
-      final PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
-      if (result != null) return result;
-    }
-
-    final PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
-    if (psiPackage  == null) return null;
-
-    final PsiAnnotation packageAnnotation = psiPackage.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
-    if (packageAnnotation != null) return packageAnnotation;
-
-    final PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
-    if (module == null) return null;
-
-    return module.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
-  }
 
   private enum SelectorKind { INT, ENUM, STRING }
 

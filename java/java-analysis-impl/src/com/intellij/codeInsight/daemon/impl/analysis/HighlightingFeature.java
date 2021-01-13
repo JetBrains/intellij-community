@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl.PreviewFeatureVisitor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -85,8 +86,6 @@ public enum HighlightingFeature {
   },
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics");
 
-  public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
-
   final LanguageLevel level;
   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
   final String key;
@@ -123,7 +122,10 @@ public enum HighlightingFeature {
   @Contract(value = "null -> null", pure = true)
   public static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable final PsiAnnotation annotation) {
     if (annotation == null) return null;
-    if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE)) return null;
+    if (!annotation.hasQualifiedName(PreviewFeatureVisitor.JDK_INTERNAL_PREVIEW_FEATURE) &&
+        !annotation.hasQualifiedName(PreviewFeatureVisitor.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)) {
+      return null;
+    }
 
     final PsiNameValuePair feature = AnnotationUtil.findDeclaredAttribute(annotation, "feature");
     if (feature == null) return null;

@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl.PreviewFeatureVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -110,7 +96,8 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
         final PsiFile file = PsiManager.getInstance(JavaAPIUsagesInspectionTest.this.getProject()).findFile(fileOrDir);
         PsiTreeUtil.findChildrenOfAnyType(file, PsiMember.class)
           .stream()
-          .filter(member -> member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE))
+          .filter(member -> member.hasAnnotation(PreviewFeatureVisitor.JDK_INTERNAL_PREVIEW_FEATURE) ||
+                            member.hasAnnotation(PreviewFeatureVisitor.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE))
           .filter(member -> getLanguageLevel(member) == LANGUAGE_LEVEL)
           .map(e -> Java15APIUsageInspection.getSignature(e))
           .forEach(previews::add);
@@ -119,7 +106,7 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
 
       @Nullable
       private LanguageLevel getLanguageLevel(@NotNull final PsiMember e) {
-        final PsiAnnotation annotation = HighlightUtil.getPreviewFeatureAnnotation(e);
+        final PsiAnnotation annotation = PreviewFeatureVisitor.getPreviewFeatureAnnotation(e);
         if (annotation == null) return null;
 
         final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
