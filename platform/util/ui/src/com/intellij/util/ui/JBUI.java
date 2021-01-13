@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -33,7 +33,6 @@ import java.lang.ref.WeakReference;
  */
 @SuppressWarnings("UseJBColor")
 public class JBUI {
-
   /**
    * @deprecated use {@link JBUIScale#sysScale()}
    */
@@ -48,14 +47,6 @@ public class JBUI {
   @Deprecated
   public static float sysScale(@Nullable Graphics2D g) {
     return JBUIScale.sysScale(g);
-  }
-
-  /**
-   * @deprecated use {@link JBUIScale#sysScale(Component)}
-   */
-  @Deprecated
-  public static float sysScale(@Nullable Component comp) {
-    return JBUIScale.sysScale(comp);
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.icons.AllIcons
@@ -10,9 +10,9 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.codereview.ToggleableContainer
@@ -39,7 +39,7 @@ object GHPRReviewThreadComponent {
 
   fun create(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider, currentUser: GHUser): JComponent {
-    val panel = JPanel(VerticalLayout(UI.scale(12))).apply {
+    val panel = JPanel(VerticalLayout(JBUIScale.scale(12))).apply {
       isOpaque = false
     }
     panel.add(
@@ -61,14 +61,14 @@ object GHPRReviewThreadComponent {
     val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover,
                                         tooltip = GithubBundle.message("pull.request.timeline.review.thread.expand"))
 
-    val panel = JPanel(VerticalLayout(UI.scale(4))).apply {
+    val panel = JPanel(VerticalLayout(JBUIScale.scale(4))).apply {
       isOpaque = false
       add(createFileName(thread, selectInToolWindowHelper, collapseButton, expandButton),
           VerticalLayout.FILL_HORIZONTAL)
     }
 
     object : CollapseController(thread, panel, collapseButton, expandButton) {
-      override fun createThreadsPanel(): JComponent = JPanel(VerticalLayout(UI.scale(12))).apply {
+      override fun createThreadsPanel(): JComponent = JPanel(VerticalLayout(JBUIScale.scale(12))).apply {
         isOpaque = false
 
         add(diffComponentFactory.createComponent(thread.diffHunk, thread.startLine), VerticalLayout.FILL_HORIZONTAL)
@@ -163,7 +163,7 @@ object GHPRReviewThreadComponent {
       resolvedLabel.isVisible = thread.isResolved
     }
 
-    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("${UI.scale(5)}", "0").fill().noGrid())).apply {
+    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("${JBUIScale.scale(5)}", "0").fill().noGrid())).apply {
       add(nameLabel)
 
       if (!path.isBlank()) add(JLabel(path).apply {
@@ -231,7 +231,7 @@ object GHPRReviewThreadComponent {
     return JPanel().apply {
       isOpaque = false
       layout = MigLayout(LC().insets("0"))
-      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + UI.scale(GHUIUtil.AVATAR_SIZE)}"))
+      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + JBUIScale.scale(GHUIUtil.AVATAR_SIZE)}"))
     }
   }
 
@@ -251,7 +251,7 @@ object GHPRReviewThreadComponent {
       border = JBUI.Borders.empty(6, 28, 6, 0)
 
       add(toggleReplyLink)
-      add(Box.createHorizontalStrut(UI.scale(8)))
+      add(Box.createHorizontalStrut(JBUIScale.scale(8)))
       add(resolveLink)
       add(unresolveLink)
     }

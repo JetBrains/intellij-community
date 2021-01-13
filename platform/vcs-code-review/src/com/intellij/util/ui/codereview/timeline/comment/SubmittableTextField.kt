@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.codereview.timeline.comment
 
 import com.intellij.icons.AllIcons
@@ -20,7 +20,11 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.ui.*
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SingleComponentCenteringLayout
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -68,7 +72,7 @@ class SubmittableTextField(
       isFocusCycleRoot = true
       isFocusTraversalPolicyProvider = true
       focusTraversalPolicy = ListFocusTraversalPolicy(listOf(textField, authorLabel))
-      add(authorLabel, CC().alignY("top").gapRight("${UI.scale(6)}"))
+      add(authorLabel, CC().alignY("top").gapRight("${JBUIScale.scale(6)}"))
     }
 
     add(textFieldWithOverlay, CC().grow().pushX())

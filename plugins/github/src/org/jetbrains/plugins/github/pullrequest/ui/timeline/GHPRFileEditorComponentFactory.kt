@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -12,8 +12,8 @@ import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.update.UiNotifyConnector
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -138,7 +138,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       add(header, CC().growX().maxWidth("$maxWidth"))
       add(timeline, CC().growX().minWidth(""))
 
-      val fullTimelineWidth = UI.scale(GHUIUtil.AVATAR_SIZE) + maxWidth
+      val fullTimelineWidth = JBUIScale.scale(GHUIUtil.AVATAR_SIZE) + maxWidth
 
       add(errorPanel, CC().hideMode(2).width("$fullTimelineWidth"))
       add(loadingIcon, CC().hideMode(2).width("$fullTimelineWidth"))

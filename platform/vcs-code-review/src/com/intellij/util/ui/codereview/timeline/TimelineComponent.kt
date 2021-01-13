@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.codereview.timeline
 
 import com.intellij.ide.plugins.newui.VerticalLayout
-import com.intellij.util.ui.UI
+import com.intellij.ui.scale.JBUIScale
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -14,7 +14,7 @@ open class TimelineComponent<in T : TimelineItem>(
   private val model: ListModel<T>,
   protected val itemComponentFactory: TimelineItemComponentFactory<T>,
   private val title: JComponent? = null,
-  offset: Int = UI.scale(20)
+  offset: Int = JBUIScale.scale(20)
 ) : JPanel(VerticalLayout(offset)) {
 
   init {

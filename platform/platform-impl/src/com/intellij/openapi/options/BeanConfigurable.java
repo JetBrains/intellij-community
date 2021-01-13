@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -12,7 +12,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.Nls;
@@ -316,7 +315,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     for (BeanField field: myFields) {
       panel.add(field.getComponent());
     }
-    BorderLayoutPanel result = UI.Panels.simplePanel().addToTop(panel);
+    BorderLayoutPanel result = JBUI.Panels.simplePanel().addToTop(panel);
     if (myTitle != null) {
       result.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
     }

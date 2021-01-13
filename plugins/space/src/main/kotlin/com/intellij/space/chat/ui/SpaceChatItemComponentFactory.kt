@@ -28,8 +28,8 @@ import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.ToggleableContainer
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
@@ -196,7 +196,7 @@ internal class SpaceChatItemComponentFactory(
   ) : HoverableJPanel() {
     companion object {
       val AVATAR_GAP: Int
-        get() = UI.scale(8)
+        get() = JBUIScale.scale(8)
     }
 
     init {

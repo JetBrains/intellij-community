@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.codereview.timeline.thread
 
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClickListener
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.MacUIUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.SingleValueModel
 import com.intellij.util.ui.codereview.SingleValueModelImpl
 import com.intellij.util.ui.codereview.timeline.thread.TimelineThreadCommentsPanel.Companion.FOLD_THRESHOLD
@@ -25,7 +28,7 @@ import javax.swing.event.ListDataListener
 class TimelineThreadCommentsPanel<T>(
   private val commentsModel: ListModel<T>,
   private val commentComponentFactory: (T) -> JComponent,
-  offset: Int = UI.scale(8)
+  offset: Int = JBUI.scale(8)
 ) : BorderLayoutPanel() {
   companion object {
     private const val FOLD_THRESHOLD = 3

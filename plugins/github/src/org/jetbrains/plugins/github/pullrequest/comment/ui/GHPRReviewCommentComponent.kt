@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.icons.AllIcons
@@ -7,8 +7,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -78,19 +78,19 @@ object GHPRReviewCommentComponent {
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill(),
-                         AC().gap("${UI.scale(8)}"))
+                         AC().gap("${JBUIScale.scale(8)}"))
 
       add(avatarLabel, CC().pushY())
       add(titlePane, CC().minWidth("0").split(5).alignX("left").pushX())
       add(pendingLabel, CC().hideMode(3).alignX("left"))
       add(resolvedLabel, CC().hideMode(3).alignX("left"))
-      add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
-      add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
+      add(editButton, CC().hideMode(3).gapBefore("${JBUIScale.scale(12)}"))
+      add(deleteButton, CC().hideMode(3).gapBefore("${JBUIScale.scale(8)}"))
       add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX().maxWidth("${getMaxWidth()}"))
     }
   }
 
-  private fun getMaxWidth() = GHUIUtil.getPRTimelineWidth() - UI.scale(GHUIUtil.AVATAR_SIZE) + AllIcons.Actions.Close.iconWidth
+  private fun getMaxWidth() = GHUIUtil.getPRTimelineWidth() - JBUIScale.scale(GHUIUtil.AVATAR_SIZE) + AllIcons.Actions.Close.iconWidth
 
   private class Controller(private val model: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,

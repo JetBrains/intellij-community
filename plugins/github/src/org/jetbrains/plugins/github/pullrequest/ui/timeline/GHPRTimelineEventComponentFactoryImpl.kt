@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.util.text.StringUtil
@@ -6,8 +6,8 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
 import icons.VcsCodeReviewIcons
@@ -295,7 +295,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
         is GHPRReferencedSubject.Issue -> GHUIUtil.getIssueStateText(reference.state)
         is GHPRReferencedSubject.PullRequest -> GHUIUtil.getPullRequestStateText(reference.state, reference.isDraft)
       }
-      return NonOpaquePanel(HorizontalLayout(UI.scale(5))).apply {
+      return NonOpaquePanel(HorizontalLayout(JBUIScale.scale(5))).apply {
         border = JBUI.Borders.emptyLeft(28)
         add(JLabel(stateIcon).apply {
           toolTipText = stateToolTip

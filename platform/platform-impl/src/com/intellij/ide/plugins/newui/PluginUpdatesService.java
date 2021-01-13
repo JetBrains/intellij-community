@@ -42,15 +42,10 @@ public class PluginUpdatesService {
       public void install(@NotNull IdeaPluginDescriptor descriptor) {
         finishUpdate(descriptor);
       }
-
-      @Override
-      public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
-      }
     });
   }
 
-  @NotNull
-  public static PluginUpdatesService connectWithCounter(@NotNull Consumer<? super Integer> callback) {
+  public static @NotNull PluginUpdatesService connectWithCounter(@NotNull Consumer<? super Integer> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
     service.myCountCallback = callback;
 

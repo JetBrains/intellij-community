@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.icons.AllIcons
@@ -20,7 +20,11 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalBox
-import com.intellij.util.ui.*
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JButtonAction
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
 import icons.VcsCodeReviewIcons
 import net.miginfocom.layout.CC
@@ -222,7 +226,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           add(titlePanel, CC().growX())
           add(editor, CC().growX().growY()
             .gap("0", "0", "0", "0"))
-          add(errorPanel, CC().minHeight("${UI.scale(32)}").growY().growPrioY(0).hideMode(3)
+          add(errorPanel, CC().minHeight("${JBUIScale.scale(32)}").growY().growPrioY(0).hideMode(3)
             .gap("0", "0", "0", "0"))
           add(buttonsPanel, CC().alignX("right"))
         }

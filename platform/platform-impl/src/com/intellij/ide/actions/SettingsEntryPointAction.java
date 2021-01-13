@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Alexander Lobas
  */
-public class SettingsEntryPointAction extends AnAction implements DumbAware, RightAlignedToolbarAction,
+public final class SettingsEntryPointAction extends AnAction implements DumbAware, RightAlignedToolbarAction,
                                                                   AnAction.TransparentUpdate, TooltipDescriptionProvider {
   private boolean myShowPopup = true;
 
@@ -264,10 +264,6 @@ public class SettingsEntryPointAction extends AnAction implements DumbAware, Rig
         @Override
         public void install(@NotNull IdeaPluginDescriptor descriptor) {
           removePluginsUpdate(Collections.singleton(descriptor));
-        }
-
-        @Override
-        public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
         }
       });
     }

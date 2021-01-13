@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.ui.UI
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.vcs.log.ui.render.LabelIcon
 import com.intellij.vcs.log.ui.render.LabelPainter
 import git4idea.GitUtil.HEAD
@@ -51,7 +51,7 @@ internal class GHPRBranchesTooltip(private val descriptors: List<BranchTooltipDe
   private fun createLabel(@Nls text: String, icon: Icon?): JBLabel {
     val label = JBLabel(text, icon, SwingConstants.LEFT)
     label.font = getLabelsFont()
-    label.iconTextGap = UI.scale(4)
+    label.iconTextGap = JBUIScale.scale(4)
     label.verticalTextPosition = SwingConstants.CENTER
     return label
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.ui.UI
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -87,9 +87,9 @@ internal object GHPRTitleComponent {
 
   private fun layout(icon: JLabel, title: HtmlEditorPane, editButton: JComponent? = null): NonOpaquePanel {
     return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("0", "0").fill())).apply {
-      add(icon, CC().gapRight("${UI.scale(4)}"))
+      add(icon, CC().gapRight("${JBUIScale.scale(4)}"))
       add(title, CC().push())
-      if (editButton != null) add(editButton, CC().gapLeft("${UI.scale(12)}"))
+      if (editButton != null) add(editButton, CC().gapLeft("${JBUIScale.scale(12)}"))
     }
   }
 }

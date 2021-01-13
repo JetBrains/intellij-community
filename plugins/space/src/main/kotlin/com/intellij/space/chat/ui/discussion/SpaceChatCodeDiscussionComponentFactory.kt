@@ -19,9 +19,9 @@ import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.codereview.SingleValueModel
@@ -76,7 +76,7 @@ class SpaceChatCodeDiscussionComponentFactory(
     }
     val reviewCommentComponent = SpaceChatMarkdownTextComponent(server)
 
-    val panel = JPanel(VerticalLayout(UI.scale(4))).apply {
+    val panel = JPanel(VerticalLayout(JBUIScale.scale(4))).apply {
       isOpaque = false
       add(snapshotComponent, VerticalLayout.FILL_HORIZONTAL)
       add(reviewCommentComponent, VerticalLayout.FILL_HORIZONTAL)
@@ -90,7 +90,7 @@ class SpaceChatCodeDiscussionComponentFactory(
     val threadComponent = createThreadComponent(project, lifetime, thread, threadActionsFactory, withFirst = false)
     val outerActionsPanel = BorderLayoutPanel().apply {
       isOpaque = false
-      border = JBUI.Borders.emptyTop(UI.scale(4))
+      border = JBUI.Borders.emptyTop(JBUIScale.scale(4))
       val outerActionsFactory = SpaceChatDiscussionActionsFactory(
         discussionProperty,
         withOffset = false,
