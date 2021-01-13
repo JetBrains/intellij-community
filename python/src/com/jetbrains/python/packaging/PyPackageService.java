@@ -2,10 +2,12 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -21,13 +23,6 @@ public class PyPackageService implements
   public volatile List<String> additionalRepositories = ContainerUtil.createConcurrentList();
   public volatile @SystemIndependent String virtualEnvBasePath;
   public volatile Boolean PYPI_REMOVED = false;
-
-  /**
-   * @deprecated This field is no longer used to check relevance of the cache.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public long LAST_TIME_CHECKED = 0;
 
   @Override
   public PyPackageService getState() {

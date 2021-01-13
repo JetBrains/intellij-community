@@ -45,13 +45,13 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @NotNull
   @Override
-  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
     return PyCallExpressionHelper.multiResolveCallee(this, resolveContext);
   }
 
   @NotNull
   @Override
-  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
     return PyCallExpressionHelper.mapArguments(this, resolveContext);
   }
 
