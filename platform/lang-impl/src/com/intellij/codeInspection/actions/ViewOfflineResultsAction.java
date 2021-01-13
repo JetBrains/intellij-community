@@ -55,7 +55,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +73,7 @@ public class ViewOfflineResultsAction extends AnAction {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getProject();
     presentation.setEnabled(project != null);
-    presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && !PlatformUtils.isCidr());
+    presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
   }
 
   @Override

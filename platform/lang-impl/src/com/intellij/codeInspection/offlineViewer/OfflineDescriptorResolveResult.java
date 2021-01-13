@@ -17,6 +17,7 @@ import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -135,13 +137,35 @@ public final class OfflineDescriptorResolveResult {
                                                                                       @NotNull Project project) {
     final InspectionManager inspectionManager = InspectionManager.getInstance(project);
     if (element instanceof RefElement) {
-      return new ProblemDescriptorBackedByRefElement((RefElement)element, offlineDescriptor, fixes);
+      RefElement refElement = (RefElement)element;
+      if(refElement.getPsiElement() instanceof PsiFile) {
+        PsiElement targetElement = findTargetElementFromOfflineDescriptor((PsiFile)refElement.getPsiElement(), offlineDescriptor, project);
+        if(targetElement != null) {
+          return inspectionManager.createProblemDescriptor(targetElement, offlineDescriptor.getDescription(), false,
+                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+        }
+      }
+      return new ProblemDescriptorBackedByRefElement(refElement, offlineDescriptor, fixes);
     }
     else if (element instanceof RefModule) {
       return inspectionManager.createProblemDescriptor(offlineDescriptor.getDescription(), ((RefModule)element).getModule(), fixes);
     } else {
       return inspectionManager.createProblemDescriptor(offlineDescriptor.getDescription(), fixes);
     }
+  }
+
+  @Nullable
+  private static PsiElement findTargetElementFromOfflineDescriptor(@NotNull PsiFile file, @NotNull OfflineProblemDescriptor descriptor,
+                                                                   @NotNull Project project) {
+    if(descriptor.getLine() - 1 <= 0 && descriptor.getOffset() <= 0)
+      return null;
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if(document == null)
+      return null;
+    int lineStartOffset = document.getLineStartOffset(descriptor.getLine() - 1);
+    if(!DocumentUtil.isValidOffset(lineStartOffset, document) || !DocumentUtil.isValidOffset(lineStartOffset + descriptor.getOffset(), document))
+      return null;
+    return file.findElementAt(lineStartOffset + descriptor.getOffset());
   }
 
   private static ProblemDescriptor runLocalTool(@NotNull PsiElement psiElement,
@@ -154,7 +178,7 @@ public final class OfflineDescriptorResolveResult {
     final LocalInspectionTool localTool = toolWrapper.getTool();
     TextRange textRange = psiElement.getTextRange();
     LOG.assertTrue(textRange != null,
-                   "text range muse be not null here; " +
+                   "text range must be not null here; " +
                    "isValid = " + psiElement.isValid() + ", " +
                    "isPhysical = " + psiElement.isPhysical() + ", " +
                    "containingFile = " + containingFile.getName() + ", " +

@@ -20,6 +20,7 @@ public final class OfflineViewParseUtil {
   @NonNls private static final String DESCRIPTION = "description";
   @NonNls private static final String HINTS = "hints";
   @NonNls private static final String LINE = "line";
+  @NonNls private static final String OFFSET = "offset";
   @NonNls private static final String MODULE = "module";
 
   private OfflineViewParseUtil() {
@@ -66,6 +67,9 @@ public final class OfflineViewParseUtil {
           }
           if (LINE.equals(reader.getNodeName())) {
             descriptor.setLine(Integer.parseInt(reader.getValue()));
+          }
+          if(OFFSET.equals(reader.getNodeName())) {
+            descriptor.setOffset(Integer.parseInt(reader.getValue()));
           }
           if (MODULE.equals(reader.getNodeName())) {
             descriptor.setModule(stringInterner.intern(reader.getValue()));

@@ -33,6 +33,7 @@ public class OfflineProblemDescriptor {
   public List<String> myHints;
   public int myProblemIndex;
   public int myLine;
+  public int myOffset;
   public String myModuleName;
 
   public String getType() {
@@ -81,6 +82,14 @@ public class OfflineProblemDescriptor {
 
   public void setLine(final int line) {
     myLine = line;
+  }
+
+  public void setOffset(final int offset) {
+    myOffset = offset;
+  }
+
+  public int getOffset() {
+    return myOffset;
   }
 
   @Nullable
