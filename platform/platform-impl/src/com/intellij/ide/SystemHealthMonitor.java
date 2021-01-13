@@ -48,9 +48,7 @@ import java.util.stream.Stream;
 
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
-
   private static final String DISPLAY_ID = "System Health";
-  private static final int MIN_RESERVED_CODE_CACHE_SIZE = PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
@@ -131,7 +129,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
   private static void checkReservedCodeCacheSize() {
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
-    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < MIN_RESERVED_CODE_CACHE_SIZE) {
+    int minReservedCodeCacheSize = PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
+    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
       NotificationAction action = new NotificationAction(IdeBundle.message("vm.options.edit.action.cap")) {
         @Override
@@ -140,7 +139,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
           ActionUtil.performActionDumbAware(vmEditAction, e);
         }
       };
-      showNotification("code.cache.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, MIN_RESERVED_CODE_CACHE_SIZE);
+      showNotification("code.cache.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
 
