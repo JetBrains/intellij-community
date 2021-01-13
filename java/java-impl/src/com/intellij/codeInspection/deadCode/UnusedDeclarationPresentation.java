@@ -28,7 +28,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.profile.codeInspection.ui.DescriptionEditorPane;
+import com.intellij.profile.codeInspection.ui.DescriptionEditorPaneKt;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -580,7 +581,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
     final Project project = entity.getRefManager().getProject();
-    JEditorPane htmlView = new JEditorPane() {
+    DescriptionEditorPane htmlView = new DescriptionEditorPane() {
       @Override
       public String getToolTipText(MouseEvent evt) {
         int pos = viewToModel(evt.getPoint());
@@ -600,10 +601,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         return null;
       }
     };
-    htmlView.setContentType(UIUtil.HTML_MIME);
-    htmlView.setEditable(false);
-    htmlView.setOpaque(false);
-    htmlView.setBackground(UIUtil.getLabelBackground());
     htmlView.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
@@ -635,7 +632,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
-    SingleInspectionProfilePanel.readHTML(htmlView, SingleInspectionProfilePanel.toHTML(htmlView, text, false));
+    DescriptionEditorPaneKt.readHTML(htmlView, DescriptionEditorPaneKt.toHTML(htmlView, text, false));
     return ScrollPaneFactory.createScrollPane(htmlView, true);
   }
 

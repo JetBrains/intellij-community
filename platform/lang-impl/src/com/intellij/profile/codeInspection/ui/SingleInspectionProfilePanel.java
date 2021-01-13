@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
@@ -47,6 +46,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.treetable.DefaultTreeTableExpander;
@@ -74,8 +74,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -94,7 +92,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private final ProjectInspectionProfileManager myProjectProfileManager;
   @NotNull
   private final InspectionProfileModifiableModel myProfile;
-  private JEditorPane myBrowser;
+  private DescriptionEditorPane myDescription;
   private JPanel myOptionsPanel;
   private JPanel myInspectionProfilePanel;
   private FilterComponent myProfileFilter;
@@ -700,21 +698,20 @@ public class SingleInspectionProfilePanel extends JPanel {
     TreeUtil.sortRecursively(myRoot, InspectionsConfigTreeComparator.INSTANCE);
   }
 
-  // TODO 134099: see IntentionDescriptionPanel#readHTML
+  /**
+   * @deprecated Use {@link DescriptionEditorPaneKt#readHTML(JEditorPane, String)} instead.
+   */
+  @Deprecated
   public static void readHTML(JEditorPane browser, String text) {
-    try {
-      browser.read(new StringReader(text), null);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    DescriptionEditorPaneKt.readHTML(browser, text);
   }
 
-  // TODO 134099: see IntentionDescriptionPanel#setHTML
+  /**
+   * @deprecated Use {@link DescriptionEditorPaneKt#toHTML(JEditorPane, String, boolean)} instead.
+   */
+  @Deprecated
   public static String toHTML(JEditorPane browser, @Nls String text, boolean miniFontSize) {
-    final HintHint hintHint = new HintHint(browser, new Point(0, 0));
-    hintHint.setFont(miniFontSize ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont());
-    return HintUtil.prepareHintText(text, hintHint);
+    return DescriptionEditorPaneKt.toHTML(browser, text, miniFontSize);
   }
 
   private void updateOptionsAndDescriptionPanel() {
@@ -735,7 +732,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
           final String description = defaultDescriptor.loadDescription(); //NON-NLS
           try {
-            readHTML(myBrowser, SearchUtil.markup(toHTML(myBrowser, description, false), myProfileFilter.getFilter()));
+            DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(DescriptionEditorPaneKt.toHTML(myDescription, description, false), myProfileFilter.getFilter()));
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +
@@ -746,11 +743,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         }
         else {
-          readHTML(myBrowser, toHTML(myBrowser, AnalysisBundle.message("inspections.settings.no.description.warning"), false));
+          DescriptionEditorPaneKt.readHTML(myDescription, DescriptionEditorPaneKt.toHTML(myDescription, AnalysisBundle.message("inspections.settings.no.description.warning"), false));
         }
       }
       else {
-        readHTML(myBrowser, toHTML(myBrowser, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"), false));
+        DescriptionEditorPaneKt.readHTML(myDescription, DescriptionEditorPaneKt.toHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"), false));
       }
 
       myOptionsPanel.removeAll();
@@ -934,7 +931,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void initOptionsAndDescriptionPanel() {
     myOptionsPanel.removeAll();
-    readHTML(myBrowser, EMPTY_HTML);
+    DescriptionEditorPaneKt.readHTML(myDescription, EMPTY_HTML);
     myOptionsPanel.validate();
     myOptionsPanel.repaint();
   }
@@ -1017,21 +1014,17 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private JPanel createInspectionProfileSettingsPanel() {
 
-    myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
-    myBrowser.setEditable(false);
-    myBrowser.setBorder(JBUI.Borders.empty(5));
-    myBrowser.addHyperlinkListener(createSettingsHyperlinkListener(getProject()));
+    myDescription = new DescriptionEditorPane();
+    myDescription.addHyperlinkListener(createSettingsHyperlinkListener(getProject()));
 
     initToolStates();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
 
-    JPanel descriptionPanel = new JPanel(new BorderLayout());
-    descriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(InspectionsBundle.message("inspection.description.title"), false,
-                                                                   JBUI.insetsLeft(UIUtil.DEFAULT_HGAP)).setShowLine(false));
-    descriptionPanel.add(ScrollPaneFactory.createScrollPane(myBrowser), BorderLayout.CENTER);
-
     JBSplitter rightSplitter =
       new JBSplitter(true, "SingleInspectionProfilePanel.HORIZONTAL_DIVIDER_PROPORTION", DIVIDER_PROPORTION_DEFAULT);
+
+    JBScrollPane descriptionPanel = new JBScrollPane(myDescription);
+    descriptionPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
     rightSplitter.setFirstComponent(descriptionPanel);
 
     myOptionsPanel = new JPanel(new GridBagLayout());
