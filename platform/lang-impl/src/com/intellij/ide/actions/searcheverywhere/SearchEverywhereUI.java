@@ -1120,20 +1120,23 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
                                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, clearFiltersAction);
       }
 
-      Optional.ofNullable(myProject)
-        .map(project -> FindInProjectManager.getInstance(project))
-        .filter(manager -> manager.isEnabled())
-        .ifPresent(manager -> {
-          DataContext context = DataManager.getInstance().getDataContext(SearchEverywhereUI.this);
-          ActionListener findInFilesAction = e -> manager.findInProject(context, null);
+      boolean showFindInFilesAction = myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
+      if (showFindInFilesAction) {
+        Optional.ofNullable(myProject)
+          .map(project -> FindInProjectManager.getInstance(project))
+          .filter(manager -> manager.isEnabled())
+          .ifPresent(manager -> {
+            DataContext context = DataManager.getInstance().getDataContext(SearchEverywhereUI.this);
+            ActionListener findInFilesAction = e -> manager.findInProject(context, null);
 
-          String findInFilesText = IdeBundle.message("searcheverywhere.try.to.find.in.files");
-          String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
-          emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction);
-          if (StringUtil.isEmpty(findInFilesShortcut)) {
-            emptyStatus.appendText(" " + findInFilesShortcut);
-          }
-        });
+            String findInFilesText = IdeBundle.message("searcheverywhere.try.to.find.in.files");
+            String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
+            emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction);
+            if (StringUtil.isEmpty(findInFilesShortcut)) {
+              emptyStatus.appendText(" " + findInFilesShortcut);
+            }
+          });
+      }
     }
 
     @TestOnly
