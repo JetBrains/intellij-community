@@ -78,13 +78,6 @@ public class ImportSpecImpl implements ImportSpec {
     this.forceWhenUptodate = forceWhenUptodate;
   }
 
-  /**
-   * @deprecated see {@link com.intellij.openapi.externalSystem.settings.ExternalProjectSettings#setUseAutoImport} for details
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public void setWhenAutoImportEnabled(boolean whenAutoImportEnabled) { }
-
   public void setCallback(@Nullable ExternalProjectRefreshCallback callback) {
     myCallback = callback;
   }

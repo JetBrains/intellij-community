@@ -41,15 +41,6 @@ public class ImportSpecBuilder {
     apply(importSpec);
   }
 
-  /**
-   * @deprecated see {@link com.intellij.openapi.externalSystem.settings.ExternalProjectSettings#setUseAutoImport} for details
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public ImportSpecBuilder whenAutoImportEnabled() {
-    return this;
-  }
-
   public ImportSpecBuilder use(@NotNull ProgressExecutionMode executionMode) {
     myProgressExecutionMode = executionMode;
     return this;
@@ -97,16 +88,6 @@ public class ImportSpecBuilder {
   @ApiStatus.Experimental
   public ImportSpecBuilder projectResolverPolicy(@NotNull ProjectResolverPolicy projectResolverPolicy) {
     myProjectResolverPolicy = projectResolverPolicy;
-    return this;
-  }
-
-  /**
-   * @deprecated no need to call the method, default callback is used by default
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public ImportSpecBuilder useDefaultCallback() {
-    callback(null);
     return this;
   }
 
