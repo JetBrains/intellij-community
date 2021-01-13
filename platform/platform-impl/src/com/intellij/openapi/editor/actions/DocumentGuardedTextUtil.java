@@ -47,10 +47,10 @@ public final class DocumentGuardedTextUtil {
       document.insertString(offset, s);
     }
     catch (ReadOnlyFragmentModificationException ex) {
-      CharSequence blockPrefix = document.getImmutableCharSequence().subSequence(ex.getGuardedBlock().getStartOffset(), offset).toString();
-      if (s.length() >= blockPrefix.length() && s.subSequence(s.length() - blockPrefix.length(), s.length()).equals(blockPrefix)) {
+      String blockPrefix = document.getImmutableCharSequence().subSequence(ex.getGuardedBlock().getStartOffset(), offset).toString();
+      if (s.toString().endsWith(blockPrefix)) {
         int newOffset = offset - blockPrefix.length();
-        String newString = blockPrefix.toString() + s.subSequence(0, s.length() - blockPrefix.length());
+        String newString = blockPrefix + s.subSequence(0, s.length() - blockPrefix.length());
         insertString(document, newOffset, newString);
       }
       else {
