@@ -11,20 +11,33 @@ import com.intellij.diff.chains.SimpleDiffRequestProducer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
+import com.intellij.openapi.vcs.history.actions.GetVersionAction;
+import com.intellij.openapi.vcs.history.actions.GetVersionAction.FileRevisionProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
@@ -46,6 +59,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.diff.DiffRequestFactoryImpl.*;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
@@ -112,9 +127,10 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                                @NotNull Hash leftRevision,
                                @Nullable Hash rightRevision) {
     UIUtil.invokeLaterIfNeeded(() -> {
+      boolean isWithLocal = rightRevision == null;
       Collection<FilePath> filePaths = affectedPaths != null ? affectedPaths : Collections.singleton(VcsUtil.getFilePath(root));
 
-      String rightRevisionTitle = rightRevision == null
+      String rightRevisionTitle = isWithLocal
                                   ? GitBundle.message("git.log.diff.handler.local.version.name")
                                   : rightRevision.toShortString();
       String dialogTitle = GitBundle.message("git.log.diff.handler.paths.diff.title", leftRevision.toShortString(),
@@ -122,11 +138,12 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                                              getTitleForPaths(root, affectedPaths));
 
       Disposable loadingDisposable = Disposer.newDisposable();
-      MyLoadingChangesPanel changesPanel = new MyLoadingChangesPanel(loadingDisposable) {
+      MyChangesBrowser changesBrowser = new MyChangesBrowser(myProject, isWithLocal);
+      MyLoadingChangesPanel changesPanel = new MyLoadingChangesPanel(changesBrowser, loadingDisposable) {
         @NotNull
         @Override
         protected Collection<Change> loadChanges() throws VcsException {
-          if (rightRevision == null) {
+          if (isWithLocal) {
             return GitChangeUtils.getDiffWithWorkingDir(myProject, root, leftRevision.asString(), filePaths, false);
           }
           else {
@@ -209,20 +226,23 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     return GitContentRevision.createRevision(filePath, revisionNumber, myProject);
   }
 
-  private abstract class MyLoadingChangesPanel extends JPanel {
+  private static abstract class MyLoadingChangesPanel extends JPanel implements DataProvider {
+    public static final DataKey<MyLoadingChangesPanel> DATA_KEY = DataKey.create("git4idea.log.MyLoadingChangesPanel");
+
     private final SimpleChangesBrowser myChangesBrowser;
     private final LoadingChangesPanel myLoadingPanel;
 
-    private MyLoadingChangesPanel(@NotNull Disposable disposable) {
+    private MyLoadingChangesPanel(@NotNull SimpleChangesBrowser changesBrowser, @NotNull Disposable disposable) {
       super(new BorderLayout());
 
-      myChangesBrowser = new SimpleChangesBrowser(myProject, false, true);
+      myChangesBrowser = changesBrowser;
 
       StatusText emptyText = myChangesBrowser.getViewer().getEmptyText();
       myLoadingPanel = new LoadingChangesPanel(myChangesBrowser, emptyText, disposable);
       add(myLoadingPanel, BorderLayout.CENTER);
     }
 
+    @NotNull
     public SimpleChangesBrowser getChangesBrowser() {
       return myChangesBrowser;
     }
@@ -236,6 +256,107 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
 
     private void applyResult(@Nullable Collection<Change> changes) {
       myChangesBrowser.setChangesToDisplay(changes != null ? changes : Collections.emptyList());
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull String dataId) {
+      if (DATA_KEY.is(dataId)) {
+        return this;
+      }
+      return null;
+    }
+  }
+
+  private static class MyChangesBrowser extends SimpleChangesBrowser {
+    public final boolean myIsWithLocal;
+
+    private MyChangesBrowser(@NotNull Project project, boolean isWithLocal) {
+      super(project, false, true);
+      myIsWithLocal = isWithLocal;
+    }
+
+    @NotNull
+    @Override
+    protected List<AnAction> createToolbarActions() {
+      return ContainerUtil.append(
+        super.createToolbarActions(),
+        new MyGetVersionAction()
+      );
+    }
+
+    @NotNull
+    @Override
+    protected List<AnAction> createPopupMenuActions() {
+      return ContainerUtil.append(
+        super.createPopupMenuActions(),
+        new MyGetVersionAction()
+      );
+    }
+  }
+
+  private static class MyGetVersionAction extends DumbAwareAction {
+    private MyGetVersionAction() {
+      super(VcsBundle.messagePointer("action.name.get.file.content.from.repository"),
+            VcsBundle.messagePointer("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      MyLoadingChangesPanel changesPanel = e.getData(MyLoadingChangesPanel.DATA_KEY);
+      if (project == null || changesPanel == null) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      MyChangesBrowser browser = ObjectUtils.tryCast(changesPanel.getChangesBrowser(), MyChangesBrowser.class);
+      boolean isVisible = browser != null && browser.myIsWithLocal;
+      boolean isEnabled = isVisible && !browser.getSelectedChanges().isEmpty();
+      e.getPresentation().setVisible(isVisible);
+      e.getPresentation().setEnabled(isEnabled);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = Objects.requireNonNull(e.getProject());
+      MyLoadingChangesPanel changesPanel = e.getRequiredData(MyLoadingChangesPanel.DATA_KEY);
+
+      List<FileRevisionProvider> fileContentProviders = ContainerUtil.map(changesPanel.getChangesBrowser().getSelectedChanges(),
+                                                                          MyFileContentProvider::new);
+      GetVersionAction.doGet(project, GitBundle.message("git.log.diff.handler.get.from.vcs.title"), fileContentProviders,
+                             () -> changesPanel.reloadChanges());
+    }
+
+    private static class MyFileContentProvider implements FileRevisionProvider {
+      @NotNull private final Change myChange;
+
+      private MyFileContentProvider(@NotNull Change change) {
+        myChange = change;
+      }
+
+      @NotNull
+      @Override
+      public FilePath getFilePath() {
+        return ChangesUtil.getFilePath(myChange);
+      }
+
+      @Override
+      public byte @Nullable [] getContent() throws VcsException {
+        ContentRevision revision = myChange.getBeforeRevision();
+        if (revision == null) return null;
+
+        if (revision instanceof ByteBackedContentRevision) {
+          byte[] bytes = ((ByteBackedContentRevision)revision).getContentAsBytes();
+          if (bytes == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
+          return bytes;
+        }
+        else {
+          String content = revision.getContent();
+          if (content == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
+          return content.getBytes(getFilePath().getCharset());
+        }
+      }
     }
   }
 }
