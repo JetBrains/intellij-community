@@ -156,7 +156,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static void onTestFinished(boolean success) {
     if (!success && BUFFER.length() != 0) {
-      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      if (System.getenv("TEAMCITY_VERSION") != null) {
         // print in several small statements to avoid service messages tearing causing this fold to expand
         // using .out instead of .err by the advice from Nikita Skvortsov
         System.out.flush();

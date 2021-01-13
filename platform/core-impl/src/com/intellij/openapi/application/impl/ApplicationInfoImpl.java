@@ -9,6 +9,7 @@ import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
@@ -981,5 +982,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @TestOnly
   public static void setInStressTest(boolean inStressTest) {
     myInStressTest = inStressTest;
+    if (inStressTest) {
+      synchronized (Logger.getFactory()) {
+        Logger.setFactory(StressTestLoggerFactory.class);
+      }
+    }
   }
 }

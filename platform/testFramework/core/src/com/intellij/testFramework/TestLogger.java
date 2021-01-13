@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -80,9 +79,6 @@ public final class TestLogger extends Log4jBasedLogger {
 
   @Override
   public boolean isDebugEnabled() {
-    if (ApplicationInfoImpl.isInStressTest()) {
-      return super.isDebugEnabled();
-    }
     return true;
   }
 }
