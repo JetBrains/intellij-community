@@ -29,8 +29,8 @@
           ],
           "doc": "The action which specifies what happens for this element. Possible values are:\n<ul>\n<li><code>statusline</code>: If there is a click on the <em>expression</em> or the reader moves the pointer over it, the <em>message</em> is sent to the browser's status line. The syntax is: <code>&lt;maction actiontype=\"statusline\"&gt; <em>expression</em> <em>message</em> &lt;/maction&gt;.</code></li>\n<li><code>toggle</code>: When there is a click on the subexpression, the rendering alternates the display of selected subexpressions. Therefore each click increments the <code>selection</code> value.<br>\nThe syntax is: <code>&lt;maction actiontype=\"toggle\" selection=\"<em>positive-integer</em>\" &gt; <em>expression1</em> <em>expression2</em> <em>expressionN</em> &lt;/maction&gt;</code>.</li>\n<li><code>tooltip</code>: When the pointer moves over the <em>expression</em>, a tooltip box with a <em>message</em> is displayed near the expression.<br>\nThe syntax is:<code> &lt;maction actiontype=\"tooltip\"&gt; <em>expression</em> <em>message</em> &lt;/maction&gt;.</code></li>\n</ul>"
         },
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/maction#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/maction#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
@@ -38,7 +38,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/maction#attr-href",
@@ -46,6 +46,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/maction#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/maction#attr-mathbackground",
@@ -64,6 +68,10 @@
         "selection": {
           "url": "$MDN_URL$/web/mathml/element/maction#attr-selection",
           "doc": "The child element which is addressed by the action. The default value is\n<code>1</code>\n, which is the first child element."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/maction#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -74,8 +82,8 @@
       ],
       "doc": "<p class=\"summary\">The top-level element in MathML is <code>&lt;math&gt;</code>. Every valid MathML instance must be wrapped in <code>&lt;math&gt;</code> tags. In addition you must not nest a second <code>&lt;math&gt;</code> element in another, but you can have an arbitrary number of other child elements in it.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/math#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/math#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "dir": {
@@ -98,6 +106,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/math#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/math#attr-mathbackground",
@@ -127,6 +139,10 @@
             "StandardTrack"
           ],
           "doc": "Specifies how an expression behaves if it is too long to fit in the allowed width.\n<br>\nPossible values are:\n<code>linebreak</code>\n(default),\n<code>scroll</code>\n,\n<code>elide</code>\n,\n<code>truncate</code>\n,\n<code>scale</code>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/math#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -137,13 +153,13 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;menclose&gt;</code> element renders its content inside an enclosing notation specified by the <code>notation</code> attribute.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/menclose#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/menclose#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
           "url": "$MDN_URL$/web/mathml/element/menclose#attr-displaystyle",
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/menclose#attr-href",
@@ -151,6 +167,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/menclose#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/menclose#attr-mathbackground",
@@ -171,7 +191,11 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A list of notations, separated by white space, to apply to the child elements. The symbols are each drawn as if the others are not present, and therefore may overlap. Possible values are:\n<table class=\"standard-table\">\n<tbody>\n<tr>\n<th>Value</th>\n<th>Sample Rendering</th>\n<th>Rendering in<br>\nyour browser</th>\n<th>Description</th>\n</tr>\n<tr>\n<td><code>longdiv</code> (default)</td>\n<td><img alt=\"longdiv\" src=\"/files/3167/default.png\" data-flaw=\"image1\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"longdiv\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>long division symbol</td>\n</tr>\n<tr>\n<td><code>actuarial</code></td>\n<td><img alt=\"actuarial\" src=\"/files/3168/actuarial.png\" data-flaw=\"image2\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"actuarial\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td><a class=\"external\" href=\"http://en.wikipedia.org/wiki/Actuarial_notation\" title=\"http://en.wikipedia.org/wiki/Actuarial_notation\">actuarial symbol</a></td>\n</tr>\n<tr>\n<td><code>radical</code> 👎</td>\n<td><img alt=\"radical\" src=\"/files/3169/radical.png\" data-flaw=\"image3\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"radical\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>square root symbol. Deprecated. Use <code><a href=\"$MDN_URL$/Web/MathML/Element/msqrt\" title=\"&lt;msqrt&gt;\">&lt;msqrt&gt;</a></code> instead.</td>\n</tr>\n<tr>\n<td><code>box</code></td>\n<td><img alt=\"box\" src=\"/files/3170/box.png\" data-flaw=\"image4\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"box\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>box</td>\n</tr>\n<tr>\n<td><code>roundedbox</code></td>\n<td><img alt=\"roundedbox\" src=\"/files/3171/roundedbox.png\" data-flaw=\"image5\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"roundedbox\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>rounded box</td>\n</tr>\n<tr>\n<td><code>circle</code></td>\n<td><img alt=\"circle\" src=\"/files/3172/circle.png\" data-flaw=\"image6\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"circle\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>circle</td>\n</tr>\n<tr>\n<td><code>left</code></td>\n<td><img alt=\"left\" src=\"/files/3173/left.png\" data-flaw=\"image7\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"left\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line to the left of the contents</td>\n</tr>\n<tr>\n<td><code>right</code></td>\n<td><img alt=\"right\" src=\"/files/3174/right.png\" data-flaw=\"image8\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"right\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line to the right of the contents</td>\n</tr>\n<tr>\n<td><code>top</code></td>\n<td><img alt=\"top\" src=\"/files/3175/top.png\" data-flaw=\"image9\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"top\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line above of the contents</td>\n</tr>\n<tr>\n<td><code>bottom</code></td>\n<td><img alt=\"bottom\" src=\"/files/3176/bottom.png\" data-flaw=\"image10\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"bottom\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line below of the contents</td>\n</tr>\n<tr>\n<td><code>updiagonalstrike</code></td>\n<td><img alt=\"updiagonalstrike\" src=\"/files/3177/updiagonalstrike.png\" data-flaw=\"image11\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"updiagonalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>strikeout line through contents from lower left to upper right</td>\n</tr>\n<tr>\n<td><code>downdiagonalstrike</code></td>\n<td><img alt=\"downdiagonalstrike\" src=\"/files/3178/downdiagonalstrike.png\" data-flaw=\"image12\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"downdiagonalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>strikeout line through contents from upper left to lower right</td>\n</tr>\n<tr>\n<td><code>verticalstrike</code></td>\n<td><img alt=\"verticalstrike\" src=\"/files/3179/verticalstrike.png\" data-flaw=\"image13\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"verticalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>vertical strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>horizontalstrike</code></td>\n<td><img alt=\"horizontalstrike\" src=\"/files/3180/horizontalstrike.png\" data-flaw=\"image14\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"horizontalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>horizontal strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>madruwb</code></td>\n<td><img alt=\"madruwb\" src=\"/files/3181/madruwb.png\" data-flaw=\"image15\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"madruwb\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td><a class=\"external\" href=\"http://en.wikipedia.org/wiki/Modern_Arabic_mathematical_notation#Arithmetic_and_algebra\" title=\"http://en.wikipedia.org/wiki/Modern_Arabic_mathematical_notation#Arithmetic_and_algebra\">Arabic factorial symbol</a></td>\n</tr>\n<tr>\n<td><code>updiagonalarrow</code></td>\n<td><img alt src=\"https://mdn.mozillademos.org/files/6255/updiagonalarrow.png\" style=\"height: 38px; width: 83px;\" data-flaw=\"image16\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"updiagonalarrow\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>diagonal arrow</td>\n</tr>\n<tr>\n<td><code>phasorangle</code></td>\n<td><img alt=\"Screenshot of the phasorangle notation\" src=\"https://mdn.mozillademos.org/files/7851/phasorangle.png\" style=\"height: 34px; width: 93px;\" data-flaw=\"image17\" loading=\"lazy\"></td>\n<td><math> <menclose notation=\"phasorangle\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>phasor angle</td>\n</tr>\n</tbody>\n</table>"
+          "doc": "A list of notations, separated by white space, to apply to the child elements. The symbols are each drawn as if the others are not present, and therefore may overlap. Possible values are:\n<table class=\"standard-table\">\n<tbody>\n<tr>\n<th>Value</th>\n<th>Sample Rendering</th>\n<th>Rendering in<br>\nyour browser</th>\n<th>Description</th>\n</tr>\n<tr>\n<td><code>longdiv</code> (default)</td>\n<td><math> <menclose notation=\"longdiv\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>long division symbol</td>\n</tr>\n<tr>\n<td><code>actuarial</code></td>\n<td><math> <menclose notation=\"actuarial\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td><a class=\"external\" href=\"http://en.wikipedia.org/wiki/Actuarial_notation\" >actuarial symbol</a></td>\n</tr>\n<tr>\n<td><code>radical</code> 👎</td>\n<td><math> <menclose notation=\"radical\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>square root symbol. Deprecated. Use <code><a href=\"$MDN_URL$/Web/MathML/Element/msqrt\" >&lt;msqrt&gt;</a></code> instead.</td>\n</tr>\n<tr>\n<td><code>box</code></td>\n<td><math> <menclose notation=\"box\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>box</td>\n</tr>\n<tr>\n<td><code>roundedbox</code></td>\n<td><math> <menclose notation=\"roundedbox\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>rounded box</td>\n</tr>\n<tr>\n<td><code>circle</code></td>\n<td><math> <menclose notation=\"circle\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>circle</td>\n</tr>\n<tr>\n<td><code>left</code></td>\n<td><math> <menclose notation=\"left\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line to the left of the contents</td>\n</tr>\n<tr>\n<td><code>right</code></td>\n<td><math> <menclose notation=\"right\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line to the right of the contents</td>\n</tr>\n<tr>\n<td><code>top</code></td>\n<td><math> <menclose notation=\"top\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line above of the contents</td>\n</tr>\n<tr>\n<td><code>bottom</code></td>\n<td><math> <menclose notation=\"bottom\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>line below of the contents</td>\n</tr>\n<tr>\n<td><code>updiagonalstrike</code></td>\n<td><math> <menclose notation=\"updiagonalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>strikeout line through contents from lower left to upper right</td>\n</tr>\n<tr>\n<td><code>downdiagonalstrike</code></td>\n<td><math> <menclose notation=\"downdiagonalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>strikeout line through contents from upper left to lower right</td>\n</tr>\n<tr>\n<td><code>verticalstrike</code></td>\n<td><math> <menclose notation=\"verticalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>vertical strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>horizontalstrike</code></td>\n<td><math> <menclose notation=\"horizontalstrike\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>horizontal strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>madruwb</code></td>\n<td><math> <menclose notation=\"madruwb\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td><a class=\"external\" href=\"http://en.wikipedia.org/wiki/Modern_Arabic_mathematical_notation#Arithmetic_and_algebra\" >Arabic factorial symbol</a></td>\n</tr>\n<tr>\n<td><code>updiagonalarrow</code></td>\n<td><math> <menclose notation=\"updiagonalarrow\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>diagonal arrow</td>\n</tr>\n<tr>\n<td><code>phasorangle</code></td>\n<td><math> <menclose notation=\"phasorangle\"> <msup><mi>a</mi><mn>2</mn></msup> <mo>+</mo> <msup><mi>b</mi><mn>2</mn></msup> </menclose> </math></td>\n<td>phasor angle</td>\n</tr>\n</tbody>\n</table>"
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/menclose#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -182,8 +206,8 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;merror&gt;</code> element is used to display contents as error messages. In Firefox this error message is rendered similar to the typical XML error message. Note that this error is<strong> not</strong> thrown when your MathML markup is wrong or not well-formed XML. You will still get an XML parsing error (in case of the XHTML notation of MathML), which has nothing to do with <code>&lt;merror&gt;</code>.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/merror#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/merror#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
@@ -191,7 +215,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/merror#attr-href",
@@ -199,6 +223,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/merror#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/merror#attr-mathbackground",
@@ -213,6 +241,10 @@
             "StandardTrack"
           ],
           "doc": "The text color and also the fraction line color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/merror#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -221,7 +253,7 @@
       "status": [
         "Deprecated"
       ],
-      "doc": "<p><span class=\"seoSummary\">The deprecated MathML <code>&lt;mfenced&gt;</code> element used to provide the possibility to add custom opening and closing parentheses (such as brackets) and separators (such as commas or semicolons) to an expression. It has been removed from the latest MathML standard and modern browsers no longer support it.</span> Use the <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" title=\"&lt;mrow&gt;\">&lt;mrow&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code> elements instead.</p>",
+      "doc": "<p><span class=\"seoSummary\">The deprecated MathML <code>&lt;mfenced&gt;</code> element used to provide the possibility to add custom opening and closing parentheses (such as brackets) and separators (such as commas or semicolons) to an expression. It has been removed from the latest MathML standard and modern browsers no longer support it.</span> Use the <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code> elements instead.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/mfenced#attr-class",
@@ -237,6 +269,10 @@
             "Deprecated"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mfenced#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mfenced#attr-mathbackground",
@@ -259,6 +295,10 @@
         "separators": {
           "url": "$MDN_URL$/web/mathml/element/mfenced#attr-separators",
           "doc": "A sequence of zero or more characters to be used for different separators, optionally divided by white space, which is ignored. The default value is \",\". By specifying more than one character, it is possible to set different separators for each argument in the expression. If there are too many separators, all excess is ignored. If there are too few separators in the expression, the last specified separator is repeated."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mfenced#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -293,7 +333,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mfrac#attr-href",
@@ -301,6 +341,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mfrac#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "linethickness": {
           "url": "$MDN_URL$/web/mathml/element/mfrac#attr-linethickness",
@@ -330,6 +374,10 @@
             "Deprecated"
           ],
           "doc": "The alignment of the numerator over the fraction. Possible values are:\n<code>left</code>\n,\n<code>center</code>\n(default), and\n<code>right</code>\n.\n<br>\nThis attribute is deprecated and will be removed in the future. Use CSS\n<code><a href=\"$MDN_URL$/Web/CSS/text-align\">text-align</a></code>\ninstead."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mfrac#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -344,8 +392,8 @@
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-alt",
           "doc": "This attribute defines the alternative text describing the image. Users will see this displayed if the image URL is wrong, the image is not in one of the\n<a href=\"$MDN_URL$/Web/HTML/Element/Img#Supported_image_formats\" data-flaw=\"link2\">supported formats</a>\n, or until the image is downloaded."
         },
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mglyph#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mglyph#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
         },
         "height": {
@@ -356,6 +404,10 @@
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-href",
           "doc": "Used to set a hyperlink to a specified URI."
         },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mglyph#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
+        },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-mathbackground",
           "doc": "The background color (if the image has transparency). You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
@@ -363,6 +415,10 @@
         "src": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-src",
           "doc": "The image URL."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mglyph#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
         },
         "valign": {
           "url": "$MDN_URL$/web/mathml/element/mglyph#attr-valign",
@@ -381,8 +437,8 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;mi&gt;</code> element indicates that the content should be rendered as an <strong>identifier</strong> such as function names, variables or symbolic constants. You can also have arbitrary text in it to mark up terms.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mi#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mi#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "dir": {
@@ -397,7 +453,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mi#attr-href",
@@ -405,6 +461,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mi#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mi#attr-mathbackground",
@@ -427,6 +487,10 @@
             "StandardTrack"
           ],
           "doc": "This logical class of the identifier, which varies in typography. That is, although the names suggest the typographic style for the class, semantically, items with the same class are treated \"the same\" within an expression, which might or might not involve displaying them with the named typography. The following values are allowed:\n<ul>\n<li><code>normal</code> (Default value for <em>more than one character</em>) ; <math><mi mathvariant=\"normal\">Example</mi></math></li>\n<li><code>bold</code> ; <math><mi mathvariant=\"bold\">Example</mi></math></li>\n<li><code>italic</code> (Default value for <em>a single character</em>) ; <math><mi mathvariant=\"italic\">Example</mi></math></li>\n<li><code>bold-italic</code> ; <math><mi mathvariant=\"bold-italic\">Example</mi></math></li>\n</ul>\n<ul>\n<li><code>double-struck</code> ; <math><mi mathvariant=\"double-struck\">Example</mi></math></li>\n<li><code>bold-fraktur</code> ; <math><mi mathvariant=\"bold-fraktur\">Example</mi></math></li>\n<li><code>script</code> ; <math><mi mathvariant=\"script\">Example</mi></math></li>\n<li><code>bold-script</code> ; <math><mi mathvariant=\"bold-script\">Example</mi></math></li>\n<li><code>fraktur</code> ; <math><mi mathvariant=\"fraktur\">Example</mi></math></li>\n</ul>\n<ul>\n<li><code>sans-serif</code> ; <math><mi mathvariant=\"sans-serif\">Example</mi></math></li>\n<li><code>bold-sans-serif</code> ; <math><mi mathvariant=\"bold-sans-serif\">Example</mi></math></li>\n<li><code>sans-serif-italic</code> ; <math><mi mathvariant=\"sans-serif-italic\">Example</mi></math></li>\n<li><code>sans-serif-bold-italic</code> ; <math><mi mathvariant=\"sans-serif-bold-italic\">Example</mi></math></li>\n<li><code>monospace</code> ; <math><mi mathvariant=\"monospace\">Example</mi></math></li>\n</ul>\n<ul>\n<li><code>initial</code> ; <math><mi mathvariant=\"initial\">مثال</mi></math></li>\n<li><code>tailed</code> ; <math><mi mathvariant=\"tailed\">مثال</mi></math></li>\n<li><code>looped</code> ; <math><mi mathvariant=\"looped\">مثال</mi></math></li>\n<li><code>stretched</code> ; <math><mi mathvariant=\"stretched\">مثال</mi></math></li>\n</ul>"
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mi#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -435,19 +499,23 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mlabeledtr&gt;</code> element is used to represent a label in a row either on the left or on the right side (determined using the <code>side</code> attribute on the <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code> element). Child elements of <code>&lt;mlabeledtr&gt;</code> must be <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" title=\"&lt;mtd&gt;\">&lt;mtd&gt;</a></code> elements. The first child is the label whereas all other children are representing row contents and are treated identically to children of <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> elements.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mlabeledtr&gt;</code> element is used to represent a label in a row either on the left or on the right side (determined using the <code>side</code> attribute on the <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code> element). Child elements of <code>&lt;mlabeledtr&gt;</code> must be <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" >&lt;mtd&gt;</a></code> elements. The first child is the label whereas all other children are representing row contents and are treated identically to children of <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code> elements.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "columnalign": {
           "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-columnalign",
-          "doc": "Overrides the horizontal alignment of cells specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code>\nfor this row.\n<br>\nPossible values are:\n<code>left</code>\n,\n<code>center</code>\nand\n<code>right</code>\n."
+          "doc": "Overrides the horizontal alignment of cells specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code>\nfor this row.\n<br>\nPossible values are:\n<code>left</code>\n,\n<code>center</code>\nand\n<code>right</code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-href",
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-mathbackground",
@@ -459,7 +527,11 @@
         },
         "rowalign": {
           "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-rowalign",
-          "doc": "Overrides the vertical alignment of cells specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code>\nfor this row.\n<br>\nPossible values are:\n<code>axis</code>\n,\n<code>baseline</code>\n,\n<code>bottom</code>\n,\n<code>center</code>\nand\n<code>top</code>\n."
+          "doc": "Overrides the vertical alignment of cells specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code>\nfor this row.\n<br>\nPossible values are:\n<code>axis</code>\n,\n<code>baseline</code>\n,\n<code>bottom</code>\n,\n<code>center</code>\nand\n<code>top</code>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mlabeledtr#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -468,7 +540,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mmultiscripts&gt;</code> element allows you to create tensor-like objects. In a descriptive way <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" title=\"http://en.wikipedia.org/wiki/Tensor\">tensors</a> are multidimensional matrices (mathematical imprecise but exemplified). The degree of a tensor depends on the dimensionality of a representative array. For example, a number is a 0-dimensional array, or a 0th-order tensor. A 1-dimensional array (e.g. vectors) is a 1st-order tensor and so 2nd-order tensors are needed to represent square matrices. To learn more about the mathematical background of tensors refer to the <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" title=\"http://en.wikipedia.org/wiki/Tensor\">entry on Wikipedia</a>.</p>\n<p>MathML uses a special syntax to describe subscripts and superscripts for both, postscripts and prescripts, attached to a base expression:</p>\n<pre class=\"syntaxbox notranslate\">&lt;mmultiscripts&gt;\n<em>base</em>\n(<em>subscript superscript</em>)*\n[ &lt;mprescripts/&gt; (<em>presubscript presuperscript</em>)* ]\n&lt;/mmultiscripts&gt;\n</pre>\n<p>After the base expression you can specify a postsubscript and a postsuperscript. Prescripts are optional and are separated by the empty tag <code>&lt;mprescripts/&gt;</code> (only one &lt;mprescripts /&gt; element is allowed, otherwise you will get an <code>DuplicateMprescripts</code> error in the <a href=\"$MDN_URL$/Error_Console\" title=\"$MDN_URL$/Error_Console\" data-flaw=\"link1\">Error Console</a> and \"invalid-markup\" in your rendering). In addition you are able to use <code>&lt;none/&gt;</code> as a placeholder for empty scripts (not for the base). See the examples section for a correct usage.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mmultiscripts&gt;</code> element allows you to create tensor-like objects. In a descriptive way <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" >tensors</a> are multidimensional matrices (mathematical imprecise but exemplified). The degree of a tensor depends on the dimensionality of a representative array. For example, a number is a 0-dimensional array, or a 0th-order tensor. A 1-dimensional array (e.g. vectors) is a 1st-order tensor and so 2nd-order tensors are needed to represent square matrices. To learn more about the mathematical background of tensors refer to the <a class=\"external\" href=\"http://en.wikipedia.org/wiki/Tensor\" >entry on Wikipedia</a>.</p>\n<p>MathML uses a special syntax to describe subscripts and superscripts for both, postscripts and prescripts, attached to a base expression:</p>\n<pre class=\"syntaxbox notranslate\">&lt;mmultiscripts&gt;\n<em>base</em>\n(<em>subscript superscript</em>)*\n[ &lt;mprescripts/&gt; (<em>presubscript presuperscript</em>)* ]\n&lt;/mmultiscripts&gt;\n</pre>\n<p>After the base expression you can specify a postsubscript and a postsuperscript. Prescripts are optional and are separated by the empty tag <code>&lt;mprescripts/&gt;</code> (only one &lt;mprescripts /&gt; element is allowed, otherwise you will get an <code>DuplicateMprescripts</code> error in the <a href=\"$MDN_URL$/Error_Console\"  data-flaw=\"link1\">Error Console</a> and \"invalid-markup\" in your rendering). In addition you are able to use <code>&lt;none/&gt;</code> as a placeholder for empty scripts (not for the base). See the examples section for a correct usage.</p>",
       "attrs": {
         "class": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-class",
@@ -485,7 +557,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-href",
@@ -493,6 +565,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-mathbackground",
@@ -511,6 +587,10 @@
             "StandardTrack"
           ]
         },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
+        },
         "subscriptshift": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#attr-subscriptshift",
           "doc": "The minimum space by which to shift the subscript below the baseline of the expression, as a\n<a href=\"$MDN_URL$/Web/CSS/length\" data-flaw=\"link5\">CSS length</a>\n.\n<br>\nThis property is deprecated and will be removed in the future."
@@ -528,8 +608,8 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;mn&gt;</code> element represents a numeric literal which is normally a sequence of digits with a possible separator (a dot or a comma). However,  it is also allowed to have arbitrary text in it which is actually a numeric quantity, for example \"eleven\".</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mn#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mn#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "dir": {
@@ -544,7 +624,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mn#attr-href",
@@ -552,6 +632,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mn#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mn#attr-mathbackground",
@@ -574,6 +658,10 @@
             "StandardTrack"
           ],
           "doc": "This attribute specifies the logical class of the number which varies in typography. That is, although the names suggest the typographic style for the class, semantically, items with the same class are treated \"the same\" within an expression, which might or might not involve displaying them with the named typography. The following values are allowed:\n<ul>\n<li><code>normal</code> (Default value) ; <math><mn mathvariant=\"normal\">Example</mn></math></li>\n<li><code>bold</code> ; <math><mn mathvariant=\"bold\">Example</mn></math></li>\n<li><code>italic</code> ; <math><mn mathvariant=\"italic\">Example</mn></math></li>\n<li><code>bold-italic</code> ; <math><mn mathvariant=\"bold-italic\">Example</mn></math></li>\n</ul>\n<ul>\n<li><code>double-struck</code> ; <math><mn mathvariant=\"double-struck\">Example</mn></math></li>\n<li><code>bold-fraktur</code> ; <math><mn mathvariant=\"bold-fraktur\">Example</mn></math></li>\n<li><code>script</code> ; <math><mn mathvariant=\"script\">Example</mn></math></li>\n<li><code>bold-script</code> ; <math><mn mathvariant=\"bold-script\">Example</mn></math></li>\n<li><code>fraktur</code> ; <math><mn mathvariant=\"fraktur\">Example</mn></math></li>\n</ul>\n<ul>\n<li><code>sans-serif</code> ; <math><mn mathvariant=\"sans-serif\">Example</mn></math></li>\n<li><code>bold-sans-serif</code> ; <math><mn mathvariant=\"bold-sans-serif\">Example</mn></math></li>\n<li><code>sans-serif-italic</code> ; <math><mn mathvariant=\"sans-serif-italic\">Example</mn></math></li>\n<li><code>sans-serif-bold-italic</code> ; <math><mn mathvariant=\"sans-serif-bold-italic\">Example</mn></math></li>\n<li><code>monospace</code> ; <math><mn mathvariant=\"monospace\">Example</mn></math></li>\n</ul>\n<ul>\n<li><code>initial</code> ; <math><mn mathvariant=\"initial\">مثال</mn></math></li>\n<li><code>tailed</code> ; <math><mn mathvariant=\"tailed\">مثال</mn></math></li>\n<li><code>looped</code> ; <math><mn mathvariant=\"looped\">مثال</mn></math></li>\n<li><code>stretched</code> ; <math><mn mathvariant=\"stretched\">مثال</mn></math></li>\n</ul>"
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mn#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -591,8 +679,8 @@
           ],
           "doc": "If the operator is used as an\n<a href=\"$MDN_URL$/Web/MathML/Element/munder\" data-flaw=\"link1\">under</a>\n- or\n<a href=\"$MDN_URL$/Web/MathML/Element/mover\" data-flaw=\"link2\">overscript</a>\nthis attribute specifies whether the operator should be treated as an accent.\n<br>\nAllowed values are\n<code>true</code>\nor\n<code>false</code>\n."
         },
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mo#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mo#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
         },
         "dir": {
@@ -607,7 +695,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "fence": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-fence",
@@ -618,7 +706,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Specifies the role of the operator in an enclosed expression, which affects spacing and other default properties. For ordinary operators (+, -, etc. ) you usually do not need to specify this attribute explicitly.\n<br>\nPossible values are:\n<ul>\n<li><code>prefix</code>, for opening fences. (It is the default value if the operator is the first argument in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" title=\"&lt;mrow&gt;\">&lt;mrow&gt;</a></code> element with more than one argument.)</li>\n<li><code>infix</code>, for separators. (It is the default value if the operator is not included in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" title=\"&lt;mrow&gt;\">&lt;mrow&gt;</a></code> element.)</li>\n<li><code>postfix</code>, closing fences. (It is the default value if the operator is the last argument in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" title=\"&lt;mrow&gt;\">&lt;mrow&gt;</a></code> element with more than one argument.)</li>\n</ul>"
+          "doc": "Specifies the role of the operator in an enclosed expression, which affects spacing and other default properties. For ordinary operators (+, -, etc. ) you usually do not need to specify this attribute explicitly.\n<br>\nPossible values are:\n<ul>\n<li><code>prefix</code>, for opening fences. (It is the default value if the operator is the first argument in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> element with more than one argument.)</li>\n<li><code>infix</code>, for separators. (It is the default value if the operator is not included in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> element.)</li>\n<li><code>postfix</code>, closing fences. (It is the default value if the operator is the last argument in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> element with more than one argument.)</li>\n</ul>"
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-href",
@@ -626,6 +714,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mo#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
         },
         "largeop": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-largeop",
@@ -705,6 +797,10 @@
           ],
           "doc": "Specifies whether the operator stretches to the size of the adjacent element.\n<br>\nAllowed values are\n<code>true</code>\nor\n<code>false</code>\n."
         },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mo#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link3\">stylesheets</a>\n."
+        },
         "symmetric": {
           "url": "$MDN_URL$/web/mathml/element/mo#attr-symmetric",
           "status": [
@@ -736,8 +832,8 @@
           ],
           "doc": "The alignment of the over-script. Possible values are:\n<code>left</code>\n,\n<code>center</code>\n, and\n<code>right</code>\n.\n<br>\nThis attribute is deprecated and will be removed in the future. Use CSS\n<code><a href=\"$MDN_URL$/Web/CSS/text-align\">text-align</a></code>\ninstead."
         },
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mover#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mover#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
@@ -745,7 +841,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mover#attr-href",
@@ -753,6 +849,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mover#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mover#attr-mathbackground",
@@ -767,6 +867,10 @@
             "StandardTrack"
           ],
           "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mover#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -777,8 +881,8 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;mpadded&gt;</code> element is used to add extra padding and to set the general adjustment of position and size of enclosed contents.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mpadded#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mpadded#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "depth": {
@@ -790,7 +894,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "height": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-height",
@@ -805,6 +909,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mpadded#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "lspace": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-lspace",
@@ -826,6 +934,10 @@
             "StandardTrack"
           ],
           "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link6\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mpadded#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "voffset": {
           "url": "$MDN_URL$/web/mathml/element/mpadded#attr-voffset",
@@ -850,8 +962,8 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;mphantom&gt;</code> element is rendered invisibly, but dimensions (such as height, width, and baseline position) are still kept.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mphantom#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mphantom#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
@@ -859,7 +971,11 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mphantom#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mphantom#attr-mathbackground",
@@ -867,6 +983,10 @@
             "StandardTrack"
           ],
           "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link2\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mphantom#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -877,8 +997,8 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;mroot&gt;</code> element is used to display roots with an explicit index. Two arguments are accepted, which leads to the syntax: <code>&lt;mroot&gt; <em>base index</em> &lt;/mroot&gt;</code>.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mroot#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mroot#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
@@ -886,7 +1006,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mroot#attr-href",
@@ -894,6 +1014,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URL."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mroot#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mroot#attr-mathbackground",
@@ -908,6 +1032,10 @@
             "StandardTrack"
           ],
           "doc": "The text color and also the color of the root symbol itself. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mroot#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -916,10 +1044,10 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mrow&gt;</code> element is used to group sub-expressions, which usually contain one or more <a href=\"$MDN_URL$/Web/MathML/Element/mo\" data-flaw=\"link1\">operators</a> with their respective operands (such as <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" title=\"&lt;mi&gt;\">&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mn\" title=\"&lt;mn&gt;\">&lt;mn&gt;</a></code>). This element renders as a horizontal row containing its arguments.</p>\n<p>When writing a MathML expression, you should group elements within an <code>&lt;mrow&gt;</code> in the same way as they are grouped in the mathematical interpretation of the expression. Proper grouping helps the rendering of the expression in several ways:</p>\n<ul>\n<li>It can improve the display by possibly affecting spacing.</li>\n<li>It allows for more intelligent line-breaking and indentation.</li>\n<li>It simplifies the interpretation of the expression by automated systems such as computer algebra systems and audio renderers.</li>\n</ul>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mrow&gt;</code> element is used to group sub-expressions, which usually contain one or more <a href=\"$MDN_URL$/Web/MathML/Element/mo\" data-flaw=\"link1\">operators</a> with their respective operands (such as <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" >&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mn\" >&lt;mn&gt;</a></code>). This element renders as a horizontal row containing its arguments.</p>\n<p>When writing a MathML expression, you should group elements within an <code>&lt;mrow&gt;</code> in the same way as they are grouped in the mathematical interpretation of the expression. Proper grouping helps the rendering of the expression in several ways:</p>\n<ul>\n<li>It can improve the display by possibly affecting spacing.</li>\n<li>It allows for more intelligent line-breaking and indentation.</li>\n<li>It simplifies the interpretation of the expression by automated systems such as computer algebra systems and audio renderers.</li>\n</ul>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mrow#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mrow#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         },
         "dir": {
@@ -934,7 +1062,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mrow#attr-href",
@@ -942,6 +1070,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mrow#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mrow#attr-mathbackground",
@@ -956,6 +1088,10 @@
             "StandardTrack"
           ],
           "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mrow#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         }
       }
     },
@@ -964,10 +1100,10 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;ms&gt;</code> element represents a <em>string literal</em> meant to be interpreted by programming languages and computer algebra systems. By default, string literals are displayed as enclosed by double quotes (<code>&amp;quot;</code>); by using the <code>lquote</code> and <code>rquote</code> attributes, you can set custom characters to display. Note that quotation marks should not be specified unless they are part of the string literal. The content of an <code>&lt;ms&gt;</code> element is not an ASCII string per se, but rather a sequence of characters and <code><a href=\"$MDN_URL$/Web/MathML/Element/mglyph\" title=\"&lt;mglyph&gt;\">&lt;mglyph&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/malignmark\" title=\"&lt;malignmark&gt;\">&lt;malignmark&gt;</a></code> elements.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;ms&gt;</code> element represents a <em>string literal</em> meant to be interpreted by programming languages and computer algebra systems. By default, string literals are displayed as enclosed by double quotes (<code>&amp;quot;</code>); by using the <code>lquote</code> and <code>rquote</code> attributes, you can set custom characters to display. Note that quotation marks should not be specified unless they are part of the string literal. The content of an <code>&lt;ms&gt;</code> element is not an ASCII string per se, but rather a sequence of characters and <code><a href=\"$MDN_URL$/Web/MathML/Element/mglyph\" >&lt;mglyph&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/malignmark\" >&lt;malignmark&gt;</a></code> elements.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/ms#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/ms#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "dir": {
@@ -982,7 +1118,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/ms#attr-href",
@@ -990,6 +1126,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/ms#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "lquote": {
           "url": "$MDN_URL$/web/mathml/element/ms#attr-lquote",
@@ -1020,6 +1160,10 @@
         "rquote": {
           "url": "$MDN_URL$/web/mathml/element/ms#attr-rquote",
           "doc": "The closing quote mark (depends on\n<code><a href=\"#attr-dir\">dir</a></code>\n) to enclose the content. The default value is \"\n<code>&amp;quot;\".</code>"
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/ms#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -1030,8 +1174,8 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;mspace&gt;</code> element is used to display a blank space, whose size is set by its attributes.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mspace#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mspace#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "depth": {
@@ -1046,7 +1190,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "height": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-height",
@@ -1055,16 +1199,24 @@
           ],
           "doc": "The desired height (above the baseline) of the space (see\n<a href=\"$MDN_URL$/Web/MathML/Attribute/Values#Lengths\" data-flaw=\"link3\">length</a>\nfor values and units)."
         },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mspace#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
+        },
         "linebreak": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-linebreak",
           "status": [
             "StandardTrack"
           ],
-          "doc": "Indicates a line-break at the space. Possible values:\n<code>auto</code>\n(default value),\n<code>newline</code>\n,\n<code>nobreak</code>\n,\n<code>goodbreak</code>\n,\n<code>badbreak</code>\n.\n<br>\nStarting with MathML 3, it is preferred to use\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\nto control linebreaking."
+          "doc": "Indicates a line-break at the space. Possible values:\n<code>auto</code>\n(default value),\n<code>newline</code>\n,\n<code>nobreak</code>\n,\n<code>goodbreak</code>\n,\n<code>badbreak</code>\n.\n<br>\nStarting with MathML 3, it is preferred to use\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\nto control linebreaking."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-mathbackground",
           "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link4\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mspace#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "width": {
           "url": "$MDN_URL$/web/mathml/element/mspace#attr-width",
@@ -1082,8 +1234,8 @@
       ],
       "doc": "<p class=\"summary\">The MathML <code>&lt;msqrt&gt;</code> element is used to display square roots (no index is displayed). The square root accepts only one argument, which leads to the following syntax: <code>&lt;msqrt&gt; <em>base</em> &lt;/msqrt&gt;</code>.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/msqrt#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/msqrt#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
@@ -1091,7 +1243,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/msqrt#attr-href",
@@ -1099,6 +1251,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/msqrt#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/msqrt#attr-mathbackground",
@@ -1113,6 +1269,10 @@
             "StandardTrack"
           ],
           "doc": "The text color and also the color of the root symbol itself. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/msqrt#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -1128,7 +1288,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "This attribute is specifying the character for the alignment point within\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mstack\" title=\"&lt;mstack&gt;\">&lt;mstack&gt;</a></code>\nand\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code>\ncolumns, if the\n<code>decimalpoint</code>\nvalue is used to specify the alignment."
+          "doc": "This attribute is specifying the character for the alignment point within\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mstack\" >&lt;mstack&gt;</a></code>\nand\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code>\ncolumns, if the\n<code>decimalpoint</code>\nvalue is used to specify the alignment."
         },
         "dir": {
           "url": "$MDN_URL$/web/mathml/element/mstyle#attr-dir",
@@ -1142,7 +1302,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "infixbreakstyle": {
           "url": "$MDN_URL$/web/mathml/element/mstyle#attr-infixbreakstyle",
@@ -1193,7 +1353,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/msub#attr-href",
@@ -1201,6 +1361,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/msub#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/msub#attr-mathbackground",
@@ -1215,6 +1379,10 @@
             "StandardTrack"
           ],
           "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/msub#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "subscriptshift": {
           "url": "$MDN_URL$/web/mathml/element/msub#attr-subscriptshift",
@@ -1241,7 +1409,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/msubsup#attr-href",
@@ -1249,6 +1417,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/msubsup#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/msubsup#attr-mathbackground",
@@ -1263,6 +1435,10 @@
             "StandardTrack"
           ],
           "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/msubsup#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "subscriptshift": {
           "url": "$MDN_URL$/web/mathml/element/msubsup#attr-subscriptshift",
@@ -1296,7 +1472,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/msup#attr-href",
@@ -1304,6 +1480,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/msup#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/msup#attr-mathbackground",
@@ -1319,6 +1499,10 @@
           ],
           "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
         },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/msup#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
+        },
         "superscriptshift": {
           "url": "$MDN_URL$/web/mathml/element/msup#attr-superscriptshift",
           "status": [
@@ -1333,7 +1517,7 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mtable&gt;</code> element allows you to create tables or matrices. Inside a <code>&lt;mtable&gt;</code> only <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" title=\"&lt;mtd&gt;\">&lt;mtd&gt;</a></code> elements may appear. These elements are similar to <a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a> , <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>\n<div class=\"note notecard\">\n<p><strong>Note: </strong>The <code>&lt;mtable&gt;</code> element resets the <code>displaystyle</code> attribute to <code>false</code>. If you want to use this element as an inline-block, you might want to set <code>&lt;mtable displaystyle=\"true\"&gt;...&lt;/mtable&gt;</code>.</p>\n</div>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mtable&gt;</code> element allows you to create tables or matrices. Inside a <code>&lt;mtable&gt;</code> only <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" >&lt;mtd&gt;</a></code> elements may appear. These elements are similar to <a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a> , <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>\n<div class=\"note notecard\">\n<p><strong>Note: </strong>The <code>&lt;mtable&gt;</code> element resets the <code>displaystyle</code> attribute to <code>false</code>. If you want to use this element as an inline-block, you might want to set <code>&lt;mtable displaystyle=\"true\"&gt;...&lt;/mtable&gt;</code>.</p>\n</div>",
       "attrs": {
         "align": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-align",
@@ -1348,8 +1532,8 @@
             "StandardTrack"
           ]
         },
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mtable#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         },
         "columnalign": {
@@ -1428,6 +1612,10 @@
           ],
           "doc": "Used to set a hyperlink to a specified URI."
         },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mtable#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
+        },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-mathbackground",
           "status": [
@@ -1475,7 +1663,11 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Specifies the position where\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mlabeledtr\" title=\"&lt;mlabeledtr&gt;\">&lt;mlabeledtr&gt;</a></code>\nlabel elements should be placed. Possible values are:\n<code>left</code>\n,\n<code>right</code>\n(default),\n<code>leftoverlap</code>\nand\n<code>rightoverlap</code>\n."
+          "doc": "Specifies the position where\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mlabeledtr\" >&lt;mlabeledtr&gt;</a></code>\nlabel elements should be placed. Possible values are:\n<code>left</code>\n,\n<code>right</code>\n(default),\n<code>leftoverlap</code>\nand\n<code>rightoverlap</code>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mtable#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         },
         "width": {
           "url": "$MDN_URL$/web/mathml/element/mtable#attr-width",
@@ -1491,10 +1683,10 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mtd&gt;</code> element represents a cell in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mtd&gt;</code> element represents a cell in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mtd#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mtd#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         },
         "columnalign": {
@@ -1502,7 +1694,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Specifies the horizontal alignment of this cell and overrides values specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code>\nor\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code>\n.\n<br>\nPossible values are:\n<code>left</code>\n,\n<code>center</code>\nand\n<code>right</code>\n."
+          "doc": "Specifies the horizontal alignment of this cell and overrides values specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code>\nor\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code>\n.\n<br>\nPossible values are:\n<code>left</code>\n,\n<code>center</code>\nand\n<code>right</code>\n."
         },
         "columnspan": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-columnspan",
@@ -1516,7 +1708,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "groupalign": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-groupalign",
@@ -1531,6 +1723,10 @@
           ],
           "doc": "Used to set a hyperlink to a specified URI."
         },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mtd#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
+        },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-mathbackground",
           "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
@@ -1544,7 +1740,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Specifies the vertical alignment of this cell and overrides values specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code>\nor\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" title=\"&lt;mtr&gt;\">&lt;mtr&gt;</a></code>\n.\n<br>\nPossible values are:\n<code>axis</code>\n,\n<code>baseline</code>\n,\n<code>bottom</code>\n,\n<code>center</code>\nand\n<code>top</code>\n."
+          "doc": "Specifies the vertical alignment of this cell and overrides values specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code>\nor\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code>\n.\n<br>\nPossible values are:\n<code>axis</code>\n,\n<code>baseline</code>\n,\n<code>bottom</code>\n,\n<code>center</code>\nand\n<code>top</code>\n."
         },
         "rowspan": {
           "url": "$MDN_URL$/web/mathml/element/mtd#attr-rowspan",
@@ -1552,6 +1748,10 @@
             "StandardTrack"
           ],
           "doc": "A non-negative integer value that indicates on how many rows does the cell extend."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mtd#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         }
       }
     },
@@ -1560,10 +1760,10 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p><span class=\"seoSummary\">The MathML &lt;mtext&gt; element is used to render arbitrary text with <em>no</em> notational meaning, such as comments or annotations.</span></p>\n<p>To display text <em>with</em> notational meaning, use <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" title=\"&lt;mi&gt;\">&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code> instead.</p>",
+      "doc": "<p><span class=\"seoSummary\">The MathML &lt;mtext&gt; element is used to render arbitrary text with <em>no</em> notational meaning, such as comments or annotations.</span></p>\n<p>To display text <em>with</em> notational meaning, use <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" >&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code> instead.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mtext#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mtext#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "dir": {
@@ -1578,7 +1778,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/mtext#attr-href",
@@ -1586,6 +1786,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mtext#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mtext#attr-mathbackground",
@@ -1608,6 +1812,10 @@
             "StandardTrack"
           ],
           "doc": "This attribute specifies the logical class of the identifier, which varies in typography. That is, although the names suggest the typographic style for the class, semantically, items with the same class are treated \"the same\" within an expression, which might or might not involve displaying them with the named typography. The following values are allowed:\n<ul>\n<li><code>normal</code> (Default value) ; <math><mtext mathvariant=\"normal\">Example</mtext></math></li>\n<li><code>bold</code> ; <math><mtext mathvariant=\"bold\">Example</mtext></math></li>\n<li><code>italic</code> ; <math><mtext mathvariant=\"italic\">Example</mtext></math></li>\n<li><code>bold-italic</code> ; <math><mtext mathvariant=\"bold-italic\">Example</mtext></math></li>\n</ul>\n<ul>\n<li><code>double-struck</code> ; <math><mtext mathvariant=\"double-struck\">Example</mtext></math></li>\n<li><code>bold-fraktur</code> ; <math><mtext mathvariant=\"bold-fraktur\">Example</mtext></math></li>\n<li><code>script</code> ; <math><mtext mathvariant=\"script\">Example</mtext></math></li>\n<li><code>bold-script</code> ; <math><mtext mathvariant=\"bold-script\">Example</mtext></math></li>\n<li><code>fraktur</code> ; <math><mtext mathvariant=\"fraktur\">Example</mtext></math></li>\n</ul>\n<ul>\n<li><code>sans-serif</code> ; <math><mtext mathvariant=\"sans-serif\">Example</mtext></math></li>\n<li><code>bold-sans-serif</code> ; <math><mtext mathvariant=\"bold-sans-serif\">Example</mtext></math></li>\n<li><code>sans-serif-italic</code> ; <math><mtext mathvariant=\"sans-serif-italic\">Example</mtext></math></li>\n<li><code>sans-serif-bold-italic</code> ; <math><mtext mathvariant=\"sans-serif-bold-italic\">Example</mtext></math></li>\n<li><code>monospace</code> ; <math><mtext mathvariant=\"monospace\">Example</mtext></math></li>\n</ul>\n<ul>\n<li><code>normal</code> (Default) ; <math><mtext>مثال</mtext></math></li>\n<li><code>initial</code> ; <math><mtext mathvariant=\"initial\">مثال</mtext></math></li>\n<li><code>tailed</code> ; <math><mtext mathvariant=\"tailed\">مثال</mtext></math></li>\n<li><code>looped</code> ; <math><mtext mathvariant=\"looped\">مثال</mtext></math></li>\n<li><code>stretched</code> ; <math><mtext mathvariant=\"stretched\">مثال</mtext></math></li>\n</ul>"
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mtext#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -1616,10 +1824,10 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p class=\"summary\">The MathML <code>&lt;mtr&gt;</code> element represents a row in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>",
+      "doc": "<p class=\"summary\">The MathML <code>&lt;mtr&gt;</code> element represents a row in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\" data-flaw=\"link1\">HTML</a>.</p>",
       "attrs": {
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/mtr#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/mtr#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         },
         "columnalign": {
@@ -1627,14 +1835,14 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Overrides the horizontal alignment of cells specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code>\nfor this row.\n<br>\nPossible values are:\n<code>left</code>\n,\n<code>center</code>\nand\n<code>right</code>\n."
+          "doc": "Overrides the horizontal alignment of cells specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code>\nfor this row.\n<br>\nPossible values are:\n<code>left</code>\n,\n<code>center</code>\nand\n<code>right</code>\n."
         },
         "displaystyle": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-displaystyle",
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "groupalign": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-groupalign",
@@ -1649,6 +1857,10 @@
           ],
           "doc": "Used to set a hyperlink to a specified URI."
         },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/mtr#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
+        },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/mtr#attr-mathbackground",
           "doc": "The background color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
@@ -1662,7 +1874,11 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "Overrides the vertical alignment of cells specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" title=\"&lt;mtable&gt;\">&lt;mtable&gt;</a></code>\nfor this row.\n<br>\nPossible values are:\n<code>axis</code>\n,\n<code>baseline</code>\n,\n<code>bottom</code>\n,\n<code>center</code>\nand\n<code>top</code>\n."
+          "doc": "Overrides the vertical alignment of cells specified by\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code>\nfor this row.\n<br>\nPossible values are:\n<code>axis</code>\n,\n<code>baseline</code>\n,\n<code>bottom</code>\n,\n<code>center</code>\nand\n<code>top</code>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/mtr#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link2\">stylesheets</a>\n."
         }
       }
     },
@@ -1688,8 +1904,8 @@
           ],
           "doc": "The alignment of the underscript. Possible values are:\n<code>left</code>\n,\n<code>center</code>\n, and\n<code>right</code>\n.\n<br>\nThis attribute is deprecated and will be removed in the future. Use CSS\n<code><a href=\"$MDN_URL$/Web/CSS/text-align\">text-align</a></code>\ninstead."
         },
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/munder#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/munder#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
@@ -1697,7 +1913,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-href",
@@ -1705,6 +1921,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/munder#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/munder#attr-mathbackground",
@@ -1719,6 +1939,10 @@
             "StandardTrack"
           ],
           "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/munder#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -1751,8 +1975,8 @@
           ],
           "doc": "The alignment of both underscript and overscript. Possible values are:\n<code>left</code>\n,\n<code>center</code>\n, and\n<code>right</code>\n.\n<br>\nThis attribute is deprecated and will be removed in the future. Use CSS\n<code><a href=\"$MDN_URL$/Web/CSS/text-align\">text-align</a></code>\ninstead."
         },
-        "class, id, style": {
-          "url": "$MDN_URL$/web/mathml/element/munderover#attr-class, id, style",
+        "class": {
+          "url": "$MDN_URL$/web/mathml/element/munderover#attr-class",
           "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "displaystyle": {
@@ -1760,7 +1984,7 @@
           "status": [
             "StandardTrack"
           ],
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "href": {
           "url": "$MDN_URL$/web/mathml/element/munderover#attr-href",
@@ -1768,6 +1992,10 @@
             "StandardTrack"
           ],
           "doc": "Used to set a hyperlink to a specified URI."
+        },
+        "id": {
+          "url": "$MDN_URL$/web/mathml/element/munderover#attr-id",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         },
         "mathbackground": {
           "url": "$MDN_URL$/web/mathml/element/munderover#attr-mathbackground",
@@ -1782,6 +2010,10 @@
             "StandardTrack"
           ],
           "doc": "The text color. You can use\n<code>#rgb</code>\n,\n<code>#rrggbb</code>\nand\n<a href=\"$MDN_URL$/Web/CSS/color_value#Color_Keywords\" data-flaw=\"link3\">HTML color names</a>\n."
+        },
+        "style": {
+          "url": "$MDN_URL$/web/mathml/element/munderover#attr-style",
+          "doc": "Provided for use with\n<a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">stylesheets</a>\n."
         }
       }
     },
@@ -1801,7 +2033,7 @@
         },
         "displaystyle": {
           "url": "$MDN_URL$/web/mathml/element/semantics#attr-displaystyle",
-          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" title=\"&lt;mo&gt;\">&lt;mo&gt;</a></code>\n."
+          "doc": "A Boolean value specifying whether more vertical space is used for displayed equations or, if set to\n<code>false</code>\n, a more compact layout is used to display formulas. The main effect is that larger versions of operators are displayed, when\n<code>displaystyle</code>\nis set to\n<code>true</code>\n. See also\n<code>largeop</code>\nand\n<code>movablelimits</code>\non\n<code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code>\n."
         },
         "encoding": {
           "url": "$MDN_URL$/web/mathml/element/semantics#attr-encoding",

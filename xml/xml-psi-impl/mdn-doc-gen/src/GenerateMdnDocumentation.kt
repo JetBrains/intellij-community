@@ -197,7 +197,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
     val attributesDoc = filterProseById(indexDataProseValues, "attributes", "attributes_for_form_submission", "deprecated_attributes",
                                         "obsolete_attributes", "non-standard_attributes")
-      .joinToString("\n") { it.getProseContent() }
+      .joinToString("\n") { it.getProseContent().content }
+      .let { RawProse(it) }
 
     val status = extractStatus(compatData)
     val doc = processElementDocumentation(elementDoc)
@@ -218,9 +219,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun extractAttributeDocumentation(dir: File): MdnHtmlAttributeDocumentation {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     return MdnHtmlAttributeDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
-                                         indexDataProseValues.first()
-                                           .getProseContent()
-                                           .let { createHtmlFile(it).text }, null)
+                                         extractDescription(indexDataProseValues), null)
   }
 
   private fun extractJavascriptDocumentation(dir: File, name: String): List<Pair<String, MdnJsSymbolDocumentation>> {
@@ -229,10 +228,9 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       return extractInformationFull(dir, blockList = webApiBlockList) { subDir ->
         extractJavascriptDocumentation(subDir, "$name.${subDir.name}")
       }.toList() + Pair(name, MdnJsSymbolDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
-                                                       indexDataProseValues.first().getProseContent()
-                                                         .let { createHtmlFile(it).text },
+                                                       extractDescription(indexDataProseValues),
                                                        extractParameters(indexDataProseValues),
-                                                       extractReturns(indexDataProseValues),
+                                                       extractReturns(indexDataProseValues)?.patch(),
                                                        extractThrows(indexDataProseValues)))
     }
     catch (e: Exception) {
@@ -241,8 +239,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     }
   }
 
-  private fun buildCssDocs(): Map<String, Map<String, MdnCssSymbolDocumentation>> {
-    val result = TreeMap<String, MutableMap<String, MdnCssSymbolDocumentation>>()
+  private fun buildCssDocs(): Map<String, Map<String, MdnRawSymbolDocumentation>> {
+    val result = TreeMap<String, MutableMap<String, MdnRawSymbolDocumentation>>()
     val cssMdnDir = getMdnDir("CSS")
     extractInformationFull(cssMdnDir,
                            { it.startsWith("_colon_") || it.startsWith("_doublecolon_") || !it.contains('_') },
@@ -281,13 +279,20 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     return result
   }
 
-  private fun extractCssElementDocumentation(dir: File): MdnCssSymbolDocumentation {
+  private fun extractCssElementDocumentation(dir: File): MdnRawSymbolDocumentation {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
-    return MdnCssSymbolDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
-                                     indexDataProseValues.first()
-                                       .getProseContent()
-                                       .let { createHtmlFile(it).text }, null)
+    val url = getMdnDocsUrl(dir)
+    val status = extractStatus(compatData)
+    val description = extractDescription(indexDataProseValues)
+    return if (dir.name.let { it.startsWith('_') || it.startsWith('@') || it.endsWith("()") })
+      MdnCssBasicSymbolDocumentation(url, status, description, null)
+    else
+      MdnCssPropertySymbolDocumentation(url, status, description, extractPropertyValues(indexDataProseValues))
   }
+
+  private fun extractDescription(indexDataProseValues: List<JsonObject>): String =
+    indexDataProseValues.first().getProseContent()
+      .let { createHtmlFile(it).patchedText() }
 
   private fun filterProseById(sections: List<JsonObject>, vararg ids: String): Sequence<JsonObject> =
     sections.asSequence().filter { value ->
@@ -297,6 +302,9 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           ids.any { id == it }
         } == true
     }
+
+  private fun getProseContentById(sections: List<JsonObject>, id: String) =
+    filterProseById(sections, id).firstOrNull()?.getProseContent()
 
   private fun reversedAliasesMap(specialMappings: Map<String, Set<String>>): Map<String, String> =
     specialMappings.entries.asSequence().flatMap { mapping -> mapping.value.asSequence().map { Pair(it, mapping.key) } }.toMap()
@@ -321,27 +329,16 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         .toList()
     )
 
-
-  private fun JsonObject.getProseContent(): String =
-    this.getAsJsonPrimitive("content").asString
-      .let { patchProse(it) }
-
-  private fun patchProse(prose: String): String =
-    prose
-      .replace("/en-US/docs", MDN_DOCS_URL_PREFIX, true)
-      .replace("&apos;", "'")
-      .replace("&quot;", "\"")
-      .also { fixedProse ->
-        Regex("&(?!lt|gt|amp)[a-z]*;").find(fixedProse)?.let {
-          throw Exception("Unknown entity found in prose: ${it.value}")
-        }
-      }
-
   private fun buildAttributes(tagDir: File,
-                              attributesDoc: String?,
+                              attributesDoc: RawProse?,
                               elementCompatData: JsonObject?,
                               commonAttributes: Map<String, MdnHtmlAttributeDocumentation>): Map<String, MdnHtmlAttributeDocumentation>? {
-    val docAttrs = processDataList(attributesDoc)
+    val docAttrs = processDataList(attributesDoc).flatMap { (name, doc) ->
+      if (name.contains(','))
+        name.splitToSequence(',').map { Pair(it.trim(), doc) }
+      else
+        sequenceOf(Pair(name, doc))
+    }.toMap()
     val compatAttrs = elementCompatData?.entrySet()?.asSequence()
                         ?.filter { data -> !data.key.any { it == '_' || it == '-' } }
                         ?.map { Pair(it.key.toLowerCase(), extractStatus(it.value.asJsonObject)) }
@@ -363,7 +360,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .takeIf { it.isNotEmpty() }
   }
 
-  private fun processElementDocumentation(elementDoc: String): Pair<String, Map<String, String>> {
+  private fun processElementDocumentation(elementDoc: RawProse): Pair<String, Map<String, String>> {
     val sections = mutableMapOf<String, String>()
 
     fun processPropertiesTable(table: XmlTag) {
@@ -378,7 +375,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                 "td" -> content += it.innerHtml() + "\n"
               }
             }
-            sections[title] = content
+            sections[title.patchProse()] = content.patchProse()
           }
           else super.visitXmlTag(tag)
         }
@@ -395,13 +392,13 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         else super.visitXmlTag(tag)
       }
     })
-    return Pair(fixSpaces(htmlFile.text), sections)
+    return Pair(fixSpaces(htmlFile.patchedText()), sections)
   }
 
-  private fun createHtmlFile(contents: String): HtmlFileImpl {
+  private fun createHtmlFile(contents: RawProse): HtmlFileImpl {
     val htmlFile = PsiFileFactory.getInstance(project)
-      .createFileFromText("dummy.html", HTMLLanguage.INSTANCE, contents, false, true)
-    val toRemove = mutableSetOf<XmlTag>()
+      .createFileFromText("dummy.html", HTMLLanguage.INSTANCE, contents.content, false, true)
+    val toRemove = mutableSetOf<XmlElement>()
     val toSimplify = mutableSetOf<XmlTag>()
     htmlFile.acceptChildren(object : XmlRecursiveElementVisitor() {
       override fun visitXmlTag(tag: XmlTag) {
@@ -414,7 +411,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                    .let { it == "topExample" || it == "Exeemple" || it == "Example" || it == "Exemple" || it == "LiveSample" }
                  || (tag.name == "span" && tag.getAttributeValue("class") == "notecard inline warning")
                  || (tag.name == "p" && tag.innerHtml().trim().startsWith("The source for this interact"))
-                 || tag.name == "iframe") {
+                 || tag.name == "iframe"
+                 || tag.name == "img") {
           toRemove.add(tag)
         }
         else if (tag.name == "svg") {
@@ -438,6 +436,20 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           tag.delete()
         }
         else super.visitXmlTag(tag)
+      }
+
+      override fun visitXmlAttribute(attribute: XmlAttribute) {
+        if (attribute.name.let { it == "data-flaw-src" || it == "title" || it == "alt" }) {
+          toRemove.add(attribute)
+        }
+        else if (attribute.value?.let { it.contains("&quot;") || it.contains("&apos;") } == true) {
+          if (attribute.name.let { it == "id" || it == "style" }) {
+            toRemove.add(attribute)
+          }
+          else {
+            throw Exception("Entities: " + attribute.text)
+          }
+        }
       }
     })
     toRemove.forEach { it.delete() }
@@ -488,54 +500,95 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     }.any { it }
 
   private fun extractParameters(sections: List<JsonObject>): Map<String, String>? =
-    processDataList(filterProseById(sections, "parameters")
-                      .firstOrNull()?.getProseContent())
-      .takeIf { it.isNotEmpty() }
-      ?.mapValues { (_, doc) -> doc.replace(Regex("<p>(.*)</p>"), "$1<br>") }
+    extractFromDataList(sections, "parameters")
 
-  private fun extractReturns(sections: List<JsonObject>): String? =
+  private fun extractReturns(sections: List<JsonObject>): RawProse? =
     filterProseById(sections, "return_value").firstOrNull()
       ?.getProseContent()
 
   private fun extractThrows(sections: List<JsonObject>): Map<String, String>? =
-    processDataList(filterProseById(sections, "exceptions")
-                      .firstOrNull()?.getProseContent())
-      .takeIf { it.isNotEmpty() }
-      ?.mapValues { (_, doc) -> doc.replace(Regex("<p>(.*)</p>"), "$1<br>") }
+    extractFromDataList(sections, "exceptions")
 
-  private fun processDataList(doc: String?): Map<String, String> {
+  private fun extractPropertyValues(sections: List<JsonObject>): Map<String, String>? =
+    extractFromDataList(sections, "values")
+
+  private fun extractFromDataList(sections: List<JsonObject>, id: String): Map<String, String>? =
+    processDataList(getProseContentById(sections, id))
+      .takeIf { it.isNotEmpty() }
+      ?.mapValues { (_, doc) -> doc.replace(Regex("<p>(.*)</p>"), "$1<br>").patchProse() }
+
+  private fun processDataList(doc: RawProse?): Map<String, String> {
     val result = mutableMapOf<String, String>()
-    if (!doc.isNullOrBlank()) {
+    if (doc != null && doc.content.isNotBlank()) {
       var lastTitle = ""
       createHtmlFile(doc)
         .document?.children?.asSequence()
         ?.filterIsInstance<XmlTag>()
-        ?.filter { it.name == "dl" }
+        ?.filter { it.name == "dl" || it.name == "table" }
         ?.flatMap { it.subTags.asSequence() }
+        ?.flatMap { if (it.name == "tbody") it.subTags.asSequence() else sequenceOf(it) }
         ?.forEach { data ->
-          @Suppress("RegExpDuplicateAlternationBranch")
           when (data.name) {
-            "dt" -> lastTitle = data
-              .let { it.findSubTag("p") ?: it }
-              .let { it.findSubTag("code") ?: it.findSubTag("var") ?: it.findSubTag("em") ?: it }
-              .let { it.findSubTag("a") ?: it }
-              .let { it.findSubTag("strong") ?: it }
-              .let { it.findSubTag("pre") ?: it }
-              .let { it.findSubTag("code") ?: it }
-              .innerHtml()
-              .replace(Regex("\n?<(em|var)>([^<]*)</(em|var)>\n?"), "$2")
-              .replace(Regex("\n?<(em|var)>([^<]*)</(em|var)>\n?"), "$2")
-              .replace(Regex("([a-zA-Z \n]+)<span .*</span>"), "$1")
-              .replace("<br>", "\n")
-              .let { if (it.contains("<table>")) "" else it }
-              .also { if (it.contains('<')) throw Exception(it) }
-              .replace(Regex("\uD83D\uDDD1|\uD83D\uDC4E|⚠️|\uD83E\uDDEA"), "")
-              .trim()
+            "dt" -> lastTitle = extractIdentifier(data)
             "dd" -> if (lastTitle.isNotBlank()) result[lastTitle] = result.getOrDefault(lastTitle, "") + data.innerHtml()
+            "tr" -> {
+              val cells = data.findSubTags("td")
+              if (cells.size == 2) {
+                val title = extractIdentifier(cells[0])
+                if (title.isNotBlank()) result[title] = result.getOrDefault(title, "") + cells[1].innerHtml()
+              }
+            }
           }
         }
     }
-    return result
+    return result.asSequence().map { Pair(it.key.patchProse(), it.value.patchProse()) }.toMap()
+  }
+
+  @Suppress("RegExpDuplicateAlternationBranch")
+  private fun extractIdentifier(data: XmlTag): String {
+    val result = StringBuilder()
+    var ok = true
+    var stop = false
+    data.acceptChildren(object : XmlRecursiveElementVisitor() {
+      override fun visitXmlTag(tag: XmlTag) {
+        val tagName = tag.name
+        if (tagName == "br") {
+          result.append("{{br}}")
+        }
+        else if (tagName == "table") {
+          ok = false
+        }
+        else if (tagName != "span" || tag.getAttributeValue("class")
+            ?.let { cls ->
+              cls.contains("badge")
+              || cls.contains("inlineIndicator")
+              || cls.contains("notecard")
+            } != true) {
+          super.visitXmlTag(tag)
+        }
+        else {
+          stop = true
+        }
+      }
+
+      override fun visitXmlText(text: XmlText) {
+        if (!stop) {
+          val infoIndex = text.text.indexOfAny(listOf("🗑", "👎", "⚠️", "🧪"))
+          if (infoIndex >= 0) {
+            stop = true
+            result.append(text.text.substring(0, infoIndex))
+          }
+          else {
+            result.append(text.text)
+          }
+        }
+      }
+    })
+    if (result.contains(">"))
+      throw Exception("Something went wrong!")
+    return if (ok)
+      result.toString().replace("{{br}}", "<br>").trim()
+    else ""
   }
 
   private fun extractStatus(compatData: JsonObject?): Set<MdnApiStatus>? =
@@ -590,3 +643,24 @@ private fun fixSpaces(doc: String): String = doc.replace(Regex("[ \t]*\n[ \t\n]*
 
 private fun String.toPascalCase(): String = getWords().map { it.toLowerCase() }.joinToString(separator = "", transform = String::capitalize)
 private fun String.getWords() = NameUtilCore.nameToWords(this).filter { it.isNotEmpty() && Character.isLetterOrDigit(it[0]) }
+
+private data class RawProse(val content: String) {
+  fun patch(): String = content.patchProse()
+}
+
+private fun PsiFile.patchedText() =
+  text.patchProse()
+
+private fun JsonObject.getProseContent(): RawProse =
+  this.getAsJsonPrimitive("content").asString
+    .let { RawProse(it) }
+
+private fun String.patchProse(): String =
+  replace("/en-US/docs", MDN_DOCS_URL_PREFIX, true)
+    .replace("&apos;", "'")
+    .replace("&quot;", "\"")
+    .also { fixedProse ->
+      Regex("&(?!lt|gt|amp)[a-z]*;").find(fixedProse)?.let {
+        throw Exception("Unknown entity found in prose: ${it.value}")
+      }
+    }

@@ -163,12 +163,12 @@ data class MdnJsDocumentation(override val lang: String,
                               val symbols: Map<String, MdnJsSymbolDocumentation>) : MdnDocumentation
 
 data class MdnCssDocumentation(override val lang: String,
-                               val atRules: Map<String, MdnCssSymbolDocumentation>,
-                               val properties: Map<String, MdnCssSymbolDocumentation>,
-                               val pseudoClasses: Map<String, MdnCssSymbolDocumentation>,
-                               val pseudoElements: Map<String, MdnCssSymbolDocumentation>,
-                               val functions: Map<String, MdnCssSymbolDocumentation>,
-                               val dataTypes: Map<String, MdnCssSymbolDocumentation>) : MdnDocumentation
+                               val atRules: Map<String, MdnCssBasicSymbolDocumentation>,
+                               val properties: Map<String, MdnCssPropertySymbolDocumentation>,
+                               val pseudoClasses: Map<String, MdnCssBasicSymbolDocumentation>,
+                               val pseudoElements: Map<String, MdnCssBasicSymbolDocumentation>,
+                               val functions: Map<String, MdnCssBasicSymbolDocumentation>,
+                               val dataTypes: Map<String, MdnCssBasicSymbolDocumentation>) : MdnDocumentation
 
 data class MdnHtmlElementDocumentation(override val url: String,
                                        override val status: Set<MdnApiStatus>?,
@@ -201,10 +201,24 @@ data class MdnJsSymbolDocumentation(override val url: String,
     }
 }
 
-data class MdnCssSymbolDocumentation(override val url: String,
-                                     override val status: Set<MdnApiStatus>?,
-                                     override val doc: String?,
-                                     override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
+data class MdnCssBasicSymbolDocumentation(override val url: String,
+                                          override val status: Set<MdnApiStatus>?,
+                                          override val doc: String?,
+                                          override val sections: Map<String, String>?) : MdnRawSymbolDocumentation
+
+data class MdnCssPropertySymbolDocumentation(override val url: String,
+                                             override val status: Set<MdnApiStatus>?,
+                                             override val doc: String?,
+                                             val values: Map<String, String>?) : MdnRawSymbolDocumentation {
+  override val sections: Map<String, String>?
+    get() {
+      val result = mutableMapOf<String, String>()
+      values?.takeIf { it.isNotEmpty() }?.let {
+        result.put("Values", buildSubSection(values))
+      }
+      return result.takeIf { it.isNotEmpty() }
+    }
+}
 
 enum class MdnApiNamespace {
   Html,
