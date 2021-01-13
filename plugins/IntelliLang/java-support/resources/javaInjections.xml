@@ -138,6 +138,7 @@
   <injection language="JSONPath" injector-id="java">
     <display-name>JsonPath (com.jayway.jsonpath)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").definedInClass("com.jayway.jsonpath.JsonPath"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("read").definedInClass("com.jayway.jsonpath.JsonPath"))]]></place>
   </injection>
   <injection language="JSONPath" injector-id="java">
     <display-name>ReadContext (com.jayway.jsonpath)</display-name>
