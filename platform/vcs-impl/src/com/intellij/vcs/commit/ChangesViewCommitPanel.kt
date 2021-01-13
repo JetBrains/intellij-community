@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -165,11 +165,8 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
   }
 
   override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
-    when {
-      isFromToolbar && isToolbarHorizontal -> popup.showAbove(toolbar.component)
-      isFromToolbar && !isToolbarHorizontal -> popup.showAbove(this@ChangesViewCommitPanel)
-      else -> popup.showInBestPositionFor(dataContext)
-    }
+    if (isFromToolbar && !isToolbarHorizontal) popup.showAbove(this@ChangesViewCommitPanel)
+    else super.showCommitOptions(popup, isFromToolbar, dataContext)
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {
     commitMessage.changeLists = changeLists
