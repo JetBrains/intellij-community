@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -35,7 +35,6 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -52,7 +51,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 
-public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider, XValueWithInlinePresentation,
+public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider,
                                                       PinToTopParentValue, PinToTopMemberValue {
   private static final Logger LOG = Logger.getInstance(JavaValue.class);
 
@@ -625,12 +624,5 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);
     });
-  }
-
-  @Nullable
-  @Override
-  public String computeInlinePresentation() {
-    ValueDescriptorImpl descriptor = getDescriptor();
-    return descriptor.isNull() || descriptor.isPrimitive() ? descriptor.getValueText() : null;
   }
 }
