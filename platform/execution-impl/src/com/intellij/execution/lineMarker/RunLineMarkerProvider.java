@@ -4,21 +4,30 @@ package com.intellij.execution.lineMarker;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
+import com.intellij.util.ui.JBUI;
+import com.intellij.xml.CommonXmlStrings;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,9 +106,24 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
       }
 
-      return tooltip.length() == 0 ? null : tooltip.toString();
+      return tooltip.length() == 0 ? null : appendShortcut(tooltip.toString());
     };
     return new RunLineMarkerInfo(element, icon, tooltipProvider, actionGroup);
+  }
+
+
+  private static String appendShortcut(String tooltip) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return tooltip;
+    Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    if (executor != null) {
+      String actionId = executor.getContextActionId();
+      String shortcutText = KeymapUtil.getShortcutText(actionId);
+      @NotNull String shortcutColor = ColorUtil.toHex(JBUI.CurrentTheme.Tooltip.shortcutForeground());
+      return XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(tooltip).replaceAll("\n", "<br>") + CommonXmlStrings.NBSP + CommonXmlStrings.NBSP + "<font color='#" + shortcutColor + "'>" + XmlStringUtil.escapeString(shortcutText) + "</font>");
+    }
+    else {
+      return tooltip;
+    }
   }
 
   static class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
@@ -112,7 +136,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     @Override
     public GutterIconRenderer createGutterRenderer() {
-      return new LineMarkerGutterIconRenderer<PsiElement>(this) {
+      return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
           return null;

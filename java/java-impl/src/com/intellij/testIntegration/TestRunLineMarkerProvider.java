@@ -3,22 +3,14 @@ package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.TestStateStorage;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.xml.CommonXmlStrings;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,22 +41,8 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
 
   @NotNull
   private static Info getInfo(TestStateStorage.Record state, boolean isClass) {
-    return new Info(getTestStateIcon(state, isClass), ExecutorAction.getActions(1), element -> tooltip());
+    return new Info(getTestStateIcon(state, isClass), ExecutorAction.getActions(1), element -> ExecutionBundle.message("run.text"));
   }
-
-  private static String tooltip() {
-    Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-    if (executor != null) {
-      String actionId = executor.getContextActionId();
-      String shortcutText = KeymapUtil.getShortcutText(actionId);
-      @NotNull String shortcutColor = ColorUtil.toHex(JBUI.CurrentTheme.Tooltip.shortcutForeground());
-      return XmlStringUtil.wrapInHtml(ExecutionBundle.message("run.text") + CommonXmlStrings.NBSP + CommonXmlStrings.NBSP + "<font color='#" + shortcutColor + "'>" + XmlStringUtil.escapeString(shortcutText) + "</font>");
-    }
-    else {
-      return ExecutionBundle.message("run.text");
-    }
-  }
-
 
   protected boolean isIdentifier(PsiElement e) {
     return e instanceof PsiIdentifier;
