@@ -14,6 +14,7 @@ interface UDeclaration : UElement, PsiJvmModifiersOwner, UAnnotated {
   /**
    * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
    */
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiModifierListOwner
 
   override fun getOriginalElement(): PsiElement? = sourcePsi?.originalElement

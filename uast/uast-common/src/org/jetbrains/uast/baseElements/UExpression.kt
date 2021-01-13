@@ -88,6 +88,7 @@ open class UastEmptyExpression(override val uastParent: UElement?) : UExpression
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
+  @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiElement?
     get() = null
 

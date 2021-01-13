@@ -15,6 +15,7 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A class wrapper to be used in [UastVisitor].
  */
 interface UClass : UDeclaration, PsiClass {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiClass
 
   override val javaPsi: PsiClass
@@ -113,6 +114,7 @@ interface UClass : UDeclaration, PsiClass {
 private val LOG = Logger.getInstance(UClass::class.java)
 
 interface UAnonymousClass : UClass, PsiAnonymousClass {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiAnonymousClass
 }
 

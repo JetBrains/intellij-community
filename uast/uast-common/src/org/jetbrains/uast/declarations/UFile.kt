@@ -15,6 +15,7 @@ interface UFile : UElement, UAnnotated {
   /**
    * Returns the original [PsiFile].
    */
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiFile
 
   @JvmDefault
