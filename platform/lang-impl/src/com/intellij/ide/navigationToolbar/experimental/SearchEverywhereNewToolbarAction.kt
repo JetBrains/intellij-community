@@ -11,9 +11,13 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.CurrentTheme.BigPopup.searchFieldBackground
 import com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_TEXT_COLOR
+import java.awt.Color
 import java.awt.Dimension
+import java.awt.Graphics
 import javax.swing.JComponent
+import javax.swing.JTextField
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction() {
 
@@ -25,11 +29,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction() {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
 
     return object : ActionButtonWithText(this, presentation, place,
-                                         Dimension(JBUI.scale(120), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)) {
+                                         Dimension(JBUI.scale(130), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)) {
       init {
         presentation.icon = AllIcons.Actions.Search
         presentation.text = ActionsBundle.message("action.SearchEverywhere.text")
-        foreground = DISABLED_TEXT_COLOR
       }
 
       override fun updateToolTipText() {
@@ -54,6 +57,12 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction() {
             AnActionEvent(e.inputEvent, e.dataContext, ActionPlaces.NEW_TOOLBAR, templatePresentation,
                           ActionManager.getInstance(), 0))
         }
+      }
+
+      override fun paint(g: Graphics?) {
+        foreground = DISABLED_TEXT_COLOR
+        background = searchFieldBackground()
+        super.paint(g)
       }
     }
   }
