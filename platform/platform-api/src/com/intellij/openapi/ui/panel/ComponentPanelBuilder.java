@@ -343,7 +343,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private static class CommentLabel extends JBLabel {
     private CommentLabel(@NotNull @NlsContexts.Label String text) {
       super(text);
-      setForeground(JBUI.CurrentTheme.ContextHelp.foreground());
+      setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
     }
 
     @Override

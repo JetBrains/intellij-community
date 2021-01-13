@@ -873,7 +873,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getContextHelpForeground() {
-    return JBUI.CurrentTheme.ContextHelp.foreground();
+    return JBUI.CurrentTheme.ContextHelp.FOREGROUND;
   }
 
   public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {
