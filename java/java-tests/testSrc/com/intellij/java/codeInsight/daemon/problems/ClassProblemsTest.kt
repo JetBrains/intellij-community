@@ -63,6 +63,49 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
       assertFalse(hasReportedProblems<PsiClass>(refClass))
     }
   }
+  
+  fun testClassOverrideBecamePrivate() {
+    myFixture.addClass("""
+        package foo;
+        
+        public abstract class Parent {
+          abstract void test();
+        }
+    """.trimIndent())
+    val targetClass = myFixture.addClass("""
+        package foo;
+        
+        public class Foo extends Parent {
+          void test() {}
+        }
+    """.trimIndent())
+    val refClass = myFixture.addClass("""
+        package foo;
+        
+        public class Usage {
+          void use() {
+            Foo foo = new Foo();
+            foo.test();
+          }
+        }
+    """.trimIndent())
+    
+    doTest(targetClass) {
+      changeClass(targetClass) { psiClass, factory -> 
+        psiClass.methods[0].parameterList.add(factory.createParameterFromText("int a", psiClass))
+      }
+
+      changeClass(targetClass) { psiClass, _ ->
+        psiClass.methods[0].modifierList.setModifierProperty(PsiModifier.PUBLIC, true)
+      }
+      
+      changeClass(targetClass) { psiClass, factory ->
+        psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+      }
+    }
+    
+    assertTrue(hasReportedProblems<PsiMethod>(refClass))
+  }
 
   fun testMakeClassInterface() {
     val targetClass = myFixture.addClass("""
