@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -65,7 +66,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       val comments = review?.comments?.totalCount
 
       e.presentation.text = getText(comments)
-      e.presentation.putClientProperty(PROP_DEFAULT, pendingReview)
+      e.presentation.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, pendingReview)
     }
 
     updateButtonFromPresentation(e)
@@ -252,24 +253,14 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     }
   }
 
-  override fun createButton(): JButton =
-    object : JButton() {
-      init {
-        configureForToolbar()
-      }
-
-      override fun isDefaultButton(): Boolean = getClientProperty(PROP_DEFAULT) as? Boolean ?: super.isDefaultButton()
-    }
-
   override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     super.updateButtonFromPresentation(button, presentation)
     val prefix = presentation.getClientProperty(PROP_PREFIX) as? String ?: GithubBundle.message("pull.request.review.submit.review")
     button.text = prefix + presentation.text
-    button.putClientProperty(PROP_DEFAULT, presentation.getClientProperty(PROP_DEFAULT))
+    UIUtil.putClientProperty(button, DarculaButtonUI.DEFAULT_STYLE_KEY, presentation.getClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY))
   }
 
   companion object {
     private const val PROP_PREFIX = "PREFIX"
-    private const val PROP_DEFAULT = "DEFAULT"
   }
 }

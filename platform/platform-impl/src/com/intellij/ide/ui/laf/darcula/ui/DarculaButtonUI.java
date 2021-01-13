@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -8,9 +8,11 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
@@ -45,8 +47,12 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected static JBValue MINIMUM_BUTTON_WIDTH = new JBValue.Float(72);
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
-  private static final Color GOTIT_BUTTON_COLOR_START = JBColor.namedColor("GotItTooltip.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
-  private static final Color GOTIT_BUTTON_COLOR_END = JBColor.namedColor("GotItTooltip.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
+  private static final Color GOTIT_BUTTON_COLOR_START =
+    JBColor.namedColor("GotItTooltip.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
+  private static final Color GOTIT_BUTTON_COLOR_END =
+    JBColor.namedColor("GotItTooltip.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
+
+  public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
@@ -58,7 +64,8 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   public static boolean isDefaultButton(JComponent c) {
-    return c instanceof JButton && ((JButton)c).isDefaultButton();
+    return c instanceof JButton &&
+           (((JButton)c).isDefaultButton() || ComponentUtil.getClientProperty(c, DEFAULT_STYLE_KEY) == Boolean.TRUE);
   }
 
   public static boolean isSmallVariant(Component c) {
