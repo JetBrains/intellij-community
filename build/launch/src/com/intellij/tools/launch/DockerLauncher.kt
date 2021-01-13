@@ -64,10 +64,10 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       paths.logFolder.writeable(),
       paths.configFolder.writeable(),
       paths.systemFolder.writeable(),
+      paths.outputRootFolder.writeable(), // classpath index making a lot of noise in stderr
 
       // RO
       paths.javaHomeFolder.readonly(),
-      paths.outputRootFolder.readonly(),
 
       // jars
       paths.communityBinFolder.readonly(),
