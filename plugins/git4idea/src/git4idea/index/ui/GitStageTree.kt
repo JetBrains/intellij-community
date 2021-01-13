@@ -199,7 +199,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }
   }
 
-  private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory)
+  private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
     private val parentNodes: MutableMap<NodeKind, MyKindNode> = mutableMapOf()
     private val untrackedFilesMap = mutableMapOf<VirtualFile, MutableCollection<GitFileStatus>>()
@@ -306,12 +306,12 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   }
 
   private open inner class MyKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
-    internal val kind: NodeKind
+    val kind: NodeKind
       get() = userObject as NodeKind
 
     init {
       markAsHelperNode()
-      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
     }
 
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
@@ -342,7 +342,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.IGNORED, files, { IgnoredViewDialog(project).show() }) {
     init {
       markAsHelperNode()
-      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
     }
 
     @Nls
@@ -354,7 +354,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
     init {
       markAsHelperNode()
-      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
     }
 
     @Nls
