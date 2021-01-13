@@ -25,10 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement, PsiJavaCodeReferenceElement> {
   public ImportClassFix(@NotNull PsiJavaCodeReferenceElement element) {
@@ -125,9 +122,8 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     return false;
   }
 
-  @NotNull
   @Override
-  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement ref) {
+  protected @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement ref) {
     if (ref instanceof PsiReferenceExpression) {
       return Collections.emptyList();
     }
