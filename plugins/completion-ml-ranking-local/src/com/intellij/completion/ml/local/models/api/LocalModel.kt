@@ -1,6 +1,9 @@
 package com.intellij.completion.ml.local.models.api
 
+import com.intellij.psi.PsiElementVisitor
+
 interface LocalModel {
-  val featuresProvider: LocalModelFeaturesProvider
-  val builder: LocalModelBuilder
+  fun fileVisitor(): PsiElementVisitor
+  fun onStarted()
+  fun onFinished()
 }

@@ -1,7 +1,7 @@
 package com.intellij.completion.ml.local.models
 
 import com.intellij.completion.ml.local.CompletionRankingLocalBundle
-import com.intellij.completion.ml.local.models.api.LocalModelBuilder
+import com.intellij.completion.ml.local.models.api.LocalModel
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -32,7 +32,7 @@ object LocalModelsTraining {
     val task = object : Task.Backgroundable(project, CompletionRankingLocalBundle.message("ml.completion.local.models.training.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         val files = getFiles(project)
-        for (modelBuilder in modelsManager.modelBuilders()) {
+        for (modelBuilder in modelsManager.getModels()) {
           modelBuilder.onStarted()
           processFiles(files, modelBuilder, project, indicator)
           modelBuilder.onFinished()
@@ -46,7 +46,7 @@ object LocalModelsTraining {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
   }
 
-  private fun processFiles(files: List<VirtualFile>, model: LocalModelBuilder, project: Project, indicator: ProgressIndicator) {
+  private fun processFiles(files: List<VirtualFile>, model: LocalModel, project: Project, indicator: ProgressIndicator) {
     val dumbService = DumbService.getInstance(project)
     val psiManager = PsiManager.getInstance(project)
     val executorService = Executors.newFixedThreadPool((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1))
@@ -58,7 +58,7 @@ object LocalModelsTraining {
     for (file in files) {
       executorService.submit {
         dumbService.runReadActionInSmartMode {
-          psiManager.findFile(file)?.accept(model.visitor())
+          psiManager.findFile(file)?.accept(model.fileVisitor())
           indicator.fraction = processed.incrementAndGet().toDouble() / files.size
         }
       }
