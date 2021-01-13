@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Component
+import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
@@ -51,6 +52,7 @@ internal open class MnemonicChooser : BorderLayoutPanel(), KeyListener {
   private fun createButton(mnemonic: Char): JButton {
     val button = JButton(mnemonic.toString())
     button.setMnemonic(mnemonic)
+    button.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     button.putClientProperty("ActionToolbar.smallVariant", true)
     button.putClientProperty("JButton.backgroundColor", if (isOccupied(mnemonic)) SELECTED else null)
     button.addActionListener { mnemonicSelected(mnemonic) }
