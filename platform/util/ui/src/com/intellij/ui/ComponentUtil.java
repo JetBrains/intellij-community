@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
@@ -14,8 +14,9 @@ import java.util.function.Predicate;
 
 public final class ComponentUtil {
   public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
+    Object value = component.getClientProperty(key);
     //noinspection unchecked
-    return (T)component.getClientProperty(key);
+    return value != null ? (T)value : null;
   }
 
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {

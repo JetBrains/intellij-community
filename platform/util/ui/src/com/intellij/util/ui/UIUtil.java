@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -553,8 +553,9 @@ public final class UIUtil {
    * @return the property value from the specified component or {@code null}
    */
   public static <T> T getClientProperty(Object component, @NotNull Key<T> key) {
+    Object value = getClientProperty(component, (Object)key);
     //noinspection unchecked
-    return (T)getClientProperty(component, (Object)key);
+    return value != null ? (T)value : null;
   }
 
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
