@@ -302,7 +302,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       runnable.run(); // will log errors if not already in a write-safe context
     }
     else {
-      TransactionGuard.submitTransaction(myProject, runnable);
+      myTrackedEdtActivityService.submitTransaction(runnable);
     }
   }
 

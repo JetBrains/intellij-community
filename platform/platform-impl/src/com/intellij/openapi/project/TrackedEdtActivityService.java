@@ -3,6 +3,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
@@ -45,11 +46,15 @@ final class TrackedEdtActivityService {
     new TrackedEdtActivity(action).invokeLaterAfterProjectInitialized();
   }
 
-  public void setDumbStartModality(@NotNull ModalityState modality) {
+  void submitTransaction(@NotNull Runnable runnable) {
+    new TrackedEdtActivity(runnable).invokeInTransaction();
+  }
+
+  void setDumbStartModality(@NotNull ModalityState modality) {
     myDumbStartModality = modality;
   }
 
-  public <T> T computeInEdt(@NotNull Producer<T> task) {
+  <T> T computeInEdt(@NotNull Producer<T> task) {
     AsyncPromise<T> promise = new AsyncPromise<>();
 
     invokeLater(() -> {
@@ -71,6 +76,7 @@ final class TrackedEdtActivityService {
       return null;
     }
   }
+
 
   private class TrackedEdtActivity implements Runnable {
     private final @NotNull Runnable myRunnable;
@@ -94,6 +100,14 @@ final class TrackedEdtActivityService {
       });
     }
 
+    void invokeInTransaction() {
+      TransactionGuard.submitTransaction(myProject, () -> {
+        if (myTrackedEdtActivities.contains(this)) {
+          run();
+        }
+      });
+    }
+
     @Override
     public void run() {
       myTrackedEdtActivities.remove(this);
@@ -106,7 +120,7 @@ final class TrackedEdtActivityService {
     }
 
     @NotNull
-    Condition<?> getActivityExpirationCondition() {
+    private Condition<?> getActivityExpirationCondition() {
       return __ -> !myTrackedEdtActivities.contains(this);
     }
   }
