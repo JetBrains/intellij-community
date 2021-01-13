@@ -90,6 +90,10 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           }
           return;
         }
+        if (parameterName.equals("cannotHappen")) {
+          // Just ignore parameter named as 'cannotHappen' (this code style appears in OpenJDK source)
+          return;
+        }
         if ((parameterName.equals("expected") || parameterName.equals("ok")) && TestUtils.isInTestSourceContent(section)) {
           return;
         }
