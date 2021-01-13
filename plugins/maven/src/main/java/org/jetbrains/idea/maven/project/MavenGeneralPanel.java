@@ -139,6 +139,5 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     watcher.registerComponent("outputLevel", outputLevelCombo);
     watcher.registerComponent("checksumPolicy", checksumPolicyCombo);
     watcher.registerComponent("failPolicy", failPolicyCombo);
-    watcher.registerComponent("showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
   }
 }
