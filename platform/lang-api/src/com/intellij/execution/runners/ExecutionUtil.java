@@ -29,11 +29,8 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -292,16 +289,5 @@ public final class ExecutionUtil {
         return base != null ? base.getIconHeight() : emptyIconHeight;
       }
     });
-  }
-
-  /**
-   * @deprecated use {@link Executor#getActionName()} instead
-   */
-  @Nls
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static String getExecutorName(@NotNull Executor executor) {
-    //noinspection HardCodedStringLiteral
-    return ObjectUtils.notNull(ExecutionBundle.message("executor." + executor.getId() + ".name"), executor.getId());
   }
 }

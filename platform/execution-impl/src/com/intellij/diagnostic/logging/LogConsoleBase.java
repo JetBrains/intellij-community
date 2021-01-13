@@ -29,7 +29,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +62,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private StringBuffer myOriginalDocument = null;
   private String myLineUnderSelection = null;
   private int myLineOffset = -1;
-  private LogContentPreprocessor myContentPreprocessor;
   private final Project myProject;
   private @NlsContexts.TabTitle String myTitle = null;
   private boolean myWasInitialized;
@@ -131,27 +129,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   @Override
   public LogFilterModel getFilterModel() {
     return myModel;
-  }
-
-  /**
-   * @deprecated use {@link #getFilterModel()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Override
-  public LogContentPreprocessor getContentPreprocessor() {
-    return myContentPreprocessor;
-  }
-
-  /**
-   * @deprecated use {@link #setFilterModel(LogFilterModel)} instead and
-   *             customize log entry in {@link LogFilterModel#processLine(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Override
-  public void setContentPreprocessor(final LogContentPreprocessor contentPreprocessor) {
-    myContentPreprocessor = contentPreprocessor;
   }
 
   @Nullable
@@ -312,35 +289,22 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   protected void addMessage(final String text) {
     if (myDisposed) return;
     if (text == null) return;
-    if (myContentPreprocessor != null) {
-      final List<LogFragment> fragments = myContentPreprocessor.parseLogLine(text + "\n");
-      myOriginalDocument = getOriginalDocument();
-      for (LogFragment fragment : fragments) {
-        String formattedMessage = myFormatter.formatMessage(fragment.getText());
-        myProcessHandler.notifyTextAvailable(formattedMessage, fragment.getOutputType());
-        if (myOriginalDocument != null) {
-          myOriginalDocument.append(fragment.getText());
+    final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(text);
+    if (processingResult.isApplicable()) {
+      final Key key = processingResult.getKey();
+      if (key != null) {
+        final String messagePrefix = processingResult.getMessagePrefix();
+        if (messagePrefix != null) {
+          String formattedPrefix = myFormatter.formatPrefix(messagePrefix);
+          myProcessHandler.notifyTextAvailable(formattedPrefix, key);
         }
+        String formattedMessage = myFormatter.formatMessage(text);
+        myProcessHandler.notifyTextAvailable(formattedMessage + "\n", key);
       }
     }
-    else {
-      final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(text);
-      if (processingResult.isApplicable()) {
-        final Key key = processingResult.getKey();
-        if (key != null) {
-          final String messagePrefix = processingResult.getMessagePrefix();
-          if (messagePrefix != null) {
-            String formattedPrefix = myFormatter.formatPrefix(messagePrefix);
-            myProcessHandler.notifyTextAvailable(formattedPrefix, key);
-          }
-          String formattedMessage = myFormatter.formatMessage(text);
-          myProcessHandler.notifyTextAvailable(formattedMessage + "\n", key);
-        }
-      }
-      myOriginalDocument = getOriginalDocument();
-      if (myOriginalDocument != null) {
-        myOriginalDocument.append(text).append("\n");
-      }
+    myOriginalDocument = getOriginalDocument();
+    if (myOriginalDocument != null) {
+      myOriginalDocument.append(text).append("\n");
     }
   }
 
@@ -468,28 +432,19 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private int printMessageToConsole(@NotNull String line, @NotNull BiConsumer<? super String, ? super Key> printer) {
-    if (myContentPreprocessor != null) {
-      List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
-      for (LogFragment fragment : fragments) {
-        printer.accept(myFormatter.formatMessage(fragment.getText()), fragment.getOutputType());
-      }
-      return line.length() + 1;
-    }
-    else {
-      final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(line);
-      if (processingResult.isApplicable()) {
-        final Key key = processingResult.getKey();
-        if (key != null) {
-          final String messagePrefix = processingResult.getMessagePrefix();
-          if (messagePrefix != null) {
-            printer.accept(myFormatter.formatPrefix(messagePrefix), key);
-          }
-          printer.accept(myFormatter.formatMessage(line) + "\n", key);
-          return (messagePrefix != null ? messagePrefix.length() : 0) + line.length() + 1;
+    final LogFilterModel.MyProcessingResult processingResult = myModel.processLine(line);
+    if (processingResult.isApplicable()) {
+      final Key key = processingResult.getKey();
+      if (key != null) {
+        final String messagePrefix = processingResult.getMessagePrefix();
+        if (messagePrefix != null) {
+          printer.accept(myFormatter.formatPrefix(messagePrefix), key);
         }
+        printer.accept(myFormatter.formatMessage(line) + "\n", key);
+        return (messagePrefix != null ? messagePrefix.length() : 0) + line.length() + 1;
       }
-      return 0;
     }
+    return 0;
   }
 
   @Nullable

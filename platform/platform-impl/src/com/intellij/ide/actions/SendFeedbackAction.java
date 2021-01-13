@@ -15,7 +15,6 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,13 +68,6 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       .replace("$EVAL", URLUtil.encodeURIComponent(la != null && la.isEvaluationLicense() ? "true" : "false"))
       .replace("$DESCR", URLUtil.encodeURIComponent(description));
     BrowserUtil.browse(url, project);
-  }
-
-  /** @deprecated use {@link #getDescription(Project)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull String getDescription() {
-    return getDescription(null);
   }
 
   public static @NotNull String getDescription(@Nullable Project project) {

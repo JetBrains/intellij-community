@@ -74,18 +74,4 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   default String getItemDescription(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     return null;
   }
-
-  /**
-   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2020.1)
-   *
-   * Specifies process order in your group
-   *
-   * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
-   *                   and use it for comparison
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  default int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder) {
-    return compare(a, b);
-  }
 }

@@ -604,11 +604,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myApplianceManager.setSoftWrapPainter(painter);
   }
 
-  @Override
-  public EditorTextRepresentationHelper getEditorTextRepresentationHelper() {
-    return myEditorTextRepresentationHelper;
-  }
-
   @TestOnly
   public void setEditorTextRepresentationHelper(EditorTextRepresentationHelper editorTextRepresentationHelper) {
     myEditorTextRepresentationHelper = editorTextRepresentationHelper;

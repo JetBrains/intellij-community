@@ -962,12 +962,6 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public boolean findNextUsageInEditor(@NotNull FileEditor fileEditor) {
-    if (!(fileEditor instanceof TextEditor)) return false;
-    return findNextUsageInFile(((TextEditor) fileEditor).getEditor(), SearchResults.Direction.DOWN);
-  }
-
-  @Override
   public boolean findNextUsageInEditor(@NotNull Editor editor) {
     return findNextUsageInFile(editor, SearchResults.Direction.DOWN);
   }
@@ -992,12 +986,6 @@ public final class FindManagerImpl extends FindManager {
       return myFindUsagesManager.findNextUsageInFile(editor);
     }
     return myFindUsagesManager.findPreviousUsageInFile(editor);
-  }
-
-  @Override
-  public boolean findPreviousUsageInEditor(@NotNull FileEditor fileEditor) {
-    if (!(fileEditor instanceof TextEditor)) return false;
-    return findNextUsageInFile(((TextEditor) fileEditor).getEditor(), SearchResults.Direction.UP);
   }
 
   private static boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset, boolean isForward, boolean secondPass) {

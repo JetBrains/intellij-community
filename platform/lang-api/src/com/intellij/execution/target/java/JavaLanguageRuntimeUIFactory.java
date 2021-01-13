@@ -5,23 +5,12 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.openapi.options.BoundConfigurable;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
 //todo[remoteServers]: should be eliminated
 public interface JavaLanguageRuntimeUIFactory {
-
-  /**
-   * @deprecated Use {@link #create(JavaLanguageRuntimeConfiguration, TargetEnvironmentType, Supplier, Project)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "21.1")
-  @NotNull
-  BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,
-                           @NotNull TargetEnvironmentConfiguration target,
-                           @NotNull Project project);
 
   @NotNull
   BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,

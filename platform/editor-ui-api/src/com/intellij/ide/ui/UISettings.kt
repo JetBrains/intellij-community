@@ -219,14 +219,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.compactTreeIndents = value
     }
 
-  var moveMouseOnDefaultButton: Boolean
-    @ScheduledForRemoval(inVersion = "2020.3")
-    @Deprecated("Use registry key 'ide.settings.move.mouse.on.default.button'")
-    get() = state.moveMouseOnDefaultButton
-    set(value) {
-      state.moveMouseOnDefaultButton = value
-    }
-
   var showMainToolbar: Boolean
     get() =  state.showMainToolbar
     set(value) {

@@ -8,7 +8,6 @@ import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.BrokenPluginsService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -766,35 +765,6 @@ object UpdateChecker {
   @Suppress("DEPRECATION")
   @JvmField val NOTIFICATIONS =
     NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated("Use `checkAndPrepareToInstall` without `incompatiblePlugins` parameter", level = DeprecationLevel.ERROR)
-  @JvmStatic
-  @Throws(IOException::class)
-  fun checkAndPrepareToInstall(
-    downloader: PluginDownloader,
-    state: InstalledPluginsState,
-    toUpdate: MutableMap<PluginId, PluginDownloader>,
-    incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
-    indicator: ProgressIndicator?)
-  {
-    checkAndPrepareToInstall(downloader, state, toUpdate, null as BuildNumber?, indicator)
-
-    val pluginId = downloader.id
-    if (PluginManagerCore.isDisabled(pluginId)) return
-    val installedPlugin = PluginManagerCore.getPlugin(pluginId)
-    // collect plugins that were not updated and would be incompatible with the new version
-    if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
-        !toUpdate.containsKey(installedPlugin.pluginId) &&
-        !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
-      incompatiblePlugins += installedPlugin
-    }
-  }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
-  @JvmStatic
-  fun getInstallationUID(@Suppress("UNUSED_PARAMETER") c: PropertiesComponent): String = PermanentInstallationID.get()
 
   @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @get:Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))

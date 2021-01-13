@@ -11,7 +11,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -746,25 +745,6 @@ public final class KeymapUtil {
       }
       return shortcutSet;
     }
-    return null;
-  }
-
-  /**
-   * Check if {@link AnActionEvent} was called with keyboard shortcut
-   * and if so return string presentation for this shortcut
-   * @param event called event
-   * @return string presentation of shortcut if {@code event} was called with shortcut. In other cases null is returned
-   * @deprecated unused method that is not needed anymore
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static String getEventCallerKeystrokeText(@NotNull AnActionEvent event) {
-    if (event.getInputEvent() instanceof KeyEvent) {
-      KeyEvent ke = (KeyEvent)event.getInputEvent();
-      return getKeystrokeText(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
-    }
-
     return null;
   }
 }

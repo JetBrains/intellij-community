@@ -95,15 +95,6 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   @Override
-  public boolean filterElementsWithWeights(@NotNull ChooseByNameBase base,
-                                           @NotNull String pattern,
-                                           boolean everywhere,
-                                           @NotNull ProgressIndicator indicator,
-                                           @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
-    return filterElementsWithWeights((ChooseByNameViewModel)base, pattern, everywhere, indicator, consumer);
-  }
-
-  @Override
   public boolean filterElementsWithWeights(@NotNull ChooseByNameViewModel base,
                                            @NotNull String pattern,
                                            boolean everywhere,

@@ -429,13 +429,6 @@ public class RecentProjectPanel extends JPanel {
     protected final JLabel myPath = ComponentPanelBuilder.createNonWrappingCommentComponent("");
     protected boolean myHovered;
 
-    /** @deprecated use the default constructor */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-    protected RecentProjectItemRenderer(@SuppressWarnings("unused") UniqueNameBuilder<ReopenProjectAction> pathShortener) {
-      this();
-    }
-
     protected RecentProjectItemRenderer() {
       super(new VerticalFlowLayout());
       setFocusable(true);

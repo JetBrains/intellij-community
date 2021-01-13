@@ -417,36 +417,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  public void registerRunnableToRunOnChange(@NotNull final Runnable runnable) {
-    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-        if (isPhysical) runnable.run();
-      }
-    });
-  }
-
-  @Override
-  public void registerRunnableToRunOnAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-        runnable.run();
-      }
-    });
-  }
-
-  @Override
-  public void registerRunnableToRunAfterAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
-        runnable.run();
-      }
-    });
-  }
-
-  @Override
   public void beforeChange(boolean isPhysical) {
     myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(isPhysical);
   }

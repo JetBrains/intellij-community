@@ -132,10 +132,6 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     }
     return tools
   }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated("use {@link #createTools()} instead", ReplaceWith("createTools()"))
-  fun get() = createTools()
 }
 
 private fun <T : InspectionEP> registerInspection(inspection: T,

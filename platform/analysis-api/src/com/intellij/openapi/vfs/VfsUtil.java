@@ -514,35 +514,6 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  public static String toIdeaUrl(@NotNull String url) {
-    return toIdeaUrl(url, true);
-  }
-
-  /** @deprecated obsolete */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
-    StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
-    VirtualFile curDir = toDir;
-
-    while (true) {
-      String token = tokenizer.nextToken();
-      if (tokenizer.hasMoreTokens()) {
-        VirtualFile childDir = curDir.findChild(token);
-        if (childDir == null) {
-          childDir = curDir.createChildDirectory(requestor, token);
-        }
-        curDir = childDir;
-      }
-      else {
-        return copyFile(requestor, file, curDir, token);
-      }
-    }
-  }
 
   /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
   @Deprecated

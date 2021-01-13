@@ -131,15 +131,6 @@ public final class FindInProjectUtil {
     model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
   }
 
-  /** @deprecated use {@link #getDirectory(FindModel)} */
-  @Deprecated
-  @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static PsiDirectory getPsiDirectory(@NotNull FindModel findModel, @NotNull Project project) {
-    VirtualFile directory = getDirectory(findModel);
-    return directory == null ? null : PsiManager.getInstance(project).findDirectory(directory);
-  }
-
   @Nullable
   public static VirtualFile getDirectory(@NotNull FindModel findModel) {
     String directoryName = findModel.getDirectoryName();

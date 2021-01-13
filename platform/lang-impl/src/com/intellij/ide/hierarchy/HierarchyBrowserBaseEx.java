@@ -50,7 +50,6 @@ import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,11 +75,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   public static final String HELP_ID = "reference.toolWindows.hierarchy";
 
-  /** @deprecated use {@link #getCurrentViewType()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected String myCurrentViewType;
+  private String myCurrentViewType;
 
   private final Map<String, Supplier<@Nls String>> myI18nMap;
 

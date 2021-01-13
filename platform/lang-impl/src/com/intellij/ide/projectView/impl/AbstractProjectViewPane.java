@@ -4,7 +4,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
@@ -51,7 +50,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -73,7 +75,6 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
@@ -321,18 +322,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
-  }
-
-  /**
-   * @deprecated added in {@link ProjectViewImpl} automatically
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  protected ToggleAction createFlattenModulesAction(@NotNull BooleanSupplier isApplicable) {
-    return new FlattenModulesToggleAction(myProject, () -> isApplicable.getAsBoolean() && ProjectView.getInstance(myProject).isShowModules(getId()),
-                                          () -> ProjectView.getInstance(myProject).isFlattenModules(getId()),
-                                          value -> ProjectView.getInstance(myProject).setFlattenModules(getId(), value));
   }
 
   @NotNull

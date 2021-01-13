@@ -52,26 +52,6 @@ public class HighlightDisplayKey {
   }
 
   /**
-   * @deprecated Use {@link #register(String, String, String)} instead
-   */
-  @Deprecated
-  @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static HighlightDisplayKey register(@NonNls @NotNull final String name, @NotNull final String displayName) {
-    return register(name, displayName, name);
-  }
-
-  /**
-   * @deprecated Use {@link #register(String, Computable, String)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Nullable
-  public static HighlightDisplayKey register(@NonNls @NotNull final String name, @NotNull Computable<String> displayName) {
-    return register(name, displayName, name);
-  }
-
-  /**
    * @see #register(String, Computable, String)
    */
   @Nullable

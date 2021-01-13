@@ -13,7 +13,6 @@ import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,8 +138,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   //private int myTabSize = 4;
   //private boolean myUseTabCharacter = false;
 
-  private int myAdditionalLinesCount = 10;
-
   @NonNls public static final String STRIP_TRAILING_SPACES_NONE = "None";
   @NonNls public static final String STRIP_TRAILING_SPACES_CHANGED = "Changed";
   @NonNls public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
@@ -245,24 +242,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setGutterIconsShown(boolean val) {
     myOptions.ARE_GUTTER_ICONS_SHOWN = val;
-  }
-
-  /**
-   * @deprecated Not used, to be removed in version 2021.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public int getAdditionalLinesCount() {
-    return myAdditionalLinesCount;
-  }
-
-  /**
-   * @deprecated Not used, to be removed in version 2021.1.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public void setAdditionalLinesCount(int additionalLinesCount) {
-    myAdditionalLinesCount = additionalLinesCount;
   }
 
   public boolean isFoldingOutlineShown() {
