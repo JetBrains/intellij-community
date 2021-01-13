@@ -84,7 +84,7 @@ class DebuggerFieldSyntheticScope(val javaSyntheticPropertiesScope: JavaSyntheti
             return false
         }
 
-        return containingFile is KtCodeFragment
+        return containingFile is KtCodeFragment && containingFile.getCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) != null
     }
 
     private fun getSyntheticPropertiesForClass(clazz: ClassDescriptor): Collection<PropertyDescriptor> {

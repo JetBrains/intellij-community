@@ -42,8 +42,8 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
     val file = createCodeFragment(filePath, elementAt!!)
 
     val typeStr = InTextDirectivesUtils.findStringWithPrefixes(getFile().text, "// ${ExpectedCompletionUtils.RUNTIME_TYPE} ")
-    if (typeStr != null) {
-        file.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) {
+    file.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) {
+        if (typeStr != null) {
             val codeFragment = KtPsiFactory(project).createBlockCodeFragment(
                 "val xxx: $typeStr",
                 PsiTreeUtil.getParentOfType(elementAt, KtElement::class.java)
@@ -52,6 +52,8 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
             val typeReference: KtTypeReference =
                 PsiTreeUtil.getChildOfType(codeFragment.getContentElement().firstChild, KtTypeReference::class.java)!!
             context[BindingContext.TYPE, typeReference]
+        } else {
+            null
         }
     }
 
