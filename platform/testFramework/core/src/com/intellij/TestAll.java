@@ -7,6 +7,7 @@ import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -41,18 +42,7 @@ import static com.intellij.TestCaseLoader.*;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class TestAll implements Test {
   static {
-    String testLoggerFactoryClass = "com.intellij.testFramework.TestLoggerFactory";
-    Class<? extends Logger.Factory> testLoggerFactory = null;
-    try {
-      //noinspection unchecked
-      testLoggerFactory = (Class<? extends Logger.Factory>)Class.forName(testLoggerFactoryClass);
-    }
-    catch (ClassNotFoundException e) {
-      System.out.println(testLoggerFactoryClass + " is not found in classpath");
-    }
-    if (testLoggerFactory != null) {
-      Logger.setFactory(testLoggerFactory);
-    }
+    Logger.setFactory(TestLoggerFactory.class);
   }
 
   private static final String MAX_FAILURE_TEST_COUNT_FLAG = "idea.max.failure.test.count";
