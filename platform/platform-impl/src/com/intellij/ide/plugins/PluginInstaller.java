@@ -352,7 +352,10 @@ public final class PluginInstaller {
                                                     IdeaPluginDescriptorImpl pluginDescriptor) {
     Path targetFile = installWithoutRestart(file, pluginDescriptor, parent);
     if (targetFile != null) {
-      IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
+      IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile,
+                                                                               DisabledPluginsState.disabledPlugins(),
+                                                                               false,
+                                                                               PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
       if (targetDescriptor != null) {
         return DynamicPlugins.loadPlugin(targetDescriptor);
       }

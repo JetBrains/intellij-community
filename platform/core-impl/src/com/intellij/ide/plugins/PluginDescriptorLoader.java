@@ -486,13 +486,10 @@ public final class PluginDescriptorLoader {
   public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     return isFull(descriptor) ?
            descriptor :
-           PluginManager.loadDescriptor(
-             descriptor.getPluginPath(),
-             PluginManagerCore.PLUGIN_XML,
-             Collections.emptySet(),
-             descriptor.isBundled(),
-             createPathResolverForPlugin(descriptor, null)
-           );
+           PluginManager.loadDescriptor(descriptor.getPluginPath(),
+                                        Collections.emptySet(),
+                                        descriptor.isBundled(),
+                                        createPathResolverForPlugin(descriptor, null));
   }
 
   static @NotNull PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
@@ -515,11 +512,7 @@ public final class PluginDescriptorLoader {
   public static @NotNull IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
     IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
-    if (fullDescriptor == null) {
-      PluginManagerCore.getLogger().error("Could not load full descriptor for plugin " + descriptor.getPluginPath());
-      fullDescriptor = descriptor;
-    }
-    return fullDescriptor;
+    return fullDescriptor != null ? fullDescriptor : descriptor;
   }
 
   private static boolean isFull(@NotNull IdeaPluginDescriptorImpl descriptor) {

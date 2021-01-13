@@ -67,19 +67,26 @@ public final class PluginManager {
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
-  // not in PluginManagerCore because it is helper method
-  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
-    return loadDescriptor(file, fileName, DisabledPluginsState.disabledPlugins(), false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
-  }
-
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
-                                                                  @NotNull String fileName,
                                                                   @NotNull Set<PluginId> disabledPlugins,
                                                                   boolean bundled,
                                                                   PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
+    if (!file.getFileSystem().isOpen()) {
+      PluginManagerCore.getLogger().warn("The underlying filesystem is closed");
+      return null;
+    }
+
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins);
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, pathResolver)) {
-      return PluginDescriptorLoader.loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
+      IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromFileOrDir(file,
+                                                                                               PluginManagerCore.PLUGIN_XML,
+                                                                                               context,
+                                                                                               Files.isDirectory(file));
+      if (descriptor == null) {
+        PluginManagerCore.getLogger().error("Could not load full descriptor for plugin " + file);
+      }
+
+      return descriptor;
     }
   }
 
