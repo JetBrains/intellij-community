@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,25 +66,8 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
     return false;
   }
 
-  /**
-   * @see GradleSettings#setOfflineWork
-   * @deprecated this settings parameter must be a project level
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public void setOfflineWork(boolean isOfflineWork) {
-  }
-
   public static class MyState {
     public String serviceDirectoryPath;
     public String gradleVmOptions;
-
-    /**
-     * @deprecated this settings parameter must be a project level
-     */
-    @Transient
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-    public boolean offlineWork;
   }
 }

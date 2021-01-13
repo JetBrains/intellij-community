@@ -2,7 +2,6 @@
 package com.intellij.grazie.grammar.strategy
 
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
-import com.intellij.grazie.grammar.strategy.impl.ReplaceNewLines
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.Text

@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsNotifier;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,17 +39,6 @@ public final class GithubNotifications {
                               @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyImportantInfo(displayId, title, message);
-  }
-
-  /**
-   * @deprecated use {@link #showWarning(Project, String, String, String)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
-  public static void showWarning(@NotNull Project project,
-                                 @NotificationTitle @NotNull String title,
-                                 @NotificationContent @NotNull String message) {
-    showWarning(project, null, title, message);
   }
 
   public static void showWarning(@NotNull Project project,
@@ -103,17 +91,6 @@ public final class GithubNotifications {
     VcsNotifier.getInstance(project).notifyError(displayId, title, message);
   }
 
-  /**
-   * @deprecated use {@link #showError(Project, String, String, Throwable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
-  public static void showError(@NotNull Project project,
-                               @NotificationTitle @NotNull String title,
-                               @NotNull Throwable e) {
-    showError(project, null, title, e);
-  }
-
   public static void showError(@NotNull Project project,
                                @NonNls @Nullable String displayId,
                                @NotificationTitle @NotNull String title,
@@ -121,18 +98,6 @@ public final class GithubNotifications {
     LOG.warn(title + "; ", e);
     if (isOperationCanceled(e)) return;
     VcsNotifier.getInstance(project).notifyError(displayId, title, getErrorTextFromException(e));
-  }
-
-  /**
-   * @deprecated use {@link #showInfoURL(Project, String, String, String, String)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
-  public static void showInfoURL(@NotNull Project project,
-                                 @NotificationTitle @NotNull String title,
-                                 @NotificationContent @NotNull String message,
-                                 @NotNull String url) {
-    showInfoURL(project, null, title, message, url);
   }
 
   public static void showInfoURL(@NotNull Project project,

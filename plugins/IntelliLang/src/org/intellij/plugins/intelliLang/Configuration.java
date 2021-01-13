@@ -544,21 +544,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return Collections.unmodifiableList(myInjections.get(injectorId));
   }
 
-  /**
-   * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, List, List, List)},
-   * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
-   * especially when {@code psiElementsToRemove} is null (IDEA-109366)
-   * To be removed in IDEA 2020.1
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void replaceInjectionsWithUndo(final Project project,
-                                        final List<? extends BaseInjection> newInjections,
-                                        final List<? extends BaseInjection> originalInjections,
-                                        final List<? extends PsiElement> psiElementsToRemove) {
-    replaceInjectionsWithUndo(project, null, newInjections, originalInjections, psiElementsToRemove);
-  }
-
   public void replaceInjectionsWithUndo(Project project,
                                         @Nullable PsiFile hostFile,
                                         List<? extends BaseInjection> newInjections,
