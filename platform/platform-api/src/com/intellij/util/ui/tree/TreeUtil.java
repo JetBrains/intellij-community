@@ -270,20 +270,6 @@ public final class TreeUtil {
     return false;
   }
 
-  private static boolean isAncestor(@NotNull final TreePath ancestor, @NotNull final TreePath path) {
-    if (path.getPathCount() < ancestor.getPathCount()) return false;
-    for (int i = 0; i < ancestor.getPathCount(); i++)
-      if (!path.getPathComponent(i).equals(ancestor.getPathComponent(i))) return false;
-    return true;
-  }
-
-  private static boolean isDescendants(@NotNull final TreePath path, final TreePath @NotNull [] paths) {
-    for (final TreePath ancestor : paths) {
-      if (isAncestor(ancestor, path)) return true;
-    }
-    return false;
-  }
-
   @NotNull
   public static TreePath getPathFromRoot(@NotNull TreeNode node) {
     TreeNode[] path = getPathFromRootTo(null, node, false);
@@ -353,23 +339,6 @@ public final class TreeUtil {
   }
 
   /**
-   * @deprecated use TreePathUtil#findCommonAncestor(TreePath...) instead
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static TreePath findCommonPath(final TreePath @NotNull [] treePaths) {
-    LOG.assertTrue(areComponentsEqual(treePaths, 0));
-    TreePath result = new TreePath(treePaths[0].getPathComponent(0));
-    int pathIndex = 1;
-    while (areComponentsEqual(treePaths, pathIndex)) {
-      result = result.pathByAddingChild(treePaths[0].getPathComponent(pathIndex));
-      pathIndex++;
-    }
-    return result;
-  }
-
-  /**
    * Tries to select the first node in the specified tree as soon as possible.
    *
    * @param tree a tree, which node should be selected
@@ -422,41 +391,6 @@ public final class TreeUtil {
     return selectionState;
   }
 
-
-  private static boolean areComponentsEqual(final TreePath @NotNull [] paths, final int componentIndex) {
-    if (paths[0].getPathCount() <= componentIndex) return false;
-    final Object pathComponent = paths[0].getPathComponent(componentIndex);
-    for (final TreePath treePath : paths) {
-      if (treePath.getPathCount() <= componentIndex) return false;
-      if (!pathComponent.equals(treePath.getPathComponent(componentIndex))) return false;
-    }
-    return true;
-  }
-
-  private static TreePath @NotNull [] removeDuplicates(final TreePath @NotNull [] paths) {
-    final ArrayList<TreePath> result = new ArrayList<>();
-    for (final TreePath path : paths) {
-      if (!result.contains(path)) result.add(path);
-    }
-    return result.toArray(EMPTY_TREE_PATH);
-  }
-
-  /**
-   * @deprecated use TreeCollector.TreePathRoots#collect(TreePath...) instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static TreePath @NotNull [] selectMaximals(final TreePath @Nullable [] paths) {
-    if (paths == null) return EMPTY_TREE_PATH;
-    final TreePath[] noDuplicates = removeDuplicates(paths);
-    final ArrayList<TreePath> result = new ArrayList<>();
-    for (final TreePath path : noDuplicates) {
-      final ArrayList<TreePath> otherPaths = new ArrayList<>(Arrays.asList(noDuplicates));
-      otherPaths.remove(path);
-      if (!isDescendants(path, otherPaths.toArray(EMPTY_TREE_PATH))) result.add(path);
-    }
-    return result.toArray(EMPTY_TREE_PATH);
-  }
 
   public static void sort(@NotNull final DefaultTreeModel model, @Nullable Comparator comparator) {
     sort((DefaultMutableTreeNode) model.getRoot(), comparator);
@@ -1619,23 +1553,6 @@ public final class TreeUtil {
         if (action == TreeVisitor.Action.CONTINUE) expandPathWithDebug(tree, path);
       }
       return action;
-    });
-  }
-
-  /**
-   * Selects a node in the specified tree.
-   *
-   * @param tree     a tree, which nodes should be selected
-   * @param visitor  a visitor that controls expanding of tree nodes
-   * @param consumer a path consumer called on EDT if path is found and selected
-   * @deprecated use {@code promiseSelect(tree, visitor).onSuccess(consumer)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void select(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseMakeVisibleOne(tree, visitor, path -> {
-      internalSelect(tree, path);
-      consumer.accept(path);
     });
   }
 

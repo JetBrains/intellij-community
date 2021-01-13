@@ -105,34 +105,6 @@ public class TreeUtilTest extends TestCase {
     assertSame(middle, tree.getSelectionPath().getLastPathComponent());
   }
 
-  public void testFindCommonPath() {
-    TreePath rootPath = new TreePath("root");
-    TreePath path1 = rootPath.pathByAddingChild("1");
-    TreePath path1_1 = path1.pathByAddingChild("1_1");
-    TreePath path1_2 = path1.pathByAddingChild("1_2");
-    TreePath path2_1 = rootPath.pathByAddingChild("2").pathByAddingChild("2_1");
-    assertEquals(path1, TreeUtil.findCommonPath(new TreePath[]{path1_1, path1_2}));
-    assertEquals(path1, TreeUtil.findCommonPath(new TreePath[]{path1, path1_1}));
-    assertEquals(rootPath, TreeUtil.findCommonPath(new TreePath[]{path1_1, path1_2, path2_1}));
-  }
-
-  public void testSelectMaximals() {
-    String e1 = "a";
-    String e2 = "b";
-    TreePath path1 = new TreePath(new Object[]{e1, e2, "c"});
-    TreePath path2 = new TreePath(new Object[]{e1, e2});
-    TreePath path2a = new TreePath(new Object[]{e1, e2});
-    TreePath path3 = new TreePath("d");
-    TreePath[] maximals = TreeUtil.selectMaximals(new TreePath[]{path1, path2, path3});
-    Assertion.compareUnordered(maximals, new TreePath[]{path2, path3});
-    assertEquals(1, TreeUtil.selectMaximals(new TreePath[]{path2, path2a}).length);
-  }
-
-  public void testSelectMaximalsWhenNone() {
-    CHECK.empty(TreeUtil.selectMaximals(null));
-    CHECK.empty(TreeUtil.selectMaximals(new TreePath[0]));
-  }
-
   public void testSorting() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultMutableTreeNode node2 = new DefaultMutableTreeNode("2");

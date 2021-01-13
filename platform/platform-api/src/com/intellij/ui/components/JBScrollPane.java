@@ -7,16 +7,18 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.*;
 import com.intellij.ui.scroll.LatchingScroll;
 import com.intellij.ui.scroll.MouseWheelSmoothScroll;
 import com.intellij.ui.scroll.TouchScroll;
 import com.intellij.ui.scroll.TouchScrollUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -37,18 +39,6 @@ import java.util.function.Supplier;
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBScrollPane extends JScrollPane {
-  /**
-   * This key is used to specify which colors should use the scroll bars on the pane.
-   * If a client property is set to {@code true} the bar's brightness
-   * will be modified according to the view's background.
-   *
-   * @see UIUtil#putClientProperty(JComponent, Key, Object)
-   * @see UIUtil#isUnderDarcula
-   * @deprecated unsupported approach to control a scroll bar painting
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
   /**
    * Supposed to be used as a client property key for scrollbar and indicates if this scrollbar should be ignored
@@ -314,16 +304,6 @@ public class JBScrollPane extends JScrollPane {
   @Override
   protected JViewport createViewport() {
     return new JBViewport();
-  }
-
-  /**
-   * @deprecated unsupported old implementation
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
-    ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
-    return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }
 
   public static boolean canBePreprocessed(@NotNull MouseEvent e, @NotNull JScrollBar bar) {
