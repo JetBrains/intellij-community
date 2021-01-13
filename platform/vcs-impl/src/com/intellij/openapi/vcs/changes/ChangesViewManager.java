@@ -116,7 +116,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     project.getMessageBus().connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateCommitWorkflow());
     // invokeLater to avoid potential cyclic dependency with ChangesViewCommitPanel constructor
-    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow());
+    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow(), myProject.getDisposed());
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
