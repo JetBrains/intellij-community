@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.IdeBundle;
@@ -15,6 +15,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -23,6 +24,9 @@ import java.util.List;
 import java.util.Set;
 
 public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider<Bookmark> implements BookmarksListener {
+  @VisibleForTesting
+  public static final Icon BOOKMARK = IconHelper.getIcon();
+
   public BookmarksFavoriteListProvider(Project project) {
     super(project, "Bookmarks");
 
@@ -165,7 +169,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
                                 int row,
                                 boolean hasFocus) {
     renderer.clear();
-    renderer.setIcon(IconHelper.getIcon());
+    renderer.setIcon(BOOKMARK);
     if (value instanceof Bookmark) {
       Bookmark bookmark = (Bookmark)value;
       BookmarkItem.setupRenderer(renderer, myProject, bookmark, selected);

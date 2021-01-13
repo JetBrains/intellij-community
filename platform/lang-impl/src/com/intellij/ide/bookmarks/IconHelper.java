@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.IdeBundle;
@@ -6,17 +6,14 @@ import com.intellij.ui.IconWrapperWithToolTip;
 import com.intellij.util.ui.RegionPaintIcon;
 import com.intellij.util.ui.RegionPainter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 
-@VisibleForTesting
-public final class IconHelper {
+final class IconHelper {
   private static final String MNEMONICS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   private static final char DEFAULT = 0;
-  @VisibleForTesting
-  public static final Icon NORMAL_ICON = createIcon(false, DEFAULT);
+  private static final Icon NORMAL_ICON = createIcon(false, DEFAULT);
   private static final Icon GUTTER_ICON = createIcon(true, DEFAULT);
   private static final Icon[] NORMAL_ICONS = new Icon[MNEMONICS.length()];
   private static final Icon[] GUTTER_ICONS = new Icon[MNEMONICS.length()];
