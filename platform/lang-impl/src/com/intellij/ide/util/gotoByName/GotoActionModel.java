@@ -74,7 +74,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   private final DataContext myDataContext;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
-  private final ActionsGlobalSummaryManager myStatManager = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager.class);
+  private final GotoActionOrderStrategy myOrderStrategy = new GotoActionOrderStrategy();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
@@ -302,10 +302,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return myActionManager.getId(anAction);
   }
 
-  private double getActionUsagesRatio(@Nullable String actionID) {
-    if (actionID == null) return .0;
-    ActionGlobalUsageInfo statistics = myStatManager.getActionStatistics(actionID);
-    return statistics != null ? statistics.getUsagesPerUserRatio() : .0;
+  private int compareActions(@Nullable AnAction first, @Nullable AnAction second) {
+    return myOrderStrategy.compare(first, second);
   }
 
   @NotNull
@@ -681,12 +679,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       int compared = myMode.compareTo(o.getMode());
       if (compared != 0) return compared;
 
-      if (Registry.is("search.everywhere.consider.action.statistics")) {
-        double myRatio = myModel.getActionUsagesRatio(myModel.getActionId(getAction()));
-        double oRatio = myModel.getActionUsagesRatio(myModel.getActionId(o.getAction()));
-        int byStat = -Double.compare(myRatio, oRatio);
-        if (byStat != 0) return byStat;
-      }
+      int byStat = myModel.compareActions(getAction(), o.getAction());
+      if (byStat != 0) return byStat;
 
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
