@@ -15,13 +15,11 @@
  */
 package com.intellij.lexer;
 
-import com.intellij.html.embedding.HtmlEmbeddedContentSupport;
 import com.intellij.html.embedding.HtmlEmbedment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -184,44 +182,5 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
   public void setHasNoEmbeddments(boolean hasNoEmbedments) {
     this.hasNoEmbedments = hasNoEmbedments;
-  }
-
-  /**
-   * This API does no longer work.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  protected Lexer getInlineScriptHighlightingLexer() {
-    return null;
-  }
-
-  /**
-   * This API does no longer work.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  @Nullable
-  protected Lexer createELLexer(Lexer newLexer) {
-    return null;
-  }
-
-
-  /**
-   * This API does no longer work.
-   *
-   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
-   */
-  @SuppressWarnings("InnerClassMayBeStatic")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public class ElEmbeddmentHandler implements TokenHandler {
-    @Override
-    public void handleElement(Lexer lexer) {
-    }
   }
 }
