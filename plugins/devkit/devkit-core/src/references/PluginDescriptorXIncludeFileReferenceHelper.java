@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,8 @@ import java.util.stream.Collectors;
 public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHelper {
   @Override
   public boolean isMine(Project project, @NotNull VirtualFile file) {
-    return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) &&
+    return !DumbService.isDumb(project) &&
+           FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) &&
            PsiUtil.isPluginProject(project) &&
            DescriptorUtil.isPluginXml(PsiManager.getInstance(project).findFile(file));
   }
