@@ -46,9 +46,12 @@ open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val pane: JComponent = JPanel(MigLayout("ins 0, novisualpadding, gap 0"))
+    return object : ActionToolbarImpl(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true) {
 
-    val bar = object : ActionToolbarImpl(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true) {
+      init {
+        setForceMinimumSize(true)
+      }
+
       private val presentationSyncer: PropertyChangeListener = PropertyChangeListener { evt ->
         val propertyName = evt.propertyName
         if (PILL_SHOWN == propertyName) {
@@ -70,11 +73,6 @@ open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
         super.removeNotify()
       }
     }
-
-    pane.add(bar.component)
-
-    pane.border = JBUI.Borders.empty(0, 2)
-    return pane
   }
 
 }

@@ -85,6 +85,10 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
 
   override fun createCustomComponent(presentation: Presentation, place_: String): JComponent {
       val bar = object : ActionToolbarImpl(place, group, true) {
+        init {
+          setForceMinimumSize(true)
+        }
+
         private var isActive = false
 
         override fun getInsets(): Insets {
