@@ -141,7 +141,6 @@ public final class OSProcessUtil {
   @SuppressWarnings("deprecation")
   @NotNull
   static WinProcess createWinProcess(@NotNull Process process) {
-    if (process instanceof RunnerWinProcess) process = ((RunnerWinProcess)process).getOriginalProcess();
     if (process instanceof WinPtyProcess) {
       return new WinProcess(((WinPtyProcess)process).getPid());
     }

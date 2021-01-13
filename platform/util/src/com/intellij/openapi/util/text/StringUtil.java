@@ -473,16 +473,6 @@ public class StringUtil extends StringUtilRt {
     "iOS", "iPhone", "iPad", "iMac"
   };
 
-  /**
-   * @deprecated Use {@link #isPreposition(String, int, int, String[])}.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  @Contract(pure = true)
-  public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
-    return isPreposition(s, firstChar, lastChar, ourPrepositions);
-  }
-
   @Contract(pure = true)
   public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar, String @NotNull [] prepositions) {
     for (String preposition : prepositions) {
@@ -3114,13 +3104,6 @@ public class StringUtil extends StringUtilRt {
       bytes[i / 2] = (byte)((Character.digit(str.charAt(i), 16) << 4) + Character.digit(str.charAt(i + 1), 16));
     }
     return bytes;
-  }
-
-  /** @deprecated use {@link #startsWithConcatenation(String, String...)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
-    return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }
 
   /**

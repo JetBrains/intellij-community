@@ -2115,17 +2115,6 @@ public class ContainerUtil {
     return new HashSet<>(Arrays.asList(items));
   }
 
-  /**
-   * @deprecated Use {@link Map#putIfAbsent}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static <K, V> void putIfAbsent(final K key, @Nullable V value, final @NotNull Map<? super K, ? super V> result) {
-    if (!result.containsKey(key)) {
-      result.put(key, value);
-    }
-  }
-
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, final @NotNull Map<? super K, ? super V> result) {
     if (value != null) {
       result.put(key, value);
