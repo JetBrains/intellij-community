@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.connection.metadata;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil;
+import com.intellij.internal.statistic.eventLog.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ public final class EventGroupRemoteDescriptors {
 
   @NotNull
   public static EventGroupRemoteDescriptors create(@Nullable String content) throws EventLogMetadataParseException {
-    if (ValidatorStringUtil.isEmptyOrSpaces(content)) {
+    if (StringUtil.isEmptyOrSpaces(content)) {
       throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.EMPTY_CONTENT);
     }
 

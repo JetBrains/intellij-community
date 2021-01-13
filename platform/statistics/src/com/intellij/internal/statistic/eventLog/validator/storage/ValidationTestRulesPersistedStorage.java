@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public final class ValidationTestRulesPersistedStorage implements ValidationRulesStorage {
-  protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final Object myLock = new Object();
   private final @NotNull EventLogTestMetadataPersistence myTestMetadataPersistence;
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
@@ -76,8 +76,9 @@ public final class ValidationTestRulesPersistedStorage implements ValidationRule
     return EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
   }
 
-  protected @NotNull Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
-                                                                   @Nullable GroupRemoteRule productionRules) {
+  @NotNull
+  private static Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
+                                                               @Nullable GroupRemoteRule productionRules) {
     final GroupRemoteRule rules = merge(groups.rules, productionRules);
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(rules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
@@ -89,7 +90,7 @@ public final class ValidationTestRulesPersistedStorage implements ValidationRule
     updateValidators();
   }
 
-  protected void cleanup() {
+  private void cleanup() {
     synchronized (myLock) {
       eventsValidators.clear();
       myTestMetadataPersistence.cleanup();

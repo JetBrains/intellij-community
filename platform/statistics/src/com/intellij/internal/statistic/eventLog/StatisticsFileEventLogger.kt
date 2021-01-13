@@ -50,10 +50,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
 
         val creationTime = System.currentTimeMillis()
         val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion,
-                                validatedEventId, isState)
-        for (datum in validatedEventData) {
-          event.event.addData(datum.key, datum.value)
-        }
+                                validatedEventId, isState, validatedEventData)
         log(event, creationTime)
       }, logExecutor)
     }

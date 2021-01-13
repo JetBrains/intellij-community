@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules;
 
-import com.intellij.internal.statistic.eventLog.util.ValidatorContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +15,16 @@ public final class EventContext {
 
   private EventContext(@NotNull String eventId, @NotNull Map<String, Object> eventData) {
     this.eventId = eventId;
-    this.eventData = ValidatorContainerUtil.unmodifiableOrEmptyMap(eventData);
+    this.eventData = unmodifiableOrEmptyMap(eventData);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull Map<String, Object> unmodifiableOrEmptyMap(@NotNull Map<String, Object> original) {
+    int size = original.size();
+    if (size == 0) {
+      return Collections.emptyMap();
+    }
+    return Collections.unmodifiableMap(original);
   }
 
   public static EventContext create(@NotNull String eventId, @NotNull Map<String, Object> eventData) {

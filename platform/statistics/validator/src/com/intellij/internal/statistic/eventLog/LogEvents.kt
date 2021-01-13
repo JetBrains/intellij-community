@@ -25,8 +25,14 @@ fun newLogEvent(session: String,
                 groupVersion: String,
                 recorderVersion: String,
                 eventId: String,
-                isState: Boolean = false): LogEvent {
+                isState: Boolean = false,
+                eventData: Map<String, Any>? = null): LogEvent {
   val event = LogEventAction(StatisticsEventEscaper.escapeEventIdOrFieldValue(eventId), isState, 1)
+  if (eventData != null) {
+    for ((key, value) in eventData) {
+      event.addData(key, value)
+    }
+  }
   return LogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, event)
 }
 

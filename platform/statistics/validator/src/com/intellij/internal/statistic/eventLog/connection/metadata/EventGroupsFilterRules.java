@@ -12,17 +12,17 @@ import java.util.Objects;
 
 public final class EventGroupsFilterRules<T extends Comparable<T>> {
   private final Map<String, EventGroupFilterRules<T>> myGroups;
-  private final EventLogBuildProducer<T> myBuildProducer;
+  private final EventLogBuildParser<T> myBuildProducer;
 
   private EventGroupsFilterRules(@NotNull Map<String, EventGroupFilterRules<T>> groups,
-                                 @NotNull EventLogBuildProducer<T> producer) {
+                                 @NotNull EventLogBuildParser<T> producer) {
     myGroups = groups;
     myBuildProducer = producer;
   }
 
   @NotNull
   public static <P extends Comparable<P>> EventGroupsFilterRules<P> create(@NotNull Map<String, EventGroupFilterRules<P>> groups,
-                                                                           @NotNull EventLogBuildProducer<P> buildProducer) {
+                                                                           @NotNull EventLogBuildParser<P> buildProducer) {
     return new EventGroupsFilterRules<>(groups, buildProducer);
   }
 
@@ -41,7 +41,7 @@ public final class EventGroupsFilterRules<T extends Comparable<T>> {
       return false;
     }
     EventGroupFilterRules<T> condition = myGroups.get(groupId);
-    return condition.accepts(myBuildProducer.create(build), parsedVersion);
+    return condition.accepts(myBuildProducer.parse(build), parsedVersion);
   }
 
   public int getSize() {
@@ -85,7 +85,7 @@ public final class EventGroupsFilterRules<T extends Comparable<T>> {
 
   @NotNull
   public static <P extends Comparable<P>> EventGroupsFilterRules<P> create(@NotNull EventGroupRemoteDescriptors groups,
-                                                                           @NotNull EventLogBuildProducer<P> buildProducer) {
+                                                                           @NotNull EventLogBuildParser<P> buildProducer) {
     Map<String, EventGroupFilterRules<P>> groupToCondition = new HashMap<>();
     for (EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group : groups.groups) {
       groupToCondition.put(group.id, EventGroupFilterRules.create(group, buildProducer));

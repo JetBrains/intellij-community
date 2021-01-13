@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
-import com.intellij.internal.statistic.eventLog.EventLogBuild;
-import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil;
+import com.intellij.internal.statistic.eventLog.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,19 +21,19 @@ public class EventGroupFilterRules<T extends Comparable<T>> {
   }
 
   @NotNull
-  public static <P extends Comparable<P>> EventGroupFilterRules<P> create(@NotNull EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group, @NotNull EventLogBuildProducer<P> buildProducer) {
+  public static <P extends Comparable<P>> EventGroupFilterRules<P> create(@NotNull EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group, @NotNull EventLogBuildParser<P> buildProducer) {
     return create(group.builds, group.versions, buildProducer);
   }
 
   @NotNull
-  private static <P extends Comparable<P>> EventGroupFilterRules<P> create(@Nullable List<EventGroupRemoteDescriptors.GroupBuildRange> builds, @Nullable List<EventGroupRemoteDescriptors.GroupVersionRange> versions, @NotNull EventLogBuildProducer<P> buildProducer) {
+  private static <P extends Comparable<P>> EventGroupFilterRules<P> create(@Nullable List<EventGroupRemoteDescriptors.GroupBuildRange> builds, @Nullable List<EventGroupRemoteDescriptors.GroupVersionRange> versions, @NotNull EventLogBuildParser<P> buildProducer) {
     final List<BuildRange<P>> buildRanges = builds != null && !builds.isEmpty() ? toBuildRanges(builds, buildProducer) : emptyList();
     final List<EventGroupFilterRules.VersionRange> versionRanges = versions != null && !versions.isEmpty() ? toVersionRanges(versions) : emptyList();
     return new EventGroupFilterRules<>(buildRanges, versionRanges);
   }
 
   @NotNull
-  private static <P extends Comparable<P>> List<BuildRange<P>> toBuildRanges(@NotNull List<EventGroupRemoteDescriptors.GroupBuildRange> builds, @NotNull EventLogBuildProducer<P> buildProducer) {
+  private static <P extends Comparable<P>> List<BuildRange<P>> toBuildRanges(@NotNull List<EventGroupRemoteDescriptors.GroupBuildRange> builds, @NotNull EventLogBuildParser<P> buildProducer) {
     List<BuildRange<P>> result = new ArrayList<>();
     for (EventGroupRemoteDescriptors.GroupBuildRange build : builds) {
       result.add(EventGroupFilterRules.BuildRange.create(build.from, build.to, buildProducer));
@@ -102,10 +101,10 @@ public class EventGroupFilterRules<T extends Comparable<T>> {
     }
 
     @NotNull
-    public static <P extends Comparable<P>> BuildRange<P> create(@Nullable String from, @Nullable String to, EventLogBuildProducer<? extends P> buildProducer) {
+    public static <P extends Comparable<P>> BuildRange<P> create(@Nullable String from, @Nullable String to, EventLogBuildParser<P> buildProducer) {
       return new BuildRange<>(
-        !ValidatorStringUtil.isEmpty(from) ? buildProducer.create(from) : null,
-        !ValidatorStringUtil.isEmpty(to) ? buildProducer.create(to) : null
+        !StringUtil.isEmpty(from) ? buildProducer.parse(from) : null,
+        !StringUtil.isEmpty(to) ? buildProducer.parse(to) : null
       );
     }
 

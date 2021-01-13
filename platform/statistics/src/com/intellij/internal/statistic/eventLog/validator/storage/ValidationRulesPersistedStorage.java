@@ -136,7 +136,6 @@ public class ValidationRulesPersistedStorage implements ValidationRulesStorage {
     return !myIsInitialized.get();
   }
 
-
   @NotNull
   protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);

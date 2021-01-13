@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class ValidatorStringUtil {
-  private ValidatorStringUtil() {
+public final class StringUtil {
+  private StringUtil() {
   }
 
   @Contract(pure = true)

@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper
-import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil
+import com.intellij.internal.statistic.eventLog.util.StringUtil
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRule
@@ -49,7 +49,7 @@ class RegexpValidationRule(private val regexp: String?) : PerformanceCareRule(),
 
     @JvmStatic
     fun escapeText(text: String): String {
-      return ValidatorStringUtil.replace(text, ESCAPE_FROM, ESCAPE_TO)
+      return StringUtil.replace(text, ESCAPE_FROM, ESCAPE_TO)
     }
   }
 }

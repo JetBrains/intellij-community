@@ -1,38 +1,39 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 
-import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil;
+import com.intellij.internal.statistic.eventLog.util.StringUtil;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.ExpressionValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ValidationSimpleRuleFactory {
+public final class ValidationSimpleRuleFactory {
   public static final String UTIL_PREFIX = "util#";
   private static final String START = "{";
   private static final String END = "}";
-  private static final BooleanRuleProducer RULE_PRODUCER = new BooleanRuleProducer();
-  private static final EnumRuleProducer ENUM_RULE_PRODUCER = new EnumRuleProducer();
-  private static final EnumReferenceRuleProducer ENUM_REFERENCE_RULE_PRODUCER = new EnumReferenceRuleProducer();
-  private static final RegexpRuleProducer REGEXP_RULE_PRODUCER = new RegexpRuleProducer();
-  private static final RegexpReferenceRuleProducer REGEXP_REFERENCE_RULE_PRODUCER = new RegexpReferenceRuleProducer();
+  private static final List<ValidationRuleProducer<?>> RULE_PRODUCERS = Arrays.asList(new BooleanRuleProducer(),
+                                                                                      new EnumRuleProducer(),
+                                                                                      new EnumReferenceRuleProducer(),
+                                                                                      new RegexpRuleProducer(),
+                                                                                      new RegexpReferenceRuleProducer());
   public static final UtilRuleProducer REJECTING_UTIL_URL_PRODUCER = new RejectingUtilRuleProducer();
 
-  private final UtilRuleProducer myUtilRuleProducer;
+  private final List<ValidationRuleProducer<?>> myRuleProducers;
 
   private static final FUSRule UNPARSED_EXPRESSION = (s, c) -> ValidationResultType.INCORRECT_RULE;
 
   public ValidationSimpleRuleFactory(@NotNull UtilRuleProducer utilRuleProducer) {
-    myUtilRuleProducer = utilRuleProducer;
-  }
-
-  public ValidationSimpleRuleFactory() {
-    this(REJECTING_UTIL_URL_PRODUCER);
+    ArrayList<ValidationRuleProducer<?>> producers = new ArrayList<>(RULE_PRODUCERS);
+    producers.add(utilRuleProducer);
+    myRuleProducers = producers;
   }
 
   public FUSRule @NotNull [] getRules(@Nullable Set<String> rules,
@@ -70,25 +71,13 @@ public class ValidationSimpleRuleFactory {
   }
 
   @Nullable
-  private FUSRule createSimpleRule(@NotNull String rule, @NotNull EventGroupContextData contextData) {
-    return createSimpleRule(rule, contextData,
-                            RULE_PRODUCER,
-                            myUtilRuleProducer,
-                            ENUM_RULE_PRODUCER,
-                            ENUM_REFERENCE_RULE_PRODUCER,
-                            REGEXP_RULE_PRODUCER,
-                            REGEXP_REFERENCE_RULE_PRODUCER);
-  }
-
-
-  private static FUSRule createSimpleRule(@NotNull String rule,
-                                          @NotNull EventGroupContextData contextData,
-                                          ValidationRuleProducer... ruleProducers) {
-    for (ValidationRuleProducer builder : ruleProducers) {
+  private FUSRule createSimpleRule(@NotNull String rule,
+                                   @NotNull EventGroupContextData contextData) {
+    for (ValidationRuleProducer<?> builder : myRuleProducers) {
       String prefix = builder.getPrefix();
       if (rule.startsWith(prefix)) {
         String value = rule.substring(prefix.length());
-        if (!ValidatorStringUtil.isEmpty(value)) {
+        if (!StringUtil.isEmpty(value)) {
           return builder.createValidationRule(value, contextData);
         }
       }
@@ -172,7 +161,7 @@ public class ValidationSimpleRuleFactory {
   // if (could not be parsed) return Collections.emptyList()
   public static List<String> parseSimpleExpression(@NotNull String s) {
     int currentRuleStart = s.indexOf(START);
-    if (ValidatorStringUtil.isEmptyOrSpaces(s)) return Collections.emptyList();
+    if (StringUtil.isEmptyOrSpaces(s)) return Collections.emptyList();
     if (currentRuleStart == -1) return Collections.singletonList(s);
     int lastRuleEnd = -1;
 
@@ -198,7 +187,7 @@ public class ValidationSimpleRuleFactory {
   }
 
   private static void addNonEmpty(@NotNull List<? super String> nodes, @Nullable String s) {
-    if (!ValidatorStringUtil.isEmpty(s)) nodes.add(s);
+    if (!StringUtil.isEmpty(s)) nodes.add(s);
   }
 
   private static boolean isExpressionNode(@NotNull String node) {

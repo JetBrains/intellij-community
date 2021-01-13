@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventAction
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogBuildProducer
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogBuildParser
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.UtilRuleProducer
@@ -16,10 +16,17 @@ import org.jetbrains.annotations.NotNull
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-class SimpleSensitiveDataValidator<T : Comparable<T>>(initialMetadataContent: String,
-                                                      private val buildProducer: EventLogBuildProducer<T>,
-                                                      private val excludeFields: List<String> = emptyList(),
-                                                      utilRulesProducer: UtilRuleProducer = ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER) {
+/**
+ * Validates log event according to remote groups validation rules.
+ * Used to ensure that no personal or proprietary data is recorded.
+ *
+ * @param initialMetadataContent validation rules that will be used initially, they can be updated later (see [update]).
+ * @param excludedFields  list of event data fields to be excluded from validation.
+ */
+class SimpleSensitiveDataValidator<T : Comparable<T>?>(initialMetadataContent: String,
+                                                       private val buildParser: EventLogBuildParser<T>,
+                                                       private val excludedFields: List<String> = emptyList(),
+                                                       utilRulesProducer: UtilRuleProducer = ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER) {
 
   private val validationRuleFactory = ValidationSimpleRuleFactory(utilRulesProducer)
   private val eventsValidators: ConcurrentMap<String, EventGroupRules> = ConcurrentHashMap() // guarded by lock
@@ -34,6 +41,10 @@ class SimpleSensitiveDataValidator<T : Comparable<T>>(initialMetadataContent: St
     updateEventGroupRules(metadataContent)
   }
 
+  /**
+   * @return null if the build or version failed validation,
+   * otherwise returns validated event in which incorrect values are replaced with {@link ValidationResultType#getDescription()}.
+   */
   fun validateEvent(event: LogEvent): LogEvent? {
     synchronized(lock) {
       if (!filterRules.accepts(event.group.id, event.group.version, event.build)) {
@@ -59,14 +70,14 @@ class SimpleSensitiveDataValidator<T : Comparable<T>>(initialMetadataContent: St
       eventsValidators.clear()
       val descriptors = EventGroupRemoteDescriptors.create(metadataContent)
       eventsValidators.putAll(createValidators(descriptors))
-      filterRules = EventGroupsFilterRules.create(descriptors, buildProducer)
+      filterRules = EventGroupsFilterRules.create(descriptors, buildParser)
     }
   }
 
   private fun createValidators(descriptors: EventGroupRemoteDescriptors): Map<String?, EventGroupRules> {
     val globalRulesHolder = GlobalRulesHolder(descriptors.rules)
     val groups = descriptors.groups
-    return groups.associate { it.id to EventGroupRules.create(it, globalRulesHolder, validationRuleFactory, excludeFields) }
+    return groups.associate { it.id to EventGroupRules.create(it, globalRulesHolder, validationRuleFactory, excludedFields) }
   }
 
   private fun guaranteeCorrectEventData(context: @NotNull EventContext,

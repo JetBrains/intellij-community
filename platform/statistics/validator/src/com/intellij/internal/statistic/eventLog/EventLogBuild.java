@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogBuildProducer;
-import com.intellij.internal.statistic.eventLog.util.ValidatorStringUtil;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogBuildParser;
+import com.intellij.internal.statistic.eventLog.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +11,7 @@ import java.util.List;
 
 public final class EventLogBuild implements Comparable<EventLogBuild> {
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
-  public static final @NotNull EventLogBuildProducer<EventLogBuild> EVENT_LOG_BUILD_PRODUCER = build -> fromString(build);
+  public static final @NotNull EventLogBuildParser<EventLogBuild> EVENT_LOG_BUILD_PRODUCER = build -> fromString(build);
 
   private final int[] myComponents;
 
@@ -25,14 +25,14 @@ public final class EventLogBuild implements Comparable<EventLogBuild> {
 
   @Nullable
   public static EventLogBuild fromString(@Nullable String version) {
-    if (version == null || ValidatorStringUtil.isEmptyOrSpaces(version)) {
+    if (version == null || StringUtil.isEmptyOrSpaces(version)) {
       return null;
     }
 
     String versionWithoutCode = removeProductCode(version);
     int separator = versionWithoutCode.indexOf('.');
     if (separator > 0) {
-      List<String> components = ValidatorStringUtil.split(versionWithoutCode, '.');
+      List<String> components = StringUtil.split(versionWithoutCode, '.');
       return new EventLogBuild(toIntArray(components));
     }
     return new EventLogBuild(tryParseInt(versionWithoutCode), 0);
