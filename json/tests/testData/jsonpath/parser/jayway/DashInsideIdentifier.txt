@@ -3,4 +3,5 @@ JsonPathFile
     PsiElement(ROOT_CONTEXT)('$')
   PsiElement(DOT)('.')
   JsonPathIdSegmentImpl(ID_SEGMENT)
-    PsiElement(IDENTIFIER)('int-max-property')
+    JsonPathIdImpl(ID)
+      PsiElement(IDENTIFIER)('int-max-property')

@@ -4,7 +4,6 @@ package com.intellij.jsonpath;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
@@ -12,11 +11,12 @@ import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
 import com.intellij.jsonpath.psi.JsonPathStringLiteral;
 import com.intellij.jsonpath.psi.JsonPathTypes;
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.jsonpath.JsonPathConstants.STANDARD_FUNCTIONS;
@@ -92,11 +92,11 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-      DataContext dataContext = DataManager.getInstance().getDataContext(parameters.getEditor().getComponent());
-      JsonFile targetFile = dataContext.getData(JsonPathEvaluateManager.JSON_PATH_EVALUATE_SOURCE_KEY);
+      PsiFile file = parameters.getOriginalFile();
+      Supplier<JsonFile> targetFileGetter = file.getUserData(JsonPathEvaluateManager.JSON_PATH_EVALUATE_SOURCE_KEY);
+      if (targetFileGetter == null) return;
 
-      if (targetFile == null) return;
-
+      JsonFile targetFile = targetFileGetter.get();
       targetFile.accept(new JsonRecursiveElementVisitor() {
         @Override
         public void visitProperty(@NotNull JsonProperty o) {

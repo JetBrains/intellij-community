@@ -2,19 +2,24 @@
 package com.intellij.jsonpath.ui
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.icons.AllIcons
 import com.intellij.json.JsonBundle
 import com.intellij.json.json5.Json5FileType
+import com.intellij.json.psi.JsonFile
 import com.intellij.jsonpath.JsonPathFileType
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.EVALUATE_TOOLWINDOW_ID
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_RESULT_KEY
+import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_SOURCE_KEY
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -30,21 +35,27 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import com.jayway.jsonpath.*
 import com.jayway.jsonpath.Configuration.ConfigurationBuilder
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
+import java.util.function.Supplier
 import javax.swing.FocusManager
+import javax.swing.JScrollPane
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-internal class JsonPathEvaluateView(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable, DataProvider {
+internal class JsonPathEvaluateView(private val project: Project,
+                                    private val mode: JsonPathEvaluateMode) : SimpleToolWindowPanel(false, true), Disposable {
 
   private val searchTextField: EditorTextField = object : EditorTextField(project, JsonPathFileType.INSTANCE) {
     init {
@@ -65,14 +76,19 @@ internal class JsonPathEvaluateView(private val project: Project) : SimpleToolWi
 
     override fun createEditor(): EditorEx {
       val editor = super.createEditor()
+
       editor.scrollPane.border = JBUI.Borders.empty()
       editor.component.border = JBUI.Borders.empty(3)
       editor.component.background = UIUtil.getInactiveTextFieldBackgroundColor()
       editor.component.isOpaque = true
-      editor.putUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY, true)
 
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-      psiFile?.putUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY, true)
+      if (psiFile != null) {
+        psiFile.putUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY, true)
+        psiFile.putUserData(JSON_PATH_EVALUATE_SOURCE_KEY, Supplier {
+          PsiDocumentManager.getInstance(project).getPsiFile(sourceEditor.document) as? JsonFile
+        })
+      }
 
       return editor
     }
@@ -81,8 +97,11 @@ internal class JsonPathEvaluateView(private val project: Project) : SimpleToolWi
   private val sourceEditor: Editor
   private val resultEditor: Editor
 
+  private val expressionHighlightingQueue: MergingUpdateQueue = MergingUpdateQueue("JSONPATH_EVALUATE", 1000, true, null, this)
+
   private val resultWrapper: JBPanelWithEmptyText = JBPanelWithEmptyText(BorderLayout())
   private val errorOutputArea: JBTextArea = JBTextArea()
+  private val errorOutputContainer: JScrollPane = JBScrollPane(errorOutputArea)
 
   private val evalOptions: MutableSet<Option> = mutableSetOf()
 
@@ -116,6 +135,8 @@ internal class JsonPathEvaluateView(private val project: Project) : SimpleToolWi
 
     resultWrapper.emptyText.text = JsonBundle.message("jsonpath.evaluate.no.result")
     errorOutputArea.isEditable = false
+    errorOutputArea.wrapStyleWord = true
+    errorOutputArea.lineWrap = true
     errorOutputArea.border = JBUI.Borders.empty(10)
 
     val splitter = OnePixelSplitter(0.5f)
@@ -136,6 +157,22 @@ internal class JsonPathEvaluateView(private val project: Project) : SimpleToolWi
         }
       }
     })
+
+    sourceEditor.document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        expressionHighlightingQueue.queue(Update.create(this@JsonPathEvaluateView) {
+          resetExpressionHighlighting()
+        })
+      }
+    })
+  }
+
+  private fun resetExpressionHighlighting() {
+    val jsonPathFile = PsiDocumentManager.getInstance(project).getPsiFile(searchTextField.document)
+    if (jsonPathFile != null) {
+      // reset inspections in expression
+      DaemonCodeAnalyzer.getInstance(project).restart(jsonPathFile)
+    }
   }
 
   private fun createOptionsGroup(): ActionGroup {
@@ -196,10 +233,8 @@ internal class JsonPathEvaluateView(private val project: Project) : SimpleToolWi
     if (!resultWrapper.components.contains(resultEditor.component)) {
       resultWrapper.removeAll()
       resultWrapper.add(resultEditor.component, BorderLayout.CENTER)
-      resultWrapper.invalidate()
-      resultEditor.component.invalidate()
+      resultWrapper.revalidate()
       resultWrapper.repaint()
-      resultEditor.component.repaint()
     }
 
     resultEditor.caretModel.moveToOffset(0)
@@ -210,11 +245,9 @@ internal class JsonPathEvaluateView(private val project: Project) : SimpleToolWi
 
     if (!resultWrapper.components.contains(errorOutputArea)) {
       resultWrapper.removeAll()
-      resultWrapper.add(errorOutputArea, BorderLayout.CENTER)
-      resultWrapper.invalidate()
-      errorOutputArea.invalidate()
+      resultWrapper.add(errorOutputContainer, BorderLayout.CENTER)
+      resultWrapper.revalidate()
       resultWrapper.repaint()
-      errorOutputArea.repaint()
     }
   }
 
@@ -281,13 +314,6 @@ internal class JsonPathEvaluateView(private val project: Project) : SimpleToolWi
     }
 
     return config.jsonProvider().toJson(result) ?: ""
-  }
-
-  override fun getData(dataId: String): Any? {
-    if (JsonPathEvaluateManager.JSON_PATH_EVALUATE_SOURCE_KEY.`is`(dataId)) {
-      return PsiDocumentManager.getInstance(project).getPsiFile(sourceEditor.document)
-    }
-    return super.getData(dataId)
   }
 
   override fun dispose() {

@@ -4,8 +4,8 @@ package com.intellij.jsonpath.ui
 import com.intellij.icons.AllIcons
 import com.intellij.json.JsonBundle
 import com.intellij.json.psi.JsonFile
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.EDT
+import java.util.function.Supplier
 
 @Service
 class JsonPathEvaluateManager(private val project: Project) {
@@ -27,9 +28,9 @@ class JsonPathEvaluateManager(private val project: Project) {
     }
   }
 
-  fun evaluateFromJson(json: String) {
+  fun evaluateFromJson(file: JsonFile, editor: Editor) {
     open {
-      it.setSource(json)
+      it.setSource(file.text) // todo add tab content
     }
   }
 
@@ -51,7 +52,7 @@ class JsonPathEvaluateManager(private val project: Project) {
   }
 
   private fun registerToolwindow(toolWindowManager: ToolWindowManager): ToolWindow {
-    val view = JsonPathEvaluateView(project)
+    val view = JsonPathEvaluateView(project, JsonPathEvaluateMode.EXPRESSION)
     val toolWindow = toolWindowManager.registerToolWindow(
       RegisterToolWindowTask(
         id = EVALUATE_TOOLWINDOW_ID,
@@ -72,7 +73,7 @@ class JsonPathEvaluateManager(private val project: Project) {
     val JSON_PATH_EVALUATE_EXPRESSION_KEY: Key<Boolean> = Key.create("JSON_PATH_EVALUATE_EXPRESSION")
 
     @JvmField
-    val JSON_PATH_EVALUATE_SOURCE_KEY: DataKey<JsonFile> = DataKey.create("JSON_PATH_EVALUATE_SOURCE")
+    val JSON_PATH_EVALUATE_SOURCE_KEY: Key<Supplier<JsonFile?>> = Key.create("JSON_PATH_EVALUATE_SOURCE")
 
     @JvmField
     val JSON_PATH_EVALUATE_RESULT_KEY: Key<Boolean> = Key.create("JSON_PATH_EVALUATE_RESULT")

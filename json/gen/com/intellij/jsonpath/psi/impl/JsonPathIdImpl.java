@@ -11,14 +11,14 @@ import static com.intellij.jsonpath.psi.JsonPathTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.jsonpath.psi.*;
 
-public class JsonPathFunctionNameImpl extends ASTWrapperPsiElement implements JsonPathFunctionName {
+public class JsonPathIdImpl extends ASTWrapperPsiElement implements JsonPathId {
 
-  public JsonPathFunctionNameImpl(@NotNull ASTNode node) {
+  public JsonPathIdImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull JsonPathVisitor visitor) {
-    visitor.visitFunctionName(this);
+    visitor.visitId(this);
   }
 
   @Override

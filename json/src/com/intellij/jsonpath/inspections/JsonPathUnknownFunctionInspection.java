@@ -6,7 +6,8 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.json.JsonBundle;
 import com.intellij.jsonpath.JsonPathConstants;
-import com.intellij.jsonpath.psi.JsonPathFunctionName;
+import com.intellij.jsonpath.psi.JsonPathFunctionCall;
+import com.intellij.jsonpath.psi.JsonPathId;
 import com.intellij.jsonpath.psi.JsonPathVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -18,18 +19,21 @@ final class JsonPathUnknownFunctionInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JsonPathVisitor() {
       @Override
-      public void visitFunctionName(@NotNull JsonPathFunctionName o) {
-        super.visitFunctionName(o);
+      public void visitFunctionCall(@NotNull JsonPathFunctionCall call) {
+        super.visitFunctionCall(call);
+
+        JsonPathId functionId = call.getId();
+        String functionName = functionId.getText();
 
         boolean isEvaluateExpr = Boolean.TRUE.equals(holder.getFile().getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY));
 
-        if (!JsonPathConstants.STANDARD_FUNCTIONS.containsKey(o.getText())) {
+        if (!JsonPathConstants.STANDARD_FUNCTIONS.containsKey(functionId.getText())) {
           if (isEvaluateExpr) {
-            holder.registerProblem(o, JsonBundle.message("inspection.message.jsonpath.unsupported.jayway.function", o.getText()),
+            holder.registerProblem(functionId, JsonBundle.message("inspection.message.jsonpath.unsupported.jayway.function", functionName),
                                    ProblemHighlightType.ERROR);
           }
           else {
-            holder.registerProblem(o, null, JsonBundle.message("inspection.message.jsonpath.unknown.function.name", o.getText()));
+            holder.registerProblem(functionId, null, JsonBundle.message("inspection.message.jsonpath.unknown.function.name", functionName));
             // todo Suppress for name quick fix
           }
         }

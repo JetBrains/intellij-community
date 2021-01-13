@@ -15,7 +15,7 @@ JsonPathFile
               PsiElement(EVAL_CONTEXT)('@')
             PsiElement(DOT)('.')
             JsonPathFunctionCallImpl(FUNCTION_CALL)
-              JsonPathFunctionNameImpl(FUNCTION_NAME)
+              JsonPathIdImpl(ID)
                 PsiElement(IDENTIFIER)('length')
               PsiElement(LPARENTH)('(')
               PsiElement(RPARENTH)(')')

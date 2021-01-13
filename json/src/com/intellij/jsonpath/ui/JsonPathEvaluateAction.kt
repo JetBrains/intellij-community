@@ -15,7 +15,7 @@ internal class JsonPathEvaluateAction : DumbAwareAction() {
     if (editor != null) {
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
       if (psiFile is JsonFile) {
-        JsonPathEvaluateManager.getInstance(project).evaluateFromJson(psiFile.text)
+        JsonPathEvaluateManager.getInstance(project).evaluateFromJson(psiFile, editor)
         return
       }
     }

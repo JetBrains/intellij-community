@@ -1,6 +1,6 @@
 JsonPathFile
   JsonPathFunctionCallImpl(FUNCTION_CALL)
-    JsonPathFunctionNameImpl(FUNCTION_NAME)
+    JsonPathIdImpl(ID)
       PsiElement(IDENTIFIER)('concat')
     PsiElement(LPARENTH)('(')
     JsonPathFunctionArgsListImpl(FUNCTION_ARGS_LIST)
@@ -13,5 +13,6 @@ JsonPathFile
           PsiElement(ROOT_CONTEXT)('$')
         PsiElement(DOT)('.')
         JsonPathIdSegmentImpl(ID_SEGMENT)
-          PsiElement(IDENTIFIER)('key')
+          JsonPathIdImpl(ID)
+            PsiElement(IDENTIFIER)('key')
     PsiElement(RPARENTH)(')')

@@ -3,7 +3,7 @@ JsonPathFile
     PsiElement(ROOT_CONTEXT)('$')
   PsiElement(DOT)('.')
   JsonPathFunctionCallImpl(FUNCTION_CALL)
-    JsonPathFunctionNameImpl(FUNCTION_NAME)
+    JsonPathIdImpl(ID)
       PsiElement(IDENTIFIER)('sum')
     PsiElement(LPARENTH)('(')
     JsonPathFunctionArgsListImpl(FUNCTION_ARGS_LIST)

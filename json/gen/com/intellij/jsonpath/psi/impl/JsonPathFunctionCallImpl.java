@@ -35,8 +35,8 @@ public class JsonPathFunctionCallImpl extends ASTWrapperPsiElement implements Js
 
   @Override
   @NotNull
-  public JsonPathFunctionName getFunctionName() {
-    return findNotNullChildByClass(JsonPathFunctionName.class);
+  public JsonPathId getId() {
+    return findNotNullChildByClass(JsonPathId.class);
   }
 
 }

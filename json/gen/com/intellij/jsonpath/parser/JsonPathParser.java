@@ -194,13 +194,13 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // functionName LPARENTH functionArgsList? RPARENTH
+  // id LPARENTH functionArgsList? RPARENTH
   public static boolean functionCall(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "functionCall")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = functionName(b, l + 1);
+    r = id(b, l + 1);
     r = r && consumeToken(b, LPARENTH);
     r = r && functionCall_2(b, l + 1);
     r = r && consumeToken(b, RPARENTH);
@@ -213,18 +213,6 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "functionCall_2")) return false;
     functionArgsList(b, l + 1);
     return true;
-  }
-
-  /* ********************************************************** */
-  // IDENTIFIER
-  public static boolean functionName(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "functionName")) return false;
-    if (!nextTokenIs(b, "<function name>", IDENTIFIER)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, FUNCTION_NAME, "<function name>");
-    r = consumeToken(b, IDENTIFIER);
-    exit_section_(b, l, m, r, false, null);
-    return r;
   }
 
   /* ********************************************************** */
@@ -241,13 +229,25 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER segmentExpression*
+  // IDENTIFIER
+  public static boolean id(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "id")) return false;
+    if (!nextTokenIs(b, "<identifier>", IDENTIFIER)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, ID, "<identifier>");
+    r = consumeToken(b, IDENTIFIER);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // id segmentExpression*
   public static boolean idSegment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "idSegment")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
+    r = id(b, l + 1);
     r = r && idSegment_1(b, l + 1);
     exit_section_(b, m, ID_SEGMENT, r);
     return r;

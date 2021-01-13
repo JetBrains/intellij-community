@@ -17,7 +17,7 @@ public interface JsonPathTypes {
   IElementType FILTER_EXPRESSION = new JsonPathElementType("FILTER_EXPRESSION");
   IElementType FUNCTION_ARGS_LIST = new JsonPathElementType("FUNCTION_ARGS_LIST");
   IElementType FUNCTION_CALL = new JsonPathElementType("FUNCTION_CALL");
-  IElementType FUNCTION_NAME = new JsonPathElementType("FUNCTION_NAME");
+  IElementType ID = new JsonPathElementType("ID");
   IElementType ID_SEGMENT = new JsonPathElementType("ID_SEGMENT");
   IElementType INDEXES_LIST = new JsonPathElementType("INDEXES_LIST");
   IElementType INDEX_EXPRESSION = new JsonPathElementType("INDEX_EXPRESSION");
@@ -106,8 +106,8 @@ public interface JsonPathTypes {
       else if (type == FUNCTION_CALL) {
         return new JsonPathFunctionCallImpl(node);
       }
-      else if (type == FUNCTION_NAME) {
-        return new JsonPathFunctionNameImpl(node);
+      else if (type == ID) {
+        return new JsonPathIdImpl(node);
       }
       else if (type == ID_SEGMENT) {
         return new JsonPathIdSegmentImpl(node);

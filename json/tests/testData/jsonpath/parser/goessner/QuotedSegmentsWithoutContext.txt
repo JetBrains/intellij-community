@@ -1,6 +1,7 @@
 JsonPathFile
   JsonPathIdSegmentImpl(ID_SEGMENT)
-    PsiElement(IDENTIFIER)('x')
+    JsonPathIdImpl(ID)
+      PsiElement(IDENTIFIER)('x')
   JsonPathQuotedSegmentImpl(QUOTED_SEGMENT)
     PsiElement(LBRACKET)('[')
     JsonPathQuotedPathsListImpl(QUOTED_PATHS_LIST)

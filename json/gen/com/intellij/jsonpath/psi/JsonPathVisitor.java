@@ -43,7 +43,7 @@ public class JsonPathVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitFunctionName(@NotNull JsonPathFunctionName o) {
+  public void visitId(@NotNull JsonPathId o) {
     visitPsiElement(o);
   }
 

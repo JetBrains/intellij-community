@@ -7,18 +7,27 @@ import com.intellij.icons.AllIcons
 import com.intellij.json.JsonBundle
 import com.intellij.jsonpath.JsonPathLanguage
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
-@Suppress("IntentionDescriptionNotFoundInspection")
 internal class JsonPathEvaluateIntentionAction : AbstractIntentionAction(), HighPriorityAction, Iconable {
   override fun getText(): String = JsonBundle.message("jsonpath.evaluate.intention")
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    val jsonPath = file?.text ?: ""
+    if (file == null) return
+
+    val manager = InjectedLanguageManager.getInstance(project)
+    val jsonPath = if (manager.isInjectedFragment(file)) {
+      manager.getUnescapedText(file)
+    }
+    else {
+      file.text
+    }
+
     JsonPathEvaluateManager.getInstance(project).evaluateExpression(jsonPath)
   }
 
@@ -26,7 +35,7 @@ internal class JsonPathEvaluateIntentionAction : AbstractIntentionAction(), High
     if (editor == null || file == null) return false
 
     return file.language == JsonPathLanguage.INSTANCE
-           && editor.getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY) != true
+           && file.getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY) != true
   }
 
   override fun getIcon(flags: Int): Icon = AllIcons.FileTypes.Json

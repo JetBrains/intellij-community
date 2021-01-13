@@ -17,6 +17,7 @@ JsonPathFile
               PsiElement(EVAL_CONTEXT)('@')
             PsiElement(DOT)('.')
             JsonPathIdSegmentImpl(ID_SEGMENT)
-              PsiElement(IDENTIFIER)('array')
+              JsonPathIdImpl(ID)
+                PsiElement(IDENTIFIER)('array')
       PsiElement(RPARENTH)(')')
       PsiElement(RBRACKET)(']')

@@ -11,6 +11,6 @@ public interface JsonPathFunctionCall extends PsiElement {
   JsonPathFunctionArgsList getFunctionArgsList();
 
   @NotNull
-  JsonPathFunctionName getFunctionName();
+  JsonPathId getId();
 
 }

@@ -29,14 +29,15 @@ private scanExpr ::= RECURSIVE_DESCENT segmentExpression+
 wildcardSegment ::= WILDCARD segmentExpression* {
   name="wildcard"
 }
-idSegment ::= IDENTIFIER segmentExpression*
+id ::= IDENTIFIER {
+  name="identifier"
+}
+idSegment ::= id segmentExpression*
+
 quotedSegment ::= LBRACKET quotedPathsList RBRACKET segmentExpression*
 quotedPathsList ::= stringLiteral (COMMA stringLiteral)*
 
-functionCall ::= functionName LPARENTH functionArgsList? RPARENTH
-functionName ::= IDENTIFIER {
-  name="function name"
-}
+functionCall ::= id LPARENTH functionArgsList? RPARENTH
 functionArgsList ::= expression (COMMA expression)* {
   name="function arguments"
 }

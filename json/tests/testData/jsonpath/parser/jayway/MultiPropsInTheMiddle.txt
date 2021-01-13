@@ -23,4 +23,5 @@ JsonPathFile
     PsiElement(RBRACKET)(']')
   PsiElement(DOT)('.')
   JsonPathIdSegmentImpl(ID_SEGMENT)
-    PsiElement(IDENTIFIER)('v')
+    JsonPathIdImpl(ID)
+      PsiElement(IDENTIFIER)('v')
