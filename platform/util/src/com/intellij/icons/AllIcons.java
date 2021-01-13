@@ -637,18 +637,6 @@ public class AllIcons {
 
     /** 7x10 */ public static final @NotNull Icon Statusbar_arrows = load("ide/statusbar_arrows.svg", -8274226850239421234L, 2);
     /** 16x16 */ public static final @NotNull Icon UpDown = load("ide/upDown.svg", -1628230695663601838L, 2);
-
-    /** @deprecated to be removed in IDEA 2021.1 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon LookupAlphanumeric = load("ide/lookupAlphanumeric.svg", 0L, 0);
-
-    /** @deprecated to be removed in IDEA 2021.1 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon LookupRelevance = load("ide/lookupRelevance.svg", 0L, 0);
   }
 
   /** 100x100 */ public static final @NotNull Icon Idea_logo_welcome = load("idea_logo_welcome.png", 0L, 0);
@@ -847,12 +835,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WebFolder = load("nodes/webFolder.svg", -7948085857918090693L, 0);
     /** 16x16 */ public static final @NotNull Icon Weblistener = load("nodes/weblistener.svg", -4599964170367864680L, 0);
     /** 16x16 */ public static final @NotNull Icon WriteAccess = load("nodes/write-access.svg", 646418927005355785L, 0);
-
-    /** @deprecated to be removed in IDEA 2020.2 - use Jsr45debugIcons.Jsr45 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.2")
-    public static final @NotNull Icon Jsr45 = load("nodes/jsr45.svg", 0L, 0);
 
     /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
@@ -1099,12 +1081,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowUIDesigner = load("toolwindows/toolWindowUIDesigner.svg", -2395025138451049875L, 2);
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("toolwindows/warningEvents.svg", -7560821905777442097L, 2);
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("toolwindows/webToolWindow.svg", 4128996477882386998L, 2);
-
-    /** @deprecated to be removed in IDEA 2021.1 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    public static final @NotNull Icon ToolWindowPreview = load("toolwindows/toolWindowPreview.png", 0L, 0);
   }
 
   public static final class Vcs {
