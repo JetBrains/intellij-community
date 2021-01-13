@@ -121,12 +121,12 @@ public class TestPackage extends TestObject {
                     JUnitBundle.message("dialog.message.failed.to.upload.list.tests", StringUtil.notNullize(t.getLocalizedMessage())));
                 }
 
-                ApplicationManager.getApplication().invokeLater(super::finish);
+                ApplicationManager.getApplication().invokeLater(super::finish, myProject.getDisposed());
                 return;
               }
             }
             LOG.error("Did not find upload volume for " + parentPath);
-            ApplicationManager.getApplication().invokeLater(super::finish);
+            ApplicationManager.getApplication().invokeLater(super::finish, myProject.getDisposed());
           });
         }
       }
