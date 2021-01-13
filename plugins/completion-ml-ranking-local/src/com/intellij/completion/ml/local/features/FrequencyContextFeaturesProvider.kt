@@ -5,7 +5,8 @@ import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.completion.ml.local.models.LocalModelsManager
-import com.intellij.completion.ml.local.models.frequency.FrequencyLocalModel
+import com.intellij.completion.ml.local.models.frequency.ClassesFrequencyLocalModel
+import com.intellij.completion.ml.local.models.frequency.MethodsFrequencyLocalModel
 import com.intellij.completion.ml.local.models.frequency.MethodsFrequencies
 import com.intellij.completion.ml.local.util.LocalModelsUtil
 import com.intellij.openapi.util.Key
@@ -22,19 +23,23 @@ class FrequencyContextFeaturesProvider : ContextFeatureProvider {
 
   override fun calculateFeatures(environment: CompletionEnvironment): MutableMap<String, MLFeatureValue> {
     val features = mutableMapOf<String, MLFeatureValue>()
-    val model = LocalModelsManager.getInstance(environment.parameters.position.project).getModel<FrequencyLocalModel>() ?: return features
-    getReceiverClass(environment.parameters)?.let { cls ->
-      LocalModelsUtil.getClassName(cls)?.let {
-        environment.putUserData(RECEIVER_CLASS_NAME_KEY, it)
-        model.getMethodsByClass(it)?.let { frequencies ->
-          environment.putUserData(RECEIVER_CLASS_FREQUENCIES_KEY, frequencies)
+    val project = environment.parameters.position.project
+    LocalModelsManager.getInstance(project).getModel<MethodsFrequencyLocalModel>()?.let { model ->
+      getReceiverClass(environment.parameters)?.let { cls ->
+        LocalModelsUtil.getClassName(cls)?.let {
+          environment.putUserData(RECEIVER_CLASS_NAME_KEY, it)
+          model.getMethodsByClass(it)?.let { frequencies ->
+            environment.putUserData(RECEIVER_CLASS_FREQUENCIES_KEY, frequencies)
+          }
         }
       }
+      features["total_methods"] = MLFeatureValue.numerical(model.totalMethodsCount())
+      features["total_methods_usages"] = MLFeatureValue.numerical(model.totalMethodsUsages())
     }
-    features["total_methods"] = MLFeatureValue.numerical(model.totalMethodsCount())
-    features["total_methods_usages"] = MLFeatureValue.numerical(model.totalMethodsUsages())
-    features["total_classes"] = MLFeatureValue.numerical(model.totalClassesCount())
-    features["total_classes_usages"] = MLFeatureValue.numerical(model.totalClassesUsages())
+    LocalModelsManager.getInstance(project).getModel<ClassesFrequencyLocalModel>()?.let { model ->
+      features["total_classes"] = MLFeatureValue.numerical(model.totalClassesCount())
+      features["total_classes_usages"] = MLFeatureValue.numerical(model.totalClassesUsages())
+    }
     return features
   }
 

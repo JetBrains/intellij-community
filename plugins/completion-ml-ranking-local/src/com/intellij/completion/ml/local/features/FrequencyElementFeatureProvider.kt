@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.completion.ml.local.models.LocalModelsManager
-import com.intellij.completion.ml.local.models.frequency.FrequencyLocalModel
+import com.intellij.completion.ml.local.models.frequency.ClassesFrequencyLocalModel
 import com.intellij.completion.ml.local.util.LocalModelsUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
@@ -35,12 +35,12 @@ class FrequencyElementFeatureProvider : ElementFeatureProvider {
         }
       }
     }
-    val model = LocalModelsManager.getInstance(location.project).getModel<FrequencyLocalModel>() ?: return features
-    if (psi is PsiClass) {
+    val classesModel = LocalModelsManager.getInstance(location.project).getModel<ClassesFrequencyLocalModel>()
+    if (psi is PsiClass && classesModel != null) {
       LocalModelsUtil.getClassName(psi)?.let { className ->
-        model.getClass(className)?.let {
+        classesModel.getClass(className)?.let {
           features["absolute_class_frequency"] = MLFeatureValue.numerical(it)
-          features["relative_class_frequency"] = MLFeatureValue.numerical(it.toDouble() / model.totalClassesUsages())
+          features["relative_class_frequency"] = MLFeatureValue.numerical(it.toDouble() / classesModel.totalClassesUsages())
         }
       }
     }

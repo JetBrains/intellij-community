@@ -32,11 +32,10 @@ object LocalModelsTraining {
     val task = object : Task.Backgroundable(project, CompletionRankingLocalBundle.message("ml.completion.local.models.training.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         val files = getFiles(project)
-        for (modelBuilder in modelsManager.getModels()) {
-          modelBuilder.onStarted()
-          processFiles(files, modelBuilder, project, indicator)
-          modelBuilder.onFinished()
-        }
+        val models = modelsManager.getModels()
+        models.forEach { it.onStarted() }
+        processFiles(files, models, project, indicator)
+        models.forEach { it.onFinished() }
       }
 
       override fun onFinished() {
@@ -46,7 +45,7 @@ object LocalModelsTraining {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
   }
 
-  private fun processFiles(files: List<VirtualFile>, model: LocalModel, project: Project, indicator: ProgressIndicator) {
+  private fun processFiles(files: List<VirtualFile>, models: Iterable<LocalModel>, project: Project, indicator: ProgressIndicator) {
     val dumbService = DumbService.getInstance(project)
     val psiManager = PsiManager.getInstance(project)
     val executorService = Executors.newFixedThreadPool((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1))
@@ -58,7 +57,11 @@ object LocalModelsTraining {
     for (file in files) {
       executorService.submit {
         dumbService.runReadActionInSmartMode {
-          psiManager.findFile(file)?.accept(model.fileVisitor())
+          psiManager.findFile(file)?.let { psiFile ->
+            for (model in models) {
+              psiFile.accept(model.fileVisitor())
+            }
+          }
           indicator.fraction = processed.incrementAndGet().toDouble() / files.size
         }
       }
