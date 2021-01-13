@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider<Bookmark> implements BookmarksListener {
   @VisibleForTesting
-  public static final Icon BOOKMARK = IconHelper.getIcon();
+  public static final Icon BOOKMARK = BookmarkType.DEFAULT.getIcon();
 
   public BookmarksFavoriteListProvider(Project project) {
     super(project, "Bookmarks");

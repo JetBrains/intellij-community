@@ -1,26 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.bookmarks;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.bookmarks
 
-import junit.framework.TestCase;
+import junit.framework.TestCase
+import javax.swing.Icon
+import kotlin.test.assertEquals
+import kotlin.test.assertSame
 
-import javax.swing.Icon;
+private const val BOOKMARK_ICON_STRING = "IconWrapperWithTooltip:BookmarkIcon"
+private const val MNEMONIC_ICON_PREFIX = "IconWrapperWithTooltip:MnemonicIcon:"
 
-public class BookmarkTest extends TestCase {
-  private static final String BOOKMARK_ICON_STRING = "IconWrapperWithTooltip:BookmarkIcon";
-  private static final String MNEMONIC_ICON_PREFIX = "IconWrapperWithTooltip:MnemonicIcon:";
-
-  public void testIcons() {
-    assertEquals(BOOKMARK_ICON_STRING, IconHelper.getIcon().toString());
-    String availableMnemonics = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    for (int i = 0; i < availableMnemonics.length(); i++) {
-      char mnemonic = availableMnemonics.charAt(i);
-      assertEquals(MNEMONIC_ICON_PREFIX + mnemonic, IconHelper.getIcon(mnemonic).toString());
-    }
-    Icon icon1 = IconHelper.getIcon('Z');
-    Icon icon2 = IconHelper.getIcon('Z');
-    assert icon1 == icon2;
-    icon1 = IconHelper.getIcon((char)('Z' + 1));
-    icon2 = IconHelper.getIcon((char)('Z' + 1));
-    assert icon1 != icon2;
+private fun testIcons(iconSupplier: (BookmarkType) -> Icon) = BookmarkType.values().forEach {
+  val icon = iconSupplier(it)
+  val expected = when (Char.MIN_VALUE != it.mnemonic) {
+    true -> MNEMONIC_ICON_PREFIX + it.mnemonic
+    else -> BOOKMARK_ICON_STRING
   }
+  assertEquals(expected, icon.toString(), "unexpected #toString")
+  assertSame(icon, iconSupplier(it), "different icon instances for the same type")
+}
+
+class BookmarkTest : TestCase() {
+  fun testIcons() = testIcons { it.icon }
+  fun testGutterIcons() = testIcons { it.gutterIcon }
 }
