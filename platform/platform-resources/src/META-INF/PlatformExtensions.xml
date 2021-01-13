@@ -1143,7 +1143,7 @@
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
     <startupActivity implementation="com.intellij.ide.LanguageDetector"/>
     <experimentalFeature id="language.detect.notification" percentOfUsers="0"/>
-    <notificationGroup id="Language Plugins Notifications" displayType="NONE"/>
+    <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
 
     <search.topHitProvider implementation="com.intellij.openapi.wm.impl.ToolwindowSidebarPositionProvider"/>
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowSidebarProvider"/>
