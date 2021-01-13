@@ -52,7 +52,7 @@ internal object IncrementalDOM {
       // and decoding them before executing the code. For our use case it's enough to encode
       // just the actual text content that will be displayed (only IncrementalDOM.text() calls).
       append("t(`")
-      append(encodeArgument(escapeTagContent(node.wholeText)))
+      append(encodeArgument(node.wholeText))
       append("`);")
     }
   }
