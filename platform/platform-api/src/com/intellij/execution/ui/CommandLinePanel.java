@@ -56,9 +56,6 @@ public class CommandLinePanel extends JPanel {
   public static Dimension setMinimumWidth(Component component, int width) {
     Dimension size = new Dimension(width, Math.max(JBUI.scale(30), component.getMinimumSize().height));
     component.setMinimumSize(size);
-    if (component instanceof ComboBox) {
-      ((ComboBox<?>)component).setMinimumAndPreferredWidth(width);
-    }
     if (component instanceof RawCommandLineEditor) {
       ((RawCommandLineEditor)component).getTextField().setColumns(0);
     }
