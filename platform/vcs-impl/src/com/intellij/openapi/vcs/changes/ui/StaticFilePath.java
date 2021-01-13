@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +43,11 @@ public class StaticFilePath {
   @Nullable
   public VirtualFile getVf() {
     return myVf;
+  }
+
+  @NotNull
+  public FilePath getFilePath() {
+    return VcsUtil.getFilePath(myPath, myIsDirectory);
   }
 
   @Nullable

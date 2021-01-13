@@ -16,12 +16,13 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
   private val repositoryManager = VcsRepositoryManager.getInstance(project)
 
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    val file = resolveVirtualFile(nodePath)
     val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
 
-    file?.let { repositoryManager.getRepositoryForFileQuick(it) }?.let { repository ->
+    val filePath = nodePath.filePath
+    val repository = repositoryManager.getRepositoryForFile(filePath, true)
+    if (repository != null) {
       if (repositoryManager.isExternal(repository)) return nextPolicyParent
-      
+
       val grandParent = nextPolicyParent ?: subtreeRoot
       val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
 
