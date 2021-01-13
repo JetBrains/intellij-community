@@ -1334,12 +1334,6 @@ public class ChangeListWorker {
       return myWorker.getStatus(file);
     }
 
-    @Deprecated
-    @Override
-    public FileStatus getStatus(@NotNull File file) {
-      return myWorker.getStatus(VcsUtil.getFilePath(file));
-    }
-
     @Override
     public FileStatus getStatus(@NotNull FilePath filePath) {
       return myWorker.getStatus(filePath);

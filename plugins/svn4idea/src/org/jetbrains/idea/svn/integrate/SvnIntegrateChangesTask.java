@@ -381,11 +381,6 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
 
     @Override
-    public FileStatus getStatus(@NotNull File file) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void setDefaultChangeList(@NotNull String list) {
       throw new UnsupportedOperationException();
     }

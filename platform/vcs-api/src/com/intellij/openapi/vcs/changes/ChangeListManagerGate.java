@@ -5,11 +5,9 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -42,13 +40,6 @@ public interface ChangeListManagerGate {
 
   @Nullable
   FileStatus getStatus(@NotNull FilePath filePath);
-
-  /**
-   * @deprecated use {@link #getStatus(FilePath)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
-  FileStatus getStatus(@NotNull File file);
 
   void setDefaultChangeList(@NotNull String list);
 }
