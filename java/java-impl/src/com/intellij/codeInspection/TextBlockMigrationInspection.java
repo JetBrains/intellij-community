@@ -12,7 +12,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -133,7 +132,8 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       String[] lines = getContentLines(operands);
       if (lines == null) return;
       String textBlock = getTextBlock(lines);
-      PsiReplacementUtil.replaceExpression(toReplace, textBlock, new CommentTracker());
+      CommentTracker tracker = new CommentTracker();
+      tracker.replaceAndRestoreComments(toReplace, textBlock);
     }
 
     @NotNull
