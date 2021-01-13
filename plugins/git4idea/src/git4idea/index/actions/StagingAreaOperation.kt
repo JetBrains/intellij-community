@@ -40,7 +40,7 @@ object GitAddOperation : StagingAreaOperation {
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED || statusNode.kind == NodeKind.UNTRACKED
 
   override fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>) {
-    GitFileUtils.addPaths(project, root, nodes.map { it.filePath }, false)
+    GitFileUtils.addPaths(project, root, nodes.map { it.filePath }, true)
   }
 }
 
