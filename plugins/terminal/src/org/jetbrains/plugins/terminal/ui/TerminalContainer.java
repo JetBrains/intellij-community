@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.ui;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -15,9 +17,14 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
+import org.jetbrains.plugins.terminal.TerminalBundle;
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalView;
 
 import javax.swing.*;
@@ -35,8 +42,8 @@ public class TerminalContainer {
   private final JBTerminalWidget myTerminalWidget;
   private final Project myProject;
   private final TerminalView myTerminalView;
-  private final TerminalWidgetListener myListener;
   private JPanel myPanel;
+  private boolean myForceHideUiWhenSessionEnds = false;
 
   public TerminalContainer(@NotNull Project project,
                            @NotNull Content content,
@@ -47,11 +54,18 @@ public class TerminalContainer {
     myTerminalWidget = terminalWidget;
     myTerminalView = terminalView;
     myPanel = createPanel(terminalWidget);
-    myListener = widget -> {
-      ApplicationManager.getApplication().invokeLater(() -> onSessionClosed(), myProject.getDisposed());
+    TerminalWidgetListener listener = widget -> {
+      ApplicationManager.getApplication().invokeLater(() -> processSessionCompleted(), myProject.getDisposed());
     };
-    terminalWidget.addListener(myListener);
+    terminalWidget.addListener(listener);
     terminalView.register(this);
+    Disposer.register(terminalWidget, new Disposable() {
+      @Override
+      public void dispose() {
+        myTerminalWidget.removeListener(listener);
+        myTerminalView.unregister(TerminalContainer.this);
+      }
+    });
   }
 
   public @NotNull JBTerminalWidget getTerminalWidget() {
@@ -60,6 +74,17 @@ public class TerminalContainer {
 
   public @NotNull Content getContent() {
     return myContent;
+  }
+
+  public void closeAndHide() {
+    myForceHideUiWhenSessionEnds = true;
+    if (myTerminalWidget.getTtyConnector().isConnected()) {
+      myTerminalWidget.close();
+    }
+    else {
+      // When "Close session when it ends" is off, terminal session is shown even with terminated shell process.
+      processSessionCompleted();
+    }
   }
 
   private static @NotNull JPanel createPanel(@NotNull JBTerminalWidget terminalWidget ) {
@@ -104,7 +129,7 @@ public class TerminalContainer {
     return splitter;
   }
 
-  private void onSessionClosed() {
+  private void processSessionCompleted() {
     Container parent = myPanel.getParent();
     if (parent instanceof Splitter) {
       JBTerminalWidget nextToFocus = null;
@@ -130,14 +155,34 @@ public class TerminalContainer {
       Disposer.dispose(myTerminalWidget);
     }
     else {
-      myTerminalView.closeTab(myContent, myTerminalWidget);
+      processSingleTerminalCompleted();
     }
-    detachWidget();
   }
 
-  public void detachWidget() {
-    myTerminalWidget.removeListener(myListener);
-    myTerminalView.unregister(this);
+  private void processSingleTerminalCompleted() {
+    if (myForceHideUiWhenSessionEnds || TerminalOptionsProvider.getInstance().closeSessionOnLogout()) {
+      myTerminalView.closeTab(myContent);
+    }
+    else {
+      String text = getSessionCompletedMessage(myTerminalWidget);
+      myTerminalWidget.writePlainMessage("\n" + text + "\n");
+      myTerminalWidget.getTerminalPanel().setCursorVisible(false);
+    }
+  }
+
+  private static @NotNull @Nls String getSessionCompletedMessage(@NotNull JBTerminalWidget widget) {
+    String text = "[" + TerminalBundle.message("session.terminated.text") + "]";
+    ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
+    if (connector != null) {
+      Integer exitCode = null;
+      try {
+        exitCode = connector.getProcess().exitValue();
+      }
+      catch (IllegalThreadStateException ignored) {
+      }
+      return text + "\n[" + IdeBundle.message("finished.with.exit.code.text.message", exitCode != null ? exitCode : "unknown") + "]";
+    }
+    return text;
   }
 
   public boolean isSplitTerminal() {
