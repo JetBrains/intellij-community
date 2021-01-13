@@ -28,7 +28,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -581,15 +580,6 @@ public final class GenerateMembersUtil {
       OverrideImplementUtil.setupMethodBody(method, overridden, containingClass);
     }
     OverrideImplementUtil.annotateOnOverrideImplement(method, base, overridden);
-  }
-
-  /**
-   * @deprecated use {@link #copyOrReplaceModifierList(PsiModifierListOwner, PsiElement, PsiModifierListOwner)}. to be deleted in 2017.2
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017.2")
-  @Deprecated
-  public static void copyOrReplaceModifierList(@NotNull PsiModifierListOwner sourceParam, @NotNull PsiModifierListOwner targetParam) {
-    copyOrReplaceModifierList(sourceParam, null, targetParam);
   }
 
   public static void copyOrReplaceModifierList(@NotNull PsiModifierListOwner sourceParam, @Nullable PsiElement targetClass, @NotNull PsiModifierListOwner targetParam) {

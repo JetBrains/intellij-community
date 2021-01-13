@@ -218,15 +218,6 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     }
   }
 
-  /** @deprecated method scope was extended, use {@link #findModule} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
-    LightJavaModule module = findModule(manager, root);
-    assert module != null : root;
-    return module;
-  }
-
   /** @deprecated caching problems; please consider using {@code JavaModuleGraphUtil} methods instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")

@@ -60,14 +60,7 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
   }
 
   protected void onClassChosen(@NotNull PsiClass psiClass) {
-    onClassChoosen(psiClass);
   }
-
-  /** @deprecated override {@link #onClassChosen(PsiClass)} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @SuppressWarnings({"DeprecatedIsStillUsed", "SpellCheckingInspection", "unused"})
-  protected void onClassChoosen(PsiClass psiClass) { }
 
   private void configureDialog(TreeClassChooser dialog) {
     PsiClass psiClass = findClass(getText());

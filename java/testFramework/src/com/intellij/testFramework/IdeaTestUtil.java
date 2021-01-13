@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
@@ -178,37 +177,6 @@ public final class IdeaTestUtil {
     return new File(PathManager.getCommunityHomePath(), "java/" + name);
   }
 
-  /**
-   * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static Sdk getWebMockJdk17() {
-    Sdk jdk = getMockJdk17();
-    jdk=addWebJarsTo(jdk);
-    return jdk;
-  }
-
-  /**
-   * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull Sdk addWebJarsTo(@NotNull Sdk jdk) {
-    try {
-      jdk = (Sdk)jdk.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-    SdkModificator sdkModificator = jdk.getSdkModificator();
-    sdkModificator.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
-    sdkModificator.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
-    sdkModificator.commitChanges();
-    return jdk;
-  }
-
   public static void addWebJarsToModule(@NotNull Module module) {
     ModuleRootModificationUtil.updateModel(module, IdeaTestUtil::addWebJarsToModule);
   }
@@ -216,14 +184,6 @@ public final class IdeaTestUtil {
   public static void addWebJarsToModule(@NotNull ModifiableRootModel model) {
     MavenDependencyUtil.addFromMaven(model, "javax.servlet.jsp:javax.servlet.jsp-api:2.3.3");
     MavenDependencyUtil.addFromMaven(model, "javax.servlet:javax.servlet-api:3.1.0");
-  }
-
-  private static @NotNull VirtualFile findJar(@NotNull String name) {
-    String path = PathManager.getHomePath() + '/' + name;
-    VirtualFile file = VfsTestUtil.findFileByCaseSensitivePath(path);
-    VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-    assert jar != null : "no .jar for: " + path;
-    return jar;
   }
 
   public static void setTestVersion(@NotNull JavaSdkVersion testVersion, @NotNull Module module, @NotNull Disposable parentDisposable) {

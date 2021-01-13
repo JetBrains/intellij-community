@@ -53,10 +53,6 @@ public class PushDownDialog extends AbstractPushDownDialog<MemberInfo, PsiMember
     return JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC;
   }
 
-  @Override
-  protected void savePreviewOption(boolean isPreview) {
-  }
-
   @Nullable
   @Override
   protected String getHelpId() {

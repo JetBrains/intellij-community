@@ -6,7 +6,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -16,7 +15,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -27,7 +25,6 @@ import com.intellij.util.indexing.IdIterator;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,17 +108,6 @@ public abstract class MetaAnnotationUtil {
       return new Result<>(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
     });
     return map.get(annotationName);
-  }
-
-  /**
-   * @deprecated Use {@link #getAnnotatedTypes(Module, String)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static Collection<PsiClass> getAnnotatedTypes(@NotNull Module module,
-                                                       @SuppressWarnings("unused") @NotNull Key<CachedValue<Collection<PsiClass>>> key,
-                                                       @NotNull String annotationName) {
-    return getAnnotatedTypes(module, annotationName);
   }
 
   @NotNull

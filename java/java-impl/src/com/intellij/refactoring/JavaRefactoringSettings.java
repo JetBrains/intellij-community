@@ -29,13 +29,6 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
 
   public boolean EXTRACT_INTERFACE_PREVIEW_USAGES = true;
 
-  /**
-   * @deprecated no read usages
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public boolean MOVE_PREVIEW_USAGES = true;
-
   public boolean MOVE_SEARCH_IN_COMMENTS = true;
   public boolean MOVE_SEARCH_FOR_TEXT = true;
 
