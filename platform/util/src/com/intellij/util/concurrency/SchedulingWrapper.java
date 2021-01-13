@@ -290,9 +290,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   @Override
-  public ScheduledFuture<?> schedule(@NotNull Runnable command,
-                                     long delay,
-                                     @NotNull TimeUnit unit) {
+  public ScheduledFuture<?> schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
     MyScheduledFutureTask<?> t = new MyScheduledFutureTask<Void>(command, null, triggerTime(delayQueue, delay, unit));
     return delayedExecute(t);
   }
@@ -312,28 +310,20 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @NotNull
   @Override
-  public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable,
-                                         long delay,
-                                         @NotNull TimeUnit unit) {
+  public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable, long delay, @NotNull TimeUnit unit) {
     MyScheduledFutureTask<V> t = new MyScheduledFutureTask<>(callable, triggerTime(delayQueue, delay, unit));
     return delayedExecute(t);
   }
 
   @NotNull
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(@NotNull Runnable command,
-                                                long initialDelay,
-                                                long period,
-                                                @NotNull TimeUnit unit) {
+  public ScheduledFuture<?> scheduleAtFixedRate(@NotNull Runnable command, long initialDelay, long period, @NotNull TimeUnit unit) {
     throw new IncorrectOperationException("Not supported because it's bad for hibernation; use scheduleWithFixedDelay() with the same parameters instead.");
   }
 
   @NotNull
   @Override
-  public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull Runnable command,
-                                                   long initialDelay,
-                                                   long delay,
-                                                   @NotNull TimeUnit unit) {
+  public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull Runnable command, long initialDelay, long delay, @NotNull TimeUnit unit) {
     if (delay <= 0) {
       throw new IllegalArgumentException("delay must be positive but got: "+delay);
     }

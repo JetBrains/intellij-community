@@ -27,7 +27,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   public static void checkNotInstantiatedTooLate(@NotNull Class<?> aClass) {
     if (ourInitializedStubs) {
       LOG.error("All stub element types should be created before index initialization is complete.\n" +
-                "Please add the " + aClass.getName() + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
+                "Please add the " + aClass + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
                 "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList());
     }
   }
