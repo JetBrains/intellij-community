@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions
 
 import com.intellij.ui.JBColor
@@ -12,6 +12,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.JButton
 import javax.swing.JPanel
+import javax.swing.KeyStroke.getKeyStroke
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.SwingConstants.CENTER
 import javax.swing.SwingUtilities
@@ -54,6 +55,8 @@ internal open class MnemonicChooser : BorderLayoutPanel(), KeyListener {
     button.putClientProperty("JButton.backgroundColor", if (isOccupied(mnemonic)) SELECTED else null)
     button.addActionListener { mnemonicSelected(mnemonic) }
     button.addKeyListener(this)
+    button.inputMap.put(getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
+    button.inputMap.put(getKeyStroke(KeyEvent.VK_ENTER, 0, false), "pressed")
     return button
   }
 
