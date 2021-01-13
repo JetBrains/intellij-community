@@ -373,6 +373,7 @@ private fun buildSubSection(items: Map<String, String>): String {
       .append(name)
       .append("</code> &ndash; ")
       .append(doc)
+      .append("<br><span style='font-size:0.2em'>&nbsp;</span>")
   }
   return result.toString()
 }
