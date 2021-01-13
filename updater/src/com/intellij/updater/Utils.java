@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -14,7 +14,7 @@ public class Utils {
   public static final boolean IS_WINDOWS = OS_NAME.startsWith("windows");
   public static final boolean IS_MAC = OS_NAME.startsWith("mac");
 
-  private static final long REQUIRED_FREE_SPACE = 2_000_000_000L;
+  private static final long REQUIRED_FREE_SPACE = Long.getLong("idea.required.space", 2_000_000_000L);
 
   private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
 
@@ -24,25 +24,21 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  public static String findDirectory(long requiredFreeSpace) {
-    String dir = System.getProperty("idea.updater.log");
-    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
-      dir = System.getProperty("java.io.tmpdir");
-      if (!isValidDir(dir, requiredFreeSpace)) {
-        dir = System.getProperty("user.home");
-      }
-    }
-    return dir;
-  }
-
-  private static boolean isValidDir(String path, long space) {
-    File dir = new File(path);
-    return dir.isDirectory() && dir.canWrite() && dir.getUsableSpace() >= space;
-  }
-
   public static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
-      myTempDir = Files.createTempDirectory(Paths.get(findDirectory(REQUIRED_FREE_SPACE)), "idea.updater.files.").toFile();
+      String path = System.getProperty("java.io.tmpdir");
+      if (path == null) throw new IllegalArgumentException("System property `java.io.tmpdir` is not defined");
+
+      Path dir = Paths.get(path);
+      if (!Files.isDirectory(dir)) throw new IOException("Not a directory: " + dir);
+      if (!Files.isWritable(dir)) throw new IOException("Not writable: " + dir);
+
+      if (REQUIRED_FREE_SPACE > 0) {
+        FileStore fs = Files.getFileStore(dir);
+        if (fs.getUsableSpace() < REQUIRED_FREE_SPACE) throw new IOException("Not enough free space on '" + fs + "'");
+      }
+
+      myTempDir = Files.createTempDirectory(dir, "idea.updater.files.").toFile();
       Runner.logger().info("created a working directory: " + myTempDir);
     }
 
