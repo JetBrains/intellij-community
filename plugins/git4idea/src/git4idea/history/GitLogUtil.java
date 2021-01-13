@@ -99,8 +99,15 @@ public final class GitLogUtil {
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
     handler.addParameters("--decorate=full");
-    handler.addParameters(parameters);
-    handler.endOptions();
+    if (parameters.contains("--")) {
+      int index = parameters.indexOf("--");
+      handler.addParameters(parameters.subList(0, index));
+      handler.endOptions();
+      handler.addParameters(parameters.subList(index + 1, parameters.size()));
+    } else {
+      handler.addParameters(parameters);
+      handler.endOptions();
+    }
     handler.addRelativePaths(filePaths);
 
     GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, record -> {

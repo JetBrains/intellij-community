@@ -144,7 +144,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
 
   companion object {
     private val LOG = Logger.getInstance(VcsLogTabsManager::class.java)
-    private val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
+    val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
 
     private fun generateShortDisplayName(ui: VcsLogUi): @TabTitle String {
       val filters = ui.filterUi.filters

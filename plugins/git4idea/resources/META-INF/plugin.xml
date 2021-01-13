@@ -276,6 +276,8 @@
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
 
+    <action id="Git.Log.Show.Command" class="git4idea.log.command.ShowGitLogCommandAction" text="Show Git Log for Command" internal="true"/>
+
     <!--This group is empty and unused, left for plugins compatibility.-->
     <group id="Git.LogContextMenu"/>
 

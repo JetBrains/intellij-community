@@ -25,3 +25,4 @@ enum class CommitCountStage(val count: Int) {
 }
 
 fun isAll(count: Int) = count < 0 || count == Int.MAX_VALUE
+fun CommitCountStage.isAll() = isAll(count)
