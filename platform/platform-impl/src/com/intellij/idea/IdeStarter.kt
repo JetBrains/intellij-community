@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea
 
-import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.runChild
+import com.intellij.diagnostic.*
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
@@ -70,6 +67,8 @@ open class IdeStarter : ApplicationStarter {
   override fun main(args: List<String>) {
     val app = ApplicationManagerEx.getApplicationEx()
 
+    assert(!app.isDispatchThread)
+
     if (app.isLightEditMode && !app.isHeadlessEnvironment) {
       // In a light mode UI is shown very quickly, tab layout requires ActionManager but it is forbidden to init ActionManager in EDT,
       // so, preload
@@ -85,8 +84,8 @@ open class IdeStarter : ApplicationStarter {
     // application components. So it is proper to perform replacement only here.
     // out of EDT
     val windowManager = WindowManagerEx.getInstanceEx()
-    runInEdt {
-      frameInitActivity.runChild("IdeEventQueue informing about WindowManager") {
+    app.invokeLater {
+      runMainActivity("IdeEventQueue informing about WindowManager") {
         IdeEventQueue.getInstance().setWindowManager(windowManager)
       }
     }
@@ -113,7 +112,8 @@ open class IdeStarter : ApplicationStarter {
         needToOpenProject = false
       }
       else {
-        val willOpenProject = args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart()
+        val willOpenProject = (args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart())
+                              && JetBrainsProtocolHandler.getCommand() == null
         needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
       }
 
@@ -140,12 +140,11 @@ open class IdeStarter : ApplicationStarter {
         if (recentProjectManager.reopenLastProjectsOnStart()) {
           openLightEditFrame = false
         }
-        else if (!openLightEditFrame) {
+        else if (!isStandaloneLightEdit) {
           WelcomeFrame.showIfNoProjectOpened()
         }
       }
 
-      // due to historical reasons, not safe to show welcome screen if willReopenProjectOnStart returns false, so, not possible to extract common branch
       if (openLightEditFrame) {
         ApplicationManager.getApplication().invokeLater {
           LightEditService.getInstance().showEditorWindow()
@@ -168,61 +167,47 @@ open class IdeStarter : ApplicationStarter {
   }
 
   private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
-    val shouldShowWelcomeFrame = !willOpenProject || JetBrainsProtocolHandler.getCommand() != null
-    val doShowWelcomeFrame = if (shouldShowWelcomeFrame) WelcomeFrame.prepareToShow() else null
-    val showWelcomeFrame = if (doShowWelcomeFrame == null) {
-      null
+    val doShowWelcomeFrame = if (willOpenProject) null else WelcomeFrame.prepareToShow()
+    // do not show Customize IDE Wizard [IDEA-249516]
+    val wizardStepProvider = wizardStepProvider
+    if (wizardStepProvider == null || System.getProperty("idea.show.customize.ide.wizard")?.toBoolean() != true) {
+      if (doShowWelcomeFrame == null) {
+        return true
+      }
+
+      ApplicationManager.getApplication().invokeLater {
+        doShowWelcomeFrame.run()
+        lifecyclePublisher.welcomeScreenDisplayed()
+      }
+      return false
     }
-    else {
-      Runnable {
-        runInEdt {
-          doShowWelcomeFrame.run()
+
+    // temporary until 211 release
+    val stepDialogName = System.getProperty("idea.temp.change.ide.wizard")
+                         ?: ApplicationInfoImpl.getShadowInstance().customizeIDEWizardDialog
+    ApplicationManager.getApplication().invokeLater {
+      val wizardDialog: CommonCustomizeIDEWizardDialog?
+      if (stepDialogName.isNullOrBlank()) {
+        wizardDialog = CustomizeIDEWizardDialog(wizardStepProvider, null, false, true)
+      }
+      else {
+        wizardDialog = try {
+          Class.forName(stepDialogName).getConstructor(StartupUtil.AppStarter::class.java)
+            .newInstance(null) as CommonCustomizeIDEWizardDialog
         }
+        catch (e: Throwable) {
+          Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
+          null
+        }
+      }
+
+      wizardDialog?.showIfNeeded()
+
+      if (doShowWelcomeFrame != null) {
+        doShowWelcomeFrame.run()
         lifecyclePublisher.welcomeScreenDisplayed()
       }
     }
-
-    // do not show Customize IDE Wizard [IDEA-249516]
-    if (System.getProperty("idea.show.customize.ide.wizard")?.toBoolean() == true) {
-      // temporary until 211 release
-      val stepsDialogName = System.getProperty("idea.temp.change.ide.wizard") ?: ApplicationInfoImpl.getShadowInstance().customizeIDEWizardDialog
-      wizardStepProvider?.let { wizardStepProvider ->
-        var done = false
-        runInEdt {
-          val wizardDialog = if (stepsDialogName.isNullOrBlank()) {
-            CustomizeIDEWizardDialog(wizardStepProvider, null, false, true)
-          }
-          else {
-            try {
-              val constr = Class.forName(stepsDialogName).getConstructor(StartupUtil.AppStarter::class.java)
-              (constr.newInstance(null) as CommonCustomizeIDEWizardDialog)
-            }
-            catch (e: Throwable) {
-              Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
-              done = false
-              null
-            }
-          }
-          wizardDialog?.setRunAfterOKAction {
-            showWelcomeFrame?.run()
-          }
-
-          if (wizardDialog?.showIfNeeded() == true || wizardDialog == null) {
-            done = true
-          }
-        }
-
-        if (done) {
-          return false
-        }
-      }
-    }
-
-    if (showWelcomeFrame == null) {
-      return true
-    }
-
-    showWelcomeFrame.run()
     return false
   }
 }
@@ -280,13 +265,14 @@ private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
 
 private fun reportPluginErrors() {
   val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
-  if (pluginErrors.isEmpty()) return
+  if (pluginErrors.isEmpty()) {
+    return
+  }
 
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
-    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title),
-                 title, content, NotificationType.ERROR) { notification, event ->
+    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR) { notification, event ->
       notification.expire()
 
       val description = event.description

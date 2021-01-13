@@ -85,9 +85,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
   }
 
   @Override
-  public final void show() {
+  public void show() {
     if (mySteps.isEmpty()) {
-      throw new IllegalStateException("no steps provided");  // use showIfNeeded() instead
+      // use showIfNeeded() instead
+      throw new IllegalStateException("no steps provided");
     }
     CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.WizardDisplayed);
     SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
