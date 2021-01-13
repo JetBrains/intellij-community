@@ -269,7 +269,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
         val libClasses = libSrcDir?.let { compileLibToDir(it, emptyList()) }
 
-        var moduleSrcDir = File("${path}depModule").takeIf { it.isDirectory }
+        var moduleSrcDir = File(path, "depModule").takeIf { it.isDirectory }
         val moduleClasses = moduleSrcDir?.let { compileLibToDir(it, emptyList()) }
         if (moduleSrcDir != null) {
             val depModule = createTestModuleFromDir(moduleSrcDir)
