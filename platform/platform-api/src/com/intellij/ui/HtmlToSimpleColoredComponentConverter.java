@@ -95,6 +95,9 @@ public class HtmlToSimpleColoredComponentConverter {
 
       @Override
       public void handleError(String errorMsg, int pos) {
+        //since <body> tag may be skipped for this parser
+        if (errorMsg.startsWith("start.missing body")) return;
+
         LOG.error("Cannot parse HTML", errorMsg);
       }
     };
