@@ -511,7 +511,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
           synchronized (myDataLock) {
             ChangeListWorker updatedWorker = dataHolder.getUpdatedWorker();
-            boolean takeChanges = myUpdateException == null && !wasCancelled;
+            boolean takeChanges = myUpdateException == null && !wasCancelled &&
+                                  updatedWorker.areChangeListsEnabled() == myWorker.areChangeListsEnabled();
 
             // do same modifications to change lists as was done during update + do delayed notifications
             dataHolder.notifyEnd();
