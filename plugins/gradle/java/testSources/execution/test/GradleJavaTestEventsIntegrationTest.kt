@@ -55,6 +55,22 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
                          "  }\n" +
                          "}");
 
+    createProjectSubFile("src/junit5test/java/my/otherpack/ADisplayNamedTest.java",
+                         """
+                           package my.otherpack;
+                           import org.junit.jupiter.api.DisplayNameGeneration;
+                           import org.junit.jupiter.api.DisplayNameGenerator;
+                           import org.junit.jupiter.api.Test;
+                           import static org.junit.jupiter.api.Assertions.assertTrue;
+                           @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+                           public class ADisplayNamedTest {
+                               @Test
+                               void successful_test() {
+                                   assertTrue(true);
+                               }
+                           }
+                         """.trimIndent())
+
     importProject(
       GradleBuildScriptBuilderEx()
         .withMavenCentral()
@@ -62,6 +78,22 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
         .addPostfix("dependencies {",
                     "  testCompile 'junit:junit:4.12'",
                     "}",
+                    """
+                      sourceSets {
+                        junit5test
+                      }
+                      
+                      dependencies {
+                        junit5testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+                        junit5testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+                      }
+                      
+                      task junit5test(type: Test) {
+                        useJUnitPlatform()
+                         testClassesDirs = sourceSets.junit5test.output.classesDirs
+                         classpath = sourceSets.junit5test.runtimeClasspath
+                      }
+                    """.trimIndent(),
                     "test { filter { includeTestsMatching 'my.pack.*' } }")
         .generate()
     )
@@ -69,7 +101,8 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     RunAll(
       ThrowableRunnable { `call test task produces test events`() },
       ThrowableRunnable { `call build task does not produce test events`() },
-      ThrowableRunnable { `call task for specific test overrides existing filters`() }
+      ThrowableRunnable { `call task for specific test overrides existing filters`() },
+      ThrowableRunnable { `test events use display name`() }
     ).run()
   }
 
@@ -154,6 +187,29 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
       .contains("<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
       .doesNotContain("<descriptor name='testFail' className='my.pack.AClassTest' />",
                       "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
+  }
+
+  private fun `test events use display name`() {
+    val taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myProject)
+    val eventLog = mutableListOf<String>()
+    val testListener = object : ExternalSystemTaskNotificationListenerAdapter() {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+        addEventLogLines(text, eventLog)
+      }
+    };
+
+    val settings = GradleManager().executionSettingsProvider.`fun`(Pair.create<Project, String>(myProject, projectPath))
+    settings.putUserData(GradleConstants.RUN_TASK_AS_TEST, true);
+
+    GradleTaskManager().executeTasks(taskId,
+                                     listOf(":junit5test"),
+                                     projectPath,
+                                     settings,
+                                     null,
+                                     testListener);
+
+    assertThat(eventLog)
+      .contains("<descriptor name='successful test' className='my.otherpack.ADisplayNamedTest' />")
   }
 
   private fun addEventLogLines(text: String, eventLog: MutableList<String>) {
