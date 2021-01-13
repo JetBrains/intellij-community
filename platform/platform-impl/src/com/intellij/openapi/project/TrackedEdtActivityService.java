@@ -18,10 +18,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 final class TrackedEdtActivityService {
-  private final Project myProject;
-  private volatile ModalityState myDumbStartModality;
-
   private final BlockingQueue<TrackedEdtActivity> myTrackedEdtActivities = new LinkedBlockingQueue<>();
+  private final @NotNull Project myProject;
+
+  private volatile ModalityState myDumbStartModality;
 
   TrackedEdtActivityService(@NotNull Project project) {
     myProject = project;
@@ -32,10 +32,6 @@ final class TrackedEdtActivityService {
     while (!myTrackedEdtActivities.isEmpty()) {
       myTrackedEdtActivities.poll().run();
     }
-  }
-
-  private void invokeLater(@NotNull Runnable action) {
-    new TrackedEdtActivity(action).invokeLater();
   }
 
   void invokeLaterIfProjectNotDisposed(@NotNull Runnable action) {
@@ -54,40 +50,12 @@ final class TrackedEdtActivityService {
     myDumbStartModality = modality;
   }
 
-  <T> T computeInEdt(@NotNull Producer<T> task) {
-    AsyncPromise<T> promise = new AsyncPromise<>();
-
-    invokeLater(() -> {
-      if (myProject.isDisposed()) {
-        promise.setError(new ProcessCanceledException());
-        return;
-      }
-      Promises.compute(promise, task::produce);
-    });
-
-    try {
-      return promise.get();
-    }
-    catch (Throwable e) {
-      Throwable cause = e.getCause();
-      if (!(cause instanceof ProcessCanceledException)) {
-        ExceptionUtil.rethrowAllAsUnchecked(cause);
-      }
-      return null;
-    }
-  }
-
-
   private class TrackedEdtActivity implements Runnable {
     private final @NotNull Runnable myRunnable;
 
     TrackedEdtActivity(@NotNull Runnable runnable) {
       myRunnable = runnable;
       myTrackedEdtActivities.add(this);
-    }
-
-    void invokeLater() {
-      ApplicationManager.getApplication().invokeLater(this, getActivityExpirationCondition());
     }
 
     void invokeLaterIfProjectNotDisposed() {
