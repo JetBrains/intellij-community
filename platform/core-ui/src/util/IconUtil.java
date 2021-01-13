@@ -524,7 +524,7 @@ public class IconUtil {
     return MathUtil.clamp(_scale, .1, 32);
   }
 
-  private static void paintScaled(@NotNull Component c, @NotNull Graphics g, int x, int y, double scale, @NotNull Icon source) {
+  private static void paintScaled(@Nullable Component c, @NotNull Graphics g, int x, int y, double scale, @NotNull Icon source) {
     Graphics2D g2d = (Graphics2D)g.create();
     try {
       g2d.translate(x, y);
