@@ -1153,9 +1153,12 @@ public class ChangeListWorker {
     }
 
 
-    @NotNull
-    public ChangeListWorker finish() {
+    public void finish() {
       checkForMultipleCopiesNotMove();
+    }
+
+    @NotNull
+    public ChangeListWorker getUpdatedWorker() {
       return myWorker;
     }
 

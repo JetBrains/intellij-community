@@ -428,8 +428,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
         dataHolder.notifyStart();
         dataHolder.notifyEnd();
 
-        ChangeListWorker updatedWorker = dataHolder.getChangeListUpdater().finish();
-        myWorker.applyChangesFromUpdate(updatedWorker, new MyChangesDeltaForwarder(myProject, myScheduler));
+        dataHolder.finish();
+        myWorker.applyChangesFromUpdate(dataHolder.getUpdatedWorker(), new MyChangesDeltaForwarder(myProject, myScheduler));
         myComposite = dataHolder.getComposite();
 
         myUpdateException = null;
@@ -510,6 +510,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
           clearCurrentRevisionsCache(invalidated);
 
           synchronized (myDataLock) {
+            ChangeListWorker updatedWorker = dataHolder.getUpdatedWorker();
             boolean takeChanges = myUpdateException == null && !wasCancelled;
 
             // do same modifications to change lists as was done during update + do delayed notifications
@@ -517,7 +518,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
             // update member from copy
             if (takeChanges) {
-              ChangeListWorker updatedWorker = dataHolder.getChangeListUpdater().finish();
+              dataHolder.finish();
               myModifier.finishUpdate(updatedWorker);
 
               myWorker.applyChangesFromUpdate(updatedWorker, new MyChangesDeltaForwarder(myProject, myScheduler));
@@ -536,7 +537,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
             }
             else {
               myModifier.finishUpdate(null);
-              LOG.debug("[update] - aborted");
+              LOG.debug(String.format("[update] - aborted, wasCancelled: %s", wasCancelled));
             }
             myShowLocalChangesInvalidated = false;
           }
@@ -649,12 +650,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       }
     }
 
+    public void finish() {
+      myChangeListUpdater.finish();
+    }
+
+    @NotNull
     public FileHolderComposite getComposite() {
       return myComposite;
     }
 
+    @NotNull
     public ChangeListUpdater getChangeListUpdater() {
       return myChangeListUpdater;
+    }
+
+    @NotNull
+    public ChangeListWorker getUpdatedWorker() {
+      return myChangeListUpdater.getUpdatedWorker();
     }
   }
 
