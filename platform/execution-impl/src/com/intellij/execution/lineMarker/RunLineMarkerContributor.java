@@ -11,7 +11,6 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -74,19 +73,17 @@ public abstract class RunLineMarkerContributor {
 
   @Nullable("null means disabled")
   protected static String getText(@NotNull AnAction action, @NotNull PsiElement element) {
-    DataContext parent = DataManager.getInstance().getDataContext();
-    DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, parent);
     if (!(action instanceof ExecutorAction)) {
       return null;
     }
-//    return ((ExecutorAction)action).getActionName(dataContext);
+    DataContext parent = DataManager.getInstance().getDataContext();
+    DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, parent);
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
     action.update(event);
     if (!event.getPresentation().isEnabledAndVisible()) {
       return null;
     }
-    String name = ((ExecutorAction)action).getActionName(dataContext);
-    return name == null ? null : TextWithMnemonic.parse(name).getText();
+    return event.getPresentation().getText();
   }
 
   @NotNull
