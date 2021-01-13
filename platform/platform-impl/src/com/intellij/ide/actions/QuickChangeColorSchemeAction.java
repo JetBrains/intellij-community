@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
-import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -83,7 +82,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
         Messages.getYesButton(), Messages.getNoButton(),
         Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
 
-        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : new DarculaLookAndFeelInfo(), true);
+        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultDarkLaf(), true);
         lafManager.updateUI();
         SwingUtilities.invokeLater(DarculaInstaller::install);
       }
@@ -97,7 +96,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
             Messages.getYesButton(), Messages.getNoButton(),
             Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES)) {
 
-        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLaf(), true);
+        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLightLaf(), true);
         lafManager.updateUI();
         SwingUtilities.invokeLater(DarculaInstaller::uninstall);
       }
