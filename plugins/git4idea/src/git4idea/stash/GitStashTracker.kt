@@ -4,9 +4,11 @@ package git4idea.stash
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -27,7 +29,7 @@ class GitStashTracker(private val project: Project) : Disposable {
   private val eventDispatcher = EventDispatcher.create(GitStashTrackerListener::class.java)
   private val updateQueue = MergingUpdateQueue("GitStashTracker", 300, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
-  var stashes = emptyMap<VirtualFile, List<StashInfo>>()
+  var stashes = emptyMap<VirtualFile, Stashes>()
     private set
 
   init {
@@ -53,9 +55,15 @@ class GitStashTracker(private val project: Project) : Disposable {
     if (!isStashToolWindowEnabled(project)) return
 
     updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
-      val newStashes = mutableMapOf<VirtualFile, List<StashInfo>>()
+      val newStashes = mutableMapOf<VirtualFile, Stashes>()
       for (repo in GitRepositoryManager.getInstance(project).repositories) {
-        newStashes[repo.root] = loadStashStack(project, repo.root)
+        try {
+          newStashes[repo.root] = Stashes.Loaded(loadStashStack(project, repo.root))
+        }
+        catch (e: VcsException) {
+          newStashes[repo.root] = Stashes.Error(e)
+          LOG.warn(e)
+        }
       }
 
       runInEdt(this) {
@@ -70,8 +78,22 @@ class GitStashTracker(private val project: Project) : Disposable {
     eventDispatcher.addListener(listener, disposable)
   }
 
+  fun getStashes(root: VirtualFile): List<StashInfo> {
+    val stashes = stashes[root]
+    return if (stashes is Stashes.Loaded) stashes.stashes else emptyList()
+  }
+
   override fun dispose() {
     stashes = emptyMap()
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(GitStashTracker::class.java)
+  }
+
+  sealed class Stashes {
+    class Loaded(val stashes: List<StashInfo>) : Stashes()
+    class Error(val error: VcsException) : Stashes()
   }
 }
 
@@ -79,7 +101,9 @@ interface GitStashTrackerListener : EventListener {
   fun stashesUpdated()
 }
 
-fun GitStashTracker.isNotEmpty() = stashes.values.any { it.isNotEmpty() }
+fun GitStashTracker.isNotEmpty(): Boolean {
+  return stashes.values.any { (it is GitStashTracker.Stashes.Error) || (it is GitStashTracker.Stashes.Loaded && it.stashes.isNotEmpty()) }
+}
 
 fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
 fun isStashToolWindowEnabled(project: Project): Boolean {
