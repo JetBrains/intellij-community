@@ -323,7 +323,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   ) : ExternalSystemProjectReloadContext
 
   companion object {
-    private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
+    val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
 
     @TestOnly
     @JvmStatic

@@ -58,13 +58,7 @@ interface ExternalSystemSetupProjectTestCase {
       )!!
   }
 
-  fun openProjectFrom(projectFile: VirtualFile): Project {
-    return detectOpenedProject {
-      invokeAndWaitIfNeeded {
-        ProjectUtil.openOrImport(projectFile.toNioPath())
-      }
-    }
-  }
+  fun openProjectFrom(projectFile: VirtualFile) = Companion.openProjectFrom(projectFile)
 
   fun importProjectFrom(projectFile: VirtualFile): Project {
     return detectOpenedProject {
@@ -124,13 +118,6 @@ interface ExternalSystemSetupProjectTestCase {
     }
   }
 
-  private fun detectOpenedProject(action: () -> Unit): Project {
-    val projectManager = ProjectManager.getInstance()
-    val openProjects = projectManager.openProjects.map { it.name }.toSet()
-    action()
-    return projectManager.openProjects.first { it.name !in openProjects }
-  }
-
   fun cleanupProjectTestResources(project: Project) {}
 
   fun Project.use(save: Boolean = false, action: (Project) -> Unit) {
@@ -141,6 +128,23 @@ interface ExternalSystemSetupProjectTestCase {
       finally {
         cleanupProjectTestResources(this)
       }
+    }
+  }
+
+  companion object {
+    fun openProjectFrom(projectFile: VirtualFile): Project {
+      return detectOpenedProject {
+        invokeAndWaitIfNeeded {
+          ProjectUtil.openOrImport(projectFile.toNioPath())
+        }
+      }
+    }
+
+    private fun detectOpenedProject(action: () -> Unit): Project {
+      val projectManager = ProjectManager.getInstance()
+      val openProjects = projectManager.openProjects.map { it.name }.toSet()
+      action()
+      return projectManager.openProjects.first { it.name !in openProjects }
     }
   }
 }

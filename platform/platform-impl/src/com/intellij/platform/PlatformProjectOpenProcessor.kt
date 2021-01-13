@@ -44,6 +44,17 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmField
     val PROJECT_OPENED_BY_PLATFORM_PROCESSOR = Key.create<Boolean>("PROJECT_OPENED_BY_PLATFORM_PROCESSOR")
 
+    @JvmField
+    val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR = Key.create<Boolean>("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
+
+    fun Project.isOpenedByPlatformProcessor(): Boolean {
+      return getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
+    }
+
+    fun Project.isConfiguredByPlatformProcessor(): Boolean {
+      return getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
+    }
+
     @JvmStatic
     fun getInstance() = getInstanceIfItExists()!!
 
@@ -167,6 +178,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
     @JvmStatic
     fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module {
+      project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
       val moduleRef = Ref<Module>()
       val virtualFile = ProjectUtil.getFileAndRefresh(baseDir)!!
       EP_NAME.forEachExtensionSafe { configurator ->

@@ -1,27 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autolink
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.ExtensionPointUtil
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.LOG
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfiguredByPlatformProcessor
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.asCompletableFuture
+import java.util.concurrent.CompletableFuture
 
 class UnlinkedProjectStartupActivity : StartupActivity.Background {
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("UnlinkedProjectTracker.backgroundExecutor", 1)
@@ -31,8 +35,46 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     showNotificationWhenNonEmptyProjectUnlinked(project)
     showNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
     showNotificationWhenNewBuildFileCreated(project, externalProjectPath)
-    if (!ExternalSystemUtil.isNewProject(project)) {
-      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
+    if (!project.isNewProject()) {
+      if (project.isOpenedWithEmptyModel()) {
+        linkProjectIfUnlinkedProjectsFound(project, externalProjectPath)
+      }
+      else {
+        showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
+      }
+    }
+  }
+
+  private fun Project.isNewProject(): Boolean {
+    return ExternalSystemUtil.isNewProject(this)
+  }
+
+  private fun Project.isOpenedWithEmptyModel(): Boolean {
+    return isConfiguredByPlatformProcessor() || isEmptyModel()
+  }
+
+  private fun Project.isEmptyModel(): Boolean {
+    val moduleManager = ModuleManager.getInstance(this)
+    return moduleManager.modules.isEmpty()
+  }
+
+  private fun linkProjectIfUnlinkedProjectsFound(project: Project, externalProjectPath: String) {
+    findUnlinkedProjectBuildFiles(project, externalProjectPath) {
+      val unlinkedProjects = it.filter { (_, buildFiles) -> buildFiles.isNotEmpty() }
+      val singleUnlinkedProject = unlinkedProjects.keys.singleOrNull()
+      if (singleUnlinkedProject != null && !Registry.`is`("external.system.auto.import.disabled")) {
+        if (LOG.isDebugEnabled) {
+          val projectId = singleUnlinkedProject.getProjectId(externalProjectPath)
+          LOG.debug("Auto-linked ${projectId.readableName} project")
+        }
+        singleUnlinkedProject.linkAndLoadProject(project, externalProjectPath)
+      }
+      else {
+        val notificationAware = UnlinkedProjectNotificationAware.getInstance(project)
+        for ((unlinkedProjectAware, _) in unlinkedProjects) {
+          notificationAware.notify(unlinkedProjectAware, externalProjectPath)
+        }
+      }
     }
   }
 
@@ -75,17 +117,71 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
     collectBuildFiles: () -> Collection<VirtualFile>
   ) {
-    val extensionDisposable = createExtensionDisposable(project, unlinkedProjectAware)
-    if (unlinkedProjectAware.isLinkedProject(project, externalProjectPath)) return
-    ReadAction.nonBlocking(collectBuildFiles)
-      .expireWith(extensionDisposable)
-      .finishOnUiThread(ModalityState.defaultModalityState()) { buildFiles ->
+    findUnlinkedProjectBuildFiles(project, externalProjectPath, unlinkedProjectAware, collectBuildFiles)
+      .whenComplete { buildFiles, _ ->
         if (buildFiles.isNotEmpty()) {
           val notificationAware = UnlinkedProjectNotificationAware.getInstance(project)
           notificationAware.notify(unlinkedProjectAware, externalProjectPath)
         }
       }
-      .submit(backgroundExecutor)
+  }
+
+  private fun findUnlinkedProjectBuildFiles(
+    project: Project,
+    externalProjectPath: String,
+    callback: (Map<ExternalSystemUnlinkedProjectAware, Collection<VirtualFile>>) -> Unit
+  ) {
+    findUnlinkedProjectBuildFiles(project, externalProjectPath).thenAccept { callback(it.toMap()) }
+  }
+
+  private fun findUnlinkedProjectBuildFiles(
+    project: Project,
+    externalProjectPath: String
+  ): CompletableFuture<List<Pair<ExternalSystemUnlinkedProjectAware, Collection<VirtualFile>>>> {
+    return allOf(EP_NAME.extensionList.map { unlinkedProjectAware ->
+      findUnlinkedProjectBuildFiles(project, externalProjectPath, unlinkedProjectAware)
+        .thenApply { buildFiles -> unlinkedProjectAware to buildFiles }
+    })
+  }
+
+  private fun <T> allOf(futures: Collection<CompletableFuture<T>>): CompletableFuture<List<T>> {
+    return CompletableFuture.allOf(*futures.toTypedArray())
+      .thenApply { futures.map { it.get() } }
+  }
+
+  private fun findUnlinkedProjectBuildFiles(
+    project: Project,
+    externalProjectPath: String,
+    unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
+  ): CompletableFuture<Collection<VirtualFile>> {
+    return findUnlinkedProjectBuildFiles(project, externalProjectPath, unlinkedProjectAware) {
+      unlinkedProjectAware.getBuildFiles(project, externalProjectPath)
+    }
+  }
+
+  private fun findUnlinkedProjectBuildFiles(
+    project: Project,
+    externalProjectPath: String,
+    unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
+    collectBuildFiles: () -> Collection<VirtualFile>
+  ): CompletableFuture<Collection<VirtualFile>> {
+    return if (unlinkedProjectAware.isLinkedProject(project, externalProjectPath)) {
+      CompletableFuture.completedFuture(emptyList())
+    }
+    else {
+      AsyncPromise<Collection<VirtualFile>>().asCompletableFuture().apply {
+        ReadAction.nonBlocking(collectBuildFiles)
+          .expireWith(createExtensionDisposable(project, unlinkedProjectAware))
+          .finishOnUiThread(ModalityState.defaultModalityState()) { buildFiles ->
+            if (LOG.isDebugEnabled && buildFiles.isNotEmpty()) {
+              val projectId = unlinkedProjectAware.getProjectId(externalProjectPath)
+              LOG.debug("Found unlinked ${projectId.readableName} project; buildFiles=${buildFiles.map(VirtualFile::getPath)}")
+            }
+            complete(buildFiles)
+          }
+          .submit(backgroundExecutor)
+      }
+    }
   }
 
   private fun showNotificationWhenNonEmptyProjectUnlinked(project: Project) {
@@ -129,11 +225,6 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     val externalProjectDir = localFilesSystem.findFileByPath(externalProjectPath)
     if (externalProjectDir == null) return emptyList()
     return externalProjectDir.children.filter { isBuildFile(project, it) }
-  }
-
-  private fun createExtensionDisposable(project: Project, unlinkedProjectAware: ExternalSystemUnlinkedProjectAware): Disposable {
-    return ExtensionPointUtil.createExtensionDisposable(unlinkedProjectAware, EP_NAME)
-      .also { Disposer.register(project, it) }
   }
 
   inner class NewBuildFilesListener(

@@ -32,6 +32,7 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.ThrowableRunnable
 import java.io.File
@@ -49,7 +50,7 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
     }
-    if (project.hasBeenOpenedBySpecificProcessor()) {
+    if (!project.isOpenedByPlatformProcessor()) {
       return
     }
 
@@ -68,10 +69,6 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
         }
       }
     })
-  }
-
-  private fun Project.hasBeenOpenedBySpecificProcessor(): Boolean {
-    return getUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR) != true
   }
 
   private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<ProjectOpenProcessor, VirtualFile> {
