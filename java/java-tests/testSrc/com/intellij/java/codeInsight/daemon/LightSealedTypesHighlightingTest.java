@@ -15,7 +15,7 @@ public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtur
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
+    return JAVA_16;
   }
 
   public void testSealedTypesBasics() { doTest(); }
@@ -26,6 +26,7 @@ public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtur
     myFixture.addClass("package p; public class P extends A {}");
     doTest(); 
   }
+  public void testSealedClassCast() { doTest(); }
   
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");

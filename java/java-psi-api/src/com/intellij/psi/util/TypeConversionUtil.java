@@ -11,6 +11,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -252,6 +253,15 @@ public final class TypeConversionUtil {
 
     PsiManager manager = fromClass.getManager();
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
+    //  jep-397
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_16_PREVIEW)) {
+      if (fromClass.hasModifierProperty(PsiModifier.SEALED)) {
+        if (!canConvertSealedTo(fromClass, toClass)) return false;
+      }
+      else if (toClass.hasModifierProperty(PsiModifier.SEALED)) {
+        if (!canConvertSealedTo(toClass, fromClass)) return false;
+      }
+    }
     if (!fromClass.isInterface()) {
       if (toClass.isInterface()) {
         return (!fromClass.hasModifierProperty(PsiModifier.FINAL) || fromClass.isInheritor(toClass, true)) &&
@@ -318,6 +328,74 @@ public final class TypeConversionUtil {
       }
       return checkSuperTypesWithDifferentTypeArguments(baseResult, derived, manager, derivedSubstitutor, null, languageLevel);
     }
+  }
+
+  /**
+   * Check if sealed class can be narrowed down to a given interface.
+   * Sealed class can be narrowed down to an interface in one of the following cases:
+   * <ul>
+   *  <li>sealed class implements interface
+   *  <li>sealed class have at least one non-sealed subclass
+   *  <li>at least one of final/sealed subclasses of sealed parent implement interface
+   * </ul>
+   *
+   * <p>Note that sealed subclasses are checked recursively, e.g. in hierarchy:</p>
+   *
+   * <code>
+   * <p>sealed class Parent {}
+   * <p>sealed class A extends Parent {}
+   * <p>final class C extends A {}
+   * </code>
+   * <p>all classes would be checked.</p>
+   * <br>
+   * <p>See JEP-397 for more details.</p>
+   */
+  public static boolean canConvertSealedTo(@NotNull PsiClass sealedClass, @NotNull PsiClass psiClass) {
+    PsiReferenceList permitsList = sealedClass.getPermitsList();
+    List<PsiClass> sealedSubClasses = new SmartList<>();
+    boolean hasClassInheritors;
+    if (permitsList == null) {
+      Set<PsiClass> subClasses = findDirectSubClassesInFile(sealedClass);
+      hasClassInheritors = subClasses.stream().anyMatch(subClass -> subClassExtendsClass(subClass, psiClass, sealedSubClasses));
+    }
+    else {
+      hasClassInheritors = Arrays.stream(permitsList.getReferencedTypes())
+        .map(t -> t.resolve())
+        .anyMatch(subClass -> subClassExtendsClass(subClass, psiClass, sealedSubClasses));
+    }
+    return hasClassInheritors || sealedSubClasses.stream().anyMatch(subClass -> canConvertSealedTo(subClass, psiClass));
+  }
+
+  private static @NotNull Set<PsiClass> findDirectSubClassesInFile(@NotNull PsiClass sealedClass) {
+    Set<PsiClass> subClasses = new HashSet<>();
+    sealedClass.getContainingFile().accept(new JavaElementVisitor() {
+      @Override
+      public void visitJavaFile(PsiJavaFile file) {
+        for (PsiClass psiClass : file.getClasses()) {
+          visitClass(psiClass);
+        }
+      }
+
+      @Override
+      public void visitClass(PsiClass psiClass) {
+        for (PsiClass inner : psiClass.getInnerClasses()) {
+          visitClass(inner);
+        }
+        if (psiClass.isInheritor(sealedClass, false)) {
+          subClasses.add(psiClass);
+        }
+      }
+    });
+    return subClasses;
+  }
+
+  private static boolean subClassExtendsClass(@Nullable PsiClass subClass,
+                                              @NotNull PsiClass psiClass,
+                                              @NotNull List<PsiClass> sealedClasses) {
+    if (subClass == null) return false;
+    if (subClass.hasModifierProperty(PsiModifier.NON_SEALED) || subClass.isInheritor(psiClass, true)) return true;
+    if (subClass.hasModifierProperty(PsiModifier.SEALED)) sealedClasses.add(subClass);
+    return false;
   }
 
   @NotNull

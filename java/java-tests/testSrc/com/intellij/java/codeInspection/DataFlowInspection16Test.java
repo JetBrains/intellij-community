@@ -5,11 +5,11 @@ import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class DataFlowInspection14Test extends DataFlowInspectionTestCase {
+public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
+    return JAVA_16;
   }
 
   @Override
@@ -27,4 +27,6 @@ public class DataFlowInspection14Test extends DataFlowInspectionTestCase {
   }
   public void testSwitchExpressionAndLambdaInlining() { doTest(); }
   public void testRecordAccessorStability() { doTest(); }
+  public void testSealedClassCast() { doTest(); }
+  public void testCastToSealedInterface() { doTest(); }
 }
