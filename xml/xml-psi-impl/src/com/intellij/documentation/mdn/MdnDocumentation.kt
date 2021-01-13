@@ -40,9 +40,7 @@ fun getJsMdnDocumentation(qualifiedName: String, namespace: MdnApiNamespace): Md
 
 fun getCssMdnDocumentation(name: String, kind: MdnCssSymbolKind): MdnSymbolDocumentation? {
   val documentation = documentationCache[Pair(MdnApiNamespace.Css, null)] as? MdnCssDocumentation ?: return null
-  return kind.getDocumentationMap(documentation)[name.toLowerCase(Locale.US)]?.let {
-    MdnSymbolDocumentationAdapter(kind.decorateName(name), documentation, it)
-  }
+  return kind.getSymbolDoc(documentation, name) ?: getUnprefixedName(name)?.let { kind.getSymbolDoc(documentation, it) }
 }
 
 fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDocumentation? {
@@ -235,6 +233,9 @@ enum class MdnCssSymbolKind {
   PseudoClass {
     override fun decorateName(name: String): String = ":$name"
     override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.pseudoClasses
+    override fun getSymbolDoc(documentation: MdnCssDocumentation, name: String): MdnSymbolDocumentation? =
+      // In case of pseudo class query we should fallback to pseudo element
+      super.getSymbolDoc(documentation, name) ?: PseudoElement.getSymbolDoc(documentation, name)
   },
   PseudoElement {
     override fun decorateName(name: String): String = "::$name"
@@ -249,9 +250,14 @@ enum class MdnCssSymbolKind {
     override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.dataTypes
   }, ;
 
-  abstract fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation>
+  protected abstract fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation>
 
-  abstract fun decorateName(name: String): String
+  protected abstract fun decorateName(name: String): String
+
+  open fun getSymbolDoc(documentation: MdnCssDocumentation, name: String): MdnSymbolDocumentation? =
+    getDocumentationMap(documentation)[name.toLowerCase(Locale.US)]?.let {
+      MdnSymbolDocumentationAdapter(decorateName(name), documentation, it)
+    }
 }
 
 val webApiFragmentStarts = arrayOf('a', 'e', 'l', 'r', 'u')
@@ -355,6 +361,12 @@ private fun buildSubSection(items: Map<String, String>): String {
       .append(doc)
   }
   return result.toString()
+}
+
+private fun getUnprefixedName(name: String): String? {
+  if (name.length < 4 || name[0] != '-' || name[1] == '-') return null
+  val index = name.indexOf('-', 2)
+  return if (index < 0 || index == name.length - 1) null else name.substring(index + 1)
 }
 
 private val UPPER_CASE = Regex("(?=\\p{Upper})")
