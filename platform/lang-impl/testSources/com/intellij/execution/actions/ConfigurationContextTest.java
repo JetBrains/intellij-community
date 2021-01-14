@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -120,6 +121,54 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     DataContext context1 = createDataContext();
     TestActionEvent event1 = new TestActionEvent(context1);
     new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).fullUpdate(event1);
+    assertTrue(event1.getPresentation().isEnabledAndVisible());
+    assertEquals("Run 'world_'", event1.getPresentation().getText());
+  }
+
+  public static void main(String[] args) {
+    
+  }
+  
+  public void test2ApplicableConfigurationsInContextNestedScopes() {
+    PsiFile file = myFixture.configureByText(FileTypes.PLAIN_TEXT, "hello,<caret>world");
+    @SuppressWarnings("rawtypes") 
+    ExtensionPoint<RunConfigurationProducer> ep = RunConfigurationProducer.EP_NAME.getPoint();
+    ep.registerExtension(new FakeRunConfigurationProducer("hello_") {
+      @Override
+      public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+        return true;
+      }
+      @Override
+      protected boolean setupConfigurationFromContext(@NotNull FakeRunConfiguration configuration,
+                                                      @NotNull ConfigurationContext context,
+                                                      @NotNull Ref<PsiElement> sourceElement) {
+        super.setupConfigurationFromContext(configuration, context, sourceElement);
+        sourceElement.set(file);
+        return true;
+      }
+    }, getTestRootDisposable());
+    ep.registerExtension(new FakeRunConfigurationProducer("world_") {
+      @Override
+      public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+        return true;
+      }
+    }, getTestRootDisposable());
+
+    List<RunnerAndConfigurationSettings> configs = getConfigurationsFromContext();
+    Assert.assertEquals(2, configs.size());
+    RunnerAndConfigurationSettings configuration = configs.get(1);
+    assertEquals("hello_", configuration.getName());
+    addConfiguration(configuration);
+    
+    DataContext context = createDataContext();
+    assertNull(ConfigurationContext.getFromContext(context).findExisting());
+    TestActionEvent event = new TestActionEvent(context);
+    new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).fullUpdate(event);
+    assertFalse(event.getPresentation().isEnabledAndVisible());
+    
+    DataContext context1 = createDataContext();
+    TestActionEvent event1 = new TestActionEvent(context1);
+    new RunContextAction(DefaultRunExecutor.getRunExecutorInstance()).fullUpdate(event1);
     assertTrue(event1.getPresentation().isEnabledAndVisible());
     assertEquals("Run 'world_'", event1.getPresentation().getText());
   }

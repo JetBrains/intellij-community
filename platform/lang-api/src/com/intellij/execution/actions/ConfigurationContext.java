@@ -39,6 +39,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Context for creating run configurations from a location in the source code.
@@ -257,6 +259,8 @@ public class ConfigurationContext {
   @Nullable
   private RunnerAndConfigurationSettings findPreferredConfiguration(@NotNull List<ExistingConfiguration> existingConfigurations,
                                                                     @NotNull PsiElement psiElement) {
+    List<ConfigurationFromContext> configurationsFromContext = getConfigurationsFromContext();
+    if (configurationsFromContext == null) return null;
     for (ExistingConfiguration configuration : existingConfigurations) {
       RunnerAndConfigurationSettings settings = configuration.getSettings();
       if (settings.equals(myConfiguration)) {
@@ -266,11 +270,18 @@ public class ConfigurationContext {
         return settings;
       }
     }
+    Set<RunnerAndConfigurationSettings> fromContextSettings =
+      configurationsFromContext.stream().map(c -> c.getConfigurationSettings()).collect(Collectors.toSet());
+
+    if (!ContainerUtil.exists(existingConfigurations, e -> fromContextSettings.contains(e.getSettings()))) {
+      return null;
+    }
+
     if (Registry.is("suggest.all.run.configurations.from.context")) {
       return null;
     }
     List<ConfigurationFromContext> contexts = ContainerUtil.mapNotNull(existingConfigurations, configuration -> {
-      if (configuration.getProducer() == null) {
+      if (configuration.getProducer() == null || !fromContextSettings.contains(configuration.getSettings())) {
         return null;
       }
       return new ConfigurationFromContextImpl(configuration.getProducer(), configuration.getSettings(), psiElement);
