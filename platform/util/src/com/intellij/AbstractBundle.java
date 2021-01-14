@@ -18,15 +18,8 @@ import java.util.function.Supplier;
 
 /**
  * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
- * <p/>
- * Usage pattern:
- * <ol>
- *   <li>Create class that extends this class and provides path to the target bundle to the current class constructor;</li>
- *   <li>
- *     Optionally create static facade method at the subclass - create single shared instance and delegate
- *     to its {@link #getMessage(String, Object...)};
- *   </li>
- * </ol>
+ * <br/>
+ * <b>This class is not supposed to be extended directly. Extend your bundle from {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle}</b>
  *
  * @author Denis Zhdanov
  */
