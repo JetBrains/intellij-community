@@ -15,6 +15,7 @@ import java.util.List;
 final class EditorConfigUtf8BomOptionProvider implements Utf8BomOptionProvider {
   @Override
   public boolean shouldAddBOMForNewUtf8File(@NotNull VirtualFile file) {
+    if (!Utils.isApplicableTo(file)) return false;
     Project project = ProjectLocator.getInstance().guessProjectForFile(file);
     if (project != null) {
       List<EditorConfig.OutPair> optionsList = SettingsProviderComponent.getInstance().getOutPairs(project, file);

@@ -43,6 +43,7 @@ public class ConfigEncodingManager implements FileEncodingProvider {
 
   @Override
   public @Nullable Charset getEncoding(@NotNull VirtualFile virtualFile) {
+    if (!Utils.isApplicableTo(virtualFile)) return null;
     Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
     if (project != null && !Utils.isEnabled(CodeStyle.getSettings(project)) || isIndexing(project) ||
         isApplyingSettings.get() != null && isApplyingSettings.get()) return null;

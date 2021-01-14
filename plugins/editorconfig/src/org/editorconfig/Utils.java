@@ -269,4 +269,8 @@ public final class Utils {
     }
     return files;
   }
+
+  public static boolean isApplicableTo(@NotNull VirtualFile virtualFile) {
+    return virtualFile.isInLocalFileSystem() && virtualFile.isValid();
+  }
 }
