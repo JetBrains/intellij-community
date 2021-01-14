@@ -386,6 +386,7 @@ To create an EditorConfig file in a directory, right-click this directory and se
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigFileHierarchyService"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigFileHierarchyServiceImpl"/>
+    <applicationService serviceImplementation="org.editorconfig.configmanagement.EditorConfigEncodingCache"/>
 
     <schemeExporter
         nameKey="scheme.exporter.target.name"
@@ -476,4 +477,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
   <applicationListeners>
     <listener class="org.editorconfig.plugincomponents.EditorConfigModificationListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
+
+  <projectListeners>
+    <listener class="org.editorconfig.configmanagement.EditorConfigEncodingCache$FileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>
