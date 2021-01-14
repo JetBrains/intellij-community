@@ -649,7 +649,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     fun testJDKImport() {
         val mockJdkPath = "${PathManager.getHomePath()}/community/java/mockJDK-1.8"
         object : WriteAction<Unit>() {
-            override fun run(result: Result<Unit>) {
+            override fun run(result: Result<in Unit>) {
                 val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
                 getProjectJdkTableSafe().addJdk(jdk)
                 ProjectRootManager.getInstance(myProject).projectSdk = jdk
@@ -666,7 +666,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
             assertEquals(mockJdkPath, moduleSDK.homePath)
         } finally {
             object : WriteAction<Unit>() {
-                override fun run(result: Result<Unit>) {
+                override fun run(result: Result<in Unit>) {
                     val jdkTable = getProjectJdkTableSafe()
                     jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
                     ProjectRootManager.getInstance(myProject).projectSdk = null
