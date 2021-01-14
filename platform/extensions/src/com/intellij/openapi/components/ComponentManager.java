@@ -65,7 +65,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * Gets all components whose implementation class is derived from {@code baseClass}.
    *
-   * @deprecated use <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extensions_and_extension_points.html">extension points</a> instead
+   * @deprecated use <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">extension points</a> instead
    */
   @Deprecated
   default <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
