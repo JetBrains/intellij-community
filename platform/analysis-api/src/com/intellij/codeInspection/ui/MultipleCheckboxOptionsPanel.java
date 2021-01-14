@@ -63,7 +63,7 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
             constraints.gridy++;
         }
         constraints.weighty = 1.0;
-        component.setBorder(JBUI.Borders.emptyTop(UIUtil.DEFAULT_VGAP));
+        component.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
         add(component, constraints);
     }
 }

@@ -36,7 +36,7 @@ public class SingleCheckboxOptionsPanel extends JPanel {
         super(new GridBagLayout());
         final boolean selected = getPropertyValue(owner, property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
-        checkBox.setBorder(JBUI.Borders.emptyTop(UIUtil.DEFAULT_VGAP));
+        checkBox.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
         final ButtonModel model = checkBox.getModel();
         final SingleCheckboxChangeListener listener =
                 new SingleCheckboxChangeListener(owner, property, model);

@@ -54,7 +54,7 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
         constraints.weightx = 0.0;
         constraints.anchor = GridBagConstraints.BASELINE_LEADING;
         constraints.fill = GridBagConstraints.NONE;
-        label.setBorder(JBUI.Borders.emptyTop(UIUtil.DEFAULT_VGAP));
+        label.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
         add(label, constraints);
         constraints.gridx = 1;
         constraints.gridy = 0;
