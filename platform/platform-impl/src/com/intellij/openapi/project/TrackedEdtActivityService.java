@@ -3,16 +3,10 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promises;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -34,16 +28,18 @@ final class TrackedEdtActivityService {
     }
   }
 
-  void invokeLaterIfProjectNotDisposed(@NotNull Runnable action) {
-    new TrackedEdtActivity(action).invokeLaterIfProjectNotDisposed();
+  void invokeLaterIfProjectNotDisposed(@NotNull Runnable runnable) {
+    new TrackedEdtActivity(runnable).invokeLaterWithModality(ModalityState.defaultModalityState());
   }
 
-  void invokeLaterAfterProjectInitialized(@NotNull Runnable action) {
-    new TrackedEdtActivity(action).invokeLaterAfterProjectInitialized();
+  void invokeLaterAfterProjectInitialized(@NotNull Runnable runnable) {
+    TrackedEdtActivity activity = new TrackedEdtActivity(runnable);
+    StartupManager.getInstance(myProject)
+      .runAfterOpened(() -> activity.invokeLaterWithModality(myDumbStartModality));
   }
 
   void submitTransaction(@NotNull Runnable runnable) {
-    new TrackedEdtActivity(runnable).invokeInTransaction();
+    new TrackedEdtActivity(runnable).invokeLaterWithModality(ModalityState.NON_MODAL);
   }
 
   void setDumbStartModality(@NotNull ModalityState modality) {
@@ -58,22 +54,10 @@ final class TrackedEdtActivityService {
       myTrackedEdtActivities.add(this);
     }
 
-    void invokeLaterIfProjectNotDisposed() {
-      ApplicationManager.getApplication().invokeLater(this, getProjectActivityExpirationCondition());
-    }
-
-    void invokeLaterAfterProjectInitialized() {
-      StartupManager.getInstance(myProject).runAfterOpened(() -> {
-        ApplicationManager.getApplication().invokeLater(this, myDumbStartModality, getProjectActivityExpirationCondition());
-      });
-    }
-
-    void invokeInTransaction() {
-      TransactionGuard.submitTransaction(myProject, () -> {
-        if (myTrackedEdtActivities.contains(this)) {
-          run();
-        }
-      });
+    void invokeLaterWithModality(@NotNull ModalityState modalityState) {
+      ApplicationManager.getApplication().invokeLater(this,
+                                                      modalityState,
+                                                      getProjectActivityExpirationCondition());
     }
 
     @Override
@@ -82,14 +66,9 @@ final class TrackedEdtActivityService {
       myRunnable.run();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private @NotNull Condition getProjectActivityExpirationCondition() {
-      return Conditions.or((Condition)myProject.getDisposed(), (Condition)getActivityExpirationCondition());
-    }
-
-    @NotNull
-    private Condition<?> getActivityExpirationCondition() {
-      return __ -> !myTrackedEdtActivities.contains(this);
+    private @NotNull Condition<?> getProjectActivityExpirationCondition() {
+      return Conditions.or(myProject.getDisposed(),
+                           __ -> !myTrackedEdtActivities.contains(this));
     }
   }
 }
