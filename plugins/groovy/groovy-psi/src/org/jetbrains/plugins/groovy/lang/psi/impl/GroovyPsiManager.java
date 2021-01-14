@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.Disposable;
@@ -114,12 +114,6 @@ public final class GroovyPsiManager implements Disposable {
     return value == null ||
            value instanceof PsiReference &&
            ResolveUtil.isEnumConstant((PsiReference)value, PASS, GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
-  }
-
-  @Nullable
-  @Deprecated
-  public PsiClass findClassWithCache(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
-    return JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
   }
 
   private static final PsiType UNKNOWN_TYPE = new GrPsiTypeStub();
