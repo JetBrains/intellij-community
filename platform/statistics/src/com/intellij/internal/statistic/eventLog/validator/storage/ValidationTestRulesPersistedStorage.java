@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.google.gson.Gson;
@@ -6,14 +6,14 @@ import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-public class ValidationTestRulesPersistedStorage extends BaseValidationRulesPersistedStorage {
+public final class ValidationTestRulesPersistedStorage extends BaseValidationRulesPersistedStorage {
   protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final Object myLock = new Object();
   private final @NotNull EventLogTestMetadataPersistence myTestMetadataPersistence;

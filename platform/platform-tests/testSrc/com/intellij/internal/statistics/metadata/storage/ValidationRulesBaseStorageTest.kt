@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.storage
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import java.io.File
 import java.io.IOException
 
 internal abstract class ValidationRulesBaseStorageTest : BasePlatformTestCase() {
@@ -32,7 +31,7 @@ internal abstract class ValidationRulesBaseStorageTest : BasePlatformTestCase() 
     for (recorder in recordersToCleanUp) {
       val file = EventLogTestMetadataPersistence(recorder).eventsTestSchemeFile
       try {
-        FileUtil.delete(File(file.parent))
+        FileUtil.delete(file.parent)
       }
       catch (e: IOException) {
         LOG.error(e)

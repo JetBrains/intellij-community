@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.BaseEventLogMetadataPersistence
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence.EVENTS_SCHEME_FILE
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,36 +15,35 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
-import java.io.File
+import java.nio.file.Path
 
-class OpenEventsSchemeFileAction(private val myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
-  : DumbAwareAction(StatisticsBundle.message("stats.open.0.scheme.file", myRecorderId),
+internal class OpenEventsSchemeFileAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
+  : DumbAwareAction(StatisticsBundle.message("stats.open.0.scheme.file", recorderId),
                     ActionsBundle.message("group.OpenEventsSchemeFileAction.description"),
                     AllIcons.FileTypes.Config) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    openFileInEditor(getEventsSchemeFile(myRecorderId), project)
+    openFileInEditor(getEventsSchemeFile(recorderId), project)
   }
 
   companion object {
-    fun openFileInEditor(file: File, project: Project) {
-      val virtualFile = VfsUtil.findFileByIoFile(file, true)
+    fun openFileInEditor(file: Path, project: Project) {
+      val virtualFile = VfsUtil.findFile(file, true)
       if (virtualFile == null) {
-        showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.file.0.does.not.exist", file.absolutePath))
+        showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.file.0.does.not.exist", file.toString()))
         return
       }
       FileEditorManager.getInstance(project).openFile(virtualFile, true)
     }
 
-    fun getEventsSchemeFile(recorderId: String): File {
+    fun getEventsSchemeFile(recorderId: String): Path {
       val settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(recorderId)
       return if (settings != null && settings.isUseCustomPath) {
-        File(settings.customPath)
+        Path.of(settings.customPath)
       }
       else {
-        BaseEventLogMetadataPersistence.getDefaultMetadataFile(recorderId, EVENTS_SCHEME_FILE, null)
+        BaseEventLogMetadataPersistence.getDefaultMetadataFile(recorderId, EventLogMetadataPersistence.EVENTS_SCHEME_FILE, null)
       }
     }
   }
-
 }

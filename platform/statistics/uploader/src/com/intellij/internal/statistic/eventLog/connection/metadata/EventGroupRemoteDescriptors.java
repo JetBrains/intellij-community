@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
 import org.jetbrains.annotations.NotNull;
@@ -45,13 +45,13 @@ import java.util.Set;
  * }
  * }</pre>
  */
-public class EventGroupRemoteDescriptors {
+public final class EventGroupRemoteDescriptors {
   @NotNull
   public final ArrayList<EventGroupRemoteDescriptor> groups = new ArrayList<>();
   @Nullable public GroupRemoteRule rules;
   @Nullable public String version;
 
-  public static class EventGroupRemoteDescriptor {
+  public static final class EventGroupRemoteDescriptor {
     @Nullable
     public String id;
     @Nullable
@@ -72,14 +72,14 @@ public class EventGroupRemoteDescriptors {
     }
   }
 
-  public static class GroupRemoteRule {
+  public static final class GroupRemoteRule {
     @Nullable public Set<String> event_id;
     @Nullable public Map<String, Set<String>> event_data;
     @Nullable public Map<String, Set<String>> enums;
     @Nullable public Map<String, String> regexps;
   }
 
-  public static class GroupBuildRange {
+  public static final class GroupBuildRange {
     public String from;
     public String to;
   }
