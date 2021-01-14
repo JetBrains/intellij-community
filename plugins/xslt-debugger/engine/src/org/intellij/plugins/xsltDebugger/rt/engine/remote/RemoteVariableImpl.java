@@ -19,12 +19,12 @@ package org.intellij.plugins.xsltDebugger.rt.engine.remote;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 
-import javax.rmi.PortableRemoteObject;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class RemoteVariableImpl extends PortableRemoteObject implements RemoteDebugger.Variable {
+public final class RemoteVariableImpl extends UnicastRemoteObject implements RemoteDebugger.Variable {
   private final Debugger.Variable myVariable;
 
   RemoteVariableImpl(Debugger.Variable variable) throws RemoteException {
