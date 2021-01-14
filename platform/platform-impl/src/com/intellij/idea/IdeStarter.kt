@@ -90,12 +90,6 @@ open class IdeStarter : ApplicationStarter {
       }
     }
 
-    // temporary check until the JRE implementation has been checked and bundled
-    if (java.lang.Boolean.getBoolean("ide.popup.enablePopupType")) {
-      @Suppress("SpellCheckingInspection")
-      System.setProperty("jbre.popupwindow.settype", "true")
-    }
-
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
     val isStandaloneLightEdit = PlatformUtils.getPlatformPrefix() == "LightEdit"
     val needToOpenProject: Boolean
