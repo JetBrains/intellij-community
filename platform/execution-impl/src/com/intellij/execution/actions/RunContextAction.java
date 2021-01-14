@@ -38,7 +38,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
 
   @Override
   protected void perform(ConfigurationContext context) {
-    perform(context.findExisting(), context);
+    perform(findExisting(context), context);
   }
 
   @Override
@@ -51,7 +51,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       }
       runManager.setTemporaryConfiguration(configuration);
     }
-    else if (configuration != context.findExisting()) {
+    else if (configuration != findExisting(context)) {
       runManager.setTemporaryConfiguration(configuration);
     }
     if (Registry.is("select.run.configuration.from.context")) {
@@ -95,7 +95,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   private Pair<Boolean, Boolean> isEnabledAndVisible(ConfigurationContext context) {
-    RunnerAndConfigurationSettings configuration = context.findExisting();
+    RunnerAndConfigurationSettings configuration = findExisting(context);
     if (configuration == null) {
       configuration = context.getConfiguration();
     }

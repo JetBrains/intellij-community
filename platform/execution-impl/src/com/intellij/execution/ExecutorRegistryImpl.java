@@ -2,6 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.actions.RunNewConfigurationContextAction;
 import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.compound.SettingsAndEffectiveTarget;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -84,6 +86,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     AnAction toolbarAction;
     AnAction runContextAction;
+    AnAction runNonExistingContextAction;
     if (executor instanceof ExecutorGroup) {
       ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
       ActionGroup toolbarActionGroup = new SplitButtonAction(new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new));
@@ -93,10 +96,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       presentation.setDescription(executor.getDescription());
       toolbarAction = toolbarActionGroup;
       runContextAction = new ExecutorGroupActionGroup(executorGroup, RunContextAction::new);
+      runNonExistingContextAction = new ExecutorGroupActionGroup(executorGroup, RunNewConfigurationContextAction::new);
     }
     else {
       toolbarAction = new ExecutorAction(executor);
       runContextAction = new RunContextAction(executor);
+      runNonExistingContextAction = new RunNewConfigurationContextAction(executor);
     }
 
     Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
@@ -111,6 +116,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
         .add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
     }
+    
+    AnAction nonExistingAction = registerAction(actionManager, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
+    ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
+      .add(nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"), actionManager);
 
     if(StateWidgetProcess.isAvailable()) {
       List<StateWidgetProcess> processes = StateWidgetProcess.getProcesses();
@@ -135,6 +144,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     myContextActionIdSet.add(executor.getContextActionId());
+  }
+
+  @NonNls
+  private static String newConfigurationContextActionId(@NotNull Executor executor) {
+    return "newConfiguration" + executor.getContextActionId();
   }
 
   private static boolean isExecutorInMainGroup(@NotNull Executor executor) {
@@ -170,6 +184,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     else {
       unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
     }
+    unregisterAction(newConfigurationContextActionId(executor), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
     unregisterAction(StateWidgetProcess.generateActionID(executor.getId()), STATE_WIDGET_GROUP, myStateWidgetIdToAction);
   }
 

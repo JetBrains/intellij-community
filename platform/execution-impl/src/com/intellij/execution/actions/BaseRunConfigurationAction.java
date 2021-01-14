@@ -49,10 +49,15 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   private AnAction[] getChildren(DataContext dataContext) {
     if (dataContext.getData(ExecutorAction.getOrderKey()) != null) return EMPTY_ARRAY;
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    if (!Registry.is("suggest.all.run.configurations.from.context") && context.findExisting() != null) {
+    if (!Registry.is("suggest.all.run.configurations.from.context") && findExisting(context) != null) {
       return EMPTY_ARRAY;
     }
     return createChildActions(context, getConfigurationsFromContext(context)).toArray(EMPTY_ARRAY);
+  }
+
+  @Nullable
+  protected RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
+    return context.findExisting();
   }
 
   @NotNull
@@ -87,7 +92,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
     final List<ConfigurationFromContext> enabledConfigurations = new ArrayList<>();
     for (ConfigurationFromContext configurationFromContext : fromContext) {
-      if (isEnabledFor(configurationFromContext.getConfiguration())) {
+      if (isEnabledFor(configurationFromContext.getConfiguration(), context)) {
         enabledConfigurations.add(configurationFromContext);
       }
     }
@@ -96,6 +101,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   protected boolean isEnabledFor(RunConfiguration configuration) {
     return true;
+  }
+  
+  protected boolean isEnabledFor(RunConfiguration configuration, ConfigurationContext context) {
+    return isEnabledFor(configuration);
   }
 
   @Override
@@ -106,7 +115,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     }
 
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    final RunnerAndConfigurationSettings existing = context.findExisting();
+    final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null) {
       final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
       return fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null;
@@ -119,7 +128,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     final DataContext dataContext = e.getDataContext();
     MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    final RunnerAndConfigurationSettings existing = context.findExisting();
+    final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
       if (producers.isEmpty()) return;
@@ -208,7 +217,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     DataContext dataContext = event.getDataContext();
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final Presentation presentation = event.getPresentation();
-    final RunnerAndConfigurationSettings existing = context.findExisting();
+    final RunnerAndConfigurationSettings existing = findExisting(context);
     RunnerAndConfigurationSettings configuration = existing;
     if (configuration == null) {
       configuration = context.getConfiguration();
@@ -223,6 +232,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
         RunLineMarkerProvider.markRunnable(vFile, true);
       }
       final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
+      if (fromContext.isEmpty()) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
       if ((existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) && !fromContext.isEmpty()) {
         ConfigurationFromContext configurationFromContext = getOrderedConfiguration(dataContext, fromContext);
         configuration = configurationFromContext.getConfigurationSettings();

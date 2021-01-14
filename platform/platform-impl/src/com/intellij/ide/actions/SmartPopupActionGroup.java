@@ -39,9 +39,9 @@ public class SmartPopupActionGroup extends DefaultActionGroup {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    int size = ActionGroupUtil.activeActionTraverser(this, e, LaterInvocator.isInModalContext()).traverse().take(2).size();
+    int size = ActionGroupUtil.activeActionTraverser(this, e, LaterInvocator.isInModalContext()).traverse().take(3).size();
     e.getPresentation().setEnabledAndVisible(size > 0);
-    myCachedIsPopup = size > 1;
+    myCachedIsPopup = size > 2;
   }
 
   @Override
