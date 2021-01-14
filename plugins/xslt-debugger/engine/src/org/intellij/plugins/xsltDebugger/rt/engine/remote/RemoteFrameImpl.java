@@ -20,15 +20,15 @@ import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger.Frame;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 
-import javax.rmi.PortableRemoteObject;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 
-public final class RemoteFrameImpl extends PortableRemoteObject implements RemoteDebugger.Frame {
-  private final Frame myFrame;
+public final class RemoteFrameImpl extends UnicastRemoteObject implements RemoteDebugger.Frame {
+  private final Frame<?> myFrame;
   private final String myAccessToken;
 
-  private RemoteFrameImpl(Frame frame, String accessToken) throws RemoteException {
+  private RemoteFrameImpl(Frame<?> frame, String accessToken) throws RemoteException {
     myFrame = frame;
     myAccessToken = accessToken;
   }
@@ -75,7 +75,7 @@ public final class RemoteFrameImpl extends PortableRemoteObject implements Remot
     return ((Debugger.StyleFrame)myFrame).getInstruction();
   }
 
-  public static RemoteFrameImpl create(Frame frame, String accessToken) throws RemoteException {
+  public static RemoteFrameImpl create(Frame<?> frame, String accessToken) throws RemoteException {
     return frame != null ? new RemoteFrameImpl(frame, accessToken) : null;
   }
 }
