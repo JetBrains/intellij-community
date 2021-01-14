@@ -18,7 +18,12 @@ internal fun requestNER(texts: Collection<String>): Collection<Collection<NERAnn
     .post(requestBody)
     .build()
 
-  val json = client.newCall(postRequest).execute().use { it.body?.string() }
+  val json = client.newCall(postRequest).execute().use {
+    if (it.isSuccessful) {
+      it.body?.string()
+    }
+    else throw RuntimeException("Unsuccessful request: " + it.code)
+  }
 
   return json?.let { Json.parse<NERResponse>(it) }?.annotations
 }
