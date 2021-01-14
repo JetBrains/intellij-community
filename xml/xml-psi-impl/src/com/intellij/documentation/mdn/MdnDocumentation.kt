@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.util.castSafelyTo
+import com.intellij.xml.util.HtmlUtil
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -298,8 +299,8 @@ private fun getApiNamespace(namespace: String?, element: PsiElement?, symbolName
   when {
     symbolName.equals("svg", true) -> MdnApiNamespace.Svg
     symbolName.equals("math", true) -> MdnApiNamespace.MathML
-    namespace == "http://www.w3.org/2000/svg" -> MdnApiNamespace.Svg
-    namespace == "http://www.w3.org/1998/Math/MathML" -> MdnApiNamespace.MathML
+    namespace == HtmlUtil.SVG_NAMESPACE -> MdnApiNamespace.Svg
+    namespace == HtmlUtil.MATH_ML_NAMESPACE -> MdnApiNamespace.MathML
     else -> PsiTreeUtil.findFirstParent(element, false) { parent ->
       parent is XmlTag && parent.localName.toLowerCase(Locale.US).let { it == "svg" || it == "math" }
     }?.castSafelyTo<XmlTag>()?.let {
