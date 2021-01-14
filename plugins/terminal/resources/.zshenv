@@ -53,6 +53,7 @@ fi
 # This function will be called after all rc files are processed
 # and before the first prompt is displayed.
 function _jedi_precmd_hook() {
+  builtin setopt local_options unset # to treat unset JEDITERM_SOURCE as empty
   if [[ -n "$JEDITERM_SOURCE" ]]; then
     # TODO: Is it correct to split JEDITERM_SOURCE_ARGS on IFS and
     # drop empty arguments? Bash integration does it and it looks
