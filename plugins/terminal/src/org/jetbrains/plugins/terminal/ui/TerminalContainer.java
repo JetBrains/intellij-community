@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -44,6 +43,7 @@ public class TerminalContainer {
   private final TerminalView myTerminalView;
   private JPanel myPanel;
   private boolean myForceHideUiWhenSessionEnds = false;
+  private final TerminalWidgetListener myListener;
 
   public TerminalContainer(@NotNull Project project,
                            @NotNull Content content,
@@ -54,18 +54,12 @@ public class TerminalContainer {
     myTerminalWidget = terminalWidget;
     myTerminalView = terminalView;
     myPanel = createPanel(terminalWidget);
-    TerminalWidgetListener listener = widget -> {
+    myListener = widget -> {
       ApplicationManager.getApplication().invokeLater(() -> processSessionCompleted(), myProject.getDisposed());
     };
-    terminalWidget.addListener(listener);
+    terminalWidget.addListener(myListener);
     terminalView.register(this);
-    Disposer.register(terminalWidget, new Disposable() {
-      @Override
-      public void dispose() {
-        myTerminalWidget.removeListener(listener);
-        myTerminalView.unregister(TerminalContainer.this);
-      }
-    });
+    Disposer.register(content, () -> cleanup());
   }
 
   public @NotNull JBTerminalWidget getTerminalWidget() {
@@ -152,11 +146,17 @@ public class TerminalContainer {
       if (nextToFocus != null) {
         requestFocus(nextToFocus);
       }
+      cleanup();
       Disposer.dispose(myTerminalWidget);
     }
     else {
       processSingleTerminalCompleted();
     }
+  }
+
+  private void cleanup() {
+    myTerminalWidget.removeListener(myListener);
+    myTerminalView.unregister(this);
   }
 
   private void processSingleTerminalCompleted() {
