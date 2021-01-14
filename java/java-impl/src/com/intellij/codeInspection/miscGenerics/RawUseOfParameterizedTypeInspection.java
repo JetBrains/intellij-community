@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -64,15 +63,15 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.new.objects.option"),
+    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.new.objects.option"),
                              "ignoreObjectConstruction");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.type.casts.option"),
+    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.type.casts.option"),
                              "ignoreTypeCasts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.uncompilable.option"),
+    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.uncompilable.option"),
                              "ignoreUncompilable");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.overridden.parameter.option"),
+    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.overridden.parameter.option"),
                              "ignoreParametersOfOverridingMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.quickfix.not.available.option"),
+    optionsPanel.addCheckbox(JavaBundle.message("raw.use.of.parameterized.type.ignore.quickfix.not.available.option"),
                              "ignoreWhenQuickFixNotAvailable");
     return optionsPanel;
   }
