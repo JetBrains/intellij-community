@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf
 
 import java.awt.Component
@@ -13,9 +13,11 @@ open class MenuArrowIcon(val icon: () -> Icon, val selectedIcon: () -> Icon, val
     if (c is JMenuItem) {
       if (!c.model.isEnabled) {
         disabledIcon().paintIcon(c, g, x, y)
-      } else if (c.model.isArmed || (c is JMenu && c.model.isSelected)) {
+      }
+      else if (c.model.isArmed || (c is JMenu && c.model.isSelected)) {
         selectedIcon().paintIcon(c, g, x, y)
-      } else {
+      }
+      else {
         icon().paintIcon(c, g, x, y)
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -122,23 +122,22 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static final String WINDOW_ALPHA = "Window.alpha";
 
   private static final Map<String, String> ourLafClassesAliases = Map.of("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
-  private static final HashMap<String, Integer> lafNameOrder = new HashMap<>() {
-    {
-      put("IntelliJ Light", 0);
-      put("macOS Light", 1);
-      put("Windows 10 Light", 1);
-      put("Darcula", 2);
-      put("High contrast", 3);
-    }
-  };
+  private static Map<String, Integer> lafNameOrder = Map.of(
+    "IntelliJ Light", 0,
+    "macOS Light", 1,
+    "Windows 10 Light", 1,
+    "Darcula", 2,
+    "High contrast", 3
+  );
 
-  //allowing other plugins to change the order of the lafs
-  @NotNull
-  public static HashMap<String, Integer> getLafNameOrder() {
+  // allowing other plugins to change the order of the LaFs (used by Rider)
+  public static @NotNull Map<String, Integer> getLafNameOrder() {
     return lafNameOrder;
   }
 
-  private static final int maxNameOrder = Collections.max(lafNameOrder.values());
+  public static void setLafNameOrder(@NotNull Map<String, Integer> value) {
+    lafNameOrder = value;
+  }
 
   private final SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> myLafComboBoxModel =
     new SynchronizedClearableLazy<>(() -> new LafComboBoxModel());
@@ -436,20 +435,20 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
+  public @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
     return myLafComboBoxModel.getValue();
   }
 
-  private List<LafReference> getAllReferences() {
+  private @NotNull List<LafReference> getAllReferences() {
     List<LafReference> result = new ArrayList<>();
     boolean addSeparator = false;
+    int maxNameOrder = Collections.max(lafNameOrder.values());
     for (UIManager.LookAndFeelInfo info : myLaFs.getValue()) {
       if (addSeparator) {
         result.add(SEPARATOR);
         addSeparator = false;
       }
       result.add(createLafReference(info));
-
       if (Objects.equals(lafNameOrder.get(info.getName()), maxNameOrder)) {
         addSeparator = true;
       }
@@ -1276,6 +1275,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private static final class DefaultMenuArrowIcon extends MenuArrowIcon {
     private static final BooleanSupplier dark = () -> ColorUtil.isDark(UIManager.getColor("MenuItem.selectionBackground"));
+
     private DefaultMenuArrowIcon() {
       super(() -> AllIcons.Icons.Ide.NextStep,
             () -> dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
@@ -1284,6 +1284,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static LafManagerImpl ourTestInstance;
+
   @TestOnly
   public static LafManagerImpl getTestInstance() {
     if (ourTestInstance == null) {
@@ -1292,7 +1293,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return ourTestInstance;
   }
 
-  private class UIThemeEPListener implements ExtensionPointListener<UIThemeProvider> {
+  private final class UIThemeEPListener implements ExtensionPointListener<UIThemeProvider> {
     @Override
     public void extensionAdded(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
       for (UIManager.LookAndFeelInfo feel : getInstalledLookAndFeels()) {
@@ -1319,7 +1320,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       updateLafComboboxModel();
 
-      // When updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
+      // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
       if (!autodetect && (!myUpdatingPlugin || newTheme.getTheme().getId().equals(myThemeIdBeforePluginUpdate))) {
         setLookAndFeelImpl(newTheme, false, false);
         JBColor.setDark(newTheme.getTheme().isDark());
@@ -1355,7 +1356,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
   }
 
-  private static class LafCellRenderer extends SimpleListCellRenderer<LafReference> {
+  private static final class LafCellRenderer extends SimpleListCellRenderer<LafReference> {
     private static final SeparatorWithText separator = new SeparatorWithText() {
       @Override
       protected void paintComponent(Graphics g) {
@@ -1390,8 +1391,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     @Override
     public void setSelectedItem(@Nullable Object item) {
-      if (item == SEPARATOR) return;
-      super.setSelectedItem(item);
+      if (item != SEPARATOR) {
+        super.setSelectedItem(item);
+      }
     }
   }
 
@@ -1428,7 +1430,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    private ActionGroup getLafGroups() {
+    private @NotNull ActionGroup getLafGroups() {
       List<UIManager.LookAndFeelInfo> lightLafs = new ArrayList<>();
       List<UIManager.LookAndFeelInfo> darkLafs = new ArrayList<>();
 
@@ -1454,9 +1456,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       List<AnAction> result = new ArrayList<>();
       if (!lafs.isEmpty()) {
         result.add(Separator.create(separatorText));
-        lafs.stream()
-          .map(l -> new LafToggleAction(l.getName(), l, isDark))
-          .forEach(a -> result.add(a));
+        for (UIManager.LookAndFeelInfo l : lafs) {
+          result.add(new LafToggleAction(l.getName(), l, isDark));
+        }
       }
       return result;
     }
