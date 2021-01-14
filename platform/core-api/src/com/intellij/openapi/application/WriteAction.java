@@ -113,7 +113,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   @Override
-  protected abstract void run(@NotNull Result<T> result) throws Throwable;
+  protected abstract void run(@NotNull Result<? super T> result) throws Throwable;
 
   /**
    * Executes {@code action} inside write action.

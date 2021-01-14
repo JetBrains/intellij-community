@@ -108,7 +108,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) {
       new MyActionWrap<Void>() {
         @Override
-        protected void run(@NotNull Result<Void> result) throws Throwable {
+        protected void run(@NotNull Result<? super Void> result) throws Throwable {
           action.run();
         }
       }.execute();
@@ -118,7 +118,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) {
       return new MyActionWrap<R>() {
         @Override
-        protected void run(@NotNull Result<R> result) throws Throwable {
+        protected void run(@NotNull Result<? super R> result) throws Throwable {
           result.setResult(action.compute());
         }
       }.execute().getResultObject();
@@ -312,7 +312,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     @Override
-    protected void run(@NotNull Result<T> result) throws Throwable {
+    protected void run(@NotNull Result<? super T> result) throws Throwable {
       run();
     }
 

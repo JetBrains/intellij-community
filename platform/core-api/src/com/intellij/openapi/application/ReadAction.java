@@ -42,7 +42,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   @Override
-  protected abstract void run(@NotNull Result<T> result) throws Throwable;
+  protected abstract void run(@NotNull Result<? super T> result) throws Throwable;
 
   /**
    * @see Application#runReadAction(Runnable)

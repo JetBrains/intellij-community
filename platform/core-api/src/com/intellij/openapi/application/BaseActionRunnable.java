@@ -5,8 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link WriteAction#run(ThrowableRunnable)} or {@link ReadAction#run(ThrowableRunnable)} or similar method instead
+ */
+@Deprecated
 public abstract class BaseActionRunnable<T> {
-  protected abstract void run(@NotNull Result<T> result) throws Throwable;
+  protected abstract void run(@NotNull Result<? super T> result) throws Throwable;
 
   /**
    * @deprecated use {@link ReadAction#run(ThrowableRunnable)}
