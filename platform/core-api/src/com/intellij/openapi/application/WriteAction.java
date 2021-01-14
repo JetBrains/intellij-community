@@ -23,6 +23,13 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance(WriteAction.class);
 
   /**
+   * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} or similar method instead
+   */
+  @Deprecated
+  public WriteAction() {
+  }
+
+  /**
    * @deprecated use {@link #run(ThrowableRunnable)}
    * or {@link #compute(ThrowableComputable)}
    * or (if really desperate) {@link #computeAndWait(ThrowableComputable)} instead
@@ -73,7 +80,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static AccessToken start() {
     // get useful information about the write action
-    Class callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
+    Class<?> callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
     return start(callerClass);
   }
 
@@ -85,7 +92,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @Deprecated
   @NotNull
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  private static AccessToken start(@NotNull Class clazz) {
+  private static AccessToken start(@NotNull Class<?> clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
   }
 
