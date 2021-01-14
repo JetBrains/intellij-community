@@ -10515,6 +10515,190 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty")
+    public static class ReplaceIsEmptyWithIfEmpty extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("defaultValueBlockHasMultiStatement.kt")
+        public void testDefaultValueBlockHasMultiStatement() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasMultiStatement.kt");
+        }
+
+        @TestMetadata("defaultValueBlockHasMultiStatement2.kt")
+        public void testDefaultValueBlockHasMultiStatement2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasMultiStatement2.kt");
+        }
+
+        @TestMetadata("elseIf.kt")
+        public void testElseIf() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/elseIf.kt");
+        }
+
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/implicitReceiver.kt");
+        }
+
+        @TestMetadata("negated.kt")
+        public void testNegated() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/negated.kt");
+        }
+
+        @TestMetadata("noElse.kt")
+        public void testNoElse() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/noElse.kt");
+        }
+
+        @TestMetadata("notSelfValue.kt")
+        public void testNotSelfValue() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/notSelfValue.kt");
+        }
+
+        @TestMetadata("notSelfValue2.kt")
+        public void testNotSelfValue2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/notSelfValue2.kt");
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/array")
+        public static class Array extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/array/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/array/isNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/collection")
+        public static class Collection extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/collection/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/collection/isNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/intArray")
+        public static class IntArray extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/intArray/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/intArray/isNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/list")
+        public static class List extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/list/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/list/isNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/map")
+        public static class Map extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/map/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/map/isNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/set")
+        public static class Set extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/set/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/set/isNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/str")
+        public static class Str extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isBlank.kt")
+            public void testIsBlank() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/str/isBlank.kt");
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/str/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotBlank.kt")
+            public void testIsNotBlank() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/str/isNotBlank.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/str/isNotEmpty.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog")
     public abstract static class ReplaceJavaStaticMethodWithKotlinAnalog extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
