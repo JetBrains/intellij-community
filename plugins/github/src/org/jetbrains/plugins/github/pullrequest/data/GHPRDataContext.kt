@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
@@ -12,8 +11,7 @@ import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
-internal class GHPRDataContext(val parsedRepositoryCoordinates: GHRepositoryCoordinates,
-                               val gitRemoteCoordinates: GitRemoteUrlCoordinates,
+internal class GHPRDataContext(val gitRemoteCoordinates: GitRemoteUrlCoordinates,
                                val searchHolder: GHPRSearchQueryHolder,
                                val listLoader: GHListLoader<GHPullRequestShort>,
                                val listUpdatesChecker: GHPRListUpdatesChecker,

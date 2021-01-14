@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.diff.util.FileEditorBase
@@ -38,8 +38,6 @@ internal class GHPRTimelineFileEditor(private val project: Project,
   val commentsData = dataProvider.commentsData
 
   val timelineLoader = dataProvider.acquireTimelineLoader(this)
-
-  val repository = dataContext.parsedRepositoryCoordinates
 
   override fun getName() = GithubBundle.message("pull.request.editor.timeline")
 

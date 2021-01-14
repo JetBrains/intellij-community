@@ -216,7 +216,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
 
-    val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, editor.repository, detailsModel.value)
+    val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value)
     val diffFactory = GHPRReviewThreadDiffComponentFactory(project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
     return GHPRTimelineItemComponentFactory(detailsDataProvider, commentsDataProvider, reviewDataProvider,

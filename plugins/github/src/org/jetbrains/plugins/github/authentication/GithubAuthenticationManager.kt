@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
 import com.intellij.openapi.components.service
@@ -73,6 +73,13 @@ class GithubAuthenticationManager internal constructor() {
       project, parentComponent,
       GHLoginRequest(server = server, login = login, isLoginEditable = false, isCheckLoginUnique = true)
     )?.registerAccount()
+
+  @RequiresEdt
+  fun requestNewAccountForDefaultServer(project: Project?, useToken: Boolean = false): GithubAccount? {
+    return GHLoginRequest(server = GithubServerPath.DEFAULT_SERVER, isCheckLoginUnique = true).let {
+      if (!useToken) it.loginWithOAuth(project, null) else it.loginWithToken(project, null)
+    }?.registerAccount()
+  }
 
   internal fun isAccountUnique(name: String, server: GithubServerPath) =
     accountManager.accounts.none { it.name == name && it.server.equals(server, true) }
