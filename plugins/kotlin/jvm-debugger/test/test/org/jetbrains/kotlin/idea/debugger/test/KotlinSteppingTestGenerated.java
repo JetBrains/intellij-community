@@ -479,12 +479,12 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
         @TestMetadata("localFunction.kt")
         public void testLocalFunction() throws Exception {
-            runTest("idea/jvm-debugger/jvm-debugger-test/testData/stepping/stepOver/localFunction.kt");
+            runTest("testData/stepping/stepOver/localFunction.kt");
         }
 
         @TestMetadata("localFunctionWithSingleLineExpressionBody.kt")
         public void testLocalFunctionWithSingleLineExpressionBody() throws Exception {
-            runTest("idea/jvm-debugger/jvm-debugger-test/testData/stepping/stepOver/localFunctionWithSingleLineExpressionBody.kt");
+            runTest("testData/stepping/stepOver/localFunctionWithSingleLineExpressionBody.kt");
         }
 
         @TestMetadata("noParameterExtensionLambdaArgumentCallInInline.kt")
