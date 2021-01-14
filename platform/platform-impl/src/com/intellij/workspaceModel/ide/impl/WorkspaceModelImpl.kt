@@ -19,7 +19,7 @@ import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
   private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && WorkspaceModelImpl.cacheEnabled) || forceEnableCaching
-  private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
+  override val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
 
   /** specifies ID of a entity which changes should be printed to the log */
   private val entityToTrace = System.getProperty("idea.workspace.model.track.facet.id")?.let {

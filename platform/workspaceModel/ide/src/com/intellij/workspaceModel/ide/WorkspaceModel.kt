@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 interface WorkspaceModel {
   val entityStorage: VersionedEntityStorage
 
+  val cache: WorkspaceModelCache?
+
   /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
    */
