@@ -778,7 +778,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
-          vendor.getValue();
           if (DomUtil.hasXml(vendor) && PluginManager.getInstance().isDevelopedByJetBrains(vendor.getValue())) {
             highlightRedundant(extension,
                                DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
