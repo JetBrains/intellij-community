@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.ide.bookmarks.BookmarkType;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -18,7 +19,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
@@ -69,9 +69,10 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
 
       final JBPopup[] popup = new JBPopup[1];
 
-      MnemonicChooser mc = new MnemonicChooser() {
+      MnemonicChooser mc = new MnemonicChooser(bookmarks, BookmarkType.get(bookmark.getMnemonic())) {
         @Override
-        protected void onMnemonicChosen(char c) {
+        protected void onChosen(@NotNull BookmarkType type) {
+          char c = type.getMnemonic();
           popup[0].cancel();
           bookmarks.setMnemonic(bookmark, c);
         }
@@ -81,11 +82,6 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
           popup[0].cancel();
           bookmarks.removeBookmark(bookmark);
         }
-
-        @Override
-        protected boolean isOccupied(char c) {
-          return bookmarks.findBookmarkForMnemonic(c) != null;
-        }
       };
 
       popup[0] = JBPopupFactory.getInstance().createComponentPopupBuilder(mc, mc.getPreferableFocusComponent()).
@@ -94,11 +90,6 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         setRequestFocus(true).
         setMovable(false).
         setCancelKeyEnabled(false).
-        setAdText(bookmarks.hasBookmarksWithMnemonics()
-                  ? LangBundle.message("popup.advertisement.cells.are.in.use",
-                                       StartupUiUtil.isUnderDarcula() ?
-                                       LangBundle.message("popup.advertisement.cells.are.in.use.brown") :
-                                       LangBundle.message("popup.advertisement.cells.are.in.use.yellow")) : null).
         setResizable(false).
         createPopup();
       popup[0].addListener(new JBPopupListener() {
