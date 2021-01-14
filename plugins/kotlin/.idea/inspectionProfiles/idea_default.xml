@@ -979,15 +979,55 @@
         <constraint name="file" nameOfExprType="java.io.File" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="DataKey.getData()" text="$Var2$.getData($Var3$.getDataContext())" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var3$.getData($Var2$)">
+      <searchConfiguration name="DataContext.getData(String)" description="DataContext.getData(DataKey) with a dedicated DataKey constant shall be used instead" problemDescriptor="DataContext.getData(DataKey) shall be used instead" text="$Var2$.getData($Var3$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" target="true" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataContext" within="" contains="" />
+        <constraint name="Var3" regexp="&quot;.*" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="DataContext.getData(String)" text="$Var2$.getData($Var3$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" target="true" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataContext" within="" contains="" />
+        <constraint name="Var3" regexp="&quot;.*" within="" contains="" />
+      </searchConfiguration>
+      <replaceConfiguration name="DataKey API" text="$Var2$.getData($Var3$.getDataContext())" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var3$.getData($Var2$)">
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
         <constraint name="Var3" nameOfExprType="AnActionEvent" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="DataKey.getData()" text="$Var2$.getData($Var3$.dataContext)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var3$.getData($Var2$)">
+      <replaceConfiguration name="DataKey API" text="$Var2$.getData($Var3$.dataContext)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var3$.getData($Var2$)">
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
         <constraint name="Var3" nameOfExprType="AnActionEvent" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="DataKey API" text="$Var2$.getName().equals($Var3$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var2$.is($Var3$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
+        <constraint name="Var3" nameOfExprType="String" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="DataKey API" text="$Var3$.equals($Var2$.getName())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var2$.is($Var3$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
+        <constraint name="Var3" nameOfExprType="String" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="DataKey API" text="$Var2$.getName() == $Var3$" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var2$.is($Var3$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
+        <constraint name="Var3" nameOfExprType="String" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="DataKey API" text="$Var3$ == $Var2$.getName()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var2$.is($Var3$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
+        <constraint name="Var3" nameOfExprType="String" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="DataKey API" text="$Var2$.name == $Var3$" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var2$.`is`($Var3$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
+        <constraint name="Var3" nameOfExprType="String" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="DataKey API" text="$Var3$ == $Var2$.name" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var2$.`is`($Var3$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
+        <constraint name="Var3" nameOfExprType="String" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="DBE model property must be public" uuid="0899a4c2-78e7-3f01-be3c-9c46451baec3" text="class $Class$ {&#10;  @StateProperty&#10;  @Modifier(&quot;packageLocal&quot;) $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
