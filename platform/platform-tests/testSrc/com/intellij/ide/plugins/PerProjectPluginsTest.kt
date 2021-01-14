@@ -3,10 +3,10 @@ package com.intellij.ide.plugins
 
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertFalse
@@ -17,17 +17,18 @@ class PerProjectPluginsTest {
 
   companion object {
     @JvmField
-    @ClassRule
     val projectRule = ProjectRule()
   }
 
-  @Rule
-  @JvmField
-  val inMemoryFs = InMemoryFsRule()
+  private val inMemoryFs = InMemoryFsRule()
 
   @Rule
   @JvmField
-  val runInEdt = EdtRule()
+  val chain = RuleChain(
+    inMemoryFs,
+    ProjectRule(),
+    EdtRule(),
+  )
 
   @Test
   fun enabledAndDisablePerProject() {

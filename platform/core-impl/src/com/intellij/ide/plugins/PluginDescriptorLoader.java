@@ -512,7 +512,13 @@ public final class PluginDescriptorLoader {
   public static @NotNull IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
     IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
-    return fullDescriptor != null ? fullDescriptor : descriptor;
+    if (fullDescriptor == null) {
+      PluginManagerCore.getLogger().error("Could not load full descriptor for plugin " + descriptor.getPluginPath());
+      return descriptor;
+    }
+    else {
+      return fullDescriptor;
+    }
   }
 
   private static boolean isFull(@NotNull IdeaPluginDescriptorImpl descriptor) {
