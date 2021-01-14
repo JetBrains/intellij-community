@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -6,7 +6,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstant;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +15,7 @@ import java.util.*;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
 
-class DfGenericObjectType extends DfAntiConstantType<Object> implements DfReferenceType {
+final class DfGenericObjectType extends DfAntiConstantType<Object> implements DfReferenceType {
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull DfaNullability myNullability;
   private final @NotNull Mutability myMutability;
@@ -198,11 +197,11 @@ class DfGenericObjectType extends DfAntiConstantType<Object> implements DfRefere
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
     Set<Object> notValues = myNotValues;
     if (type instanceof DfGenericObjectType) {
-      notValues = new THashSet<>(myNotValues);
+      notValues = new HashSet<>(myNotValues);
       notValues.retainAll(((DfGenericObjectType)other).myNotValues);
     }
     if (type instanceof DfReferenceConstantType) {
-      notValues = new THashSet<>(myNotValues);
+      notValues = new HashSet<>(myNotValues);
       notValues.remove(((DfReferenceConstantType)type).getValue());
     }
     return new DfGenericObjectType(notValues, constraint, nullability, mutability, sf, sfType, locality);
@@ -246,8 +245,9 @@ class DfGenericObjectType extends DfAntiConstantType<Object> implements DfRefere
       Set<Object> otherNotValues = ((DfGenericObjectType)other).myNotValues;
       if (otherNotValues.containsAll(myNotValues)) {
         notValues = otherNotValues;
-      } else if (!myNotValues.containsAll(otherNotValues)) {
-        notValues = new THashSet<>(myNotValues);
+      }
+      else if (!myNotValues.containsAll(otherNotValues)) {
+        notValues = new HashSet<>(myNotValues);
         notValues.addAll(otherNotValues);
         if (nullability == DfaNullability.NOT_NULL) {
           DfEphemeralReferenceType ephemeralValue = checkEphemeral(constraint, notValues);
@@ -299,7 +299,7 @@ class DfGenericObjectType extends DfAntiConstantType<Object> implements DfRefere
   public int hashCode() {
     return Objects.hash(myConstraint, myNullability, myMutability, mySpecialField, mySpecialFieldType, myLocal, myNotValues);
   }
-  
+
   @Override
   public String toString() {
     List<String> components = new ArrayList<>();

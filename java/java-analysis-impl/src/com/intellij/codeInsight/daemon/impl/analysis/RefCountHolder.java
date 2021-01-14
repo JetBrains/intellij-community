@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -24,7 +24,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +38,8 @@ final class RefCountHolder {
   // resolved elements -> list of their references
   private final MultiMap<PsiElement,PsiReference> myLocalRefsMap = MultiMap.createSet();
 
-  private final Map<PsiAnchor, Boolean> myDclsUsedMap = new THashMap<>();
-  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<>();
+  private final Map<PsiAnchor, Boolean> myDclsUsedMap = new HashMap<>();
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new HashMap<>();
   private final AtomicReference<ProgressIndicator> myState = new AtomicReference<>(EMPTY);
   // contains useful information
   private static final ProgressIndicator READY = new DaemonProgressIndicator() {
@@ -215,8 +214,8 @@ final class RefCountHolder {
     synchronized (myLocalRefsMap) {
       array = myLocalRefsMap.get(element);
     }
-    if (!array.isEmpty() && 
-        !isParameterUsedRecursively(element, array) && 
+    if (!array.isEmpty() &&
+        !isParameterUsedRecursively(element, array) &&
         !isClassUsedForInnerImports(element, array)) {
       for (PsiReference reference : array) {
         if (reference.isReferenceTo(element)) return true;
@@ -226,7 +225,7 @@ final class RefCountHolder {
     Boolean usedStatus = myDclsUsedMap.get(PsiAnchor.create(element));
     return usedStatus == Boolean.TRUE;
   }
-  
+
   private boolean isClassUsedForInnerImports(@NotNull PsiElement element, @NotNull Collection<? extends PsiReference> array) {
     if (!(element instanceof PsiClass)) return false;
 

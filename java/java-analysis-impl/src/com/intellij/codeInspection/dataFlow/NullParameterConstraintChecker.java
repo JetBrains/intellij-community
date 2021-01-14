@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -17,10 +17,10 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -41,9 +41,9 @@ final class NullParameterConstraintChecker extends DataFlowRunner {
 
   private NullParameterConstraintChecker(Project project, Collection<PsiParameter> parameters) {
     super(project);
-    myPossiblyViolatedParameters = new THashSet<>(parameters);
-    myParametersWithSuccessfulExecutionInNotNullState = new THashSet<>();
-    myUsedParameters = new THashSet<>();
+    myPossiblyViolatedParameters = new HashSet<>(parameters);
+    myParametersWithSuccessfulExecutionInNotNullState = new HashSet<>();
+    myUsedParameters = new HashSet<>();
   }
 
   static PsiParameter @NotNull [] checkMethodParameters(PsiMethod method) {

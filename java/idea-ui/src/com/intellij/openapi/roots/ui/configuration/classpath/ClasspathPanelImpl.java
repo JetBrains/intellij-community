@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -43,7 +43,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,9 +62,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-
-public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
+public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private static final Logger LOG = Logger.getInstance(ClasspathPanelImpl.class);
   private final JBTable myEntryTable;
   private final ClasspathTableModel myModel;
@@ -498,7 +496,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
     finally {
       enableModelUpdate();
-      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myEntryTable, true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEntryTable, true));
     }
   }
 
@@ -507,11 +505,11 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     for (ClasspathTableItem<?> item : toAdd) {
       myModel.addRow(item);
     }
-    TIntArrayList toSelect = new TIntArrayList();
+    IntArrayList toSelect = new IntArrayList();
     for (int i = myModel.getRowCount() - toAdd.size(); i < myModel.getRowCount(); i++) {
       toSelect.add(myEntryTable.convertRowIndexToView(i));
     }
-    TableUtil.selectRows(myEntryTable, toSelect.toNativeArray());
+    TableUtil.selectRows(myEntryTable, toSelect.toIntArray());
     TableUtil.scrollSelectionToVisible(myEntryTable);
 
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myState.getProject()).getContext();
@@ -636,13 +634,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myModel.clear();
     myModel.init();
     myModel.fireTableDataChanged();
-    TIntArrayList newSelection = new TIntArrayList();
+    IntArrayList newSelection = new IntArrayList();
     for (int i = 0; i < myModel.getRowCount(); i++) {
       if (oldSelection.contains(getItemAt(i))) {
         newSelection.add(i);
       }
     }
-    TableUtil.selectRows(myEntryTable, newSelection.toNativeArray());
+    TableUtil.selectRows(myEntryTable, newSelection.toIntArray());
   }
 
   static CellAppearanceEx getCellAppearance(final ClasspathTableItem<?> item,

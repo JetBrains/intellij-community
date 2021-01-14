@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,7 +8,6 @@ import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.InitialPatternCondition
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SharedProcessingContext
-import gnu.trove.THashMap
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
@@ -77,7 +76,7 @@ internal class UastPatternAdapter(private val pattern: (UElement, ProcessingCont
       val existingMap = sharedContext.get(CACHED_UAST_ELEMENTS)
       if (existingMap != null) return existingMap
       // we assume that patterns are queried sequentially in the same thread
-      val newMap = THashMap<Class<out UElement>, UElement?>()
+      val newMap = HashMap<Class<out UElement>, UElement?>()
       sharedContext.put(CACHED_UAST_ELEMENTS, newMap)
       return newMap
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -17,7 +17,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -174,7 +174,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
 
-    private String joinToString(List<? extends ResourceVariable> variables) {
+    private static String joinToString(List<? extends ResourceVariable> variables) {
       return variables.stream().map(ResourceVariable::generateResourceDeclaration).collect(Collectors.joining("; "));
     }
 
@@ -254,7 +254,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
       List<ResourceVariable> resourceVariables = new ArrayList<>();
       List<PsiStatement> statementsToDelete = new ArrayList<>();
-      TIntArrayList initializerPositions = new TIntArrayList();
+      IntArrayList initializerPositions = new IntArrayList();
       for (PsiVariable resourceVariable : collectedVariables) {
         boolean variableUsedOutsideTry = isVariableUsedOutsideContext(resourceVariable, tryStatement);
         if (!PsiUtil.isLanguageLevel9OrHigher(finallyBlock) && variableUsedOutsideTry) return null;
@@ -291,8 +291,9 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           statementsToDelete.add(finallyStatements[i]);
         }
       }
-      if (!noStatementsBetweenVariableDeclarations(collectedVariables)) return null;
-      if (!initializersAreAtTheBeginning(initializerPositions)) return null;
+      if (!noStatementsBetweenVariableDeclarations(collectedVariables) || !initializersAreAtTheBeginning(initializerPositions)) {
+        return null;
+      }
 
       resourceVariables.sort(Comparator.comparing(o -> o.getInitializedElement(), PsiElementOrderComparator.getInstance()));
       Optional<ResourceVariable> lastNonTryVar = StreamEx.of(ContainerUtil.reverse(resourceVariables))
@@ -310,10 +311,10 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       return new Context(resourceVariables, new HashSet<>(statementsToDelete));
     }
 
-    private static boolean initializersAreAtTheBeginning(TIntArrayList initializerPositions) {
-      initializerPositions.sort();
+    private static boolean initializersAreAtTheBeginning(IntArrayList initializerPositions) {
+      initializerPositions.sort(null);
       for (int i = 0; i < initializerPositions.size(); i++) {
-        if (initializerPositions.get(i) != i) return false;
+        if (initializerPositions.getInt(i) != i) return false;
       }
       return true;
     }

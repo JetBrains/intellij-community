@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -11,7 +11,6 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,11 +108,11 @@ public final class FindSuperElementsHelper {
     }
   }
 
-  private static class SiblingInheritorSearcher implements Processor<PsiClass> {
+  private static final class SiblingInheritorSearcher implements Processor<PsiClass> {
     private final PsiClass myContainingClass;
     private final Set<PsiMethod> myRemainingMethods;
     private Map<PsiMethod, SiblingInfo> myResult;
-    private final Collection<PsiAnchor> myCheckedInterfaces = new THashSet<>();
+    private final Collection<PsiAnchor> myCheckedInterfaces = new HashSet<>();
 
     SiblingInheritorSearcher(@NotNull Collection<PsiMethod> methods, @NotNull PsiClass containingClass) {
       myContainingClass = containingClass;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -18,7 +18,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +33,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance(StandardInstructionVisitor.class);
   private final boolean myStopAnalysisOnNpe;
 
-  final Set<InstanceofInstruction> myReachable = new THashSet<>();
-  final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
+  final Set<InstanceofInstruction> myReachable = new HashSet<>();
+  final Set<InstanceofInstruction> myUsefulInstanceofs = new HashSet<>();
 
   public StandardInstructionVisitor() {
     myStopAnalysisOnNpe = false;
@@ -63,7 +62,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (!(dfaDest instanceof DfaVariableValue &&
           ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
           dfaSource instanceof DfaVariableValue &&
-          (ControlFlowAnalyzer.isTempVariable((DfaVariableValue)dfaSource) || 
+          (ControlFlowAnalyzer.isTempVariable((DfaVariableValue)dfaSource) ||
           ((DfaVariableValue)dfaSource).getDescriptor().isCall()))) {
       dropLocality(dfaSource, memState);
     }
@@ -89,7 +88,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
-      if (var.getInherentNullability() == Nullability.NULLABLE && 
+      if (var.getInherentNullability() == Nullability.NULLABLE &&
           DfaNullability.fromDfType(memState.getDfType(var)) == DfaNullability.UNKNOWN && instruction.isVariableInitializer()) {
         memState.meetDfType(var, DfaNullability.NULLABLE.asDfType());
       }
@@ -118,7 +117,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (toType == TypeConstraints.BOTTOM) return;
     if (toType instanceof TypeConstraint.Exact) {
       toType = ((TypeConstraint.Exact)toType).instanceOf();
-    } 
+    }
     TypeConstraint fromType = TypeConstraint.fromDfType(memState.getDfType(dfaSource));
     TypeConstraint meet = fromType.meet(toType);
     if (meet != TypeConstraints.BOTTOM) return;
@@ -718,7 +717,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return factory.getUnknown();
   }
 
-  private static @NotNull PsiType narrowReturnType(@NotNull PsiType returnType, @Nullable PsiType qualifierType, 
+  private static @NotNull PsiType narrowReturnType(@NotNull PsiType returnType, @Nullable PsiType qualifierType,
                                                    @NotNull PsiMethod realMethod) {
     PsiClass containingClass = realMethod.getContainingClass();
     PsiType realReturnType = realMethod.getReturnType();
@@ -735,7 +734,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
       }
     }
-    if (realReturnType != null && !realReturnType.equals(returnType) && 
+    if (realReturnType != null && !realReturnType.equals(returnType) &&
         TypeConversionUtil.erasure(returnType).isAssignableFrom(realReturnType)) {
       // possibly covariant return type
       return realReturnType;
@@ -1014,7 +1013,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         if (!memState.isNull(dfaLeft)) {
           useful = true;
         } else if (DfaNullability.fromDfType(leftType) == DfaNullability.UNKNOWN) {
-          // Not-instanceof check leaves only "null" possible value in some state: likely the state is ephemeral 
+          // Not-instanceof check leaves only "null" possible value in some state: likely the state is ephemeral
           memState.markEphemeral();
         }
       }

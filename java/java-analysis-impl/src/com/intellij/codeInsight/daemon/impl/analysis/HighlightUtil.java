@@ -61,7 +61,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,13 +77,13 @@ public final class HighlightUtil {
 
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
-  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
-  private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new THashMap<>(11);
-  private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new THashMap<>(8);
-  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new THashMap<>(8);
-  private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new THashMap<>(1);
-  private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = new THashMap<>(1);
-  private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = new THashMap<>(2);
+  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new HashMap<>(7);
+  private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new HashMap<>(11);
+  private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new HashMap<>(8);
+  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new HashMap<>(8);
+  private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new HashMap<>(1);
+  private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = new HashMap<>(1);
+  private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = new HashMap<>(2);
 
   private static final Set<String> ourConstructorNotAllowedModifiers =
     Set.of(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
@@ -994,7 +993,7 @@ public final class HighlightUtil {
         else {
           //noinspection DuplicateExpressions
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
-            isAllowed = modifierOwnerParent instanceof PsiClass && 
+            isAllowed = modifierOwnerParent instanceof PsiClass &&
                         (PsiModifier.STATIC.equals(modifier) || ((PsiClass)modifierOwnerParent).getQualifiedName() != null) ||
                         FileTypeUtils.isInServerPageFile(modifierOwnerParent) ||
                         // non-physical dummy holder might not have FQN

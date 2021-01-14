@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -20,14 +19,13 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 import java.util.*;
 
-public class RefClassImpl extends RefJavaElementImpl implements RefClass {
+public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final Set<RefElement> EMPTY_SET = Collections.emptySet();
   private static final Set<RefClass> EMPTY_CLASS_SET = Collections.emptySet();
   private static final List<RefMethod> EMPTY_METHOD_LIST = ContainerUtil.emptyList();
@@ -343,7 +341,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
     if (myBases.size() == 1) {
       // convert from singleton
-      myBases = new THashSet<>(myBases);
+      myBases = new HashSet<>(myBases);
     }
     myBases.add(refClass);
   }
@@ -361,7 +359,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
     if (mySubClasses.size() == 1) {
       // convert from singleton
-      mySubClasses = new THashSet<>(mySubClasses);
+      mySubClasses = new HashSet<>(mySubClasses);
     }
     mySubClasses.add(refClass);
   }
@@ -391,7 +389,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (from != null) {
       synchronized (this) {
         if (myInTypeReferences == null){
-          myInTypeReferences = new THashSet<>(1);
+          myInTypeReferences = new HashSet<>(1);
         }
         myInTypeReferences.add(from);
       }

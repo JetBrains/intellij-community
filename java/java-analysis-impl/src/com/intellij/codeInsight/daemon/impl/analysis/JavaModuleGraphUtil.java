@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.jvm.JvmLanguage;
@@ -21,12 +21,12 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -34,9 +34,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.jar.JarFile;
-
-import static com.intellij.util.ObjectUtils.tryCast;
-import static java.util.Objects.requireNonNullElse;
 
 public final class JavaModuleGraphUtil {
   private JavaModuleGraphUtil() { }
@@ -126,7 +123,7 @@ public final class JavaModuleGraphUtil {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
       Result.create(findCycles(project), PsiModificationTracker.MODIFICATION_COUNT));
-    return requireNonNullElse(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
+    return Objects.requireNonNullElse(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
   }
 
   public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @Nullable PsiJavaModule target) {
@@ -201,7 +198,7 @@ public final class JavaModuleGraphUtil {
     for (PsiPackageAccessibilityStatement statement : source.getExports()) {
       String pkg = statement.getPackageName();
       List<String> targets = statement.getModuleNames();
-      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : new THashSet<>(targets));
+      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : new HashSet<>(targets));
     }
     return map;
   }
@@ -218,7 +215,7 @@ public final class JavaModuleGraphUtil {
    */
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
-    Set<String> transitiveEdges = new THashSet<>();
+    Set<String> transitiveEdges = new HashSet<>();
 
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
@@ -349,7 +346,7 @@ public final class JavaModuleGraphUtil {
     private final boolean myInbound;
 
     private ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
-      myNodes = new THashSet<>();
+      myNodes = new HashSet<>();
       edges.entrySet().forEach(e -> {
         myNodes.add(e.getKey());
         myNodes.addAll(e.getValue());
@@ -410,7 +407,7 @@ public final class JavaModuleGraphUtil {
 
     private static boolean isJvmLanguageFile(@NotNull VirtualFile file) {
       FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
-      LanguageFileType languageFileType = tryCast(fileTypeRegistry.getFileTypeByFileName(file.getName()), LanguageFileType.class);
+      LanguageFileType languageFileType = ObjectUtils.tryCast(fileTypeRegistry.getFileTypeByFileName(file.getName()), LanguageFileType.class);
       return languageFileType != null && languageFileType.getLanguage() instanceof JvmLanguage;
     }
 

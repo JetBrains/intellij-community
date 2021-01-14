@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -23,6 +23,7 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1542,7 +1543,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * thus sum of resulting class sizes is equal to the original class size
    */
   private @NotNull List<EqClass> splitEqClass(EqClass eqClass, DfaMemoryStateImpl other) {
-    TIntObjectHashMap<EqClass> groupsInClasses = new TIntObjectHashMap<>();
+    Int2ObjectOpenHashMap<EqClass> groupsInClasses = new Int2ObjectOpenHashMap<>();
     List<EqClass> groups = new ArrayList<>();
     for (DfaVariableValue value : eqClass.asList()) {
       int otherClass = other.getEqClassIndex(value);
@@ -1560,7 +1561,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       list.add(value.getID());
     }
-    groupsInClasses.forEachValue(groups::add);
+    groups.addAll(groupsInClasses.values());
     return groups;
   }
 

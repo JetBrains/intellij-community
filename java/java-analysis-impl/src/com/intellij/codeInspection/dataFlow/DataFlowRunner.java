@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -28,7 +28,6 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import gnu.trove.THashSet;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +66,8 @@ public class DataFlowRunner {
 
   /**
    * @param project current project
-   * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust 
- *                field initializers (e.g. we usually cannot if context is a constructor) 
+   * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust
+ *                field initializers (e.g. we usually cannot if context is a constructor)
    * @param unknownMembersAreNullable if true every parameter or method return value without nullity annotation is assumed to be nullable
    * @param ignoreAssertions if true, assertion statements will be ignored, as if JVM is started with -da.
    */
@@ -330,11 +329,11 @@ public class DataFlowRunner {
   }
 
   protected void beforeInstruction(Instruction instruction) {
-    
+
   }
 
   protected void afterInstruction(Instruction instruction) {
-    
+
   }
 
   private @NotNull DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<DfaMemoryState> processed) {
@@ -523,7 +522,7 @@ public class DataFlowRunner {
     })) return;
 
     // now remove obsolete memory states
-    final Set<BranchingInstruction> mayRemoveStatesFor = new THashSet<>();
+    final Set<BranchingInstruction> mayRemoveStatesFor = new HashSet<>();
     for (Instruction instruction : myInstructions) {
       if (inSameLoop(prevInstruction, instruction, loopNumber) && instruction instanceof BranchingInstruction) {
         mayRemoveStatesFor.add((BranchingInstruction)instruction);

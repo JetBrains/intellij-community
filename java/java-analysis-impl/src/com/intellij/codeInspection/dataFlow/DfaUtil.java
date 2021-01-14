@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -32,7 +32,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Gregory.Shrago
  */
 public final class DfaUtil {
-
   public static @NotNull Collection<PsiExpression> getVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
@@ -180,7 +179,7 @@ public final class DfaUtil {
     if (body == null) return Nullability.UNKNOWN;
 
     final DataFlowRunner dfaRunner = new DataFlowRunner(owner.getProject());
-    class BlockNullabilityVisitor extends StandardInstructionVisitor {
+    final class BlockNullabilityVisitor extends StandardInstructionVisitor {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
       boolean hasUnknowns = false;

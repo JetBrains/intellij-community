@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -11,9 +11,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,9 +27,8 @@ public class ModuleDescriptor {
   private final MultiMap<File, DetectedSourceRoot> myContentToSourceRoots = new MultiMap<>();
   private final Set<File> myLibraryFiles = new HashSet<>();
   private final Set<ModuleDescriptor> myDependencies = new HashSet<>();
-  private static final Set<String> ourModuleNameStopList = new THashSet<>(
-    Arrays.asList("java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp"),
-    CaseInsensitiveStringHashingStrategy.INSTANCE
+  private static final Set<String> ourModuleNameStopList = CollectionFactory.createCaseInsensitiveStringSet(
+    Arrays.asList("java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp")
   );
 
   private boolean myReuseExistingElement;

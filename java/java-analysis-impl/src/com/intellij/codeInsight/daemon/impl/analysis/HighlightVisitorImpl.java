@@ -42,15 +42,11 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.siyeh.ig.psiutils.ClassUtils;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Function;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
@@ -64,17 +60,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private PreviewFeatureVisitor myPreviewFeatureVisitor;
 
   // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
-  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<>();
+  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new HashMap<>();
   // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
-  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<>();
+  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new HashMap<>();
 
   private enum ReassignedState {
     DUNNO, INSIDE_FILE, REASSIGNED
   }
-  private final Map<PsiParameter, ReassignedState> myReassignedParameters = new THashMap<>();
+  private final Map<PsiParameter, ReassignedState> myReassignedParameters = new HashMap<>();
 
-  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new THashMap<>();
-  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<>();
+  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new HashMap<>();
+  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new HashMap<>();
 
   private final PsiElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementWalkingVisitor() {
     @Override public void visitElement(@NotNull PsiElement element) {
@@ -90,8 +86,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
   };
-  private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<>();
-  private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new THashSet<>();
+  private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new HashMap<>();
+  private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
   private final Map<PsiMethod, PsiType> myExpectedReturnTypes = new HashMap<>();
   private final Function<? super PsiElement, ? extends PsiClass> myInsideConstructorOfClass = this::findInsideConstructorClass;
   private final Map<PsiElement, PsiClass> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
@@ -2004,7 +2000,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     @Override
     public void visitImportStatement(final PsiImportStatement statement) {
-      final PsiModifierListOwner owner = tryCast(statement.resolve(), PsiModifierListOwner.class);
+      final PsiModifierListOwner owner = ObjectUtils.tryCast(statement.resolve(), PsiModifierListOwner.class);
       final HighlightInfo highlightInfo = checkPreviewFeatureElement(statement, owner, myLanguageLevel);
       myHolder.add(highlightInfo);
     }
@@ -2105,7 +2101,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
       final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
       if (reference == null) return null;
-      return tryCast(reference.resolve(), PsiModifierListOwner.class);
+      return ObjectUtils.tryCast(reference.resolve(), PsiModifierListOwner.class);
     }
 
     /**

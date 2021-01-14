@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,19 +142,17 @@ public abstract class ModuleInsight {
   }
 
   private void maximizeModuleFolders(@NotNull Collection<ModuleCandidate> modules) {
-    TObjectIntHashMap<File> dirToChildRootCount = new TObjectIntHashMap<>();
+    Object2IntOpenHashMap<File> dirToChildRootCount = new Object2IntOpenHashMap<>();
     for (ModuleCandidate module : modules) {
       walkParents(module.myFolder, this::isEntryPointRoot, file -> {
-        if (!dirToChildRootCount.adjustValue(file, 1)) {
-          dirToChildRootCount.put(file, 1);
-        }
+        dirToChildRootCount.addTo(file, 1);
       });
     }
     for (ModuleCandidate module : modules) {
       File moduleRoot = module.myFolder;
       Ref<File> adjustedRootRef = new Ref<>(module.myFolder);
       File current = moduleRoot;
-      while (dirToChildRootCount.get(current) == 1) {
+      while (dirToChildRootCount.getInt(current) == 1) {
         adjustedRootRef.set(current);
         if (isEntryPointRoot(current)) break;
         current = current.getParentFile();
@@ -180,7 +178,7 @@ public abstract class ModuleInsight {
     return myIgnoredNames.contains(sourceRoot.getName());
   }
 
-  protected void addModules(Collection<? extends ModuleDescriptor> newModules) {
+  protected void addModules(Collection<ModuleDescriptor> newModules) {
     if (myModules == null) {
       myModules = new ArrayList<>(newModules);
     }

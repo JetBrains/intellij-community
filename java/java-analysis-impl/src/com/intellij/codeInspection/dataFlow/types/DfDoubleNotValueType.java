@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.java.analysis.JavaAnalysisBundle;import com.intellij.psi.PsiKeyword;
-import gnu.trove.THashSet;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.psi.PsiKeyword;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
-class DfDoubleNotValueType extends DfAntiConstantType<Double> implements DfDoubleType {
+final class DfDoubleNotValueType extends DfAntiConstantType<Double> implements DfDoubleType {
   DfDoubleNotValueType(Set<Double> values) {
     super(values);
   }
@@ -26,7 +27,7 @@ class DfDoubleNotValueType extends DfAntiConstantType<Double> implements DfDoubl
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
     if (other instanceof DfDoubleNotValueType) {
-      THashSet<Double> notValues = new THashSet<>(myNotValues);
+      Set<Double> notValues = new HashSet<>(myNotValues);
       notValues.retainAll(((DfDoubleNotValueType)other).myNotValues);
       return notValues.isEmpty() ? DfTypes.DOUBLE : new DfDoubleNotValueType(notValues);
     }
@@ -40,7 +41,7 @@ class DfDoubleNotValueType extends DfAntiConstantType<Double> implements DfDoubl
     if (other.isSuperType(this)) return this;
     if (other instanceof DfDoubleConstantType && myNotValues.contains(((DfDoubleConstantType)other).getValue())) return DfTypes.BOTTOM;
     if (other instanceof DfDoubleNotValueType) {
-      THashSet<Double> notValues = new THashSet<>(myNotValues);
+      Set<Double> notValues = new HashSet<>(myNotValues);
       notValues.addAll(((DfDoubleNotValueType)other).myNotValues);
       return new DfDoubleNotValueType(notValues);
     }

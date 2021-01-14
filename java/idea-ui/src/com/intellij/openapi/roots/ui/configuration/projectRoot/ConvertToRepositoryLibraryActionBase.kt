@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.ide.JavaUiBundle
@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
@@ -31,8 +30,8 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
-import gnu.trove.THashSet
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -263,16 +262,23 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
     if (downloadedFiles.size != libraryFiles.size) {
       return false
     }
-    val contentHashing = object : TObjectHashingStrategy<File> {
-      override fun computeHashCode(file: File) = file.length().toInt()
+    val contentHashing = object : Hash.Strategy<File> {
+      override fun hashCode(file: File?) = file?.length()?.toInt() ?: 0
 
-      override fun equals(o1: File, o2: File): Boolean {
+      override fun equals(o1: File?, o2: File?): Boolean {
+        if (o1 === o2) {
+          return true
+        }
+        if (o1 == null || o2 == null) {
+          return true
+        }
+
         val equal = contentEqual(o1, o2)
-        LOG.debug(" comparing files: ${o1.absolutePath}${if (equal) "==" else "!="}${o2.absolutePath}")
+        LOG.debug { " comparing files: ${o1.absolutePath}${if (equal) "==" else "!="}${o2.absolutePath}" }
         return equal
       }
     }
-    return THashSet(downloadedFiles, contentHashing) == THashSet(libraryFiles, contentHashing)
+    return ObjectOpenCustomHashSet(downloadedFiles, contentHashing) == ObjectOpenCustomHashSet(libraryFiles, contentHashing)
   }
 
   private fun contentEqual(file1: File, file2: File): Boolean {

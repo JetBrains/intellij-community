@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -8,10 +8,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
  * @author Pavel.Dolgov
  */
 public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends LocalQuickFixAndIntentionActionOnPsiElement {
-
   protected MergeModuleStatementsFix(@NotNull PsiJavaModule javaModule) {
     super(javaModule);
   }
@@ -73,7 +72,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends L
 
   @NotNull
   protected static String joinUniqueNames(@NotNull List<String> names) {
-    final Set<String> unique = new THashSet<>();
+    final Set<String> unique = new HashSet<>();
     return names.stream()
       .filter(name -> unique.add(name))
       .collect(Collectors.joining(","));
