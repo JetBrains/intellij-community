@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -55,7 +55,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.LightDirectoryIndex;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +68,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
 @State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
-public class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>, Disposable {
+public final class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>, Disposable {
   private static final RootType NO_ROOT_TYPE = new RootType("", "NO_ROOT_TYPE") {};
 
   private final LightDirectoryIndex<RootType> myIndex;
