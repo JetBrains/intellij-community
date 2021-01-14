@@ -106,9 +106,9 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
     @Override
     public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) {
-      new MyActionWrap() {
+      new MyActionWrap<Void>() {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result<Void> result) throws Throwable {
           action.run();
         }
       }.execute();
@@ -248,12 +248,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
     // this is needed to prevent memory leak, since the command is put into undo queue
     Ref<RunResult<?>> resultRef = new Ref<>(result);
-    doExecuteCommand(() -> {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        resultRef.get().run();
-        resultRef.set(null);
-      });
-    });
+    doExecuteCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      resultRef.get().run();
+      resultRef.set(null);
+    }));
   }
 
   /**
