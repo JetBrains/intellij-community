@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
@@ -164,12 +164,12 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   @Override
   @Nullable
   public PsiType getReturnType() {
-    return TypeInferenceHelper.getCurrentContext().getCachedValue(this, this::doGetReturnType);
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(this, GrClosableBlockImpl::doGetReturnType);
   }
 
   @Nullable
-  private PsiType doGetReturnType() {
-    return GroovyPsiManager.inferType(this, new MethodTypeInferencer(this));
+  private static PsiType doGetReturnType(GrClosableBlockImpl t) {
+    return GroovyPsiManager.inferType(t, new MethodTypeInferencer(t));
   }
 
   @Override

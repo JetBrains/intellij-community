@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.ResolveCache.AbstractResolver
@@ -33,9 +32,9 @@ internal class PartialContext(private val types: Map<VariableDescriptor, DFAType
     }
   }
 
-  override fun <T> getCachedValue(element: GroovyPsiElement, computable: Computable<T>): T {
-    return doGetCachedValue(Pair(element, computable.javaClass)) {
-      computable.compute()
+  override fun <E : GroovyPsiElement, T> getCachedValue(element: E, computation: Function<in E, out T>): T {
+    return doGetCachedValue(Pair(element, computation.javaClass)) {
+      computation.apply(element)
     }
   }
 

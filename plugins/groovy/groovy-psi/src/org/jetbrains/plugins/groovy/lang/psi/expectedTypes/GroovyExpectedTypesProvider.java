@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -61,29 +61,31 @@ public final class GroovyExpectedTypesProvider {
   private static final ExtensionPointName<GroovyExpectedTypesContributor> EP_NAME = new ExtensionPointName<>("org.intellij.groovy.expectedTypesContributor");
 
   public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
-    return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, () -> {
-        MyCalculator calculator = new MyCalculator(expression);
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof GroovyPsiElement) {
-          ((GroovyPsiElement)parent).accept(calculator);
-        }
-        else {
-          parent.accept(new GroovyPsiElementVisitor(calculator));
-        }
-        final TypeConstraint[] result = calculator.getResult();
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, GroovyExpectedTypesProvider::doCalculateTypeConstraints);
+  }
 
-      List<TypeConstraint> custom = new ArrayList<>();
-        for (GroovyExpectedTypesContributor contributor : EP_NAME.getExtensionList()) {
-          custom.addAll(contributor.calculateTypeConstraints(expression));
-        }
+  private static TypeConstraint[] doCalculateTypeConstraints(@NotNull GrExpression expression) {
+    MyCalculator calculator = new MyCalculator(expression);
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof GroovyPsiElement) {
+      ((GroovyPsiElement)parent).accept(calculator);
+    }
+    else {
+      parent.accept(new GroovyPsiElementVisitor(calculator));
+    }
+    final TypeConstraint[] result = calculator.getResult();
 
-        if (!custom.isEmpty()) {
-          custom.addAll(0, Arrays.asList(result));
-          return custom.toArray(TypeConstraint.EMPTY_ARRAY);
-        }
+    List<TypeConstraint> custom = new ArrayList<>();
+    for (GroovyExpectedTypesContributor contributor : EP_NAME.getExtensionList()) {
+      custom.addAll(contributor.calculateTypeConstraints(expression));
+    }
 
-        return result;
-      });
+    if (!custom.isEmpty()) {
+      custom.addAll(0, Arrays.asList(result));
+      return custom.toArray(TypeConstraint.EMPTY_ARRAY);
+    }
+
+    return result;
   }
 
   public static List<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {
