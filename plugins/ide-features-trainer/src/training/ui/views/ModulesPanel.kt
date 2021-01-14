@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.views
 
+import com.intellij.lang.Language
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
@@ -10,6 +11,7 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.ui.UISettings
 import training.util.DataLoader
+import training.util.learningProgressString
 import training.util.openLinkInBrowser
 import training.util.wrapWithUrlPanel
 import java.awt.BorderLayout
@@ -46,8 +48,27 @@ class ModulesPanel : JPanel() {
     }
 
     removeAll()
+    addHeaderPanel()
     add(modulesPanel, BorderLayout.CENTER)
     addFooter()
+  }
+
+  private fun addHeaderPanel() {
+    val headerContent = JPanel()
+    headerContent.isOpaque = false
+    headerContent.layout = VerticalLayout(UISettings.instance.progressCourseGap)
+    val langSupport = LangManager.getInstance().getLangSupport() ?: return
+    val primaryLanguageId = langSupport.primaryLanguage
+    val language = Language.findLanguageByID(primaryLanguageId) ?: return
+    headerContent.add(JLabel(LearnBundle.message("modules.panel.header", language.displayName)).also {
+      it.font = UISettings.instance.modulesHeaderFont
+    })
+    headerContent.add(JLabel(learningProgressString(CourseManager.instance.lessonsForModules)).also {
+      it.foreground = UISettings.instance.moduleProgressColor
+    })
+
+    headerContent.add(Box.createVerticalStrut(UISettings.instance.northInset))
+    add(headerContent, BorderLayout.PAGE_START)
   }
 
   private fun addFooter() {

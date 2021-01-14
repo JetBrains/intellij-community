@@ -33,7 +33,7 @@ class UISettings {
   val headerGap: Int by lazy { JBUI.scale(2) }
   val moduleGap: Int by lazy { JBUI.scale(20) }
   val descriptionGap: Int by lazy { JBUI.scale(100) }
-  val progressGap: Int by lazy { JBUI.scale(12) }
+  val progressCourseGap: Int by lazy { JBUI.scale(4) }
   val lessonGap: Int by lazy { JBUI.scale(12) }
   val radioButtonGap: Int by lazy { JBUI.scale(3) }
 
@@ -53,6 +53,8 @@ class UISettings {
   //TODO: remove in 2021.1
   val fontFace: String
     get() = JBUI.Fonts.label().fontName
+  val modulesHeaderFont: Font
+    get() = JBUI.Fonts.label().deriveFont(Font.BOLD).deriveFont(fontSize + JBUI.scale(3))
   val modulesFont: Font
     get() = JBUI.Fonts.label().deriveFont(Font.BOLD)
   val moduleNameFont: Font
