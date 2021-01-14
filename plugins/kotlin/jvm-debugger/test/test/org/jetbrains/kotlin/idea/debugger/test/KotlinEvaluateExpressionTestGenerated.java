@@ -348,7 +348,7 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
 
         @TestMetadata("localFunctionCapturedLocalVariable.kt")
         public void testLocalFunctionCapturedLocalVariable() throws Exception {
-            runTest("idea/jvm-debugger/jvm-debugger-test/testData/evaluation/singleBreakpoint/localFunctionCapturedLocalVariable.kt");
+            runTest("testData/evaluation/singleBreakpoint/localFunctionCapturedLocalVariable.kt");
         }
 
         @TestMetadata("localFunctionsWithReceivers.kt")
