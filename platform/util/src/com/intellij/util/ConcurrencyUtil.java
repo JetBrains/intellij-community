@@ -248,4 +248,17 @@ public final class ConcurrencyUtil {
     }
   }
 
+  /**
+   * Rethrow exception (wrapped in RuntimeException if necessary) if it's the completion result of the {@code task}
+   */
+  public static void manifestExceptionsIn(@NotNull Future<?> task) {
+    try {
+      task.get();
+    }
+    catch (CancellationException | InterruptedException ignored) {
+    }
+    catch (ExecutionException e) {
+      ExceptionUtil.rethrow(e.getCause());
+    }
+  }
 }

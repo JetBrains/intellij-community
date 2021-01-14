@@ -3,6 +3,7 @@ package com.intellij.util.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,7 +37,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   @Override
   void futureDone(@NotNull Future<?> task) {
     if (EdtExecutorServiceImpl.shouldManifestExceptionsImmediately()) {
-      EdtExecutorServiceImpl.manifestExceptionsIn(task);
+      ConcurrencyUtil.manifestExceptionsIn(task);
     }
   }
 

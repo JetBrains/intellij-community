@@ -610,6 +610,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   private void scheduleUpdateRunnable(long delayNanos) {
+    Future<?> oldFuture = myUpdateRunnableFuture;
+    if (oldFuture.isDone()) {
+      ConcurrencyUtil.manifestExceptionsIn(oldFuture);
+    }
     myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
   }
 
@@ -870,7 +874,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
       // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
       dca.cancelUpdateProgress(true, "Cancel by alarm");
-      dca.myUpdateRunnableFuture.cancel(false);
       DaemonProgressIndicator progress = dca.createUpdateProgress(passes.keySet());
       dca.myPassExecutorService.submitPasses(passes, progress);
     }
