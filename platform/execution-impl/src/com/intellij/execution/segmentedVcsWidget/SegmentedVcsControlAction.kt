@@ -18,7 +18,6 @@ class SegmentedVcsControlAction : SegmentedBarActionComponent(ActionPlaces.NEW_T
         }
       }
     }
-    paintBorderAroundOneItem = false
   }
 
   override fun update(e: @NotNull AnActionEvent) {

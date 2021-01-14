@@ -27,7 +27,7 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
       val v = value.asBoolean()
       toolbarState.state =
         getToolbarStateByVisibilityFlags(v, if(v) false else isToolbarVisible(), v,
-                                         if(v) false else isNavBarVisible())
+                                         isNavBarVisible())
       updateSettingsState()
       UISettings.instance.fireUISettingsChanged()
     }
