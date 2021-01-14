@@ -1727,11 +1727,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ChangedFilesCollector changedFilesCollector = getChangedFilesCollector();
     for (VirtualFile file : changedFilesCollector.getAllFilesToUpdate()) {
       final int fileId = getFileId(file);
-      if (!file.isValid() || ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA) {
+      if (!file.isValid()) {
         removeDataFromIndicesForFile(fileId, file);
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }
-      else if (getIndexableSetForFile(file) == null) { // todo remove data from indices for removed
+      else if (getIndexableSetForFile(file) == null) {
+        if (ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA) {
+          removeDataFromIndicesForFile(fileId, file);
+        }
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }
     }
