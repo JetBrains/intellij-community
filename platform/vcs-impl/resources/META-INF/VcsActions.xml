@@ -514,8 +514,16 @@
 
     <group id="CommitView.GearActions">
       <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>
-      <action id="CommitView.ShowEditorPreviewOnDoubleClick"
-              class="com.intellij.openapi.vcs.changes.actions.ShowEditorPreviewOnDoubleClickToggleAction"/>
+      <group id="CommitView.ShowOnDoubleClick" popup="true" searchable="false">
+        <action id="CommitView.ShowOnDoubleClick.EditorPreview"
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$EditorPreview">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="CommitView.ShowOnDoubleClick.Source"
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$Source">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+      </group>
 
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
