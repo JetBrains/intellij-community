@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven;
 
-import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.jps.api.JpsDynamicBundle;
 
 import java.util.function.Supplier;
 
-public final class MavenJpsBundle extends AbstractBundle {
+public final class MavenJpsBundle extends JpsDynamicBundle {
 
   private static final @NonNls String BUNDLE = "messages.MavenJpsBundle";
   private static final MavenJpsBundle INSTANCE = new MavenJpsBundle();
