@@ -430,11 +430,24 @@ public class JBTabsImpl extends JComponent
     myMoreToolbar.getComponent().setOpaque(false);
     myMoreToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     add(myMoreToolbar.getComponent());
+    final double[] directionAccumulator = new double[]{0};
     addMouseWheelListener(event -> {
-      int units = event.getUnitsToScroll();
+
+      double units = event.getUnitsToScroll();
       if (units == 0) return;
+      if (directionAccumulator[0] == 0) {
+        directionAccumulator[0] += units;
+      } else {
+        if (directionAccumulator[0] * units < 0) {
+          directionAccumulator[0] = 0;
+          return;
+        }
+      }
+      if (Math.abs(event.getPreciseWheelRotation()) > 1) {
+        units = event.getPreciseWheelRotation();
+      }
       if (mySingleRowLayout.myLastSingRowLayout != null) {
-        mySingleRowLayout.scroll((int)(event.getPreciseWheelRotation() * mySingleRowLayout.getScrollUnitIncrement()));
+        mySingleRowLayout.scroll((int)Math.round(units * mySingleRowLayout.getScrollUnitIncrement()));
         revalidateAndRepaint(false);
       }
     });

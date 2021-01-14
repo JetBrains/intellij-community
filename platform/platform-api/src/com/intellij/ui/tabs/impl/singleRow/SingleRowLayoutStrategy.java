@@ -2,10 +2,12 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
+import com.intellij.util.MathUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -141,7 +143,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getScrollUnitIncrement(TabLabel label) {
-      return 10;
+      return MathUtil.clamp(Registry.intValue("ide.editor.tabs.scroll.unit.increment", 10), 1, 200);
     }
   }
 
