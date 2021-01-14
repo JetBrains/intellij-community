@@ -772,7 +772,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       }
     }
 
-    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName) && extension.exists()) {
+    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName)) {
       String implementation = extension.getXmlTag().getAttributeValue("implementation");
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
