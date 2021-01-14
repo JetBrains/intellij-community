@@ -20,7 +20,6 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
@@ -172,8 +171,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
     if (helperFile == null) return Collections.emptyList();
 
-    Map<Integer, ByteArraySequence> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, helperFile, trait.getProject());
-    ByteArraySequence byteSequence = ContainerUtil.getFirstItem(data.values());
+    ByteArraySequence byteSequence = FileBasedIndex.getInstance().getSingleEntryIndexData(INDEX_ID, helperFile, trait.getProject());
 
     SerializationManagerEx manager = SerializationManagerEx.getInstanceEx();
     List<PsiMethod> result = new ArrayList<>();

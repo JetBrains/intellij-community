@@ -170,6 +170,19 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
+  public <V> @Nullable V getSingleEntryIndexData(@NotNull ID<Integer, V> id,
+                                                 @NotNull VirtualFile virtualFile,
+                                                 @NotNull Project project) {
+    if (!(getIndex(id).getExtension() instanceof SingleEntryFileBasedIndexExtension)) {
+      throw new IllegalArgumentException("'" + id + "' index is not a SingleEntryFileBasedIndex");
+    }
+    Map<Integer, V> data = getFileData(id, virtualFile, project);
+    if (data.isEmpty()) return null;
+    if (data.size() == 1) return data.values().iterator().next();
+    throw new IllegalStateException("Invalid single entry index data '" + id + "'");
+  }
+
+  @Override
   @NotNull
   public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                            @NotNull K dataKey,

@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author yole
@@ -96,12 +95,9 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
     boolean saved = document == null || !FileDocumentManager.getInstance().isDocumentUnsaved(document);
 
-    final Map<Integer, SerializedStubTree> datas = FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, vFile, project);
-    final int size = datas.size();
+    final SerializedStubTree stubTree = FileBasedIndex.getInstance().getSingleEntryIndexData(StubUpdatingIndex.INDEX_ID, vFile, project);
 
-    if (size == 1) {
-      SerializedStubTree stubTree = datas.values().iterator().next();
-
+    if (stubTree != null) {
       if (vFile instanceof VirtualFileWithId && !checkLengthMatch(project, vFile, wasIndexedAlready, document, saved)) {
         return null;
       }
@@ -121,11 +117,6 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
       tree.setDebugInfo("created from index");
       checkDeserializationCreatesNoPsi(tree);
       return tree;
-    }
-    if (size != 0) {
-      return processError(vFile,
-                          "Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one.",
-                          null);
     }
 
     return null;

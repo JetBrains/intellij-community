@@ -216,10 +216,11 @@ public final class GrTraitUtil {
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
     if (helperFile == null) return;
 
-    Map<Integer, Collection<TraitFieldDescriptor>> data =
-      FileBasedIndex.getInstance().getFileData(GroovyTraitFieldsFileIndex.INDEX_ID, helperFile, trait.getProject());
-    Collection<TraitFieldDescriptor> values = ContainerUtil.getFirstItem(data.values(), Collections.emptyList());
-    values.forEach(descriptor -> result.add(createTraitField(descriptor, trait)));
+    Collection<TraitFieldDescriptor> values =
+      FileBasedIndex.getInstance().getSingleEntryIndexData(GroovyTraitFieldsFileIndex.INDEX_ID, helperFile, trait.getProject());
+    if (values != null) {
+      values.forEach(descriptor -> result.add(createTraitField(descriptor, trait)));
+    }
   }
 
   private static GrLightField createTraitField(TraitFieldDescriptor descriptor, PsiClass trait) {
