@@ -486,7 +486,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon OverridingMethod = load("general/overridingMethod.svg", 3742709686740988416L, 0);
     /** 16x16 */ public static final @NotNull Icon Pin_tab = load("general/pin_tab.svg", 7761700865075600681L, 2);
     /** 16x16 */ public static final @NotNull Icon Print = load("general/print.svg", 473084745106679614L, 2);
-    /** 9x9 */ public static final @NotNull Icon ProjectConfigurable = load("general/projectConfigurable.svg", 3822945088295952754L, 0);
+    /** 9x9 */ public static final @NotNull Icon ProjectConfigurable = load("general/projectConfigurable.svg", -5428195135491798340L, 0);
     /** 16x16 */ public static final @NotNull Icon ProjectStructure = load("general/projectStructure.svg", -1251058499723841860L, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectTab = load("general/projectTab.svg", -5958907997104362345L, 0);
     /** 32x32 */ public static final @NotNull Icon QuestionDialog = load("general/questionDialog.svg", -6789648605209313700L, 2);
