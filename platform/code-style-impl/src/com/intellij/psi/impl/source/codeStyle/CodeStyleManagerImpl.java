@@ -89,6 +89,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     ASTNode treeElement = element.getNode();
     final PsiFile file = element.getContainingFile();
+
+    if (file == null)
+      return element;
+
     if (ExternalFormatProcessor.useExternalFormatter(file)) {
       return ExternalFormatProcessor.formatElement(element, element.getTextRange(), canChangeWhiteSpacesOnly);
     }
