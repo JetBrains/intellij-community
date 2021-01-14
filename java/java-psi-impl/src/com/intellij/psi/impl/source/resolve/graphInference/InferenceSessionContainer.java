@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Expressio
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,7 +223,7 @@ public class InferenceSessionContainer {
       }
     }
 
-    Map<PsiTypeParameter, PsiType> map = new THashMap<>();
+    Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     for (InferenceVariable variable : topLevelSession.getInferenceVariables()) {
       final PsiType instantiation = variable.getInstantiation();
       if (instantiation != PsiType.NULL) {
@@ -264,7 +263,7 @@ public class InferenceSessionContainer {
   @NotNull
   private static PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
     final List<InferenceVariable> targetVars = new ArrayList<>();
-    Map<PsiTypeParameter, PsiType> map = new THashMap<>();
+    Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[0]);
     for (InferenceVariable variable : oldVars) {
       final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter(), variable.getName());

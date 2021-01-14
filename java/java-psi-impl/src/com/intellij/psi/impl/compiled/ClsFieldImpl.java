@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -18,11 +18,11 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -87,15 +87,19 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   public Object computeConstantValue() {
-    return computeConstantValue(new THashSet<>());
+    return computeConstantValue(new HashSet<>());
   }
 
   @Override
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
-    if (!hasModifierProperty(PsiModifier.FINAL)) return null;
+    if (!hasModifierProperty(PsiModifier.FINAL)) {
+      return null;
+    }
 
     PsiExpression initializer = getInitializer();
-    if (initializer == null) return null;
+    if (initializer == null) {
+      return null;
+    }
 
     PsiClass containingClass = getContainingClass();
     if (containingClass != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -10,11 +10,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.IntStack;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntHashSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +72,7 @@ public final class ControlFlowUtil {
       PsiManager psiManager = psiVariable.getManager();
       final List<SSAInstructionState> queue = new ArrayList<>();
       queue.add(new SSAInstructionState(0, from));
-      Set<SSAInstructionState> processedStates = new THashSet<>();
+      Set<SSAInstructionState> processedStates = new HashSet<>();
 
       while (!queue.isEmpty()) {
         final SSAInstructionState state = queue.remove(0);
@@ -229,7 +227,7 @@ public final class ControlFlowUtil {
     List<Instruction> instructions = flow.getInstructions();
     LOG.assertTrue(start >= 0, "flow start");
     LOG.assertTrue(end <= instructions.size(), "flow end");
-    
+
     PsiManager psiManager = variable.getManager();
     for (int i = start; i < end; i++) {
       Instruction instruction = instructions.get(i);
@@ -364,7 +362,7 @@ public final class ControlFlowUtil {
       exitPoints.add(end);
       return Collections.emptyList();
     }
-    final Collection<PsiStatement> exitStatements = new THashSet<>();
+    final Collection<PsiStatement> exitStatements = new HashSet<>();
     InstructionClientVisitor<Void> visitor = new InstructionClientVisitor<Void>() {
       @Override
       public void visitThrowToInstruction(ThrowToInstruction instruction, int offset, int nextOffset) {
@@ -515,7 +513,7 @@ public final class ControlFlowUtil {
     class Worker {
       @NotNull
       private Map<PsiVariable, IntList> getWritesOffsets() {
-        final Map<PsiVariable, IntList> writeOffsets = new THashMap<>();
+        final Map<PsiVariable, IntList> writeOffsets = new HashMap<>();
         for (int i = flowStart; i < flowEnd; i++) {
           Instruction instruction = instructions.get(i);
           if (instruction instanceof WriteVariableInstruction) {
@@ -533,7 +531,7 @@ public final class ControlFlowUtil {
 
       @NotNull
       private Map<PsiVariable, IntList> getVisibleReadsOffsets(@NotNull Map<PsiVariable, IntList> writeOffsets, @NotNull PsiCodeBlock tryBlock) {
-        final Map<PsiVariable, IntList> visibleReadOffsets = new THashMap<>();
+        final Map<PsiVariable, IntList> visibleReadOffsets = new HashMap<>();
         for (PsiVariable variable : writeOffsets.keySet()) {
           if (!PsiTreeUtil.isAncestor(tryBlock, variable, true)) {
             visibleReadOffsets.put(variable, new IntArrayList());
@@ -558,7 +556,7 @@ public final class ControlFlowUtil {
       @NotNull
       private Map<PsiVariable, Set<PsiElement>> getReachableAfterWrite(@NotNull Map<PsiVariable, IntList> writeOffsets,
                                                                        @NotNull Map<PsiVariable, IntList> visibleReadOffsets) {
-        final Map<PsiVariable, Set<PsiElement>> afterWrite = new THashMap<>();
+        final Map<PsiVariable, Set<PsiElement>> afterWrite = new HashMap<>();
         for (PsiVariable variable : visibleReadOffsets.keySet()) {
           final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator();
           final BitSet collectedOffsets = new BitSet(flowEnd);
@@ -568,7 +566,7 @@ public final class ControlFlowUtil {
             collectedOffsets.or(reachableOffsets);
           }
           Set<PsiElement> throwSources = afterWrite.get(variable);
-          if (throwSources == null) afterWrite.put(variable, throwSources = new THashSet<>());
+          if (throwSources == null) afterWrite.put(variable, throwSources = new HashSet<>());
           for (int i = flowStart; i < flowEnd; i++) {
             if (collectedOffsets.get(i)) {
               throwSources.add(flow.getElement(i));
@@ -1510,20 +1508,20 @@ public final class ControlFlowUtil {
                                                   @NotNull List<? extends PsiElement> references) {
     class MyVisitor extends InstructionClientVisitor<Integer> {
       // set of exit points reached from this offset
-      private final TIntHashSet[] exitPoints = new TIntHashSet[flow.getSize()];
+      private final IntOpenHashSet[] exitPoints = new IntOpenHashSet[flow.getSize()];
 
       @Override
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
 
         if (exitPoints[offset] == null) {
-          exitPoints[offset] = new TIntHashSet();
+          exitPoints[offset] = new IntOpenHashSet();
         }
         if (isLeaf(nextOffset)) {
           exitPoints[offset].add(offset);
         }
         else if (exitPoints[nextOffset] != null) {
-          exitPoints[offset].addAll(exitPoints[nextOffset].toArray());
+          exitPoints[offset].addAll(exitPoints[nextOffset]);
         }
       }
 
@@ -1534,7 +1532,7 @@ public final class ControlFlowUtil {
         int maxExitPoints = 0;
         nextOffset:
         for (int i = sourceOffset; i < exitPoints.length; i++) {
-          TIntHashSet exitPointSet = exitPoints[i];
+          IntOpenHashSet exitPointSet = exitPoints[i];
           final int size = exitPointSet == null ? 0 : exitPointSet.size();
           if (size > maxExitPoints) {
             // this offset should be reachable from all other references

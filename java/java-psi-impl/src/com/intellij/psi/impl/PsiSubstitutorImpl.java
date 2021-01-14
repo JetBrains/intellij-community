@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,8 +10,8 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,15 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author ik, dsl
- */
 public final class PsiSubstitutorImpl implements PsiSubstitutor {
   private static final Logger LOG = Logger.getInstance(PsiSubstitutorImpl.class);
 
-  private static final TObjectHashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new TObjectHashingStrategy<PsiTypeParameter>() {
+  private static final HashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new HashingStrategy<PsiTypeParameter>() {
     @Override
-    public int computeHashCode(PsiTypeParameter parameter) {
+    public int hashCode(PsiTypeParameter parameter) {
       return Comparing.hashcode(parameter.getName());
     }
 

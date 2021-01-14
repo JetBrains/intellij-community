@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,9 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +92,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkPrimitiveVarargs(conflicts, getActualParametersLength());
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    Set<CandidateInfo> uniques = new THashSet<>(conflicts);
+    Set<CandidateInfo> uniques = new HashSet<>(conflicts);
     if (uniques.size() == 1) return uniques.iterator().next();
     return null;
   }
@@ -189,7 +187,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   protected void checkSameSignatures(@NotNull List<? extends CandidateInfo> conflicts, Map<MethodCandidateInfo, PsiSubstitutor> map) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
-    Map<MethodSignature, CandidateInfo> signatures = new THashMap<>(conflicts.size());
+    Map<MethodSignature, CandidateInfo> signatures = new HashMap<>(conflicts.size());
     Set<PsiMethod> superMethods = new HashSet<>();
     GlobalSearchScope resolveScope = ResolveScopeManager.getInstance(myContainingFile.getProject()).getResolveScope(myContainingFile);
     for (CandidateInfo conflict : conflicts) {
@@ -315,7 +313,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                         Map<MethodCandidateInfo, PsiSubstitutor> map,
                                         boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
-    TIntArrayList unmatchedIndices = null;
+    IntArrayList unmatchedIndices = null;
     for (int i = 0; i < conflicts.size(); i++) {
       ProgressManager.checkCanceled();
       CandidateInfo info = conflicts.get(i);
@@ -329,7 +327,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         // remove all unmatched before
         if (unmatchedIndices != null) {
           for (int u=unmatchedIndices.size()-1; u>=0; u--) {
-            int index = unmatchedIndices.get(u);
+            int index = unmatchedIndices.getInt(u);
             //ensure super method with varargs won't win over non-vararg override
             if (ignoreIfStaticsProblem && isVarargs) {
               MethodCandidateInfo candidateInfo = (MethodCandidateInfo)conflicts.get(index);
@@ -354,7 +352,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         i--;
       }
       else {
-        if (unmatchedIndices == null) unmatchedIndices = new TIntArrayList(conflicts.size()-i);
+        if (unmatchedIndices == null) unmatchedIndices = new IntArrayList(conflicts.size()-i);
         unmatchedIndices.add(i);
       }
     }

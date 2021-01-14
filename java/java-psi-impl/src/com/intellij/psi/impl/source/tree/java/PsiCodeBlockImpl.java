@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -17,14 +17,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock {
+public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock {
   private static final Logger LOG = Logger.getInstance(PsiCodeBlockImpl.class);
 
   public PsiCodeBlockImpl(CharSequence text) {
@@ -107,8 +107,8 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     Set<String> set2 = myVariablesSet;
     boolean wasConflict = myConflict;
     if (set1 == null || set2 == null) {
-      final Set<String> localsSet = new THashSet<>();
-      final Set<String> classesSet = new THashSet<>();
+      final Set<String> localsSet = new HashSet<>();
+      final Set<String> classesSet = new HashSet<>();
       final Ref<Boolean> conflict = new Ref<>(Boolean.FALSE);
       PsiScopesUtil.walkChildrenScopes(this, new PsiScopeProcessor() {
         @Override

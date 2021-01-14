@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -37,7 +37,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -450,7 +449,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   public void processVariants(@NotNull PsiScopeProcessor processor) {
     DelegatingScopeProcessor filterProcessor = new DelegatingScopeProcessor(processor) {
       private PsiElement myResolveContext;
-      private final Set<String> myVarNames = new THashSet<>();
+      private final Set<String> myVarNames = new HashSet<>();
 
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {

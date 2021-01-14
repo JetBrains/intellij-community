@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -20,7 +20,6 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +31,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   private static final Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP;
   private static final Map<IElementType, String> KEYWORD_TYPE_TO_NAME_MAP;
   static {
-    NAME_TO_KEYWORD_TYPE_MAP = new THashMap<>();
+    NAME_TO_KEYWORD_TYPE_MAP = new HashMap<>();
     NAME_TO_KEYWORD_TYPE_MAP.put(PUBLIC, JavaTokenType.PUBLIC_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(PROTECTED, JavaTokenType.PROTECTED_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(PRIVATE, JavaTokenType.PRIVATE_KEYWORD);
@@ -50,7 +49,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     NAME_TO_KEYWORD_TYPE_MAP.put(SEALED, JavaTokenType.SEALED_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(NON_SEALED, JavaTokenType.NON_SEALED_KEYWORD);
 
-    KEYWORD_TYPE_TO_NAME_MAP = new THashMap<>();
+    KEYWORD_TYPE_TO_NAME_MAP = new HashMap<>();
     for (String name : NAME_TO_KEYWORD_TYPE_MAP.keySet()) {
       KEYWORD_TYPE_TO_NAME_MAP.put(NAME_TO_KEYWORD_TYPE_MAP.get(name), name);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.lang.LighterAST;
@@ -14,7 +14,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,16 +24,16 @@ import java.util.List;
 
 import static com.intellij.util.BitUtil.isSet;
 
-public class TypeInfo {
+public final class TypeInfo {
   private static final int FREQUENT_INDEX_MASK = 0x01F;
   private static final int HAS_TYPE_ANNOTATIONS = 0x20;
   private static final int HAS_ARRAY_COUNT = 0x40;
   private static final int HAS_ELLIPSIS = 0x80;
-  
-  public static final TypeInfo[] EMPTY_ARRAY = {}; 
+
+  public static final TypeInfo[] EMPTY_ARRAY = {};
 
   private static final String[] ourIndexFrequentType;
-  private static final TObjectIntHashMap<String> ourFrequentTypeIndex;
+  private static final Object2IntOpenHashMap<String> ourFrequentTypeIndex;
   static {
     ourIndexFrequentType = new String[]{
       "",
@@ -42,12 +42,11 @@ public class TypeInfo {
       CommonClassNames.JAVA_LANG_STRING_SHORT, CommonClassNames.JAVA_LANG_STRING
     };
 
-    ourFrequentTypeIndex = new TObjectIntHashMap<>();
+    ourFrequentTypeIndex = new Object2IntOpenHashMap<>();
     for (int i = 0; i < ourIndexFrequentType.length; i++) {
       ourFrequentTypeIndex.put(ourIndexFrequentType[i], i);
     }
     assert ourFrequentTypeIndex.size() == ourIndexFrequentType.length;
-    assert ourFrequentTypeIndex.size() < FREQUENT_INDEX_MASK;
   }
 
   private static final TypeInfo NULL = new TypeInfo(null);
@@ -59,7 +58,7 @@ public class TypeInfo {
 
   /**
    * Creates a non-array type info
-   * 
+   *
    * @param text type text (not array)
    */
   public TypeInfo(String text) {
@@ -118,7 +117,7 @@ public class TypeInfo {
   }
 
   @NotNull
-  public static TypeInfo create(@NotNull LighterAST tree, @NotNull LighterASTNode element, StubElement parentStub) {
+  public static TypeInfo create(@NotNull LighterAST tree, @NotNull LighterASTNode element, StubElement<?> parentStub) {
     String text;
     byte arrayCount = 0;
     boolean isEllipsis = false;
@@ -196,7 +195,7 @@ public class TypeInfo {
           collector.add(typePath, anno);
         }
       }
-      
+
       collector.install();
     }
     return info;
@@ -253,7 +252,7 @@ public class TypeInfo {
 
     String text = typeInfo.text;
     byte arrayCount = typeInfo.arrayCount;
-    int frequentIndex = ourFrequentTypeIndex.get(text);
+    int frequentIndex = ourFrequentTypeIndex.getInt(text);
     boolean hasTypeAnnotations = typeInfo.myTypeAnnotations != null && !typeInfo.myTypeAnnotations.isEmpty();
     int flags = (typeInfo.isEllipsis ? HAS_ELLIPSIS : 0) | (arrayCount != 0 ? HAS_ARRAY_COUNT : 0) |
                 (hasTypeAnnotations ? HAS_TYPE_ANNOTATIONS : 0) | frequentIndex;
@@ -301,7 +300,7 @@ public class TypeInfo {
 
   @NotNull
   public static String internFrequentType(@NotNull String type) {
-    int frequentIndex = ourFrequentTypeIndex.get(type);
+    int frequentIndex = ourFrequentTypeIndex.getInt(type);
     return frequentIndex == 0 ? StringUtil.internEmptyString(type) : ourIndexFrequentType[frequentIndex];
   }
 }

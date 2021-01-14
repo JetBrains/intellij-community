@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -22,11 +22,11 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx {
@@ -124,7 +124,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @Override
   public Object computeConstantValue() {
-    return computeConstantValue(new THashSet<>());
+    return computeConstantValue(new HashSet<>());
   }
 
   @Override

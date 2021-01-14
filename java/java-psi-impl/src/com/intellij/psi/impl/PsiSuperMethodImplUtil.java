@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +16,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +28,10 @@ public final class PsiSuperMethodImplUtil {
   private static final PsiCacheKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_FOR_CLASS_KEY = PsiCacheKey
     .create("SIGNATURES_FOR_CLASS_KEY",
             (NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>)dom -> buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true,
-                                                                                                                      new THashSet<>(), false, dom.getResolveScope()));
+                                                                                                                      new HashSet<>(), false, dom.getResolveScope()));
   private static final PsiCacheKey<Map<Pair<String, GlobalSearchScope>, Map<MethodSignature, HierarchicalMethodSignature>>, PsiClass> SIGNATURES_BY_NAME_KEY = PsiCacheKey
     .create("SIGNATURES_BY_NAME_KEY", psiClass -> ConcurrentFactoryMap.createMap(
-      pair -> buildMethodHierarchy(psiClass, pair.first, PsiSubstitutor.EMPTY, true, new THashSet<>(), false,
+      pair -> buildMethodHierarchy(psiClass, pair.first, PsiSubstitutor.EMPTY, true, new HashSet<>(), false,
                                          pair.second)));
 
   private PsiSuperMethodImplUtil() {
