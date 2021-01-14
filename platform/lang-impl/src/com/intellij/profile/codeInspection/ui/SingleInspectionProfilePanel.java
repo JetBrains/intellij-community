@@ -881,7 +881,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanel.add(new JBLabel(InspectionsBundle.message("inspection.scopes.and.severities")),
                           new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                 JBUI.insets(5, 0, 2, 10), 0, 0));
+                                                 JBUI.insets(5, 0, UIUtil.DEFAULT_VGAP, 10), 0, 0));
         severityPanel.add(panel, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                         JBUI.insets(0, 0, 0, 0), 0, 0));
         severityPanelWeightY = 0.3;
@@ -1224,10 +1224,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
       setLayout(new GridBagLayout());
-      GridBagConstraints optionsLabelConstraints = new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(0, 2, 0, 0), 0, 0);
+      GridBagConstraints optionsLabelConstraints = new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(UIUtil.LARGE_VGAP, 2, 0, 0), 0, 0);
       add(new JBLabel(AnalysisBundle.message("inspections.settings.options.title")), optionsLabelConstraints);
       GridBagConstraints separatorConstraints =
-        new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, JBUI.insets(2,
+        new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, JBUI.insets(UIUtil.LARGE_VGAP + 2,
                                                                                                                        TitledSeparator.SEPARATOR_LEFT_INSET,
                                                                                                                        0,
                                                                                                                        TitledSeparator.SEPARATOR_RIGHT_INSET),
