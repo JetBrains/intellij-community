@@ -3,6 +3,38 @@
   "fixed": false,
   "ui": [
     {
+      "key": "BookmarkIcon.background",
+      "description": "The background of the default bookmark icon."
+    },
+    {
+      "key": "MnemonicIcon.foreground",
+      "description": "The text color on the bookmark icon with mnemonic."
+    },
+    {
+      "key": "MnemonicIcon.background",
+      "description": "The background of the bookmark icon with mnemonic."
+    },
+    {
+      "key": "MnemonicIcon.borderColor",
+      "description": "The border color of the bookmark icon with mnemonic."
+    },
+    {
+      "key": "AssignedMnemonic.foreground",
+      "description": "The button text color for the already assigned bookmark mnemonic."
+    },
+    {
+      "key": "AssignedMnemonic.background",
+      "description": "The button background for the already assigned bookmark mnemonic."
+    },
+    {
+      "key": "AssignedMnemonic.selectionForeground",
+      "description": "The button text color for the currently selected bookmark mnemonic."
+    },
+    {
+      "key": "AssignedMnemonic.selectionBackground",
+      "description": "The button background for the currently selected bookmark mnemonic."
+    },
+    {
       "key": "BigSpinner.background",
       "description": "A translucent overlay background for decorated panel while loading"
     },
