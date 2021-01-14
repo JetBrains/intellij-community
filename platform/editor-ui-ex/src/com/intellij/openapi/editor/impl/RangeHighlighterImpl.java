@@ -115,7 +115,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public void setTextAttributes(@NotNull TextAttributes textAttributes) {
+  public void setTextAttributes(@Nullable TextAttributes textAttributes) {
     TextAttributes old = myForcedTextAttributes;
     if (old == textAttributes) return;
 
