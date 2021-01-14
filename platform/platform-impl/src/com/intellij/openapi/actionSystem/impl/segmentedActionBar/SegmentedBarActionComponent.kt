@@ -42,8 +42,8 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
     fun paintButtonDecorations(g: Graphics2D, c: JComponent, paint: Paint): Boolean {
       return painter.paintButtonDecorations(g, c, paint)
     }
-
   }
+  protected var paintBorderAroundOneItem = true
 
   private val group: ActionGroup = object : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -90,6 +90,7 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
         }
 
         private var isActive = false
+        private var visibleItemsCount = 0
 
         override fun getInsets(): Insets {
           return JBUI.emptyInsets()
@@ -174,12 +175,16 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
         }
 
         override fun paintBorder(g: Graphics) {
-          painter.paintActionBarBorder(this, g)
+          if(visibleItemsCount > 1 || paintBorderAroundOneItem) {
+            painter.paintActionBarBorder(this, g)
+          }
         }
 
         override fun paint(g: Graphics) {
           super.paint(g)
-          painter.paintActionBarBorder(this, g)
+          if(visibleItemsCount > 1 || paintBorderAroundOneItem) {
+            painter.paintActionBarBorder(this, g)
+          }
         }
 
         private fun addMetadata(component: JComponent, index: Int, count: Int) {
@@ -199,6 +204,7 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
         override fun actionsUpdated(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
           val filtered = newVisibleActions.filter { isSuitableAction(it) }
           isActive = filtered.size > 1
+          visibleItemsCount = newVisibleActions.size
           super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
         }
 
@@ -221,6 +227,10 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
       }
 
       return bar.component
+  }
+
+  private fun moreThanOneItemVisible(actions: List<AnAction>): Boolean {
+    return actions.count { action -> action.templatePresentation.isVisible } > 1
   }
 }
 
