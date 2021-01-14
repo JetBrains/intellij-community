@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectAttachProcessor
+import com.intellij.ui.IdeUICustomization
 
 class CloseProjectAction : CloseProjectsActionBase() {
   override fun canClose(project: Project, currentProject: Project) = project === currentProject
@@ -17,6 +18,10 @@ class CloseProjectAction : CloseProjectsActionBase() {
 
     if (ProjectAttachProcessor.canAttachToProject() && e.project != null && ModuleManager.getInstance(e.project!!).modules.size > 1) {
       e.presentation.setText(IdeBundle.messagePointer("action.close.projects.in.current.window"))
+    }
+    else {
+      @Suppress("DialogTitleCapitalization")
+      e.presentation.text = IdeUICustomization.getInstance().projectMessage("action.close.project.text")
     }
   }
 }
