@@ -26,17 +26,13 @@ object PluginSignatureChecker {
     indicator.isIndeterminate = true
 
     val errorMessage = when (val verificationResult = ZipVerifier.verify(pluginFile)) {
-      is InvalidSignatureResult ->
-        verificationResult.errorMessage
-      is MissingSignatureResult ->
-        "Plugin file is not signed"
+      is InvalidSignatureResult -> verificationResult.errorMessage
+      is MissingSignatureResult -> IdeBundle.message("plugin.signature.not.signed")
       is SuccessfulVerificationResult ->
         if (!verificationResult.isSignedBy(getCertificate())) {
-          "Plugin file is not signed by JetBrains"
+          IdeBundle.message("plugin.signature.not.signed.by.jetbrains")
         }
-        else {
-          null
-        }
+        else null
     }
 
     if (errorMessage != null) {
@@ -47,7 +43,8 @@ object PluginSignatureChecker {
       var result: Int = -1
       ApplicationManager.getApplication().invokeAndWait(
         { result = Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) },
-        ModalityState.any())
+        ModalityState.any()
+      )
       return result == Messages.YES
     }
 
