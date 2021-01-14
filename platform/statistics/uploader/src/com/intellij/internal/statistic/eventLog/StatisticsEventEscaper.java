@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class StatisticsEventEscaper {
-  private static final String SYMBOLS_TO_REPLACE = ":;,";
+  private static final String SYMBOLS_TO_REPLACE = ":;, ";
   private static final String SYMBOLS_TO_REPLACE_FIELD_NAME = '.' + SYMBOLS_TO_REPLACE;
 
   /**
@@ -15,7 +15,7 @@ public final class StatisticsEventEscaper {
    */
   @NotNull
   public static String escapeEventIdOrFieldValue(@NotNull String str) {
-    return escapeInternal(str, null);
+    return escapeInternal(str, null, true);
   }
 
   /**
@@ -23,7 +23,7 @@ public final class StatisticsEventEscaper {
    */
   @NotNull
   public static String escape(@NotNull String str) {
-    return escapeInternal(str, SYMBOLS_TO_REPLACE);
+    return escapeInternal(str, SYMBOLS_TO_REPLACE, false);
   }
 
   /**
@@ -31,7 +31,7 @@ public final class StatisticsEventEscaper {
    */
   @NotNull
   public static String escapeFieldName(@NotNull String str) {
-    return escapeInternal(str, SYMBOLS_TO_REPLACE_FIELD_NAME);
+    return escapeInternal(str, SYMBOLS_TO_REPLACE_FIELD_NAME, false);
   }
 
   /**
@@ -43,26 +43,29 @@ public final class StatisticsEventEscaper {
   @Nullable
   public static String cleanupForLegacyRulesIfNeeded(@NotNull String str) {
     if (containsSystemSymbols(str, SYMBOLS_TO_REPLACE)) {
-      return replace(str, SYMBOLS_TO_REPLACE);
+      return replace(str, SYMBOLS_TO_REPLACE, false);
     }
     return null;
   }
 
   @NotNull
-  private static String escapeInternal(@NotNull String str, @Nullable String toReplace) {
+  private static String escapeInternal(@NotNull String str, @Nullable String toReplace, boolean allowSpaces) {
     if (containsSystemSymbols(str, toReplace)) {
-      return replace(str, toReplace);
+      return replace(str, toReplace, allowSpaces);
     }
     return str;
   }
 
   @NotNull
-  private static String replace(@NotNull String value, @Nullable String toReplace) {
+  private static String replace(@NotNull String value, @Nullable String toReplace, boolean allowSpaces) {
     final StringBuilder out = new StringBuilder();
     for (int i = 0; i < value.length(); i++) {
       final char c = value.charAt(i);
       if (!isAscii(c)) {
         out.append("?");
+      }
+      else if (isWhiteSpaceToReplace(c)) {
+        out.append(allowSpaces ? " " : "_");
       }
       else if (isSymbolToReplace(c, toReplace)) {
         out.append("_");
@@ -78,6 +81,7 @@ public final class StatisticsEventEscaper {
     for (int i = 0; i < value.length(); i++) {
       final char c = value.charAt(i);
       if (!isAscii(c)) return true;
+      if (isWhiteSpaceToReplace(c)) return true;
       if (isSymbolToReplace(c, toReplace)) return true;
       if (isProhibitedSymbol(c)) return true;
     }
@@ -92,11 +96,11 @@ public final class StatisticsEventEscaper {
     if (toReplace != null && containsChar(toReplace, c)) {
       return true;
     }
-    return isAsciiControl(c) || isWhiteSpace(c);
+    return isAsciiControl(c);
   }
 
-  public static boolean isWhiteSpace(char c) {
-    return c == '\n' || c == '\t' || c == ' ';
+  public static boolean isWhiteSpaceToReplace(char c) {
+    return c == '\n' || c == '\r' || c == '\t';
   }
 
   private static boolean isAsciiControl(char c) {
