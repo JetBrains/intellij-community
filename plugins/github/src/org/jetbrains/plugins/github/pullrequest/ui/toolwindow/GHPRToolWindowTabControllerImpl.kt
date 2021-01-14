@@ -18,6 +18,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -34,6 +35,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                                private val authManager: GithubAuthenticationManager,
                                                private val repositoryManager: GHProjectRepositoriesManager,
                                                private val dataContextRepository: GHPRDataContextRepository,
+                                               private val projectSettings: GithubPullRequestsProjectUISettings,
                                                private val tab: Content) : GHPRToolWindowTabController {
 
   private var currentRepository: GHGitRepositoryMapping? = null
@@ -78,7 +80,26 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     private val accounts = authManager.getAccounts()
 
     fun update() {
+      guessAndSetRepoAndAccount()?.let { (repo, account) ->
+        try {
+          val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
+          showPullRequestsComponent(repo, account, requestExecutor)
+        }
+        catch (e: Exception) {
+          //show error near selectors?
+        }
+      } ?: showSelectors()
+    }
+
+    private fun guessAndSetRepoAndAccount(): Pair<GHGitRepositoryMapping, GithubAccount>? {
       resetIfMissing()
+
+      val saved = projectSettings.selectedRepoAndAccount
+      if (saved != null) {
+        currentRepository = saved.first
+        currentAccount = saved.second
+        return saved
+      }
 
       if (currentRepository == null && repos.size == 1) {
         currentRepository = repos.single()
@@ -92,19 +113,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
         }
       }
       val account = currentAccount
-
-      if (repo != null && account != null) {
-        try {
-          val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
-          showPullRequestsComponent(repo, account, requestExecutor)
-        }
-        catch (e: Exception) {
-          //show error near selectors?
-        }
-      }
-      else {
-        showSelectors()
-      }
+      return if (repo != null && account != null) repo to account else null
     }
 
     private fun resetIfMissing() {
@@ -131,6 +140,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       currentRepository = repo
       currentAccount = account
       val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, mainPanel) ?: return@create
+      projectSettings.selectedRepoAndAccount = repo to account
       showPullRequestsComponent(repo, account, requestExecutor)
     }
     with(mainPanel) {

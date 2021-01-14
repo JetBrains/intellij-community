@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.pullrequest.action.GHPRViewFilePullRequestAction
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabControllerImpl
@@ -31,8 +32,9 @@ class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
         val authManager = GithubAuthenticationManager.getInstance()
         val repositoryManager = project.service<GHProjectRepositoriesManager>()
         val dataContextRepository = GHPRDataContextRepository.getInstance(project)
+        val projectString = GithubPullRequestsProjectUISettings.getInstance(project)
         it.putUserData(GHPRToolWindowTabController.KEY,
-                       GHPRToolWindowTabControllerImpl(project, authManager, repositoryManager, dataContextRepository, it))
+                       GHPRToolWindowTabControllerImpl(project, authManager, repositoryManager, dataContextRepository, projectString, it))
       })
     }
   }
