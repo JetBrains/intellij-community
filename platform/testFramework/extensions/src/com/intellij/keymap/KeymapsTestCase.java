@@ -237,6 +237,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"},
     { "ctrl L",                   "$Cut", "Terminal.ClearBuffer"},
     { "alt O",                    "SwitchHeaderSource", "ExportToTextFile"},
+    { "ctrl H",                   "Replace", "Vcs.ShowMessageHistory"},
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
