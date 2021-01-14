@@ -94,9 +94,6 @@ import java.util.concurrent.CountDownLatch
 
 import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadExtensionWithText
 
-/**
- * @author Eugene Zhuravlev
- */
 @SkipSlowTestLocally
 class IndexTest extends JavaCodeInsightFixtureTestCase {
 

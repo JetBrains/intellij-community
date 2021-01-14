@@ -32,20 +32,23 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
   public <Key, Psi extends PsiElement> StubIdList retrieveStubIdList(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                      @NotNull Key key,
                                                                      @NotNull VirtualFile file,
-                                                                     @NotNull Project project) {
+                                                                     @NotNull Project project,
+                                                                     boolean failOnMissedKeys) {
     int id = ((VirtualFileWithId)file).getId();
     try {
       Map<Integer, SerializedStubTree> data = StubIndexImpl.getStubUpdatingIndex().getIndexedFileData(id);
       if (data.size() != 1) {
-        LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +
-                  "indexing stamp = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
-                  "can have stubs = " + StubUpdatingIndex.canHaveStub(file));
-        onInternalError(file);
+        if (failOnMissedKeys) {
+          LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +
+                    "indexing stamp = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
+                    "can have stubs = " + StubUpdatingIndex.canHaveStub(file));
+          onInternalError(file);
+        }
         return null;
       }
       SerializedStubTree tree = data.values().iterator().next();
       StubIdList stubIdList = tree.restoreIndexedStubs(indexKey, key);
-      if (stubIdList == null) {
+      if (stubIdList == null && failOnMissedKeys) {
         String mainMessage = "Stub ids not found for key in index = " + indexKey.getName() + ", " + getFileTypeInfo(file, project);
         String additionalMessage;
         if (REPORT_SENSITIVE_DATA_ON_ERROR) {
