@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.lang.Language;
@@ -22,34 +22,25 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author gregsh
- *
- * Created on 1/19/15
- */
 public abstract class RootType {
-  public static final ExtensionPointName<RootType> ROOT_EP = ExtensionPointName.create("com.intellij.scratch.rootType");
+  public static final ExtensionPointName<RootType> ROOT_EP = new ExtensionPointName<>("com.intellij.scratch.rootType");
 
-  @NotNull
-  public static List<RootType> getAllRootTypes() {
+  public static @NotNull List<RootType> getAllRootTypes() {
     return ROOT_EP.getExtensionList();
   }
 
-  @NotNull
-  public static RootType findById(@NotNull String id) {
+  public static @NotNull RootType findById(@NotNull String id) {
     for (RootType type : getAllRootTypes()) {
       if (id.equals(type.getId())) return type;
     }
     throw new AssertionError(id);
   }
 
-  @NotNull
-  public static <T extends RootType> T findByClass(@NotNull Class<T> aClass) {
+  public static @NotNull <T extends RootType> T findByClass(@NotNull Class<T> aClass) {
     return ROOT_EP.findExtensionOrFail(aClass);
   }
 
-  @Nullable
-  public static RootType forFile(@Nullable VirtualFile file) {
+  public static @Nullable RootType forFile(@Nullable VirtualFile file) {
     return ScratchFileService.findRootType(file);
   }
 
@@ -62,14 +53,11 @@ public abstract class RootType {
     myDisplayName = displayName;
   }
 
-  @NotNull
-  public final String getId() {
+  public final @NotNull String getId() {
     return myId;
   }
 
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public final String getDisplayName() {
+  public final @Nullable @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
     return myDisplayName;
   }
 
@@ -81,13 +69,11 @@ public abstract class RootType {
     return ScratchFileService.findRootType(file) == this;
   }
 
-  @Nullable
-  public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
-  public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
     Language language = substituteLanguage(project, file);
     FileType fileType = LanguageUtil.getLanguageFileType(language);
@@ -98,9 +84,7 @@ public abstract class RootType {
     return fileType != null && fileType != UnknownFileType.INSTANCE ? fileType.getIcon() : null;
   }
 
-  @Nullable
-  @NlsSafe
-  public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable @NlsSafe String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
     return null;
   }
 
@@ -120,5 +104,4 @@ public abstract class RootType {
 
   public void registerTreeUpdater(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
   }
-
 }
