@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.NlsContexts.Command;
 
@@ -56,16 +57,16 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   private static final class BuilderImpl implements Builder {
     private final Project myProject;
-    private final PsiFile[] myFiles;
+    private final PsiFile[] myPsiFiles;
     private @Command String myCommandName = getDefaultCommandName();
     private String myGroupId = DEFAULT_GROUP_ID;
-    private UndoConfirmationPolicy myPolicy;
+    private UndoConfirmationPolicy myUndoConfirmationPolicy;
     private boolean myGlobalUndoAction;
     private boolean myShouldRecordActionForActiveDocument = true;
 
     private BuilderImpl(Project project, PsiFile @NotNull ... files) {
       myProject = project;
-      myFiles = files;
+      myPsiFiles = files;
     }
 
     @NotNull
@@ -92,8 +93,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     @NotNull
     @Override
     public Builder withUndoConfirmationPolicy(@NotNull UndoConfirmationPolicy policy) {
-      if (myPolicy != null) throw new IllegalStateException("do not call withUndoConfirmationPolicy() several times");
-      myPolicy = policy;
+      if (myUndoConfirmationPolicy != null) throw new IllegalStateException("do not call withUndoConfirmationPolicy() several times");
+      myUndoConfirmationPolicy = policy;
       return this;
     }
 
@@ -105,45 +106,61 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     @Override
-    public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) {
-      new MyActionWrap<Void>() {
-        @Override
-        protected void run(@NotNull Result<? super Void> result) throws Throwable {
-          action.run();
+    public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) throws E {
+      Application application = ApplicationManager.getApplication();
+      boolean dispatchThread = application.isDispatchThread();
+
+      if (!dispatchThread && application.isReadAccessAllowed()) {
+        LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
+        throw new IllegalStateException();
+      }
+
+      AtomicReference<E> thrown = new AtomicReference<>();
+      if (dispatchThread) {
+        thrown.set(doRunWriteCommandAction(action));
+      }
+      else {
+        try {
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            thrown.set(doRunWriteCommandAction(action));
+          });
         }
-      }.execute();
+        catch (ProcessCanceledException ignored) {
+        }
+      }
+      if (thrown.get() != null) {
+        throw thrown.get();
+      }
+    }
+
+    private <E extends Throwable> E doRunWriteCommandAction(@NotNull ThrowableRunnable<E> action) {
+      if (myPsiFiles.length > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(myPsiFiles)) {
+        return null;
+      }
+
+      AtomicReference<Throwable> thrown = new AtomicReference<>();
+      Runnable wrappedRunnable = () -> {
+        if (myGlobalUndoAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            action.run();
+          }
+          catch (Throwable e) {
+            thrown.set(e);
+          }
+        });
+      };
+      CommandProcessor.getInstance().executeCommand(myProject, wrappedRunnable, myCommandName, myGroupId,
+                                                    ObjectUtils.notNull(myUndoConfirmationPolicy, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION),
+                                                    myShouldRecordActionForActiveDocument);
+      return (E)thrown.get();
     }
 
     @Override
-    public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) {
-      return new MyActionWrap<R>() {
-        @Override
-        protected void run(@NotNull Result<? super R> result) throws Throwable {
-          result.setResult(action.compute());
-        }
-      }.execute().getResultObject();
-    }
-
-    private abstract class MyActionWrap<T> extends WriteCommandAction<T> {
-      MyActionWrap() {
-        super(BuilderImpl.this.myProject, BuilderImpl.this.myCommandName, myGroupId, myFiles);
-      }
-
-      @NotNull
-      @Override
-      protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-        return ObjectUtils.notNull(myPolicy, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
-      }
-
-      @Override
-      protected boolean isGlobalUndoAction() {
-        return myGlobalUndoAction;
-      }
-
-      @Override
-      protected boolean shouldRecordActionForActiveDocument() {
-        return myShouldRecordActionForActiveDocument;
-      }
+    public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) throws E {
+      AtomicReference<R> result = new AtomicReference<>();
+      run(() -> result.set(action.compute()));
+      return result.get();
     }
   }
 
@@ -341,12 +358,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     writeCommandAction(project, files).withName(commandName).withGroupId(groupID).run(() -> runnable.run());
   }
 
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
     return writeCommandAction(project).compute(() -> computable.compute());
   }
 
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable)
     throws E {
     return writeCommandAction(project).compute(computable);

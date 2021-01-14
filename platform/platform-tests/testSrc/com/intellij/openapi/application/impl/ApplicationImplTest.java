@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -28,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -671,5 +673,10 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     readAction2.get();
     readAction1.get();
     if (exception != null) throw exception;
+  }
+
+  public void testWriteCommandActionMustThrowRelevantException() {
+    assertThrows(IOException.class, () -> WriteCommandAction.runWriteCommandAction(getProject(),
+                                          (ThrowableComputable<ThrowableRunnable<?>, IOException>)() -> { throw new IOException("aaaah"); }));
   }
 }
