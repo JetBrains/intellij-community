@@ -94,8 +94,6 @@ public class LineStatusMarkerDrawUtil {
                                        @NotNull Editor editor,
                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
                                        int framingBorder) {
-    EditorImpl editorImpl = (EditorImpl)editor;
-
     Color borderColor = getGutterBorderColor(editor);
     Color gutterBackgroundColor = ((EditorEx)editor).getGutterComponentEx().getBackground();
 
@@ -147,11 +145,8 @@ public class LineStatusMarkerDrawUtil {
           Color gutterColor = getGutterColor(change.type, editor);
           paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
         }
-        else if (borderColor != null) {
-          paintTriangle(g, editor, null, borderColor, x, endX, start);
-        }
         else {
-          Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
+          Color ignoredBorderColor = borderColor != null ? borderColor : getIgnoredGutterBorderColor(change.type, editor);
           paintTriangle(g, editor, null, ignoredBorderColor, x, endX, start);
         }
       }
