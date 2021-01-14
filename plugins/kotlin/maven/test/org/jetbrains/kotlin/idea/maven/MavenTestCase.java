@@ -342,7 +342,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     protected Module createModule(final String name, final ModuleType type) throws IOException {
         return new WriteCommandAction<Module>(myProject) {
             @Override
-            protected void run(@NotNull Result<Module> moduleResult) throws Throwable {
+            protected void run(@NotNull Result<? super Module> moduleResult) throws Throwable {
                 VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
                 Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type.getId());
                 PsiTestUtil.addContentRoot(module, f.getParent());
@@ -364,7 +364,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         if (f == null) {
             f = new WriteAction<VirtualFile>() {
                 @Override
-                protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+                protected void run(@NotNull Result<? super VirtualFile> result) throws Throwable {
                     VirtualFile res = dir.createChildData(null, "pom.xml");
                     result.setResult(res);
                 }
@@ -420,7 +420,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
         if (f == null) {
             f = new WriteAction<VirtualFile>() {
                 @Override
-                protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+                protected void run(@NotNull Result<? super VirtualFile> result) throws Throwable {
                     VirtualFile res = dir.createChildData(null, "profiles.xml");
                     result.setResult(res);
                 }
@@ -491,7 +491,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) throws IOException {
         new WriteAction<VirtualFile>() {
             @Override
-            protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+            protected void run(@NotNull Result<? super VirtualFile> result) throws Throwable {
                 if (advanceStamps) {
                     file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 4000);
                 }
