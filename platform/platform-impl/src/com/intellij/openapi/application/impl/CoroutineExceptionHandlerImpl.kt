@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.lazyPub
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -13,7 +14,9 @@ import kotlin.coroutines.CoroutineContext
  */
 class CoroutineExceptionHandlerImpl : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
   override fun handleException(context: CoroutineContext, exception: Throwable) {
-    kotlin.runCatching { Companion.LOG.error("Unhandled exception in $context", exception) }
+    if (exception is ProcessCanceledException) return
+
+    kotlin.runCatching { LOG.error("Unhandled exception in $context", exception) }
   }
 
   companion object {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -16,14 +17,29 @@ class PooledCoroutineContextTest : UsefulTestCase() {
   @Test
   fun `log error`() = runBlocking<Unit> {
     val errorMessage = "don't swallow me"
+    val loggedErrors = loggedErrorsAfterThrowingFromGlobalScope(RuntimeException(errorMessage))
+
+    assertThat(loggedErrors).anyMatch { errorMessage in it.message.orEmpty() }
+  }
+
+  @Test
+  fun `do not log ProcessCanceledException`() = runBlocking<Unit> {
+    val errorMessage = "ignore me"
+    val loggedErrors = loggedErrorsAfterThrowingFromGlobalScope(ProcessCanceledException(RuntimeException(errorMessage)))
+
+    assertThat(loggedErrors).noneMatch { errorMessage in it.cause?.message.orEmpty() }
+  }
+
+  private suspend fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): List<Throwable> {
     // cannot use assertThatThrownBy here, because AssertJ doesn't support Kotlin coroutines
     val loggedErrors = mutableListOf<Throwable>()
     withLoggedErrorsRecorded(loggedErrors) {
       GlobalScope.launch(Dispatchers.ApplicationThreadPool) {
-        throw RuntimeException(errorMessage)
+        throw exception
       }.join()
     }
-    assertThat(loggedErrors).anyMatch { errorMessage in it.message.orEmpty() }
+
+    return loggedErrors
   }
 
   private suspend fun <T> withLoggedErrorsRecorded(loggedErrors: List<Throwable>,
