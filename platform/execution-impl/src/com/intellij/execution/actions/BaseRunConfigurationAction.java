@@ -160,9 +160,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     perform(context);
   }
 
-  protected void perform(ConfigurationContext context) {
-    throw new UnsupportedOperationException();
-  }
+  protected abstract void perform(ConfigurationContext context);
 
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {

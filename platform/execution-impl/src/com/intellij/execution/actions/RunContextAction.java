@@ -37,6 +37,11 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   @Override
+  protected void perform(ConfigurationContext context) {
+    perform(context.findExisting(), context);
+  }
+
+  @Override
   protected void perform(RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
     final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
     if (configuration == null) {
