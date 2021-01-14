@@ -18,6 +18,11 @@ public class Utils {
 
   private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
 
+  private static final CopyOption[] COPY_STANDARD = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
+  private static final CopyOption[] COPY_REPLACE = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING};
+
+  private static final boolean WIN_UNPRIVILEGED = IS_WINDOWS && Boolean.getBoolean("idea.unprivileged.process");
+
   private static File myTempDir;
 
   public static boolean isZipFile(String fileName) {
@@ -143,22 +148,25 @@ public class Utils {
   public static void copy(File from, File to, boolean overwrite) throws IOException {
     Runner.logger().info(from + (overwrite ? " over " : " into ") + to);
 
-    if (Files.isDirectory(from.toPath(), LinkOption.NOFOLLOW_LINKS)) {
-      Files.createDirectories(to.toPath());
+    Path src = from.toPath(), dst = to.toPath();
+    BasicFileAttributes attrs = Files.readAttributes(src, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+    if (attrs.isDirectory()) {
+      Files.createDirectories(dst);
+    }
+    else if (WIN_UNPRIVILEGED && attrs.isSymbolicLink()) {
+      if (overwrite) Files.deleteIfExists(dst);
+      Files.createDirectories(dst.getParent());
+      Files.createSymbolicLink(dst, Files.readSymbolicLink(src));
     }
     else {
-      Files.createDirectories(to.toPath().getParent());
-      CopyOption[] options =
-        overwrite ? new CopyOption[]{LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING} :
-                    new CopyOption[]{LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
-      Files.copy(from.toPath(), to.toPath(), options);
+      Files.createDirectories(dst.getParent());
+      Files.copy(src, dst, overwrite ? COPY_REPLACE : COPY_STANDARD);
     }
   }
 
   public static void copyDirectory(Path from, Path to) throws IOException {
     Runner.logger().info(from + " into " + to);
 
-    CopyOption[] options = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
     Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -174,7 +182,12 @@ public class Utils {
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         Path copy = to.resolve(from.relativize(file));
         Runner.logger().info("  " + file + " into " + copy);
-        Files.copy(file, copy, options);
+        if (WIN_UNPRIVILEGED && attrs.isSymbolicLink()) {
+          Files.createSymbolicLink(copy, Files.readSymbolicLink(file));
+        }
+        else {
+          Files.copy(file, copy, COPY_STANDARD);
+        }
         return FileVisitResult.CONTINUE;
       }
     });
