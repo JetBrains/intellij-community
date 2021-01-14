@@ -87,4 +87,6 @@ class ClassesFrequencyLocalModel private constructor(private val storage: Classe
   override fun onFinished() {
     storage.setValid(true)
   }
+
+  override fun readyToUse(): Boolean = storage.isValid() && !storage.isEmpty()
 }

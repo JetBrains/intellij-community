@@ -36,7 +36,7 @@ class FrequencyElementFeatureProvider : ElementFeatureProvider {
       }
     }
     val classesModel = LocalModelsManager.getInstance(location.project).getModel<ClassesFrequencyLocalModel>()
-    if (psi is PsiClass && classesModel != null) {
+    if (psi is PsiClass && classesModel != null && classesModel.readyToUse()) {
       LocalModelsUtil.getClassName(psi)?.let { className ->
         classesModel.getClass(className)?.let {
           features["absolute_class_frequency"] = MLFeatureValue.numerical(it)

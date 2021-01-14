@@ -6,4 +6,5 @@ interface LocalModel {
   fun fileVisitor(): PsiElementVisitor
   fun onStarted()
   fun onFinished()
+  fun readyToUse(): Boolean
 }

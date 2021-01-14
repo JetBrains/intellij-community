@@ -10,40 +10,41 @@ object StorageUtil {
 
   private const val STORAGE_INFO_FILE = "info.json"
 
-  fun readInfo(storageDirectory: Path): StorageInfo? {
+  private fun readInfo(storageDirectory: Path): StorageInfo? {
     val infoFile = storageDirectory.resolve(STORAGE_INFO_FILE)
     if (!infoFile.exists()) return null
 
     return GSON.fromJson(infoFile.readText(), StorageInfo::class.java)
   }
 
-  fun saveInfo(info: StorageInfo, storageDirectory: Path) {
+  fun saveInfo(version: Int, isValid: Boolean, storageDirectory: Path) {
     val infoFile = storageDirectory.resolve(STORAGE_INFO_FILE)
-    infoFile.writeText(GSON.toJson(info))
+    infoFile.writeText(GSON.toJson(StorageInfo(version, isValid)))
   }
 
-  fun<K> clearMap(map: PersistentHashMap<K, *>) {
+  fun <K> PersistentHashMap<K, *>.isEmpty(): Boolean = this.processKeysWithExistingMapping { false }
+
+  fun<K> PersistentHashMap<K, *>.clear() {
     val existing = HashSet<K>()
-    map.processKeysWithExistingMapping {
+    this.processKeysWithExistingMapping {
       existing.add(it)
       true
     }
     existing.forEach { fileId ->
-      map.remove(fileId)
+      this.remove(fileId)
     }
   }
 
-  fun prepareStorage(storageDirectory: Path, version: Int): Boolean {
-    var isValid = false
+  fun prepareStorage(storageDirectory: Path, version: Int) {
     if (storageDirectory.exists()) {
       val info = readInfo(storageDirectory)
       if (info == null || !info.isValid || info.version != version) {
         storageDirectory.delete()
-      } else {
-        isValid = true
       }
     }
     storageDirectory.createDirectories()
-    return isValid
+    saveInfo(version, true, storageDirectory)
   }
+
+  private data class StorageInfo(val version: Int, val isValid: Boolean)
 }

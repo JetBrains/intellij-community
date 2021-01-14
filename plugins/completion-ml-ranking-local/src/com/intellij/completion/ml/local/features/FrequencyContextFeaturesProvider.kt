@@ -24,21 +24,23 @@ class FrequencyContextFeaturesProvider : ContextFeatureProvider {
   override fun calculateFeatures(environment: CompletionEnvironment): MutableMap<String, MLFeatureValue> {
     val features = mutableMapOf<String, MLFeatureValue>()
     val project = environment.parameters.position.project
-    LocalModelsManager.getInstance(project).getModel<MethodsFrequencyLocalModel>()?.let { model ->
+    val methodsModel = LocalModelsManager.getInstance(project).getModel<MethodsFrequencyLocalModel>()
+    if (methodsModel != null && methodsModel.readyToUse()) {
       getReceiverClass(environment.parameters)?.let { cls ->
         LocalModelsUtil.getClassName(cls)?.let {
           environment.putUserData(RECEIVER_CLASS_NAME_KEY, it)
-          model.getMethodsByClass(it)?.let { frequencies ->
+          methodsModel.getMethodsByClass(it)?.let { frequencies ->
             environment.putUserData(RECEIVER_CLASS_FREQUENCIES_KEY, frequencies)
           }
         }
       }
-      features["total_methods"] = MLFeatureValue.numerical(model.totalMethodsCount())
-      features["total_methods_usages"] = MLFeatureValue.numerical(model.totalMethodsUsages())
+      features["total_methods"] = MLFeatureValue.numerical(methodsModel.totalMethodsCount())
+      features["total_methods_usages"] = MLFeatureValue.numerical(methodsModel.totalMethodsUsages())
     }
-    LocalModelsManager.getInstance(project).getModel<ClassesFrequencyLocalModel>()?.let { model ->
-      features["total_classes"] = MLFeatureValue.numerical(model.totalClassesCount())
-      features["total_classes_usages"] = MLFeatureValue.numerical(model.totalClassesUsages())
+    val classesModel = LocalModelsManager.getInstance(project).getModel<ClassesFrequencyLocalModel>()
+    if (classesModel != null && classesModel.readyToUse()) {
+      features["total_classes"] = MLFeatureValue.numerical(classesModel.totalClassesCount())
+      features["total_classes_usages"] = MLFeatureValue.numerical(classesModel.totalClassesUsages())
     }
     return features
   }

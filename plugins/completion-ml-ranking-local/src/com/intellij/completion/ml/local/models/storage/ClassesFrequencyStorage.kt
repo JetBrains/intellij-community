@@ -1,5 +1,7 @@
 package com.intellij.completion.ml.local.models.storage
 
+import com.intellij.completion.ml.local.models.storage.StorageUtil.clear
+import com.intellij.completion.ml.local.models.storage.StorageUtil.isEmpty
 import com.intellij.util.Processor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.IntInlineKeyDescriptor
@@ -14,13 +16,11 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
 
     fun getStorage(baseDirectory: Path): ClassesFrequencyStorage {
       val storageDirectory = baseDirectory.resolve(STORAGE_NAME)
-      val isValid = StorageUtil.prepareStorage(storageDirectory, VERSION)
-      val storage = ClassesFrequencyStorage(storageDirectory)
-      storage.setValid(isValid)
-      return storage
+      StorageUtil.prepareStorage(storageDirectory, VERSION)
+      return ClassesFrequencyStorage(storageDirectory)
     }
   }
-  private var isValid: Boolean = false
+  private var isValid: Boolean = true
   private val persistentStorage = PersistentHashMap(storageDirectory.resolve(STORAGE_NAME),
                                                     EnumeratorStringDescriptor(),
                                                     IntInlineKeyDescriptor())
@@ -32,21 +32,27 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
   @Volatile var totalClassesUsages = 0
     private set
 
+  init {
+    toMemoryStorage()
+  }
+
   override fun name(): String = STORAGE_NAME
 
   override fun version(): Int = VERSION
 
   override fun isValid(): Boolean = isValid
 
+  override fun isEmpty(): Boolean = persistentStorage.isEmpty()
+
   override fun setValid(isValid: Boolean) {
     if (isValid) {
       toMemoryStorage()
     } else {
-      StorageUtil.clearMap(persistentStorage)
+      persistentStorage.clear()
       memoryStorage.clear()
     }
     this.isValid = isValid
-    StorageUtil.saveInfo(StorageInfo(VERSION, isValid), storageDirectory)
+    StorageUtil.saveInfo(VERSION, isValid, storageDirectory)
   }
 
   @Synchronized
