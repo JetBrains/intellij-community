@@ -26,21 +26,23 @@ abstract class CachingAvatarIconsProvider<T>(private val defaultIcon: Icon) : Av
     }
   }
 
-  /**
-   * Must not throw exceptions
-   */
-  protected abstract fun loadImage(key: T): Image
+  protected abstract fun loadImage(key: T): Image?
 
   private inner class DeferredAvatarIcon(private val key: T, size: Int) : Icon {
     private val baseIcon = IconUtil.resizeSquared(defaultIcon, size)
 
     private val scaledIconCache = ScaleContext.Cache<Icon> { scaleCtx ->
       DeferredIconImpl(baseIcon, key, false) {
-        val image = loadImage(it)
-        val hidpiImage = ImageUtil.ensureHiDPI(image, scaleCtx)
-        val scaledSize = scaleCtx.apply(size.toDouble(), ScaleType.USR_SCALE).toInt()
-        val scaledImage = ImageUtil.scaleImage(hidpiImage, scaledSize, scaledSize)
-        IconUtil.createImageIcon(scaledImage)
+        try {
+          val image = loadImage(it)
+          val hidpiImage = ImageUtil.ensureHiDPI(image, scaleCtx)
+          val scaledSize = scaleCtx.apply(size.toDouble(), ScaleType.USR_SCALE).toInt()
+          val scaledImage = ImageUtil.scaleImage(hidpiImage, scaledSize, scaledSize)
+          IconUtil.createImageIcon(scaledImage)
+        }
+        catch (e: Exception) {
+          baseIcon
+        }
       }
     }
 
