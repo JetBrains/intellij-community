@@ -353,8 +353,6 @@ internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor
         declarationDescriptor.source.getPsi()?.takeIf { it.isValid }?.let { it.getMaybeLightElement() ?: it }?.let { return it }
     }
 
-    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess())?.let { return it }
-
     if (declarationDescriptor is ValueParameterDescriptor) {
         val parentDeclaration = resolveToDeclaration(sourcePsi, declarationDescriptor.containingDeclaration)
         if (parentDeclaration is PsiClass && parentDeclaration.isAnnotationType) {
@@ -368,6 +366,8 @@ internal fun resolveToDeclaration(sourcePsi: KtExpression, declarationDescriptor
             .firstOrNull()
             ?.let { return it }
     }
+
+    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess())?.let { return it }
 
     return null
 }
