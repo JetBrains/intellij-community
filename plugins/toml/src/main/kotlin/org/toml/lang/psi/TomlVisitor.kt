@@ -23,6 +23,10 @@ open class TomlVisitor : PsiElementVisitor() {
         visitElement(element)
     }
 
+    open fun visitKeySegment(element: TomlKeySegment) {
+        visitElement(element)
+    }
+
     open fun visitKey(element: TomlKey) {
         visitElement(element)
     }

@@ -34,16 +34,30 @@ class TomlKeyValueImpl(type: IElementType) : CompositePsiElement(type), TomlKeyV
     }
 }
 
-class TomlKeyImpl(type: IElementType) : CompositePsiElement(type), TomlKey {
-    override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
+class TomlKeySegmentImpl(type: IElementType) : CompositePsiElement(type), TomlKeySegment {
 
     override fun getName(): String = text
 
     override fun setName(name: String): PsiElement {
-        return replace(TomlPsiFactory(project).createKey(name))
+        return replace(TomlPsiFactory(project).createKeySegment(name))
     }
 
     override fun getPresentation(): ItemPresentation = PresentationData(name, null, null, null)
+
+    override fun toString(): String = "TomlKeySegment"
+    override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
+
+    override fun accept(visitor: PsiElementVisitor) {
+        if (visitor is TomlVisitor) {
+            visitor.visitKeySegment(this)
+        } else {
+            super.accept(visitor)
+        }
+    }
+}
+
+class TomlKeyImpl(type: IElementType) : CompositePsiElement(type), TomlKey {
+    override val segments: List<TomlKeySegment> get() = childrenOfType()
 
     override fun toString(): String = "TomlKey"
 
@@ -113,7 +127,7 @@ class TomlTableImpl(type: IElementType) : CompositePsiElement(type), TomlTable {
 }
 
 class TomlTableHeaderImpl(type: IElementType) : CompositePsiElement(type), TomlTableHeader {
-    override val names: List<TomlKey> get() = childrenOfType()
+    override val key: TomlKey? get() = childOfTypeNullable()
     override fun toString(): String = "TomlTableHeader"
 
     override fun accept(visitor: PsiElementVisitor) {
@@ -154,8 +168,9 @@ class TomlArrayTableImpl(type: IElementType) : CompositePsiElement(type), TomlAr
 }
 
 class TomlASTFactory : ASTFactory() {
-    override fun createComposite(type: IElementType): CompositeElement? = when (type) {
+    override fun createComposite(type: IElementType): CompositeElement = when (type) {
         KEY_VALUE -> TomlKeyValueImpl(type)
+        KEY_SEGMENT -> TomlKeySegmentImpl(type)
         KEY -> TomlKeyImpl(type)
         LITERAL -> TomlLiteralImpl(type)
         ARRAY -> TomlArrayImpl(type)

@@ -11,41 +11,46 @@ import org.toml.TomlTestBase
 import kotlin.reflect.KClass
 
 class TomlVisitorTest : TomlTestBase() {
+
+    fun `test visit key segment`() = doTest<TomlKeySegment>("""
+        <caret>a = 5
+    """)
+
     fun `test visit key`() = doTest<TomlKey>("""
         <caret>a = 5
-    """, TomlKey::class)
+    """)
 
     fun `test visit literal`() = doTest<TomlLiteral>("""
         a = <caret>5
-    """, TomlLiteral::class, TomlValue::class)
+    """, TomlValue::class)
 
     fun `test visit key value`() = doTest<TomlKeyValue>("""
         <caret>a = 5
-    """, TomlKeyValue::class)
+    """)
 
     fun `test visit array`() = doTest<TomlArray>("""
         a = <caret>[5]
-    """, TomlArray::class, TomlValue::class)
+    """, TomlValue::class)
 
     fun `test visit table`() = doTest<TomlTable>("""
         <caret>[foo]
-    """, TomlTable::class, TomlKeyValueOwner::class)
+    """, TomlKeyValueOwner::class)
 
     fun `test visit table header`() = doTest<TomlTableHeader>("""
         [<caret>foo]
-    """, TomlTableHeader::class)
+    """)
 
     fun `test visit inline table`() = doTest<TomlInlineTable>("""
         a = { b = <caret>5 }
-    """, TomlInlineTable::class, TomlKeyValueOwner::class)
+    """, TomlKeyValueOwner::class)
 
     fun `test visit array table`() = doTest<TomlArrayTable>("""
         [[<caret>foo]]
-    """, TomlArrayTable::class, TomlKeyValueOwner::class)
+    """, TomlKeyValueOwner::class)
 
     private inline fun <reified T: TomlElement> doTest(
         @Language("TOML") code: String,
-        vararg expectedVisits: KClass<out TomlElement>
+        vararg additionalVisits: KClass<out TomlElement>
     ) {
         InlineFile(code)
         val element = myFixture.file.findElementAt(myFixture.caretOffset)!!.parentOfType<T>(true)!!
@@ -65,6 +70,11 @@ class TomlVisitorTest : TomlTestBase() {
             override fun visitKeyValue(element: TomlKeyValue) {
                 visits.add(TomlKeyValue::class)
                 super.visitKeyValue(element)
+            }
+
+            override fun visitKeySegment(element: TomlKeySegment) {
+                visits.add(TomlKeySegment::class)
+                super.visitKeySegment(element)
             }
 
             override fun visitKey(element: TomlKey) {
@@ -108,6 +118,6 @@ class TomlVisitorTest : TomlTestBase() {
             }
         }
         element.accept(visitor)
-        assertEquals(expectedVisits.toList().plus(TomlElement::class), visits)
+        assertEquals(listOf(T::class, *additionalVisits, TomlElement::class), visits)
     }
 }

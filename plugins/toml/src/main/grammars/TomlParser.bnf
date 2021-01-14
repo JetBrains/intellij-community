@@ -42,16 +42,14 @@ private FileForm_recover ::=
   !<<atNewLine (BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '[')>>
 private EatUntilNextLine_recover ::= !<<atNewLine <<any>>>>
 
-KeyValue ::= LongKey '=' <<atSameLine Value>> { pin = 1 }
+KeyValue ::= Key '=' <<atSameLine Value>> { pin = 1 }
 NewLineKeyValue ::= <<atNewLine KeyValue>> {
     elementType = KeyValue
     recoverWhile = EatUntilNextLine_recover
 }
 
-fake Key ::= BasicKey ('.' BasicKey)*
-LongKey ::= BasicKey ('.' BasicKey)* { elementType = Key }
-ShortKey ::= BasicKey { elementType = Key }
-private BasicKey ::= BareKey | BASIC_STRING | LITERAL_STRING
+Key ::= KeySegment ('.' KeySegment)*
+KeySegment ::= BareKey | BASIC_STRING | LITERAL_STRING
 private BareKey ::= BARE_KEY
   | <<remap 'BARE_KEY_OR_NUMBER' 'BARE_KEY'>>
   | <<remap 'BARE_KEY_OR_DATE' 'BARE_KEY'>>
@@ -80,13 +78,13 @@ private ArrayElement ::= !']' Value (','|&']') {
 private ArrayElement_recover ::= !(']' | Value_first) { consumeTokenMethod = "consumeTokenFast" }
 
 Table ::= TableHeader NewLineKeyValue*
-TableHeader ::= '[' ShortKey ('.' ShortKey)* ']' {
+TableHeader ::= '[' Key ']' {
   pin = 1
   recoverWhile = EatUntilNextLine_recover
 }
 
 ArrayTable ::= ArrayTableHeader NewLineKeyValue*
-ArrayTableHeader ::= '[''[' ShortKey ('.' ShortKey)* ']'']' {
+ArrayTableHeader ::= '[''[' Key ']'']' {
   pin = 2
   elementType = TableHeader
   recoverWhile = EatUntilNextLine_recover

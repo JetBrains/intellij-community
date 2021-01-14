@@ -1,7 +1,8 @@
 TOML File
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('key')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('key')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -10,7 +11,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('bare_key')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('bare_key')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -19,7 +21,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('bare-key')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('bare-key')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -28,7 +31,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('1234')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('1234')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -37,7 +41,8 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('2018-04-01')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('2018-04-01')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -46,7 +51,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('2018-04-01Z')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('2018-04-01Z')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -55,7 +61,8 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BASIC_STRING)('"127.0.0.1"')
+      TomlKeySegment
+        PsiElement(BASIC_STRING)('"127.0.0.1"')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -64,7 +71,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BASIC_STRING)('"character encoding"')
+      TomlKeySegment
+        PsiElement(BASIC_STRING)('"character encoding"')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -73,7 +81,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BASIC_STRING)('"ʎǝʞ"')
+      TomlKeySegment
+        PsiElement(BASIC_STRING)('"ʎǝʞ"')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -82,7 +91,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(LITERAL_STRING)(''key2'')
+      TomlKeySegment
+        PsiElement(LITERAL_STRING)(''key2'')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -91,7 +101,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(LITERAL_STRING)(''quoted "value"'')
+      TomlKeySegment
+        PsiElement(LITERAL_STRING)(''quoted "value"'')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -100,7 +111,8 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BASIC_STRING)('""')
+      TomlKeySegment
+        PsiElement(BASIC_STRING)('""')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -109,7 +121,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(LITERAL_STRING)('''')
+      TomlKeySegment
+        PsiElement(LITERAL_STRING)('''')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -118,7 +131,8 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('name')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('name')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -127,9 +141,11 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('physical')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('physical')
       PsiElement(.)('.')
-      PsiElement(BARE_KEY)('color')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('color')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -138,9 +154,11 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('physical')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('physical')
       PsiElement(.)('.')
-      PsiElement(BARE_KEY)('shape')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('shape')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -149,9 +167,11 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('site')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('site')
       PsiElement(.)('.')
-      PsiElement(BASIC_STRING)('"google.com"')
+      TomlKeySegment
+        PsiElement(BASIC_STRING)('"google.com"')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -160,11 +180,14 @@ TOML File
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('a')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('a')
       PsiElement(.)('.')
-      PsiElement(BARE_KEY)('b')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('b')
       PsiElement(.)('.')
-      PsiElement(BARE_KEY)('c')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('c')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -173,9 +196,11 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('a')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('a')
       PsiElement(.)('.')
-      PsiElement(BARE_KEY)('d')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('d')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -186,10 +211,11 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('a')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('a')
     PsiElement(.)('.')
     PsiWhiteSpace(' ')
-    PsiErrorElement:BARE_KEY, BASIC_STRING or LITERAL_STRING expected, got '='
+    PsiErrorElement:<key segment> expected, got '='
       PsiElement(=)('=')
     PsiWhiteSpace(' ')
     PsiElement(BASIC_STRING)('""')
@@ -206,7 +232,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('key1')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('key1')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiErrorElement:VALUE expected, got '"key2"'
@@ -214,7 +241,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BASIC_STRING)('"key2"')
+      TomlKeySegment
+        PsiElement(BASIC_STRING)('"key2"')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -223,7 +251,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('key3')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('key3')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiErrorElement:VALUE expected, got 'key4'
@@ -231,7 +260,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('key4')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('key4')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -242,7 +272,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('key1')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('key1')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiErrorElement:<literal>, '[' or '{' expected, got 'IntellijIdeaRulezzz'
@@ -251,7 +282,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('key2')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('key2')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiErrorElement:<literal>, '[' or '{' expected, got 'IntellijIdeaRulezzz'

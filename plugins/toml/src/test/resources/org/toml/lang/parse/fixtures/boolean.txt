@@ -1,7 +1,8 @@
 TOML File
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('bool1')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('bool1')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
@@ -10,7 +11,8 @@ TOML File
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
-      PsiElement(BARE_KEY)('bool2')
+      TomlKeySegment
+        PsiElement(BARE_KEY)('bool2')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
