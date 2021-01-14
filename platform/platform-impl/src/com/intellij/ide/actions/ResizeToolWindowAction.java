@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -54,7 +55,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   @Override
   public final void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null) {
+    if (project == null || e.getData(CommonDataKeys.HOST_EDITOR) != null) {
       setDisabled(e);
       return;
     }
