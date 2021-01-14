@@ -22,6 +22,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
 
   @Test
   fun test() {
+    val gradleSupportsJunitPlatform = isGradleNewerOrSameAs("4.6")
     createProjectSubFile("src/main/java/my/pack/AClass.java",
                          "package my.pack;\n" +
                          "public class AClass {\n" +
@@ -78,6 +79,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
         .addPostfix("dependencies {",
                     "  testCompile 'junit:junit:4.12'",
                     "}",
+                    if (gradleSupportsJunitPlatform) {
                     """
                       sourceSets {
                         junit5test
@@ -93,7 +95,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
                          testClassesDirs = sourceSets.junit5test.output.classesDirs
                          classpath = sourceSets.junit5test.runtimeClasspath
                       }
-                    """.trimIndent(),
+                    """.trimIndent() } else { "" },
                     "test { filter { includeTestsMatching 'my.pack.*' } }")
         .generate()
     )
@@ -102,7 +104,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
       ThrowableRunnable { `call test task produces test events`() },
       ThrowableRunnable { `call build task does not produce test events`() },
       ThrowableRunnable { `call task for specific test overrides existing filters`() },
-      ThrowableRunnable { `test events use display name`() }
+      ThrowableRunnable { if (gradleSupportsJunitPlatform) `test events use display name`() }
     ).run()
   }
 
