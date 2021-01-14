@@ -47,19 +47,12 @@ public class DomElementClassIndex extends StringStubIndexExtension<PsiFile> {
     if (!(file instanceof VirtualFileWithId)) return false;
 
     final String clazzName = clazz.getName();
-    final int virtualFileId = ((VirtualFileWithId)file).getId();
 
     CommonProcessors.FindFirstProcessor<? super PsiFile> processor =
       new CommonProcessors.FindFirstProcessor<>();
     StubIndex.getInstance().processElements(KEY, clazzName,
                                             domFileElement.getFile().getProject(),
                                             GlobalSearchScope.fileScope(domFileElement.getFile()),
-                                            new IdFilter() {
-                                              @Override
-                                              public boolean containsFileId(int id) {
-                                                return id == virtualFileId;
-                                              }
-                                            },
                                             PsiFile.class, 
                                             processor
     );
