@@ -17,8 +17,8 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.uast.UastModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdIterator;
@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.PsiAnnotation.TargetType.ANNOTATION_TYPE;
+import static com.intellij.psi.search.GlobalSearchScope.allScope;
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
@@ -71,7 +72,7 @@ public abstract class MetaAnnotationUtil {
         GlobalSearchScope effectiveSearchScope = getAllAnnotationFilesScope(project).intersectWith(moduleScope);
         return getAnnotationTypesWithChildren(annotationClass, effectiveSearchScope);
       });
-      return Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
+      return Result.create(factoryMap, UastModificationTracker.getInstance(project));
     });
 
     return map.get(pair(annotationName, includeTests));
@@ -105,7 +106,7 @@ public abstract class MetaAnnotationUtil {
         return findAnnotatedTypes(module, key);
       });
 
-      return new Result<>(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
+      return new Result<>(factoryMap, UastModificationTracker.getInstance(module.getProject()));
     });
     return map.get(annotationName);
   }
@@ -136,13 +137,13 @@ public abstract class MetaAnnotationUtil {
       GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(project);
       return Result.createSingleDependency(
         javaScope.uniteWith(otherScope),
-        PsiModificationTracker.MODIFICATION_COUNT);
+        UastModificationTracker.getInstance(project));
     });
   }
 
   @NotNull
   private static GlobalSearchScope searchForAnnotationInheritorsInOtherLanguages(Project project) {
-    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+    GlobalSearchScope allScope = allScope(project);
     Set<VirtualFile> allAnnotationFiles = new HashSet<>();
     for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project)
       .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, allScope)) {
@@ -166,7 +167,7 @@ public abstract class MetaAnnotationUtil {
   @NotNull
   private static TIntHashSet getJavaAnnotationInheritorIds(Project project) {
     IdIterator iterator = StubIndex.getInstance().getContainingIds(JavaStubIndexKeys.SUPER_CLASSES, "Annotation", project,
-                                                                   GlobalSearchScope.allScope(project));
+                                                                   allScope(project));
     TIntHashSet idSet = new TIntHashSet();
     while (iterator.hasNext()) {
       idSet.add(iterator.next());
@@ -258,7 +259,7 @@ public abstract class MetaAnnotationUtil {
     return CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
       ConcurrentMap<String, PsiAnnotation> metaAnnotationsMap = ConcurrentFactoryMap.createMap(
         anno -> findMetaAnnotation(subjectAnnotation, anno, new HashSet<>()));
-      return new Result<>(metaAnnotationsMap, PsiModificationTracker.MODIFICATION_COUNT);
+      return Result.create(metaAnnotationsMap, UastModificationTracker.getInstance(subjectAnnotation.getProject()));
     }).get(annotationToFind);
   }
 
