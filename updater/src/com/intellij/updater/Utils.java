@@ -24,7 +24,7 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  public static File getTempFile(String name) throws IOException {
+  public synchronized static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
       String path = System.getProperty("java.io.tmpdir");
       if (path == null) throw new IllegalArgumentException("System property `java.io.tmpdir` is not defined");
@@ -51,7 +51,7 @@ public class Utils {
     return myTempFile;
   }
 
-  public static void cleanup() throws IOException {
+  public synchronized static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
     Runner.logger().info("deleted a working directory: " + myTempDir.getPath());
