@@ -2,10 +2,14 @@
 package git4idea.log;
 
 import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffVcsDataKeys;
+import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.SimpleDiffRequestChain;
+import com.intellij.diff.chains.SimpleDiffRequestProducer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
-import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,10 +26,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
-import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -67,20 +71,21 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                        @NotNull Hash rightHash) {
     if (leftPath == null && rightPath == null) return;
 
-    if (chooseNotNull(leftPath, rightPath).isDirectory()) {
-      showDiffForPaths(root, Collections.singleton(chooseNotNull(leftPath, rightPath)), leftHash, rightHash);
+    FilePath filePath = chooseNotNull(leftPath, rightPath);
+    if (filePath.isDirectory()) {
+      showDiffForPaths(root, Collections.singleton(filePath), leftHash, rightHash);
     }
     else {
-      loadDiffAndShow((ThrowableComputable<DiffRequest, VcsException>)() -> {
+      DiffRequestProducer requestProducer = SimpleDiffRequestProducer.create(filePath, () -> {
         DiffContent leftDiffContent = createDiffContent(root, leftPath, leftHash);
         DiffContent rightDiffContent = createDiffContent(root, rightPath, rightHash);
 
         return new SimpleDiffRequest(getTitle(leftPath, rightPath, DIFF_TITLE_RENAME_SEPARATOR),
                                      leftDiffContent, rightDiffContent,
                                      leftHash.asString(), rightHash.asString());
-      },
-                      request -> DiffManager.getInstance().showDiff(myProject, request),
-                      GitBundle.message("git.log.diff.handler.process", chooseNotNull(rightPath, leftPath).getName()));
+      });
+      SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducer(requestProducer);
+      UIUtil.invokeLaterIfNeeded(() -> DiffManager.getInstance().showDiff(myProject, chain, DiffDialogHints.DEFAULT));
     }
   }
 
@@ -91,16 +96,16 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       showDiffForPaths(root, Collections.singleton(localPath), revisionHash, null);
     }
     else {
-      loadDiffAndShow((ThrowableComputable<DiffRequest, VcsException>)() -> {
+      DiffRequestProducer requestProducer = SimpleDiffRequestProducer.create(localPath, () -> {
         DiffContent leftDiffContent = createDiffContent(root, revisionPath, revisionHash);
         DiffContent rightDiffContent = createCurrentDiffContent(localPath);
         return new SimpleDiffRequest(getTitle(revisionPath, localPath, DIFF_TITLE_RENAME_SEPARATOR),
                                      leftDiffContent, rightDiffContent,
                                      revisionHash.asString(),
-                                     "(" + GitBundle.message("git.log.diff.handler.local.version.content.title") + ")");
-      },
-                      request -> DiffManager.getInstance().showDiff(myProject, request),
-                      GitBundle.message("git.log.diff.handler.process", localPath.getName()));
+                                     GitBundle.message("git.log.diff.handler.local.version.content.title"));
+      });
+      SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducer(requestProducer);
+      UIUtil.invokeLaterIfNeeded(() -> DiffManager.getInstance().showDiff(myProject, chain, DiffDialogHints.DEFAULT));
     }
   }
 
