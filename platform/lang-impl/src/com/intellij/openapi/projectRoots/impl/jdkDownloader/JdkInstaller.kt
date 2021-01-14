@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JdkUtil
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerWSL.WSLDistributionForJdkInstaller
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerWSL.unpackJdkOnWsl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -28,6 +27,7 @@ import com.intellij.util.io.*
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.Nullable
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -86,14 +86,22 @@ class JdkInstaller : JdkInstallerBase() {
 
   override fun wslDistributionFromPath(targetDir: Path): WSLDistributionForJdkInstaller? {
     val d = WslDistributionManager.getInstance().distributionFromPath(targetDir.toString()) ?: return null
-    return object : WSLDistributionForJdkInstaller {
+    return wrap(d)
+  }
+
+  private fun wrap(d: @Nullable WSLDistribution) =
+    object : WSLDistributionForJdkInstaller {
       override fun getWslPath(path: Path): String = d.getWslPath(path.toString()) ?: error("Failed to map $path to WSL")
 
       override fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput {
         return d.executeOnWsl(command, WSLCommandLineOptions().setRemoteWorkingDirectory(dir), timeout, null)
       }
     }
-  }
+}
+
+interface WSLDistributionForJdkInstaller {
+  fun getWslPath(path: Path): String
+  fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput
 }
 
 private val LOG = logger<JdkInstaller>()
@@ -345,7 +353,10 @@ abstract class JdkInstallerBase {
     try {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
-      val expectOs = if (WslDistributionManager.isWslPath(jdkPath.toString())) "linux" else JdkPredicate.currentOS
+      val predicate = when {
+        WslDistributionManager.isWslPath(jdkPath.toString()) -> JdkPredicate.forWSL()
+        else -> JdkPredicate.default()
+      }
 
       // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
       val markerFile = generateSequence(jdkPath, { file -> file.parent })
@@ -355,7 +366,7 @@ abstract class JdkInstallerBase {
                          .firstOrNull { it.isFile() } ?: return null
 
       val json = JdkListParser.readTree(markerFile.readBytes())
-      return JdkListParser.parseJdkItem(json, JdkPredicate.createInstance()).firstOrNull { it.os == expectOs }
+      return JdkListParser.parseJdkItem(json, predicate).firstOrNull()
     }
     catch (e: Throwable) {
       return null

@@ -77,7 +77,7 @@ class JdkDownloaderTest : LightPlatformTestCase() {
                                        size = 604,
                                        sha256 = "1cf15536c1525f413190fd53243f343511a17e6ce7439ccee4dc86f0d34f9e81")
 
-  private val mockWSL = object: JdkInstallerWSL.WSLDistributionForJdkInstaller {
+  private val mockWSL = object: WSLDistributionForJdkInstaller {
     override fun getWslPath(path: Path): String = path.toString()
 
     override fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput {

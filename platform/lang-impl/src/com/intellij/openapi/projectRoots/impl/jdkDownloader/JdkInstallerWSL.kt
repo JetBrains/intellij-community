@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.wsl.WSLCommandLineOptions
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.isAncestor
@@ -83,10 +80,5 @@ object JdkInstallerWSL {
       LOG.warn(message + ": " + processOutput.stderrLines.takeLast(10).joinToString("") { "\n  $it" })
       throw RuntimeException(message)
     }
-  }
-
-  interface WSLDistributionForJdkInstaller {
-    fun getWslPath(path: Path): String
-    fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput
   }
 }

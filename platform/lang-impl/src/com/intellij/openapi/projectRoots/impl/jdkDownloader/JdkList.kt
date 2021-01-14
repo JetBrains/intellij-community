@@ -30,6 +30,7 @@ import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -171,7 +172,7 @@ data class JdkItem(
     get() = StringUtil.formatFileSize(archiveSize)
 
   /**
-   * returns Arch if it's expected to be shown, `null` othersise
+   * returns Arch if it's expected to be shown, `null` otherwise
    */
   val presentableArchIfNeeded: @NlsSafe String?
     get() = if (arch != "x86_64") arch else null
@@ -215,16 +216,26 @@ data class JdkPredicate(
 ) {
 
   companion object {
-    fun createInstance(): JdkPredicate {
-      val x86_64 ="x86_64"
-      val platforms = mutableListOf(JdkPlatform(currentOS, x86_64))
+    fun default() = createInstance(forWsl = false)
+    fun forWSL() = createInstance(forWsl = true)
 
-      if ((SystemInfo.isMac && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.m1")) {
-        platforms += JdkPlatform(os = "macOS", arch = "aarch64")
-      }
+    private fun createInstance(forWsl: Boolean = false): JdkPredicate {
+      val x86_64 = "x86_64"
+      val defaultPlatform = JdkPlatform(currentOS, x86_64)
+      val platforms = when {
+        SystemInfo.isMac && CpuArch.isArm64() || Registry.`is`("jdk.downloader.assume.m1") -> {
+          listOf(defaultPlatform, defaultPlatform.copy(arch = "aarch64"))
+        }
 
-      if (SystemInfo.isWindows /* && test for WSL*/) {
-        platforms += JdkPlatform(os = "linux", arch = x86_64)
+        SystemInfo.isWindows && forWsl -> {
+          listOf(defaultPlatform.copy(os = "linux"))
+        }
+
+        !SystemInfo.isWindows && forWsl -> {
+          listOf()
+        }
+
+        else -> listOf(defaultPlatform)
       }
 
       return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, platforms.toSet())
@@ -425,52 +436,60 @@ abstract class JdkListDownloaderBase {
    * contains few more entries than the result of the [downloadForUI] call.
    * Entries are sorter from the best suggested to the worst suggested items.
    */
-  fun downloadModelForJdkInstaller(progress: ProgressIndicator?, os: String = JdkPredicate.currentOS): List<JdkItem> {
-    return downloadJdksListWithCache(feedUrl, progress).filter { it.os == os }
+  fun downloadModelForJdkInstaller(progress: ProgressIndicator?): List<JdkItem> = downloadModelForJdkInstaller(progress, JdkPredicate.default())
+
+  /**
+   * Returns a list of entries for JDK automatic installation. That set of entries normally
+   * contains few more entries than the result of the [downloadForUI] call.
+   * Entries are sorter from the best suggested to the worst suggested items.
+   */
+  fun downloadModelForJdkInstaller(progress: ProgressIndicator?, predicate: JdkPredicate): List<JdkItem> {
+    return downloadJdksListWithCache(predicate, feedUrl, progress)
   }
 
   /**
    * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
    */
-  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null) : List<JdkItem> {
+  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null) : List<JdkItem> = downloadForUI(progress, feedUrl, JdkPredicate.default())
+
+  /**
+   * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
+   */
+  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null, predicate: JdkPredicate) : List<JdkItem> {
     //we intentionally disable cache here for all user UI requests, as of IDEA-252237
     val url = feedUrl ?: this.feedUrl
-    val list = downloadJdksListNoCache(url, progress)
+    val raw = downloadJdksListNoCache(url, progress)
 
     //setting value to the cache, just in case
-    jdksListCache.setValue(url, list)
+    jdksListCache.setValue(url, raw)
 
+    val list = raw.getJdks(predicate)
     if (ApplicationManager.getApplication().isInternal) {
-      return list.filter { it.os == JdkPredicate.currentOS }
+      return list
     }
 
-    return list.filter { it.isVisibleOnUI && it.os == JdkPredicate.currentOS }
+    return list.filter { it.isVisibleOnUI }
   }
 
-  fun findWslJdk(item: JdkItem): JdkItem {
-    val jdkList = downloadJdksListWithCache(feedUrl, null)
-    return jdkList.firstOrNull { it.product.vendor == item.product.vendor && it.versionString == item.versionString && it.os == "linux" } ?: item
-  }
+  private val jdksListCache = CachedValueWithTTL<RawJdkList>(15 to TimeUnit.MINUTES)
 
-  private val jdksListCache = CachedValueWithTTL<List<JdkItem>>(15 to TimeUnit.MINUTES)
-
-  private fun downloadJdksListWithCache(feedUrl: String?, progress: ProgressIndicator?): List<JdkItem> {
+  private fun downloadJdksListWithCache(predicate: JdkPredicate, feedUrl: String?, progress: ProgressIndicator?): List<JdkItem> {
     @Suppress("NAME_SHADOWING")
     val feedUrl = feedUrl ?: this.feedUrl
 
-    return jdksListCache.getOrCompute(feedUrl, listOf()) {
+    return jdksListCache.getOrCompute(feedUrl, EmptyRawJdkList) {
       downloadJdksListNoCache(feedUrl, progress)
-    }
+    }.getJdks(predicate)
   }
 
-  private fun downloadJdksListNoCache(feedUrl: String, progress: ProgressIndicator?): List<JdkItem> {
+  private fun downloadJdksListNoCache(feedUrl: String, progress: ProgressIndicator?): RawJdkList {
     // download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
     val rawDataXZ = try {
       downloadJdkList(feedUrl, progress)
     }
     catch (t: IOException) {
       Logger.getInstance(javaClass).warn("Failed to download the list of available JDKs from $feedUrl. ${t.message}")
-      return emptyList()
+      return EmptyRawJdkList
     }
 
     val rawData = try {
@@ -491,12 +510,37 @@ abstract class JdkListDownloaderBase {
       throw RuntimeException("Failed to parse the downloaded list of available JDKs. ${t.message}", t)
     }
 
-    try {
-      return ImmutableList.copyOf(JdkListParser.parseJdkList(json, JdkPredicate.createInstance()))
+    return RawJdkListImpl(feedUrl, json)
+  }
+}
+
+private interface RawJdkList {
+  fun getJdks(predicate: JdkPredicate) : List<JdkItem>
+}
+
+private object EmptyRawJdkList : RawJdkList {
+  override fun getJdks(predicate: JdkPredicate) : List<JdkItem> = listOf()
+}
+
+private class RawJdkListImpl(
+  private val feedUrl: String,
+  private val json: ObjectNode,
+) : RawJdkList {
+  private val cache = ConcurrentHashMap<JdkPredicate, () -> List<JdkItem>>()
+
+  override fun getJdks(predicate: JdkPredicate) = cache.computeIfAbsent(predicate) { parseJson(it) }()
+
+  private fun parseJson(predicate: JdkPredicate) : () -> List<JdkItem> {
+    val result = runCatching {
+      try {
+        ImmutableList.copyOf(JdkListParser.parseJdkList(json, predicate))
+      }
+      catch (t: Throwable) {
+        throw RuntimeException("Failed to process the downloaded list of available JDKs from $feedUrl. ${t.message}", t)
+      }
     }
-    catch (t: Throwable) {
-      throw RuntimeException("Failed to process the downloaded list of available JDKs from $feedUrl. ${t.message}", t)
-    }
+
+    return { result.getOrThrow() }
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -228,7 +228,7 @@ class JdkListTest {
     for (osType in listOf("windows", "linux", "macOS")) {
       val archs: Set<JdkPlatform> = setOf(JdkPlatform(osType,"x86_64"))
       val predicate = JdkPredicate(BuildNumber.fromString("201.123")!!, archs)
-      val data = JdkListParser.parseJdkList(json, predicate).filter { it.os == osType }
+      val data = JdkListParser.parseJdkList(json, predicate)
       assertThat(data)
         .withFailMessage("should have items for $osType")
         .assert()
