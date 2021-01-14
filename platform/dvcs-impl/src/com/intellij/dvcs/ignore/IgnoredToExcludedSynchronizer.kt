@@ -7,6 +7,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.projectView.actions.MarkExcludeRootAction
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
@@ -17,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -29,6 +32,9 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FilesProcessorImpl
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.IGNORED_TO_EXCLUDE_NOT_FOUND
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
@@ -230,6 +236,32 @@ class IgnoredToExcludeNotificationProvider : EditorNotifications.Provider<Editor
       createActionLabel(message("ignore.to.exclude.notification.action.mute"), muteAction(project))
       createActionLabel(message("ignore.to.exclude.notification.action.details")) {
         BrowserUtil.browse("https://www.jetbrains.com/help/idea/content-roots.html#folder-categories") }
+    }
+  }
+}
+
+internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = e.project != null
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project!!
+    val changeListManager = ChangeListManager.getInstance(project)
+
+    changeListManager.invokeAfterUpdateWithModal(false, ActionsBundle.message("action.CheckIgnoredAndNotExcludedDirectories.progress")) {
+      val dirsToExclude = determineIgnoredDirsToExclude(project, changeListManager.ignoredFilePaths)
+      if (dirsToExclude.isEmpty()) {
+        VcsNotifier.getInstance(project)
+          .notifyMinorInfo(IGNORED_TO_EXCLUDE_NOT_FOUND, "", message("ignore.to.exclude.no.directories.found"))
+      }
+      else {
+        val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
+        if (userSelectedFiles.isNotEmpty()) {
+          markIgnoredAsExcluded(project, userSelectedFiles)
+        }
+      }
     }
   }
 }

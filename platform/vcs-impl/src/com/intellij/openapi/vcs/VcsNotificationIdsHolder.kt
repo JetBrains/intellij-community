@@ -40,6 +40,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val EXTERNALLY_ADDED_FILES = "externally.added.files.notification"
     const val PROJECT_CONFIGURATION_FILES_ADDED = "project.configuration.files.added.notification"
     const val MANAGE_IGNORE_FILES = "manage.ignore.files.notification"
+    const val IGNORED_TO_EXCLUDE_NOT_FOUND = "ignored.to.exclude.not.found"
     const val CHERRY_PICK_ERROR = "vcs.cherry.pick.error"
     const val COMMIT_CANCELED = "vcs.commit.canceled"
     const val COMMIT_FAILED = "vcs.commit.failed"

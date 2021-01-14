@@ -63,6 +63,8 @@
       <add-to-group group-id="ChangesView.GroupBy"/>
     </action>
 
+    <action id="CheckIgnoredAndNotExcludedDirectories" class="com.intellij.dvcs.ignore.CheckIgnoredToExcludeAction"/>
+
   </actions>
 
   <projectListeners>
