@@ -4,9 +4,11 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.*;
+import com.intellij.refactoring.move.moveClassesOrPackages.ModifyModuleStatementUsageInfo;
 import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoUsageDetector;
-import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteModuleStatementsUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +43,9 @@ public class ModuleInfoSafeDeleteUsageDetector extends ModuleInfoUsageDetector {
         // if a package doesn't contain any other classes except moved ones then we need to delete a corresponding export statement
         Collection<PsiClass> sourceClasses = mySourceClassesByDir.get(sourceDir);
         if (dirContainsOnlyClasses(sourceDir, sourceClasses)) {
-          sourceStatements.forEach(statement -> usageInfos.add(new SafeDeleteReferenceJavaDeleteUsageInfo(statement, sourceModuleDescriptor, true)));
+          List<ModifyModuleStatementUsageInfo> moduleStatementUsages = ContainerUtil
+            .map(sourceStatements, statement -> ModifyModuleStatementUsageInfo.createLastDeletionInfo(statement, sourceModuleDescriptor));
+          usageInfos.add(new SafeDeleteModuleStatementsUsageInfo(sourceStatements.get(0), moduleStatementUsages));
         }
       }
     }

@@ -78,7 +78,7 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
         // if a package doesn't contain any other classes except moved ones then we need to delete a corresponding export statement
         Collection<PsiClass> sourceClasses = mySourceClassesByDir.get(sourceDir);
         if (dirContainsOnlyClasses(sourceDir, sourceClasses)) {
-          sourceStatements.forEach(statement -> usageInfos.add(ModifyModuleStatementUsageInfo.createDeletionInfo(statement, sourceModuleDescriptor)));
+          sourceStatements.forEach(statement -> usageInfos.add(ModifyModuleStatementUsageInfo.createLastDeletionInfo(statement, sourceModuleDescriptor)));
         }
         PsiJavaModule targetModuleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(targetDirectory);
         // so far we don't take into account a motion between separate JPMS-modules
@@ -225,53 +225,6 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
       moduleRefsText = " to " + String.join(",", moduleRefNames);
     }
     return roleText + " " + packageName + moduleRefsText;
-  }
-
-  static class ModifyModuleStatementUsageInfo extends UsageInfo {
-    private final PsiJavaModule myModuleDescriptor;
-    private final ModifyingOperation myModifyingOperation;
-
-    private ModifyModuleStatementUsageInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
-                                           @NotNull PsiJavaModule descriptor,
-                                           @NotNull ModifyingOperation modifyingOperation) {
-      super(moduleStatement);
-      myModuleDescriptor = descriptor;
-      myModifyingOperation = modifyingOperation;
-    }
-
-    @NotNull
-    PsiJavaModule getModuleDescriptor() {
-      return myModuleDescriptor;
-    }
-
-    @NotNull
-    PsiPackageAccessibilityStatement getModuleStatement() {
-      return (PsiPackageAccessibilityStatement)Objects.requireNonNull(getElement());
-    }
-
-    @NotNull
-    static ModifyModuleStatementUsageInfo createAdditionInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
-                                                             @NotNull PsiJavaModule descriptor) {
-      return new ModifyModuleStatementUsageInfo(moduleStatement, descriptor, ModifyingOperation.ADD);
-    }
-
-    @NotNull
-    static ModifyModuleStatementUsageInfo createDeletionInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
-                                                             @NotNull PsiJavaModule descriptor) {
-      return new ModifyModuleStatementUsageInfo(moduleStatement, descriptor, ModifyingOperation.DELETE);
-    }
-
-    boolean isAddition() {
-      return myModifyingOperation == ModifyingOperation.ADD;
-    }
-
-    boolean isDeletion() {
-      return myModifyingOperation == ModifyingOperation.DELETE;
-    }
-
-    private enum ModifyingOperation {
-      ADD, DELETE
-    }
   }
 
   private static class DirectoryWithModuleStatements {
