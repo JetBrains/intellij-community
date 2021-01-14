@@ -63,7 +63,8 @@ internal class ScriptChangesNotifier(
                     val file = FileDocumentManager.getInstance().getFile(document)?.takeIf { it.isInLocalFileSystem } ?: return
 
                     // Do not listen for changes in files that are not open
-                    if (file !in FileEditorManager.getInstance(project).openFiles) {
+                    val editorManager = FileEditorManager.getInstance(project) ?: return
+                    if (file !in editorManager.openFiles) {
                         return
                     }
 
