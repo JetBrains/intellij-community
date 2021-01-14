@@ -193,6 +193,24 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     showingSelectors = false
   }
 
+  override fun canResetRemoteOrAccount(): Boolean {
+    if (currentRepository == null) return false
+    if (currentAccount == null) return false
+
+    val singleRepo = repositoryManager.knownRepositories.singleOrNull()
+    if (singleRepo == null) return true
+
+    val matchingAccounts = authManager.getAccounts().filter { it.server.equals(singleRepo.repository.serverPath, true) }
+    return matchingAccounts.size != 1
+  }
+
+  override fun resetRemoteAndAccount() {
+    currentRepository = null
+    currentAccount = null
+    projectSettings.selectedRepoAndAccount = null
+    Updater().update()
+  }
+
   private inner class ComponentController(private val dataContext: GHPRDataContext,
                                           private val wrapper: Wrapper,
                                           private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {

@@ -7,6 +7,9 @@ interface GHPRToolWindowTabController {
 
   val componentController: GHPRToolWindowTabComponentController?
 
+  fun canResetRemoteOrAccount(): Boolean
+  fun resetRemoteAndAccount()
+
   companion object {
     val KEY = Key.create<GHPRToolWindowTabController>("Github.PullRequests.ToolWindow.Tab.Controller")
   }

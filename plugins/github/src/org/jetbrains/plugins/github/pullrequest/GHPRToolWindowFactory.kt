@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
@@ -11,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRViewFilePullRequestAction
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
@@ -23,6 +25,7 @@ class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = with(toolWindow as ToolWindowEx) {
     setTitleActions(listOf(GHPRViewFilePullRequestAction()))
+    setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
     component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
     with(contentManager) {
       addContent(factory.createContent(JPanel(null), null, false).apply {
