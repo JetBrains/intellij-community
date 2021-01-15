@@ -1,15 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
-
 
 import com.intellij.openapi.util.Getter;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SimpleEntry;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -130,7 +126,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     return new MyEntrySetView();
   }
 
-  private class MyEntrySetView extends AbstractSet<Entry<V>> {
+  private final class MyEntrySetView extends AbstractSet<Entry<V>> {
     @NotNull
     @Override
     public Iterator<Entry<V>> iterator() {
@@ -254,11 +250,13 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     }
   }
 
-  @NotNull
   @Override
-  public Collection<V> values() {
-    Set<V> result = new THashSet<>();
-    ContainerUtil.addAll(result, elements());
+  public @NotNull Collection<V> values() {
+    Set<V> result = new HashSet<>();
+    Enumeration<? extends V> enumeration = elements();
+    while (enumeration.hasMoreElements()) {
+      result.add(enumeration.nextElement());
+    }
     return result;
   }
 }
