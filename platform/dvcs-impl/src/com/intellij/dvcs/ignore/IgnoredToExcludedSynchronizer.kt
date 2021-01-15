@@ -88,7 +88,7 @@ internal class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolde
 
   fun clearFiles(files: Collection<VirtualFile>) = removeFiles(files)
 
-  fun getValidFiles() = acquireValidFiles()
+  fun getValidFiles() = with(ChangeListManager.getInstance(project)) { acquireValidFiles().filter(this::isIgnoredFile) }
 
   fun muteForCurrentProject() {
     setForCurrentProject(false)
@@ -128,7 +128,6 @@ internal class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolde
       determineIgnoredDirsToExclude(project, ignoredPaths)
 
     if (allowShowNotification()) {
-      clearFiles()
       processFiles(ignoredDirs)
       val editorNotifications = EditorNotifications.getInstance(project)
       FileEditorManager.getInstance(project).openFiles
