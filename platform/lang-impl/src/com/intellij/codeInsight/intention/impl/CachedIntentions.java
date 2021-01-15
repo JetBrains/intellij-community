@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.daemon.impl.GutterIntentionAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,13 +14,18 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
@@ -26,16 +33,15 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.ui.EmptyIcon;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
 
 public final class CachedIntentions {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
@@ -52,6 +58,8 @@ public final class CachedIntentions {
   private final PsiFile myFile;
   @NotNull
   private final Project myProject;
+
+  private final List<AnAction> myGuttersRaw = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public CachedIntentions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor) {
     myProject = project;
@@ -125,18 +133,53 @@ public final class CachedIntentions {
     boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myErrorFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myInspectionFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.intentionsToShow, myIntentions, callUpdate);
-    changed |= wrapActionsTo(newInfo.guttersToShow, myGutters, callUpdate);
+    changed |= updateGuttersRaw(newInfo);
     changed |= wrapActionsTo(newInfo.notificationActionsToShow, myNotifications, callUpdate);
     return changed;
+  }
+
+  private boolean updateGuttersRaw(@NotNull ShowIntentionsPass.IntentionsInfo newInfo) {
+    if (newInfo.guttersToShow.isEmpty()) return false;
+    myGuttersRaw.addAll(newInfo.guttersToShow);
+    return true;
   }
 
   public boolean addActions(@NotNull ShowIntentionsPass.IntentionsInfo info) {
     boolean changed = addActionsTo(info.errorFixesToShow, myErrorFixes);
     changed |= addActionsTo(info.inspectionFixesToShow, myInspectionFixes);
     changed |= addActionsTo(info.intentionsToShow, myIntentions);
-    changed |= addActionsTo(info.guttersToShow, myGutters);
+    changed |= updateGuttersRaw(info);
     changed |= addActionsTo(info.notificationActionsToShow, myNotifications);
     return changed;
+  }
+
+  public void wrapAndUpdateGutters() {
+    LOG.assertTrue(myEditor != null);
+    if (myGuttersRaw.isEmpty()) return;
+    myGutters.clear();
+
+    Predicate<IntentionAction> filter = action -> ContainerUtil.and(
+      IntentionActionFilter.EXTENSION_POINT_NAME.getExtensionList(), f -> f.accept(action, myFile));
+
+    DataContext dataContext = ((EditorEx)myEditor).getDataContext();
+    PresentationFactory presentationFactory = new PresentationFactory();
+    List<AnAction> actions = Utils.expandActionGroup(
+      false, new DefaultActionGroup(myGuttersRaw), presentationFactory,
+      dataContext, ActionPlaces.INTENTION_MENU);
+    List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
+    int order = 0;
+    for (AnAction action : actions) {
+      Presentation presentation = presentationFactory.getPresentation(action);
+      Icon icon = ObjectUtils.notNull(presentation.getIcon(), EmptyIcon.ICON_16);
+      String text = presentation.getText();
+      if (StringUtil.isEmpty(text)) continue;
+      IntentionAction intentionAction = new GutterIntentionAction(action, order++, icon, text);
+      if (!filter.test(intentionAction)) continue;
+      HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(
+        intentionAction, Collections.emptyList(), text, icon, null, null, null);
+      descriptors.add(descriptor);
+    }
+    wrapActionsTo(descriptors, myGutters, false);
   }
 
   private boolean addActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,

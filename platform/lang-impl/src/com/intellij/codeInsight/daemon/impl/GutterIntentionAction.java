@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
@@ -24,17 +23,18 @@ import javax.swing.*;
 /**
  * @author Dmitry Avdeev
  */
-class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider,
+public class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider,
                                                                        PriorityAction {
   private final AnAction myAction;
   private final int myOrder;
   private final Icon myIcon;
-  private @IntentionName String myText;
+  private final @IntentionName String myText;
 
-  GutterIntentionAction(AnAction action, int order, Icon icon) {
+  public GutterIntentionAction(@NotNull AnAction action, int order, @NotNull Icon icon, @NotNull @IntentionName String text) {
     myAction = action;
     myOrder = order;
     myIcon = icon;
+    myText = text;
   }
 
   @Override
@@ -56,36 +56,16 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
     }
   }
 
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myText != null ? StringUtil.isNotEmpty(myText) : isAvailable(((EditorEx)editor).getDataContext());
-  }
-
   @NotNull
   @Override
   public Priority getPriority() {
     return myAction instanceof PriorityAction ? ((PriorityAction)myAction).getPriority() : Priority.NORMAL;
   }
 
-  boolean isAvailable(@NotNull DataContext dataContext) {
-    if (myText == null) {
-      AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.INTENTION_MENU, null, dataContext);
-      ActionUtil.performDumbAwareUpdate(false, myAction, event, false);
-      if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-        String text = event.getPresentation().getText();
-        myText = text != null ? text : StringUtil.notNullize(myAction.getTemplatePresentation().getText());
-      }
-      else {
-        myText = "";
-      }
-    }
-    return StringUtil.isNotEmpty(myText);
-  }
-
   @Override
   @NotNull
   public String getText() {
-    return StringUtil.notNullize(myText);
+    return myText;
   }
 
   @Override

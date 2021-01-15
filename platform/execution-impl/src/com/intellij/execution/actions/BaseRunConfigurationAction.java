@@ -13,6 +13,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
@@ -180,9 +181,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
+    boolean doFullUpdate = !ApplicationManager.getApplication().isDispatchThread() ||
+                           ApplicationManager.getApplication().isUnitTestMode();
     VirtualFile vFile = event.getDataContext().getData(CommonDataKeys.VIRTUAL_FILE);
     ThreeState hadAnythingRunnable = vFile == null ? ThreeState.UNSURE : RunLineMarkerProvider.hadAnythingRunnable(vFile);
-    if (hadAnythingRunnable == ThreeState.UNSURE) {
+    if (doFullUpdate || hadAnythingRunnable == ThreeState.UNSURE) {
       fullUpdate(event);
       return;
     }

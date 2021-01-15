@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupport
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorActivityManager;
@@ -37,7 +38,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
@@ -178,7 +181,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
-    public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
+    public final List<AnAction> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> notificationActionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myOffset;
 
@@ -187,7 +190,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       filter(intentionsToShow, psiFile, filters);
       filter(errorFixesToShow, psiFile, filters);
       filter(inspectionFixesToShow, psiFile, filters);
-      filter(guttersToShow, psiFile, filters);
       filter(notificationActionsToShow, psiFile, filters);
     }
 
