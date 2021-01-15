@@ -187,11 +187,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return this;
   }
 
-  @Deprecated
-  public IdeaGradleSystemSettingsControlBuilder dropOfflineModeBox() {
-    return this;
-  }
-
 
   private void addServiceDirectoryControl(PaintAwarePanel canvas, int indentLevel) {
     if (dropServiceDirectory) return;

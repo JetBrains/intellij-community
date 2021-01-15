@@ -150,14 +150,6 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
-  /**
-   * @deprecated Use {@link #dropUseLocalDistributionButton()} instead
-   */
-  @Deprecated
-  public IdeaGradleProjectSettingsControlBuilder dropGradleHomePathComponents() {
-    return this;
-  }
-
   public IdeaGradleProjectSettingsControlBuilder dropCustomizableWrapperButton() {
     dropCustomizableWrapperButton = true;
     return this;
@@ -182,11 +174,6 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
-  @Deprecated
-  public IdeaGradleProjectSettingsControlBuilder dropCreateEmptyContentRootDirectoriesBox() {
-    return this;
-  }
-
   public IdeaGradleProjectSettingsControlBuilder dropResolveModulePerSourceSetCheckBox() {
     dropResolveModulePerSourceSetCheckBox = true;
     return this;
@@ -194,19 +181,6 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   public IdeaGradleProjectSettingsControlBuilder dropResolveExternalAnnotationsCheckBox() {
     dropResolveExternalAnnotationsCheckBox = true;
-    return this;
-  }
-
-  /**
-   * @deprecated Use {@link IdeaGradleSystemSettingsControlBuilder#dropStoreExternallyCheckBox}
-   */
-  @Deprecated
-  public IdeaGradleProjectSettingsControlBuilder dropStoreExternallyCheckBox() {
-    return this;
-  }
-
-  @Deprecated
-  public IdeaGradleProjectSettingsControlBuilder dropModulesGroupingOptionPanel() {
     return this;
   }
 

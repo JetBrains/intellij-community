@@ -56,14 +56,6 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     this(ProjectDataManager.getInstance());
   }
 
-  /**
-   * @deprecated use {@link GradleProjectImportBuilder#GradleProjectImportBuilder(ProjectDataManager)}
-   */
-  @Deprecated
-  public GradleProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager dataManager) {
-    this((ProjectDataManager)dataManager);
-  }
-
   public GradleProjectImportBuilder(@NotNull ProjectDataManager dataManager) {
     super(dataManager, () -> new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
     LOG.warn("Do not use `GradleProjectImportBuilder` directly. Use instead:\n" +
