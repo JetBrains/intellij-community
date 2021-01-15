@@ -21,10 +21,11 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import java.util.Collection;
-import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Base class for actions that affect the entire git repository.
@@ -58,15 +59,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     }
     GitRepository currentRepository = GitBranchUtil.getCurrentRepository(project);
     return currentRepository != null ? currentRepository.getRoot() : roots.get(0);
-  }
-
-  /**
-   * @deprecated "final tasks" are not called for all actions anymore.
-   * They should be called by certain actions manually if and when needed.
-   */
-  @Deprecated
-  protected boolean executeFinalTasksSynchronously() {
-    return true;
   }
 
   /**

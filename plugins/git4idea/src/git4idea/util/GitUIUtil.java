@@ -27,12 +27,6 @@ import java.util.List;
  * Utilities for git plugin user interface
  */
 public final class GitUIUtil {
-  /**
-   * Text containing in the label when there is no current branch
-   * @deprecated Use {@link #getNoCurrentBranch()} instead
-   */
-  @Deprecated
-  public static final String NO_CURRENT_BRANCH = "<no active branch>";
 
   /**
    * A private constructor for utility class

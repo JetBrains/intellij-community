@@ -352,26 +352,6 @@ public final class GitUtil {
    * Return a git root for the file path (the parent directory with ".git" subdirectory)
    *
    * @param filePath a file path
-   * @return git root for the file
-   * @throws IllegalArgumentException if the file is not under git
-   * @throws VcsException             if the file is not under git
-   *
-   * @deprecated because uses the java.io.File.
-   * @use GitRepositoryManager#getRepositoryForFile().
-   */
-  @Deprecated
-  public static VirtualFile getGitRoot(@NotNull FilePath filePath) throws VcsException {
-    VirtualFile root = getGitRootOrNull(filePath);
-    if (root != null) {
-      return root;
-    }
-    throw new VcsException(GitBundle.message("file.is.not.under.root", filePath));
-  }
-
-  /**
-   * Return a git root for the file path (the parent directory with ".git" subdirectory)
-   *
-   * @param filePath a file path
    * @return git root for the file or null if the file is not under git
    *
    * @deprecated because uses the java.io.File.
@@ -398,27 +378,6 @@ public final class GitUtil {
 
   public static boolean isGitRoot(@NotNull File folder) {
     return isGitRoot(folder.toPath());
-  }
-
-  /**
-   * Return a git root for the file (the parent directory with ".git" subdirectory)
-   *
-   * @param file the file to check
-   * @return git root for the file
-   * @throws VcsException if the file is not under git
-   *
-   * @deprecated because uses the java.io.File.
-   * @use GitRepositoryManager#getRepositoryForFile().
-   */
-  @Deprecated
-  public static VirtualFile getGitRoot(@NotNull final VirtualFile file) throws VcsException {
-    final VirtualFile root = gitRootOrNull(file);
-    if (root != null) {
-      return root;
-    }
-    else {
-      throw new VcsException(GitBundle.message("file.is.not.under.root", file.getPath()));
-    }
   }
 
   /**

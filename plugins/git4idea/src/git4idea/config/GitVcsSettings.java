@@ -301,32 +301,4 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
       return Objects.hash(super.hashCode(), targetRemoteName, targetBranchName);
     }
   }
-
-  /**
-   * @deprecated Use {@link GitSaveChangesPolicy}
-   */
-  @Deprecated
-  public enum UpdateChangesPolicy {
-    STASH,
-    SHELVE;
-
-    @NotNull
-    private static UpdateChangesPolicy from(GitSaveChangesPolicy policy) {
-      return policy == GitSaveChangesPolicy.STASH ? STASH : SHELVE;
-    }
-
-    @NotNull
-    public GitSaveChangesPolicy convert() {
-      return this == STASH ? GitSaveChangesPolicy.STASH : GitSaveChangesPolicy.SHELVE;
-    }
-  }
-
-  /**
-   * @deprecated Use {@link #getSaveChangesPolicy()}
-   */
-  @Deprecated
-  @NotNull
-  public UpdateChangesPolicy updateChangesPolicy() {
-    return UpdateChangesPolicy.from(getSaveChangesPolicy());
-  }
 }

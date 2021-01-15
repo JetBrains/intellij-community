@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
-import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
@@ -177,21 +176,5 @@ public class GitPreservingProcess {
     else {
       LOG.info("The changes were already loaded");
     }
-  }
-
-  /**
-   * @deprecated Use {@link #GitPreservingProcess(Project, Git, Collection, String, String, GitSaveChangesPolicy,
-   * ProgressIndicator, Runnable)}
-   */
-  @Deprecated
-  public GitPreservingProcess(@NotNull Project project,
-                              @NotNull Git git,
-                              @NotNull Collection<? extends VirtualFile> rootsToSave,
-                              @NotNull @Nls String operationTitle,
-                              @NotNull @Nls String destinationName,
-                              @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,
-                              @NotNull ProgressIndicator indicator,
-                              @NotNull Runnable operation) {
-    this(project, git, rootsToSave, operationTitle, destinationName, saveMethod.convert(), indicator, operation);
   }
 }

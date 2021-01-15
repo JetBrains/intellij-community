@@ -65,13 +65,6 @@ public class GitImpl extends GitImplBase {
     return runCommand(h);
   }
 
-  @NotNull
-  @Override
-  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths)
-    throws VcsException {
-    return ContainerUtil.map2SetNotNull(ignoredFilePaths(project, root, paths), FilePath::getVirtualFile);
-  }
-
   @Override
   public Set<FilePath> ignoredFilePaths(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths)
     throws VcsException {
@@ -86,13 +79,6 @@ public class GitImpl extends GitImplBase {
       }
     }
     return ignoredFiles;
-  }
-
-  @NotNull
-  @Override
-  public Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths)
-    throws VcsException {
-    return ContainerUtil.map2SetNotNull(ignoredFilePathsNoChunk(project, root, paths), FilePath::getVirtualFile);
   }
 
   @Override
@@ -161,16 +147,6 @@ public class GitImpl extends GitImplBase {
     }
 
     return untrackedFiles;
-  }
-
-  // relativePaths are guaranteed to fit into command line length limitations.
-  @Override
-  @NotNull
-  public Collection<VirtualFile> untrackedFilesNoChunk(@NotNull Project project,
-                                                       @NotNull VirtualFile root,
-                                                       @Nullable List<String> relativePaths)
-    throws VcsException {
-    return ContainerUtil.mapNotNull(untrackedFilePathsNoChunk(project, root, relativePaths), FilePath::getVirtualFile);
   }
 
   @NotNull

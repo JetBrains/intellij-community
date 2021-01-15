@@ -5,7 +5,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
-import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,14 +41,6 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
 
   public GitRepositoryManager(@NotNull Project project) {
-    super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
-  }
-
-  /**
-   * @deprecated Use {@link #GitRepositoryManager(Project)}
-   */
-  @Deprecated
-  public GitRepositoryManager(@NotNull Project project, @SuppressWarnings("unused") @NotNull VcsRepositoryManager vcsRepositoryManager) {
     super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
   }
 

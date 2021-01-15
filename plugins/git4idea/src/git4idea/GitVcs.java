@@ -261,15 +261,6 @@ public final class GitVcs extends AbstractVcs {
     return GitExecutableManager.getInstance().getVersion(myProject);
   }
 
-  /**
-   * Shows a command line message in the Version Control Console
-   * @deprecated use {@link GitVcsConsoleWriter}
-   */
-  @Deprecated
-  public void showCommandLine(@Nls String cmdLine) {
-    GitVcsConsoleWriter.getInstance(myProject).showCommandLine(cmdLine);
-  }
-
   @Override
   public boolean allowsNestedRoots() {
     return true;

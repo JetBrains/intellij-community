@@ -4,14 +4,12 @@ package org.jetbrains.plugins.github.tasks;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
@@ -43,7 +41,6 @@ import java.util.regex.Pattern;
 
 @Tag("GitHub")
 final class GithubRepository extends BaseRepository {
-  private static final Logger LOG = Logger.getInstance(GithubRepository.class);
 
   private Pattern myPattern = Pattern.compile("($^)");
   @NotNull private String myRepoAuthor = "";
@@ -335,23 +332,6 @@ final class GithubRepository extends BaseRepository {
 
   public void setAssignedIssuesOnly(boolean value) {
     myAssignedIssuesOnly = value;
-  }
-
-  @Deprecated
-  @Tag("token")
-  public String getEncodedToken() {
-    return null;
-  }
-
-  @Deprecated
-  @SuppressWarnings("unused")
-  public void setEncodedToken(String password) {
-    try {
-      setPassword(PasswordUtil.decodePassword(password));
-    }
-    catch (NumberFormatException e) {
-      LOG.warn("Can't decode token", e);
-    }
   }
 
   @Override

@@ -84,17 +84,6 @@ public final class LocalChangesWouldBeOverwrittenHelper {
       );
   }
 
-  /**
-   * @deprecated Use {@link #showErrorNotification(Project, String, VirtualFile, String, Collection)} instead
-   */
-  @Deprecated
-  public static void showErrorDialog(@NotNull Project project, @NotNull VirtualFile root, @NotNull String operationName,
-                                     @NotNull Collection<String> relativeFilePaths) {
-    Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
-    List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
-    showErrorDialog(project, operationName, changes, absolutePaths);
-  }
-
   private static void showErrorDialog(@NotNull Project project, @NotNull String operationName, @NotNull List<? extends Change> changes,
                                       @NotNull Collection<String> absolutePaths) {
     String title = GitBundle.message("dialog.title.local.changes.prevent.from.operation", StringUtil.capitalize(operationName));

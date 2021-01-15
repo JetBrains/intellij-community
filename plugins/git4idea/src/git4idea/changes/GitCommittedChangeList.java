@@ -30,20 +30,6 @@ public class GitCommittedChangeList extends CommittedChangeListForRevision {
   private final boolean myModifiable;
   private final AbstractVcs myVcs;
 
-  @SuppressWarnings("unused") // used externally
-  @Deprecated
-  public GitCommittedChangeList(@NotNull String name,
-                                @NotNull String comment,
-                                @NotNull String committerName,
-                                @NotNull GitRevisionNumber revisionNumber,
-                                @NotNull Date commitDate,
-                                @NotNull Collection<Change> changes,
-                                boolean isModifiable) {
-    super(name, comment, committerName, commitDate, changes, revisionNumber);
-    myVcs = null;
-    myModifiable = isModifiable;
-  }
-
   public GitCommittedChangeList(@NotNull String name,
                                 @NotNull String comment,
                                 @NotNull String committerName,

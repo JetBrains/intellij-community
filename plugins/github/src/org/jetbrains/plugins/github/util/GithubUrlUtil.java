@@ -7,7 +7,6 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GHRepositoryPath;
-import org.jetbrains.plugins.github.api.GithubServerPath;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,12 +33,6 @@ public final class GithubUrlUtil {
       return s.substring(0, s.length() - 1);
     }
     return s;
-  }
-
-  @Deprecated
-  @NotNull
-  public static String getApiUrl(@NotNull String urlFromSettings) {
-    return GithubServerPath.from(urlFromSettings).toApiUrl();
   }
 
   /**

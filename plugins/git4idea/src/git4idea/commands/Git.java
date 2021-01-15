@@ -58,15 +58,7 @@ public interface Git {
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, GitLineHandlerListener @NotNull ... listeners);
 
-  @Deprecated
-  @NotNull
-  Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths) throws VcsException;
-
   Set<FilePath> ignoredFilePaths(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths) throws VcsException;
-
-  @Deprecated
-  @NotNull
-  Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
   Set<FilePath> ignoredFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
@@ -77,12 +69,6 @@ public interface Git {
 
   Set<FilePath> untrackedFilePaths(@NotNull Project project, @NotNull VirtualFile root,
                                   @Nullable Collection<FilePath> files) throws VcsException;
-
-  // relativePaths are guaranteed to fit into command line length limitations.
-  @Deprecated
-  @NotNull
-  Collection<VirtualFile> untrackedFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root,
-                                                @Nullable List<String> relativePaths) throws VcsException;
 
   @NotNull
   Collection<FilePath> untrackedFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root,
