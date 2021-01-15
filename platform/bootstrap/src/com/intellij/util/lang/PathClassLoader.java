@@ -30,7 +30,7 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   public PathClassLoader(Builder builder, BytecodeTransformer transformer) {
-    super(builder, isParallelCapable);
+    super(builder, RESOURCE_FILE_FACTORY, isParallelCapable);
 
     this.transformer = transformer;
   }
@@ -38,7 +38,7 @@ public final class PathClassLoader extends UrlClassLoader {
   // for java.system.class.loader
   @ApiStatus.Internal
   public PathClassLoader(@NotNull ClassLoader parent) {
-    super(createDefaultBuilderForJdk(parent), null, isParallelCapable);
+    super(createDefaultBuilderForJdk(parent), RESOURCE_FILE_FACTORY, isParallelCapable);
 
     transformer = null;
     registerInClassLoaderValueMap(parent, this);
