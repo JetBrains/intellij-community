@@ -495,9 +495,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         for (VirtualFile file : getChangedFilesCollector().getAllPossibleFilesToUpdate()) {
           int fileId = getFileId(file);
-          removeDataFromIndicesForFile(fileId, file);
+          try {
+            removeDataFromIndicesForFile(fileId, file);
+          }
+          catch (Throwable throwable) {
+            LOG.error(throwable);
+          }
         }
-
         getChangedFilesCollector().clearFilesToUpdate();
 
         IndexingStamp.flushCaches();
@@ -533,7 +537,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  protected void removeDataFromIndicesForFile(int fileId, VirtualFile file) {
+  void removeDataFromIndicesForFile(int fileId, VirtualFile file) {
     VirtualFile originalFile = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile() : file;
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
