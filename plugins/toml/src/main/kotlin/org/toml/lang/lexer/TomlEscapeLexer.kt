@@ -52,7 +52,7 @@ class TomlEscapeLexer private constructor(
         return try {
             val value = bufferSequence.substring(start + 2, end).toInt(16)
             // https://github.com/toml-lang/toml/blame/92a0a60bf37093fe0a888e5c98445e707ac9375b/README.md#L296-L297
-            // http://unicode.org/glossary/#unicode_scalar_value
+            // https://unicode.org/glossary/#unicode_scalar_value
             value in 0..0xD7FF || value in 0xE000..0x10FFFF
         } catch (e: NumberFormatException) {
             false
