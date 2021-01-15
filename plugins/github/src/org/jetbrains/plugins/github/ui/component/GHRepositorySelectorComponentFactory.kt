@@ -23,7 +23,9 @@ class GHRepositorySelectorComponentFactory {
                                            hasFocus: Boolean) {
           if (value is ComboBoxWithActionsModel.Item.Wrapper) {
             val mapping = value.wrappee.castSafelyTo<GHGitRepositoryMapping>() ?: return
-            val repositoryName = GHUIUtil.getRepositoryDisplayName(model.items.map(GHGitRepositoryMapping::repository), mapping.repository)
+            val repositoryName = GHUIUtil.getRepositoryDisplayName(model.items.map(GHGitRepositoryMapping::repository),
+                                                                   mapping.repository,
+                                                                   true)
             val remoteName = mapping.gitRemote.remote.name
             append(repositoryName).append(" ").append(remoteName, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }

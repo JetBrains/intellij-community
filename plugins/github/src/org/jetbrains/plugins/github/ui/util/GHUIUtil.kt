@@ -307,9 +307,26 @@ object GHUIUtil {
   }
 
   @NlsSafe
-  fun getRepositoryDisplayName(allRepositories: List<GHRepositoryCoordinates>, repository: GHRepositoryCoordinates): String {
+  fun getRepositoryDisplayName(allRepositories: List<GHRepositoryCoordinates>,
+                               repository: GHRepositoryCoordinates,
+                               alwaysShowOwner: Boolean = false): String {
     val showServer = needToShowRepositoryServer(allRepositories)
-    return if (showServer) "${repository.serverPath}/${repository.repositoryPath}" else "${repository.repositoryPath}"
+    val showOwner = if (showServer || alwaysShowOwner) true else needToShowRepositoryOwner(allRepositories)
+
+    val builder = StringBuilder()
+    if (showServer) builder.append(repository.serverPath).append("/")
+    if (showOwner) builder.append(repository.repositoryPath.owner).append("/")
+    builder.append(repository.repositoryPath.repository)
+    return builder.toString()
+  }
+
+  /**
+   * Assuming all servers are the same
+   */
+  private fun needToShowRepositoryOwner(repos: List<GHRepositoryCoordinates>): Boolean {
+    if (repos.size <= 1) return false
+    val firstOwner = repos.first().repositoryPath.owner
+    return repos.any { it.repositoryPath.owner != firstOwner }
   }
 
   private fun needToShowRepositoryServer(repos: List<GHRepositoryCoordinates>): Boolean {
