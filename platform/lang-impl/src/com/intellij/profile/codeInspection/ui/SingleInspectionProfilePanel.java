@@ -596,11 +596,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
     });
 
-
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTreeTable);
     tree.setShowsRootHandles(true);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM + SideBorder.LEFT + SideBorder.TOP));
     TreeUtil.collapseAll(tree, 1);
 
     tree.addTreeExpansionListener(new TreeExpansionListener() {
@@ -1025,11 +1023,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       new JBSplitter(true, "SingleInspectionProfilePanel.HORIZONTAL_DIVIDER_PROPORTION", DIVIDER_PROPORTION_DEFAULT);
 
     JBScrollPane descriptionPanel = new JBScrollPane(myDescription);
-    descriptionPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
+    descriptionPanel.setBorder(JBUI.Borders.empty());
     rightSplitter.setFirstComponent(descriptionPanel);
 
     myOptionsPanel = new JPanel(new GridBagLayout());
-    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
     initOptionsAndDescriptionPanel();
     rightSplitter.setSecondComponent(myOptionsPanel);
     rightSplitter.setHonorComponentsMinimumSize(true);
@@ -1044,11 +1041,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     northPanel.add(createTreeToolbarPanel().getComponent(), new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL,
                                                                                    JBUI.emptyInsets(), 0, 0));
 
-    JBSplitter mainSplitter = new OnePixelSplitter(false, DIVIDER_PROPORTION_DEFAULT, 0.01f, 0.99f);
+    JBSplitter mainSplitter = new JBSplitter(false, DIVIDER_PROPORTION_DEFAULT, 0.01f, 0.99f);
     mainSplitter.setSplitterProportionKey("SingleInspectionProfilePanel.VERTICAL_DIVIDER_PROPORTION");
     mainSplitter.setFirstComponent(tree);
     mainSplitter.setSecondComponent(rightSplitter);
     mainSplitter.setHonorComponentsMinimumSize(false);
+    mainSplitter.setDividerWidth(20);
 
     final JPanel inspectionTreePanel = new JPanel(new BorderLayout());
     inspectionTreePanel.add(northPanel, BorderLayout.NORTH);
