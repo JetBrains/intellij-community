@@ -36,18 +36,18 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     if (!LOG.assertTrue(state == State.NOT_STARTED, state.name)) return this
     state = State.STARTED
 
-    val data = createDataWithActivityId().addProject(projectOrNullForApplication)
+    val data = createDataWithActivityId()
     consumer.accept(data)
 
     startedTimestamp = System.nanoTime()
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName(STARTED_EVENT_ID), data)
+    FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName(STARTED_EVENT_ID), data)
     return this
   }
 
   fun stageStarted(stageName: String): IdeActivity {
     if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
 
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName(stageName), createDataWithActivityId())
+    FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName(stageName), createDataWithActivityId())
     return this
   }
 
@@ -55,7 +55,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
 
     val data = createDataWithActivityId().addData("stage_class", stageClass.name)
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("stage"), data)
+    FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName("stage"), data)
     return this
   }
 
@@ -64,7 +64,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     state = State.FINISHED
 
     val duration = TimeoutUtil.getDurationMillis(startedTimestamp)
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("finished"),
+    FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName("finished"),
                                                 createDataWithActivityId().addData("duration_ms", duration))
     return this
   }
