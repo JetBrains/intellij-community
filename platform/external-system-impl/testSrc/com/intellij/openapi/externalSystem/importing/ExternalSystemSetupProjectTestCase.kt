@@ -142,9 +142,9 @@ interface ExternalSystemSetupProjectTestCase {
 
     private fun detectOpenedProject(action: () -> Unit): Project {
       val projectManager = ProjectManager.getInstance()
-      val openProjects = projectManager.openProjects.map { it.name }.toSet()
+      val openProjects = projectManager.openProjects.toSet()
       action()
-      return projectManager.openProjects.first { it.name !in openProjects }
+      return projectManager.openProjects.first { it !in openProjects }
     }
   }
 }
