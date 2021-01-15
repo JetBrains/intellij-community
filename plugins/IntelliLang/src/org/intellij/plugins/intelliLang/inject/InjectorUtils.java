@@ -245,14 +245,6 @@ public final class InjectorUtils {
     InjectedLanguageUtil.putInjectedFileUserData(element, language, key, value);
   }
 
-  /**
-   * @deprecated use {@link InjectorUtils#putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
-   */
-  @Deprecated
-  public static <T> void putInjectedFileUserData(@NotNull MultiHostRegistrar registrar, @NotNull Key<T> key, T value) {
-    InjectedLanguageUtil.putInjectedFileUserData(registrar, key, value);
-  }
-
   @SuppressWarnings("UnusedParameters")
   public static Configuration getEditableInstance(@NotNull Project project) {
     return Configuration.getInstance();

@@ -193,12 +193,6 @@ public interface IdeaPlugin extends DomElement {
   @NotNull
   List<Helpset> getHelpsets();
 
-  /**
-   * @deprecated not used anymore
-   */
-  @Deprecated
-  Helpset addHelpset();
-
   interface ContentDescriptor extends DomElement {
     @NotNull
     @Stubbed

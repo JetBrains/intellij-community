@@ -28,13 +28,7 @@ import org.jetbrains.annotations.Nullable;
 class XsltElementFactoryImpl extends XsltElementFactory {
     private static final Key<Pair<ASTNode, XsltElement>> WRAPPER = Key.create("WRAPPER");
 
-    @Override
-    @SuppressWarnings({ "unchecked" })
-    public XsltElement wrapElement(XmlTag target) {
-        return wrapElement(target, XsltElement.class);
-    }
-
-    @Override
+  @Override
     public <T extends XsltElement> T wrapElement(XmlTag target, Class<T> clazz) {
         assert target.isValid();
 

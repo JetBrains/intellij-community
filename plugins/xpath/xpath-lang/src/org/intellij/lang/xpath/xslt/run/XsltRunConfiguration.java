@@ -69,7 +69,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     private static final String LOG_TAG = "(?:\\[[\\w ]+\\]\\:? +)?";
 
     public enum OutputType {
-        CONSOLE, STDOUT, @Deprecated FILE
+        CONSOLE, STDOUT
     }
 
     public enum JdkChoice {
@@ -247,13 +247,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         final Element outputType = element.getChild("OutputType");
         if (outputType != null) {
             final String value = outputType.getAttributeValue("value");
-            if (OutputType.FILE.name().equals(value)) {
-                myOutputType = OutputType.STDOUT;
-                mySaveToFile = true;
-            } else {
-                myOutputType = OutputType.valueOf(value);
-                mySaveToFile = Boolean.valueOf(outputType.getAttributeValue("save-to-file"));
-            }
+            myOutputType = OutputType.valueOf(value);
+            mySaveToFile = Boolean.valueOf(outputType.getAttributeValue("save-to-file"));
         }
         final Element fileType = element.getChild("FileType");
         if (fileType != null) {

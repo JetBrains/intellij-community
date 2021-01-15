@@ -26,9 +26,6 @@ public final class ContextType {
     public static final ContextType PLAIN = lookupOrCreate("PLAIN", XPathVersion.V1);
     public static final ContextType PLAIN_V2 = lookupOrCreate("PLAIN_V2", XPathVersion.V2);
 
-    /** @deprecated left here for compatibility with intellij.platform.langInjection */
-    @Deprecated public static final ContextType INTERACTIVE = lookupOrCreate("INTERACTIVE");
-
     private final String myName;
     private final XPathVersion myVersion;
 

@@ -12,10 +12,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractCoverageProjectViewNodeDecorator implements ProjectViewNodeDecorator {
   private Project myProject;
 
-  @Deprecated
-  public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @Nullable CoverageDataManager coverageDataManager) {
-  }
-
   public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
     myProject = project;
   }

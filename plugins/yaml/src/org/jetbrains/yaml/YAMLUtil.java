@@ -32,13 +32,6 @@ public class YAMLUtil {
   private static final Logger LOG = Logger.getInstance(YAMLUtil.class);
 
 
-  @Deprecated
-  @NotNull
-  public static String getFullKey(final YAMLKeyValue yamlKeyValue) {
-    String fullPath = getConfigFullName(yamlKeyValue);
-    return StringUtil.notNullize(StringUtil.substringAfter(fullPath, "."));
-  }
-
   /**
    * This method return flattened key path (consist of ancestors until document).
    * </p>

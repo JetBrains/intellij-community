@@ -16,9 +16,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +25,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
-import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgExecutableManager;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
@@ -100,23 +97,6 @@ public class HgCommandExecutor {
 
   public void setOutputAlwaysSuppressed(boolean outputAlwaysSuppressed) {
     myOutputAlwaysSuppressed = outputAlwaysSuppressed;
-  }
-
-  /**
-   * @deprecated Use synchronous versions of "execute", e.g. {@link #executeInCurrentThread(VirtualFile, String, List)}.
-   * Use {@link BackgroundTaskUtil#executeOnPooledThread(Disposable, Runnable)} if need to execute on a pooled thread.
-   */
-  @Deprecated
-  public void execute(@Nullable final VirtualFile repo,
-                      @NotNull final @NonNls String operation,
-                      @Nullable final List<String> arguments,
-                      @Nullable final HgCommandResultHandler handler) {
-    BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
-      HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
-      if (handler != null) {
-        handler.process(result);
-      }
-    });
   }
 
   @Nullable

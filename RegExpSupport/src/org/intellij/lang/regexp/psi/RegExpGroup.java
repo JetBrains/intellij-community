@@ -25,14 +25,6 @@ public interface RegExpGroup extends RegExpAtom, PsiNamedElement {
 
   @NotNull RegExpPattern getPattern();
 
-  /** @deprecated use #getType() */
-  @Deprecated
-  boolean isPythonNamedGroup();
-
-  /** @deprecated use #getType() */
-  @Deprecated
-  boolean isRubyNamedGroup();
-
   /** @return true, if this is a named group of any kind, false otherwise */
   boolean isAnyNamedGroup();
 

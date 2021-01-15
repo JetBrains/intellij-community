@@ -50,21 +50,6 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
     return type == Type.CAPTURING_GROUP || type == Type.NAMED_GROUP || type == Type.QUOTED_NAMED_GROUP || type == Type.PYTHON_NAMED_GROUP;
   }
 
-  /** @deprecated use #getType */
-  @Deprecated
-  @Override
-  public boolean isPythonNamedGroup() {
-    return getType() == Type.PYTHON_NAMED_GROUP;
-  }
-
-  /** @deprecated use #getType */
-  @Deprecated
-  @Override
-  public boolean isRubyNamedGroup() {
-    final Type type = getType();
-    return type == Type.NAMED_GROUP || type == Type.QUOTED_NAMED_GROUP;
-  }
-
   @Override
   public boolean isAnyNamedGroup() {
     final Type type = getType();

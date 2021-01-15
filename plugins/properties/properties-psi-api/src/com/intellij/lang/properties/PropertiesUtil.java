@@ -2,7 +2,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -179,20 +178,6 @@ public class PropertiesUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * @deprecated use PropertiesUtil.findAllProperties(ResourceBundle resourceBundle, String key)
-   */
-  @NotNull
-  @Deprecated
-  public static List<IProperty> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
-    List<IProperty> result = new SmartList<>();
-    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
-    for (PropertiesFile propertiesFile : propertiesFiles) {
-      result.addAll(propertiesFile.findPropertiesByKey(key));
-    }
-    return result;
   }
 
   public static List<IProperty> findAllProperties(@NotNull ResourceBundle resourceBundle, String key) {
