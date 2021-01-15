@@ -6,7 +6,6 @@ import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -76,8 +75,11 @@ public abstract class RunLineMarkerContributor {
     if (!(action instanceof ExecutorAction)) {
       return null;
     }
-    DataContext parent = DataManager.getInstance().getDataContext();
-    DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, parent);
+    DataContext dataContext = SimpleDataContext.builder()
+      .noUI()
+      .add(CommonDataKeys.PROJECT, element.getProject())
+      .add(CommonDataKeys.PSI_ELEMENT, element)
+      .build();
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
     action.update(event);
     if (!event.getPresentation().isEnabledAndVisible()) {
