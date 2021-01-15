@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.util.containers.MultiMap;
-import groovyjarjarcommonscli.Option;
+import org.apache.commons.cli.Option;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableList;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.junit.Test;

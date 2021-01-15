@@ -105,20 +105,17 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
             effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
           }
 
-          boolean isTestExecution = Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST);
-          if (!isTestExecution) {
-
-            BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-            launcher.forTasks(ArrayUtil.toStringArray(tasks));
-            launcher.withCancellationToken(cancellationTokenSource.token());
-            launcher.run();
-
-          } else {
+          if (testLauncherIsApplicable(effectiveSettings)) {
             TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, effectiveSettings, listener);
             launcher.withCancellationToken(cancellationTokenSource.token());
             launcher.run();
           }
-
+          else {
+            BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
+            launcher.forTasks(ArrayUtil.toStringArray(tasks));
+            launcher.withCancellationToken(cancellationTokenSource.token());
+            launcher.run();
+          }
         }
         finally {
           myCancellationMap.remove(id);
@@ -136,6 +133,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
     }
     myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
+  }
+
+  private boolean testLauncherIsApplicable(GradleExecutionSettings effectiveSettings) {
+    return Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST);
   }
 
   protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
