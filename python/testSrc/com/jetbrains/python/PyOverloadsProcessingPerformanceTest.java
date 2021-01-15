@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
@@ -25,6 +26,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +84,13 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   public void testNavigatingToDefinition() {
     configureAndGetCallExprUnderCaret("mainQualified.py");
+    Project project = myFixture.getProject();
     doPerformanceTestResettingCaches("Navigating to definition", 600, () -> {
-      PsiElement element = GotoDeclarationAction.findTargetElement(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
-      assertInstanceOf(element, PyFunction.class);
+      TypeEvalContext context = TypeEvalContext.userInitiated(project, myFixture.getFile());
+      PsiElement target = GotoDeclarationAction.findTargetElement(project, myFixture.getEditor(), myFixture.getCaretOffset());
+      assertNotNull(target);
+      PyFunction function = assertInstanceOf(target.getNavigationElement(), PyFunction.class);
+      assertFalse(PyiUtil.isOverload(function, context));
     });
   }
 
