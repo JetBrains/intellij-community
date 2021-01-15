@@ -8,6 +8,7 @@ import com.intellij.space.chat.markdown.convertToHtml
 import com.intellij.space.chat.markdown.processUnfurls
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.review.HtmlEditorPane
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 
 internal class SpaceChatMarkdownTextComponent(
@@ -17,6 +18,7 @@ internal class SpaceChatMarkdownTextComponent(
   initialUnfurls: List<UnfurlAttachment> = emptyList()
 ) : HtmlEditorPane() {
   init {
+    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     initialText?.let { setMarkdownText(it, initialIsEdited, initialUnfurls) }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.message
 
 import circlet.client.api.CApplicationPrincipalDetails
@@ -42,9 +42,11 @@ internal class MessageTitleComponent(
 
   init {
     val authorPanel = HtmlEditorPane().apply {
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       setBody(createMessageAuthorChunk(message.author).bold().toString())
     }
     val timePanel = HtmlEditorPane().apply {
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       foreground = UIUtil.getContextHelpForeground()
       setBody(HtmlChunk.text(message.created.formatPrettyDateTime()).toString()) // NON-NLS
     }
