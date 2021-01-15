@@ -266,7 +266,6 @@ public final class FSOperations {
       if (filter == null) {
         context.getProjectDescriptor().fsState.clearRecompile(rd);
       }
-      //final FSCache fsCache = rd.canUseFileCache() ? context.getProjectDescriptor().getFSCache() : FSCache.NO_CACHE;
       completelyMarkedDirty &= traverseRecursively(context, rd, round, rd.getRootFile(), stampsStorage, forceMarkDirty, currentFiles, filter);
     }
 

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.BaseOutputReader;
 import io.netty.bootstrap.ServerBootstrap;
@@ -65,15 +64,6 @@ public class ExternalJavacManager extends ProcessAdapter {
   private boolean myOwnExecutor;
   private final long myKeepAliveTimeout;
 
-  /**
-   * @deprecated: use {@link #ExternalJavacManager(File, Executor)} instead with explicit executor parameter
-   */
-  @Deprecated
-  public ExternalJavacManager(@NotNull final File workingDir) {
-    this(workingDir, ConcurrencyUtil.newSingleThreadExecutor("Javac server event loop pool"));
-    myOwnExecutor = true;
-  }
-
   public ExternalJavacManager(@NotNull final File workingDir, @NotNull Executor executor) {
     this(workingDir, executor, 5 * 60 * 1000L /* 5 minutes default*/);
   }
@@ -111,32 +101,6 @@ public class ExternalJavacManager extends ProcessAdapter {
     catch (UnknownHostException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  /**
-   * @deprecated Use {@link #forkJavac(String, int, Iterable, Iterable, CompilationPaths, Iterable, Map, DiagnosticOutputConsumer, OutputFileConsumer, JavaCompilingTool, CanceledStatus, boolean)} instead
-   */
-  @Deprecated
-  public boolean forkJavac(String javaHome,
-                           int heapSize,
-                           List<String> vmOptions,
-                           List<String> options,
-                           Collection<? extends File> platformCp,
-                           Collection<? extends File> classpath,
-                           Collection<? extends File> upgradeModulePath,
-                           Collection<? extends File> modulePath,
-                           Collection<? extends File> sourcePath,
-                           Collection<? extends File> files,
-                           Map<File, Set<File>> outs,
-                           DiagnosticOutputConsumer diagnosticSink,
-                           OutputFileConsumer outputSink,
-                           JavaCompilingTool compilingTool,
-                           CanceledStatus cancelStatus) {
-    return forkJavac(
-      javaHome, heapSize, vmOptions, options,
-      CompilationPaths.create(platformCp, classpath, upgradeModulePath, ModulePath.create(modulePath), sourcePath),
-      files, outs, diagnosticSink, outputSink, compilingTool, cancelStatus, false
-    ).get();
   }
 
 
