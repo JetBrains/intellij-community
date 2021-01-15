@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
@@ -29,12 +30,12 @@ class FloatingToolbarComponentImpl(
   @Deprecated("see FloatingToolbarComponent#update")
   override fun update() = actionToolbar.updateActionsImmediately()
 
-  override fun scheduleShow() {
+  override fun scheduleShow() = invokeLater {
     actionToolbar.updateActionsImmediately()
     visibilityController.scheduleShow()
   }
 
-  override fun scheduleHide() {
+  override fun scheduleHide() = invokeLater {
     actionToolbar.updateActionsImmediately()
     visibilityController.scheduleHide()
   }
