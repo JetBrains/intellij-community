@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff
 
+import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -18,6 +19,7 @@ internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boole
     val file = JBIterable.from(e.getData(VIRTUAL_FILES)).single()
     e.presentation.isEnabledAndVisible = project != null
                                          && file != null
+                                         && file is DiffContentVirtualFile
                                          && isEnabledAndVisible(project)
   }
 
