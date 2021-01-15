@@ -198,7 +198,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     initComponents();
     initByModel();
 
-    FindUtil.triggerUsedOptionsStats(FIND_TYPE, myHelper.getModel());
+    FindUtil.triggerUsedOptionsStats(myProject, FIND_TYPE, myHelper.getModel());
   }
 
   @Override
@@ -433,7 +433,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myInfoLabel = new JBLabel("", UIUtil.ComponentStyle.SMALL);
     myLoadingIcon = new JLabel(EmptyIcon.ICON_16);
     ItemListener liveResultsPreviewUpdateListener = __ -> scheduleResultsUpdate();
-    myCbFileFilter = createCheckBox();
+    myCbFileFilter = createCheckBox(myProject);
     myCbFileFilter.addItemListener(__ -> {
       if (myCbFileFilter.isSelected()) {
         myFileMaskField.setEnabled(true);
@@ -1000,10 +1000,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   @NotNull
-  private static StateRestoringCheckBox createCheckBox() {
+  private static StateRestoringCheckBox createCheckBox(@NotNull Project project) {
     StateRestoringCheckBox checkBox = new StateRestoringCheckBox(FindBundle.message("find.popup.filemask"));
     checkBox.addActionListener(
-      __ -> FUCounterUsageLogger.getInstance().logEvent(
+      __ -> FUCounterUsageLogger.getInstance().logEvent(project,
         "find", "check.box.toggled", new FeatureUsageData().
           addData("type", FIND_TYPE).
           addData("option_name", "FileFilter").
@@ -1982,7 +1982,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myIsPinned.set(state);
       UISettings.getInstance().setPinFindInPath(state);
-      FUCounterUsageLogger.getInstance().logEvent(
+      FUCounterUsageLogger.getInstance().logEvent(e.getProject(),
         "find", "pin.toggled", new FeatureUsageData().
           addData("option_value", state)
       );

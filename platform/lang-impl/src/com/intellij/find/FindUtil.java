@@ -1019,7 +1019,9 @@ public final class FindUtil {
            ? findResult.getEndOffset() : Math.min(findResult.getStartOffset() + caretShiftFromSelectionStart, findResult.getEndOffset());
   }
 
-  public static void triggerUsedOptionsStats(@NotNull String type, @NotNull FindModel model) {
+  public static void triggerUsedOptionsStats(@Nullable Project project,
+                                             @NotNull String type,
+                                             @NotNull FindModel model) {
     FeatureUsageData data = new FeatureUsageData().
       addData("type", type).
       addData("case_sensitive", model.isCaseSensitive()).
@@ -1027,7 +1029,7 @@ public final class FindUtil {
       addData("regular_expressions", model.isRegularExpressions()).
       addData("with_file_filter", model.getFileFilter() != null).
       addData("context", model.getSearchContext().name());
-    FUCounterUsageLogger.getInstance().logEvent("find", "search.session.started", data);
+    FUCounterUsageLogger.getInstance().logEvent(project, "find", "search.session.started", data);
   }
 
   public static void triggerRegexHelpClicked(@Nullable String type) {
