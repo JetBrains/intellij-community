@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -171,7 +172,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   }
 
   private void checkGotIt(SettingsEditorFragment<Settings, ?> fragment) {
-    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag()) {
+    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag() && StringUtil.isNotEmpty(fragment.getName())) {
       //noinspection unchecked
       Settings clone = (Settings)mySettings.clone();
       fragment.applyEditorTo(clone);
