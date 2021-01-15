@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsGlobal;
@@ -55,15 +54,6 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
     JpsModel model = JpsElementFactory.getInstance().createModel();
     Path optionsDir = Paths.get(FileUtil.toCanonicalPath(optionsPath));
     return loadPathVariables(model.getGlobal(), optionsDir);
-  }
-
-  /**
-   * @deprecated use {@link JpsModelSerializationDataService#getPathVariableValue(JpsGlobal, String)} instead
-   */
-  @Deprecated
-  @Nullable
-  public static String getPathVariable(JpsGlobal global, String name) {
-    return JpsModelSerializationDataService.getPathVariableValue(global, name);
   }
 
   private void load(@NotNull Path optionsDir) {

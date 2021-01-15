@@ -16,14 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class JpsModelSerializationDataService {
-  /**
-   * @deprecated use {@link #computeAllPathVariables(JpsGlobal)} instead
-   */
-  @Deprecated
-  @NotNull
-  public static Map<String, String> getAllPathVariables(JpsGlobal global) {
-    return computeAllPathVariables(global);
-  }
 
   public static Map<String, String> computeAllPathVariables(JpsGlobal global) {
     Map<String, String> pathVariables = new HashMap<>(PathMacroUtil.getGlobalSystemMacros(false));
