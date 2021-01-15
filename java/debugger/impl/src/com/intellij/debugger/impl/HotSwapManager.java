@@ -4,7 +4,7 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
@@ -189,7 +189,7 @@ public final class HotSwapManager {
 
     reloadClassesProgress.setTitle(JavaDebuggerBundle.message("progress.hotswap.reloading"));
     reloadClassesCommand.run();
-    ActionsCollector.getInstance().record("Reload Classes", HotSwapManager.class);
+    ActionsCollectorImpl.recordCustomActionInvoked(reloadClassesProgress.getProject(), "Reload Classes", null, HotSwapManager.class);
   }
 
   public static class HotSwapDebuggerManagerListener implements DebuggerManagerListener {

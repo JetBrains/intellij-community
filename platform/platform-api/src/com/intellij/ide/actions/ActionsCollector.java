@@ -20,13 +20,6 @@ public abstract class ActionsCollector {
   }
 
   /**
-   * Records explicitly whitelisted actions
-   */
-  public void record(@Nullable String actionId, @NotNull Class context) {
-    record(actionId, null, context);
-  }
-
-  /**
    * Records explicitly whitelisted actions with input event
    */
   public abstract void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context);
