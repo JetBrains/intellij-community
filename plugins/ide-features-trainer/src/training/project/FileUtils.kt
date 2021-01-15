@@ -4,25 +4,28 @@ package training.project
 import com.intellij.UtilBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.URLUtil
 import org.apache.commons.lang.StringUtils
 import java.io.*
-import java.net.JarURLConnection
 import java.net.URL
+import java.util.jar.JarFile
 
 object FileUtils {
   private val LOG = Logger.getInstance(FileUtils::class.java)
 
   @Throws(IOException::class)
   fun copyJarResourcesRecursively(destDir: File,
-                                  jarConnection: JarURLConnection,
+                                  jarPath: String,
                                   destinationFilter: FileFilter? = null): Boolean {
-    val jarFile = jarConnection.jarFile
+    val splitJarPath = splitJarPath(jarPath)
+    val jarFile = JarFile(splitJarPath.first)
+    val prefix = splitJarPath.second
 
     val entries = jarFile.entries()
     while (entries.hasMoreElements()) {
       val entry = entries.nextElement()
-      if (entry.name.startsWith(jarConnection.entryName)) {
-        val filename = StringUtils.removeStart(entry.name, jarConnection.entryName)
+      if (entry.name.startsWith(prefix)) {
+        val filename = StringUtils.removeStart(entry.name, prefix)
 
         val f = File(destDir, filename)
 
@@ -45,11 +48,12 @@ object FileUtils {
 
   fun copyResourcesRecursively(originUrl: URL, destination: File, destinationFilter: FileFilter? = null): Boolean {
     try {
-      val urlConnection = originUrl.openConnection()
-      if (urlConnection is JarURLConnection)
-        copyJarResourcesRecursively(destination, urlConnection, destinationFilter)
-      else
+      if (originUrl.protocol == URLUtil.JAR_PROTOCOL) {
+        copyJarResourcesRecursively(destination, URL(originUrl.file).file, destinationFilter)
+      }
+      else if (originUrl.protocol == URLUtil.FILE_PROTOCOL) {
         copyDirWithDestFilter(File(originUrl.path), destination, destinationFilter)
+      }
       return true
     }
     catch (e: IOException) {
@@ -109,4 +113,13 @@ object FileUtils {
   }
 
   fun ensureDirectoryExists(f: File): Boolean = f.exists() || f.mkdirs()
+
+  private fun splitJarPath(path: String): Pair<String, String> {
+    val lastIndexOf = path.lastIndexOf(".jar!")
+    if (lastIndexOf == -1) throw IOException("Invalid Jar path format")
+    val splitIdx = lastIndexOf + 4 // ".jar"
+    val filePath = path.substring(0, splitIdx)
+    val pathInsideJar = path.substring(splitIdx + 1 ,path.length)
+    return Pair(filePath, pathInsideJar)
+  }
 }
