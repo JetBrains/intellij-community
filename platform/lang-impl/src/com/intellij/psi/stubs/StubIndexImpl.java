@@ -26,6 +26,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.storage.*;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;

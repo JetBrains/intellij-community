@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.indexing;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing.events;
 
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.PathManager;
@@ -15,13 +15,15 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
+import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-abstract class IndexedFilesListener implements AsyncFileListener {
+public abstract class IndexedFilesListener implements AsyncFileListener {
   @NotNull
   private final VfsEventsMerger myEventMerger = new VfsEventsMerger();
 
@@ -41,7 +43,7 @@ abstract class IndexedFilesListener implements AsyncFileListener {
                                                                  VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS));
 
   @NotNull
-  VfsEventsMerger getEventMerger() {
+  public VfsEventsMerger getEventMerger() {
     return myEventMerger;
   }
 
@@ -82,10 +84,10 @@ abstract class IndexedFilesListener implements AsyncFileListener {
 
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
 
-  void invalidateIndicesRecursively(@NotNull VirtualFile file,
-                                    boolean contentChange,
-                                    boolean forceRebuildRequested,
-                                    @NotNull VfsEventsMerger eventMerger) {
+  public void invalidateIndicesRecursively(@NotNull VirtualFile file,
+                                           boolean contentChange,
+                                           boolean forceRebuildRequested,
+                                           @NotNull VfsEventsMerger eventMerger) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

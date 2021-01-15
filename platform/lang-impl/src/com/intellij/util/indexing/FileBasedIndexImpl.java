@@ -54,6 +54,9 @@ import com.intellij.util.indexing.impl.storage.*;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
+import com.intellij.util.indexing.events.ChangedFilesCollector;
+import com.intellij.util.indexing.events.DeletedVirtualFileStub;
+import com.intellij.util.indexing.events.VfsEventsMerger;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -111,7 +114,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
 
   private final Lock myReadLock;
-  final Lock myWriteLock;
+  public final Lock myWriteLock;
 
   private IndexConfiguration getState() {
     return myRegisteredIndexes.getConfigurationState();
@@ -281,7 +284,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return true;
   }
 
-  RegisteredIndexes getRegisteredIndexes() {
+  public RegisteredIndexes getRegisteredIndexes() {
     return myRegisteredIndexes;
   }
 
@@ -537,7 +540,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void removeDataFromIndicesForFile(int fileId, VirtualFile file) {
+  public void removeDataFromIndicesForFile(int fileId, VirtualFile file) {
     VirtualFile originalFile = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile() : file;
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
@@ -714,7 +717,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myChangedFilesCollector.getValue();
   }
 
-  void incrementFilesModCount() {
+  public void incrementFilesModCount() {
     myFilesModCount.incrementAndGet();
   }
 
@@ -1030,7 +1033,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myStorageBufferingHandler.runUpdate(true, updateComputable);
   }
 
-  void cleanupMemoryStorage(boolean skipContentDependentIndexes) {
+  public void cleanupMemoryStorage(boolean skipContentDependentIndexes) {
     myLastIndexedDocStamps.clear();
     if (myRegisteredIndexes == null) {
       // unsaved doc is dropped while plugin load/unload-ing
@@ -1491,7 +1494,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myRegisteredIndexes.isContentDependentIndex(indexId);
   }
 
-  @Nullable IndexableFileSet getIndexableSetForFile(VirtualFile file) {
+  public @Nullable IndexableFileSet getIndexableSetForFile(VirtualFile file) {
     for (IndexableFileSet set : myIndexableSets) {
       if (set.isInSet(file)) {
         return set;
@@ -1522,7 +1525,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     index.invalidateIndexedStateForFile(inputId);
   }
 
-  void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file) {
+  public void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file) {
     waitUntilIndicesAreInitialized();
     clearUpToDateIndexesForUnsavedOrTransactedDocs();
 
@@ -1545,7 +1548,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     getChangedFilesCollector().scheduleForUpdate(file);
   }
 
-  void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
+  public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
     waitUntilIndicesAreInitialized();
     cleanProcessedFlag(file);
 
@@ -1595,7 +1598,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
+  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
     final List<IndexableFilesFilter> filters = IndexableFilesFilter.EP_NAME.getExtensionList();
     if (!filters.isEmpty() && !ContainerUtil.exists(filters, e -> e.shouldIndex(file))) return;
 
@@ -1690,7 +1693,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return getIndex(indexId).getIndexingStateForFile(((NewVirtualFile)virtualFile).getId(), file);
   }
 
-  static boolean isMock(final VirtualFile file) {
+  public static boolean isMock(final VirtualFile file) {
     return !(file instanceof NewVirtualFile);
   }
 
@@ -1764,7 +1767,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  static void cleanProcessedFlag(@NotNull final VirtualFile file) {
+  public static void cleanProcessedFlag(@NotNull final VirtualFile file) {
     if (!(file instanceof VirtualFileSystemEntry)) return;
 
     final VirtualFileSystemEntry nvf = (VirtualFileSystemEntry)file;

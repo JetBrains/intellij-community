@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class RegisteredIndexes {
+public final class RegisteredIndexes {
   @NotNull
   private final FileDocumentManager myFileDocumentManager;
   @NotNull
@@ -140,7 +140,7 @@ final class RegisteredIndexes {
     return myExtensionsRelatedDataWasLoaded;
   }
 
-  boolean isInitialized() {
+  public boolean isInitialized() {
     return myInitialized;
   }
 
@@ -158,7 +158,7 @@ final class RegisteredIndexes {
     return myIndicesForDirectories;
   }
 
-  boolean isContentDependentIndex(@NotNull ID<?, ?> indexId) {
+  public boolean isContentDependentIndex(@NotNull ID<?, ?> indexId) {
     return myRequiringContentIndices.contains(indexId);
   }
 

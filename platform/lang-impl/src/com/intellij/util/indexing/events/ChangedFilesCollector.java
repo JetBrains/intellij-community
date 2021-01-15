@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.indexing;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.history.LocalHistory;
@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.indexing.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ import java.util.stream.Stream;
 @ApiStatus.Internal
 public final class ChangedFilesCollector extends IndexedFilesListener {
   private static final Logger LOG = Logger.getInstance(ChangedFilesCollector.class);
-  static final boolean CLEAR_NON_INDEXABLE_FILE_DATA =
+  public static final boolean CLEAR_NON_INDEXABLE_FILE_DATA =
     SystemProperties.getBooleanProperty("idea.indexes.clear.non.indexable.file.data", true);
 
   private final IntObjectMap<VirtualFile> myFilesToUpdate =
@@ -86,11 +87,11 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  boolean isUpdateInProgress() {
+  public boolean isUpdateInProgress() {
     return myUpdatingFiles.get() > 0;
   }
 
-  void scheduleForUpdate(@NotNull VirtualFile file) {
+  public void scheduleForUpdate(@NotNull VirtualFile file) {
     if (VfsEventsMerger.LOG != null) {
       VfsEventsMerger.LOG.info("File " + file + " is scheduled for update");
     }
@@ -105,7 +106,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     myFilesToUpdate.put(fileId, file);
   }
 
-  void removeScheduledFileFromUpdate(VirtualFile file) {
+  public void removeScheduledFileFromUpdate(VirtualFile file) {
     int fileId = FileBasedIndex.getFileId(file);
     VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
@@ -113,7 +114,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  void removeFileIdFromFilesScheduledForUpdate(int fileId) {
+  public void removeFileIdFromFilesScheduledForUpdate(int fileId) {
     myFilesToUpdate.remove(fileId);
   }
 
@@ -121,11 +122,11 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return myFilesToUpdate.containsKey(fileId);
   }
 
-  Stream<VirtualFile> getFilesToUpdate() {
+  public Stream<VirtualFile> getFilesToUpdate() {
     return myFilesToUpdate.values().stream();
   }
 
-  Collection<VirtualFile> getAllFilesToUpdate() {
+  public Collection<VirtualFile> getAllFilesToUpdate() {
     ensureUpToDate();
     if (myFilesToUpdate.isEmpty()) {
       return Collections.emptyList();
@@ -134,7 +135,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   // it's important here to don't load any extension here, so we don't check scopes.
-  Collection<VirtualFile> getAllPossibleFilesToUpdate() {
+  public Collection<VirtualFile> getAllPossibleFilesToUpdate() {
 
     ReadAction.run(() -> {
       processFilesInReadAction(info -> {
@@ -147,7 +148,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return new ArrayList<>(myFilesToUpdate.values());
   }
 
-  void clearFilesToUpdate() {
+  public void clearFilesToUpdate() {
     myFilesToUpdate.clear();
   }
 
@@ -194,11 +195,11 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
            requestor == LocalHistory.VFS_EVENT_REQUESTOR;
   }
 
-  boolean isScheduledForUpdate(VirtualFile file) {
+  public boolean isScheduledForUpdate(VirtualFile file) {
     return myFilesToUpdate.containsKey(FileBasedIndex.getFileId(file));
   }
 
-  void ensureUpToDate() {
+  public void ensureUpToDate() {
     if (!IndexUpToDateCheckIn.isUpToDateCheckEnabled()) {
       return;
     }
@@ -213,7 +214,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  void ensureUpToDateAsync() {
+  public void ensureUpToDateAsync() {
     if (getEventMerger().getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0,1)) {
       myVfsEventsExecutor.execute(() -> {
         try {

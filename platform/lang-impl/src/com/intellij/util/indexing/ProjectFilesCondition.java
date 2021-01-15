@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 
 final class ProjectFilesCondition implements Condition<VirtualFile> {
   private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
