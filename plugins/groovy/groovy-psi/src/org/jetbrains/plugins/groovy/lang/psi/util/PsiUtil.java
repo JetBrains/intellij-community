@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -1197,7 +1197,7 @@ public final class PsiUtil {
 
   public static boolean isCompileStatic(PsiElement e) {
     PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
-    return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
+    return containingMember != null && GroovyPsiManager.isCompileStatic(containingMember);
   }
 
   public static boolean isNewified(@Nullable PsiElement expr) {

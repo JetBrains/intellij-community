@@ -12,6 +12,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -53,7 +54,6 @@ public final class GroovyPsiManager implements Disposable {
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = CollectionFactory.createConcurrentWeakMap();
   private final ConcurrentMap<GrExpression, PsiType> topLevelTypes = CollectionFactory.createConcurrentWeakMap();
-  private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = CollectionFactory.createConcurrentWeakMap();
 
   private static final RecursionGuard<PsiElement> ourGuard = RecursionManager.createGuard("groovyPsiManager");
 
@@ -70,7 +70,6 @@ public final class GroovyPsiManager implements Disposable {
   public void dropTypesCache() {
     myCalculatedTypes.clear();
     topLevelTypes.clear();
-    myCompileStatic.clear();
   }
 
   public static GroovyPsiManager getInstance(Project project) {
@@ -89,11 +88,11 @@ public final class GroovyPsiManager implements Disposable {
     return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqName, resolveScope);
   }
 
-  public boolean isCompileStatic(@NotNull PsiMember member) {
-    return myCompileStatic.computeIfAbsent(member, this::isCompileStaticInner);
+  public static boolean isCompileStatic(@NotNull PsiMember member) {
+    return CachedValuesManager.getProjectPsiDependentCache(member, GroovyPsiManager::isCompileStaticInner);
   }
 
-  private boolean isCompileStaticInner(@NotNull PsiMember member) {
+  private static boolean isCompileStaticInner(@NotNull PsiMember member) {
     PsiAnnotation annotation = getCompileStaticAnnotation(member);
     if (annotation != null) return checkForPass(annotation);
     PsiMember enclosingMember = PsiTreeUtil.getParentOfType(member, PsiMember.class, true);
