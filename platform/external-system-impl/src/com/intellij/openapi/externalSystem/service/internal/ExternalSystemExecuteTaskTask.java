@@ -2,9 +2,7 @@
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
@@ -18,13 +16,14 @@ import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTa
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -50,25 +49,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     myJvmParametersSetup = jvmParametersSetup;
   }
 
-  /**
-   * @deprecated use {@link #ExternalSystemExecuteTaskTask(Project, ExternalSystemTaskExecutionSettings, String)}
-   */
-  @Deprecated
-  public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
-                                       @NotNull Project project,
-                                       @NotNull List<? extends ExternalTaskPojo> tasksToExecute,
-                                       @Nullable String vmOptions,
-                                       @Nullable String arguments,
-                                       @Nullable String jvmParametersSetup) throws IllegalArgumentException {
-    super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
-    myTasksToExecute = ContainerUtil.map(tasksToExecute, ExternalTaskPojo::getName);
-    myVmOptions = vmOptions;
-    myArguments = arguments;
-    myJvmParametersSetup = jvmParametersSetup;
-    myPassParentEnvs = true;
-    myEnv = Collections.emptyMap();
-  }
-
   @NotNull
   public List<String> getTasksToExecute() {
     return myTasksToExecute;
@@ -86,31 +66,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   public void appendArguments(@NotNull String arguments) {
     myArguments = myArguments == null ? arguments : myArguments + ' ' + arguments;
-  }
-
-  @Deprecated
-  @NotNull
-  private static String getLinkedExternalProjectPath(@NotNull Collection<? extends ExternalTaskPojo> tasks) throws IllegalArgumentException {
-    if (tasks.isEmpty()) {
-      throw new IllegalArgumentException("Can't execute external tasks. Reason: given tasks list is empty");
-    }
-    String result = null;
-    for (ExternalTaskPojo task : tasks) {
-      String path = task.getLinkedExternalProjectPath();
-      if (result == null) {
-        result = path;
-      }
-      else if (!result.equals(path)) {
-        throw new IllegalArgumentException(String.format(
-          "Can't execute given external system tasks. Reason: expected that all of them belong to the same external project " +
-          "but they are not (at least two different projects detected - '%s' and '%s'). Tasks: %s",
-          result,
-          task.getLinkedExternalProjectPath(),
-          tasks
-        ));
-      }
-    }
-    return result;
   }
 
   @SuppressWarnings("unchecked")

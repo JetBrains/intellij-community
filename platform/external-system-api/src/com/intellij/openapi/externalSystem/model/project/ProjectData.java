@@ -23,16 +23,6 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   private String version;
   private String ideGrouping;
 
-  @Deprecated
-  public ProjectData(@NotNull ProjectSystemId owner,
-                     @NotNull String ideProjectFileDirectoryPath,
-                     @NotNull String linkedExternalProjectPath) {
-    super(owner, "unnamed");
-
-    this.linkedExternalProjectPath = ExternalSystemApiUtil.toCanonicalPath(linkedExternalProjectPath);
-    this.ideProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
-  }
-
   @PropertyMapping({"owner", "externalName", "ideProjectFileDirectoryPath", "linkedExternalProjectPath"})
   public ProjectData(@NotNull ProjectSystemId owner,
                      @NotNull String externalName,
@@ -42,13 +32,6 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
 
     this.linkedExternalProjectPath = ExternalSystemApiUtil.toCanonicalPath(linkedExternalProjectPath);
     this.ideProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
-  }
-
-  @Deprecated
-  @Override
-  public void setName(@NotNull String name) {
-    super.setExternalName(name);
-    super.setInternalName(name);
   }
 
   @NotNull
