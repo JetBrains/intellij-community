@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
 import java.awt.*;
 
 public final class AccessibleContextUtil {
@@ -147,14 +146,6 @@ public final class AccessibleContextUtil {
       return;
     }
     component.getAccessibleContext().setAccessibleParent(null);
-  }
-
-  /**
-   * @deprecated use {@link #setParent(Component, Component)} instead
-   */
-  @Deprecated
-  public static void setParent(@NotNull JComponent component, @Nullable Component newParent) {
-    setParent((Component)component, newParent);
   }
 
   @Nullable

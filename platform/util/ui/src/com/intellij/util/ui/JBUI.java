@@ -80,14 +80,6 @@ public class JBUI {
   }
 
   /**
-   * @deprecated use {@link JBUIScale#setUserScaleFactor(float)}
-   */
-  @Deprecated
-  public static float setUserScaleFactor(float scale) {
-    return JBUIScale.setUserScaleFactor(scale);
-  }
-
-  /**
    * @deprecated use {@link JBUIScale#scale(float)}
    */
   @Deprecated
@@ -1280,18 +1272,6 @@ public class JBUI {
    */
 
   /**
-   * @deprecated Use {@link com.intellij.ui.scale.ScaleType}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public enum ScaleType {
-    USR_SCALE,
-    SYS_SCALE,
-    OBJ_SCALE,
-    PIX_SCALE
-  }
-
-  /**
    * @deprecated Use {@link UserScaleContext}.
    */
   @Deprecated
@@ -1304,20 +1284,6 @@ public class JBUI {
 
     public boolean update(@NotNull Scale scale) {
       return setScale(scale);
-    }
-
-    /**
-     * @deprecated Use {@link UserScaleContext#getScale(com.intellij.ui.scale.ScaleType)}.
-     */
-    @Deprecated
-    public double getScale(@NotNull ScaleType type) {
-      switch (type) {
-        case USR_SCALE: return usrScale.value();
-        case SYS_SCALE: return 1d;
-        case OBJ_SCALE: return objScale.value();
-        case PIX_SCALE: return pixScale;
-      }
-      return 1f; // unreachable
     }
   }
 
@@ -1350,17 +1316,6 @@ public class JBUI {
 
     private ScaleContext(@NotNull Scale scale) {
       setScale(scale);
-    }
-
-    @Override
-    public double getScale(@NotNull ScaleType type) {
-      switch (type) {
-        case USR_SCALE: return usrScale.value();
-        case SYS_SCALE: return sysScale.value();
-        case OBJ_SCALE: return objScale.value();
-        case PIX_SCALE: return pixScale;
-      }
-      return 1f; // unreachable
     }
 
     @Override

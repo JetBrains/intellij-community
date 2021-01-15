@@ -923,24 +923,8 @@ public final class UIUtil {
     return JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
   }
 
-  /**
-   * @deprecated use {@link UIUtil#getTextFieldBackground()} instead
-   */
-  @Deprecated
-  public static Color getActiveTextFieldBackgroundColor() {
-    return getTextFieldBackground();
-  }
-
   public static Color getInactiveTextFieldBackgroundColor() {
     return UIManager.getColor("TextField.inactiveBackground");
-  }
-
-  /**
-   * @deprecated use {@link UIUtil#getInactiveTextColor()} instead
-   */
-  @Deprecated
-  public static @NotNull Color getTextInactiveTextColor() {
-    return getInactiveTextColor();
   }
 
   public static Color getTreeSelectionBorderColor() {
@@ -1047,22 +1031,8 @@ public final class UIUtil {
     return UIManager.getFont("Menu.font");
   }
 
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
-   */
-  @Deprecated
-  public static @NotNull Color getSeparatorForeground() {
-    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
-  }
-
   public static Color getSeparatorShadow() {
     return UIManager.getColor("Separator.shadow");
-  }
-
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  public static Color getSeparatorHighlight() {
-    return UIManager.getColor("Separator.highlight");
   }
 
   /**
@@ -1120,12 +1090,6 @@ public final class UIUtil {
     return AllIcons.General.BalloonError;
   }
 
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  public static Icon getRadioButtonIcon() {
-    return UIManager.getIcon("RadioButton.icon");
-  }
-
   public static @NotNull Icon getTreeNodeIcon(boolean expanded, boolean selected, boolean focused) {
     boolean white = selected && focused || StartupUiUtil.isUnderDarcula();
 
@@ -1153,14 +1117,6 @@ public final class UIUtil {
 
   public static @NotNull Icon getTreeExpandedIcon() {
     return UIManager.getIcon("Tree.expandedIcon");
-  }
-
-  /**
-   * @deprecated use {@link #getTreeExpandedIcon()} and {@link #getTreeCollapsedIcon()}
-   */
-  @Deprecated
-  public static Icon getTreeIcon(boolean expanded) {
-    return expanded ? getTreeExpandedIcon() : getTreeCollapsedIcon();
   }
 
   public static @NotNull Icon getTreeSelectedCollapsedIcon() {
@@ -1621,14 +1577,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link ImageUtil#createImage(GraphicsConfiguration, int, int, int)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
-    return ImageUtil.createImage(gc, width, height, type);
-  }
-
-  /**
    * Creates a HiDPI-aware BufferedImage in the graphics config scale.
    *
    * @param gc the graphics config
@@ -1669,14 +1617,6 @@ public final class UIUtil {
    */
   public static @NotNull BufferedImage createImage(@Nullable Component component, int width, int height, int type) {
     return ImageUtil.createImage(component == null ? null : component.getGraphicsConfiguration(), width, height, type);
-  }
-
-  /**
-   * @deprecated use {@link #createImage(Graphics, int, int, int)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
-    return ImageUtil.createImage(g, width, height, type);
   }
 
   /**
@@ -2586,14 +2526,6 @@ public final class UIUtil {
     return TimerUtil.createNamedTimer(name, delay, listener);
   }
 
-  /**
-   * @deprecated Use {@link TimerUtil#createNamedTimer(String, int)}
-   */
-  @Deprecated
-  public static @NotNull Timer createNamedTimer(@NonNls @NotNull String name, int delay) {
-    return TimerUtil.createNamedTimer(name, delay);
-  }
-
   public static boolean isDialogRootPane(JRootPane rootPane) {
     if (rootPane != null) {
       final Object isDialog = rootPane.getClientProperty("DIALOG_ROOT_PANE");
@@ -3316,14 +3248,6 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull Color getTableSelectionBackground() {
     return getTableSelectionBackground(true);
-  }
-
-  /**
-   * @deprecated use {@link #getTableSelectionBackground(boolean)}
-   */
-  @Deprecated
-  public static @NotNull Color getTableUnfocusedSelectionBackground() {
-    return getTableSelectionBackground(false);
   }
 
   // foreground

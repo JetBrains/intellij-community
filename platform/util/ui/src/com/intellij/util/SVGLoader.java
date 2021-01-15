@@ -520,14 +520,7 @@ public final class SVGLoader {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public interface SvgColorPatcher {
 
-    /**
-     * @deprecated use {@link #patchColors(URL, Element)}
-     */
-    @Deprecated
-    default void patchColors(@SuppressWarnings("unused") @NotNull Element svg) {}
-
     default void patchColors(@Nullable @SuppressWarnings("unused") URL url, @NotNull Element svg) {
-      patchColors(svg);
     }
   }
 }

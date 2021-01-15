@@ -201,19 +201,6 @@ public final class StartupUiUtil {
     drawImage(g, image, new Rectangle(x, y, -1, -1), null, null, observer);
   }
 
-  /**
-   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)}.
-   * <p>
-   * @deprecated Note, the method interprets [x,y,width,height] as the destination and source bounds which doesn't conform
-   * to the {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)} method contract. This works
-   * just fine for the general-purpose one-to-one drawing, however when the dst and src bounds need to be specific,
-   * use {@link #drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver)}.
-   */
-  @Deprecated
-  public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable ImageObserver observer) {
-    drawImage(g, image, x, y, width, height, null, observer);
-  }
-
   static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable BufferedImageOp op, ImageObserver observer) {
     Rectangle srcBounds = width >= 0 && height >= 0 ? new Rectangle(x, y, width, height) : null;
     drawImage(g, image, new Rectangle(x, y, width, height), srcBounds, op, observer);

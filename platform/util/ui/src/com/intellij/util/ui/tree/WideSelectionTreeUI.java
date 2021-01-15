@@ -26,9 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.util.ReflectionUtil.getMethod;
 
@@ -58,7 +56,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   @NotNull private final Condition<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
-  private boolean myForceDontPaintLines = false;
   private static final boolean mySkinny = false;
 
   private static final TreeUIAction EXPAND_OR_SELECT_NEXT = new TreeUIAction() {
@@ -205,14 +202,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     map.put("selectParent", COLLAPSE_OR_SELECT_PREVIOUS);
   }
 
-  /**
-   * @deprecated not supported in UI
-   */
-  @Deprecated
-  public void setForceDontPaintLines() {
-    myForceDontPaintLines = true;
-  }
-
   private abstract static class TreeUIAction extends AbstractAction implements UIResource {
   }
 
@@ -245,7 +234,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     if (UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       return false;
     }
-    return myForceDontPaintLines || !"None".equals(tree.getClientProperty("JTree.lineStyle"));
+    return !"None".equals(tree.getClientProperty("JTree.lineStyle"));
   }
 
   @Override
