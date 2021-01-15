@@ -1091,7 +1091,6 @@
     <notificationGroup id="Test Sticky Notification" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Test Notification" displayType="BALLOON"/>
     <notificationGroup id="Editor notifications" displayType="BALLOON"/>
-    <notificationGroup id="Error Copying File" displayType="BALLOON" bundle="messages.IdeBundle" key="jar.copy.error.title"/>
     <notificationGroup id="Test Runner" displayType="NONE"/>
     <notificationGroup id="System Messages" displayType="BALLOON"/>
     <notificationGroup id="Merge" displayType="BALLOON"/>

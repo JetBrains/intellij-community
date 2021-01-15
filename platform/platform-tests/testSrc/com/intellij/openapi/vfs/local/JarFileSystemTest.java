@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.jar.BasicJarHandler;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.impl.jar.JarHandler;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -28,7 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +38,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -199,22 +195,9 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
-    JarHandler handler = new JarHandler(jar.getPath());
-    FileAttributes attributes = handler.getAttributes(JarFile.MANIFEST_NAME);
-    assertNotNull(attributes);
-    assertEquals(0, attributes.length);
-    assertTimestampsEqual(jar.lastModified(), attributes.lastModified);
-
-    JarFileSystemImpl jarFileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
-    if (jarFileSystem.isMakeCopyOfJar(jar)) {
-      // for performance reasons we create file copy on windows when we read contents and have the handle open to the copy
-      Field resolved = handler.getClass().getDeclaredField("myFileWithMirrorResolved");
-      resolved.setAccessible(true);
-      assertNull(resolved.get(handler));
-    }
-
-    jarFileSystem.setNoCopyJarForPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    assertFalse(jarFileSystem.isMakeCopyOfJar(jar));
+    JarFileSystemImpl fs = (JarFileSystemImpl)JarFileSystem.getInstance();
+    fs.setNoCopyJarForPath(jar.getPath());
+    assertFalse(fs.isMakeCopyOfJar(jar));
   }
 
   @Test

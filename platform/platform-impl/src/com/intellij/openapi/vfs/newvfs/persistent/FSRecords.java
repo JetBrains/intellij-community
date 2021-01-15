@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.PathManager;
@@ -63,16 +63,16 @@ public final class FSRecords {
     return nextMask(versionValue, 8, prevMask);
   }
   static final int VERSION = nextMask(58,  // acceptable range is [0..255]
-                                     nextMask(useContentHashes,
-                                     nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
-                                     nextMask(bulkAttrReadSupport,
-                                     nextMask(inlineAttributes,
-                                     nextMask(ourStoreRootsSeparately,
-                                     nextMask(useCompressionUtil,
-                                     nextMask(useSmallAttrTable,
-                                     nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                                     nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP,0)))))))))));
+                             nextMask(useContentHashes,
+                             nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
+                             nextMask(bulkAttrReadSupport,
+                             nextMask(inlineAttributes,
+                             nextMask(ourStoreRootsSeparately,
+                             nextMask(useCompressionUtil,
+                             nextMask(useSmallAttrTable,
+                             nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                             nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                             nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP, 0)))))))))));
 
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   static final ReentrantReadWriteLock lock;

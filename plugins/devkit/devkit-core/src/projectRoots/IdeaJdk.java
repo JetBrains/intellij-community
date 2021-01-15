@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -417,7 +417,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       File jarFile = srcs[i];
       if (jarFile.exists()) {
         JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-        String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+        String path = jarFile.getAbsolutePath();
         jarFileSystem.setNoCopyJarForPath(path);
         VirtualFile vFile = jarFileSystem.findFileByPath(path);
         sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
@@ -461,7 +461,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
           final File jarFile = new File(jdkHome, srcZip);
           if (jarFile.exists()){
             JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-            String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
+            String path = jarFile.getAbsolutePath();
             jarFileSystem.setNoCopyJarForPath(path);
             sdkModificator.addRoot(jarFileSystem.findFileByPath(path), OrderRootType.SOURCES);
           }

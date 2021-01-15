@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -185,14 +185,7 @@ final class BuildTasksImpl extends BuildTasks {
 
   private Path patchIdeaPropertiesFile() {
     StringBuilder builder = new StringBuilder(Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties")))
-    if (!buildContext.shouldIDECopyJarsByDefault()) {
-      builder.append("""
-#---------------------------------------------------------------------
-# IDE can copy library .jar files to prevent their locking. Set this property to 'false' to enable copying.
-#---------------------------------------------------------------------
-idea.jars.nocopy=true
-""")
-    }
+
     buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
       builder.append('\n').append(Files.readString(Paths.get(it)))
     }
