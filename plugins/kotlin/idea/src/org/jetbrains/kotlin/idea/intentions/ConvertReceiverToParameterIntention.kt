@@ -91,6 +91,7 @@ class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntent
                             if (!brokenOff) {
                                 runChangeSignature(
                                     element.project,
+                                    editor,
                                     function.resolveToExpectedDescriptorIfPossible() as FunctionDescriptor,
                                     configureChangeSignature(newName),
                                     function.receiverTypeReference!!,
@@ -106,7 +107,7 @@ class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntent
                 )
             }
         } else {
-            runChangeSignature(element.project, descriptor, configureChangeSignature(), element, text)
+            runChangeSignature(element.project, editor, descriptor, configureChangeSignature(), element, text)
         }
     }
 }

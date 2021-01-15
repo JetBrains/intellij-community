@@ -106,7 +106,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                 val config = configureChangeSignature(element, propertyDescriptor)
                 object : CompositeRefactoringRunner(project, "refactoring.changeSignature") {
                     override fun runRefactoring() {
-                        runChangeSignature(project, constructorDescriptor, config, contextElement, text)
+                        runChangeSignature(project, editor, constructorDescriptor, config, contextElement, text)
                     }
 
                     override fun onRefactoringDone() {
@@ -156,6 +156,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
         // TODO: Allow processing of multiple functions in Change Signature so that Start/Finish Mark can be used here
         private fun processConstructors(
             project: Project,
+            editor: Editor?,
             propertyDescriptor: PropertyDescriptor,
             descriptorsToProcess: Iterator<ConstructorDescriptor>,
             visitedElements: MutableSet<PsiElement> = HashSet()
@@ -169,20 +170,20 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
 
             object : CompositeRefactoringRunner(project, "refactoring.changeSignature") {
                 override fun runRefactoring() {
-                    runChangeSignature(project, descriptor, config, element.containingClassOrObject!!, text)
+                    runChangeSignature(project, editor, descriptor, config, element.containingClassOrObject!!, text)
                 }
 
                 override fun onRefactoringDone() {
                     val constructorOrClass = constructorPointer?.element
                     val constructor = constructorOrClass as? KtConstructor<*> ?: (constructorOrClass as? KtClass)?.primaryConstructor
                     if (constructor == null || !visitedElements.add(constructor)) return
-                    constructor.getValueParameters().lastOrNull()?.let { newParam ->
+                    constructor.valueParameters.lastOrNull()?.let { newParam ->
                         val psiFactory = KtPsiFactory(project)
                         (constructor as? KtSecondaryConstructor)?.getOrCreateBody()?.appendElement(
                             psiFactory.createExpression("this.${element.name} = ${newParam.name!!}")
                         ) ?: element.setInitializer(psiFactory.createExpression(newParam.name!!))
                     }
-                    processConstructors(project, propertyDescriptor, descriptorsToProcess)
+                    processConstructors(project, editor, propertyDescriptor, descriptorsToProcess)
                 }
             }.run()
         }
@@ -202,7 +203,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
             }
 
             project.runRefactoringAndKeepDelayedRequests {
-                processConstructors(project, propertyDescriptor, constructorDescriptors.iterator())
+                processConstructors(project, editor, propertyDescriptor, constructorDescriptors.iterator())
             }
         }
     }

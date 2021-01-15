@@ -137,16 +137,17 @@ abstract class ChangeFunctionSignatureFix(
             override fun getText() = KotlinBundle.message("fix.change.signature.remove.parameter", parameterToRemove.name.asString())
 
             override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-                runRemoveParameter(parameterToRemove, element ?: return)
+                runRemoveParameter(parameterToRemove, element ?: return, editor)
             }
         }
 
         val FAMILY_NAME = KotlinBundle.message("fix.change.signature.family")
 
-        fun runRemoveParameter(parameterDescriptor: ValueParameterDescriptor, context: PsiElement) {
+        fun runRemoveParameter(parameterDescriptor: ValueParameterDescriptor, context: PsiElement, editor: Editor?) {
             val functionDescriptor = parameterDescriptor.containingDeclaration as FunctionDescriptor
             runChangeSignature(
                 context.project,
+                editor,
                 functionDescriptor,
                 object : KotlinChangeSignatureConfiguration {
                     override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {

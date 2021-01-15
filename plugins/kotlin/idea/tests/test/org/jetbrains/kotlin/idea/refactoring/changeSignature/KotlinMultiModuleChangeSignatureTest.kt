@@ -37,7 +37,7 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
             val element = KotlinChangeSignatureHandler().findTargetMember(psiFile.findElementAt(marker)!!) as KtElement
             val bindingContext = element.analyze(BodyResolveMode.FULL)
             val callableDescriptor = KotlinChangeSignatureHandler.findDescriptor(element, project, editor, bindingContext)!!
-            val changeInfo = createChangeInfo(project, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, element)!!
+            val changeInfo = createChangeInfo(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, element)!!
             KotlinChangeSignatureProcessor(project, changeInfo.apply { configure() }, "Change signature").run()
         }
     }

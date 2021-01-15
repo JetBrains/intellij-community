@@ -119,7 +119,7 @@ fun getParametersToRemove(
         .toList()
 }
 
-fun IntroduceParameterDescriptor.performRefactoring(onExit: (() -> Unit)? = null) {
+fun IntroduceParameterDescriptor.performRefactoring(editor: Editor? = null, onExit: (() -> Unit)? = null) {
     val config = object : KotlinChangeSignatureConfiguration {
         override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
             return originalDescriptor.modify { methodDescriptor ->
@@ -155,7 +155,7 @@ fun IntroduceParameterDescriptor.performRefactoring(onExit: (() -> Unit)? = null
     val project = callable.project
     object : CompositeRefactoringRunner(project, "refactoring.changeSignature") {
         override fun runRefactoring() {
-            runChangeSignature(project, callableDescriptor, config, callable, INTRODUCE_PARAMETER)
+            runChangeSignature(project, editor, callableDescriptor, config, callable, INTRODUCE_PARAMETER)
         }
 
         override fun onRefactoringDone() {
@@ -334,7 +334,7 @@ open class KotlinIntroduceParameterHandler(
                         )
                     )
                 if (isTestMode) {
-                    introduceParameterDescriptor.performRefactoring()
+                    introduceParameterDescriptor.performRefactoring(editor)
                     return
                 }
 

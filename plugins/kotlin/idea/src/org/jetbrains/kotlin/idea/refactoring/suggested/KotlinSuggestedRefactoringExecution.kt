@@ -65,7 +65,8 @@ class KotlinSuggestedRefactoringExecution(
         val configuration = object : KotlinChangeSignatureConfiguration {
             override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
         }
-        val changeSignature = KotlinChangeSignature(project, descriptor, configuration, declaration, null)
+
+        val changeSignature = KotlinChangeSignature(project, null, descriptor, configuration, declaration, null)
         val methodDescriptor = changeSignature.adjustDescriptor(listOf(descriptor))!!
 
         val parameters = mutableListOf<KotlinParameterInfo>()

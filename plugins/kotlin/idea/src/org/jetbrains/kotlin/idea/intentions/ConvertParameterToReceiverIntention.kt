@@ -45,6 +45,6 @@ class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
         val function = element.getStrictParentOfType<KtNamedFunction>() ?: return
         val parameterIndex = function.valueParameters.indexOf(element)
         val descriptor = function.resolveToExpectedDescriptorIfPossible() as? FunctionDescriptor ?: return
-        runChangeSignature(element.project, descriptor, configureChangeSignature(parameterIndex), element, text)
+        runChangeSignature(element.project, editor, descriptor, configureChangeSignature(parameterIndex), element, text)
     }
 }

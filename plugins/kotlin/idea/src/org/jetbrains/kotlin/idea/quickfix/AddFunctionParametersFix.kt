@@ -123,7 +123,7 @@ class AddFunctionParametersFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val callElement = callElement ?: return
-        runChangeSignature(project, functionDescriptor, addParameterConfiguration(), callElement, text)
+        runChangeSignature(project, editor, functionDescriptor, addParameterConfiguration(), callElement, text)
     }
 
     private fun addParameterConfiguration(): KotlinChangeSignatureConfiguration {

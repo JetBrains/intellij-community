@@ -117,6 +117,15 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
             val bindingContext = element.analyze(BodyResolveMode.FULL)
 
             val callableDescriptor = findDescriptor(element, project, editor, bindingContext) ?: return
+            if (callableDescriptor is DeserializedDescriptor) {
+                return CommonRefactoringUtil.showErrorHint(
+                    project,
+                    editor,
+                    KotlinBundle.message("error.hint.the.read.only.declaration.cannot.be.changed"),
+                    RefactoringBundle.message("changeSignature.refactoring.name"),
+                    "refactoring.changeSignature",
+                )
+            }
 
             if (callableDescriptor is JavaCallableMemberDescriptor) {
                 val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, callableDescriptor)
@@ -151,7 +160,7 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
                 return
             }
 
-            runChangeSignature(project, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, context, null)
+            runChangeSignature(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, context, null)
         }
 
         private fun getDescriptor(bindingContext: BindingContext, element: PsiElement): DeclarationDescriptor? {

@@ -312,6 +312,7 @@ class KotlinIntroduceParameterDialog private constructor(
             )
 
             helper.configure(descriptorToRefactor).performRefactoring(
+                editor,
                 onExit = { FinishMarkAction.finish(myProject, editor, startMarkAction) }
             )
         }

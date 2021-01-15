@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -54,12 +55,13 @@ fun KotlinMethodDescriptor.modify(action: (KotlinMutableMethodDescriptor) -> Uni
 
 fun runChangeSignature(
     project: Project,
+    editor: Editor?,
     callableDescriptor: CallableDescriptor,
     configuration: KotlinChangeSignatureConfiguration,
     defaultValueContext: PsiElement,
     commandName: String? = null
 ): Boolean {
-    val result = KotlinChangeSignature(project, callableDescriptor, configuration, defaultValueContext, commandName).run()
+    val result = KotlinChangeSignature(project, editor, callableDescriptor, configuration, defaultValueContext, commandName).run()
     if (!result) {
         broadcastRefactoringExit(project, "refactoring.changeSignature")
     }
@@ -68,12 +70,14 @@ fun runChangeSignature(
 
 class KotlinChangeSignature(
     project: Project,
+    editor: Editor?,
     callableDescriptor: CallableDescriptor,
     val configuration: KotlinChangeSignatureConfiguration,
     val defaultValueContext: PsiElement,
     @NlsContexts.Command commandName: String?
 ) : CallableRefactoring<CallableDescriptor>(
     project,
+    editor,
     callableDescriptor,
     commandName ?: RefactoringBundle.message("changeSignature.refactoring.name")
 ) {
@@ -265,11 +269,12 @@ class KotlinChangeSignature(
 @TestOnly
 fun createChangeInfo(
     project: Project,
+    editor: Editor?,
     callableDescriptor: CallableDescriptor,
     configuration: KotlinChangeSignatureConfiguration,
     defaultValueContext: PsiElement
 ): KotlinChangeInfo? {
-    val jetChangeSignature = KotlinChangeSignature(project, callableDescriptor, configuration, defaultValueContext, null)
+    val jetChangeSignature = KotlinChangeSignature(project, editor, callableDescriptor, configuration, defaultValueContext, null)
     val declarations =
         (callableDescriptor as? CallableMemberDescriptor)?.getDeepestSuperDeclarations() ?: listOf(callableDescriptor)
 

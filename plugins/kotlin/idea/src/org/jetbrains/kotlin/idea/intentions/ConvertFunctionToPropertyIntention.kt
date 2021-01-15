@@ -53,9 +53,9 @@ class ConvertFunctionToPropertyIntention :
     private inner class Converter(
         project: Project,
         private val file: KtFile,
-        private val editor: Editor?,
+        editor: Editor?,
         descriptor: FunctionDescriptor
-    ) : CallableRefactoring<FunctionDescriptor>(project, descriptor, text) {
+    ) : CallableRefactoring<FunctionDescriptor>(project, editor, descriptor, text) {
         private val elementsToShorten = ArrayList<KtElement>()
 
         private val newName: String by lazy {

@@ -116,7 +116,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         val callableDescriptor = KotlinChangeSignatureHandler
             .findDescriptor(element, project, editor, bindingContext)
             .sure { "Target descriptor is null" }
-        return createChangeInfo(project, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, context)!!
+        return createChangeInfo(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, context)!!
     }
 
     private fun doTest(configure: KotlinChangeInfo.() -> Unit = {}) {
@@ -393,6 +393,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         doTestConflict {
             removeParameter(0)
         }
+    }
+
+    fun testFunctionFromStdlibConflict() {
+        doTestUnmodifiable()
+    }
+
+    fun testExtensionFromStdlibConflict() {
+        doTestUnmodifiable()
     }
 
     fun testRemoveUsedReceiver2() {

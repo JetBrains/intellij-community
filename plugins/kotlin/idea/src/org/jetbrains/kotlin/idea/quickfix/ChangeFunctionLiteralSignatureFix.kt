@@ -44,6 +44,7 @@ class ChangeFunctionLiteralSignatureFix private constructor(
         val element = element ?: return
         runChangeSignature(
             project,
+            editor,
             functionDescriptor,
             object : KotlinChangeSignatureConfiguration {
                 override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {

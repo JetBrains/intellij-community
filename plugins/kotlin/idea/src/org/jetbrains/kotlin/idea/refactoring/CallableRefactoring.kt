@@ -18,14 +18,17 @@ package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.lang.findUsages.DescriptiveNameUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.*
@@ -49,6 +52,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 
 abstract class CallableRefactoring<out T : CallableDescriptor>(
     val project: Project,
+    val editor: Editor?,
     val callableDescriptor: T,
     @NlsContexts.Command val commandName: String
 ) {
@@ -98,11 +102,16 @@ abstract class CallableRefactoring<out T : CallableDescriptor>(
             return true
         }
 
-        val unmodifiableFile = element.containingFile?.virtualFile?.presentableUrl
-        if (unmodifiableFile != null) {
+        val unmodifiableFileName = element.containingFile?.name
+        if (unmodifiableFileName != null) {
             val message = RefactoringBundle.message("refactoring.cannot.be.performed") + "\n" +
-                    IdeBundle.message("error.message.cannot.modify.file.0", unmodifiableFile)
-            Messages.showErrorDialog(project, message, CommonBundle.getErrorTitle()!!)
+                    KotlinBundle.message(
+                        "error.hint.cannot.modify.0.declaration.from.1.file",
+                        DescriptiveNameUtil.getDescriptiveName(element),
+                        unmodifiableFileName,
+                    )
+
+            CommonRefactoringUtil.showErrorHint(project, editor, message, CommonBundle.getErrorTitle(), null)
         } else {
             LOG.error("Could not find file for Psi element: " + element.text)
         }

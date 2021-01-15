@@ -42,8 +42,9 @@ class ConvertPropertyToFunctionIntention : SelfTargetingIntention<KtProperty>(
 ), LowPriorityAction {
     private inner class Converter(
         project: Project,
+        editor: Editor?,
         descriptor: CallableDescriptor
-    ) : CallableRefactoring<CallableDescriptor>(project, descriptor, text) {
+    ) : CallableRefactoring<CallableDescriptor>(project, editor, descriptor, text) {
         private val newName: String = JvmAbi.getterName(callableDescriptor.name.asString())
 
         private fun convertProperty(originalProperty: KtProperty, psiFactory: KtPsiFactory) {
@@ -208,6 +209,6 @@ class ConvertPropertyToFunctionIntention : SelfTargetingIntention<KtProperty>(
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
         val descriptor = element.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? CallableDescriptor ?: return
-        Converter(element.project, descriptor).run()
+        Converter(element.project, editor, descriptor).run()
     }
 }

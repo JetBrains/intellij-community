@@ -43,7 +43,7 @@ class RemoveUnusedFunctionParameterFix(parameter: KtParameter, private val check
         val typeParameters = typeParameters(parameter.typeReference)
         val primaryConstructor = parameterList.parent as? KtPrimaryConstructor
 
-        ChangeFunctionSignatureFix.runRemoveParameter(parameterDescriptor, parameter)
+        ChangeFunctionSignatureFix.runRemoveParameter(parameterDescriptor, parameter, editor)
         runRemoveUnusedTypeParameters(typeParameters)
 
         if (parameterSize > 1) {

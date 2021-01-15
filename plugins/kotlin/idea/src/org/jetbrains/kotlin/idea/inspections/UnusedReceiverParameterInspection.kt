@@ -155,7 +155,7 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                         function.setReceiverTypeReference(null)
                     }
                 } else {
-                    runChangeSignature(project, callableDescriptor, configureChangeSignature(), element, actionName)
+                    runChangeSignature(project, function.findExistingEditor(), callableDescriptor, configureChangeSignature(), element, actionName)
                 }
                 RemoveUnusedFunctionParameterFix.runRemoveUnusedTypeParameters(typeParameters)
             }

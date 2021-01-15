@@ -38,7 +38,7 @@ open class CreateParameterFromUsageFix<E : KtElement>(
 
     override fun startInWriteAction() = false
 
-    private fun runChangeSignature(project: Project) {
+    private fun runChangeSignature(project: Project, editor: Editor?) {
         val config = object : KotlinChangeSignatureConfiguration {
             override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
                 return originalDescriptor.modify { it.addParameter(data.parameterInfo) }
@@ -47,17 +47,17 @@ open class CreateParameterFromUsageFix<E : KtElement>(
             override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = data.createSilently
         }
 
-        runChangeSignature(project, data.parameterInfo.callableDescriptor, config, data.originalExpression, text)
+        runChangeSignature(project, editor, data.parameterInfo.callableDescriptor, config, data.originalExpression, text)
     }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val onComplete = data.onComplete
         if (onComplete == null) {
-            runChangeSignature(project)
+            runChangeSignature(project, editor)
         } else {
             object : CompositeRefactoringRunner(project, "refactoring.changeSignature") {
                 override fun runRefactoring() {
-                    runChangeSignature(project)
+                    runChangeSignature(project, editor)
                 }
 
                 override fun onRefactoringDone() {
