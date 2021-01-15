@@ -31,14 +31,25 @@ internal class SpaceReviewChangesVmImpl(
   override val projectKey: ProjectKey,
   override val reviewIdentifier: ReviewIdentifier,
   override val reviewId: TID,
-  override val selectedCommits: Property<List<ReviewCommitListItem>>,
+  override val allCommits: Property<List<SpaceReviewCommitListItem>>,
   override val participantsVm: Property<SpaceReviewParticipantsVm?>,
-  override val listSelection: MutableProperty<ListSelection<SpaceReviewChange>>,
   override val infoByRepos: Map<String, SpaceRepoInfo>,
 ) : SpaceReviewChangesVm,
     SpaceVmWithClient {
 
-  val lifetimeSource = lifetime.nested()
+  private val lifetimeSource = lifetime.nested()
+
+  override val selectedChanges: MutableProperty<ListSelection<SpaceReviewChange>> =
+    mutableProperty(ListSelection.create(emptyList<SpaceReviewChange>(), null))
+
+  override val selectedCommitIndices: MutableProperty<List<Int>> = mutableProperty(emptyList())
+
+  override val selectedCommits: Property<List<SpaceReviewCommitListItem>> =
+    mapInit(selectedCommitIndices, allCommits, emptyList()) { indices, commits ->
+      if (indices.isEmpty()) return@mapInit commits
+
+      indices.map { commits[it] }
+    }
 
   override val changes: Property<Map<String, ChangesWithDiscussion>?> = mapInit(selectedCommits, null) { selectedCommits ->
     selectedCommits

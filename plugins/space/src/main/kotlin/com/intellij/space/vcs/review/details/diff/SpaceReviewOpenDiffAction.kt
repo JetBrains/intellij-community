@@ -15,7 +15,7 @@ class SpaceReviewOpenDiffActionProvider : AnActionExtensionProvider {
 
   override fun update(e: AnActionEvent) {
     val detailsVm = getDetailsVm(e) ?: return
-    val isSelectionEmpty = detailsVm.changesVm.listSelection.value.isEmpty
+    val isSelectionEmpty = detailsVm.selectedChangesVm.value.selectedChanges.value.isEmpty
     e.presentation.isEnabled = !isSelectionEmpty
   }
 
@@ -25,9 +25,8 @@ class SpaceReviewOpenDiffActionProvider : AnActionExtensionProvider {
 
     val chainBuilder = SpaceDiffRequestChainBuilder(LifetimeSource(),
                                                     project,
-                                                    detailsVm.spaceDiffVm,
-                                                    detailsVm.changesVm)
-    val requestChain = chainBuilder.getRequestChain(detailsVm.changesVm.listSelection.value)
+                                                    detailsVm.spaceDiffVm)
+    val requestChain = chainBuilder.getRequestChain(detailsVm.selectedChangesVm.value.selectedChanges.value)
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)
   }
 

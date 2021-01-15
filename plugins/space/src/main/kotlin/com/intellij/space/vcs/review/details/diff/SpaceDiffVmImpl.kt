@@ -4,9 +4,8 @@ package com.intellij.space.vcs.review.details.diff
 import circlet.client.api.ProjectKey
 import circlet.platform.api.TID
 import circlet.platform.client.KCircletClient
-import com.intellij.openapi.ListSelection
-import com.intellij.space.vcs.review.details.ReviewCommitListItem
-import com.intellij.space.vcs.review.details.SpaceReviewChange
+import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
+import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import runtime.reactive.Property
 
 internal class SpaceDiffVmImpl(
@@ -14,7 +13,10 @@ internal class SpaceDiffVmImpl(
   override val reviewId: TID,
   override val reviewKey: String,
   override val projectKey: ProjectKey,
-  override val selectedCommits: Property<List<ReviewCommitListItem>>,
-  override val selectedChanges: Property<ListSelection<SpaceReviewChange>>,
+  override val changesVm: Property<SpaceReviewChangesVm>,
+  //override val selectedCommits: Property<List<ReviewCommitListItem>>,
+  //override val changes: Property<Map<String, ChangesWithDiscussion>?>,
+  //override val selectedChanges: Property<ListSelection<SpaceReviewChange>>,
   override val spaceReviewDiffLoader: SpaceReviewDiffLoader,
+  override val participantVm: Property<SpaceReviewParticipantsVm?>,
 ) : SpaceDiffVm

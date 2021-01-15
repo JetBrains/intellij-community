@@ -13,22 +13,28 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
 import libraries.coroutines.extra.LifetimeSource
+import runtime.reactive.bind
 import javax.swing.JComponent
 
 internal class SpaceDiffFileEditor(project: Project, spaceDiffFile: SpaceDiffFile) : FileEditorBase() {
   internal val diffProcessor = SpaceDiffRequestProcessor(project)
 
   private val editorLifetime = LifetimeSource()
-  private val chainBuilder = SpaceDiffRequestChainBuilder(editorLifetime, project, spaceDiffFile.diffVm, spaceDiffFile.changesVm)
 
   init {
     Disposer.register(this, Disposable { editorLifetime.terminate() })
     Disposer.register(this, diffProcessor)
 
-    val diffVm = spaceDiffFile.diffVm
-    diffVm.selectedChanges.forEach(editorLifetime) {
-      diffProcessor.chain = chainBuilder.getRequestChain(it)
+    editorLifetime.bind(spaceDiffFile.changesVm) { changesVm: SpaceReviewChangesVm ->
+      val chainBuilder = SpaceDiffRequestChainBuilder(lifetime, project, spaceDiffFile.diffVm)
+
+      bind(changesVm.changes) {
+        bind(changesVm.selectedChanges) { selectedChange ->
+          diffProcessor.chain = chainBuilder.getRequestChain(selectedChange)
+        }
+      }
     }
   }
 

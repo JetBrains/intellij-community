@@ -3,12 +3,8 @@ package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewRecord
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
@@ -20,19 +16,29 @@ import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
+import libraries.coroutines.extra.Lifetime
+import runtime.reactive.Property
 import javax.swing.JComponent
 
 internal class SpaceReviewCommitListPanel(parentDisposable: Disposable,
                                           reviewDetailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
   init {
     val commitsBrowser = OnePixelSplitter(true, "space.review.commit.list", 0.4f).apply {
+      val changesVm = reviewDetailsVm.commitChangesVm
+      val diffVm = reviewDetailsVm.spaceDiffVm
+
       val selectedCommitDetails = OnePixelSplitter(true, "space.review.commit.list.details", 0.3f).apply {
-        val commitDetailsPanel = createCommitsDetailsPanel(parentDisposable,reviewDetailsVm.ideaProject, reviewDetailsVm.changesVm)
+        val commitDetailsPanel = createCommitsDetailsPanel(parentDisposable, reviewDetailsVm.ideaProject, changesVm)
+
         val tree = SpaceReviewChangesTreeFactory.create(
           reviewDetailsVm.ideaProject,
           this,
-          reviewDetailsVm.changesVm,
-          reviewDetailsVm.spaceDiffVm
+          changesVm,
+          object : SpaceDiffFileProvider {
+            override fun getSpaceDiffFile(): SpaceDiffFile {
+              return SpaceDiffFile(reviewDetailsVm.selectedChangesVm, diffVm)
+            }
+          }
         ).apply {
           border = IdeBorderFactory.createBorder(SideBorder.TOP)
         }
@@ -44,7 +50,17 @@ internal class SpaceReviewCommitListPanel(parentDisposable: Disposable,
           .addToCenter(tree)
       }
 
-      firstComponent = SpaceReviewCommitListFactory.createCommitList(reviewDetailsVm)
+      firstComponent = SpaceReviewCommitListFactory.createCommitList(
+        object : SpaceReviewCommitListVm {
+          override val commits: Property<List<SpaceReviewCommitListItem>> = reviewDetailsVm.commits
+          override val lifetime: Lifetime = reviewDetailsVm.lifetime
+        },
+        object : SpaceReviewCommitListController {
+          override fun setSelectedCommitsIndices(indices: List<Int>) {
+            reviewDetailsVm.commitChangesVm.selectedCommitIndices.value = indices
+          }
+        }
+      )
       secondComponent = selectedCommitDetails
     }
     addToCenter(commitsBrowser)
@@ -79,16 +95,6 @@ internal class SpaceReviewCommitListPanel(parentDisposable: Disposable,
 
     return commitListPanel
   }
-
-  private fun createChangesBrowserToolbar(target: JComponent): TreeActionsToolbarPanel {
-    val actionManager = ActionManager.getInstance()
-    val changesToolbarActionGroup = actionManager.getAction("space.review.changes.toolbar") as ActionGroup
-    val changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true)
-    val treeActionsGroup = DefaultActionGroup(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL),
-                                              actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL))
-    return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
-  }
-
 }
 
 

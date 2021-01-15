@@ -13,11 +13,11 @@ import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
+import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.space.vcs.review.details.process.SpaceReviewAction
 import com.intellij.space.vcs.review.details.process.SpaceReviewActionsBuilder
 import com.intellij.space.vcs.review.openReviewInEditor
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.labels.LinkLabel
@@ -38,108 +38,132 @@ import javax.swing.JPanel
 
 internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
   init {
-    val titleComponent = HtmlEditorPane().apply {
-      font = font.deriveFont((font.size * 1.2).toFloat())
-    }
+    val infoPanel = BorderLayoutPanel().apply {
+      val titleComponent = HtmlEditorPane().apply {
+        font = font.deriveFont((font.size * 1.2).toFloat())
+      }
 
-    val createdByComponent = JBLabel().apply {
-      font = JBUI.Fonts.smallFont()
-      foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
-    }
+      val createdByComponent = JBLabel().apply {
+        font = JBUI.Fonts.smallFont()
+        foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
+      }
 
-    detailsVm.createdBy.forEach(detailsVm.lifetime) {
-      createdByComponent.text = SpaceBundle.message(
-        "review.label.created.by.user.at.time",
-        it.englishFullName(),
-        detailsVm.createdAt.value.formatPrettyDateTime()
-      )
-    }
-
-    detailsVm.title.forEach(detailsVm.lifetime) {
-      titleComponent.setBody(it)
-    }
-
-    val gap = 0
-    val projectDetails = NonOpaquePanel(
-      FlowLayout(FlowLayout.LEADING,
-                 JBUI.scale(gap),
-                 JBUI.scale(gap))).apply {
-
-      @NlsSafe val projectName = detailsVm.spaceProjectInfo.project.name
-      val projectLink = link(projectName, SpaceUrls.project(detailsVm.projectKey))
-      val reviewLinkLabel = link(detailsVm.reviewKey ?: "", detailsVm.reviewUrl)
-
-      add(projectLink)
-      add(JLabel("${FontUtil.spaceAndThinSpace()}/${FontUtil.spaceAndThinSpace()}"))
-      add(reviewLinkLabel)
-    }
-
-    val actionsPanel = NonOpaquePanel()
-
-    val usersPanel = NonOpaquePanel().apply {
-      layout = MigLayout(LC()
-                           .fillX()
-                           .gridGap("0", "0")
-                           .insets("0", "0", "0", "0"))
-    }
-
-    detailsVm.participantsVm.forEach(detailsVm.lifetime) { participantsVm: SpaceReviewParticipantsVm? ->
-      usersPanel.removeAll()
-      if (participantsVm != null) {
-        val reviewersComponent = ReviewersComponent(
-          detailsVm,
-          participantsVm
+      detailsVm.createdBy.forEach(detailsVm.lifetime) {
+        createdByComponent.text = SpaceBundle.message(
+          "review.label.created.by.user.at.time",
+          it.englishFullName(),
+          detailsVm.createdAt.value.formatPrettyDateTime()
         )
-        val authorsComponent = AuthorsComponent(
-          detailsVm,
-          participantsVm
+      }
+
+      detailsVm.title.forEach(detailsVm.lifetime) {
+        titleComponent.setBody(it)
+      }
+
+      val gap = 0
+      val projectDetails = NonOpaquePanel(
+        FlowLayout(FlowLayout.LEADING,
+                   JBUI.scale(gap),
+                   JBUI.scale(gap))).apply {
+
+        @NlsSafe val projectName = detailsVm.spaceProjectInfo.project.name
+        val projectLink = link(projectName, SpaceUrls.project(detailsVm.projectKey))
+        val reviewLinkLabel = link(detailsVm.reviewKey ?: "", detailsVm.reviewUrl)
+
+        add(projectLink)
+        add(JLabel("${FontUtil.spaceAndThinSpace()}/${FontUtil.spaceAndThinSpace()}"))
+        add(reviewLinkLabel)
+      }
+
+      val actionsPanel = NonOpaquePanel()
+
+      val usersPanel = NonOpaquePanel().apply {
+        layout = MigLayout(LC()
+                             .fillX()
+                             .gridGap("0", "0")
+                             .insets("0", "0", "0", "0"))
+      }
+
+      detailsVm.participantsVm.forEach(detailsVm.lifetime) { participantsVm: SpaceReviewParticipantsVm? ->
+        usersPanel.removeAll()
+        if (participantsVm != null) {
+          val reviewersComponent = ReviewersComponent(
+            detailsVm,
+            participantsVm
+          )
+          val authorsComponent = AuthorsComponent(
+            detailsVm,
+            participantsVm
+          )
+
+          addListPanel(usersPanel, authorsComponent.label, authorsComponent.panel)
+          addListPanel(usersPanel, reviewersComponent.label, reviewersComponent.panel)
+
+          participantsVm.controlVm.forEach(detailsVm.lifetime) {
+            actionsPanel.setContent(createActionButton(detailsVm, it))
+            actionsPanel.validate()
+            actionsPanel.repaint()
+            validate()
+            repaint()
+          }
+        }
+
+        validate()
+        repaint()
+      }
+
+      val openTimelineLinkLabel = LinkLabel.create(SpaceBundle.message("review.details.view.timeline.link.action")) {
+        openReviewInEditor(detailsVm.ideaProject,
+                           detailsVm.workspace,
+                           detailsVm.spaceProjectInfo,
+                           detailsVm.reviewRef
         )
+      }
 
-        addListPanel(usersPanel, authorsComponent.label, authorsComponent.panel)
-        addListPanel(usersPanel, reviewersComponent.label, reviewersComponent.panel)
+      val contentPanel: JPanel = ScrollablePanel(VerticalLayout(JBUI.scale(6))).apply {
+        border = JBUI.Borders.empty(8)
+        add(projectDetails)
 
-        participantsVm.controlVm.forEach(detailsVm.lifetime) {
-          actionsPanel.setContent(createActionButton(detailsVm, it))
-          actionsPanel.validate()
-          actionsPanel.repaint()
-          validate()
-          repaint()
+        if (detailsVm is MergeRequestDetailsVm) {
+          add(createDirectionPanel(detailsVm))
+        }
+
+        add(titleComponent)
+        add(createdByComponent)
+        add(usersPanel)
+        add(actionsPanel)
+        add(openTimelineLinkLabel)
+      }
+
+      val scrollPane = ScrollPaneFactory.createScrollPane(contentPanel, true)
+
+      addToCenter(scrollPane)
+      UIUtil.setOpaqueRecursively(scrollPane, false)
+      UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
+    }
+
+    val tree = SpaceReviewChangesTreeFactory.create(
+      detailsVm.ideaProject,
+      this,
+      detailsVm.allChangesVm,
+      object : SpaceDiffFileProvider {
+        override fun getSpaceDiffFile(): SpaceDiffFile {
+          return SpaceDiffFile(detailsVm.selectedChangesVm, detailsVm.spaceDiffVm)
         }
       }
-
-      validate()
-      repaint()
+    ).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
+    val treeActionsToolbarPanel = createChangesBrowserToolbar(tree)
 
-    val openTimelineLinkLabel = LinkLabel.create(SpaceBundle.message("review.details.view.timeline.link.action")) {
-      openReviewInEditor(detailsVm.ideaProject,
-                         detailsVm.workspace,
-                         detailsVm.spaceProjectInfo,
-                         detailsVm.reviewRef
-      )
+    OnePixelSplitter(true, "space.review.info.changes", 0.3f).apply {
+      firstComponent = infoPanel
+      secondComponent = BorderLayoutPanel()
+        .addToTop(treeActionsToolbarPanel)
+        .addToCenter(tree)
+    }.also {
+      addToCenter(it)
     }
-
-
-    val contentPanel: JPanel = ScrollablePanel(VerticalLayout(JBUI.scale(6))).apply {
-      border = JBUI.Borders.empty(8)
-      add(projectDetails)
-
-      if (detailsVm is MergeRequestDetailsVm) {
-        add(createDirectionPanel(detailsVm))
-      }
-
-      add(titleComponent)
-      add(createdByComponent)
-      add(usersPanel)
-      add(actionsPanel)
-      add(openTimelineLinkLabel)
-    }
-
-    val scrollPane = ScrollPaneFactory.createScrollPane(contentPanel, true)
-
-    addToCenter(scrollPane)
-    UIUtil.setOpaqueRecursively(scrollPane, false)
-    UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
   }
 
   private fun createActionButton(detailsVm: SpaceReviewDetailsVm<*>, controlVM: ParticipantStateControlVM): JComponent? {

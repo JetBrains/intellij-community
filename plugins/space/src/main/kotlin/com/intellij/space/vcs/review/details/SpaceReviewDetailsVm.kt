@@ -10,7 +10,6 @@ import circlet.platform.api.Ref
 import circlet.platform.api.TID
 import circlet.platform.client.*
 import circlet.workspaces.Workspace
-import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceProjectInfo
@@ -79,44 +78,48 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
     client.codeReview.getReviewDetails(review.value.project.identifier, review.value.identifier)
   }
 
-  val commits: Property<List<ReviewCommitListItem>?> = mapInit(detailedInfo, null) { detailedInfo ->
-    detailedInfo?.commits?.flatMap { revInReview ->
+  val commits: Property<List<SpaceReviewCommitListItem>> = mapInit(detailedInfo, emptyList()) { detailedInfo ->
+    val revisions: List<RevisionsInReview> = detailedInfo?.commits ?: emptyList()
+
+    revisions.flatMap { revInReview ->
       val repo = revInReview.repository
       val repoInfo = infoByRepos[repo.name]
       val commitsInRepository = revInReview.commits.size
 
       revInReview.commits
         .filterNot(GitCommitWithGraph::unreachable)
-        .mapIndexed { index, gitCommitWithGraph -> ReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo) }
+        .mapIndexed { index, gitCommitWithGraph -> SpaceReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo) }
     }
   }
 
-  val selectedCommitIndices: MutableProperty<List<Int>> = Property.createMutable(emptyList())
+  val selectedTab: MutableProperty<SelectedTab> = mutableProperty(SelectedTab.INFO)
 
-  private val selectedCommits: Property<List<ReviewCommitListItem>> = mapInit(selectedCommitIndices, commits,
-                                                                              emptyList()) { indices, commits ->
-    commits ?: return@mapInit emptyList<ReviewCommitListItem>()
+  val commitChangesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
+    lifetime, client, projectKey, review.value.identifier,
+    reviewId, commits, participantsVm, infoByRepos
+  )
 
-    if (indices.isEmpty()) return@mapInit commits
+  val allChangesVm: SpaceReviewChangesVmImpl = SpaceReviewChangesVmImpl(
+    lifetime, client, projectKey, review.value.identifier,
+    reviewId, commits, participantsVm, infoByRepos
+  )
 
-    indices.map { commits[it] }
+  val selectedChangesVm: Property<SpaceReviewChangesVm> = map(selectedTab) { tab ->
+    selectedOrAll(tab, commitChangesVm, allChangesVm)
   }
-
-  private val spaceReviewChange: MutableProperty<ListSelection<SpaceReviewChange>> =
-    mutableProperty(ListSelection.create(emptyList<SpaceReviewChange>(), null))
 
   val spaceDiffVm: SpaceDiffVm = SpaceDiffVmImpl(client,
                                                  reviewId,
                                                  reviewKey as String,
                                                  projectKey,
-                                                 selectedCommits,
-                                                 spaceReviewChange,
-                                                 SpaceReviewDiffLoader(lifetime, client))
+                                                 selectedChangesVm,
+                                                 SpaceReviewDiffLoader(lifetime, client),
+                                                 participantsVm)
+}
 
-  val changesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
-    lifetime, client, projectKey, review.value.identifier,
-    reviewId, selectedCommits, participantsVm, spaceReviewChange, infoByRepos
-  )
+private fun <T> selectedOrAll(tab: SelectedTab, selected: T, all: T): T = when (tab) {
+  SelectedTab.INFO -> all
+  SelectedTab.COMMITS -> selected
 }
 
 internal class MergeRequestDetailsVm(
@@ -172,16 +175,10 @@ internal fun createReviewDetailsVm(lifetime: Lifetime,
   }
 }
 
-data class ReviewCommitListItem(
-  val commitWithGraph: GitCommitWithGraph,
-  val repositoryInReview: RepositoryInReview,
-  val index: Int,
-  val commitsInRepository: Int,
-  val spaceRepoInfo: SpaceRepoInfo?
-) {
-  val inCurrentProject: Boolean = spaceRepoInfo != null
+enum class SelectedTab {
+  INFO,
+  COMMITS
 }
-
 
 private fun SpaceReviewDetailsVm<*>.pendingCounterAsync(client: KCircletClient): LoadingProperty<Ref<CodeReviewPendingMessageCounter>> {
   return load {

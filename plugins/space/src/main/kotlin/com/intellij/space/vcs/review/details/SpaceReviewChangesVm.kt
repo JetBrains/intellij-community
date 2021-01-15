@@ -24,9 +24,13 @@ internal interface SpaceReviewChangesVm : SpaceVmWithClient, Lifetimed {
   val projectKey: ProjectKey
   val reviewIdentifier: ReviewIdentifier
   val reviewId: TID
-  val selectedCommits: Property<List<ReviewCommitListItem>>
+
+  val allCommits: Property<List<SpaceReviewCommitListItem>>
+  val selectedCommitIndices: MutableProperty<List<Int>>
+  val selectedCommits: Property<List<SpaceReviewCommitListItem>>
+
   val changes: Property<Map<String, ChangesWithDiscussion>?>
-  val listSelection: MutableProperty<ListSelection<SpaceReviewChange>>
+  val selectedChanges: MutableProperty<ListSelection<SpaceReviewChange>>
 
   val participantsVm: Property<SpaceReviewParticipantsVm?>
   val infoByRepos: Map<String, SpaceRepoInfo>

@@ -3,9 +3,7 @@ package com.intellij.space.vcs.review.details
 
 import circlet.code.api.ChangeInReview
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -14,7 +12,6 @@ import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
-import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -22,17 +19,32 @@ import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nullable
 import javax.swing.JComponent
+import javax.swing.event.TreeSelectionListener
+
+internal interface SpaceDiffFileProvider {
+  fun getSpaceDiffFile(): SpaceDiffFile
+}
 
 internal object SpaceReviewChangesTreeFactory {
   fun create(project: Project,
              parentPanel: JComponent,
              changesVm: SpaceReviewChangesVm,
-             spaceDiffVm: SpaceDiffVm): JComponent {
+             spaceDiffFileProvider: SpaceDiffFileProvider): JComponent {
 
     val tree = object : ChangesTree(project, false, false) {
+
+
       init {
+        val listener = TreeSelectionListener {
+          val selection = VcsTreeModelData.getListSelectionOrAll(this).map { it as? SpaceReviewChange }
+          // do not reset selection to zero
+          if (!selection.isEmpty) changesVm.selectedChanges.value = selection
+        }
+
         changesVm.changes.forEach(changesVm.lifetime) {
           it ?: return@forEach
+          removeTreeSelectionListener(listener)
+
           val builder = TreeModelBuilder(project, grouping)
 
           it.forEach { (repo, changesWithDiscussion) ->
@@ -42,9 +54,10 @@ internal object SpaceReviewChangesTreeFactory {
             val changes = changesWithDiscussion.changesInReview
             addChanges(builder, repoNode, changes, spaceRepoInfo)
             updateTreeModel(builder.build())
-
-            if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
           }
+
+          addTreeSelectionListener(listener)
+          if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
         }
       }
 
@@ -67,16 +80,11 @@ internal object SpaceReviewChangesTreeFactory {
     }
     tree.doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
-      val spaceDiffFile = SpaceDiffFile(spaceDiffVm, changesVm)
+      val spaceDiffFile = spaceDiffFileProvider.getSpaceDiffFile()
       VcsEditorTabFilesManager.getInstance().openFile(project, spaceDiffFile, true)
       true
     }
 
-    tree.addSelectionListener {
-      val selection = VcsTreeModelData.getListSelectionOrAll(tree).map { it as? SpaceReviewChange }
-      // do not reset selection to zero
-      if (!selection.isEmpty) changesVm.listSelection.value = selection
-    }
     DataManager.registerDataProvider(parentPanel) {
       if (tree.isShowing) tree.getData(it) else null
     }
@@ -119,4 +127,13 @@ internal class SpaceReviewChangeNode(spaceReviewChange: SpaceReviewChange)
                                                           spaceReviewChange.fileStatus) {
 
   override fun filePath(userObject: SpaceReviewChange): FilePath = userObject.filePath
+}
+
+internal fun createChangesBrowserToolbar(target: JComponent): TreeActionsToolbarPanel {
+  val actionManager = ActionManager.getInstance()
+  val changesToolbarActionGroup = actionManager.getAction("space.review.changes.toolbar") as ActionGroup
+  val changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true)
+  val treeActionsGroup = DefaultActionGroup(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL),
+                                            actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL))
+  return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
 }

@@ -12,6 +12,7 @@ import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.SpaceReviewDataKeys
 import com.intellij.ui.tabs.TabInfo
+import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.ReturnToListComponent
@@ -53,7 +54,7 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
           currentReview.value = null
         }
       }
-      val commitsTabInfo = TabInfo(SpaceReviewCommitListPanel(parentDisposable,detailsVm)).apply {
+      val commitsTabInfo = TabInfo(SpaceReviewCommitListPanel(parentDisposable, detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.commits")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null
@@ -61,9 +62,7 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
       }
 
       detailsVm.commits.forEach(lifetime) {
-        commitsTabInfo.text =
-          if (it == null) SpaceBundle.message("review.tab.name.commits")
-          else SpaceBundle.message("review.tab.name.commits.count", it.size)
+        commitsTabInfo.text = SpaceBundle.message("review.tab.name.commits.count", it.size)
       }
 
       val tabs = object : SingleHeightTabs(project, uiDisposable as Disposable) {
@@ -78,6 +77,15 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
 
         addTab(detailsTabInfo)
         addTab(commitsTabInfo)
+
+        addListener(object : TabsListener {
+          override fun selectionChanged(oldSelection: TabInfo, newSelection: TabInfo) {
+            detailsVm.selectedTab.value = when (newSelection.component) {
+              is SpaceReviewCommitListPanel -> SelectedTab.COMMITS
+              else -> SelectedTab.INFO
+            }
+          }
+        })
       }
 
       view.addToCenter(tabs)

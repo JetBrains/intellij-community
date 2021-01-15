@@ -10,13 +10,13 @@ import icons.SpaceIcons
 import javax.swing.Icon
 
 internal class SpaceDiffFile(
-  val diffVm: SpaceDiffVm,
-  val changesVm: SpaceReviewChangesVm
+  val changesVm: runtime.reactive.Property<SpaceReviewChangesVm>,
+  val diffVm: SpaceDiffVm
 ) : LightVirtualFile(SpaceBundle.message("review.diff.tab.title", diffVm.reviewKey),
                      SpaceDiffFileType,
                      "") {
 
-  val reviewId: TID = diffVm.reviewId
+  private val reviewId: TID = diffVm.reviewId
 
   init {
     isWritable = false
