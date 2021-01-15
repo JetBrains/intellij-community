@@ -232,7 +232,10 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
     override fun viewList() {
-      tab.displayName = GithubBundle.message("tab.title.pull.requests.in", dataContext.gitRemoteCoordinates.remote.name)
+      val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::repository)
+      tab.displayName = GithubBundle.message("tab.title.pull.requests.in",
+                                             GHUIUtil.getRepositoryDisplayName(allRepos,
+                                                                               dataContext.repositoryDataService.repositoryCoordinates))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
       wrapper.setContent(listComponent)

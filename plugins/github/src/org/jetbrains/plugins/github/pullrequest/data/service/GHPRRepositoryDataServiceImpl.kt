@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.progress.ProgressManager
@@ -21,6 +21,8 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
                                                          private val repoPath: GHRepositoryPath,
                                                          private val repoOwner: GHRepositoryOwnerName)
   : GHPRRepositoryDataService {
+
+  override val repositoryCoordinates = GHRepositoryCoordinates(serverPath, repoPath)
 
   init {
     requestExecutor.addListener(this) {

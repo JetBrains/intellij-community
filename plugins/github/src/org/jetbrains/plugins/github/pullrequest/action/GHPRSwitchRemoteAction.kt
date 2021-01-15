@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabController
 
-class GHPRSwitchRemoteAction : DumbAwareAction(GithubBundle.message("pull.requests.change.remote.or.account")) {
+class GHPRSwitchRemoteAction : DumbAwareAction(GithubBundle.message("pull.request.change.remote.or.account")) {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)

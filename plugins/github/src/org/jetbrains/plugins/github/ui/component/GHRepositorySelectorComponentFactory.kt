@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.getName
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import javax.swing.JList
@@ -22,9 +22,10 @@ class GHRepositorySelectorComponentFactory {
                                            selected: Boolean,
                                            hasFocus: Boolean) {
           if (value is ComboBoxWithActionsModel.Item.Wrapper) {
-            val remote = value.wrappee.castSafelyTo<GHGitRepositoryMapping>()?.gitRemote?.remote ?: return
-            @NlsSafe val url = remote.urls.first()
-            append(remote.name).append(" ").append(url, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+            val mapping = value.wrappee.castSafelyTo<GHGitRepositoryMapping>() ?: return
+            val repositoryName = GHUIUtil.getRepositoryDisplayName(model.items.map(GHGitRepositoryMapping::repository), mapping.repository)
+            val remoteName = mapping.gitRemote.remote.name
+            append(repositoryName).append(" ").append(remoteName, SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }
           if (value is ComboBoxWithActionsModel.Item.Action) {
             if (model.size == index) border = IdeBorderFactory.createBorder(SideBorder.TOP)

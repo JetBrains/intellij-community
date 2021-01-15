@@ -23,6 +23,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import icons.VcsCodeReviewIcons
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.GithubIssueState
@@ -303,6 +304,18 @@ object GHUIUtil {
       override fun getText(value: GHLabel) = value.name
       override fun getIcon(value: GHLabel) = ColorIcon(16, ColorUtil.fromHex(value.color))
     }
+  }
+
+  @NlsSafe
+  fun getRepositoryDisplayName(allRepositories: List<GHRepositoryCoordinates>, repository: GHRepositoryCoordinates): String {
+    val showServer = needToShowRepositoryServer(allRepositories)
+    return if (showServer) "${repository.serverPath}/${repository.repositoryPath}" else "${repository.repositoryPath}"
+  }
+
+  private fun needToShowRepositoryServer(repos: List<GHRepositoryCoordinates>): Boolean {
+    if (repos.size <= 1) return false
+    val firstServer = repos.first().serverPath
+    return repos.any { it.serverPath != firstServer }
   }
 }
 
