@@ -11,6 +11,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingRev
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewDataProvider {
@@ -36,12 +37,10 @@ interface GHPRReviewDataProvider {
   @RequiresEdt
   fun createReview(progressIndicator: ProgressIndicator,
                    event: GHPullRequestReviewEvent? = null, body: String? = null,
-                   commitSha: String? = null, comments: List<GHPullRequestDraftReviewComment>? = null)
+                   commitSha: String? = null,
+                   comments: List<GHPullRequestDraftReviewComment>? = null,
+                   threads: List<GHPullRequestDraftReviewThread>? = null)
     : CompletableFuture<GHPullRequestPendingReview>
-
-  @RequiresEdt
-  fun createReview(progressIndicator: ProgressIndicator, body: String, line: Int, side: Side, startLine: Int, fileName: String)
-    : CompletableFuture<GHPullRequestReviewThread>
 
   @RequiresEdt
   fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<String>

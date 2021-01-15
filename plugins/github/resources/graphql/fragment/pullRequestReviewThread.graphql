@@ -2,12 +2,10 @@ fragment pullRequestReviewThread on PullRequestReviewThread {
     ...nodeInfo
     diffSide
     isResolved
-    isOutdated
     line
     originalLine
     startLine
     originalStartLine
-    path
     comments(first: 100) {
         nodes {
             ...pullRequestReviewComment

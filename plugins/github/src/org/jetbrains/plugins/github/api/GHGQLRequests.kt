@@ -11,6 +11,7 @@ import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryRespo
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
+import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 
 object GHGQLRequests {
@@ -199,12 +200,14 @@ object GHGQLRequests {
 
       fun create(server: GithubServerPath, pullRequestId: String,
                  event: GHPullRequestReviewEvent?, body: String?, commitSha: String?,
-                 comments: List<GHPullRequestDraftReviewComment>?): GQLQuery<GHPullRequestPendingReview> =
+                 comments: List<GHPullRequestDraftReviewComment>?,
+                 threads: List<GHPullRequestDraftReviewThread>?): GQLQuery<GHPullRequestPendingReview> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.createReview,
                                  mapOf("pullRequestId" to pullRequestId,
                                        "event" to event,
                                        "commitOid" to commitSha,
                                        "comments" to comments,
+                                       "threads" to threads,
                                        "body" to body),
                                  GHPullRequestPendingReview::class.java,
                                  "addPullRequestReview", "pullRequestReview")
@@ -276,13 +279,12 @@ object GHGQLRequests {
                                  GHPullRequestReviewComment::class.java,
                                  "updatePullRequestReviewComment", "pullRequestReviewComment")
 
-      fun addThread(server: GithubServerPath, pullRequestId: String, reviewId: String?,
+      fun addThread(server: GithubServerPath, reviewId: String,
                     body: String, line: Int, side: Side, startLine: Int, fileName: String): GQLQuery<GHPullRequestReviewThread> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addPullRequestReviewThread,
                                  mapOf("body" to body,
                                        "line" to line,
                                        "path" to fileName,
-                                       "pullRequestId" to pullRequestId,
                                        "pullRequestReviewId" to reviewId,
                                        "side" to side.name,
                                        "startSide" to side.name,

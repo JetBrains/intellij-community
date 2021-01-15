@@ -7,11 +7,9 @@ import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.GHNodes
 
 class GHPullRequestReviewThread(id: String,
-                                val isOutdated: Boolean,
                                 val isResolved: Boolean,
                                 val line: Int,
                                 val startLine: Int?,
-                                val path: String,
                                 @JsonProperty("diffSide") val side: Side,
                                 @JsonProperty("comments") comments: GHNodes<GHPullRequestReviewComment>)
   : GHNode(id) {
@@ -24,4 +22,6 @@ class GHPullRequestReviewThread(id: String,
   val createdAt = root.createdAt
   val diffHunk = root.diffHunk
   val reviewId = root.reviewId
+  val isOutdated = root.position == null
+  val path = root.path
 }
