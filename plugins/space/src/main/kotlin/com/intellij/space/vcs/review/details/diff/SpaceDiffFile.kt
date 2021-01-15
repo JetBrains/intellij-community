@@ -2,6 +2,7 @@
 package com.intellij.space.vcs.review.details.diff
 
 import circlet.platform.api.TID
+import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
@@ -14,7 +15,7 @@ internal class SpaceDiffFile(
   val diffVm: SpaceDiffVm
 ) : LightVirtualFile(SpaceBundle.message("review.diff.tab.title", diffVm.reviewKey),
                      SpaceDiffFileType,
-                     "") {
+                     ""), DiffContentVirtualFile {
 
   private val reviewId: TID = diffVm.reviewId
 
