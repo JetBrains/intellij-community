@@ -248,7 +248,7 @@ public class PsiToDocumentSynchronizer {
       int parentStart = change.getChangedParent().getStartOffset();
       for (ASTNode child : change.getAffectedChildren()) {
         ChangeInfoImpl info = change.getChangeByChild(child);
-        TreeElement newChild = info.getNewChild();
+        ASTNode newChild = info.getNewChild();
         PsiElement newPsi = newChild == null ? null : newChild.getPsi();
         if (!(newPsi instanceof ForeignLeafPsiElement)) {
           transaction.replace(info.getOffsetInParent() + parentStart, info.getOldLength(), newChild == null ? "" : newChild.getText(), newPsi);

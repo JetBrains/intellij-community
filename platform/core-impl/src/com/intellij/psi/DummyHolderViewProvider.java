@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
@@ -62,9 +62,8 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
     return Collections.singletonList(myHolder);
   }
 
-  @NotNull
   @Override
-  public List<FileElement> getKnownTreeRoots() {
+  public @NotNull List<FileASTNode> getKnownTreeRoots() {
     return Collections.singletonList(myHolder.getTreeElement());
   }
 

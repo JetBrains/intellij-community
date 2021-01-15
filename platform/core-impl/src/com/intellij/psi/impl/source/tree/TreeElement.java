@@ -14,6 +14,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.ReparseableASTNode;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class TreeElement extends ElementBase implements ASTNode, Cloneable {
+public abstract class TreeElement extends ElementBase implements ASTNode, ReparseableASTNode, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
   private TreeElement myNextSibling;
   private TreeElement myPrevSibling;
@@ -226,6 +227,18 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     DebugUtil.onInvalidated(this);
   }
 
+  @Override
+  public final void applyReplaceOnReparse(@NotNull ASTNode newChild) {
+    TreeElement newTreeElement = (TreeElement)newChild;
+    newTreeElement.rawRemove();
+    rawReplaceWithList(newTreeElement);
+
+    newTreeElement.clearCaches();
+    if (!(newTreeElement instanceof FileElement)) {
+      newTreeElement.getTreeParent().subtreeChanged();
+    }
+  }
+
   public void rawInsertBeforeMe(@NotNull TreeElement firstNew) {
     final TreeElement anchorPrev = getTreePrev();
     if(anchorPrev == null){
@@ -312,7 +325,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     invalidate();
   }
 
-  public void rawReplaceWithList(TreeElement firstNew) {
+  public void rawReplaceWithList(@Nullable TreeElement firstNew) {
     if (firstNew != null){
       rawInsertAfterMeWithoutNotifications(firstNew);
     }

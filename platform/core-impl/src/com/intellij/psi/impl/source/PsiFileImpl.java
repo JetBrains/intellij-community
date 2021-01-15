@@ -933,6 +933,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return calcTreeElement();
   }
 
+  @Nullable
+  public FileASTNode getNodeIfLoaded() {
+    return getTreeElement();
+  }
+
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return this == another;

@@ -16,23 +16,23 @@
 
 package com.intellij.pom.tree.events.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ChangeInfoImpl implements ChangeInfo {
-  @Nullable private final TreeElement myOldChild;
-  @Nullable private final TreeElement myNewChild;
+  @Nullable private final ASTNode myOldChild;
+  @Nullable private final ASTNode myNewChild;
   private final int myOffset;
   private final int myOldLength;
   private final int myNewLength;
 
-  ChangeInfoImpl(@Nullable TreeElement oldChild, @Nullable TreeElement newChild, int offset, int oldLength) {
+  ChangeInfoImpl(@Nullable ASTNode oldChild, @Nullable ASTNode newChild, int offset, int oldLength) {
     myOldChild = oldChild;
     myNewChild = newChild;
     myOffset = offset;
@@ -40,8 +40,16 @@ public class ChangeInfoImpl implements ChangeInfo {
     myNewLength = newChild != null ? newChild.getTextLength() : 0;
   }
 
+  /**
+   * @deprecated for API compatibility with Kotlin plugin
+   */
   @Nullable
+  @Deprecated
   public TreeElement getOldChild() {
+    return (TreeElement)myOldChild;
+  }
+
+  public ASTNode getOldChildNode() {
     return myOldChild;
   }
 
@@ -58,7 +66,7 @@ public class ChangeInfoImpl implements ChangeInfo {
   }
 
   @Nullable
-  public TreeElement getNewChild() {
+  public ASTNode getNewChild() {
     return myNewChild;
   }
 
@@ -78,11 +86,11 @@ public class ChangeInfoImpl implements ChangeInfo {
     return myNewLength - myOldLength;
   }
 
-  TreeElement getAffectedChild() {
+  ASTNode getAffectedChild() {
     return myNewChild != null ? myNewChild : myOldChild;
   }
 
-  void fireEvent(int parentStart, PsiFile file, CompositeElement parent) {
+  void fireEvent(int parentStart, PsiFile file, ASTNode parent) {
     PsiTreeChangeEventImpl e = createEvent(file, myOffset + parentStart);
 
     if (myOldChild == myNewChild && myNewChild != null) {
@@ -112,20 +120,20 @@ public class ChangeInfoImpl implements ChangeInfo {
            myNewChild != null && myNewChild.getPsi() == null;
   }
 
-  private static void childAdded(PsiTreeChangeEventImpl e, TreeElement child, CompositeElement parent) {
+  private static void childAdded(PsiTreeChangeEventImpl e, ASTNode child, ASTNode parent) {
     e.setParent(parent.getPsi());
     e.setChild(child.getPsi());
     getPsiManagerImpl(e).childAdded(e);
   }
 
-  private void childRemoved(PsiTreeChangeEventImpl e, TreeElement child, CompositeElement parent) {
+  private void childRemoved(PsiTreeChangeEventImpl e, ASTNode child, ASTNode parent) {
     e.setParent(parent.getPsi());
     e.setChild(child.getPsi());
     e.setOldLength(myOldLength);
     getPsiManagerImpl(e).childRemoved(e);
   }
 
-  private void childReplaced(PsiTreeChangeEventImpl e, TreeElement oldChild, TreeElement newChild, CompositeElement parent) {
+  private void childReplaced(PsiTreeChangeEventImpl e, ASTNode oldChild, ASTNode newChild, ASTNode parent) {
     e.setParent(parent.getPsi());
     e.setOldChild(oldChild.getPsi());
     e.setChild(newChild.getPsi());
@@ -134,7 +142,7 @@ public class ChangeInfoImpl implements ChangeInfo {
     getPsiManagerImpl(e).childReplaced(e);
   }
 
-  static void childrenChanged(PsiTreeChangeEventImpl e, TreeElement parent, int oldLength) {
+  static void childrenChanged(PsiTreeChangeEventImpl e, ASTNode parent, int oldLength) {
     e.setParent(parent.getPsi());
     e.setOldLength(oldLength);
     getPsiManagerImpl(e).childrenChanged(e);

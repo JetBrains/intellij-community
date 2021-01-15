@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionUtil;
@@ -133,11 +133,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  @NotNull
-  public final List<FileElement> getKnownTreeRoots() {
+  public final @NotNull List<FileASTNode> getKnownTreeRoots() {
     PsiFile psiFile = getCachedPsi(getBaseLanguage());
     if (!(psiFile instanceof PsiFileImpl)) return Collections.emptyList();
-    FileElement element = ((PsiFileImpl)psiFile).getTreeElement();
+    FileASTNode element = ((PsiFileImpl)psiFile).getNodeIfLoaded();
     return ContainerUtil.createMaybeSingletonList(element);
   }
 

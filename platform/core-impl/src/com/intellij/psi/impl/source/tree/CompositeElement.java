@@ -16,6 +16,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
@@ -717,6 +718,43 @@ public class CompositeElement extends TreeElement {
 
   void clearPsi() {
     myWrapper = null;
+  }
+
+  @Override
+  public final void applyInsertOnReparse(@NotNull ASTNode newChild, ASTNode anchor) {
+    TreeElement newTreeElement = (TreeElement) newChild;
+    newTreeElement.rawRemove();
+    if (anchor != null) {
+      TreeElement anchorTreeElement = (TreeElement) anchor;
+      anchorTreeElement.rawInsertAfterMe(newTreeElement);
+    }
+    else {
+      TreeElement firstChildNode = getFirstChildNode();
+      if (firstChildNode != null) {
+        firstChildNode.rawInsertBeforeMe(newTreeElement);
+      }
+      else {
+        rawAddChildren(newTreeElement);
+      }
+    }
+
+    newTreeElement.clearCaches();
+    subtreeChanged();
+  }
+
+  @Override
+  public final void applyDeleteOnReparse(@NotNull ASTNode oldChild) {
+    ((TreeElement) oldChild).rawRemove();
+    subtreeChanged();
+  }
+
+  @Override
+  public final void applyReplaceFileOnReparse(@NotNull PsiFile psiFile, @NotNull FileASTNode newNode) {
+    if (getFirstChildNode() != null) rawRemoveAllChildren();
+    final ASTNode firstChildNode = newNode.getFirstChildNode();
+    if (firstChildNode != null) rawAddChildren((TreeElement)firstChildNode);
+    ((PsiFileImpl) psiFile).calcTreeElement().setCharTable(newNode.getCharTable());
+    subtreeChanged();
   }
 
   public final void rawAddChildren(@NotNull TreeElement first) {

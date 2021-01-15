@@ -23,8 +23,10 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -329,13 +331,13 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
 
       diffLog.doActualPsiChange(file);
 
-      assertAfterCommit(document, file, (FileElement)oldFileNode);
+      assertAfterCommit(document, file, oldFileNode);
 
       return true;
     };
   }
 
-  private static void assertAfterCommit(@NotNull Document document, @NotNull PsiFile file, @NotNull FileElement oldFileNode) {
+  private static void assertAfterCommit(@NotNull Document document, @NotNull PsiFile file, @NotNull FileASTNode oldFileNode) {
     if (oldFileNode.getTextLength() != document.getTextLength()) {
       String documentText = document.getText();
       String fileText = file.getText();
