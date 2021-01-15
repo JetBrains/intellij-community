@@ -21,13 +21,14 @@ import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
+import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -72,6 +73,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @NotNull private final CefFocusHandler myCefFocusHandler;
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @NotNull private final CefKeyboardHandler myKeyboardHandler;
+  @Nullable private final CefLoadHandler myLoadHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   private final boolean myIsDefaultClient;
@@ -247,12 +249,19 @@ public class JBCefBrowser implements JBCefDisposable {
     });
 
     if (cefBrowser == null) {
-      myCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
-          @Override
-          public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+      myCefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
+        volatile String lastLoadUrl = "";
+        @Override
+        public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
+          lastLoadUrl = frame.getURL();
+        }
+        @Override
+        public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+          if (lastLoadUrl.equals(failedUrl)) {
             UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
           }
-        }, myCefBrowser);
+        }
+      }, myCefBrowser);
 
       myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
           @Override
@@ -268,6 +277,7 @@ public class JBCefBrowser implements JBCefDisposable {
     }
     else {
       myLifeSpanHandler = null;
+      myLoadHandler = null;
     }
 
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
@@ -479,6 +489,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
       if (myLifeSpanHandler != null) myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
+      if (myLoadHandler != null) myCefClient.removeLoadHandler(myLoadHandler, myCefBrowser);
       myCefBrowser.stopLoad();
       myCefBrowser.close(true);
       if (myIsDefaultClient) {
