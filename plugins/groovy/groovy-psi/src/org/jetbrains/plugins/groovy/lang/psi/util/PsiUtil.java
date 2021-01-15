@@ -1197,7 +1197,7 @@ public final class PsiUtil {
 
   public static boolean isCompileStatic(PsiElement e) {
     PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
-    return containingMember != null && GroovyPsiManager.isCompileStatic(containingMember);
+    return containingMember != null && CompileStaticUtil.isCompileStatic(containingMember);
   }
 
   public static boolean isNewified(@Nullable PsiElement expr) {

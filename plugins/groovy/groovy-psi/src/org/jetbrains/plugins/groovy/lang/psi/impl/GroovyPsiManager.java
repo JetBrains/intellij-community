@@ -6,14 +6,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
@@ -25,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt;
 
 import java.util.HashMap;
@@ -47,7 +43,6 @@ public final class GroovyPsiManager implements Disposable {
                                                                                 CommonClassNames.JAVA_UTIL_LIST,
                                                                                 CommonClassNames.JAVA_UTIL_COLLECTION,
                                                                                 CommonClassNames.JAVA_LANG_STRING);
-  @NlsSafe private static final String PASS = "PASS";
   private final Project myProject;
 
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<>();
@@ -86,33 +81,6 @@ public final class GroovyPsiManager implements Disposable {
     }
 
     return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqName, resolveScope);
-  }
-
-  public static boolean isCompileStatic(@NotNull PsiMember member) {
-    return CachedValuesManager.getProjectPsiDependentCache(member, GroovyPsiManager::isCompileStaticInner);
-  }
-
-  private static boolean isCompileStaticInner(@NotNull PsiMember member) {
-    PsiAnnotation annotation = getCompileStaticAnnotation(member);
-    if (annotation != null) return checkForPass(annotation);
-    PsiMember enclosingMember = PsiTreeUtil.getParentOfType(member, PsiMember.class, true);
-    return enclosingMember != null && isCompileStatic(enclosingMember);
-  }
-
-  @Nullable
-  public static PsiAnnotation getCompileStaticAnnotation(@NotNull PsiMember member) {
-    PsiModifierList list = member.getModifierList();
-    if (list == null) return null;
-    PsiAnnotation compileStatic = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC);
-    if (compileStatic != null) return compileStatic;
-    return list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKED);
-  }
-
-  public static boolean checkForPass(@NotNull PsiAnnotation annotation) {
-    PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
-    return value == null ||
-           value instanceof PsiReference &&
-           ResolveUtil.isEnumConstant((PsiReference)value, PASS, GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
   }
 
   private static final PsiType UNKNOWN_TYPE = new GrPsiTypeStub();
