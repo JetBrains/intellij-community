@@ -1179,35 +1179,10 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Safari = load("xml/browsers/safari.svg", 4960499538926108019L, 0);
       /** 16x16 */ public static final @NotNull Icon Yandex = load("xml/browsers/yandex.svg", 7850811118871199617L, 0);
 
-      /** @deprecated use {@link #Canary} */
-      @SuppressWarnings("unused")
-      @Deprecated
-      public static final @NotNull Icon Canary16 = Canary;
-
       /** @deprecated use {@link #Chrome} */
       @SuppressWarnings("unused")
       @Deprecated
       public static final @NotNull Icon Chrome16 = Chrome;
-
-      /** @deprecated use {@link #Chromium} */
-      @SuppressWarnings("unused")
-      @Deprecated
-      public static final @NotNull Icon Chromium16 = Chromium;
-
-      /** @deprecated use {@link #Nwjs} */
-      @SuppressWarnings("unused")
-      @Deprecated
-      public static final @NotNull Icon Nwjs16 = Nwjs;
-
-      /** @deprecated use {@link #Opera} */
-      @SuppressWarnings("unused")
-      @Deprecated
-      public static final @NotNull Icon Opera16 = Opera;
-
-      /** @deprecated use {@link #Yandex} */
-      @SuppressWarnings("unused")
-      @Deprecated
-      public static final @NotNull Icon Yandex16 = Yandex;
     }
 
     /** 16x16 */ public static final @NotNull Icon Css_class = load("xml/css_class.svg", 5282752036851440440L, 0);
