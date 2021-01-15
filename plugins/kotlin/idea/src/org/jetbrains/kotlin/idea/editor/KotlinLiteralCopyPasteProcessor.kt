@@ -152,7 +152,7 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
                     beginTp.getQualifiedExpressionForReceiver()?.callExpression?.calleeExpression?.text == "trimIndent" &&
                     templateTokenSequence.firstOrNull()?.indent() == templateTokenSequence.lastOrNull()?.indent()
                 ) {
-                    begin.parent?.prevSibling?.takeIf { it.text != "\n" }?.text
+                    begin.parent?.prevSibling?.takeIf { it.text != "\n" && it.text != "\"\"\""  }?.text
                 } else {
                     null
                 } ?: ""

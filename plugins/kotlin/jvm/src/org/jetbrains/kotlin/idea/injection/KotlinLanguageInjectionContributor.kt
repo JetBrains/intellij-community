@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PatternConditionPlus
@@ -22,6 +23,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.castSafelyTo
 import org.intellij.plugins.intelliLang.Configuration
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
@@ -35,6 +37,7 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriority
 import org.jetbrains.kotlin.idea.patterns.KotlinFunctionPattern
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -47,6 +50,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.aliasImportMap
 import org.jetbrains.kotlin.utils.SmartList
@@ -133,7 +137,25 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
             }
         }
 
-        return findInjectionInfo(ktHost)?.toBaseInjection(support)
+        return findInjectionInfo(unwrapTrims(ktHost))?.toBaseInjection(support)
+    }
+
+    private fun unwrapTrims(ktHost: KtElement): KtElement {
+        if (!Registry.`is`("kotlin.injection.handle.trimindent", true)) return ktHost
+        val dotQualifiedExpression = ktHost.parent as? KtDotQualifiedExpression ?: return ktHost
+        val callExpression = dotQualifiedExpression.selectorExpression.castSafelyTo<KtCallExpression>() ?: return ktHost
+        val callFqn = callExpression.resolveToCall(BodyResolveMode.PARTIAL)?.candidateDescriptor?.fqNameOrNull()?.asString()
+        if (callFqn == "kotlin.text.trimIndent") {
+            ktHost.indentHandler = TrimIndentHandler()
+            return dotQualifiedExpression
+        }
+        if (callFqn == "kotlin.text.trimMargin") {
+            val marginChar = callExpression.valueArguments.getOrNull(0)?.getArgumentExpression().castSafelyTo<KtStringTemplateExpression>()
+                ?.entries?.singleOrNull()?.castSafelyTo<KtLiteralStringTemplateEntry>()?.text ?: "|"
+            ktHost.indentHandler = TrimIndentHandler(marginChar)
+            return dotQualifiedExpression
+        }
+        return ktHost;
     }
 
 
@@ -445,3 +467,7 @@ internal fun isSupportedElement(context: KtElement): Boolean {
     if (context.isConcatenationExpression()) return true
     return false
 }
+
+internal var KtElement.indentHandler: IndentHandler? by UserDataProperty(
+    Key.create<IndentHandler>("KOTLIN_INDENT_HANDLER")
+)

@@ -7,6 +7,11 @@
 
     <regExpLanguageHost forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
+
+    <registryKey key="kotlin.injection.handle.trimindent"
+                 description="Experimental `trimIndent` and `trimMargin` injection and fragment editor support for Kotlin"
+                 defaultValue="true"
+                 restartRequired="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">

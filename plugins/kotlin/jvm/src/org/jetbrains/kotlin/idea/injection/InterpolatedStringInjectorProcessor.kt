@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea.injection
 
+import com.intellij.injected.editor.InjectionMeta
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.Trinity
 import com.intellij.psi.PsiElement
@@ -23,7 +24,11 @@ import com.intellij.psi.PsiLanguageInjectionHost
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import com.intellij.lang.injection.general.Injection
+import com.intellij.openapi.util.Key
+import com.intellij.psi.ElementManipulators
+import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil.concat
+import com.intellij.util.text.splitToTextRanges
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -35,8 +40,12 @@ typealias InjectionTrinity = Trinity<PsiLanguageInjectionHost, InjectedLanguage,
 
 data class InjectionSplitResult(val isUnparsable: Boolean, val ranges: List<InjectionTrinity>)
 
+internal var PsiElement.trimIndent: String? by UserDataProperty(InjectionMeta.INJECTION_INDENT)
+
 fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtElement): InjectionSplitResult? {
     InjectorUtils.getLanguageByString(injection.injectedLanguageId) ?: return null
+
+    val indentHandler = literalOrConcatenation.indentHandler ?: NoIndentHandler
 
     fun injectionRange(literal: KtStringTemplateExpression, range: TextRange, prefix: String, suffix: String): InjectionTrinity {
         TextRange.assertProperRange(range, injection)
@@ -74,12 +83,24 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
                 val lastChild = children[consequentStringsCount]
                 val remaining = tail.subList(consequentStringsCount, tail.size)
 
-                collected += injectionRange(
+                val rangesIterator = indentHandler.getUntrimmedRanges(
                     literal,
-                    TextRange.create(partOffsetInParent, lastChild.startOffsetInParent + lastChild.textLength),
-                    pendingPrefix,
-                    if (remaining.isEmpty()) injection.suffix else ""
-                )
+                    TextRange.create(
+                        partOffsetInParent,
+                        lastChild.startOffsetInParent + lastChild.textLength
+                    )
+                ).iterator()
+
+                var pendingPrefixForTrimmed = pendingPrefix
+                while (rangesIterator.hasNext()) {
+                    val trimAwareRange = rangesIterator.next()
+                    collected += injectionRange(
+                        literal, trimAwareRange, pendingPrefixForTrimmed,
+                        if (!rangesIterator.hasNext() && remaining.isEmpty()) injection.suffix else ""
+                    )
+                    pendingPrefixForTrimmed = ""
+                }
+
                 return collectInjections(literal, remaining, "", unparseable, collected)
             }
             else -> {
