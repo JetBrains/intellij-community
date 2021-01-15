@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -30,22 +29,5 @@ public abstract class PatchBaseDirectoryDetector {
     return ServiceManager.getService(project, PatchBaseDirectoryDetector.class);
   }
 
-  @Nullable
-  @Deprecated
-  public Result detectBaseDirectory(String name) {
-    return null;
-  }
-
   public abstract Collection<VirtualFile> findFiles(String fileName);
-
-  @Deprecated
-  public static class Result {
-    public String baseDir;
-    public int stripDirs;
-
-    public Result(final String baseDir, final int stripDirs) {
-      this.baseDir = baseDir;
-      this.stripDirs = stripDirs;
-    }
-  }
 }

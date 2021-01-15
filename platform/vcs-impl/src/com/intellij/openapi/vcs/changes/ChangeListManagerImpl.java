@@ -1297,10 +1297,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @Override
-  public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
-  }
-
-  @Override
   public void setFilesToIgnore(IgnoredFileBean @NotNull ... filesToIgnore) {
   }
 

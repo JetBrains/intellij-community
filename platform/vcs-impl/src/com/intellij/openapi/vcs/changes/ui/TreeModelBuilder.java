@@ -100,20 +100,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return new DefaultTreeModel(ChangesBrowserNode.createRoot());
   }
 
-  /**
-   * @deprecated Use {@link TreeModelBuilder#buildFromChanges(Project, ChangesGroupingPolicyFactory, Collection, ChangeNodeDecorator)}.
-   */
-  @Deprecated
-  @NotNull
-  public static DefaultTreeModel buildFromChanges(@NotNull Project project,
-                                                  boolean showFlatten,
-                                                  @NotNull Collection<? extends Change> changes,
-                                                  @Nullable ChangeNodeDecorator changeNodeDecorator) {
-    return new TreeModelBuilder(project, showFlatten)
-      .setChanges(changes, changeNodeDecorator)
-      .build();
-  }
-
   @NotNull
   public static DefaultTreeModel buildFromChanges(@Nullable Project project,
                                                   @NotNull ChangesGroupingPolicyFactory grouping,

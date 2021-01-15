@@ -20,7 +20,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,15 +75,6 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
     updateLater();
-  }
-
-  /**
-   * @deprecated dvcs widgets are controlled by {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager}
-   * and cannot be removed manually
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public void deactivate() {
   }
 
   @Override

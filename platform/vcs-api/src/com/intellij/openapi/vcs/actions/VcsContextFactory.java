@@ -40,20 +40,6 @@ public interface VcsContextFactory {
   FilePath createFilePathOn(@NotNull File file);
 
   /**
-   * Creates a FilePath corresponding to the specified java.io.File. Assumes that the file does not exist in the filesystem
-   * and does not try to find the corresponding VirtualFile, which provides a performance benefit.
-   *
-   * @param file the file for which the FilePath should be created.
-   * @param isDirectory whether {@code file} specifies a file or a directory.
-   * @return the FilePath instance.
-   *
-   * @deprecated use {@link #createFilePathOn(File, boolean)}
-   */
-  @NotNull
-  @Deprecated
-  FilePath createFilePathOnDeleted(@NotNull File file, boolean isDirectory);
-
-  /**
    * Creates a FilePath corresponding to the specified java.io.File. If the file does not exist, uses the value
    * of the {@code isDirectory} parameter to determine if the file is a directory.
    *

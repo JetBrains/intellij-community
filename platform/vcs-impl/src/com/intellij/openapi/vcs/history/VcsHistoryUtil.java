@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
@@ -32,9 +31,6 @@ import java.io.IOException;
 import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 
 public final class VcsHistoryUtil {
-  @Deprecated
-  public static final Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffVcsDataKeys.REVISION_INFO;
-
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 
   private VcsHistoryUtil() {

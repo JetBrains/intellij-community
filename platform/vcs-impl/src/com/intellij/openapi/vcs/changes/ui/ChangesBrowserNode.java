@@ -373,11 +373,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return ChangesUtil.findValidParentAccurately(filePath);
   }
 
-  @Deprecated
-  public final int getCount() {
-    return getFileCount();
-  }
-
   public boolean shouldExpandByDefault() {
     return true;
   }

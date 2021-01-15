@@ -529,12 +529,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myDetailsSplitter.getComponent();
   }
 
-  @Deprecated
-  @NotNull
-  public Set<? extends AbstractVcs> getAffectedVcses() {
-    return isDefaultCommitEnabled() ? myWorkflow.getVcses() : emptySet();
-  }
-
   public boolean hasDiffs() {
     return !getIncludedChanges().isEmpty() || !getIncludedUnversionedFiles().isEmpty();
   }

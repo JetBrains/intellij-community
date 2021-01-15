@@ -26,13 +26,4 @@ public final class VcsLogProperties {
    * True if VCS has separate committer and committed date information which may differ from author and author date
    */
   @NotNull public static final VcsLogProperty<Boolean> HAS_COMMITTER = new VcsLogProperty<>(false);
-
-  /**
-   * @deprecated use {@link VcsLogProperty#getOrDefault(VcsLogProvider)}
-   */
-  @Deprecated
-  @NotNull
-  public static <T> T get(@NotNull VcsLogProvider provider, VcsLogProperty<T> property) {
-    return property.getOrDefault(provider);
-  }
 }

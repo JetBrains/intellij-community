@@ -27,14 +27,6 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void scheduleUpdate();
 
   /**
-   * @deprecated use {@link #scheduleUpdate()}
-   */
-  @Deprecated
-  public void scheduleUpdate(boolean updateUnversionedFiles) {
-    scheduleUpdate();
-  }
-
-  /**
    * Invoke callback when current CLM refresh is completed, without any visible progress.
    */
   public void invokeAfterUpdate(boolean callbackOnAwt, @NotNull Runnable afterUpdate) {
@@ -250,12 +242,6 @@ public abstract class ChangeListManager implements ChangeListModification {
    */
   @Deprecated
   public abstract void addDirectoryToIgnoreImplicitly(@NotNull @NlsSafe String path);
-
-  /**
-   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
-   */
-  @Deprecated
-  public abstract void removeImplicitlyIgnoredDirectory(@NotNull @NlsSafe String path);
 
 
   @NotNull

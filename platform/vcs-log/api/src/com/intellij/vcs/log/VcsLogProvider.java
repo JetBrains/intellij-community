@@ -59,10 +59,8 @@ public interface VcsLogProvider {
    * <p/>
    * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
    */
-  default void readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes,
-                               @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) throws VcsException {
-    readFullDetails(root, hashes, commitConsumer, false);
-  }
+  void readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes,
+                       @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) throws VcsException;
 
   /**
    * <p>Returns the VCS which is supported by this provider.</p>
@@ -209,19 +207,6 @@ public interface VcsLogProvider {
     CollectConsumer<VcsShortCommitDetails> collectConsumer = new CollectConsumer<>();
     readMetadata(root, hashes, collectConsumer);
     return new ArrayList<>(collectConsumer.getResult());
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readFullDetails(VirtualFile, List, Consumer)}.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  default void readFullDetails(@NotNull VirtualFile root,
-                               @NotNull List<String> hashes,
-                               @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer,
-                               boolean isForIndexing)
-    throws VcsException {
-    throw new UnsupportedOperationException(this.getClass().getName() + ".readFullDetails is deprecated");
   }
 
   /**

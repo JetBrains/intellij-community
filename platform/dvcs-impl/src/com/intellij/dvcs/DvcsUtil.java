@@ -190,14 +190,6 @@ public final class DvcsUtil {
     };
   }
 
-  /**
-   * @deprecated Call {@link AccessToken#finish()} directly from the AccessToken received by {@link #workingTreeChangeStarted(Project)}
-   */
-  @Deprecated
-  public static void workingTreeChangeFinished(@NotNull Project project, @NotNull AccessToken token) {
-    token.finish();
-  }
-
   public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);
 
   public static void assertFileExists(File file, @NonNls @Nls String message) throws IllegalStateException {

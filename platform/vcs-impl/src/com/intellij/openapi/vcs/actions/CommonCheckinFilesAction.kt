@@ -63,12 +63,8 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
     val status = ChangeListManager.getInstance(dataContext.project!!).getStatus(path)
 
     @Suppress("DEPRECATION")
-    return (path.isDirectory || status != FileStatus.NOT_CHANGED) && status != FileStatus.IGNORED &&
-           path.virtualFile?.let { isApplicableRoot(it, status, dataContext) } != false
+    return (path.isDirectory || status != FileStatus.NOT_CHANGED) && status != FileStatus.IGNORED
   }
-
-  @Deprecated("Use `isApplicableRoot(FilePath, VcsContext)` instead", ReplaceWith("isApplicableRoot()")) // NON-NLS
-  protected open fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean = true
 
   override fun getRoots(dataContext: VcsContext): Array<FilePath> = dataContext.selectedFilePaths
 
