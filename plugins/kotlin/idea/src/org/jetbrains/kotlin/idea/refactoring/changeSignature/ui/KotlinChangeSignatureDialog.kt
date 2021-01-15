@@ -36,18 +36,20 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureDialogBase
 import com.intellij.refactoring.changeSignature.MethodDescriptor
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel
-import com.intellij.ui.DottedBorder
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer
 import com.intellij.util.ui.table.JBTableRow
 import com.intellij.util.ui.table.JBTableRowEditor
+import com.intellij.util.ui.table.JBTableRowRenderer
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor.Kind
@@ -59,7 +61,6 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
-import java.awt.BorderLayout
 import java.awt.Font
 import java.awt.Toolkit
 import java.awt.event.ItemEvent
@@ -86,85 +87,38 @@ class KotlinChangeSignatureDialog(
 
     private val parametersTableModel: KotlinCallableParameterTableModel get() = super.myParametersTableModel
 
-    override fun getRowPresentation(
-        item: ParameterTableModelItemBase<KotlinParameterInfo>,
-        selected: Boolean,
-        focused: Boolean
-    ): JComponent {
-        val panel = JPanel(BorderLayout())
+    override fun createParametersListTable(): ParametersListTable = object : ParametersListTable() {
+        private val rowRenderer = object : EditorTextFieldJBTableRowRenderer(project, KotlinLanguage.INSTANCE, disposable) {
+            override fun getText(table: JTable?, row: Int): String {
+                val item = getRowItem(row)
+                val valOrVar = if (myMethod.kind === Kind.PRIMARY_CONSTRUCTOR) {
+                    when (item.parameter.valOrVar) {
+                        KotlinValVar.None -> "    "
+                        KotlinValVar.Val -> "val "
+                        KotlinValVar.Var -> "var "
+                    }
+                } else {
+                    ""
+                }
 
-        val valOrVar = if (myMethod.kind === Kind.PRIMARY_CONSTRUCTOR) {
-            when (item.parameter.valOrVar) {
-                KotlinValVar.None -> "    "
-                KotlinValVar.Val -> "val "
-                KotlinValVar.Var -> "var "
+                val parameterName = getPresentationName(item)
+                val typeText = item.typeCodeFragment.text
+                val defaultValue = item.defaultValueCodeFragment.text
+                val separator = StringUtil.repeatSymbol(' ', getParamNamesMaxLength() - parameterName.length + 1)
+                val text = "$valOrVar$parameterName:$separator$typeText" + if (StringUtil.isNotEmpty(defaultValue)) {
+                    KotlinBundle.message("text.default.value", defaultValue)
+                } else {
+                    ""
+                }
+
+                return " $text"
             }
-        } else {
-            ""
+
         }
 
-        val parameterName = getPresentationName(item)
-        val typeText = item.typeCodeFragment.text
-        val defaultValue = item.defaultValueCodeFragment.text
-        val separator = StringUtil.repeatSymbol(' ', getParamNamesMaxLength() - parameterName.length + 1)
-        val text = "$valOrVar$parameterName:$separator$typeText" + if (StringUtil.isNotEmpty(defaultValue)) {
-            KotlinBundle.message("text.default.value", defaultValue)
-        } else {
-            ""
-        }
+        override fun getRowRenderer(row: Int): JBTableRowRenderer = rowRenderer
 
-        val field = object : EditorTextField(" $text", project, fileType) {
-            override fun shouldHaveBorder() = false
-        }
-
-        val plainFont = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN)
-        field.font = Font(plainFont.fontName, plainFont.style, 12)
-
-        if (selected && focused) {
-            panel.background = UIUtil.getTableSelectionBackground(true)
-            field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(true), UIUtil.getTableSelectionForeground(true))
-        } else {
-            panel.background = UIUtil.getTableBackground()
-            if (selected && !focused) {
-                panel.border = DottedBorder(UIUtil.getTableForeground())
-            }
-        }
-        panel.add(field, BorderLayout.WEST)
-
-        return panel
-    }
-
-    private fun getPresentationName(item: ParameterTableModelItemBase<KotlinParameterInfo>): String {
-        val parameter = item.parameter
-        return if (parameter == parametersTableModel.receiver) "<receiver>" else parameter.name
-    }
-
-    private fun getColumnTextMaxLength(nameFunction: Function1<ParameterTableModelItemBase<KotlinParameterInfo>, String?>) =
-        parametersTableModel.items.maxOfOrNull { nameFunction(it)?.length ?: 0 } ?: 0
-
-    private fun getParamNamesMaxLength() = getColumnTextMaxLength { getPresentationName(it) }
-
-    private fun getTypesMaxLength() = getColumnTextMaxLength { it.typeCodeFragment?.text }
-
-    private fun getDefaultValuesMaxLength() = getColumnTextMaxLength { it.defaultValueCodeFragment?.text }
-
-    override fun isListTableViewSupported() = true
-
-    override fun isEmptyRow(row: ParameterTableModelItemBase<KotlinParameterInfo>): Boolean {
-        if (row.parameter.name.isNotEmpty()) return false
-        if (row.parameter.typeText.isNotEmpty()) return false
-        return true
-    }
-
-    override fun createCallerChooser(title: String, treeToReuse: Tree?, callback: Consumer<Set<PsiElement>>) =
-        KotlinCallerChooser(myMethod.method, myProject, title, treeToReuse, callback)
-
-    // Forbid receiver propagation
-    override fun mayPropagateParameters() =
-        parameters.any { it.isNewParameter && it != parametersTableModel.receiver }
-
-    override fun getTableEditor(table: JTable, item: ParameterTableModelItemBase<KotlinParameterInfo>): JBTableRowEditor {
-        return object : JBTableRowEditor() {
+        override fun getRowEditor(item: ParameterTableModelItemBase<KotlinParameterInfo>): JBTableRowEditor = object : JBTableRowEditor() {
             private val components = ArrayList<JComponent>()
             private val nameEditor = EditorTextField(item.parameter.name, project, fileType)
 
@@ -172,8 +126,7 @@ class KotlinChangeSignatureDialog(
                 nameEditor.isEnabled = item.parameter != parametersTableModel.receiver
             }
 
-            private fun isDefaultColumnEnabled() =
-                item.parameter.isNewParameter && item.parameter != myMethod.receiver
+            private fun isDefaultColumnEnabled() = item.parameter.isNewParameter && item.parameter != myMethod.receiver
 
             override fun prepareEditor(table: JTable, row: Int) {
                 layout = BoxLayout(this, BoxLayout.X_AXIS)
@@ -291,30 +244,59 @@ class KotlinChangeSignatureDialog(
                 return if (component is EditorTextField) component.focusTarget else component
             }
 
-            override fun getFocusableComponents(): Array<JComponent> {
-                return Array(components.size) {
-                    val component = components[it]
-                    (component as? EditorTextField)?.focusTarget ?: component
-                }
+            override fun getFocusableComponents(): Array<JComponent> = Array(components.size) {
+                val component = components[it]
+                (component as? EditorTextField)?.focusTarget ?: component
             }
+        }
+
+        override fun isRowEmpty(row: Int): Boolean {
+            val rowItem = getRowItem(row)
+            if (rowItem.parameter.name.isNotEmpty()) return false
+            if (rowItem.parameter.typeText.isNotEmpty()) return false
+            return true
         }
     }
 
-    override fun calculateSignature(): String {
-        val changeInfo = evaluateChangeInfo(
-            parametersTableModel,
-            myReturnTypeCodeFragment,
-            getMethodDescriptor(),
-            visibility,
-            methodName,
-            myDefaultValueContext,
-            true
-        )
-        return changeInfo.getNewSignature(getMethodDescriptor().originalPrimaryCallable)
+    private fun getPresentationName(item: ParameterTableModelItemBase<KotlinParameterInfo>): String {
+        val parameter = item.parameter
+        return if (parameter == parametersTableModel.receiver) "<receiver>" else parameter.name
     }
 
+    private fun getColumnTextMaxLength(nameFunction: Function1<ParameterTableModelItemBase<KotlinParameterInfo>, String?>) =
+        parametersTableModel.items.maxOfOrNull { nameFunction(it)?.length ?: 0 } ?: 0
+
+    private fun getParamNamesMaxLength() = getColumnTextMaxLength { getPresentationName(it) }
+
+    private fun getTypesMaxLength() = getColumnTextMaxLength { it.typeCodeFragment?.text }
+
+    private fun getDefaultValuesMaxLength() = getColumnTextMaxLength { it.defaultValueCodeFragment?.text }
+
+    override fun isListTableViewSupported() = true
+
+    override fun createCallerChooser(title: String, treeToReuse: Tree?, callback: Consumer<Set<PsiElement>>) =
+        KotlinCallerChooser(myMethod.method, myProject, title, treeToReuse, callback)
+
+    // Forbid receiver propagation
+    override fun mayPropagateParameters() = parameters.any { it.isNewParameter && it != parametersTableModel.receiver }
+
+    override fun calculateSignature(): String = evaluateChangeInfo(
+        parametersTableModel,
+        myReturnTypeCodeFragment,
+        getMethodDescriptor(),
+        visibility,
+        methodName,
+        myDefaultValueContext,
+        true
+    ).getNewSignature(getMethodDescriptor().originalPrimaryCallable)
+
     override fun createVisibilityControl() = ComboBoxVisibilityPanel(
-        arrayOf(DescriptorVisibilities.INTERNAL, DescriptorVisibilities.PRIVATE, DescriptorVisibilities.PROTECTED, DescriptorVisibilities.PUBLIC)
+        arrayOf(
+            DescriptorVisibilities.INTERNAL,
+            DescriptorVisibilities.PRIVATE,
+            DescriptorVisibilities.PROTECTED,
+            DescriptorVisibilities.PUBLIC
+        )
     )
 
     override fun updateSignatureAlarmFired() {
@@ -494,13 +476,13 @@ class KotlinChangeSignatureDialog(
         }
 
         private fun evaluateChangeInfo(
-                parametersModel: KotlinCallableParameterTableModel,
-                returnTypeCodeFragment: PsiCodeFragment?,
-                methodDescriptor: KotlinMethodDescriptor,
-                visibility: DescriptorVisibility?,
-                methodName: String,
-                defaultValueContext: PsiElement,
-                forPreview: Boolean
+            parametersModel: KotlinCallableParameterTableModel,
+            returnTypeCodeFragment: PsiCodeFragment?,
+            methodDescriptor: KotlinMethodDescriptor,
+            visibility: DescriptorVisibility?,
+            methodName: String,
+            defaultValueContext: PsiElement,
+            forPreview: Boolean
         ): KotlinChangeInfo {
             val parameters = parametersModel.items.map { parameter ->
                 val parameterInfo = parameter.parameter
