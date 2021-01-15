@@ -28,6 +28,7 @@ import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
+import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +38,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -188,9 +185,16 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
     if (cefBrowser == null) {
       myCefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
+        volatile String lastLoadUrl = "";
+        @Override
+        public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
+          lastLoadUrl = frame.getURL();
+        }
         @Override
         public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-          UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
+          if (lastLoadUrl.equals(failedUrl)) {
+            UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
+          }
         }
       }, myCefBrowser);
     } else {
