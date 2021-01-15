@@ -3,12 +3,19 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/fieldCanBeLocal";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   private void doTest() {
@@ -104,6 +111,10 @@ public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testConstructor() {
+    doTest();
+  }
+  
+  public void testReflection() {
     doTest();
   }
 }

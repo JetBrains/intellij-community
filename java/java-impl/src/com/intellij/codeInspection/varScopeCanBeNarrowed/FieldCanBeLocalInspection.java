@@ -78,7 +78,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
         final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<>();
         for (PsiReference reference : references.findAll()) {
           final PsiElement element = reference.getElement();
-          if (!(element instanceof PsiReferenceExpression)) break;
+          if (!(element instanceof PsiReferenceExpression)) continue FieldLoop;
           final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
           if (qualifier != null && (!(qualifier instanceof PsiThisExpression) || ((PsiThisExpression)qualifier).getQualifier() != null) ||
               !groupReferenceByCodeBlocks(refs, reference)) {
