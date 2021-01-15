@@ -44,10 +44,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
+
+  private static final ThreadLocal<AtomicInteger> ourGetDataLevel = ThreadLocal.withInitial(AtomicInteger::new);
+
   private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<>();
 
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
@@ -90,6 +94,7 @@ public class DataManagerImpl extends DataManager {
       return null;
     }
     try {
+      ourGetDataLevel.get().incrementAndGet();
       Object data = provider.getData(dataId);
       if (data != null) return validated(data, dataId, provider);
 
@@ -104,6 +109,7 @@ public class DataManagerImpl extends DataManager {
       return null;
     }
     finally {
+      ourGetDataLevel.get().decrementAndGet();
       if (alreadyComputedIds != null) alreadyComputedIds.remove(dataId);
     }
   }
@@ -163,6 +169,12 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext getDataContext(Component component) {
+    if (Registry.is("actionSystem.dataContextAssertions")) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (ourGetDataLevel.get().get() > 0) {
+        LOG.warn("DataContext shall not be created and queried inside another getData() call.");
+      }
+    }
     return new MyDataContext(component);
   }
 
@@ -300,6 +312,8 @@ public class DataManagerImpl extends DataManager {
 
   /**
    * todo make private in 2020
+   * @see DataManager#loadFromDataContext(DataContext, Key)
+   * @see DataManager#saveInDataContext(DataContext, Key, Object)
    * @deprecated use {@link DataManager#getDataContext(Component)} instead
    */
   @Deprecated
