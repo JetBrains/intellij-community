@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -38,10 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -268,7 +265,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private PsiType getTypeFromClassRef() {
     PsiType qualifierType = PsiImplUtil.getQualifierType(this);
 
-    if (qualifierType == null && !PsiUtil.isCompileStatic(this)) return null;
+    if (qualifierType == null && !CompileStaticUtil.isCompileStatic(this)) return null;
     return TypesUtil.createJavaLangClassType(qualifierType, this);
   }
 
@@ -294,7 +291,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (nominal == null) {
-      if (inferred.equals(PsiType.NULL) && PsiUtil.isCompileStatic(refExpr)) {
+      if (inferred.equals(PsiType.NULL) && CompileStaticUtil.isCompileStatic(refExpr)) {
         return TypesUtil.getJavaLangObject(refExpr);
       }
       else {
@@ -328,7 +325,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final PsiElement resolved = result.getElement();
     if (resolved instanceof GrField) {
       ensureValid(resolved);
-      if (PsiUtil.isCompileStatic(refExpr)) {
+      if (CompileStaticUtil.isCompileStatic(refExpr)) {
         return TypesUtil.getJavaLangObject(refExpr);
       }
       else {
@@ -338,7 +335,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     else if (resolved instanceof GrVariable) {
       ensureValid(resolved);
       PsiType typeGroovy = SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
-      if (typeGroovy == null && PsiUtil.isCompileStatic(refExpr)) {
+      if (typeGroovy == null && CompileStaticUtil.isCompileStatic(refExpr)) {
         return TypesUtil.getJavaLangObject(refExpr);
       }
       else {

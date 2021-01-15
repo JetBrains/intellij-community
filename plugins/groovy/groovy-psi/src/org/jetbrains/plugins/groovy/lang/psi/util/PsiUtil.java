@@ -67,7 +67,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -1192,12 +1195,7 @@ public final class PsiUtil {
   }
 
   public static boolean isInStaticCompilationContext(@NotNull GrReferenceExpression expression) {
-    return isCompileStatic(expression) || GrStaticChecker.isPropertyAccessInStaticMethod(expression);
-  }
-
-  public static boolean isCompileStatic(PsiElement e) {
-    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
-    return containingMember != null && CompileStaticUtil.isCompileStatic(containingMember);
+    return CompileStaticUtil.isCompileStatic(expression) || GrStaticChecker.isPropertyAccessInStaticMethod(expression);
   }
 
   public static boolean isNewified(@Nullable PsiElement expr) {
@@ -1451,7 +1449,7 @@ public final class PsiUtil {
   }
 
   public static boolean isEligibleForInvocationWithNull(@NotNull GrCall call) {
-    if (isCompileStatic(call) || call.hasClosureArguments()) {
+    if (CompileStaticUtil.isCompileStatic(call) || call.hasClosureArguments()) {
       return false;
     }
     var argumentList = call.getArgumentList();

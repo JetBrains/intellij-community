@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,12 +92,12 @@ public class GrAccessibilityChecker {
   }
 
   @Nullable
-  public HighlightInfo checkCodeReferenceElement(GrCodeReferenceElement ref) {
+  public HighlightInfo checkCodeReferenceElement(@NotNull GrCodeReferenceElement ref) {
     return checkReferenceImpl(ref);
   }
 
-  private HighlightInfo checkReferenceImpl(GrReferenceElement ref) {
-    boolean isCompileStatic = PsiUtil.isCompileStatic(ref);
+  private HighlightInfo checkReferenceImpl(@NotNull GrReferenceElement ref) {
+    boolean isCompileStatic = CompileStaticUtil.isCompileStatic(ref);
 
     if (!needToCheck(ref, isCompileStatic)) return null;
 
@@ -144,7 +144,7 @@ public class GrAccessibilityChecker {
   }
 
   @Nullable
-  public HighlightInfo checkReferenceExpression(GrReferenceExpression ref) {
+  public HighlightInfo checkReferenceExpression(@NotNull GrReferenceExpression ref) {
     return checkReferenceImpl(ref);
   }
 

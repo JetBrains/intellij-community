@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
@@ -22,8 +23,8 @@ import java.util.Collection;
 public final class GrReassignedLocalVarsChecker {
 
   @Nullable
-  public static PsiType getReassignedVarType(GrReferenceExpression refExpr, boolean honorCompileStatic) {
-    if (honorCompileStatic && !PsiUtil.isCompileStatic(refExpr) || refExpr.getQualifier() != null) {
+  public static PsiType getReassignedVarType(@NotNull GrReferenceExpression refExpr, boolean honorCompileStatic) {
+    if (honorCompileStatic && !CompileStaticUtil.isCompileStatic(refExpr) || refExpr.getQualifier() != null) {
       return null;
     }
 

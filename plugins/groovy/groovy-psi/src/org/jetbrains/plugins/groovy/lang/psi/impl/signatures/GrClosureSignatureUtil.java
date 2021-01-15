@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.LazyFqnClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature;
@@ -478,9 +479,9 @@ public final class GrClosureSignatureUtil {
     }
   }
 
-  private static int getOptionalParamCount(@NotNull GrSignature signature, PsiElement context) {
+  private static int getOptionalParamCount(@NotNull GrSignature signature, @NotNull PsiElement context) {
     GrClosureParameter[] parameters = signature.getParameters();
-    boolean isCompileStatic = PsiUtil.isCompileStatic(context);
+    boolean isCompileStatic = CompileStaticUtil.isCompileStatic(context);
     if (parameters.length == 1 && !(parameters[0].getType() instanceof PsiPrimitiveType) && !signature.isCurried() && !isCompileStatic)
       return 1;
     int count = 0;

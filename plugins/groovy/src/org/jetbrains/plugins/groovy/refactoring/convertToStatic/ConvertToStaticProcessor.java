@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.HashSet;
@@ -128,7 +127,8 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   }
 
   private void processMethods(@NotNull GrMethod method, Set<GrMethod> dynamicMethods) {
-    boolean isOuterStatic = PsiUtil.isCompileStatic(method.getContainingClass());
+    PsiElement containingClass = method.getContainingClass();
+    boolean isOuterStatic = containingClass != null && CompileStaticUtil.isCompileStatic(containingClass);
     boolean isStatic = dynamicMethods.stream().noneMatch(method::isEquivalentTo);
 
     if (isOuterStatic != isStatic) {
@@ -137,7 +137,8 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   }
 
   private void processDefinitions(GrTypeDefinition typeDef, Set<GrTypeDefinition> dynamicClasses) {
-    boolean isOuterStatic = PsiUtil.isCompileStatic(typeDef.getContainingClass());
+    PsiElement containingClass = typeDef.getContainingClass();
+    boolean isOuterStatic = containingClass != null && CompileStaticUtil.isCompileStatic(containingClass);
 
     boolean isStatic = !dynamicClasses.contains(typeDef);
     if (isOuterStatic && !isStatic) {
