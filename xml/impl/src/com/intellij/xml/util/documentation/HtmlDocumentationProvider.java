@@ -36,7 +36,6 @@ import static com.intellij.util.ObjectUtils.doIfNotNull;
 public class HtmlDocumentationProvider implements DocumentationProvider {
   public static final ExtensionPointName<DocumentationProvider> SCRIPT_PROVIDER_EP_NAME =
     ExtensionPointName.create("com.intellij.html.scriptDocumentationProvider");
-  public static final String ATTR_PREFIX = "#attr-";
 
   private final boolean myUseStyleProvider;
 

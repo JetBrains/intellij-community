@@ -236,6 +236,8 @@
 
     <lang.documentationProvider language="XML" implementationClass="com.intellij.xml.util.documentation.XmlDocumentationProvider"
                                 order="last"/>
+    <lang.documentationProvider language="XML" implementationClass="com.intellij.documentation.mdn.XmlMdnDocumentationProvider"
+                                order="before rng"/>
     <lang.documentationProvider language="DTD" implementationClass="com.intellij.xml.util.documentation.XmlDocumentationProvider"
                                 id="dtd"/>
     <lang.documentationProvider language="DTD" implementationClass="com.intellij.xml.util.documentation.HtmlDocumentationProvider"

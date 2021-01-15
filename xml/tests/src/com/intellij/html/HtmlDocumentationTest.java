@@ -121,7 +121,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "<bo<caret>dy onload=\"\">\n" +
            "</body>\n" +
            "</html>",
-           "Tag name:&nbsp;<b>body</b><br>Description  :&nbsp;=================== Document Body ====================================",
+           "<div class='definition'><pre>body</pre></div><div class='content'><p><span class=\"seoSummary\">The <strong>HTML <code>&lt;body&gt;</code> Element</strong> represents the content of an HTML document. ",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body"));
   }
 
