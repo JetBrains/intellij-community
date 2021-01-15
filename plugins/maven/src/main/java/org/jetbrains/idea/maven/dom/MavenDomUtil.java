@@ -408,21 +408,10 @@ public final class MavenDomUtil {
   public static MavenDomDependency createDomDependency(MavenDomProjectModel model,
                                                        @Nullable Editor editor,
                                                        @NotNull final MavenId id) {
-    return createDomDependency(model.getDependencies(), editor, id);
+
+    return createDomDependency(model.getDependencies(), editor, (MavenCoordinate)id);
   }
 
-
-  /**
-   * @deprecated left for binary compatibility
-   */
-  @Deprecated
-  @NotNull
-  public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
-                                                       @Nullable Editor editor,
-                                                       @NotNull final MavenId id) {
-
-    return createDomDependency(dependencies, editor, (MavenCoordinate)id);
-  }
 
   @NotNull
   public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,

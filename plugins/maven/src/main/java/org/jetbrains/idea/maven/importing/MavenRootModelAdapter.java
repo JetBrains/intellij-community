@@ -188,11 +188,6 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     return false;
   }
 
-  @Deprecated
-  public static String makeLibraryName(@NotNull MavenArtifact artifact) {
-    return artifact.getLibraryName();
-  }
-
   public static boolean isMavenLibrary(@Nullable Library library) {
     return library != null && MavenArtifact.isMavenLibrary(library.getName());
   }

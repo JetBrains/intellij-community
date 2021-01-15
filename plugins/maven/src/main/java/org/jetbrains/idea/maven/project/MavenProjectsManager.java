@@ -1043,23 +1043,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree)));
   }
 
-  /**
-   * @deprecated Use {@link #scheduleArtifactsDownloading(Collection, Collection, boolean, boolean, AsyncPromise)}
-   */
-  @Deprecated
-  public void scheduleArtifactsDownloading(Collection<MavenProject> projects,
-                                           @Nullable Collection<MavenArtifact> artifacts,
-                                           boolean sources, boolean docs,
-                                           @Nullable AsyncResult<DownloadResult> result) {
-    AsyncPromise<DownloadResult> promise = null;
-    if (result != null) {
-      promise = new AsyncPromise<DownloadResult>()
-        .onSuccess(result::setDone)
-        .onError(it -> result.reject(it.getMessage()));
-    }
-    scheduleArtifactsDownloading(projects, artifacts, sources, docs, promise);
-  }
-
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
                                            @Nullable final Collection<MavenArtifact> artifacts,
                                            final boolean sources, final boolean docs,
