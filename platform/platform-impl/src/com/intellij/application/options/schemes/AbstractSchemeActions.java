@@ -361,14 +361,6 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
 
   /**
-   * @deprecated Use {@link #exportScheme(Project, Scheme, String)} instead.
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  protected void exportScheme(@NotNull T scheme, @NotNull String exporterName) {
-  }
-
-  /**
    * Export the scheme using the given exporter name.
    *
    * @param scheme The scheme to export.

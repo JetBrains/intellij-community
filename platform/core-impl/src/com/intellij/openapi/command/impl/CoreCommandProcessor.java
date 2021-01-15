@@ -144,11 +144,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
-    executeCommand(null, runnable, name, groupId);
-  }
-
-  @Override
   public void executeCommand(Project project, @NotNull Runnable runnable, String name, Object groupId) {
     executeCommand(project, runnable, name, groupId, UndoConfirmationPolicy.DEFAULT);
   }

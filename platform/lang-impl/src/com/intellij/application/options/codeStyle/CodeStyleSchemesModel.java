@@ -167,15 +167,6 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     return ContainerUtil.filter(mySchemes, scheme -> !(scheme instanceof ProjectScheme));
   }
 
-  /**
-   * @deprecated Not used anymore.
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static boolean cannotBeModified(CodeStyleScheme currentScheme) {
-    return false;
-  }
-
   public void fireBeforeCurrentSettingsChanged() {
     if (myUiEventsEnabled) myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }

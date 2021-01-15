@@ -22,14 +22,6 @@ public abstract class CommandProcessor {
     return ApplicationManager.getApplication().getService(CommandProcessor.class);
   }
 
-  /**
-   * @deprecated use {@link #executeCommand(Project, Runnable, String, Object)}
-   */
-  @Deprecated
-  public abstract void executeCommand(@NotNull Runnable runnable,
-                                      @Nullable @NlsContexts.Command String name,
-                                      @Nullable Object groupId);
-
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
                                       @Nullable @NlsContexts.Command String name,

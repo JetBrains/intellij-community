@@ -42,12 +42,6 @@ import java.util.function.Supplier;
 public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
-  /**
-   * @deprecated Use {@link #getMainMenuTitle()} instead
-   */
-  @Deprecated
-  public static final String MAIN_MENU_TITLE = "Main menu";
-
   @NonNls
   private static final String EDITOR_PREFIX = "Editor";
 

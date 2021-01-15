@@ -33,7 +33,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -181,14 +180,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
     }
     return super.processKeyBinding(ks, e, condition, pressed);
-  }
-
-  /**
-   * @deprecated Use {@link #setTitleActions(List)}
-   */
-  @Deprecated
-  public void setTitleActions(@NotNull AnAction @NotNull [] actions) {
-    header.setAdditionalTitleActions(Arrays.asList(actions));
   }
 
   public void setTitleActions(@NotNull List<AnAction> actions) {

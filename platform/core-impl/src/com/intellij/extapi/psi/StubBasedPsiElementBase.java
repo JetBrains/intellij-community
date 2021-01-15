@@ -307,14 +307,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
-   * @deprecated use {@link #getParent()} instead
-   */
-  @Deprecated
-  protected final PsiElement getParentByTree() {
-    return SharedImplUtil.getParent(getNode());
-  }
-
-  /**
    * @return the parent of this element. Uses stub hierarchy if possible, but might cause an expensive switch to AST
    * if the parent stub doesn't correspond to the parent AST node.
    */

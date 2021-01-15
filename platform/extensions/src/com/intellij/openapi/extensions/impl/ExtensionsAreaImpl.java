@@ -95,8 +95,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
   }
 
-  @Override
-  public void registerExtension(@NotNull ExtensionPoint<?> extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement) {
+  private void registerExtension(@NotNull ExtensionPoint<?> extensionPoint,
+                                 @NotNull PluginDescriptor pluginDescriptor,
+                                 @NotNull Element extensionElement) {
     ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, componentManager);
   }
 

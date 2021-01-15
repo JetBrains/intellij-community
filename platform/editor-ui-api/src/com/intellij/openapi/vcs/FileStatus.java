@@ -34,8 +34,6 @@ public interface FileStatus {
   /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_MISSING = Gray._97;
   /** @deprecated use {@link FileStatus#getColor} */
-  @Deprecated Color COLOR_ADDED = new Color(10, 119, 0);
-  /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
   /** @deprecated use {@link FileStatus#getColor} */
   @Deprecated Color COLOR_SWITCHED = new Color(8, 151, 143);

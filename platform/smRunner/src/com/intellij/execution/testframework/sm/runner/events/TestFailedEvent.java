@@ -230,14 +230,6 @@ public class TestFailedEvent extends TreeNodeEvent {
     append(buf, "comparisonFailureExpectedText", myComparisonFailureExpectedText);
   }
 
-  /**
-   * @deprecated use {@link #getExpectedFilePath()} instead
-   */
-  @Deprecated
-  public String getFilePath() {
-    return myExpectedFilePath;
-  }
-
   @Nullable
   public String getExpectedFilePath() {
     return myExpectedFilePath;

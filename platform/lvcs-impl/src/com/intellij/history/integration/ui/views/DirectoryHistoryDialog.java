@@ -87,7 +87,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private SearchTextField createSearchBox(JPanel root) {
-    final SearchTextFieldWithStoredHistory field = new SearchTextFieldWithStoredHistory(getDimensionKey() + ".searchHistory");
+    final SearchTextField field = new SearchTextField(getDimensionKey() + ".searchHistory");
     field.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

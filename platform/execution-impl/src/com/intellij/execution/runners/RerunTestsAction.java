@@ -41,13 +41,6 @@ public class RerunTestsAction extends DumbAwareAction implements AnAction.Transp
     }
   }
 
-  /**
-   * @deprecated use {@link #register(RunContentDescriptor)} instead
-   */
-  @Deprecated
-  public static void register(@NotNull ExecutionEnvironment environment) {
-  }
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     List<RunContentDescriptor> descriptors = new ArrayList<>(REGISTRY);

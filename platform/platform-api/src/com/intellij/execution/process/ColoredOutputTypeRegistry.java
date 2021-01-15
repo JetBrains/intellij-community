@@ -127,14 +127,6 @@ public final class ColoredOutputTypeRegistry {
     return newKey;
   }
 
-  /**
-   * @deprecated use {@link #getOutputType(String, Key)} instead
-   */
-  @Deprecated
-  public @NotNull Key getOutputKey(@NonNls String attribute) {
-    return getOutputType(attribute, ProcessOutputTypes.STDOUT);
-  }
-
   private static Color getAnsiColor(final int value) {
     return getColorByKey(getAnsiColorKey(value));
   }

@@ -102,21 +102,6 @@ class FeatureUsageData {
     return this
   }
 
-  /**
-   * Group by OS will be available without adding OS explicitly to event data.
-   */
-  @Deprecated("Don't add OS to event data")
-  fun addOS(): FeatureUsageData {
-    data["os"] = getOS()
-    return this
-  }
-
-  private fun getOS(): String {
-    if (SystemInfo.isWindows) return "Windows"
-    if (SystemInfo.isMac) return "Mac"
-    return if (SystemInfo.isLinux) "Linux" else "Other"
-  }
-
   fun addPluginInfo(info: PluginInfo?): FeatureUsageData {
     info?.let {
       addPluginInfoTo(info, data)

@@ -84,19 +84,11 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
   };
 
-  /**
-   * @deprecated use {@link #AsyncTreeModel(TreeModel, Disposable)} instead
-   */
-  @Deprecated
-  public AsyncTreeModel(@NotNull TreeModel model) {
-    this(model, true);
+  public AsyncTreeModel(@NotNull TreeModel model, @NotNull Disposable parent) {
+    this(model, true, parent);
   }
 
-  /**
-   * @deprecated use {@link #AsyncTreeModel(TreeModel, boolean, Disposable)} instead
-   */
-  @Deprecated
-  public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode) {
+  public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode, @NotNull Disposable parent) {
     if (model instanceof Disposable) {
       Disposer.register(this, (Disposable)model);
     }
@@ -111,14 +103,6 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     this.model = model;
     this.model.addTreeModelListener(listener);
     this.showLoadingNode = showLoadingNode;
-  }
-
-  public AsyncTreeModel(@NotNull TreeModel model, @NotNull Disposable parent) {
-    this(model, true, parent);
-  }
-
-  public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode, @NotNull Disposable parent) {
-    this(model, showLoadingNode);
     Disposer.register(parent, this);
   }
 

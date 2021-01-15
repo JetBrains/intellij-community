@@ -77,11 +77,6 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components
 
-  @Deprecated("", replaceWith = ReplaceWith("doImport(saveFile.toPath())"))
-  protected open fun doImport(saveFile: File) {
-    doImport(saveFile.toPath())
-  }
-
   protected open fun doImport(saveFile: Path) {
     if (!saveFile.exists()) {
       Messages.showErrorDialog(ConfigurationStoreBundle.message("error.cannot.find.file", saveFile), ConfigurationStoreBundle.message("title.file.not.found"))

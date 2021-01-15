@@ -95,21 +95,13 @@ public final class TipDialog extends DialogWrapper {
   }
 
   public static void showForProject(@Nullable Project project) {
-    createForProject(project);
-    ourInstance.show();
-  }
-
-  /**
-   * @deprecated Use {@link #showForProject(Project)} instead
-   */
-  @Deprecated
-  public static TipDialog createForProject(@Nullable Project project) {
     Window w = WindowManagerEx.getInstanceEx().suggestParentWindow(project);
     if (w == null) w = WindowManagerEx.getInstanceEx().findVisibleFrame();
     if (ourInstance != null && ourInstance.isVisible()) {
       ourInstance.dispose();
     }
-    return ourInstance = new TipDialog(w);
+    ourInstance = new TipDialog(w);
+    ourInstance.show();
   }
 
   public static void hideForProject(@Nullable Project project) {

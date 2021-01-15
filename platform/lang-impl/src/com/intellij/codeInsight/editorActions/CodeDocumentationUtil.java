@@ -6,7 +6,6 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.DocCommentSettings;
@@ -21,15 +20,6 @@ import org.jetbrains.annotations.Nullable;
 public final class CodeDocumentationUtil {
 
   private CodeDocumentationUtil() {
-  }
-
-  /**
-   * @deprecated  Use createDocCommentLine(lineData,file,commenter) instead.
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static String createDocCommentLine(String lineData, Project project, CodeDocumentationAwareCommenter commenter) {
-    return createLine(lineData, commenter, DocCommentSettings.DEFAULTS);
   }
 
   public static String createDocCommentLine(String lineData, PsiFile file, CodeDocumentationAwareCommenter commenter) {

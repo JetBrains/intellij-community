@@ -223,12 +223,6 @@ public abstract class PsiDocumentManager {
   public abstract void addListener(@NotNull Listener listener);
 
   /**
-   * @deprecated Use message bus {@link PsiDocumentListener#TOPIC}.
-   */
-  @Deprecated
-  public abstract void removeListener(@NotNull Listener listener);
-
-  /**
    * Checks if the PSI tree corresponding to the specified document has been modified and the changes have not
    * yet been applied to the document. Documents in that state cannot be modified directly, because such changes
    * would conflict with the pending PSI changes. Changes made through PSI are always applied in the end of a write action,

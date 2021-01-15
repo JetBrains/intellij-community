@@ -55,14 +55,6 @@ abstract class RunManager {
    * @param type a run configuration type.
    * @return all configurations of the type, or an empty array if no configurations of the type are defined.
    */
-  @Deprecated("", ReplaceWith("getConfigurationsList(type)"))
-  fun getConfigurations(type: ConfigurationType): Array<RunConfiguration> = getConfigurationsList(type).toTypedArray()
-
-  /**
-   * Returns the list of all configurations of a specified type.
-   * @param type a run configuration type.
-   * @return all configurations of the type, or an empty array if no configurations of the type are defined.
-   */
   abstract fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration>
 
   /**
@@ -214,12 +206,6 @@ abstract class RunManager {
     configuration.setName(suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type))
     return oldName != configuration.name
   }
-
-  @Deprecated("The method name is grammatically incorrect", replaceWith = ReplaceWith("this.setUniqueNameIfNeeded(configuration)"))
-  fun setUniqueNameIfNeed(configuration: RunConfiguration): Boolean = setUniqueNameIfNeeded(configuration)
-
-  @Deprecated("Use ConfigurationTypeUtil", ReplaceWith("ConfigurationTypeUtil.findConfigurationType(typeName)", "com.intellij.execution.configurations.ConfigurationTypeUtil"))
-  fun getConfigurationType(typeName: String) = ConfigurationTypeUtil.findConfigurationType(typeName)
 
   abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
 

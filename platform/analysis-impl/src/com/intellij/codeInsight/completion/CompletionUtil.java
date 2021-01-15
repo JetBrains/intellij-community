@@ -7,13 +7,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -34,7 +31,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class CompletionUtil {
-  private static final ExtensionPointName<CompletionDataEP> EP_NAME = new ExtensionPointName<>("com.intellij.completionData");
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
@@ -49,29 +45,7 @@ public final class CompletionUtil {
   @Nullable
   public static CompletionData getCompletionDataByElement(@Nullable final PsiElement position, @NotNull PsiFile originalFile) {
     if (position == null) return null;
-
-    PsiElement parent = position.getParent();
-    Language language = parent == null ? position.getLanguage() : parent.getLanguage();
-    final FileType fileType = language.getAssociatedFileType();
-    if (fileType != null) {
-      final CompletionData mainData = getCompletionDataByFileType(fileType);
-      if (mainData != null) {
-        return mainData;
-      }
-    }
-
-    final CompletionData mainData = getCompletionDataByFileType(originalFile.getFileType());
-    return mainData != null ? mainData : ourGenericCompletionData;
-  }
-
-  @Nullable
-  private static CompletionData getCompletionDataByFileType(FileType fileType) {
-    for (CompletionDataEP ep: EP_NAME.getExtensionList()) {
-      if (ep.fileType.equals(fileType.getName())) {
-        return ep.getHandler();
-      }
-    }
-    return null;
+    return ourGenericCompletionData;
   }
 
   public static boolean shouldShowFeature(CompletionParameters parameters, @NonNls final String id) {

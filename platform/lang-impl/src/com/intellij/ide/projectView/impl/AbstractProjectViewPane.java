@@ -438,13 +438,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       .toList();
   }
 
-  /** @deprecated use {@link AbstractProjectViewPane#getElementsFromNode(Object)}**/
-  @Deprecated
-  @Nullable
-  public PsiElement getPSIElementFromNode(@Nullable TreeNode node) {
-    return getFirstElementFromNode(node);
-  }
-
   @Nullable
   protected Module getNodeModule(@Nullable final Object element) {
     if (element instanceof PsiElement) {

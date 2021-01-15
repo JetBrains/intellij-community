@@ -115,11 +115,6 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void removeListener(@NotNull Listener listener) {
-    throw new UnsupportedOperationException("Method removeListener is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
     throw new UnsupportedOperationException("Method isDocumentBlockedByPsi is not yet implemented in " + getClass().getName());
   }

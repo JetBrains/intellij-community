@@ -16,12 +16,6 @@ public abstract class FacetTypeRegistry {
   @Deprecated
   public abstract void registerFacetType(FacetType<?, ?> facetType);
 
-  /**
-   * @deprecated register {@code facetType} as an extension instead
-   */
-  @Deprecated
-  public abstract void unregisterFacetType(FacetType<?, ?> facetType);
-
   public abstract FacetTypeId<?> @NotNull [] getFacetTypeIds();
 
   public abstract FacetType<?, ?> @NotNull [] getFacetTypes();

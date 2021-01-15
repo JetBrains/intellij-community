@@ -64,16 +64,6 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     return result;
   }
 
-  /**
-   * Will be removed after 2017.3 (still cannot because Google Cloud Tools uses it)
-   *
-   * @deprecated use {@link #getFactoryForType(DeploymentSourceType)}
-   */
-  @Deprecated
-  public ConfigurationFactoryEx getFactory() {
-    return (ConfigurationFactoryEx)getFactoryForType(null);
-  }
-
   @NotNull
   public ServerType<?> getServerType() {
     ServerType<?> result = ServerType.EP_NAME.findFirstSafe(next -> myServerTypeId.equals(next.getId()));

@@ -501,17 +501,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   /**
-   * Gets the Open in New Tab flag.
-   *
-   * @return the value of the Open in New Tab flag.
-   * @deprecated and not used anymore
-   */
-  @Deprecated
-  public boolean isOpenInNewTab() {
-    return true;
-  }
-
-  /**
    * Sets the Open in New Tab flag.
    *
    * @param showInNewTab the value of the Open in New Tab flag.

@@ -161,12 +161,10 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     return myDirectDependencies;
   }
 
-  @Override
-  public boolean isTransitive() {
+  private boolean isTransitive() {
     return myTransitive > 0;
   }
 
-  @Override
   public int getTransitiveBorder() {
     return myTransitive;
   }

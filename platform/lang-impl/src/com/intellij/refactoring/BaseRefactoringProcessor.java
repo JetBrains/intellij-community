@@ -690,14 +690,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
-  /**
-   * @deprecated use {@link #showConflicts(MultiMap, UsageInfo[])}
-   */
-  @Deprecated
-  protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts) {
-    return showConflicts(conflicts, null);
-  }
-
   protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());

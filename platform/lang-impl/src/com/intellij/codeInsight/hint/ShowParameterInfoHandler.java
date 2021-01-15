@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,14 +45,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   @Override
   public boolean startInWriteAction() {
     return false;
-  }
-
-  /**
-   * @deprecated use {@link #invoke(Project, Editor, PsiFile, int, PsiElement, boolean)} instead
-   */
-  @Deprecated
-  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
-    invoke(project, editor, file, lbraceOffset, highlightedElement, false);
   }
 
   public static void invoke(final Project project, final Editor editor, PsiFile file,

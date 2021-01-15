@@ -112,5 +112,3 @@ fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
   return EmptyStatisticsEventLoggerProvider(recorderId)
 }
 
-@Deprecated("Use EventLogGroup instead")
-class FeatureUsageGroup(val id: String, val version: Int)

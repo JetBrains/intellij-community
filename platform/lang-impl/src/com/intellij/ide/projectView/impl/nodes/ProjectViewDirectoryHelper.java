@@ -52,15 +52,6 @@ public class ProjectViewDirectoryHelper {
     myIndex = DirectoryIndex.getInstance(project);
   }
 
-  /**
-   * @deprecated use {@link ProjectViewDirectoryHelper(Project)}
-   */
-  @Deprecated
-  public ProjectViewDirectoryHelper(Project project, DirectoryIndex index) {
-    myProject = project;
-    myIndex = index;
-  }
-
   public Project getProject() {
     return myProject;
   }

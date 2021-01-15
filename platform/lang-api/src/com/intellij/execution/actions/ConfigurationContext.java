@@ -181,13 +181,6 @@ public class ConfigurationContext {
     myInitialized = true;
   }
 
-  @Deprecated
-  @Nullable
-  public RunnerAndConfigurationSettings updateConfiguration(final RuntimeConfigurationProducer producer) {
-    myConfiguration = producer.getConfiguration();
-    return myConfiguration;
-  }
-
   /**
    * Returns the source code location for this context.
    *

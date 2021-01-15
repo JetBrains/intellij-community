@@ -10,14 +10,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 
 public interface ExtensionsArea  {
-  /**
-   * @deprecated use {@link ExtensionsArea#registerExtensionPoint(String, String, ExtensionPoint.Kind)}
-   */
-  @TestOnly
-  @Deprecated
-  default void registerExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass) {
-    registerExtensionPoint(extensionPointName, extensionPointBeanClass, ExtensionPoint.Kind.INTERFACE);
-  }
 
   @TestOnly
   void registerExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind);
@@ -50,10 +42,4 @@ public interface ExtensionsArea  {
    */
   @TestOnly
   void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement, @Nullable String extensionNs);
-
-  /**
-   * @deprecated Do not use.
-   */
-  @Deprecated
-  void registerExtension(@NotNull ExtensionPoint<?> extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement);
 }

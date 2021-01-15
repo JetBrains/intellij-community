@@ -131,11 +131,6 @@ public abstract class AbstractCodeStylePropertyMapper {
   @NotNull
   public abstract String getLanguageDomainId();
 
-  @Deprecated
-  public boolean containsProperty(@NotNull String name) {
-    return getAccessorMap().containsKey(name);
-  }
-
   @Nullable
   public abstract String getPropertyDescription(@NotNull String externalName);
 }

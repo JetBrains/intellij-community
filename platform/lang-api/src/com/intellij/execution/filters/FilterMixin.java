@@ -40,16 +40,6 @@ public interface FilterMixin {
       super(resultItems);
     }
 
-    @Deprecated
-    public int getStart() {
-      return getHighlightStartOffset();
-    }
-
-    @Deprecated
-    public int getEnd() {
-      return getHighlightEndOffset();
-    }
-
     @Nullable
     public TextAttributes getTextAttributes(@Nullable final TextAttributes source) {
       return null;

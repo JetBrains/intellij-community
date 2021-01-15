@@ -74,13 +74,4 @@ public interface LayoutStateDefaults {
   default LayoutStateDefaults initFocusContent(@NotNull String contentId, @NotNull String condition) {
     return initContentAttraction(contentId, condition);
   }
-
-  /**
-   * @deprecated use {@link #initContentAttraction(String, String, LayoutAttractionPolicy)} instead
-   */
-  @Deprecated
-  @NotNull
-  default LayoutStateDefaults initFocusContent(@NotNull String contentId, @NotNull String condition, @NotNull LayoutAttractionPolicy policy) {
-    return initContentAttraction(contentId, condition, policy);
-  }
 }

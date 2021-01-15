@@ -739,11 +739,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public void removeListener(@NotNull Listener listener) {
-    myListeners.remove(listener);
-  }
-
-  @Override
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
     return false;
   }

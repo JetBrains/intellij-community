@@ -91,7 +91,7 @@ public class ShortestPathTest extends GraphTestCase {
   }
 
   private static void doTest(Map<String, String> graph, String from, String to, String expectedPath) {
-    List<String> shortestPath = getAlgorithmsInstance().findShortestPath((InboundSemiGraph<String>)initGraph(graph), from, to);
+    List<String> shortestPath = getAlgorithmsInstance().findShortestPath(initGraph(graph), from, to);
     if (expectedPath != null) {
       assertNotNull(shortestPath);
       assertEquals(expectedPath, StringUtil.join(shortestPath, ""));

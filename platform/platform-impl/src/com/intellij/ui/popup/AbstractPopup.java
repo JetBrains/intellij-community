@@ -1519,15 +1519,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   public static class MyContentPanel extends JPanel implements DataProvider {
     private @Nullable DataProvider myDataProvider;
 
-    /**
-     * @deprecated use {@link MyContentPanel#MyContentPanel(PopupBorder)}
-     */
-    @Deprecated
-    public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
-      this(border);
-      DeprecatedMethodException.report("Use com.intellij.ui.popup.AbstractPopup.MyContentPanel.MyContentPanel(com.intellij.ui.PopupBorder) instead");
-    }
-
     public MyContentPanel(@NotNull PopupBorder border) {
       super(new BorderLayout());
       MnemonicHelper.init(this);

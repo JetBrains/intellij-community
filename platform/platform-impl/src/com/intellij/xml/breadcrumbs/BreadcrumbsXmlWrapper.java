@@ -11,8 +11,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author spleaner
  */
@@ -22,11 +20,6 @@ public class BreadcrumbsXmlWrapper extends BreadcrumbsPanel {
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     super(editor);
     myFile = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
-  }
-
-  @Deprecated
-  public JComponent getComponent() {
-    return this;
   }
 
   @Nullable

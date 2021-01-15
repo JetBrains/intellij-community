@@ -915,9 +915,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
     final String pattern = patternToLowerCase(transformPattern(text));
     final Matcher matcher = buildPatternMatcher(isSearchInAnyPlace() ? "*" + pattern : pattern);
-    if (cellRenderer instanceof MatcherHolder) {
-      ((MatcherHolder)cellRenderer).setPatternMatcher(matcher);
-    }
     MatcherHolder.associateMatcher(myList, matcher);
 
     scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, pos, elements -> {

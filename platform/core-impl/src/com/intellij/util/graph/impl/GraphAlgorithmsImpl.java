@@ -11,10 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class GraphAlgorithmsImpl extends GraphAlgorithms {
-  @Override
-  public <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish) {
-    return findShortestPath((InboundSemiGraph<Node>)graph, start, finish);
-  }
 
   @Nullable
   @Override

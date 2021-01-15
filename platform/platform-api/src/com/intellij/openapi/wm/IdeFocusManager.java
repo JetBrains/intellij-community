@@ -186,20 +186,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
     return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
   }
 
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  public @NotNull FocusRequestor getFurtherRequestor() {
-    return new FocusRequestor() {
-      @Override
-      public @NotNull ActionCallback requestFocus(@NotNull Component c, boolean forced) {
-        return ActionCallback.REJECTED;
-      }
-
-      @Override
-      public void dispose() {}
-    };
-  }
-
   public static @NotNull IdeFocusManager getGlobalInstance() {
     IdeFocusManager focusManager = null;
 

@@ -419,12 +419,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   }
 
   @Override
-  public void addProjectManagerListener(final @NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable) {
-    addProjectManagerListener(listener);
-    Disposer.register(parentDisposable, () -> removeProjectManagerListener(listener));
-  }
-
-  @Override
   public void removeProjectManagerListener(@NotNull ProjectManagerListener listener) {
     boolean removed = myListeners.remove(listener);
     LOG.assertTrue(removed);

@@ -14,16 +14,6 @@ public abstract class TestStatusListener {
     testSuiteFinished(root);
   }
 
-  /**
-   * @deprecated use {@link #notifySuiteFinished(AbstractTestProxy, Project)}
-   */
-  @Deprecated
-  public static void notifySuiteFinished(AbstractTestProxy root) {
-    for (TestStatusListener statusListener : EP_NAME.getExtensionList()) {
-      statusListener.testSuiteFinished(root);
-    }
-  }
-
   public static void notifySuiteFinished(@Nullable AbstractTestProxy root, Project project) {
     for (TestStatusListener statusListener : EP_NAME.getExtensionList()) {
       statusListener.testSuiteFinished(root, project);

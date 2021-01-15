@@ -120,14 +120,6 @@ public final class LookupElementBuilder extends LookupElement {
                              myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withRenderer(LookupElementRenderer)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setRenderer(@Nullable LookupElementRenderer<LookupElement> renderer) {
-    return withRenderer(renderer);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withRenderer(@Nullable LookupElementRenderer<LookupElement> renderer) {
     return cloneWithUserData(myLookupString, myObject, myInsertHandler, renderer, myExpensiveRenderer, myHardcodedPresentation,
@@ -174,14 +166,6 @@ public final class LookupElementBuilder extends LookupElement {
     return presentation;
   }
 
-  /**
-   * @deprecated use {@link #withLookupString(String)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder addLookupString(@NotNull String another) {
-    return withLookupString(another);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withLookupString(@NotNull String another) {
     final Set<String> set = new HashSet<>(myAllLookupStrings);
@@ -204,14 +188,6 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   /**
-   * @deprecated use {@link #withCaseSensitivity(boolean)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setCaseSensitive(boolean caseSensitive) {
-    return withCaseSensitivity(caseSensitive);
-  }
-  /**
    * @param caseSensitive if this lookup item should be completed in the same letter case as prefix
    * @return modified builder
    * @see com.intellij.codeInsight.completion.CompletionResultSet#caseInsensitive()
@@ -232,14 +208,6 @@ public final class LookupElementBuilder extends LookupElement {
                              myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withItemTextForeground(Color)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setItemTextForeground(@NotNull Color itemTextForeground) {
-    return withItemTextForeground(itemTextForeground);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withItemTextForeground(@NotNull Color itemTextForeground) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -248,14 +216,6 @@ public final class LookupElementBuilder extends LookupElement {
                              myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withItemTextUnderlined(boolean)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setItemTextUnderlined(boolean underlined) {
-    return withItemTextUnderlined(underlined);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withItemTextUnderlined(boolean underlined) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -283,15 +243,6 @@ public final class LookupElementBuilder extends LookupElement {
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withTypeText(@Nullable String typeText) {
     return withTypeText(typeText, false);
-  }
-
-  /**
-   * @deprecated use {@link #withTypeText(String, boolean)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setTypeText(@Nullable String typeText, boolean grayed) {
-    return withTypeText(typeText, grayed);
   }
 
   @Contract(pure=true)
@@ -331,27 +282,11 @@ public final class LookupElementBuilder extends LookupElement {
                              myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #bold()}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setBold() {
-    return bold();
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder bold() {
     return withBoldness(true);
   }
 
-  /**
-   * @deprecated use {@link #withBoldness(boolean)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setBold(boolean bold) {
-    return withBoldness(bold);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withBoldness(boolean bold) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -360,27 +295,11 @@ public final class LookupElementBuilder extends LookupElement {
                              myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #strikeout()}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setStrikeout() {
-    return strikeout();
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder strikeout() {
     return withStrikeoutness(true);
   }
 
-  /**
-   * @deprecated use {@link #withStrikeoutness(boolean)}
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setStrikeout(boolean strikeout) {
-    return withStrikeoutness(strikeout);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withStrikeoutness(boolean strikeout) {
     final LookupElementPresentation presentation = copyPresentation();

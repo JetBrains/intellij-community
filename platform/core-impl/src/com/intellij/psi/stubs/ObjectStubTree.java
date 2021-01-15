@@ -47,12 +47,6 @@ public class ObjectStubTree<T extends Stub> {
     return getPlainList();
   }
 
-  @Deprecated
-  @ApiStatus.Internal
-  public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree() {
-    return indexStubTree(null);
-  }
-
   @ApiStatus.Internal
   public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@Nullable Function<StubIndexKey<?, ?>, Hash.Strategy<Object>> keyHashingStrategyFunction) {
     StubIndexSink sink = new StubIndexSink(keyHashingStrategyFunction);

@@ -193,13 +193,6 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
-   */
-  @Deprecated
-  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
-  }
-
-  /**
    * Removes specified {@code listener}
    *
    * @param listener listener to be removed

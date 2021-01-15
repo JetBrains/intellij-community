@@ -71,21 +71,6 @@ public final class DarculaUIUtil {
     public abstract void setGraphicsColor(Graphics2D g, boolean focused);
   }
 
-  /**
-   * @deprecated use {@link #paintFocusBorder(Graphics2D, int, int, float, boolean)}
-   */
-  @Deprecated
-  public static void paintFocusRing(Graphics g, Rectangle r) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
-      g2.translate(r.x, r.y);
-      paintFocusBorder(g2, r.width, r.height, COMPONENT_ARC.getFloat(), true);
-    }
-    finally {
-      g2.dispose();
-    }
-  }
-
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
     Outline.focus.setGraphicsColor(g, true);
 
@@ -104,14 +89,6 @@ public final class DarculaUIUtil {
     float inner = height - bw * 2;
     border.append(new RoundRectangle2D.Float(bw, bw, width - bw * 2, inner, inner, inner), false);
     g2.fill(border);
-  }
-
-  /**
-   * @deprecated use {@link #paintOutlineBorder(Graphics2D, int, int, float, boolean, boolean, DarculaUIUtil.Outline)}
-   */
-  @Deprecated
-  public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean symmetric, boolean hasFocus) {
-    paintOutlineBorder(g, width, height, arc, symmetric, hasFocus, Outline.error);
   }
 
   public static void paintOutlineBorder(Graphics2D g, int width, int height, float arc, boolean symmetric, boolean hasFocus, Outline type) {
@@ -261,38 +238,6 @@ public final class DarculaUIUtil {
   public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
 
-  /**
-   * @deprecated use {@link #LW}.get() instead
-   */
-  @Deprecated
-  public static float lw(Graphics2D g2) {
-    return JBUIScale.scale(1.0f);
-  }
-
-  /**
-   * @deprecated use {@link #BW}.get() instead
-   */
-  @Deprecated
-  public static float bw() {
-    return BW.getFloat();
-  }
-
-  /**
-   * @deprecated use {@link #COMPONENT_ARC}.getFloat() instead
-   */
-  @Deprecated
-  public static float arc() {
-    return COMPONENT_ARC.getFloat();
-  }
-
-  /**
-   * @deprecated use {@link #BUTTON_ARC}.get() instead
-   */
-  @Deprecated
-  public static float buttonArc() {
-    return BUTTON_ARC.get();
-  }
-
   public static Insets paddings() {
     return JBUI.insets(1);
   }
@@ -302,22 +247,6 @@ public final class DarculaUIUtil {
            focused ? JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA)) :
            JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF)) :
            JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
-  }
-
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Arrow#backgroundColor(boolean, boolean)}
-   */
-  @Deprecated
-  public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
-    return JBUI.CurrentTheme.Arrow.backgroundColor(enabled, editable);
-  }
-
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Arrow#foregroundColor(boolean)}
-   */
-  @Deprecated
-  public static Color getArrowButtonForegroundColor(boolean enabled) {
-    return JBUI.CurrentTheme.Arrow.foregroundColor(enabled);
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {

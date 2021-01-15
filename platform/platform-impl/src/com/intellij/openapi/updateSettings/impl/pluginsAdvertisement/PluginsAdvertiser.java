@@ -245,14 +245,6 @@ public final class PluginsAdvertiser {
     public boolean myBundled;
     public boolean myFromCustomRepository;
 
-    /**
-     * @deprecated Please use {@link #Plugin(String, String, boolean)}
-     */
-    @Deprecated
-    public Plugin(PluginId pluginId, String pluginName, boolean bundled) {
-      this(pluginId.getIdString(), pluginName, bundled);
-    }
-
     public Plugin(String pluginId, String pluginName, boolean bundled) {
       myPluginId = pluginId;
       myBundled = bundled;

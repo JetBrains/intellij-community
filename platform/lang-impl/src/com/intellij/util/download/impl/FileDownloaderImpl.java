@@ -359,10 +359,4 @@ class FileDownloaderImpl implements FileDownloader {
     List<VirtualFile> files = downloadFilesWithProgress(myDirectoryForDownloadedFilesPath, myProject, myParentComponent);
     return files != null ? VfsUtilCore.toVirtualFileArray(files) : null;
   }
-
-  @Nullable
-  @Override
-  public List<Pair<VirtualFile, DownloadableFileDescription>> downloadAndReturnWithDescriptions() {
-    return downloadWithProgress(myDirectoryForDownloadedFilesPath, myProject, myParentComponent);
-  }
 }

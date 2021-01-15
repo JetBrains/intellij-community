@@ -2,10 +2,6 @@
   <extensionPoints>
     <extensionPoint name="severitiesProvider"
                     interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
-    <extensionPoint name="completionData"
-                    beanClass="com.intellij.codeInsight.completion.CompletionDataEP">
-      <with attribute="className" implements="com.intellij.codeInsight.completion.CompletionData"/>
-    </extensionPoint>
 
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger" dynamic="true"/>
     <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>

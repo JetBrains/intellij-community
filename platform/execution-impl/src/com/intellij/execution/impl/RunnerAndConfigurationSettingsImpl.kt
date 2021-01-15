@@ -55,10 +55,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   private var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE
 ) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
 
-  @Deprecated("isSingleton parameter removed", level = DeprecationLevel.ERROR)
-  @Suppress("UNUSED_PARAMETER")
-  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean, isSingleton: Boolean) : this(manager, configuration, isTemplate)
-
   init {
     (_configuration as? PersistentAwareRunConfiguration)?.setTemplate(isTemplate)
   }

@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.Pass;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -45,12 +44,6 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
   public InplaceButton(IconButton source, ActionListener listener) {
     this(source, listener, (Consumer<? super MouseEvent>)null, TimedDeadzone.DEFAULT);
-  }
-
-  /** @deprecated use {@link #InplaceButton(IconButton, ActionListener, Consumer, TimedDeadzone.Length)} */
-  @Deprecated
-  public InplaceButton(IconButton source, ActionListener listener, Pass<? super MouseEvent> pass, TimedDeadzone.Length mouseDeadzone) {
-    this(source, listener, (Consumer<? super MouseEvent>)pass, mouseDeadzone);
   }
 
   public InplaceButton(IconButton source, ActionListener listener, Consumer<? super MouseEvent> consumer, TimedDeadzone.Length mouseDeadzone) {

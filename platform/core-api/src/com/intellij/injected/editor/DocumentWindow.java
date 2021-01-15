@@ -21,14 +21,6 @@ public interface DocumentWindow extends Document {
   @NotNull
   Document getDelegate();
 
-  /**
-   * @deprecated use {@link #injectedToHost(int)} instead
-   */
-  @Deprecated
-  default int hostToInjectedUnescaped(int hostOffset) {
-    return injectedToHost(hostOffset);
-  }
-
   int injectedToHost(int injectedOffset);
 
   /**

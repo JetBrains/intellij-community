@@ -539,7 +539,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
     /**
-     * Returns the default font scale, which depends on the HiDPI mode (see JBUI#ScaleType).
+     * Returns the default font scale, which depends on the HiDPI mode (see [com.intellij.ui.scale.ScaleType]).
      * <p>
      * The font is represented:
      * - in relative (dpi-independent) points in the JRE-managed HiDPI mode, so the method returns 1.0f

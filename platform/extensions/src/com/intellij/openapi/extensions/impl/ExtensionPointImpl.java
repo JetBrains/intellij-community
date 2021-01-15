@@ -852,11 +852,6 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   @Override
-  public final void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    addExtensionPointListener(listener, true, null);
-  }
-
-  @Override
   public final void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener,
                                               boolean invokeForLoadedExtensions,
                                               @Nullable Disposable parentDisposable) {

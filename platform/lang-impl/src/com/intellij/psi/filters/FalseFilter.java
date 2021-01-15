@@ -18,13 +18,9 @@ package com.intellij.psi.filters;
 import com.intellij.psi.PsiElement;
 
 public class FalseFilter implements ElementFilter {
-  public static final FalseFilter INSTANCE = new FalseFilter(true);
+  public static final FalseFilter INSTANCE = new FalseFilter();
 
-  /** @deprecated use {@link #INSTANCE} */
-  @Deprecated
-  public FalseFilter() { }
-
-  private FalseFilter(@SuppressWarnings("unused") boolean b) { }
+  private FalseFilter() {}
 
   @Override
   public boolean isClassAcceptable(Class hintClass) {

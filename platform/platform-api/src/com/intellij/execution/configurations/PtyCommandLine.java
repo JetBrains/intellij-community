@@ -67,38 +67,6 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   public PtyCommandLine() { }
 
-  /**
-   * @deprecated use {@link #withUseCygwinLaunch(boolean)}
-   */
-  @Deprecated
-  public void setUseCygwinLaunch(boolean useCygwinLaunch) {
-    withUseCygwinLaunch(useCygwinLaunch);
-  }
-
-  /**
-   * @deprecated use {@link #withConsoleMode(boolean)}
-   */
-  @Deprecated
-  public void setConsoleMode(boolean consoleMode) {
-    withConsoleMode(consoleMode);
-  }
-
-  /**
-   * @deprecated use {@link #withInitialColumns(int)}
-   */
-  @Deprecated
-  public void setInitialColumns(int initialColumns) {
-    withInitialColumns(initialColumns);
-  }
-
-  /**
-   * @deprecated use {@link #withInitialRows(int)}
-   */
-  @Deprecated
-  public void setInitialRows(int initialRows) {
-    withInitialRows(initialRows);
-  }
-
   public PtyCommandLine withUseCygwinLaunch(boolean useCygwinLaunch) {
     myUseCygwinLaunch = useCygwinLaunch;
     return this;

@@ -53,7 +53,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
   }
 
   @Synchronized
-  override fun unregisterFacetType(facetType: FacetType<*, *>) {
+  private fun unregisterFacetType(facetType: FacetType<*, *>) {
     val id = facetType.id
     val stringId = facetType.stringId
     LOG.assertTrue(myFacetTypes.remove(id) != null, "Facet type '$stringId' is not registered")

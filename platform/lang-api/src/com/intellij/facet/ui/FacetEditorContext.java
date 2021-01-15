@@ -17,8 +17,6 @@
 package com.intellij.facet.ui;
 
 import com.intellij.facet.Facet;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -42,13 +40,6 @@ public interface FacetEditorContext extends UserDataHolder {
 
   @Nullable
   Library findLibrary(@NotNull String name);
-
-  /**
-   * @deprecated always {@code null}
-   */
-  @Deprecated
-  @Nullable
-  ModuleBuilder getModuleBuilder();
 
   boolean isNewFacet();
 
@@ -74,13 +65,6 @@ public interface FacetEditorContext extends UserDataHolder {
   ModuleRootModel getRootModel();
 
   Library[] getLibraries();
-
-  /**
-   * @deprecated always {@code null}
-   */
-  @Deprecated
-  @Nullable
-  WizardContext getWizardContext();
 
   Library createProjectLibrary(@NonNls String name, final VirtualFile[] roots, final VirtualFile[] sources);
 

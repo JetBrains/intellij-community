@@ -156,11 +156,6 @@ abstract class Row : Cell(), RowBuilder {
   operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
     invoke(constraints = *constraints, growPolicy = growPolicy).withLeftGap(gapLeft)
   }
-
-  @Deprecated(level = DeprecationLevel.ERROR,
-              message = "Do not create standalone panel, if you want layout components in vertical flow mode, use cell(isVerticalFlow = true)")
-  fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit) {
-  }
 }
 
 enum class GrowPolicy {

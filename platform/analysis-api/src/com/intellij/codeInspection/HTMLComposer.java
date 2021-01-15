@@ -43,14 +43,6 @@ public abstract class HTMLComposer {
     buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
   }
 
-  /**
-   * @deprecated Use CSS for indentations
-   */
-  @Deprecated
-  public static void appendAfterHeaderIndention(@NonNls StringBuffer buf) {
-    buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-  }
-
   public abstract void appendNoProblems(@NotNull StringBuilder buf);
 
   public abstract <T> T getExtension(Key<T> key);

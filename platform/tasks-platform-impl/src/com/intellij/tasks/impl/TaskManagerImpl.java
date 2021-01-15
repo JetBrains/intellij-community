@@ -231,11 +231,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     myDispatcher.addListener(listener, parentDisposable);
   }
 
-  @Override
-  public void removeTaskListener(TaskListener listener) {
-    myDispatcher.removeListener(listener);
-  }
-
   @NotNull
   @Override
   public LocalTask getActiveTask() {

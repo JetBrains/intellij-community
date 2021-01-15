@@ -862,13 +862,6 @@ public abstract class DialogWrapper {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
   }
 
-  /** @deprecated Dialogs with no parents are discouraged. */
-  @Deprecated
-  @NotNull
-  protected DialogWrapperPeer createPeer(boolean canBeParent, boolean applicationModalIfPossible) {
-    return createPeer(null, canBeParent, applicationModalIfPossible);
-  }
-
   @NotNull
   protected DialogWrapperPeer createPeer(Window owner, boolean canBeParent, IdeModalityType ideModalityType) {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, ideModalityType);

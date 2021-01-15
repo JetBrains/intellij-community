@@ -59,13 +59,6 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test add os data`() {
-    val build = FeatureUsageData().addOS().build()
-    Assert.assertTrue(build.size == 1)
-    Assert.assertTrue(build.containsKey("os"))
-  }
-
-  @Test
   fun `test add null place`() {
     val build = FeatureUsageData().addPlace(null).build()
     Assert.assertTrue(build.isEmpty())

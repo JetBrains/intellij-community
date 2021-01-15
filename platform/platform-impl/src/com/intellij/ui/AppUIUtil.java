@@ -28,7 +28,6 @@ import com.intellij.util.*;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -279,13 +278,6 @@ public final class AppUIUtil {
     }
 
     return iconPath;
-  }
-
-  /** @deprecated use {@link #showConsentsAgreementIfNeeded(Logger)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
-    return showConsentsAgreementIfNeeded(log);
   }
 
   public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {

@@ -169,7 +169,3 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
   }
 }
 
-@Deprecated("Use StatisticsEventEscaper#escape", ReplaceWith("StatisticsEventEscaper.escape(str)"))
-fun escape(str: String): String {
-  return StatisticsEventEscaper.escape(str)
-}

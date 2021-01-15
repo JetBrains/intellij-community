@@ -93,15 +93,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myDumbService = DumbService.getInstance(myManager.getProject());
   }
 
-  /**
-   * @deprecated Use {@link #PsiSearchHelperImpl(Project)}
-   */
-  @Deprecated
-  public PsiSearchHelperImpl(@NotNull PsiManagerEx psiManager) {
-    myManager = psiManager;
-    myDumbService = DumbService.getInstance(myManager.getProject());
-  }
-
   @Override
   public PsiElement @NotNull [] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
     List<PsiElement> result = Collections.synchronizedList(new ArrayList<>());

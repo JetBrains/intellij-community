@@ -30,7 +30,6 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,15 +79,6 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myLocationString = locationString;
     myPresentableText = presentableText;
     myAttributesKey = attributesKey;
-  }
-
-  /**
-   * @deprecated Use {@link #PresentationData(String, String, Icon, TextAttributesKey)} instead.
-   */
-  @Deprecated
-  public PresentationData(@Nls String presentableText, String locationString, Icon openIcon, Icon closedIcon,
-                          @Nullable TextAttributesKey attributesKey) {
-    this(presentableText, locationString, closedIcon, attributesKey);
   }
 
 

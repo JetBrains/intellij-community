@@ -281,20 +281,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                  preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
     }
 
-    /** @deprecated Use {@link ActionPopupStep#createActionItems(ActionGroup, DataContext, boolean, boolean, boolean, boolean, String, PresentationFactory)} instead. */
-    @Deprecated
-    @NotNull
-    public static List<ActionItem> getActionItems(@NotNull ActionGroup actionGroup,
-                                                  @NotNull DataContext dataContext,
-                                                  boolean showNumbers,
-                                                  boolean useAlphaAsNumbers,
-                                                  boolean showDisabledActions,
-                                                  boolean honorActionMnemonics,
-                                                  @Nullable String actionPlace) {
-      return ActionPopupStep.createActionItems(
-        actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, null);
-    }
-
     @Override
     public void dispose() {
       if (myDisposeCallback != null) {

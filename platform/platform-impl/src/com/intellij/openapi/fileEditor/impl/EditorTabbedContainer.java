@@ -337,20 +337,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     return EditorTabPresentationUtil.getEditorTabTitle(project, file, null);
   }
 
-  /** @deprecated Use {@link EditorTabPresentationUtil#getUniqueEditorTabTitle(Project, VirtualFile, EditorWindow)} */
-  @Deprecated
-  @NotNull
-  public static String calcFileName(@NotNull Project project, @NotNull VirtualFile file) {
-    return EditorTabPresentationUtil.getUniqueEditorTabTitle(project, file, null);
-  }
-
-  /** @deprecated Use {@link EditorTabPresentationUtil#getEditorTabBackgroundColor(Project, VirtualFile, EditorWindow)} */
-  @Deprecated
-  @Nullable
-  public static Color calcTabColor(@NotNull Project project, @NotNull VirtualFile file) {
-    return EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file, null);
-  }
-
   public Component getComponentAt(int i) {
     TabInfo tab = myTabs.getTabAt(i);
     return tab.getComponent();

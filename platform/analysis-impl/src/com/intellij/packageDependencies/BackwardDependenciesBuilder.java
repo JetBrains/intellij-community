@@ -62,7 +62,6 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     return AnalysisBundle.message("backward.dependencies.usage.view.initial.text");
   }
 
-  @Override
   public AnalysisScope getScopeOfInterest() {
     return myScopeOfInterest;
   }

@@ -322,12 +322,6 @@ final class ProgressDialog implements Disposable {
 
     @NotNull
     @Override
-    protected DialogWrapperPeer createPeer(final boolean canBeParent, final boolean applicationModalIfPossible) {
-      return createPeer(null, canBeParent, applicationModalIfPossible);
-    }
-
-    @NotNull
-    @Override
     protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
       if (useLightPopup()) {
         try {

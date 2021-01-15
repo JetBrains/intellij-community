@@ -584,15 +584,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     private final IndentOptionsEditor myEditor;
     private final JPanel myTopPanel = new JPanel(new BorderLayout());
 
-    /**
-     * @deprecated Use {@link #MyIndentOptionsWrapper(CodeStyleSettings, IndentOptionsEditor)}
-     */
-    @SuppressWarnings("unused")
-    @Deprecated
-    protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider, IndentOptionsEditor editor) {
-      this(settings, editor);
-    }
-
     protected MyIndentOptionsWrapper(CodeStyleSettings settings, IndentOptionsEditor editor) {
       super(settings);
       JPanel leftPanel = new JPanel(new BorderLayout());

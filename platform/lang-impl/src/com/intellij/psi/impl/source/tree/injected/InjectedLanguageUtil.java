@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.BooleanRunnable;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -309,20 +308,6 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
                                                  @Nullable T value) {
     PsiFile file = getCachedInjectedFileWithLanguage(element, language);
     if (file != null) {
-      file.putUserData(key, value);
-    }
-  }
-
-  /**
-   * @deprecated use {@link #putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
-   */
-  @Deprecated
-  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
-    DeprecatedMethodException.report("use putInjectedFileUserData(PsiElement, Language, Key, Object)} instead");
-    InjectionResult result = ((InjectionRegistrarImpl)registrar).getInjectedResult();
-    if (result != null && result.files != null) {
-      List<? extends PsiFile> files = result.files;
-      PsiFile file = files.get(files.size() - 1);
       file.putUserData(key, value);
     }
   }

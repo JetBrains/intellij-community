@@ -290,23 +290,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;
   }
 
-  /**
-   * See {@link CommandProcessor#executeCommand(Project, Runnable, String, Object, UndoConfirmationPolicy, boolean)} for details.
-   *
-   * @deprecated Use {@link #writeCommandAction(Project)}.shouldRecordActionForActiveDocument() instead
-   */
-  @Deprecated
-  protected boolean shouldRecordActionForActiveDocument() {
-    return true;
-  }
-
   private void doExecuteCommand(@NotNull Runnable runnable) {
     Runnable wrappedRunnable = () -> {
       if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(getProject());
       runnable.run();
     };
     CommandProcessor.getInstance().executeCommand(getProject(), wrappedRunnable, getCommandName(), getGroupID(),
-                                                  getUndoConfirmationPolicy(), shouldRecordActionForActiveDocument());
+                                                  getUndoConfirmationPolicy(), true);
   }
 
   /**

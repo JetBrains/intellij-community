@@ -69,23 +69,6 @@ public class CheckboxTreeBase extends Tree {
     myHelper.initTree(this, this, cellRenderer);
   }
 
-  /**
-   * @deprecated use {@link #setNodeState} to change node state or subscribe to {@link #addCheckboxTreeListener} to get notifications about state changes
-   */
-  @Deprecated
-  protected boolean toggleNode(CheckedTreeNode node) {
-    setNodeState(node, !node.isChecked());
-    return node.isChecked();
-  }
-
-  /**
-   * @deprecated use {@link #setNodeState} to change node state or subscribe to {@link #addCheckboxTreeListener} to get notifications about state changes
-   */
-  @Deprecated
-  protected void checkNode(CheckedTreeNode node, boolean checked) {
-    setNodeState(node, checked);
-  }
-
   public void setNodeState(@NotNull CheckedTreeNode node, boolean checked) {
     myHelper.setNodeState(this, node, checked);
   }
