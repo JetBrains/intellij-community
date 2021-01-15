@@ -397,8 +397,10 @@ public final class PluginManagerMain {
     notification.addAction(new NotificationAction(action) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        ApplicationManagerEx.getApplicationEx().restart(true);
+        if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
+          notification.expire();
+          ApplicationManagerEx.getApplicationEx().restart(true);
+        }
       }
     });
     notification.notify(project);
