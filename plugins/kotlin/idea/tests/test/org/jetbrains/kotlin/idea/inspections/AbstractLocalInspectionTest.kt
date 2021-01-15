@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.SystemInfo
@@ -144,7 +143,6 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val inspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
         val inspectionProfile = inspectionProfileManager.currentProfile
         val state = inspectionProfile.getToolDefaultState(inspection.shortName, project)
-        val originalLevel = state.level
         state.level = HighlightDisplayLevel.WARNING
 
         if (inspectionSettings != null) {
@@ -171,18 +169,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 "Expected at least one problem at caret",
             problemExpected == highlightInfos.isNotEmpty()
         )
+
         if (!problemExpected || highlightInfos.isEmpty()) return false
-        if (originalLevel != HighlightDisplayLevel.DO_NOT_SHOW) {
-            highlightInfos
-                .filter { it.type != HighlightInfoType.INFORMATION }
-                .forEach {
-                    val description = it.description
-                    Assert.assertTrue(
-                        "Problem description should not contain 'can': $description",
-                        " can " !in description
-                    )
-                }
-        }
 
         if (expectedProblemString != null) {
             Assert.assertTrue(
