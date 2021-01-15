@@ -39,15 +39,6 @@ public class ContainerUtil {
     return new HashMap<>();
   }
 
-  /**
-   * @deprecated Use {@link HashMap#HashMap(Map)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new HashMap<>(map);
-  }
-
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, Pair<? extends K,? extends V> @NotNull ... entries) {
@@ -73,39 +64,12 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link TreeMap#TreeMap()}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
-    return new TreeMap<>();
-  }
-
-  /**
-   * @deprecated Use {@link TreeMap#TreeMap(Map)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new TreeMap<>(map);
-  }
-
-  /**
    * @deprecated Use {@link LinkedHashMap#LinkedHashMap()}
    */
   @Contract(pure = true)
   @Deprecated
   public static @NotNull <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return new LinkedHashMap<>();
-  }
-
-  /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new LinkedHashMap<>(map);
   }
 
   @SafeVarargs
@@ -117,15 +81,6 @@ public class ContainerUtil {
       map.put(entry.getFirst(), entry.getSecond());
     }
     return map;
-  }
-
-  /**
-   * @deprecated Use {@link THashMap#THashMap(Map)}
-   */
-  @Deprecated
-  @Contract(pure = true)
-  public static @NotNull <K, V> THashMap<K, V> newTroveMap() {
-    return new THashMap<>();
   }
 
   /**
@@ -309,15 +264,6 @@ public class ContainerUtil {
     return new HashSet<>();
   }
 
-  /**
-   * @deprecated Use {@link HashSet#HashSet(int)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <T> HashSet<T> newHashSet(int initialCapacity) {
-    return new HashSet<>(initialCapacity);
-  }
-
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(T @NotNull ... elements) {
@@ -412,15 +358,6 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link THashSet#THashSet(Collection)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <T> THashSet<T> newTroveSet(@NotNull Collection<? extends T> elements) {
-    return new THashSet<>(elements);
-  }
-
-  /**
    * @deprecated Use {@link it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap}
    */
   @Deprecated
@@ -436,15 +373,6 @@ public class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return new TreeSet<>();
-  }
-
-  /**
-   * @deprecated Use {@link TreeSet#TreeSet(Comparator)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
-    return new TreeSet<>(comparator);
   }
 
   @Contract(pure = true)
@@ -858,15 +786,6 @@ public class ContainerUtil {
       set.add(value);
     }
     return hashMap;
-  }
-
-  /**
-   * @deprecated Use {@link Collections#emptyIterator()} instead
-   */
-  @Deprecated
-  @Contract(pure = true)
-  public static @NotNull <T> Iterator<T> emptyIterator() {
-    return Collections.emptyIterator();
   }
 
   /**

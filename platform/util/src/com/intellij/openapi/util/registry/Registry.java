@@ -231,12 +231,4 @@ public final class Registry  {
     ourInstance.myContributedKeys.remove(key);
     ourInstance.myValues.remove(key);
   }
-
-  /**
-   * @deprecated Use extension point `com.intellij.registryKey`.
-   */
-  @Deprecated
-  public static synchronized void addKey(@NonNls @NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
-    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, Integer.toString(defaultValue), restartRequired, null));
-  }
 }

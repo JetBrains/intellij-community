@@ -58,9 +58,6 @@ fun HttpResponse.addKeepAliveIfNeeded(request: HttpRequest): Boolean {
   return false
 }
 
-@Deprecated("The method name is grammatically incorrect", replaceWith = ReplaceWith("this.addKeepAliveIfNeeded(request)"))
-fun HttpResponse.addKeepAliveIfNeed(request: HttpRequest): Boolean = addKeepAliveIfNeeded(request)
-
 fun HttpResponse.addCommonHeaders() {
   if (!headers().contains(HttpHeaderNames.DATE)) {
     headers().set(HttpHeaderNames.DATE, Calendar.getInstance().time)
