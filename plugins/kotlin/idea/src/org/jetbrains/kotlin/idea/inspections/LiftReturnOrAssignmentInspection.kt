@@ -64,10 +64,9 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
                 highlightType: ProblemHighlightType = if (isSerious) GENERIC_ERROR_OR_WARNING else INFORMATION
             ) {
                 val subject = if (fix is LiftReturnOutFix) KotlinBundle.message("text.Return") else KotlinBundle.message("text.Assignment")
-                val verb = if (isSerious) KotlinBundle.message("text.should") else KotlinBundle.message("text.can")
                 holder.registerProblemWithoutOfflineInformation(
                     expression,
-                    KotlinBundle.message("0.1.be.lifted.out.of.2", subject, verb, keyword.text),
+                    KotlinBundle.message("0.1.be.lifted.out.of.2", subject, keyword.text),
                     isOnTheFly,
                     highlightType,
                     highlightElement.textRange?.shiftRight(-expression.startOffset),
