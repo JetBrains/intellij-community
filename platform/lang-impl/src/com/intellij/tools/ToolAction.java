@@ -21,11 +21,22 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
+import static com.intellij.openapi.actionSystem.LangDataKeys.MODULE;
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.PROJECT_FILE_DIRECTORY;
 
 /**
  * @author Eugene Belyaev
@@ -77,7 +88,7 @@ public class ToolAction extends AnAction implements DumbAware {
                       @Nullable ProcessListener processListener) {
     Tool tool = findTool(actionId, context);
     if (tool != null) {
-      tool.execute(e, new HackyDataContext(context), executionId, processListener);
+      tool.execute(e, getToolDataContext(context), executionId, processListener);
     } else {
       Tool.notifyCouldNotStart(processListener);
     }
@@ -87,5 +98,23 @@ public class ToolAction extends AnAction implements DumbAware {
   @Override
   public String getTemplateText() {
     return ToolsBundle.message("action.text.external.tool");
+  }
+
+  @NotNull
+  public static DataContext getToolDataContext(@NotNull DataContext dataContext) {
+    SimpleDataContext.Builder builder = SimpleDataContext.builder();
+    for (DataKey<?> key : ContainerUtil.ar(
+      PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE)) {
+      //noinspection unchecked
+      builder.add((DataKey<Object>)key, dataContext.getData(key));
+    }
+    VirtualFile virtualFile = dataContext.getData(VIRTUAL_FILE);
+    if (virtualFile == null) {
+      Project project = dataContext.getData(PROJECT);
+      FileEditor editor = project == null ? null : FileEditorManager.getInstance(project).getSelectedEditor();
+      VirtualFile editorFile = editor == null ? null : editor.getFile();
+      builder.add(VIRTUAL_FILE, editorFile);
+    }
+    return builder.noUI().build();
   }
 }
