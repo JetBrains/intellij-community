@@ -33,14 +33,8 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.StripeTable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.pom.Navigatable;
@@ -61,6 +55,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
+import icons.PlatformImplIcons;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
@@ -100,6 +95,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
+  private static final Icon KotlinLogo = IconLoader.getIcon("/com/intellij/internal/inspector/kotlin.svg", UiInspectorAction.class);
   private UiInspector myInspector;
 
   public UiInspectorAction() {
@@ -489,7 +485,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
           append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         componentNode.setText(toString());
-        setIcon(createColorIcon(component.getBackground(), component.getForeground()));
+        setIcon(UiInspectorIcons.findIconFor(component));
       }
       if (value instanceof HierarchyTree.ClickInfoNode) {
         append(value.toString());
@@ -1288,6 +1284,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
     return JBUIScale.scaleIcon(new ColorsIcon(11, color1, color2));
   }
 
+  private static Icon createComponentIcon(Component component) {
+    return UiInspectorIcons.findIconFor(component);
+  }
 
   private static class InspectorTableModel extends AbstractTableModel {
 
@@ -2073,5 +2072,66 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
       return "ArrayTable!";
     }
     throw new UnsupportedOperationException(type.toString());
+  }
+
+  static class UiInspectorIcons {
+    private static final Map<Class<?>, Icon> COMPONENT_MAPPING = new HashMap<>();
+    private static @NotNull Icon load(@NotNull String path) {
+      return load(path, null);
+    }
+
+    private static @NotNull Icon load(@NotNull String path, Class<?> cls) {
+      Icon icon = IconLoader.getIcon("com/intellij/internal/inspector/icons/" + path, UiInspectorAction.class);
+      if (cls != null) {
+        COMPONENT_MAPPING.put(cls, icon);
+      }
+      return icon;
+    }
+    static {
+      load("button.svg", JButton.class);
+      load("checkBox.svg", JCheckBox.class);
+      load("comboBox.svg", JComboBox.class);
+      load("editorPane.svg", JEditorPane.class);
+      load("formattedTextField.svg", JFormattedTextField.class);
+      load("label.svg", JLabel.class);
+      load("list.svg", JList.class);
+      load("panel.svg", JPanel.class);
+      load("passwordField.svg", JPasswordField.class);
+      load("progressbar.svg", JProgressBar.class);
+      load("radioButton.svg", JRadioButton.class);
+      load("scrollbar.svg", JScrollBar.class);
+      load("scrollPane.svg", JScrollPane.class);
+      load("separator.svg", JSeparator.class);
+      load("slider.svg", JSlider.class);
+      load("spinner.svg", JSpinner.class);
+      load("splitPane.svg", JSplitPane.class);
+      load("tabbedPane.svg", JTabbedPane.class);
+      load("table.svg", JTable.class);
+      load("textArea.svg", JTextArea.class);
+      load("textField.svg", JTextField.class);
+      load("textPane.svg", JTextPane.class);
+      load("toolbar.svg", JToolBar.class);
+      //load("toolbarSeparator.svg");
+      load("tree.svg", JTree.class);
+    }
+
+    static final @NotNull Icon Kotlin = load("kotlin.svg");
+    static final @NotNull Icon Unknown = load("unknown.svg");
+
+    public static Icon findIconFor(Component component) {
+      Class<?> aClass = component.getClass();
+      Icon icon = null;
+      while (icon == null && aClass != null) {
+        icon = COMPONENT_MAPPING.get(aClass);
+        aClass = aClass.getSuperclass();
+      }
+      if (icon == null) icon = Unknown;
+
+      if (ComponentUtil.findParentByCondition(component, (c) -> c.getClass() == DialogPanel.class) != null) {
+        Icon kotlinIcon = ((ScalableIcon)Kotlin).scale(0.5f);
+        return new RowIcon(icon, IconUtil.toSize(kotlinIcon, icon.getIconWidth(), icon.getIconHeight()));
+      }
+      return icon;
+    }
   }
 }
