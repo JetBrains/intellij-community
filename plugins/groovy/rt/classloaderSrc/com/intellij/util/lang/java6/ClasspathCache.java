@@ -29,11 +29,6 @@ public final class ClasspathCache {
     private final int[] myClassPackageHashes;
     private final NameFilter myNameFilter;
 
-    @Deprecated
-    LoaderData() {
-      this(new int[0], new int[0], new NameFilter(10000, PROBABILITY));
-    }
-
     LoaderData(@NotNull int[] resourcePackageHashes, @NotNull int[] classPackageHashes, @NotNull NameFilter nameFilter) {
       myResourcePackageHashes = resourcePackageHashes;
       myClassPackageHashes = classPackageHashes;

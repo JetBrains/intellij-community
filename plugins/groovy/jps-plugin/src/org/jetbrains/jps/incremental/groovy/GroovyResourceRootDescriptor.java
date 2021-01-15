@@ -4,7 +4,6 @@ package org.jetbrains.jps.incremental.groovy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -57,11 +56,6 @@ class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   @Override
   public File getRootFile() {
     return myDescriptor.getRootFile();
-  }
-
-  @Override
-  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
-    return myDescriptor.createFileFilter(descriptor);
   }
 
   @NotNull
