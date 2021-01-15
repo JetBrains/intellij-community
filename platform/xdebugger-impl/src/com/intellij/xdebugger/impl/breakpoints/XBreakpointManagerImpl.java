@@ -373,11 +373,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Override
-  public void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable) {
-    myProject.getMessageBus().connect(parentDisposable).subscribe(XBreakpointListener.TOPIC, listener);
-  }
-
-  @Override
   public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
     getDispatcher().addListener(listener);
   }

@@ -2,10 +2,7 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.*;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
@@ -224,11 +221,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   @Override
   public MarkObjectActionHandler getMarkObjectHandler() {
     return myMarkObjectActionHandler;
-  }
-
-  @Override
-  public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
-    return XDebuggerManager.getInstance(project).getCurrentSession();
   }
 
   @NotNull
