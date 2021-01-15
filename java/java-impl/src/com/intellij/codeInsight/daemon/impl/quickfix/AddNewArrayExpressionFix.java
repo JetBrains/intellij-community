@@ -70,6 +70,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
   }
 
   public void doFix() {
+    if (myType == null) return;
     Project project = myInitializer.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     @NonNls String text = "new " + myType.getCanonicalText() + "[]{}";
