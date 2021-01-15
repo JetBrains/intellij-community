@@ -106,10 +106,10 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
             BalloonLayoutData.MergeInfo mergeInfo = myLayoutData.mergeData;
             if (mergeInfo != null && mergeInfo.linkIds != null) {
               for (BalloonLayoutData.ID id : mergeInfo.linkIds) {
-                NotificationCollector.getInstance().logNotificationBalloonClosedByUser(id.notificationId, id.notificationDisplayId, myDisplayGroupId);
+                NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myLayoutData.project, id.notificationId, id.notificationDisplayId, myDisplayGroupId);
               }
             }
-            NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myNotificationId, myNotificationDisplayId, myDisplayGroupId);
+            NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myLayoutData.project, myNotificationId, myNotificationDisplayId, myDisplayGroupId);
             myBalloon.hide();
           }
         });

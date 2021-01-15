@@ -11,6 +11,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -163,8 +164,12 @@ public final class EventLog {
           Object source = event.getSource();
           DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
           AnAction action = notification.getActions().get(Integer.parseInt(event.getDescription()));
+          Project project = null;
+          if (context != null) {
+            project = context.getData(CommonDataKeys.PROJECT);
+          }
           NotificationCollector.getInstance()
-            .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.EVENT_LOG);
+            .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.EVENT_LOG);
           Notification.fire(notification, action, context);
         }
       });
@@ -662,7 +667,7 @@ public final class EventLog {
         Balloon balloon =
           NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, BalloonLayoutData.fullContent(), project);
         balloon.show(target, Balloon.Position.above);
-        NotificationCollector.getInstance().logBalloonShownFromEventLog(myNotification);
+        NotificationCollector.getInstance().logBalloonShownFromEventLog(project, myNotification);
       }
     }
 

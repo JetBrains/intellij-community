@@ -262,7 +262,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
                 DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
 
                 NotificationCollector.getInstance()
-                  .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.TOOL_WINDOW);
+                  .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.TOOL_WINDOW);
 
                 Notification.fire(notification, action, context);
               }
@@ -554,7 +554,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
             link.setIcon(AllIcons.Ide.Notification.Expand);
             link.setHoveringIcon(AllIcons.Ide.Notification.ExpandHover);
-            NotificationCollector.getInstance().logNotificationBalloonCollapsed(notification);
+            NotificationCollector.getInstance().logNotificationBalloonCollapsed(layoutData.project, notification);
           }
           else {
             text.select(0, 0);
@@ -562,7 +562,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
             link.setIcon(AllIcons.Ide.Notification.Collapse);
             link.setHoveringIcon(AllIcons.Ide.Notification.CollapseHover);
-            NotificationCollector.getInstance().logNotificationBalloonExpanded(notification);
+            NotificationCollector.getInstance().logNotificationBalloonExpanded(layoutData.project, notification);
           }
 
           text.setPreferredSize(size);
@@ -817,7 +817,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           @Override
           public void linkSelected(LinkLabel<AnAction> aSource, AnAction action) {
             NotificationCollector.getInstance()
-              .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.BALLOON);
+              .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
             Notification.fire(notification, action, DataManager.getInstance().getDataContext(aSource));
           }
         }, action));
