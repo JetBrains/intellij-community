@@ -2,13 +2,12 @@
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.englishFullName
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.ui.SpaceUi
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
@@ -65,8 +64,8 @@ internal object SpaceReviewInfoPanelFactory {
                  JBUI.scale(gap))).apply {
 
       @NlsSafe val projectName = detailsVm.spaceProjectInfo.project.name
-      val projectLink = link(projectName, SpaceUrls.project(detailsVm.projectKey))
-      val reviewLinkLabel = link(detailsVm.reviewKey ?: "", detailsVm.reviewUrl)
+      val projectLink = SpaceUi.linkLabel(projectName, SpaceUrls.project(detailsVm.projectKey))
+      val reviewLinkLabel = SpaceUi.linkLabel(detailsVm.reviewKey ?: "", detailsVm.reviewUrl)
 
       add(projectLink)
       add(JLabel("${FontUtil.spaceAndThinSpace()}/${FontUtil.spaceAndThinSpace()}"))
@@ -188,9 +187,5 @@ private fun createDirectionPanel(detailsVm: MergeRequestDetailsVm): NonOpaquePan
     })
     add(JLabel(source), CC())
   }
-}
-
-fun link(@NlsContexts.LinkLabel text: String, url: String): LinkLabel<*> {
-  return LinkLabel.create(text) { BrowserUtil.browse(url) }
 }
 
