@@ -176,17 +176,17 @@ class SpaceChatCodeDiscussionComponentFactory(
     }
 
     return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("${JBUI.scale(5)}", "0").fill().noGrid())).apply {
-      add(nameLabel)
+      add(nameLabel, CC().minWidth("0").shrinkPrio(9))
 
       if (parentPath.isNotBlank()) {
         add(JBLabel(parentPath).apply {
           foreground = UIUtil.getContextHelpForeground()
           setCopyable(true)
-        })
+        }, CC().minWidth("0").shrinkPrio(10))
       }
-      add(resolvedLabel, CC().hideMode(3))
-      add(collapseButton, CC().hideMode(3))
-      add(expandButton, CC().hideMode(3))
+      add(resolvedLabel, CC().hideMode(3).shrinkPrio(0))
+      add(collapseButton, CC().hideMode(3).shrinkPrio(0))
+      add(expandButton, CC().hideMode(3).shrinkPrio(0))
 
       resolved.forEach(lifetime) {
         resolvedLabel.isVisible = it
