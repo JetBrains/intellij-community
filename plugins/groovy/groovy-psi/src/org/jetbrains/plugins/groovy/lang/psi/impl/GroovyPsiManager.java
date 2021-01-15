@@ -19,10 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +46,6 @@ public final class GroovyPsiManager implements Disposable {
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = CollectionFactory.createConcurrentWeakMap();
-  private final ConcurrentMap<GrExpression, PsiType> topLevelTypes = CollectionFactory.createConcurrentWeakMap();
 
   private static final RecursionGuard<PsiElement> ourGuard = RecursionManager.createGuard("groovyPsiManager");
 
@@ -64,7 +61,6 @@ public final class GroovyPsiManager implements Disposable {
 
   public void dropTypesCache() {
     myCalculatedTypes.clear();
-    topLevelTypes.clear();
   }
 
   public static GroovyPsiManager getInstance(Project project) {
@@ -88,11 +84,6 @@ public final class GroovyPsiManager implements Disposable {
   @Nullable
   public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator) {
     return getTypeWithCaching(element, myCalculatedTypes, calculator);
-  }
-
-  @Nullable
-  public PsiType getTopLevelType(@NotNull GrExpression expression) {
-    return getTypeWithCaching(expression, topLevelTypes, InferenceKt::getTopLevelType);
   }
 
   @Nullable

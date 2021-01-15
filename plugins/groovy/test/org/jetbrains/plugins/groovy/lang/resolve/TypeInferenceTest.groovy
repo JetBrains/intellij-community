@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.RecursionManager
@@ -361,6 +361,18 @@ def foo(Integer a) {
   }
 }
 ''', '[java.lang.Integer,java.lang.String]')
+  }
+
+  void 'test infer argument type from method 5 no recursion'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''\
+void usage(Collection<UnknownClass> x) {
+  while (unknownCondition) {
+    <caret>foo(x)
+  }
+}
+void foo(Collection<UnknownClass> list) {}
+''', 'void'
   }
 
   void testEmptyListOrListWithGenerics() {
