@@ -13,14 +13,6 @@ public class XMLLanguage extends CompositeLanguage {
     super("XML", "application/xml", "text/xml");
   }
 
-  /**
-   * @deprecated use {@link #XMLLanguage(Language, String, String...)}
-   */
-  @Deprecated
-  protected XMLLanguage(@NonNls String name, @NonNls String... mime) {
-    super(name, mime);
-  }
-
   protected XMLLanguage(Language baseLanguage, @NonNls String name, @NonNls String... mime) {
     super(baseLanguage, name, mime);
   }

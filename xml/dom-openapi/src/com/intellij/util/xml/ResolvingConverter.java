@@ -54,21 +54,10 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   /**
    * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
    * They will also appear in the completion dropdown.
-   * 
-   * @deprecated implement {@link #getAdditionalVariants(ConvertContext)}
-   */
-  @Deprecated
-  @NotNull
-  public Set<String> getAdditionalVariants() {
-    return Collections.emptySet();
-  }
-  /**
-   * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
-   * They will also appear in the completion dropdown.
    */
   @NotNull
   public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
-    return getAdditionalVariants();
+    return Collections.emptySet();
   }
 
   /**

@@ -28,9 +28,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
 
 import static com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS;
 import static com.intellij.ide.highlighter.XmlFileHighlighter.registerAdditionalHighlighters;
@@ -86,16 +83,5 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     synchronized (getClass()) {
       return SyntaxHighlighterBase.pack(XmlHighlighterColors.HTML_CODE, ourMap.get(tokenType).toArray(TextAttributesKey.EMPTY_ARRAY));
     }
-  }
-
-  /**
-   * @deprecated use {@link EmbeddedTokenHighlighter} extension
-   */
-  @Deprecated
-  public static synchronized void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
-                                                     Map<IElementType, TextAttributesKey> _keys2) {
-    HashSet<IElementType> existingKeys = new HashSet<>(ourMap.keySet());
-    XmlFileHighlighter.addMissing(_keys1, existingKeys, ourMap);
-    XmlFileHighlighter.addMissing(_keys2, existingKeys, ourMap);
   }
 }
