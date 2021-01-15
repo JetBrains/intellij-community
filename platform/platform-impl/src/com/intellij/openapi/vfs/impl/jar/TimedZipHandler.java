@@ -22,22 +22,24 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipFile;
 
-// JarHandler that keeps limited LRU number of ZipFile references opened for a while after they were used
-// Once the inactivity time passed the ZipFile is closed.
-public class BasicJarHandler extends ZipHandlerBase {
-  private static final Logger LOG = Logger.getInstance(BasicJarHandler.class);
+/**
+ * ZIP handler that keeps limited LRU number of ZipFile references open for a while after they were used.
+ * Once the inactivity time is passed, the ZipFile is closed.
+*/
+public class TimedZipHandler extends ZipHandlerBase {
+  private static final Logger LOG = Logger.getInstance(TimedZipHandler.class);
   private static final boolean doTracing = LOG.isTraceEnabled();
   private static final AtomicLong ourOpenTime = new AtomicLong();
   private static final AtomicInteger ourOpenCount = new AtomicInteger();
   private static final AtomicInteger ourCloseCount = new AtomicInteger();
   private static final AtomicLong ourCloseTime = new AtomicLong();
 
-  private static final Map<BasicJarHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
+  private static final Map<TimedZipHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
   static {
     final int maxSize = 30;
     ourOpenFileLimitGuard = new LinkedHashMap<>(maxSize, true) {
       @Override
-      protected boolean removeEldestEntry(Map.Entry<BasicJarHandler, ScheduledFuture<?>> eldest, BasicJarHandler key, ScheduledFuture<?> value) {
+      protected boolean removeEldestEntry(Map.Entry<TimedZipHandler, ScheduledFuture<?>> eldest, TimedZipHandler key, ScheduledFuture<?> value) {
         if (size() > maxSize) {
           key.myHandle.invalidateZipReference(value);
           return true;
@@ -49,7 +51,7 @@ public class BasicJarHandler extends ZipHandlerBase {
 
   static void closeOpenZipReferences() {
     synchronized (ourOpenFileLimitGuard) {
-      ourOpenFileLimitGuard.keySet().forEach(BasicJarHandler::dispose);
+      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::dispose);
     }
   }
 
@@ -58,7 +60,7 @@ public class BasicJarHandler extends ZipHandlerBase {
 
   private final ZipResourceHandle myHandle;
 
-  public BasicJarHandler(@NotNull String path) {
+  public TimedZipHandler(@NotNull String path) {
     super(path);
     myHandle = new ZipResourceHandle(((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(getFile()) ? 2000L : 5L * 60 * 1000);
   }
@@ -93,7 +95,7 @@ public class BasicJarHandler extends ZipHandlerBase {
 
     private void attach() throws IOException {
       synchronized (ourOpenFileLimitGuard) {
-        ourOpenFileLimitGuard.remove(BasicJarHandler.this);
+        ourOpenFileLimitGuard.remove(TimedZipHandler.this);
       }
 
       myLock.lock();
@@ -139,7 +141,7 @@ public class BasicJarHandler extends ZipHandlerBase {
         myLock.unlock();
       }
       synchronized (ourOpenFileLimitGuard) {
-        ourOpenFileLimitGuard.put(BasicJarHandler.this, invalidationRequest);
+        ourOpenFileLimitGuard.put(TimedZipHandler.this, invalidationRequest);
       }
     }
 

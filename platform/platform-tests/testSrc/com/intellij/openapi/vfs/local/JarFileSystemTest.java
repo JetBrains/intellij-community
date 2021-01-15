@@ -8,7 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.jar.BasicJarHandler;
+import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -126,8 +126,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBasicJarHandlerWithInvalidJar() throws Exception {
-    final BasicJarHandler handler = new BasicJarHandler("some invalid path");
+  public void testTimedZipHandlerWithInvalidJar() throws Exception {
+    final TimedZipHandler handler = new TimedZipHandler("some invalid path");
     Runnable failingIOAction = () -> {
       try {
         handler.getInputStream("").close();
@@ -146,13 +146,13 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBasicJarHandlerConcurrency() throws Exception {
+  public void testTimedZipHandlerConcurrency() throws Exception {
     try {
       int number = 40;
-      List<BasicJarHandler> handlers = new ArrayList<>();
+      List<TimedZipHandler> handlers = new ArrayList<>();
       for (int i = 0; i < number; ++i) {
         File jar = IoTestUtil.createTestJar(tempDir.newFile("test" + i + ".jar"));
-        handlers.add(new BasicJarHandler(jar.getPath()));
+        handlers.add(new TimedZipHandler(jar.getPath()));
       }
 
       int N = Math.max(2, Runtime.getRuntime().availableProcessors());
@@ -167,7 +167,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
               sameStartCondition.await();
               Random random = new Random();
               for (int j = 0; j < 2 * number; ++j) {
-                BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
+                TimedZipHandler handler = handlers.get(random.nextInt(handlers.size()));
                 if (random.nextBoolean()) {
                   assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
                 }
@@ -185,7 +185,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
         for (Future<?> future : futuresToWait) future.get(2, TimeUnit.SECONDS);
       }
 
-      for (BasicJarHandler handler : handlers) handler.dispose();
+      for (TimedZipHandler handler : handlers) handler.dispose();
     }
     catch (TimeoutException e) {
       fail("Deadlock detected");

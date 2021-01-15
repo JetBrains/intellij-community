@@ -51,15 +51,13 @@ public final class FSRecords {
   private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1<<bits) && value >= 0 : value;
     int mask = (prevMask << bits) | value;
-    if (mask < 0) {
-      throw new IllegalStateException("Too many flags, int mask overflown");
-    }
+    if (mask < 0) throw new IllegalStateException("Too many flags, int mask overflown");
     return mask;
   }
   private static int nextMask(boolean value, int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
-  private static int nextMask(int versionValue, int prevMask) {
+  private static int nextMask(@SuppressWarnings("SameParameterValue") int versionValue, int prevMask) {
     return nextMask(versionValue, 8, prevMask);
   }
   static final int VERSION = nextMask(58,  // acceptable range is [0..255]

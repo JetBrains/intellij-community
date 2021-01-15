@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -123,7 +123,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
       manifest.putUserData(MULTI_RELEASE_KEY, value = new CachedValueImpl<>(() -> {
         Boolean result = Boolean.FALSE;
         try (InputStream stream = manifest.getInputStream()) {
-          result = Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(new Attributes.Name("Multi-Release")));
+          result = Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(Attributes.Name.MULTI_RELEASE));
         }
         catch (IOException ignored) { }
         return CachedValueProvider.Result.create(result, manifest);

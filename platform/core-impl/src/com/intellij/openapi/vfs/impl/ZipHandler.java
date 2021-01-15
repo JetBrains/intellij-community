@@ -23,14 +23,13 @@ public class ZipHandler extends ZipHandlerBase {
     }
 
     @Override
-    protected void disposeAccessor(@NotNull final ZipFile fileAccessor) throws IOException {
-      // todo: ZipFile isn't disposable for Java6, replace the code below with 'disposeCloseable(fileAccessor);'
+    protected void disposeAccessor(@NotNull ZipFile fileAccessor) throws IOException {
       fileAccessor.close();
     }
 
     @Override
     public boolean isEqual(ZipHandler val1, ZipHandler val2) {
-      return val1 == val2; // reference equality to handle different jars for different ZipHandlers on the same path
+      return val1 == val2;  // reference equality to handle different jars for different ZipHandlers on the same path
     }
   };
 

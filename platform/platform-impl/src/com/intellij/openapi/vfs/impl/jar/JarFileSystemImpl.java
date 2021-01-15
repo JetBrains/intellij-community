@@ -65,46 +65,40 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   }
 
   @Override
-  @NotNull
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return PROTOCOL;
   }
 
-  @NotNull
   @Override
-  public String extractPresentableUrl(@NotNull String path) {
+  public @NotNull String extractPresentableUrl(@NotNull String path) {
     return super.extractPresentableUrl(StringUtil.trimEnd(path, JAR_SEPARATOR));
   }
 
-  @Nullable
   @Override
-  protected String normalize(@NotNull String path) {
+  protected @Nullable String normalize(@NotNull String path) {
     int separatorIndex = path.indexOf(JAR_SEPARATOR);
     return separatorIndex > 0 ? FileUtil.normalize(path.substring(0, separatorIndex)) + path.substring(separatorIndex) : null;
   }
 
-  @NotNull
   @Override
-  protected String extractRootPath(@NotNull String normalizedPath) {
+  protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
     int separatorIndex = normalizedPath.indexOf(JAR_SEPARATOR);
     return separatorIndex > 0 ? normalizedPath.substring(0, separatorIndex + JAR_SEPARATOR.length()) : "";
   }
 
-  @NotNull
   @Override
-  protected String extractLocalPath(@NotNull String rootPath) {
+  protected @NotNull String extractLocalPath(@NotNull String rootPath) {
     return StringUtil.trimEnd(rootPath, JAR_SEPARATOR);
   }
 
-  @NotNull
   @Override
-  protected String composeRootPath(@NotNull String localPath) {
+  protected @NotNull String composeRootPath(@NotNull String localPath) {
     return localPath + JAR_SEPARATOR;
   }
 
   @Override
   protected @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
-    return VfsImplUtil.getHandler(this, entryFile, myNoCopyJarPaths == null ? ZipHandler::new : BasicJarHandler::new);
+    return VfsImplUtil.getHandler(this, entryFile, myNoCopyJarPaths == null ? ZipHandler::new : TimedZipHandler::new);
   }
 
   @TestOnly
@@ -140,7 +134,7 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
 
   @TestOnly
   public static void cleanupForNextTest() {
-    BasicJarHandler.closeOpenZipReferences();
+    TimedZipHandler.closeOpenZipReferences();
   }
 
   @Override

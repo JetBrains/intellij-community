@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,16 +32,14 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     super(path);
   }
 
-  @NotNull
   @Override
-  protected Map<String, EntryInfo> createEntriesMap() throws IOException {
+  protected @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException {
     try (ResourceHandle<ZipFile> existingZipRef = acquireZipHandle()) {
       return buildEntryMapForZipFile(existingZipRef.get());
     }
   }
 
-  @NotNull
-  protected Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
+  protected @NotNull Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
     Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
     map.put("", createRootEntry());
 
@@ -53,8 +51,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     return map;
   }
 
-  @NotNull
-  private EntryInfo getOrCreate(@NotNull ZipEntry entry, @NotNull Map<String, EntryInfo> map, @NotNull ZipFile zip) {
+  private EntryInfo getOrCreate(ZipEntry entry, Map<String, EntryInfo> map, ZipFile zip) {
     boolean isDirectory = entry.isDirectory();
     String entryName = entry.getName();
     if (StringUtil.endsWithChar(entryName, '/')) {
@@ -68,8 +65,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     EntryInfo info = map.get(entryName);
     if (info != null) {
       if (!isDirectory) {
-        Logger.getInstance(ZipHandlerBase.class).info(
-          "Duplicated entry: " + getFile() + "!/" + entryName + ' ' + info.length + '/' + entry.getSize());
+        Logger.getInstance(ZipHandlerBase.class).info("Duplicated entry: " + getFile() + "!/" + entryName + ' ' + info.length + '/' + entry.getSize());
       }
       return info;
     }
@@ -84,22 +80,20 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     return info;
   }
 
-  @NotNull
-  private static EntryInfo store(@NotNull Map<String, EntryInfo> map,
+  private static EntryInfo store(Map<String, EntryInfo> map,
                                  @Nullable EntryInfo parentInfo,
-                                 @NotNull CharSequence shortName,
+                                 CharSequence shortName,
                                  boolean isDirectory,
                                  long size,
                                  long time,
-                                 @NotNull String entryName) {
+                                 String entryName) {
     CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(shortName);
     EntryInfo info = new EntryInfo(sequence, isDirectory, size, time, parentInfo);
     map.put(entryName, info);
     return info;
   }
 
-  @NotNull
-  private EntryInfo getOrCreate(@NotNull String entryName, @NotNull Map<String, EntryInfo> map, @NotNull ZipFile zip) {
+  private EntryInfo getOrCreate(String entryName, Map<String, EntryInfo> map, ZipFile zip) {
     EntryInfo info = map.get(entryName);
 
     if (info == null) {
@@ -159,11 +153,10 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     throw new FileNotFoundException(getFile() + "!/" + relativePath);
   }
 
-  @NotNull
   @Override
-  public InputStream getInputStream(@NotNull String relativePath) throws IOException {
+  public @NotNull InputStream getInputStream(@NotNull String relativePath) throws IOException {
     boolean release = true;
-    final ResourceHandle<ZipFile> zipRef = acquireZipHandle();
+    ResourceHandle<ZipFile> zipRef = acquireZipHandle();
     try {
       ZipFile zip = zipRef.get();
       ZipEntry entry = zip.getEntry(relativePath);
@@ -195,8 +188,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   protected abstract long getEntryFileStamp();
 
-  @NotNull
-  protected abstract ResourceHandle<ZipFile> acquireZipHandle() throws IOException;
+  protected abstract @NotNull ResourceHandle<ZipFile> acquireZipHandle() throws IOException;
 
   private static class InputStreamWrapper extends InputStream {
     private final InputStream myStream;
