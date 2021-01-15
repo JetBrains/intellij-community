@@ -25,7 +25,6 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
 
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
   public boolean DISPLAY_NOTIFICATION_POPUP = true;
-  @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean MAKE_PROJECT_ON_SAVE = false; // until we fix problems with several open projects (IDEA-104064), daemon slowness (IDEA-104666)
 

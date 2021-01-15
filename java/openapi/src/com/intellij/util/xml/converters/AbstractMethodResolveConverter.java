@@ -137,7 +137,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
 
   @NotNull
   @Override
-  public Set<String> getAdditionalVariants() {
+  public Set<String> getAdditionalVariants(@NotNull ConvertContext context) {
     return Collections.singleton(ALL_METHODS);
   }
 

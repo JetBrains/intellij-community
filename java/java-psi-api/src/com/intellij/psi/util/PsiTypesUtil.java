@@ -312,14 +312,6 @@ public final class PsiTypesUtil {
   }
 
   /**
-   * @deprecated not compliant to specification, use {@link PsiTypesUtil#isDenotableType(PsiType, PsiElement)} instead
-   */
-  @Deprecated
-  public static boolean isDenotableType(@Nullable PsiType type) {
-    return !(type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType);
-  }
-
-    /**
      * @param context in which type should be checked
      * @return false if type is null or has no explicit canonical type representation (e. g. intersection type)
      */

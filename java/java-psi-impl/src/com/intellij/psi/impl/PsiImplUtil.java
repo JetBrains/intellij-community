@@ -300,24 +300,6 @@ public final class PsiImplUtil {
     return null;
   }
 
-  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiAnnotation, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
-  @Deprecated
-  public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType @NotNull ... types) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, types);
-  }
-
-  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
-  @Deprecated
-  public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiClass annotationType, PsiAnnotation.TargetType @NotNull ... types) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotationType, types);
-  }
-
-  /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */
-  @Deprecated
-  public static PsiAnnotation.TargetType @NotNull [] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
-    return AnnotationTargetUtil.getTargetsForLocation(owner);
-  }
-
   @Nullable
   public static ASTNode findDocComment(@NotNull CompositeElement element) {
     TreeElement node = element.getFirstChildNode();

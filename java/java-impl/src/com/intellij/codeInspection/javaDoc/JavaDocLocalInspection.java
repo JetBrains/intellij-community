@@ -61,6 +61,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
   public Options FIELD_OPTIONS = new Options("none", "");
   public boolean IGNORE_DEPRECATED;
   public boolean IGNORE_JAVADOC_PERIOD = true;
+  /** @deprecated unused, left to avoid modifications in config files */
   @Deprecated
   public boolean IGNORE_DUPLICATED_THROWS;
   public boolean IGNORE_POINT_TO_ITSELF;

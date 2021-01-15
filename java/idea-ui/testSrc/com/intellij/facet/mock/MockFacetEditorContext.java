@@ -4,8 +4,6 @@ package com.intellij.facet.mock;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ui.FacetEditorContextBase;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -62,12 +60,6 @@ public class MockFacetEditorContext extends FacetEditorContextBase {
   }
 
   @Override
-  @Nullable
-  public ModuleBuilder getModuleBuilder() {
-    return null;
-  }
-
-  @Override
   public boolean isNewFacet() {
     return myNewFacet;
   }
@@ -94,12 +86,6 @@ public class MockFacetEditorContext extends FacetEditorContextBase {
   @NotNull
   public ModifiableRootModel getModifiableRootModel() {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  @Nullable
-  public WizardContext getWizardContext() {
-    return null;
   }
 
   @Override

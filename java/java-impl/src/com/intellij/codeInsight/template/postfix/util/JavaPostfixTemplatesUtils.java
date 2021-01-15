@@ -154,16 +154,6 @@ public final class JavaPostfixTemplatesUtils {
     element -> element instanceof PsiExpression && isNotPrimitiveTypeExpression((PsiExpression)element);
 
   /**
-   * @deprecated use {@link #isArray(PsiType)}
-   */
-  @Deprecated public static final Condition<PsiElement> IS_ARRAY = element -> {
-    if (!(element instanceof PsiExpression)) return false;
-
-    PsiType type = ((PsiExpression)element).getType();
-    return isArray(type);
-  };
-
-  /**
    * @deprecated use {@link #isIterable(PsiType)} / {@link #isArray(PsiType)}
    */
   @Deprecated public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {

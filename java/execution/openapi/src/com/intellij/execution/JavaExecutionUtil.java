@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,15 +72,6 @@ public final class JavaExecutionUtil {
 
   @Nullable
   public static @NlsSafe String getPresentableClassName(@Nullable String rtClassName) {
-    return getPresentableClassName(rtClassName, null);
-  }
-
-  /**
-   * @deprecated use {@link JavaExecutionUtil#getPresentableClassName(String)}
-   */
-  @Deprecated
-  @Nullable
-  public static String getPresentableClassName(@Nullable String rtClassName, @SuppressWarnings("unused") JavaRunConfigurationModule configurationModule) {
     if (StringUtil.isEmpty(rtClassName)) {
       return null;
     }

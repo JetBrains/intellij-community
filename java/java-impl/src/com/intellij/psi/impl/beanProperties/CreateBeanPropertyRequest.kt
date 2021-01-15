@@ -37,8 +37,5 @@ class CreateBeanPropertyRequest(
   private val myParameters = if (isSetter) listOf(expectedParameter(type, propertyName)) else emptyList()
   override fun getExpectedParameters() = myParameters
 
-  private val oldParameters = getParameters(myParameters, project)
-  override fun getParameters() = oldParameters
-
   override fun isValid() = type.isValid
 }

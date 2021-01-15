@@ -3,7 +3,6 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -132,14 +131,6 @@ public abstract class CompilerManager {
   public abstract List<CompileTask> getBeforeTasks();
 
   /**
-   * @deprecated Use {@link #getAfterTaskList}
-   */
-  @Deprecated
-  public CompileTask @NotNull [] getAfterTasks() {
-    return getAfterTaskList().toArray(new CompileTask[0]);
-  }
-
-  /**
    * Returns the list of all tasks to be executed after compilation.
    *
    * @return all tasks to be executed after compilation.
@@ -243,12 +234,6 @@ public abstract class CompilerManager {
    */
   @Deprecated
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener);
-
-  /**
-   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
-   */
-  @Deprecated
-  public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead

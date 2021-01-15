@@ -55,14 +55,6 @@ public final class HighlightUtils {
 
   /**
    * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
-   * Please use {@link #highlightElement(PsiElement, Editor)} instead.
-   */
-  public static void highlightElement(@NotNull PsiElement element, @NlsContexts.StatusBarText String statusBarText) {
-    highlightElements(Collections.singleton(element), statusBarText);
-  }
-
-  /**
-   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
    * Please use {@link #highlightElements(Collection, Editor)} instead.
    */
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection) {

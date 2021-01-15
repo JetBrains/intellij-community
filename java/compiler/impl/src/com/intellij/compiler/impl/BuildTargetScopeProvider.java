@@ -37,23 +37,12 @@ public abstract class BuildTargetScopeProvider {
    * @deprecated override {@link #getBuildTargetScopes(CompileScope, Project, boolean)} instead
    */
   @Deprecated
-  @NotNull
-  @Contract(pure = true)
-  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
-                                                         @NotNull Project project) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * @deprecated override {@link #getBuildTargetScopes(CompileScope, Project, boolean)} instead
-   */
-  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Contract(pure = true)
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
                                                          @NotNull Project project, boolean forceBuild) {
-    return getBuildTargetScopes(baseScope, filter, project);
+    return Collections.emptyList();
   }
 
   @NotNull

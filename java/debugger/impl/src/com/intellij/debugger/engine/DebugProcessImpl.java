@@ -874,14 +874,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     mySteppingBreakpoint = breakpoint;
   }
 
-  /**
-   * @deprecated use {@link #setSteppingBreakpoint(SteppingBreakpoint)}
-   */
-  @Deprecated
-  public void setRunToCursorBreakpoint(@Nullable RunToCursorBreakpoint breakpoint) {
-    mySteppingBreakpoint = breakpoint;
-  }
-
   public void cancelRunToCursorBreakpoint() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final SteppingBreakpoint runToCursorBreakpoint = mySteppingBreakpoint;

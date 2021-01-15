@@ -80,17 +80,6 @@ public final class MoveClassesOrPackagesUtil {
     }
   }
 
-  /** @deprecated Use {@link MoveClassesOrPackagesUtil#findNonCodeUsages(PsiElement, SearchScope, boolean, boolean, String, Collection)} */
-  @Deprecated
-  public static void findNonCodeUsages(boolean searchInStringsAndComments,
-                                       boolean searchInNonJavaFiles,
-                                       final PsiElement element,
-                                       final String newQName,
-                                       ArrayList<? super UsageInfo> results) {
-    findNonCodeUsages(element, GlobalSearchScope.projectScope(element.getProject()),
-                      searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
-  }
-
   public static void findNonCodeUsages(@NotNull PsiElement element,
                                        @NotNull SearchScope searchScope,
                                        boolean searchInStringsAndComments,

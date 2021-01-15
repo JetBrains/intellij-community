@@ -6,7 +6,6 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.*;
@@ -345,12 +344,6 @@ public class CompilerManagerImpl extends CompilerManager {
   public void addCompilationStatusListener(@NotNull CompilationStatusListener listener) {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     myListenerAdapters.put(listener, connection);
-    connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
-  }
-
-  @Override
-  public void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable) {
-    final MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
     connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
   }
 

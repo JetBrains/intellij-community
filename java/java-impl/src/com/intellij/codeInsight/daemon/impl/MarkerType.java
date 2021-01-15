@@ -43,14 +43,6 @@ public class MarkerType {
   private final Function<PsiElement, String> myTooltip;
   @NotNull private final String myDebugName;
 
-  /**
-   * @deprecated use {@link #MarkerType(String, Function, LineMarkerNavigator)} instead
-   */
-  @Deprecated
-  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
-    this("Unknown", tooltip, navigator);
-  }
-
   public MarkerType(@NotNull String debugName, @NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
     myDebugName = debugName;

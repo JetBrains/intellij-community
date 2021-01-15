@@ -128,7 +128,7 @@ class LightTestMigration {
         String pathText = '/' + relativePath.toString().replace('\\', '/');
         if (pathText.startsWith(LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH)) {
           importedClasses.add(LightJavaInspectionTestCase.class);
-          pathSpec = "LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + \"" +
+          pathSpec = "LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + \"" +
                      StringUtil.escapeStringCharacters(
                        pathText.substring(LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH.length())) + '"';
         }

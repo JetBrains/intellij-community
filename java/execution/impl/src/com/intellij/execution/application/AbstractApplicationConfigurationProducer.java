@@ -25,14 +25,6 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     super();
   }
 
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated
-  public AbstractApplicationConfigurationProducer(@NotNull ApplicationConfigurationType configurationType) {
-    super(configurationType);
-  }
-
   @Override
   protected boolean setupConfigurationFromContext(@NotNull T configuration,
                                                   @NotNull ConfigurationContext context,

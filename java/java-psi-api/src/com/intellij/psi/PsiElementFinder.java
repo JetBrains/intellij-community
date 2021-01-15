@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -24,12 +23,6 @@ import java.util.function.Predicate;
  */
 public abstract class PsiElementFinder {
   public static final ProjectExtensionPointName<PsiElementFinder> EP = new ProjectExtensionPointName<>("com.intellij.java.elementFinder");
-
-  /**
-   * @deprecated use {@link #EP}
-   */
-  @Deprecated
-  public static final ExtensionPointName<PsiElementFinder> EP_NAME = new ExtensionPointName<>("com.intellij.java.elementFinder");
 
   /**
    * Searches the specified scope within the project for a class with the specified full-qualified

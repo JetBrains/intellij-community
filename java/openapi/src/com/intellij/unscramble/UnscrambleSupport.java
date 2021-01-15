@@ -27,9 +27,7 @@ public interface UnscrambleSupport<T extends JComponent> {
   ExtensionPointName<UnscrambleSupport> EP_NAME = ExtensionPointName.create("com.intellij.unscrambleSupport");
 
   @Nullable
-  default String unscramble(@NotNull Project project, @NotNull String text, @NotNull String logName, @Nullable T settings) {
-    return unscramble(project, text, logName);
-  }
+  String unscramble(@NotNull Project project, @NotNull String text, @NotNull String logName, @Nullable T settings);
 
   @NotNull
   @Contract(pure = true)
@@ -37,15 +35,6 @@ public interface UnscrambleSupport<T extends JComponent> {
 
   @Nullable
   default T createSettingsComponent() {
-    return null;
-  }
-
-  /**
-   * @deprecated override {@link #unscramble(Project, String, String, JComponent)} instead
-   */
-  @Deprecated
-  @Nullable
-  default String unscramble(Project project, String text, String logName) {
     return null;
   }
 }
