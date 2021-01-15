@@ -280,15 +280,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   public void afterProjectGenerated(@NotNull final Project project) {
   }
 
-  /**
-   * @deprecated This method no longer has any effect. The standard interpreter chooser UI is always shown.
-   */
-  @Deprecated
-  @Contract(" -> false")
-  public boolean hideInterpreter() {
-    return false;
-  }
-
   public void addErrorLabelMouseListener(@NotNull final MouseListener mouseListener) {
     myErrorLabelMouseListener = mouseListener;
   }

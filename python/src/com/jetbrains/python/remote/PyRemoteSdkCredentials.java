@@ -20,6 +20,6 @@ import com.intellij.remote.RemoteSdkCredentials;
 /**
  * @author yole
  */
-public interface PyRemoteSdkCredentials extends RemoteSdkCredentials, PySkeletonsPathAware {
+public interface PyRemoteSdkCredentials extends RemoteSdkCredentials {
 
 }

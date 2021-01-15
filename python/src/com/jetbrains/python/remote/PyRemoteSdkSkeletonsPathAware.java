@@ -3,5 +3,5 @@ package com.jetbrains.python.remote;
 
 import com.intellij.remote.RemoteSdkProperties;
 
-public interface PyRemoteSdkSkeletonsPathAware extends PySkeletonsPathAware, RemoteSdkProperties{
+public interface PyRemoteSdkSkeletonsPathAware extends RemoteSdkProperties{
 }

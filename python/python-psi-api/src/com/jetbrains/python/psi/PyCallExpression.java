@@ -8,8 +8,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.FunctionParameter;
-import com.jetbrains.python.nameResolver.FQNamesProvider;
-import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -168,24 +166,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
     return callee instanceof PyReferenceExpression &&
            ContainerUtil.exists(nameCandidates, name -> name.equals(((PyReferenceExpression)callee).getReferencedName()));
-  }
-
-  /**
-   * Checks if the qualified name of the callee matches any of the specified names provided by provider.
-   * May be <strong>heavy</strong>, and it is not recommended to use.
-   * Use {@link NameResolverTools#isCalleeShortCut(PyCallExpression, FQNamesProvider...)} or
-   * {@link com.jetbrains.extensions.python.PyCallExpressionExtKt#isCalleeName(PyCallExpression, FQNamesProvider...)}.
-   *
-   * @param name providers that provides one or more names to check
-   * @return true if matches, false otherwise
-   * @see com.jetbrains.python.nameResolver
-   * @see com.jetbrains.extensions.python.PyCallExpressionExtKt#isCalleeName(PyCallExpression, FQNamesProvider...)
-   * @deprecated use {@link com.jetbrains.extensions.python.PyCallExpressionExtKt#isCalleeName(PyCallExpression, FQNamesProvider...)}.
-   */
-  @Deprecated
-  default boolean isCallee(FQNamesProvider @NotNull ... name) {
-    final PyExpression callee = getCallee();
-    return callee instanceof PyReferenceExpression && NameResolverTools.isName(callee, name);
   }
 
   class PyArgumentsMapping {
