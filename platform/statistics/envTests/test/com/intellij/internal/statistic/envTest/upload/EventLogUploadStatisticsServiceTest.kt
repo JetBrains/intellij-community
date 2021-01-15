@@ -163,7 +163,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
       successContents.add(content)
     }
 
-    override fun onFailed(request: LogEventRecordRequest?, content: String?) {
+    override fun onFailed(request: LogEventRecordRequest?, error: Int, content: String?) {
       failed++
     }
 

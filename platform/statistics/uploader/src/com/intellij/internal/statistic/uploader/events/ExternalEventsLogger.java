@@ -60,8 +60,10 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
     logEvent(new ExternalUploadFinishedEvent(System.currentTimeMillis(), error));
   }
 
-  public void logSendingLogsSucceed(@NotNull List<String> successfullySentFiles, int failed, int total) {
-    logEvent(new ExternalUploadSendEvent(System.currentTimeMillis(), successfullySentFiles.size(), failed, total, successfullySentFiles));
+  public void logSendingLogsSucceed(@NotNull List<String> successfullySentFiles, @NotNull List<Integer> errors, int total) {
+    int succeed = successfullySentFiles.size();
+    int failed = errors.size();
+    logEvent(new ExternalUploadSendEvent(System.currentTimeMillis(), succeed, failed, total, successfullySentFiles, errors));
   }
 
   @Override

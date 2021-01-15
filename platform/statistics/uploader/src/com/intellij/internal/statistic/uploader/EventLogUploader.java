@@ -88,8 +88,10 @@ public final class EventLogUploader {
     try {
       EventLogStatisticsService service = new EventLogStatisticsService(device, recorder, appInfo, new EventLogSendListener() {
         @Override
-        public void onLogsSend(@NotNull List<String> successfullySentFiles, int failed, int totalLocalFiles) {
-          eventsLogger.logSendingLogsSucceed(successfullySentFiles, failed, totalLocalFiles);
+        public void onLogsSend(@NotNull List<String> successfullySentFiles,
+                               @NotNull List<Integer> errors,
+                               int totalLocalFiles) {
+          eventsLogger.logSendingLogsSucceed(successfullySentFiles, errors, totalLocalFiles);
         }
       });
 

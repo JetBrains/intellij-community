@@ -16,16 +16,51 @@ class EventLogResultParserTest : UsefulTestCase() {
   }
 
   fun test_parse_send_event() {
-    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10"))
-    assertEquals(ExternalUploadSendEvent(1583419435214, 6, 0, 15, emptyList()), deserialize("1583419435214 SEND 6 0 15"))
-    assertEquals(ExternalUploadSendEvent(1583419435214, 2, -1, 5, emptyList()), deserialize("1583419435214 SEND 2 a 5"))
-    assertEquals(ExternalUploadSendEvent(1583419435214, -1, -1, -1, emptyList()), deserialize("1583419435214 SEND a b b"))
-    assertEquals(ExternalUploadSendEvent(1583419435214, -1, 34, 50, emptyList()), deserialize("1583419435214 SEND 12a 34 50"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList(), emptyList()), deserialize("1583419435214 SEND 2 1 10"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 6, 0, 15, emptyList(), emptyList()), deserialize("1583419435214 SEND 6 0 15"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, -1, 5, emptyList(), emptyList()), deserialize("1583419435214 SEND 2 a 5"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, -1, -1, -1, emptyList(), emptyList()), deserialize("1583419435214 SEND a b b"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, -1, 34, 50, emptyList(), emptyList()), deserialize("1583419435214 SEND 12a 34 50"))
   }
 
   fun test_parse_send_event_with_files_hashes() {
-    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, listOf("path_to_file1", "path_to_file2")), deserialize("1583419435214 SEND 2 1 10 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==]"))
-    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10 []"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, listOf("path_to_file1", "path_to_file2"), emptyList()),
+                 deserialize("1583419435214 SEND 2 1 10 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==]"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList(), emptyList()), deserialize("1583419435214 SEND 2 1 10 []"))
+  }
+
+  fun test_parse_send_event_with_errors() {
+    assertEquals(
+      ExternalUploadSendEvent(1583419435214, 1, 1, 10, emptyList(), emptyList()),
+      deserialize("1583419435214 SEND 1 1 10 [] []")
+    )
+    assertEquals(
+      ExternalUploadSendEvent(1583419435214, 1, 1, 10, emptyList(), arrayListOf(1)),
+      deserialize("1583419435214 SEND 1 1 10 [] [1]")
+    )
+    assertEquals(
+      ExternalUploadSendEvent(1583419435214, 1, 2, 10, emptyList(), arrayListOf(1, 5)),
+      deserialize("1583419435214 SEND 1 2 10 [] [1,5]")
+    )
+    assertEquals(
+      ExternalUploadSendEvent(1583419435214, 1, 3, 10, emptyList(), arrayListOf(1, 5, 400)),
+      deserialize("1583419435214 SEND 1 3 10 [] [1,5,400]")
+    )
+    assertEquals(
+      ExternalUploadSendEvent(1583419435214, 1, 3, 10, emptyList(), emptyList()),
+      deserialize("1583419435214 SEND 1 3 10 [] 400")
+    )
+    assertEquals(
+      ExternalUploadSendEvent(1583419435214, 1, 3, 10, emptyList(), emptyList()),
+      deserialize("1583419435214 SEND 1 3 10 123 400")
+    )
+  }
+
+  fun test_parse_send_event_with_pathes_and_errors() {
+    assertEquals(
+      ExternalUploadSendEvent(1583419435214, 1, 3, 10, arrayListOf("path_to_file1"), arrayListOf(1, 5, 400)),
+      deserialize("1583419435214 SEND 1 3 10 [cGF0aF90b19maWxlMQ==] [1,5,400]")
+    )
   }
 
   fun test_parse_finished_event() {
@@ -54,7 +89,7 @@ class EventLogResultParserTest : UsefulTestCase() {
     assertNull(deserialize("1583419435214 SEND"))
     assertNull(deserialize("1583419435214 SEND 2"))
     assertNull(deserialize("1583419435214 SEND 2 3"))
-    assertNull(deserialize("1583419435214 SEND 2 3 4 5 6"))
+    assertNull(deserialize("1583419435214 SEND 2 3 4 5 6 7"))
     assertNull(deserialize("1583419435214 SEND 2,3,5"))
     assertNull(deserialize("1583419435214 SEND,2,3,5"))
     assertNull(deserialize("SEND 2 3 4 5"))
@@ -62,8 +97,9 @@ class EventLogResultParserTest : UsefulTestCase() {
   }
 
   fun test_parse_send_event_if_files_hashes_incorrect() {
-    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10 qwerty"))
-    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList()), deserialize("1583419435214 SEND 2 1 10 [']"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList(), emptyList()),
+                 deserialize("1583419435214 SEND 2 1 10 qwerty"))
+    assertEquals(ExternalUploadSendEvent(1583419435214, 2, 1, 10, emptyList(), emptyList()), deserialize("1583419435214 SEND 2 1 10 [']"))
   }
 
   fun test_parse_error_event_failed() {
@@ -97,44 +133,83 @@ class EventLogResultParserTest : UsefulTestCase() {
   }
 
   fun test_serialize_send_event() {
-    assertEquals("1583419435214 SEND 1 2 3 [cGF0aF90b19maWxl]", serialize(ExternalUploadSendEvent(1583419435214, 1, 2, 3, listOf("path_to_file"))))
-    assertEquals("1583419435214 SEND 2 -1 12 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==]", serialize(ExternalUploadSendEvent(1583419435214, 2, -1, 12, listOf("path_to_file1", "path_to_file2"))))
+    assertEquals(
+      "1583419435214 SEND 1 2 3 [cGF0aF90b19maWxl] []",
+      serialize(ExternalUploadSendEvent(1583419435214, 1, 2, 3, listOf("path_to_file"), emptyList()))
+    )
+    assertEquals(
+      "1583419435214 SEND 2 -1 12 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==] []",
+      serialize(ExternalUploadSendEvent(1583419435214, 2, -1, 12, listOf("path_to_file1", "path_to_file2"), emptyList()))
+    )
+  }
+
+  fun test_serialize_send_event_without_path() {
+    assertEquals(
+      "1583419435214 SEND 0 2 3 [] []",
+      serialize(ExternalUploadSendEvent(1583419435214, 0, 2, 3, emptyList(), emptyList()))
+    )
+  }
+
+  fun test_serialize_send_event_without_path_but_with_errors() {
+    assertEquals(
+      "1583419435214 SEND 0 3 3 [] [400,1,5]",
+      serialize(ExternalUploadSendEvent(1583419435214, 0, 3, 3, emptyList(), arrayListOf(400, 1, 5)))
+    )
+    assertEquals(
+      "1583419435214 SEND 0 2 3 [] [400,50]",
+      serialize(ExternalUploadSendEvent(1583419435214, 0, 2, 3, emptyList(), arrayListOf(400, 50)))
+    )
+    assertEquals(
+      "1583419435214 SEND 0 1 3 [] [-10]",
+      serialize(ExternalUploadSendEvent(1583419435214, 0, 1, 3, emptyList(), arrayListOf(-10)))
+    )
+  }
+
+  fun test_serialize_send_event_with_errors() {
+    assertEquals(
+      "1583419435214 SEND 1 2 3 [cGF0aF90b19maWxl] [50,400]",
+      serialize(ExternalUploadSendEvent(1583419435214, 1, 2, 3, listOf("path_to_file"), arrayListOf(50, 400)))
+    )
+    assertEquals(
+      "1583419435214 SEND 2 -1 12 [cGF0aF90b19maWxlMQ==,cGF0aF90b19maWxlMg==] [400]",
+      serialize(ExternalUploadSendEvent(1583419435214, 2, -1, 12, listOf("path_to_file1", "path_to_file2"), arrayListOf(400)))
+    )
   }
 
   fun test_serialize_failed_event() {
     assertEquals("1583419435214 FINISHED error-on-send",
-      serialize(ExternalUploadFinishedEvent(1583419435214, "error-on-send"))
+                 serialize(ExternalUploadFinishedEvent(1583419435214, "error-on-send"))
     )
 
     assertEquals("1583419435214 FINISHED message",
-      serialize(ExternalUploadFinishedEvent(1583419435214, "message"))
+                 serialize(ExternalUploadFinishedEvent(1583419435214, "message"))
     )
 
     assertEquals("1583419435214 FINISHED multi_word_message",
-      serialize(ExternalUploadFinishedEvent(1583419435214, "multi word message"))
+                 serialize(ExternalUploadFinishedEvent(1583419435214, "multi word message"))
     )
 
     assertEquals("1583419435214 FINISHED",
-      serialize(ExternalUploadFinishedEvent(1583419435214, ""))
+                 serialize(ExternalUploadFinishedEvent(1583419435214, ""))
     )
 
     assertEquals("1583419435214 FINISHED",
-      serialize(ExternalUploadFinishedEvent(1583419435214, null))
+                 serialize(ExternalUploadFinishedEvent(1583419435214, null))
     )
   }
 
   fun test_serialize_error_event() {
     assertEquals("1583419435214 ERROR loading.config.failed com.jetbrains.SomeException",
-      serialize(ExternalSystemErrorEvent(1583419435214, "loading.config.failed", "com.jetbrains.SomeException"))
+                 serialize(ExternalSystemErrorEvent(1583419435214, "loading.config.failed", "com.jetbrains.SomeException"))
     )
 
     assertEquals("1583419435214 ERROR loading SomeException",
-      serialize(ExternalSystemErrorEvent(1583419435214, "loading", "SomeException"))
+                 serialize(ExternalSystemErrorEvent(1583419435214, "loading", "SomeException"))
     )
 
     val ex = MockEventLogCustomException()
     assertEquals("1583419435214 ERROR event.failed com.intellij.internal.statistics.uploader.MockEventLogCustomException",
-      serialize(ExternalSystemErrorEvent(1583419435214, "event.failed", ex))
+                 serialize(ExternalSystemErrorEvent(1583419435214, "event.failed", ex))
     )
   }
 
@@ -163,7 +238,7 @@ class EventLogResultParserTest : UsefulTestCase() {
   fun test_parse_external_send_succeed_result_file() {
     doTestParseFile(
       "1583419435214 STARTED\n1583419435234 SEND 1 2 3",
-      ExternalUploadStartedEvent(1583419435214), ExternalUploadSendEvent(1583419435234, 1, 2, 3, emptyList())
+      ExternalUploadStartedEvent(1583419435214), ExternalUploadSendEvent(1583419435234, 1, 2, 3, emptyList(), emptyList())
     )
   }
 

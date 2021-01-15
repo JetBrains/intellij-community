@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
@@ -28,10 +29,10 @@ public final class ExternalSystemEventSerializer {
     }
     else if (event instanceof ExternalUploadSendEvent) {
       ExternalUploadSendEvent finished = (ExternalUploadSendEvent)event;
-      String hashedFiles = finished.getSuccessfullySentFiles().stream()
-        .map(path -> Base64.getEncoder().encodeToString(path.getBytes(StandardCharsets.UTF_8)))
-        .collect(Collectors.joining(",", "[", "]"));
-      return prefix + " " + finished.getSucceed() + " " + finished.getFailed() + " " + finished.getTotal() + " " + hashedFiles;
+      String hashedFiles = filesToString(finished.getSuccessfullySentFiles());
+      String errors = errorsToString(finished.getErrors());
+      return prefix + " " + finished.getSucceed() + " " + finished.getFailed() + " " + finished.getTotal() +
+             " " + hashedFiles + " " + errors;
     }
     else if (event instanceof ExternalSystemErrorEvent) {
       ExternalSystemErrorEvent error = (ExternalSystemErrorEvent)event;
@@ -54,12 +55,13 @@ public final class ExternalSystemEventSerializer {
       String error = parts.length >= 3 ? parts[2].trim() : null;
       return new ExternalUploadFinishedEvent(timestamp, error);
     }
-    else if (type == ExternalSystemEventType.SEND && (length == 6 || length == 5)) {
+    else if (type == ExternalSystemEventType.SEND && length >= 5 && length <= 7) {
       int succeed = parseInt(parts[2]);
       int failed = parseInt(parts[3]);
       int total = parseInt(parts[4]);
-      List<String> sentFiles = length == 6 ? parseSentFiles(parts[5]) : Collections.emptyList();
-      return new ExternalUploadSendEvent(timestamp, succeed, failed, total, sentFiles);
+      List<String> sentFiles = length >= 6 ? parseSentFiles(parts[5]) : Collections.emptyList();
+      List<Integer> errors = length >= 7 ? parseErrors(parts[6]) : Collections.emptyList();
+      return new ExternalUploadSendEvent(timestamp, succeed, failed, total, sentFiles, errors);
     }
     else if (type == ExternalSystemEventType.STARTED && length == 2) {
       return new ExternalUploadStartedEvent(timestamp);
@@ -72,14 +74,25 @@ public final class ExternalSystemEventSerializer {
     return null;
   }
 
+  @NotNull
   private static List<String> parseSentFiles(@NotNull String part) {
+    return parseValues(part, value -> new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8));
+  }
+
+  @NotNull
+  private static List<Integer> parseErrors(@NotNull String part) {
+    return parseValues(part, value -> parseInt(value));
+  }
+
+  @NotNull
+  private static <V> List<V> parseValues(@NotNull String part, @NotNull Function<String, V> processor) {
     try {
       if (part.startsWith("[") && part.endsWith("]")) {
         String unwrappedPart = part.substring(1, part.length() - 1);
-        String[] filePathHashes = unwrappedPart.split(",");
-        return Arrays.stream(filePathHashes)
-          .filter(hash -> !hash.isEmpty())
-          .map(hash -> new String(Base64.getDecoder().decode(hash), StandardCharsets.UTF_8))
+        String[] values = unwrappedPart.split(",");
+        return Arrays.stream(values)
+          .filter(value -> !value.isEmpty())
+          .map(processor)
           .collect(Collectors.toList());
       }
       return Collections.emptyList();
@@ -87,6 +100,20 @@ public final class ExternalSystemEventSerializer {
     catch (IllegalArgumentException e) {
       return Collections.emptyList();
     }
+  }
+
+  @NotNull
+  private static String filesToString(@NotNull List<String> files) {
+    return valuesToString(files, path -> Base64.getEncoder().encodeToString(path.getBytes(StandardCharsets.UTF_8)));
+  }
+
+  @NotNull
+  private static String errorsToString(@NotNull List<Integer> errors) {
+    return valuesToString(errors, error -> String.valueOf(error));
+  }
+
+  private static <V> String valuesToString(@NotNull List<V> values, @NotNull Function<V, String> processor) {
+    return values.stream().map(processor).collect(Collectors.joining(",", "[", "]"));
   }
 
   private static int parseInt(String value) {

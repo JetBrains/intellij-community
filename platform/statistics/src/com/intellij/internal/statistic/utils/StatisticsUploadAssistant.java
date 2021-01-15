@@ -53,8 +53,14 @@ public final class StatisticsUploadAssistant {
   public static @NotNull StatisticsService getEventLogStatisticsService(@NotNull String recorderId) {
     EventLogSendListener listener = new EventLogSendListener() {
       @Override
-      public void onLogsSend(@NotNull List<String> successfullySentFiles, int failed, int totalLocalFiles) {
-        EventLogSystemLogger.logFilesSend(recorderId, totalLocalFiles, successfullySentFiles.size(), failed, false, successfullySentFiles);
+      public void onLogsSend(@NotNull List<String> successfullySentFiles,
+                             @NotNull List<Integer> errors,
+                             int totalLocalFiles) {
+        int success = successfullySentFiles.size();
+        int failed = errors.size();
+        EventLogSystemLogger.logFilesSend(
+          recorderId, totalLocalFiles, success, failed, false, successfullySentFiles, errors
+        );
       }
     };
 

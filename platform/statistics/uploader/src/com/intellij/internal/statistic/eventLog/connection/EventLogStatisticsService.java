@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
-import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 
 @ApiStatus.Internal
 public class EventLogStatisticsService implements StatisticsService {
@@ -114,12 +113,12 @@ public class EventLogStatisticsService implements StatisticsService {
         String deviceId = device.getDeviceId();
         LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger);
-        final String error = validate(recordRequest, file);
-        if (isNotEmpty(error) || recordRequest == null) {
+        ValidationErrorInfo error = validate(recordRequest, file);
+        if (error != null) {
           if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + "-> " + error);
+            logger.trace(file.getName() + "-> " + error.getMessage());
           }
-          decorator.onFailed(recordRequest, null);
+          decorator.onFailed(recordRequest, error.getCode(), null);
           toRemove.add(file);
           continue;
         }
@@ -135,14 +134,14 @@ public class EventLogStatisticsService implements StatisticsService {
               if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
                 toRemove.add(file);
               }
-              decorator.onFailed(recordRequest, loadAndLogResponse(logger, r, file));
+              decorator.onFailed(recordRequest, code, loadAndLogResponse(logger, r, file));
             }).send();
         }
         catch (Exception e) {
           if (logger.isTraceEnabled()) {
             logger.trace(file.getName() + " -> " + e.getMessage());
           }
-          decorator.onFailed(null, null);
+          decorator.onFailed(null, 50, null);
         }
       }
 
@@ -175,27 +174,27 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @Nullable
-  private static String validate(@Nullable LogEventRecordRequest request, @NotNull File file) {
+  private static ValidationErrorInfo validate(@Nullable LogEventRecordRequest request, @NotNull File file) {
     if (request == null) {
-      return "File is empty or has invalid format: " + file.getName();
+      return new ValidationErrorInfo("File is empty or has invalid format: " + file.getName(), 1);
     }
 
     if (isEmpty(request.getDevice())) {
-      return "Cannot upload event log, device ID is empty";
+      return new ValidationErrorInfo("Cannot upload event log, device ID is empty", 2);
     }
     else if (isEmpty(request.getProduct())) {
-      return "Cannot upload event log, product code is empty";
+      return new ValidationErrorInfo("Cannot upload event log, product code is empty", 3);
     }
     else if (isEmpty(request.getRecorder())) {
-      return "Cannot upload event log, recorder code is empty";
+      return new ValidationErrorInfo("Cannot upload event log, recorder code is empty", 4);
     }
     else if (request.getRecords().isEmpty()) {
-      return "Cannot upload event log, record list is empty";
+      return new ValidationErrorInfo("Cannot upload event log, record list is empty", 5);
     }
 
     for (LogEventRecord content : request.getRecords()) {
       if (content.getEvents().isEmpty()) {
-        return "Cannot upload event log, event list is empty";
+        return new ValidationErrorInfo("Cannot upload event log, event list is empty", 6);
       }
     }
     return null;
@@ -233,12 +232,31 @@ public class EventLogStatisticsService implements StatisticsService {
     }
   }
 
+  private static final class ValidationErrorInfo {
+    private final int myCode;
+    private final String myError;
+
+    private ValidationErrorInfo(@NotNull String error, int code) {
+      myError = error;
+      myCode = code;
+    }
+
+    private int getCode() {
+      return myCode;
+    }
+
+    @NotNull
+    private String getMessage() {
+      return myError;
+    }
+  }
+
   private static final class EventLogCounterResultDecorator implements EventLogResultDecorator {
     private final EventLogSendListener myListener;
 
     private int myLocalFiles = -1;
-    private int myFailed = 0;
     private final List<String> mySuccessfullySentFiles = new ArrayList<>();
+    private final List<Integer> myErrors = new ArrayList<>();
 
     private EventLogCounterResultDecorator(@Nullable EventLogSendListener listener) {
       myListener = listener;
@@ -255,23 +273,24 @@ public class EventLogStatisticsService implements StatisticsService {
     }
 
     @Override
-    public void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content) {
-      myFailed++;
+    public void onFailed(@Nullable LogEventRecordRequest request, int error, @Nullable String content) {
+      myErrors.add(error);
     }
 
     @NotNull
     @Override
     public StatisticsResult onFinished() {
       if (myListener != null) {
-        myListener.onLogsSend(mySuccessfullySentFiles, myFailed, myLocalFiles);
+        myListener.onLogsSend(mySuccessfullySentFiles, myErrors, myLocalFiles);
       }
 
       int succeed = mySuccessfullySentFiles.size();
-      int total = succeed + myFailed;
+      int failed = myErrors.size();
+      int total = succeed + failed;
       if (total == 0) {
         return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to upload.");
       }
-      else if (myFailed > 0) {
+      else if (failed > 0) {
         return new StatisticsResult(ResultCode.SENT_WITH_ERRORS, "Uploaded " + succeed + " out of " + total + " files.");
       }
       return new StatisticsResult(ResultCode.SEND, "Uploaded " + succeed + " files.");

@@ -39,7 +39,9 @@ object EventLogExternalUploader {
               EventLogSystemLogger.logStartingExternalSend(recorderId, event.timestamp)
             }
             is ExternalUploadSendEvent -> {
-              EventLogSystemLogger.logFilesSend(recorderId, event.total, event.succeed, event.failed, true, event.successfullySentFiles)
+              val files = event.successfullySentFiles
+              val errors = event.errors
+              EventLogSystemLogger.logFilesSend(recorderId, event.total, event.succeed, event.failed, true, files, errors)
             }
             is ExternalUploadFinishedEvent -> {
               EventLogSystemLogger.logFinishedExternalSend(recorderId, event.error, event.timestamp)

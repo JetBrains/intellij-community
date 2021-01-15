@@ -8,5 +8,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public interface EventLogSendListener {
-  void onLogsSend(@NotNull List<String> successfullySentFiles, int failed, int totalLocalFiles);
+  void onLogsSend(@NotNull List<String> successfullySentFiles,
+                  @NotNull List<Integer> errors,
+                  int totalLocalFiles);
 }

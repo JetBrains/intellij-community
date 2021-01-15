@@ -116,7 +116,7 @@ public class SendEventLogAction extends AnAction {
     }
 
     @Override
-    public void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content) {
+    public void onFailed(@Nullable LogEventRecordRequest request, int error, @Nullable String content) {
       if (request != null) {
         myFailed.add(request);
       }
