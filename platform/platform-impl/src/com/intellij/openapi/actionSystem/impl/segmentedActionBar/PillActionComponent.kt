@@ -50,6 +50,7 @@ open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
 
       init {
         setForceMinimumSize(true)
+        layoutPolicy = NOWRAP_LAYOUT_POLICY
       }
 
       private val presentationSyncer: PropertyChangeListener = PropertyChangeListener { evt ->

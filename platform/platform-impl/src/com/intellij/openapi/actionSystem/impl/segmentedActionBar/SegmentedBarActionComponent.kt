@@ -87,6 +87,7 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
       val bar = object : ActionToolbarImpl(place, group, true) {
         init {
           setForceMinimumSize(true)
+          layoutPolicy = NOWRAP_LAYOUT_POLICY
         }
 
         private var isActive = false
