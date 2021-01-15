@@ -135,7 +135,9 @@ public class PerformanceTestInfo {
         if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
-      if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < 30) maxRetries++;
+      if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < 30 && maxRetries != 1) {
+        maxRetries++;
+      }
       String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" + (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
