@@ -1,6 +1,6 @@
 // "Replace explicit type with 'var'" "true"
 class Main {
   {
-    <caret>String[] args = {"hello, world"};
+      var args = new String[]{"hello, world"};
   }
 }

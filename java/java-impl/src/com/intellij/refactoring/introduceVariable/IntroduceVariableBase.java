@@ -3,6 +3,7 @@ package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddNewArrayExpressionFix;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -1000,6 +1001,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         if (!diamondResolveResult.getInferredTypes().isEmpty()) {
           PsiDiamondTypeUtil.expandTopLevelDiamondsInside(copyVariableInitializer);
         }
+      }
+      else if (copyVariableInitializer instanceof PsiArrayInitializerExpression) {
+        new AddNewArrayExpressionFix((PsiArrayInitializerExpression)copyVariableInitializer).doFix();
       }
     }
 
