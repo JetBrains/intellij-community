@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
@@ -264,14 +264,6 @@ final class CommunityRepositoryModules {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
       withProjectLibrary("ktor-server-jetty")
-      withGeneratedResources(new ResourcesGenerator() {
-        @Override
-        File generateResources(BuildContext context) {
-          def gradleRunner = context.getGradle()
-          gradleRunner.run("Download Space Automation definitions", "setupSpaceAutomationDefinitions")
-          return context.paths.communityHomeDir.resolve("build/dependencies/build/space").toFile()
-        }
-      }, "lib")
     },
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")

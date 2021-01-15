@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.plugins.pipelines.services
 
 import circlet.automation.bootstrap.AutomationDslEvaluationBootstrap
-import circlet.pipelines.config.api.parseProjectConfig
 import circlet.pipelines.config.idea.api.IdeaScriptConfig
-import circlet.pipelines.config.utils.AutomationCompilerConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.io.safeOutputStream
@@ -38,7 +36,7 @@ class ScriptKtsPersistentState(val project: Project) {
 
     return try {
       Files.newBufferedReader(path, Charsets.UTF_8).use { reader ->
-        val evalService = AutomationDslEvaluationBootstrap(log, automationConfiguration()).loadEvaluatorForIdea()
+        val evalService = AutomationDslEvaluationBootstrap(log, getAutomationConfigurationWithFallback()).loadEvaluatorForIdea()
         if (evalService == null) {
           log.error("DSL evaluation service not found, cannot deserialize automation DSL model")
           return null

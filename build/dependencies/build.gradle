@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 buildscript {
   repositories {
     maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
@@ -49,7 +49,6 @@ apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
 apply from: 'setupDelve.gradle'
 apply from: 'setupRpluginDeps.gradle'
-apply from: 'setupSpacePlugin.gradle'
 apply from: 'setupZkm.gradle'
 apply from: 'setupAndroidStudio.gradle'
 apply from: 'setupVulnerabilitySearchPlugin.gradle'

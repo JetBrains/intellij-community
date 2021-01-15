@@ -126,7 +126,7 @@
     </orderEntry>
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.codeReview" />
-    <orderEntry type="module-library" scope="RUNTIME">
+    <orderEntry type="module-library">
       <library name="org.apache.ivy" type="repository">
         <properties maven-id="org.apache.ivy:ivy:2.5.0" />
         <CLASSES>
@@ -141,5 +141,42 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="intellij-markdown" level="project" />
+    <orderEntry type="module-library">
+      <library name="kotlin-scripting-dependencies" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:1.4.10">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains:annotations" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/1.4.10/kotlin-scripting-dependencies-1.4.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.10/kotlin-scripting-common-1.4.10.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kotlin-scripting-jvm" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.4.10">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-script-runtime" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-scripting-common" />
+            <dependency maven-id="org.jetbrains:annotations" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.4.10/kotlin-scripting-jvm-1.4.10.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.plugins.pipelines.services
 
 import circlet.automation.bootstrap.AutomationCompilerBootstrap
@@ -26,14 +26,16 @@ import com.intellij.space.plugins.pipelines.viewmodel.ScriptModel
 import com.intellij.space.plugins.pipelines.viewmodel.ScriptState
 import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
-import libraries.coroutines.extra.*
+import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.launch
+import libraries.coroutines.extra.using
+import libraries.coroutines.extra.withContext
 import libraries.klogging.*
 import org.slf4j.event.Level
 import org.slf4j.event.SubstituteLoggingEvent
 import org.slf4j.helpers.SubstituteLogger
 import runtime.Ui
 import runtime.reactive.*
-import java.io.*
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.name
@@ -158,7 +160,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
         val compiledJarPath = outputDirPath.resolve("compiledJar.jar")
         val scriptRuntimePath = outputDirPath.resolve("space-automation-runtime.jar")
 
-        val configuration = automationConfiguration()
+        val configuration = getAutomationConfigurationWithFallback()
 
         val compiler = AutomationCompilerBootstrap(log = eventLogger, configuration = configuration)
         val compileResultCode = compiler.compile(script = Paths.get(scriptFile.path), jar = compiledJarPath)
@@ -214,12 +216,15 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
   }
 }
 
-internal fun automationConfiguration(): AutomationCompilerConfiguration {
-  val spaceClient = SpaceWorkspaceComponent.getInstance().workspace.value?.client
-  // Primary option is to download from currently connected server, fallback to the public maven
-  val server = spaceClient?.server?.let { embeddedMavenServer(it) } ?: publicMavenServer
-  return AutomationCompilerConfiguration.Remote(server = server)
-}
+internal fun getAutomationConfigurationOrNull(): AutomationCompilerConfiguration? =
+  SpaceWorkspaceComponent.getInstance().workspace.value?.client?.server?.let {
+    AutomationCompilerConfiguration.Remote(server = embeddedMavenServer(it))
+  }
+
+
+// Primary option is to download from currently connected server, fallback to the public maven
+internal fun getAutomationConfigurationWithFallback(): AutomationCompilerConfiguration =
+  getAutomationConfigurationOrNull() ?: AutomationCompilerConfiguration.Remote(server = publicMavenServer)
 
 private fun LogData.asLogger(lifetime: Lifetime): KLogger {
   val queue = ObservableQueue.mutable<SubstituteLoggingEvent>()
