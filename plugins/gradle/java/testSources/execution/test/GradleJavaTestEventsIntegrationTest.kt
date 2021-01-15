@@ -23,6 +23,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
   @Test
   fun test() {
     val gradleSupportsJunitPlatform = isGradleNewerOrSameAs("4.6")
+    val testLauncherAPISupported = isGradleNewerOrSameAs("6.1")
     createProjectSubFile("src/main/java/my/pack/AClass.java",
                          "package my.pack;\n" +
                          "public class AClass {\n" +
@@ -101,7 +102,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     )
 
     RunAll(
-      ThrowableRunnable { `call test task produces Gradle test events`() },
+      ThrowableRunnable { if (testLauncherAPISupported) `call test task produces Gradle test events`() },
       ThrowableRunnable { `call test task produces test events`() },
       ThrowableRunnable { `call build task does not produce test events`() },
       ThrowableRunnable { `call task for specific test overrides existing filters`() },
@@ -118,20 +119,17 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
       }
     };
 
-    val settings = GradleManager().executionSettingsProvider.`fun`(Pair.create<Project, String>(myProject, projectPath))
-    settings.putUserData(GradleConstants.RUN_TASK_AS_TEST, true);
-    settings.withArguments("--tests","my.otherpack.*")
+    val settings = createSettings {
+      putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
+      withArguments("--tests", "my.otherpack.*")
+    }
 
-
-    //assertThatThrownBy {
-      GradleTaskManager().executeTasks(taskId,
-                                       listOf(":test"),
-                                       projectPath,
-                                       settings,
-                                       null,
-                                       testListener);
-    //}
-    //  .hasMessageContaining("There were failing tests")
+    GradleTaskManager().executeTasks(taskId,
+                                     listOf(":test"),
+                                     projectPath,
+                                     settings,
+                                     null,
+                                     testListener);
 
     val result = eventLog.joinToString(separator = "\n")
     println(result)
