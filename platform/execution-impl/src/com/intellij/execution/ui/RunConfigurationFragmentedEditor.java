@@ -165,7 +165,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   }
 
   private void checkGotIt(SettingsEditorFragment<Settings, ?> fragment) {
-    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag()) {
+    if (!isDefaultSettings() && !fragment.isCanBeHidden() && !fragment.isTag() && StringUtil.isNotEmpty(fragment.getName())) {
       //noinspection unchecked
       Settings clone = (Settings)mySettings.clone();
       fragment.applyEditorTo(clone);
