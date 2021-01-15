@@ -20,6 +20,8 @@ import java.awt.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 
+import static com.intellij.ui.jcef.JBCefTestHelper.await;
+
 /**
  * Tests {@link JBCefClient#JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP} and "ide.browser.jcef.jsQueryPoolSize" (used for testing purposes).
  *
@@ -114,7 +116,7 @@ public class JBCefJSQueryTest {
       frame.setVisible(true);
     });
 
-    TestCase.assertTrue(JBCefTestHelper.wait(LATCH_LOAD));
+    TestCase.assertTrue(await(LATCH_LOAD));
 
     JBCefJSQuery jsQuery_after = JBCefJSQuery.create(browser);
     jsQuery_after.addHandler(result -> {
@@ -127,12 +129,12 @@ public class JBCefJSQueryTest {
       browser.getCefBrowser().executeJavaScript(jsQuery_before.inject("'query_before'"), "about:blank", 0);
     });
 
-    TestCase.assertTrue(JBCefTestHelper.wait(LATCH_JS_BEFORE));
+    TestCase.assertTrue(await(LATCH_JS_BEFORE));
 
     SwingUtilities.invokeLater(() -> {
       browser.getCefBrowser().executeJavaScript(jsQuery_after.inject("'query_after'"), "about:blank", 0);
     });
 
-    TestCase.assertTrue(JBCefTestHelper.wait(LATCH_JS_AFTER));
+    TestCase.assertTrue(await(LATCH_JS_AFTER));
   }
 }
