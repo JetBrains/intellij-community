@@ -142,51 +142,6 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
         }
       }
     }
-
-    //TODO: remove this method
-    @Deprecated("Because of unreliable logic for reading Nodes", ReplaceWith("getNode1 function"))
-    fun getNode2(path: Array<String>): NodeFixture? {
-      val tree = myPane.tree
-      val root = computeOnEdt { myPane.tree.model.root } ?: throw Exception(
-        "Unfortunately the root for a tree model in ProjectView is null")
-      var pivotRoot: Any = root
-      for (pathItem in path) {
-        var (childCount, children) = getChildrenAndCountOnEdt(tree, pivotRoot)
-        if (childCount == 0) throw Exception("${pathItem} node has no more children")
-        if (childCount == 1 && children[0] is LoadingNode) {
-          runOnEdt { TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(children[0]!!)) }
-          waitUntil("children will be loaded", Timeouts.seconds30) {
-            val updatedChildrenAndCount = getChildrenAndCountOnEdt(tree, pivotRoot)
-            childCount = updatedChildrenAndCount.first
-            children = updatedChildrenAndCount.second
-            childCount > 1 || (childCount == 1 && children[0] !is LoadingNode)
-          }
-        }
-        var childIsFound = false
-        for (child in children) {
-          child ?: throw Exception("Path element ($pathItem) is null")
-          val nodeText = withPauseWhenNull("project view node for pathItem: $pathItem\"") { getNodeText(child.userObject) }
-          if (nodeText == pathItem) {
-            pivotRoot = child
-            childIsFound = true
-            break
-          }
-        }
-        if (!childIsFound) return null
-      }
-      return NodeFixture(pivotRoot as DefaultMutableTreeNode, TreeUtil.getPathFromRoot(pivotRoot), myPane)
-    }
-
-    //TODO: remove this method
-    private fun getChildrenAndCountOnEdt(tree: JTree,
-                                         node: Any): Pair<Int, ArrayList<DefaultMutableTreeNode?>> {
-      return computeOnEdt {
-        Pair(tree.model.getChildCount(node),
-             (0 until tree.model.getChildCount(node))
-               .map { tree.model.getChild(node, it) as DefaultMutableTreeNode? }
-               .toCollection(arrayListOf<DefaultMutableTreeNode?>()))
-      }!!
-    }
   }
 
   inner class NodeFixture internal constructor(private val myNode: DefaultMutableTreeNode,
