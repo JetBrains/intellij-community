@@ -476,7 +476,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassAndPackageConflict(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkPublicClassInRightFile(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkWellFormedRecord(aClass));
-    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightClassUtil.checkSealedClassInheritors(aClass));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSealedClassInheritors(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSealedSuper(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel));
   }
