@@ -24,6 +24,6 @@ class TopInferenceContext : InferenceContext {
   }
 
   override fun <T : GroovyPsiElement> getExpressionType(element: T, calculator: Function<in T, out PsiType>): PsiType? {
-    return GroovyPsiManager.getInstance(element.project).getType(element, calculator)
+    return CachedValuesManager.getProjectPsiDependentCache(element, calculator)
   }
 }
