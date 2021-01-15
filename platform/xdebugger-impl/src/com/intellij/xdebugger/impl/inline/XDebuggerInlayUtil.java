@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
@@ -11,7 +12,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -26,7 +26,7 @@ public final class XDebuggerInlayUtil {
                                            @NotNull XSourcePosition position,
                                            Document document) {
     if (valueNode.getValuePresentation() != null) {
-      UIUtil.invokeLaterIfNeeded(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         int offset = document.getLineEndOffset(position.getLine());
         Project project = session.getProject();
         FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(file);
@@ -39,14 +39,14 @@ public final class XDebuggerInlayUtil {
             ((InlineWatchNodeImpl)valueNode).inlayCreated(inlay);
           }
         }
-      });
+      }, session.getProject().getDisposed());
       return true;
     }
     return false;
   }
 
   public static void clearInlays(@NotNull Project project) {
-    UIUtil.invokeLaterIfNeeded(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       FileEditor[] editors = FileEditorManager.getInstance(project).getAllEditors();
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
@@ -54,6 +54,6 @@ public final class XDebuggerInlayUtil {
           e.getInlayModel().getAfterLineEndElementsInRange(0, e.getDocument().getTextLength(), InlineDebugRenderer.class).forEach(Disposer::dispose);
         }
       }
-    });
+    }, project.getDisposed());
   }
 }
