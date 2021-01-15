@@ -426,21 +426,6 @@ public final class SvnUtil {
   }
 
   @Nullable
-  @Deprecated // Required for compatibility with external plugins.
-  public static Url getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
-    Url url = null;
-
-    try {
-      url = createUrl(urlValue);
-    }
-    catch (SvnBindException e) {
-      LOG.debug(e);
-    }
-
-    return url != null ? getBranchForUrl(vcs, vcsRoot, url) : null;
-  }
-
-  @Nullable
   public static Url getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull Url url) {
     Url result = null;
     SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
