@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.TestFixtureExtension
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
@@ -331,18 +330,14 @@ internal fun findUsages(
         val processor = CommonProcessors.CollectProcessor<UsageInfo>()
         for (psiElement in handler.primaryElements + handler.secondaryElements) {
             if (highlightingMode) {
-                project.runReadActionInSmartMode {
-                    for (reference in handler.findReferencesToHighlight(psiElement, options.searchScope)) {
-                        processor.process(UsageInfo(reference))
-                    }
+                for (reference in handler.findReferencesToHighlight(psiElement, options.searchScope)) {
+                    processor.process(UsageInfo(reference))
                 }
             } else {
                 ProgressManager.getInstance().run(
                     object : Task.Modal(project, "", false) {
                         override fun run(indicator: ProgressIndicator) {
-                            project.runReadActionInSmartMode {
-                                handler.processElementUsages(psiElement, processor, options)
-                            }
+                            handler.processElementUsages(psiElement, processor, options)
                         }
                     },
                 )

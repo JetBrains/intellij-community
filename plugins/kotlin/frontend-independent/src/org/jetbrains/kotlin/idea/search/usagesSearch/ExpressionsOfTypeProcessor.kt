@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.search.usagesSearch
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.highlighter.XmlFileType
-import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -391,9 +390,9 @@ class ExpressionsOfTypeProcessor(
         ) : Task {
             override fun perform() {
                 if (scope is LocalSearchScope) {
-                    testLog { "Searched imported static member $declaration in ${scope.scope.toList()}" }
+                    testLog { runReadAction { "Searched imported static member $declaration in ${scope.scope.toList()}" } }
                 } else {
-                    testLog { "Searched references to ${logPresentation(declaration)} in non-Java files" }
+                    testLog { runReadAction { "Searched references to ${logPresentation(declaration)} in non-Java files" } }
                 }
 
                 val searchParameters = KotlinReferencesSearchParameters(

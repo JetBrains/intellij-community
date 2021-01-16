@@ -230,10 +230,11 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
                     for (psiMethod in element.providedToLightMethods().filterDataClassComponentsIfDisabled(kotlinSearchOptions)) {
                         addTask {
+                            val query = MethodReferencesSearch.search(psiMethod, psiMethodScopeSearch, true)
                             applyQueryFilters(
                                 element,
                                 options,
-                                MethodReferencesSearch.search(psiMethod, psiMethodScopeSearch, true)
+                                query
                             ).forEach(referenceProcessor)
                         }
                     }

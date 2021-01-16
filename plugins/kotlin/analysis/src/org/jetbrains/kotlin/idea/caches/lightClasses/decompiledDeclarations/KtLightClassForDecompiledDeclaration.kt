@@ -214,10 +214,11 @@ open class KtLightClassForDecompiledDeclaration(
 
     override fun getNavigationElement() = kotlinOrigin?.navigationElement ?: file
 
-    override fun equals(other: Any?): Boolean =
-        other is KtLightClassForDecompiledDeclaration &&
+    override fun equals(other: Any?): Boolean {
+        return this === other || other is KtLightClassForDecompiledDeclaration &&
                 qualifiedName == other.qualifiedName &&
                 kotlinOrigin?.fqName == other.kotlinOrigin?.fqName
+    }
 
     override fun hashCode(): Int = qualifiedName?.hashCode() ?: kotlinOrigin?.fqName?.hashCode() ?: 0
 
