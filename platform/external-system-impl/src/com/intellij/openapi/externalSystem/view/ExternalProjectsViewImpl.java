@@ -107,7 +107,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     myViewContributors = Arrays.stream(ExternalSystemViewContributor.EP_NAME.getExtensions())
       .filter(contributorPredicate)
       .collect(Collectors.toList());
-    ExternalSystemViewContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<ExternalSystemViewContributor>() {
+    ExternalSystemViewContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
         if (contributorPredicate.test(extension)) {

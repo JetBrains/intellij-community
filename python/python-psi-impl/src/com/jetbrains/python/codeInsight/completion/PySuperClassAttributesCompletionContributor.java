@@ -32,7 +32,7 @@ public class PySuperClassAttributesCompletionContributor extends CompletionContr
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement()
              .withParents(PyReferenceExpression.class, PyExpressionStatement.class, PyStatementList.class, PyClass.class),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,

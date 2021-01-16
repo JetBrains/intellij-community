@@ -379,7 +379,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     ChangeListChooser() {
       myChooser.setEditable(false);
-      myChooser.setRenderer(new ColoredListCellRenderer<LocalChangeList>() {
+      myChooser.setRenderer(new ColoredListCellRenderer<>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList<? extends LocalChangeList> list, LocalChangeList value,
                                              int index, boolean selected, boolean hasFocus) {

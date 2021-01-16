@@ -249,12 +249,12 @@ public final class CompletionUtil {
   }
 
   public static Iterable<String> iterateLookupStrings(@NotNull final LookupElement element) {
-    return new Iterable<String>() {
+    return new Iterable<>() {
       @NotNull
       @Override
       public Iterator<String> iterator() {
         final Iterator<String> original = element.getAllLookupStrings().iterator();
-        return new UnmodifiableIterator<String>(original) {
+        return new UnmodifiableIterator<>(original) {
           @Override
           public boolean hasNext() {
             try {

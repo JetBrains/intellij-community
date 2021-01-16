@@ -81,7 +81,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
   public void testInsideAnonymous() {
     doTest("import java.util.*;" +
            "class A<T> {{" +
-           "Iterator<T> i = new Iterator<T>() {" +
+           "Iterator<T> i = new Iterator<>() {" +
            "  Enumeration<T> myEnumeration;" +
            "  public boolean hasNext() {" +
            "    return myEnumeration.hasMoreElements();" +

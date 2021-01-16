@@ -32,7 +32,7 @@ public abstract class AbstractWizardStepFixture<S> extends JComponentFixture<S, 
 
   @NotNull
   protected JCheckBoxFixture findCheckBoxWithLabel(@NotNull final String label) {
-    JCheckBox checkBox = robot().finder().find(target(), new GenericTypeMatcher<JCheckBox>(JCheckBox.class) {
+    JCheckBox checkBox = robot().finder().find(target(), new GenericTypeMatcher<>(JCheckBox.class) {
       @Override
       protected boolean isMatching(@NotNull JCheckBox component) {
         return label.equals(component.getText());

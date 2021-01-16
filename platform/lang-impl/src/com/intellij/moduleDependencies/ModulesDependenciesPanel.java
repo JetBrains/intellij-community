@@ -133,7 +133,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
   private Iterable<Module> getModuleDependencies(Module module) {
     final Iterator<Module> iterator = myState.forwardDirection ? myModuleGraph.getIn(module) : myModuleGraph.getOut(module);
-    return new Iterable<Module>() {
+    return new Iterable<>() {
       @Override
       public Iterator<Module> iterator() {
         return iterator;

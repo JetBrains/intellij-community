@@ -51,7 +51,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     if (handlers.isEmpty()) return;
 
     Map<PsiElement, ExpressionTypeProvider> map = getExpressions(file, editor, handlers);
-    Pass<PsiElement> callback = new Pass<PsiElement>() {
+    Pass<PsiElement> callback = new Pass<>() {
       @Override
       public void pass(@NotNull PsiElement expression) {
         ExpressionTypeProvider provider = Objects.requireNonNull(map.get(expression));

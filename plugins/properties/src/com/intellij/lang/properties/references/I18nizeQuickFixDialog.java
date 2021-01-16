@@ -180,7 +180,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       }
     });
     
-    myExistingProperties.setRenderer(new ColoredListCellRenderer<IProperty>() {
+    myExistingProperties.setRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends IProperty> list,
                                            IProperty value,

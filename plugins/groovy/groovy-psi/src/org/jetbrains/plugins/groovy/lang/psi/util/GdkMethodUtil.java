@@ -408,7 +408,7 @@ public final class GdkMethodUtil {
 
   @Nullable
   public static PsiClassType getCategoryType(@NotNull final PsiClass categoryAnnotationOwner) {
-    return CachedValuesManager.getCachedValue(categoryAnnotationOwner, new CachedValueProvider<PsiClassType>() {
+    return CachedValuesManager.getCachedValue(categoryAnnotationOwner, new CachedValueProvider<>() {
       @Override
       public Result<PsiClassType> compute() {
         return Result.create(inferCategoryType(categoryAnnotationOwner), PsiModificationTracker.MODIFICATION_COUNT);

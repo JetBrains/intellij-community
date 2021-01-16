@@ -99,17 +99,17 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         LOG.debug("Displaying member chooser dialog");
 
         final MemberChooser<PsiElementClassMember> chooser =
-            new MemberChooser<PsiElementClassMember>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
-                @Override
-                protected @NotNull String getHelpId() {
-                    return "editing.altInsert.tostring";
-                }
+          new MemberChooser<>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
+            @Override
+            protected @NotNull String getHelpId() {
+              return "editing.altInsert.tostring";
+            }
 
-                @Override
-                protected boolean isInsertOverrideAnnotationSelected() {
-                    return JavaCodeStyleSettings.getInstance(clazz.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
-                }
-            };
+            @Override
+            protected boolean isInsertOverrideAnnotationSelected() {
+              return JavaCodeStyleSettings.getInstance(clazz.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
+            }
+          };
         //noinspection DialogTitleCapitalization
         chooser.setTitle(JavaBundle.message("generate.tostring.title"));
 

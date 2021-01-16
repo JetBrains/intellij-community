@@ -602,7 +602,7 @@ public final class PyExtractMethodUtil {
     }
 
     final boolean isMethod = PyPsiUtils.isMethodContext(element);
-    final ExtractMethodDecorator<Object> decorator = new ExtractMethodDecorator<Object>() {
+    final ExtractMethodDecorator<Object> decorator = new ExtractMethodDecorator<>() {
       @Override
       @NotNull
       public String createMethodSignature(@NotNull ExtractMethodSettings<Object> settings) {
@@ -629,9 +629,9 @@ public final class PyExtractMethodUtil {
       }
     };
 
-    final AbstractExtractMethodDialog<?> dialog = new AbstractExtractMethodDialog<Object>(project, "method_name", fragment,
-                                                                                          ArrayUtilRt.EMPTY_OBJECT_ARRAY, validator,
-                                                                                          decorator, PythonFileType.INSTANCE) {
+    final AbstractExtractMethodDialog<?> dialog = new AbstractExtractMethodDialog<>(project, "method_name", fragment,
+                                                                                    ArrayUtilRt.EMPTY_OBJECT_ARRAY, validator,
+                                                                                    decorator, PythonFileType.INSTANCE) {
       @Override
       protected String getHelpId() {
         return "python.reference.extractMethod";

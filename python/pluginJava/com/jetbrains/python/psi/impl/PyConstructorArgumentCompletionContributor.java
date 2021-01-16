@@ -35,7 +35,7 @@ public class PyConstructorArgumentCompletionContributor extends CompletionContri
     extend(CompletionType.BASIC,
            psiElement()
              .withParents(PyReferenceExpression.class, PyArgumentList.class, PyCallExpression.class),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -48,7 +48,7 @@ public class PyConstructorArgumentCompletionContributor extends CompletionContri
                  if (callee instanceof PsiClass) {
                    addSettersAndListeners(result, (PsiClass)callee, parameters.getOriginalFile());
                  }
-                 else if (callee instanceof PsiMethod && ((PsiMethod) callee).isConstructor()) {
+                 else if (callee instanceof PsiMethod && ((PsiMethod)callee).isConstructor()) {
                    final PsiClass containingClass = ((PsiMethod)callee).getContainingClass();
                    assert containingClass != null;
                    addSettersAndListeners(result, containingClass, parameters.getOriginalFile());

@@ -33,7 +33,7 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
   public ProjectFacetManagerImpl(Project project) {
     myProject = project;
 
-    ProjectWideFacetListenersRegistry.getInstance(project).registerListener(new ProjectWideFacetAdapter<Facet>() {
+    ProjectWideFacetListenersRegistry.getInstance(project).registerListener(new ProjectWideFacetAdapter<>() {
       @Override
       public void facetAdded(@NotNull Facet facet) {
         myIndex = null;

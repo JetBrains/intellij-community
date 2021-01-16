@@ -186,7 +186,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
     final Map<String, Library> namesToLibs = new HashMap<>();
     final Set<Library> potentialOrphans = new HashSet<>();
-    RootPolicy<Void> excludeUsedLibraries = new RootPolicy<Void>() {
+    RootPolicy<Void> excludeUsedLibraries = new RootPolicy<>() {
       @Override
       public Void visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Void value) {
         if (ideDependency.isModuleLevel()) {

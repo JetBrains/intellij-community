@@ -135,7 +135,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
     checkDisposed();
     try {
-      myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
+      myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<>() {
         @Override
         protected boolean accept(CommitId commitId) {
           return !consumer.test(commitId);

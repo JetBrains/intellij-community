@@ -46,7 +46,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @NotNull
   public Set<@NlsSafe String> getAllTemplateKeys(PsiFile file, int offset) {
-    Set<String> keys = new HashSet<String>();
+    Set<String> keys = new HashSet<>();
     Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
       ProgressManager.checkCanceled();

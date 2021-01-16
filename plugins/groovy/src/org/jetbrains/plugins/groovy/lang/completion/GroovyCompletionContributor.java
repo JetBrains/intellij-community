@@ -40,7 +40,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     GrMainCompletionProvider.register(this);
     GrAnnotationAttributeCompletionProvider.register(this);
 
-    extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(GrLiteral.class), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(GrLiteral.class), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,

@@ -82,7 +82,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     CacheManager.getInstance(project).processVirtualFilesWithAllWords(words,
                                                                       UsageSearchContext.IN_STRINGS,
                                                                       scope,
-                                                                      true, new Processor<VirtualFile>() {
+                                                                      true, new Processor<>() {
         int filesWithLiterals;
 
         @Override

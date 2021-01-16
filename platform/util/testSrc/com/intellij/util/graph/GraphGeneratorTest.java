@@ -29,7 +29,7 @@ public class GraphGeneratorTest {
   @Test
   public void testEmptyGraph() {
     TestNode node = new TestNode("A");
-    Graph<TestNode> graph = GraphGenerator.generate(new InboundSemiGraph<TestNode>() {
+    Graph<TestNode> graph = GraphGenerator.generate(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<TestNode> getNodes() {
@@ -54,7 +54,7 @@ public class GraphGeneratorTest {
     TestNode[] inA = {nodeB};
     TestNode[] inB = {nodeA};
 
-    Graph<TestNode> graph = GraphGenerator.generate(new InboundSemiGraph<TestNode>() {
+    Graph<TestNode> graph = GraphGenerator.generate(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<TestNode> getNodes() {

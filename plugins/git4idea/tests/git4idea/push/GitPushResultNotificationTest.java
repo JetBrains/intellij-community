@@ -65,7 +65,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   public void test_success_and_fail() {
-    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+    GitPushResultNotification notification = notification(new HashMap<>() {{
       put(repo("ultimate"), repoResult(SUCCESS, "master", "origin/master", 1));
       put(repo("community"), repoResult(ERROR, "master", "origin/master", "Permission denied"));
     }});
@@ -75,7 +75,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   public void test_success_and_reject() {
-    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+    GitPushResultNotification notification = notification(new HashMap<>() {{
       put(repo("ultimate"), repoResult(SUCCESS, "master", "origin/master", 1));
       put(repo("community"), repoResult(REJECTED, "master", "origin/master", -1));
     }});
@@ -90,7 +90,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   public void test_success_and_resolved_conflicts() {
-    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+    GitPushResultNotification notification = notification(new HashMap<>() {{
       put(repo("community"), repoResult(REJECTED, "master", "origin/master", -1, GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS));
       put(repo("contrib"), repoResult(REJECTED, "master", "origin/master", -1, GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS));
       put(repo("ultimate"), repoResult(SUCCESS, "master", "origin/master", 1));
@@ -133,7 +133,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     final GitPushRepoResult comRes = convertFromNative(branchSuccess, singletonList(tagResult), 1, from("master"), to("origin/master"));
     final GitPushRepoResult ultRes = convertFromNative(branchUpToDate, singletonList(tagResult), 0, from("master"), to("origin/master"));
 
-    GitPushResultNotification notification = notification(new HashMap<GitRepository, GitPushRepoResult>() {{
+    GitPushResultNotification notification = notification(new HashMap<>() {{
       put(repo("community"), comRes);
       put(repo("ultimate"), ultRes);
     }});
@@ -157,7 +157,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
                                                                        final String to,
                                                                        final int commits,
                                                                        @Nullable final GitUpdateResult updateResult) {
-    return new HashMap<GitRepository, GitPushRepoResult>() {{
+    return new HashMap<>() {{
       put(repo("community"), repoResult(type, from, to, commits, updateResult));
     }};
   }

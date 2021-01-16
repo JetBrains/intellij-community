@@ -167,7 +167,8 @@ public final class JpsServerClientImpl implements JpsServerClient {
           if (connection instanceof HttpURLConnection) {
             HttpURLConnection httpConnection = (HttpURLConnection)connection;
             if (httpConnection.getResponseCode() == 200) {
-              return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<Map<String, List<String>>>() {});
+              return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<>() {
+              });
             }
             else {
               String statusLine = httpConnection.getResponseCode() + ' ' + httpConnection.getRequestMethod();

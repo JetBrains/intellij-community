@@ -948,7 +948,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       ComboBox<Item> comboBox = new ComboBox<>(new Model(builder1.build()));
       comboBox.setSwingPopup(false);
-      ColoredListCellRenderer<Item> renderer = new ColoredListCellRenderer<Item>() {
+      ColoredListCellRenderer<Item> renderer = new ColoredListCellRenderer<>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList<? extends Item> list,
                                              Item value,

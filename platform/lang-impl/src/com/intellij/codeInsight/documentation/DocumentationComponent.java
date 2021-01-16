@@ -139,7 +139,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private DocumentationProvider myProvider;
   private Reference<Component> myReferenceComponent;
 
-  private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
+  private final MyDictionary<String, Image> myImageProvider = new MyDictionary<>() {
     @Override
     public Image get(Object key) {
       return getImageByKeyImpl(key);

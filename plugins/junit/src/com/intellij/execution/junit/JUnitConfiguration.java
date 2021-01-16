@@ -80,7 +80,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   private final Data myData;
   private final InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
-  final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
+  final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -100,7 +100,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       setName(psiPackage.getQualifiedName());
     }
   };
-  final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
+  final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(@NotNull final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -121,7 +121,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
   };
 
-  final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<PsiClass>() {
+  final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(@NotNull final String qualifiedName) {
       setCategory(qualifiedName);
@@ -489,7 +489,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.write(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.write(persistentData, element, new DifferenceFilter<Data>(persistentData, new Data()) {
+    DefaultJDOMExternalizer.write(persistentData, element, new DifferenceFilter<>(persistentData, new Data()) {
       @Override
       public boolean test(@NotNull Field field) {
         return "TEST_OBJECT".equals(field.getName()) || super.test(field);

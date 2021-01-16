@@ -105,7 +105,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
   public void testListener() {
     final StringBuilder out = new StringBuilder();
-    XBreakpointListener<XLineBreakpoint<MyBreakpointProperties>> listener = new XBreakpointListener<XLineBreakpoint<MyBreakpointProperties>>() {
+    XBreakpointListener<XLineBreakpoint<MyBreakpointProperties>> listener = new XBreakpointListener<>() {
       @Override
       public void breakpointAdded(@NotNull final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
         out.append("added[").append(breakpoint.getProperties().myOption).append("];");

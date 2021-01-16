@@ -148,7 +148,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
     }
     List<String> suggestedNames = new ArrayList<>();
     suggestedNames.add(method.getName());
-    processor.substituteElementToRename(method, editor, new Pass<PsiElement>() {
+    processor.substituteElementToRename(method, editor, new Pass<>() {
       @Override
       public void pass(PsiElement substitutedElement) {
         SmartPsiElementPointer<PsiMethod> pointer = SmartPointerManager.createPointer(method);

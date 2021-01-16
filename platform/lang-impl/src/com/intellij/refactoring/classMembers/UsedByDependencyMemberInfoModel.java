@@ -26,10 +26,10 @@ public class UsedByDependencyMemberInfoModel<T extends NavigatablePsiElement, C 
 
   public UsedByDependencyMemberInfoModel(C aClass) {
     super(new UsedByMemberDependencyGraph<>(aClass), ERROR);
-    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<>() {
       @Override
       public String getTooltip(M memberInfo) {
-        return ((UsedByMemberDependencyGraph<T, C, M>) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
+        return ((UsedByMemberDependencyGraph<T, C, M>)myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
       }
     });
   }

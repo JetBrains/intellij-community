@@ -37,7 +37,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
     }
 
     final List<Pair<String,Integer>> names = new ArrayList<>(nameCount.size());
-    nameCount.forEachEntry(new TObjectIntProcedure<String>() {
+    nameCount.forEachEntry(new TObjectIntProcedure<>() {
       @Override
       public boolean execute(String name, int count) {
         names.add(Pair.create(name, count));
@@ -65,7 +65,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
 
     final TObjectIntHashMap<String> save = new TObjectIntHashMap<>();
     // compute economy
-    suffixes.forEachEntry(new TObjectIntProcedure<String>() {
+    suffixes.forEachEntry(new TObjectIntProcedure<>() {
       @Override
       public boolean execute(String s, int count) {
         save.put(s, count * s.length());
@@ -105,7 +105,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
       saveSorted.clear();
 
       // adjust
-      suffixes.forEachEntry(new TObjectIntProcedure<String>() {
+      suffixes.forEachEntry(new TObjectIntProcedure<>() {
         @Override
         public boolean execute(String s, int count) {
           for (int i = picked.size() - 1; i >= 0; i--) {
@@ -146,7 +146,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
 
   private static List<Pair<String,Integer>> show(final TObjectIntHashMap<String> prefixes) {
     final List<Pair<String,Integer>> prefs = new ArrayList<>(prefixes.size());
-    prefixes.forEachEntry(new TObjectIntProcedure<String>() {
+    prefixes.forEachEntry(new TObjectIntProcedure<>() {
       @Override
       public boolean execute(String s, int count) {
         prefs.add(Pair.create(s, count));

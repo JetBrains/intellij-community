@@ -845,7 +845,7 @@ public final class PyUtil {
     if (!(scope instanceof PyClass) && !(scope instanceof PyFile) && !(scope instanceof PyFunction)) {
       return Collections.emptyList();
     }
-    final Set<String> variables = new HashSet<String>() {
+    final Set<String> variables = new HashSet<>() {
       @Override
       public boolean add(String s) {
         return s != null && super.add(s);

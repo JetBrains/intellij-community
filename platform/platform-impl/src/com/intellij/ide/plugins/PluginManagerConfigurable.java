@@ -832,7 +832,7 @@ public final class PluginManagerConfigurable
           }
 
           if (!downloaded.descriptors.isEmpty()) {
-            myUpdateAll.setListener(new LinkListener<Object>() {
+            myUpdateAll.setListener(new LinkListener<>() {
               @Override
               public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
                 myUpdateAll.setEnabled(false);

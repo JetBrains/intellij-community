@@ -2361,7 +2361,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       final V v = p.val;
       lastReturned = p;
       advance();
-      return new LongEntry<V>() {
+      return new LongEntry<>() {
         @Override
         public long getKey() {
           return k;

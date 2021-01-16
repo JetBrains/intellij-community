@@ -29,13 +29,13 @@ public class PropertiesUtil {
   public static final Set<Character> BASE_NAME_BORDER_CHAR = ContainerUtil.newHashSet('-', '_', '.');
   public static final Locale DEFAULT_LOCALE = new Locale("", "", "");
 
-  private static final SoftLazyValue<Set<String>> LOCALES_LANGUAGE_CODES = new SoftLazyValue<Set<String>>() {
+  private static final SoftLazyValue<Set<String>> LOCALES_LANGUAGE_CODES = new SoftLazyValue<>() {
     @NotNull
     @Override
     protected Set<String> compute() {
       final HashSet<String> locales =
         new HashSet<>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
-                                                                        (Function<Locale, List<String>>)locale -> {
+                                                              (Function<Locale, List<String>>)locale -> {
                                                                 final ArrayList<String> languages =
                                                                   ContainerUtil.newArrayList(locale.getLanguage());
                                                                 try {
@@ -84,7 +84,7 @@ public class PropertiesUtil {
 
   @NotNull
   static String getDefaultBaseName(@NotNull final PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<String>() {
+    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<String> compute() {

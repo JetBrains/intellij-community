@@ -44,7 +44,7 @@ public class ChangeListChooserPanel extends JPanel {
     myProject = project;
     myExistingListsCombo = new MyEditorComboBox();
     myExistingListsCombo.setEditable(true);
-    myExistingListsCombo.setRenderer(new ColoredListCellRenderer<ChangeList>() {
+    myExistingListsCombo.setRenderer(new ColoredListCellRenderer<>() {
 
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ChangeList> list,

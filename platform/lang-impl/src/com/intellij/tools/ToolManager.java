@@ -28,7 +28,7 @@ public final class ToolManager extends BaseToolManager<Tool> {
 
   @Override
   protected SchemeProcessor<ToolsGroup<Tool>, ToolsGroup<Tool>> createProcessor() {
-    return new ToolsProcessor<Tool>() {
+    return new ToolsProcessor<>() {
       @Override
       protected ToolsGroup<Tool> createToolsGroup(String groupName) {
         return new ToolsGroup<>(groupName);

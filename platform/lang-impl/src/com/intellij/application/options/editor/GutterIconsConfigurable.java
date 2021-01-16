@@ -176,7 +176,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
   }
 
   private void createUIComponents() {
-    myList = new CheckBoxList<GutterIconDescriptor>() {
+    myList = new CheckBoxList<>() {
       @Override
       protected JComponent adjustRendering(JComponent rootComponent, JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
         JPanel panel = new JPanel(new BorderLayout());

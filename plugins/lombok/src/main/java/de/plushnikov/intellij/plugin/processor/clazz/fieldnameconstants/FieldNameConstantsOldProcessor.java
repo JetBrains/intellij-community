@@ -78,7 +78,7 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
   @NotNull
   private Collection<PsiField> filterFields(@NotNull PsiClass psiClass) {
-    final Collection<PsiField> psiFields = new ArrayList<PsiField>();
+    final Collection<PsiField> psiFields = new ArrayList<>();
 
     FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {

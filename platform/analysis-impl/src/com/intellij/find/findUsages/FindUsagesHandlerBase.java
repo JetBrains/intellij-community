@@ -60,7 +60,7 @@ public class FindUsagesHandlerBase {
   public boolean processElementUsages(@NotNull final PsiElement element,
                                       @NotNull final Processor<? super UsageInfo> processor,
                                       @NotNull final FindUsagesOptions options) {
-    final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<PsiReference>() {
+    final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(final PsiReference ref) {
         return processor.process(new UsageInfo(ref));

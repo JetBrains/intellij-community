@@ -88,7 +88,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     popup.setMaximumListSizeLimit(PAGE_SIZE);
     popup.setListSizeIncreasing(PAGE_SIZE);
 
-    showNavigationPopup(new GotoActionCallback<Object>() {
+    showNavigationPopup(new GotoActionCallback<>() {
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         TaskManager taskManager = TaskManager.getManager(project);

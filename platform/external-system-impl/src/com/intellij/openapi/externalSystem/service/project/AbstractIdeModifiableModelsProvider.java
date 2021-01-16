@@ -273,7 +273,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   }
 
   private Graph<Module> getModuleGraph() {
-    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<Module> getNodes() {

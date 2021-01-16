@@ -104,7 +104,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       }
     }
     //super()
-    DirectClassInheritorsSearch.search(clazz, onlyGroovy).forEach(new ReadActionProcessor<PsiClass>() {
+    DirectClassInheritorsSearch.search(clazz, onlyGroovy).forEach(new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(PsiClass inheritor) {
         if (inheritor instanceof GrTypeDefinition) {

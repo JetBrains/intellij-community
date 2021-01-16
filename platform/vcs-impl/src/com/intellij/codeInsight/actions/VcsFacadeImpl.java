@@ -124,7 +124,7 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @NotNull
   private static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<? extends Change> changes) {
-    Function<Change, PsiFile> changeToPsiFileMapper = new Function<Change, PsiFile>() {
+    Function<Change, PsiFile> changeToPsiFileMapper = new Function<>() {
       private final PsiManager myPsiManager = PsiManager.getInstance(project);
 
       @Override

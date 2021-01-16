@@ -58,7 +58,7 @@ public final class ExternalSystemApiUtil {
 
   @NotNull public static final String PATH_SEPARATOR = "/";
 
-  @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
+  @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<>() {
 
     @Override
     public int compare(@NotNull Object o1, @NotNull Object o2) {

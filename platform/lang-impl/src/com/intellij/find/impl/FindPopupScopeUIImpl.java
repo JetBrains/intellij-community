@@ -89,7 +89,7 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
     Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScope(),
                                             myHelper.getModel().getCustomScopeName(),
                                             FindSettings.getInstance().getDefaultScopeName());
-    myScopeCombo.init(myProject, true, true, selection, new Condition<ScopeDescriptor>() {
+    myScopeCombo.init(myProject, true, true, selection, new Condition<>() {
       //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
       final String moduleFilesScopeName;
 

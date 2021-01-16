@@ -218,7 +218,7 @@ public class InstalledPackagesPanel extends JPanel {
 
   private void upgradePackage(@NotNull final InstalledPackage pkg, @Nullable final String toVersion) {
     final PackageManagementService selPackageManagementService = myPackageManagementService;
-    myPackageManagementService.fetchPackageVersions(pkg.getName(), new CatchingConsumer<List<String>, Exception>() {
+    myPackageManagementService.fetchPackageVersions(pkg.getName(), new CatchingConsumer<>() {
       @Override
       public void consume(List<String> releases) {
         if (!releases.isEmpty() && !isUpdateAvailable(pkg.getVersion(), releases.get(0))) {
@@ -476,7 +476,7 @@ public class InstalledPackagesPanel extends JPanel {
     for (int i = 0; i < packageCount; ++i) {
       final int finalIndex = i;
       final InstalledPackage pkg = getInstalledPackageAt(finalIndex);
-      serviceEx.fetchLatestVersion(pkg, new CatchingConsumer<String, Exception>() {
+      serviceEx.fetchLatestVersion(pkg, new CatchingConsumer<>() {
 
         private void decrement() {
           if (inProgressPackageCount.decrementAndGet() == 0) {

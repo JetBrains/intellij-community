@@ -71,7 +71,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     if (prefix == null) {
       return delegate;
     }
-    return new Iterator<String>() {
+    return new Iterator<>() {
       @Override
       public boolean hasNext() {
         return delegate.hasNext();

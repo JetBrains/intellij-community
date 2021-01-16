@@ -52,7 +52,7 @@ class ScriptFilter extends FilterAction {
 
   @Override
   public FilterEditor<NamedScriptableDefinition> getEditor() {
-    return new FilterEditor<NamedScriptableDefinition>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("script.label"));
       private final EditorTextField myTextField = UIUtil.createScriptComponent("", myTable.getProject());
@@ -85,16 +85,16 @@ class ScriptFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createSequentialGroup()
-                .addComponent(myLabel)
-                .addComponent(myTextField)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
-                .addComponent(myHelpLabel)
+            .addComponent(myLabel)
+            .addComponent(myTextField)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+            .addComponent(myHelpLabel)
         );
         layout.setVerticalGroup(
           layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                .addComponent(myLabel)
-                .addComponent(myTextField)
-                .addComponent(myHelpLabel)
+            .addComponent(myLabel)
+            .addComponent(myTextField)
+            .addComponent(myHelpLabel)
         );
       }
 
@@ -115,7 +115,7 @@ class ScriptFilter extends FilterAction {
 
       @Override
       public JComponent[] getFocusableComponents() {
-        return new JComponent[] {myTextField};
+        return new JComponent[]{myTextField};
       }
     };
   }

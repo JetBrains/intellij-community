@@ -209,7 +209,7 @@ public class InplaceChangeSignature implements DocumentListener {
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(content, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+    myBalloon.show(new PositionTracker<>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(@NotNull Balloon object) {
         int offset = myStableChange.getMethod().getTextOffset();

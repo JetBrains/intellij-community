@@ -82,7 +82,7 @@ public class CompressedRefs {
 
   @NotNull
   public Collection<VcsRef> getRefs() {
-    return new AbstractCollection<VcsRef>() {
+    return new AbstractCollection<>() {
       private final Supplier<Collection<VcsRef>> myLoadedRefs =
         Suppliers.memoize(() -> CompressedRefs.this.stream().collect(Collectors.toList()));
 

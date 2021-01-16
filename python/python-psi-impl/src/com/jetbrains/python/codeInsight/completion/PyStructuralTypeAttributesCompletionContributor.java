@@ -100,7 +100,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
     private Set<PyClass> suggestClassesFromUsedAttributes(@NotNull PsiElement anchor,
                                                           @NotNull Set<String> seenAttrs,
                                                           @NotNull TypeEvalContext context) {
-      final Set<PyClass> candidates = new HashSet<PyClass>();
+      final Set<PyClass> candidates = new HashSet<>();
       final Map<PyClass, Set<PyClass>> ancestorsCache = Maps.newHashMap();
       for (String attribute : seenAttrs) {
         // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
@@ -117,7 +117,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         }
       }
 
-      final Set<PyClass> suitableClasses = new HashSet<PyClass>();
+      final Set<PyClass> suitableClasses = new HashSet<>();
       for (PyClass candidate : candidates) {
         if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
           continue;
@@ -159,7 +159,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       }
       // Sentinel value to prevent infinite recursion
       ancestorsCache.put(pyClass, Collections.emptySet());
-      final Set<PyClass> result = new HashSet<PyClass>();
+      final Set<PyClass> result = new HashSet<>();
       try {
         for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(context)) {
           if (!(baseType instanceof PyClassType)) {

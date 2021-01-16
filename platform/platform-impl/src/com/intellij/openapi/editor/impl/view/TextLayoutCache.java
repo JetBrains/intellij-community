@@ -39,7 +39,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private Map<LineLayout.Chunk, Object> myLaidOutChunks =
     // using our own LinkedHashMap implementation to avoid IDEA-205735
-    new LinkedHashMap<LineLayout.Chunk, Object>(MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true) {
+    new LinkedHashMap<>(MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<LineLayout.Chunk, Object> eldest) {
         if (size() > getChunkCacheSizeLimit()) {

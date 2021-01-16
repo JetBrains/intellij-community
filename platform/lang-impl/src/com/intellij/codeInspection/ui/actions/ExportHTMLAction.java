@@ -55,7 +55,7 @@ public final class ExportHTMLAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ListPopup popup = JBPopupFactory.getInstance()
-      .createListPopup(new BaseListPopupStep<String>(InspectionsBundle.message("inspection.action.export.popup.title"), HTML, XML) {
+      .createListPopup(new BaseListPopupStep<>(InspectionsBundle.message("inspection.action.export.popup.title"), HTML, XML) {
         @Override
         public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
           return doFinalStep(() -> exportHTML(Comparing.strEqual(selectedValue, HTML)));

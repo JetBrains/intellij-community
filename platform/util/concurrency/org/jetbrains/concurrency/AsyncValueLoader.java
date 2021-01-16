@@ -17,7 +17,7 @@ public abstract class AsyncValueLoader<T> {
   private volatile long modificationCount;
   private volatile long loadedModificationCount;
 
-  private final Consumer<T> doneHandler = new Consumer<T>() {
+  private final Consumer<T> doneHandler = new Consumer<>() {
     @Override
     public void accept(T o) {
       loadedModificationCount = modificationCount;

@@ -341,10 +341,10 @@ public final class PsiUtil {
   }
 
   public static Iterable<PsiClass> iterateSupers(@NotNull final PsiClass psiClass, final boolean includeSelf) {
-    return new Iterable<PsiClass>() {
+    return new Iterable<>() {
       @Override
       public Iterator<PsiClass> iterator() {
-        return new Iterator<PsiClass>() {
+        return new Iterator<>() {
           final IntArrayList indices = new IntArrayList();
           final Stack<PsiClassType[]> superTypesStack = new Stack<>();
           final Set<PsiClass> visited = new HashSet<>();

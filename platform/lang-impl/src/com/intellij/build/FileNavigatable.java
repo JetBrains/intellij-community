@@ -21,7 +21,7 @@ public class FileNavigatable implements Navigatable {
   public FileNavigatable(@NotNull Project project, @NotNull FilePosition filePosition) {
     myProject = project;
     myFilePosition = filePosition;
-    myValue = new NullableLazyValue<OpenFileDescriptor>() {
+    myValue = new NullableLazyValue<>() {
       @Nullable
       @Override
       protected OpenFileDescriptor compute() {

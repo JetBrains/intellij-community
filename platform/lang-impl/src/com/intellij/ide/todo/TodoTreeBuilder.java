@@ -173,14 +173,15 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   public Iterator<PsiFile> getAllFiles() {
     final Iterator<VirtualFile> iterator = myFileTree.getFileIterator();
-    return new Iterator<PsiFile>() {
+    return new Iterator<>() {
       @Override
       public boolean hasNext() {
         return iterator.hasNext();
       }
 
       @Override
-      @Nullable public PsiFile next() {
+      @Nullable
+      public PsiFile next() {
         VirtualFile vFile = iterator.next();
         if (vFile == null || !vFile.isValid()) {
           return null;

@@ -93,7 +93,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     return tooManyOverrides ? PyBundle.message("line.markers.tooltip.has.overridden.methods") : builder.wrapWithHtmlBody().toString();
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> SUPER_METHOD_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> SUPER_METHOD_NAVIGATOR = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(@NotNull PsiElement nameIdentifier) {
       return PyBundle.message("line.markers.popup.title.choose.super.method", ((PyFunction)nameIdentifier.getParent()).getName());
@@ -107,10 +107,11 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> SUPER_ATTRIBUTE_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> SUPER_ATTRIBUTE_NAVIGATOR = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(@NotNull PsiElement nameIdentifier) {
-      return PyBundle.message("line.markers.popup.title.choose.super.attribute", ((PyTargetExpression)nameIdentifier.getParent()).getName());
+      return PyBundle
+        .message("line.markers.popup.title.choose.super.attribute", ((PyTargetExpression)nameIdentifier.getParent()).getName());
     }
 
     @Override
@@ -131,7 +132,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> ourSubclassNavigator = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> ourSubclassNavigator = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(final PsiElement elt) {
       PsiElement parent = elt.getParent();
@@ -146,7 +147,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> ourOverridingMethodNavigator = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> ourOverridingMethodNavigator = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(PsiElement element) {
       PsiElement parent = element.getParent();

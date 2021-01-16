@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
 public final class BindingProperty extends Property<RadComponent, String> {
   private static final Logger LOG = Logger.getInstance(BindingProperty.class);
 
-  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
+  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>() {
     @Override
     protected void customize(@NotNull final @NlsSafe String value) {
       setText(value);

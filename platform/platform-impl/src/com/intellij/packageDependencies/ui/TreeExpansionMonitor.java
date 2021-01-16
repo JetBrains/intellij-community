@@ -22,7 +22,7 @@ public abstract class TreeExpansionMonitor<T> {
   }
 
   public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree, final BiPredicate<? super DefaultMutableTreeNode, ? super DefaultMutableTreeNode> equality) {
-    return new TreeExpansionMonitor<DefaultMutableTreeNode>(tree) {
+    return new TreeExpansionMonitor<>(tree) {
       @Override
       protected TreePath findPathByNode(final DefaultMutableTreeNode node) {
         Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();

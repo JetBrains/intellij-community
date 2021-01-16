@@ -120,7 +120,7 @@ public final class PyDefUseUtil {
       return PyElement.EMPTY_ARRAY;
     }
     final boolean[] visited = new boolean[instructions.length];
-    final Collection<PyElement> result = new HashSet<PyElement>();
+    final Collection<PyElement> result = new HashSet<>();
     for (Instruction instruction : instructions[instr].allSucc()) {
       getPostRefs(var, instructions, instruction.num(), visited, result);
     }

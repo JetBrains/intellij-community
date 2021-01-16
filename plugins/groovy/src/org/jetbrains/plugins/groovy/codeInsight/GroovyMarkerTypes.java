@@ -206,15 +206,16 @@ public final class GroovyMarkerTypes {
                                                                           new PsiElementProcessor.CollectElementsWithLimit<>(5);
 
                                                                         for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-                                                                          OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
-                                                                            @Override
-                                                                            public boolean processInReadAction(PsiMethod method) {
-                                                                              if (method instanceof GrTraitMethod) {
-                                                                                return true;
+                                                                          OverridingMethodsSearch.search(m).forEach(
+                                                                            new ReadActionProcessor<>() {
+                                                                              @Override
+                                                                              public boolean processInReadAction(PsiMethod method) {
+                                                                                if (method instanceof GrTraitMethod) {
+                                                                                  return true;
+                                                                                }
+                                                                                return processor.execute(method);
                                                                               }
-                                                                              return processor.execute(method);
-                                                                            }
-                                                                          });
+                                                                            });
                                                                         }
 
                                                                         boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -250,7 +251,7 @@ public final class GroovyMarkerTypes {
           new PsiElementProcessor.CollectElementsWithLimit<>(2, new HashSet<>());
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
           for (GrMethod m : PsiImplUtil.getMethodOrReflectedMethods(method)) {
-            OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<PsiMethod>() {
+            OverridingMethodsSearch.search(m).forEach(new ReadActionProcessor<>() {
               @Override
               public boolean processInReadAction(PsiMethod psiMethod) {
                 if (psiMethod instanceof GrReflectedMethod) {
@@ -332,7 +333,7 @@ public final class GroovyMarkerTypes {
       super.run(indicator);
       for (PsiMethod method : PsiImplUtil.getMethodOrReflectedMethods(myMethod)) {
         OverridingMethodsSearch.search(method).forEach(
-          new CommonProcessors.CollectProcessor<PsiMethod>() {
+          new CommonProcessors.CollectProcessor<>() {
             @Override
             public boolean process(PsiMethod psiMethod) {
               if (!updateComponent(com.intellij.psi.impl.PsiImplUtil.handleMirror(psiMethod))) {

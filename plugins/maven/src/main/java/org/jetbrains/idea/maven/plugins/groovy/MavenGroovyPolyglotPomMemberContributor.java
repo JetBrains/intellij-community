@@ -268,7 +268,7 @@ public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContr
   }
 
   private static class Contributor {
-    private final AtomicNullableLazyValue<String> myClassSourceValue = new AtomicNullableLazyValue<String>() {
+    private final AtomicNullableLazyValue<String> myClassSourceValue = new AtomicNullableLazyValue<>() {
       @Override
       protected String compute() {
         try {

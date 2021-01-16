@@ -119,7 +119,7 @@ public final class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixtu
   }
 
   private JBPopupMenu waitUntilFoundMenu(final String actionName) {
-    return GuiTestUtil.INSTANCE.waitUntilFound(robot(), new GenericTypeMatcher<JBPopupMenu>(JBPopupMenu.class) {
+    return GuiTestUtil.INSTANCE.waitUntilFound(robot(), new GenericTypeMatcher<>(JBPopupMenu.class) {
       @Override
       protected boolean isMatching(@NotNull JBPopupMenu menu) {
         boolean found = false;

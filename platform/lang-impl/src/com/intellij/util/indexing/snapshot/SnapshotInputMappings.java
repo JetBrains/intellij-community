@@ -269,7 +269,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     final File mapFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "indextrace");
     try {
       return new PersistentHashMap<>(mapFile.toPath(), EnumeratorIntegerDescriptor.INSTANCE,
-                                     new DataExternalizer<String>() {
+                                     new DataExternalizer<>() {
                                        @Override
                                        public void save(@NotNull DataOutput out, String value) throws IOException {
                                          out.write((byte[])CompressionUtil.compressStringRawBytes(value));

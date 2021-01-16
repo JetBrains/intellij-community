@@ -26,7 +26,7 @@ public class PositionTrackerTestAction extends AnAction {
       popupFactory
         .createDialogBalloonBuilder(popupContent, null)
         .createBalloon()
-        .show(new PositionTracker<Balloon>(editor.getContentComponent()) {
+        .show(new PositionTracker<>(editor.getContentComponent()) {
           @Override
           public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
             return popupFactory.guessBestPopupLocation(editor);

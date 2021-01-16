@@ -423,7 +423,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
-    new CodeStyleManagerRunnable<Object>(this, FormattingMode.ADJUST_INDENT) {
+    new CodeStyleManagerRunnable<>(this, FormattingMode.ADJUST_INDENT) {
       @Override
       protected Object doPerform(int offset, TextRange range) {
         FormatterEx.getInstanceEx().adjustLineIndentsForRange(myModel, mySettings, myIndentOptions, range);

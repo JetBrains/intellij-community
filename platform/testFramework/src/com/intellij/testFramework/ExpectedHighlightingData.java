@@ -468,11 +468,12 @@ public class ExpectedHighlightingData {
   public void checkResult(@Nullable PsiFile psiFile, Collection<? extends HighlightInfo> infos, String text, @Nullable String filePath) {
     StringBuilder failMessage = new StringBuilder();
 
-    Set<HighlightInfo> expectedFound = new THashSet<>(new TObjectHashingStrategy<HighlightInfo>() {
+    Set<HighlightInfo> expectedFound = new THashSet<>(new TObjectHashingStrategy<>() {
       @Override
       public int computeHashCode(HighlightInfo object) {
         return object.hashCode();
       }
+
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
         return haveSamePresentation(o1, o2, true);
@@ -531,11 +532,12 @@ public class ExpectedHighlightingData {
 
   @NotNull
   private static Set<HighlightInfo> indexInfos(Collection<? extends HighlightInfo> infos) {
-    Set<HighlightInfo> index = new THashSet<>(new TObjectHashingStrategy<HighlightInfo>() {
+    Set<HighlightInfo> index = new THashSet<>(new TObjectHashingStrategy<>() {
       @Override
       public int computeHashCode(HighlightInfo object) {
         return Objects.hash(object.startOffset, object.endOffset); //good enough
       }
+
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
         return matchesPattern(o1, o2, false);
@@ -797,7 +799,7 @@ public class ExpectedHighlightingData {
     }
   }
 
-  private static final SmartPsiElementPointer<PsiElement> NULL_POINTER = new SmartPsiElementPointer<PsiElement>() {
+  private static final SmartPsiElementPointer<PsiElement> NULL_POINTER = new SmartPsiElementPointer<>() {
     @Nullable
     @Override
     public PsiElement getElement() {

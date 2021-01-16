@@ -50,10 +50,10 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     final List<List<T>> values = new ArrayList<>(myNegated ? map.descendingMap().values() : map.values());
     ContainerUtil.addIfNotNull(values, nulls);
 
-    return new Iterable<T>() {
+    return new Iterable<>() {
       @Override
       public Iterator<T> iterator() {
-        return new FlatteningIterator<List<T>, T>(values.iterator()) {
+        return new FlatteningIterator<>(values.iterator()) {
           @Override
           protected Iterator<T> createValueIterator(List<T> group) {
             return myNext.classify(group, context).iterator();

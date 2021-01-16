@@ -44,47 +44,47 @@ public class ReferenceCompletionContributor extends CompletionContributor {
 
   public ReferenceCompletionContributor() {
     extend(CompletionType.BASIC, PATTERN,
-       new CompletionProvider<CompletionParameters>() {
-         @Override
-         protected void addCompletions(@NotNull CompletionParameters parameters,
-                                       @NotNull ProcessingContext context,
-                                       @NotNull CompletionResultSet result) {
-           PsiElement original = parameters.getPosition();
-           PsiFile file = original.getContainingFile();
-           int offset = parameters.getOffset();
-           String prefix = getPrefix(offset, file);
+           new CompletionProvider<>() {
+             @Override
+             protected void addCompletions(@NotNull CompletionParameters parameters,
+                                           @NotNull ProcessingContext context,
+                                           @NotNull CompletionResultSet result) {
+               PsiElement original = parameters.getPosition();
+               PsiFile file = original.getContainingFile();
+               int offset = parameters.getOffset();
+               String prefix = getPrefix(offset, file);
 
-           if (prefix.length() > 0) {
-            result = result.withPrefixMatcher(prefix);
-           }
-           RestReference[] elements = PsiTreeUtil.getChildrenOfType(file, RestReference.class);
-           RestReferenceTarget[] targets = PsiTreeUtil.getChildrenOfType(file, RestReferenceTarget.class);
-           Set<String> names = new HashSet<>();
-           if (targets != null) {
-             for (RestReferenceTarget t : targets) {
-               names.add(t.getReferenceName());
-             }
-           }
+               if (prefix.length() > 0) {
+                 result = result.withPrefixMatcher(prefix);
+               }
+               RestReference[] elements = PsiTreeUtil.getChildrenOfType(file, RestReference.class);
+               RestReferenceTarget[] targets = PsiTreeUtil.getChildrenOfType(file, RestReferenceTarget.class);
+               Set<String> names = new HashSet<>();
+               if (targets != null) {
+                 for (RestReferenceTarget t : targets) {
+                   names.add(t.getReferenceName());
+                 }
+               }
 
-           if (elements != null) {
-             for (RestReference e : elements) {
-               String name = e.getReferenceText();
-               if (!names.contains(name)) {
-                 if ((name.startsWith("[") && name.endsWith("]")) || (name.startsWith("|") && name.endsWith("|"))) {
-                   result.addElement(LookupElementBuilder.create(name));
-                 }
-                 else if (name.equals("__")) {
-                   result.addElement(LookupElementBuilder.create(name + ":"));
-                 }
-                 else {
-                   name = name.startsWith("_") ? "\\" + name : name;
-                   result.addElement(LookupElementBuilder.create("_" + name + ":"));
+               if (elements != null) {
+                 for (RestReference e : elements) {
+                   String name = e.getReferenceText();
+                   if (!names.contains(name)) {
+                     if ((name.startsWith("[") && name.endsWith("]")) || (name.startsWith("|") && name.endsWith("|"))) {
+                       result.addElement(LookupElementBuilder.create(name));
+                     }
+                     else if (name.equals("__")) {
+                       result.addElement(LookupElementBuilder.create(name + ":"));
+                     }
+                     else {
+                       name = name.startsWith("_") ? "\\" + name : name;
+                       result.addElement(LookupElementBuilder.create("_" + name + ":"));
+                     }
+                   }
                  }
                }
              }
-           }
-         }
-       });
+           });
   }
 
   public static String getPrefix(int offset, PsiFile file) {

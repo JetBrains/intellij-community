@@ -72,7 +72,7 @@ public final class EditorWindow {
   public static final Key<Integer> DRAG_START_LOCATION_HASH_KEY = KeyWithDefaultValue.create("drag start editor location hash", 0);
   // Metadata to support editor tab drag&drop process: initial 'pinned' state
   public static final Key<Boolean> DRAG_START_PINNED_KEY = Key.create("drag start editor pinned state");
-  private final Stack<Pair<String, FileEditorOpenOptions>> myRemovedTabs = new Stack<Pair<String, FileEditorOpenOptions>>() {
+  private final Stack<Pair<String, FileEditorOpenOptions>> myRemovedTabs = new Stack<>() {
     @Override
     public void push(Pair<String, FileEditorOpenOptions> pair) {
       if (size() >= getTabLimit()) {

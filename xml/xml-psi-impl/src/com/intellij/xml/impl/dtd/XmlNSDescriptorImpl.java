@@ -29,25 +29,26 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
   private XmlFile myDescriptorFile;
 
   private static final SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl> myCachedDeclsCache = new
-    SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl>() {
-    @Override
-    protected final CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
-      return xmlNSDescriptor.doBuildDeclarationMap();
-    }
+    SimpleFieldCache<>() {
+      @Override
+      protected final CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
+        return xmlNSDescriptor.doBuildDeclarationMap();
+      }
 
-    @Override
-    protected final CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
-      return xmlNSDescriptor.myCachedDecls;
-    }
+      @Override
+      protected final CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
+        return xmlNSDescriptor.myCachedDecls;
+      }
 
-    @Override
-    protected final void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue, final XmlNSDescriptorImpl xmlNSDescriptor) {
-      xmlNSDescriptor.myCachedDecls = cachedValue;
-    }
-  };
+      @Override
+      protected final void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue,
+                                    final XmlNSDescriptorImpl xmlNSDescriptor) {
+        xmlNSDescriptor.myCachedDecls = cachedValue;
+      }
+    };
 
   private volatile CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
-  private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlElementDecl>() {
+  private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<>() {
     @Override
     public String getName(@NotNull final XmlElementDecl psiElement) {
       return psiElement.getName();

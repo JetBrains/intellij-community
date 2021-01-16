@@ -35,14 +35,16 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
-    return new DataIndexer<String, Void, FileContent>() {
+    return new DataIndexer<>() {
       @Override
       @NotNull
       public Map<String, Void> map(@NotNull FileContent inputData) {
         final HashMap<String, Void> map = new HashMap<>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
-          if (CharArrayUtil.indexOf(inputDataContentAsText, RelaxNgMetaDataContributor.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();
+          if (CharArrayUtil.indexOf(inputDataContentAsText, RelaxNgMetaDataContributor.RNG_NAMESPACE, 0) == -1) {
+            return Collections.emptyMap();
+          }
           NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlBuilder() {
             NanoXmlBuilder attributeHandler;
             int depth;

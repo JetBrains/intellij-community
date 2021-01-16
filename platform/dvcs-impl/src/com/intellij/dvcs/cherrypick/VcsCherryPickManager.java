@@ -134,7 +134,7 @@ public final class VcsCherryPickManager {
 
     @NotNull
     public MultiMap<VcsCherryPicker, VcsFullCommitDetails> createArrayMultiMap() {
-      return new MultiMap<VcsCherryPicker, VcsFullCommitDetails>() {
+      return new MultiMap<>() {
         @NotNull
         @Override
         protected Collection<VcsFullCommitDetails> createCollection() {

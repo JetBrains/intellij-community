@@ -50,7 +50,7 @@ public class ConfigureAndroidProjectStepFixture extends AbstractWizardStepFixtur
   public File getLocationInFileSystem() {
     final TextFieldWithBrowseButton locationField = robot().finder().findByType(target(), TextFieldWithBrowseButton.class);
     //noinspection ConstantConditions
-    return execute(new GuiQuery<File>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected File executeInEDT() throws Throwable {
         String location = locationField.getText();

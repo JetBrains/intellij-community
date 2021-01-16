@@ -65,14 +65,22 @@ public interface GradlePropertyModel {
   }
 
   // The following are TypeReferences used in calls to getValue and getRawValue.
-  TypeReference<String> STRING_TYPE = new TypeReference<String>() {};
-  TypeReference<Integer> INTEGER_TYPE = new TypeReference<Integer>() {};
-  TypeReference<BigDecimal> BIG_DECIMAL_TYPE = new TypeReference<BigDecimal>() {};
-  TypeReference<Boolean> BOOLEAN_TYPE = new TypeReference<Boolean>() {};
-  TypeReference<List<GradlePropertyModel>> LIST_TYPE = new TypeReference<List<GradlePropertyModel>>() {};
-  TypeReference<Map<String, GradlePropertyModel>> MAP_TYPE = new TypeReference<Map<String, GradlePropertyModel>>() {};
-  TypeReference<Object> OBJECT_TYPE = new TypeReference<Object>() {};
-  TypeReference<ReferenceTo> REFERENCE_TO_TYPE = new TypeReference<ReferenceTo>() {};
+  TypeReference<String> STRING_TYPE = new TypeReference<>() {
+  };
+  TypeReference<Integer> INTEGER_TYPE = new TypeReference<>() {
+  };
+  TypeReference<BigDecimal> BIG_DECIMAL_TYPE = new TypeReference<>() {
+  };
+  TypeReference<Boolean> BOOLEAN_TYPE = new TypeReference<>() {
+  };
+  TypeReference<List<GradlePropertyModel>> LIST_TYPE = new TypeReference<>() {
+  };
+  TypeReference<Map<String, GradlePropertyModel>> MAP_TYPE = new TypeReference<>() {
+  };
+  TypeReference<Object> OBJECT_TYPE = new TypeReference<>() {
+  };
+  TypeReference<ReferenceTo> REFERENCE_TO_TYPE = new TypeReference<>() {
+  };
 
   /**
    * Represents the type of the value stored by this property, or when a type can't be found

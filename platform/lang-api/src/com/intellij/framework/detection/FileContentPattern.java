@@ -24,7 +24,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   }
 
   public FileContentPattern withName(@NotNull final String name) {
-    return with(new PatternCondition<FileContent>("withName") {
+    return with(new PatternCondition<>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         return name.equals(fileContent.getFileName());
@@ -33,7 +33,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   }
 
   public FileContentPattern withName(final StringPattern namePattern) {
-    return with(new PatternCondition<FileContent>("withName") {
+    return with(new PatternCondition<>("withName") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         return namePattern.accepts(fileContent.getFileName());
@@ -42,7 +42,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   }
 
   public FileContentPattern inDirectory(final @NotNull String name) {
-    return with(new PatternCondition<FileContent>("inDirectory") {
+    return with(new PatternCondition<>("inDirectory") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         return name.equals(fileContent.getFile().getParent().getName());
@@ -51,7 +51,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   }
 
   public FileContentPattern xmlWithRootTag(@NotNull final String rootTag) {
-    return with(new PatternCondition<FileContent>("withRootTag") {
+    return with(new PatternCondition<>("withRootTag") {
       @Override
       public boolean accepts(@NotNull FileContent fileContent, ProcessingContext context) {
         try {
@@ -69,7 +69,7 @@ public final class FileContentPattern extends ObjectPattern<FileContent, FileCon
   }
 
   public FileContentPattern xmlWithRootTagNamespace(final ElementPattern<String> namespacePattern) {
-    return with(new PatternCondition<FileContent>("xmlWithRootTagNamespace") {
+    return with(new PatternCondition<>("xmlWithRootTagNamespace") {
       @Override
       public boolean accepts(@NotNull final FileContent fileContent, final ProcessingContext context) {
         try {

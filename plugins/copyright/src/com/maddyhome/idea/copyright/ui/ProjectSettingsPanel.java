@@ -113,7 +113,7 @@ public class ProjectSettingsPanel {
     component.setText(CopyrightBundle.message("copyright.default.project.copyright"));
     component.setLabelLocation(BorderLayout.WEST);
     component.setComponent(myProfilesComboBox);
-    ElementProducer<ScopeSetting> producer = new ElementProducer<ScopeSetting>() {
+    ElementProducer<ScopeSetting> producer = new ElementProducer<>() {
       @Override
       public ScopeSetting createElement() {
         return new ScopeSetting(CustomScopesProviderEx.getAllScope(), myProfilesModel.getAllProfiles().values().iterator().next());

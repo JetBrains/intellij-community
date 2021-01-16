@@ -114,7 +114,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
     boolean hasExternalRefs = false;
     if (XsltSupport.isTopLevelElement(tag)) {
       final Query<PsiReference> query = ReferencesSearch.search(variable, GlobalSearchScope.allScope(project), false);
-      hasExternalRefs = !query.forEach(new Processor<PsiReference>() {
+      hasExternalRefs = !query.forEach(new Processor<>() {
         int allRefs = 0;
 
         @Override

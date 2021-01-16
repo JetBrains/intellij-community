@@ -42,7 +42,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
 
   // TODO: CompositeCommittedChangesProvider.getColumns() needs to be updated if new standard columns are added 
 
-  public static final ChangeListColumn<CommittedChangeList> DATE = new ChangeListColumn<CommittedChangeList>() {
+  public static final ChangeListColumn<CommittedChangeList> DATE = new ChangeListColumn<>() {
     @Override
     @NotNull
     public String getTitle() {
@@ -64,7 +64,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     }
   };
 
-  public static final ChangeListColumn<CommittedChangeList> NAME = new ChangeListColumn<CommittedChangeList>() {
+  public static final ChangeListColumn<CommittedChangeList> NAME = new ChangeListColumn<>() {
     @Override
     @NotNull
     public String getTitle() {
@@ -86,7 +86,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
   public static final ChangeListColumn<CommittedChangeList> NUMBER =
     new ChangeListNumberColumn(message("column.name.revision.list.number"));
 
-  public static final ChangeListColumn<CommittedChangeList> DESCRIPTION = new ChangeListColumn<CommittedChangeList>() {
+  public static final ChangeListColumn<CommittedChangeList> DESCRIPTION = new ChangeListColumn<>() {
     @Override
     @NotNull
     public String getTitle() {

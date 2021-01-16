@@ -19,7 +19,7 @@ public final class RunConfigurationComboBoxFixture extends JComponentFixture<Run
   @NotNull
   static RunConfigurationComboBoxFixture find(@NotNull final IdeFrameFixture parent) {
     ComponentFinder finder = parent.robot().finder();
-    ActionToolbarImpl toolbar = finder.find(parent.target(), new GenericTypeMatcher<ActionToolbarImpl>(ActionToolbarImpl.class) {
+    ActionToolbarImpl toolbar = finder.find(parent.target(), new GenericTypeMatcher<>(ActionToolbarImpl.class) {
       @Override
       protected boolean isMatching(@NotNull ActionToolbarImpl toolbar) {
         String place = field("myPlace").ofType(String.class).in(toolbar).get();
@@ -27,7 +27,7 @@ public final class RunConfigurationComboBoxFixture extends JComponentFixture<Run
       }
     });
 
-    JButton button = finder.find(toolbar, new GenericTypeMatcher<JButton>(JButton.class) {
+    JButton button = finder.find(toolbar, new GenericTypeMatcher<>(JButton.class) {
       @Override
       protected boolean isMatching(@NotNull JButton button) {
         return button.getClass().getSimpleName().equals("ComboBoxButton");
@@ -42,7 +42,7 @@ public final class RunConfigurationComboBoxFixture extends JComponentFixture<Run
 
   @Nullable
   public String getText() {
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected String executeInEDT() throws Throwable {
         return target().getText();

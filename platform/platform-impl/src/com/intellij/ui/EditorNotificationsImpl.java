@@ -89,7 +89,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     });
 
     EP_PROJECT.getPoint(project).addExtensionPointListener(
-      new ExtensionPointListener<Provider<?>>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
           updateAllNotifications();

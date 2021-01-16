@@ -108,7 +108,7 @@ public class SearchModelTest extends BasePlatformTestCase {
   @NotNull
   private static SearchEverywhereContributor<Object> createStubContributor(int weight) {
     String id = UUID.randomUUID().toString();
-    return new SearchEverywhereContributor<Object>() {
+    return new SearchEverywhereContributor<>() {
       @NotNull
       @Override
       public String getSearchProviderId() {

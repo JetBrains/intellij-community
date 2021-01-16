@@ -187,7 +187,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       if (!processor.isInplaceRenameSupported()) {
         return;
       }
-      processor.substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
+      processor.substituteElementToRename(elementToRename, editor, new Pass<>() {
         @Override
         public void pass(PsiElement substitutedElement) {
           final MemberInplaceRenamer renamer = new MemberInplaceRenamer(elementToRename, substitutedElement, editor);

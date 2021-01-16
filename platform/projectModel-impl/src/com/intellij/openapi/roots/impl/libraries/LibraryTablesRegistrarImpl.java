@@ -58,7 +58,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
     synchronized (myExtensionsLoadingLock) {
       if (!myExtensionsLoaded) {
-        CUSTOM_TABLES_EP.getPoint().addExtensionPointListener(new ExtensionPointListener<CustomLibraryTableDescription>() {
+        CUSTOM_TABLES_EP.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
           @Override
           public void extensionAdded(@NotNull CustomLibraryTableDescription extension, @NotNull PluginDescriptor pluginDescriptor) {
             LibraryTableBase table = new CustomLibraryTableImpl(extension.getTableLevel(), extension.getPresentation());

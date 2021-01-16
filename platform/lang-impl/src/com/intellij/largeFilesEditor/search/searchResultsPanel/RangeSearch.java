@@ -146,7 +146,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
         }
       }
     });
-    myShowingResultsList.setCellRenderer(new ColoredListCellRenderer<ListElementWrapper>() {
+    myShowingResultsList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ListElementWrapper> list,
                                            ListElementWrapper value,

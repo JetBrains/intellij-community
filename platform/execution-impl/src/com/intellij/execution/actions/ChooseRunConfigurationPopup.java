@@ -1085,7 +1085,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     boolean isFirst = true;
     final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
     for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration.getConfiguration())) {
-      ItemWrapper<ExecutionTarget> itemWrapper = new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
+      ItemWrapper<ExecutionTarget> itemWrapper = new ItemWrapper<>(eachTarget, isFirst) {
         @Override
         public Icon getIcon() {
           return getValue().getIcon();
@@ -1115,7 +1115,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
   @NotNull
   private static ItemWrapper<Void> createEditAction() {
-    ItemWrapper<Void> result = new ItemWrapper<Void>(null) {
+    ItemWrapper<Void> result = new ItemWrapper<>(null) {
       @Override
       public Icon getIcon() {
         return AllIcons.Actions.EditSource;

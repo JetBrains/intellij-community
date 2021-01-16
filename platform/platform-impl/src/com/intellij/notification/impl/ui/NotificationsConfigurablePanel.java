@@ -152,24 +152,24 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private void initColumns() {
       TableColumn displayTypeColumn = getColumnModel().getColumn(DISPLAY_TYPE_COLUMN);
       ComboBoxTableRenderer<NotificationDisplayType> displayTypeRenderer =
-        new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
-        @Override
-        protected void customizeComponent(NotificationDisplayType value, JTable table, boolean isSelected) {
-          super.customizeComponent(myDisplayBalloons.isSelected() ? value : NotificationDisplayType.NONE, table, isSelected);
-          if (!myDisplayBalloons.isSelected() && !isSelected) {
-            setBackground(UIUtil.getComboBoxDisabledBackground());
-            setForeground(UIUtil.getComboBoxDisabledForeground());
+        new ComboBoxTableRenderer<>(NotificationDisplayType.values()) {
+          @Override
+          protected void customizeComponent(NotificationDisplayType value, JTable table, boolean isSelected) {
+            super.customizeComponent(myDisplayBalloons.isSelected() ? value : NotificationDisplayType.NONE, table, isSelected);
+            if (!myDisplayBalloons.isSelected() && !isSelected) {
+              setBackground(UIUtil.getComboBoxDisabledBackground());
+              setForeground(UIUtil.getComboBoxDisabledForeground());
+            }
           }
-        }
 
-        @Override
-        protected String getTextFor(@NotNull NotificationDisplayType value) {
-          return value.getTitle();
-        }
-      };
+          @Override
+          protected String getTextFor(@NotNull NotificationDisplayType value) {
+            return value.getTitle();
+          }
+        };
       displayTypeColumn.setCellRenderer(displayTypeRenderer);
 
-      displayTypeColumn.setCellEditor(new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
+      displayTypeColumn.setCellEditor(new ComboBoxTableRenderer<>(NotificationDisplayType.values()) {
         @Override
         public boolean isCellEditable(EventObject event) {
           if (!myDisplayBalloons.isSelected()) {

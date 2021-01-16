@@ -23,7 +23,7 @@ import java.util.Objects;
  * @author yole
  */
 public class LayoutManagerProperty extends Property<RadContainer, String> {
-  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
+  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>() {
     @Override
     protected void customize(@NotNull final String value) {
       setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));

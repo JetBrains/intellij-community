@@ -27,7 +27,7 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
 
   private String @NotNull [] doGetUrls(@NotNull OrderEntry entry) {
     List<String> result = new ArrayList<>();
-    RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
+    RootPolicy<List<String>> policy = new RootPolicy<>() {
       @Override
       public List<String> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootUrls(JavadocOrderRootType.this));

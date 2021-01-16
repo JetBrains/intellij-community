@@ -812,7 +812,7 @@ public final class ControlFlowUtils {
   @NotNull
   public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
-    final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
+    final Semilattice<BitSet> sem = new Semilattice<>() {
 
       @NotNull
       @Override
@@ -831,7 +831,7 @@ public final class ControlFlowUtils {
       }
     };
 
-    DfaInstance<BitSet> dfa = new DfaInstance<BitSet>() {
+    DfaInstance<BitSet> dfa = new DfaInstance<>() {
       @Override
       public void fun(@NotNull BitSet bitSet, @NotNull Instruction instruction) {
         if (!(instruction instanceof ReadWriteVariableInstruction)) return;

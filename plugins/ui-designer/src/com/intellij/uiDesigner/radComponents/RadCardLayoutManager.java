@@ -180,10 +180,10 @@ public class RadCardLayoutManager extends RadLayoutManager {
   private static final class CardNameProperty extends Property<RadComponent, String> {
     private final LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>();
 
-    private final AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<String>() {
+    private final AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<>() {
       @Override
       protected void setValueFromComponent(RadComponent component, String value) {
-        myTf.setText((String) component.getCustomLayoutConstraints());
+        myTf.setText((String)component.getCustomLayoutConstraints());
       }
 
       @Override

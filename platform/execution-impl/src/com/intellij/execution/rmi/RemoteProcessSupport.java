@@ -238,7 +238,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   private void startProcess(@NotNull Target target, @NotNull Parameters configuration, @NotNull Pair<Target, Parameters> key) {
-    ProgramRunner<?> runner = new ProgramRunner<RunnerSettings>() {
+    ProgramRunner<?> runner = new ProgramRunner<>() {
       @Override
       @NotNull
       public String getRunnerId() {

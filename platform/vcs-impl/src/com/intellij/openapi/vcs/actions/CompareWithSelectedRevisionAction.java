@@ -40,7 +40,7 @@ import static java.util.Objects.requireNonNull;
 public class CompareWithSelectedRevisionAction extends DumbAwareAction {
   private static class Holder {
     private static final ColumnInfo<TreeNodeAdapter, String> BRANCH_COLUMN =
-      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.branch")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revisions.list.branch")) {
         @Override
         public String valueOf(final TreeNodeAdapter object) {
           return object.getRevision().getBranchName();
@@ -48,7 +48,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       };
 
     private static final ColumnInfo<TreeNodeAdapter, String> REVISION_COLUMN =
-      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.revision")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.revision")) {
         @Override
         public String valueOf(final TreeNodeAdapter object) {
           return object.getRevision().getRevisionNumber().asString();
@@ -56,7 +56,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       };
 
     private static final ColumnInfo<TreeNodeAdapter, String> DATE_COLUMN =
-      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.filter")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revisions.list.filter")) {
         @Override
         public String valueOf(final TreeNodeAdapter object) {
           return DateFormatUtil.formatPrettyDateTime(object.getRevision().getRevisionDate());
@@ -64,7 +64,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       };
 
     private static final ColumnInfo<TreeNodeAdapter, String> AUTHOR_COLUMN =
-      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.author")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.author")) {
         @Override
         public String valueOf(final TreeNodeAdapter object) {
           return object.getRevision().getAuthor();
@@ -72,7 +72,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       };
 
     private static final ColumnInfo<VcsFileRevision, String> REVISION_TABLE_COLUMN =
-      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.revision")) {
         @Override
         public String valueOf(final VcsFileRevision vcsFileRevision) {
           return vcsFileRevision.getRevisionNumber().asString();
@@ -80,7 +80,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       };
 
     private static final ColumnInfo<VcsFileRevision, String> DATE_TABLE_COLUMN =
-      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.revision")) {
         @Override
         public String valueOf(final VcsFileRevision vcsFileRevision) {
           final Date date = vcsFileRevision.getRevisionDate();
@@ -89,7 +89,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       };
 
     private static final ColumnInfo<VcsFileRevision, String> AUTHOR_TABLE_COLUMN =
-      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.author")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.author")) {
         @Override
         public String valueOf(final VcsFileRevision vcsFileRevision) {
           return vcsFileRevision.getAuthor();
@@ -97,7 +97,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       };
 
     private static final ColumnInfo<VcsFileRevision, String> BRANCH_TABLE_COLUMN =
-      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revisions.list.branch")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revisions.list.branch")) {
         @Override
         public String valueOf(final VcsFileRevision vcsFileRevision) {
           return vcsFileRevision.getBranchName();

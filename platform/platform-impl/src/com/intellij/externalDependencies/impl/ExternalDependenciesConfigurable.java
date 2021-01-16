@@ -74,7 +74,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
   @Override
   public JComponent createComponent() {
     JBList<ProjectExternalDependency> dependenciesList = new JBList<>();
-    dependenciesList.setCellRenderer(new ColoredListCellRenderer<ProjectExternalDependency>() {
+    dependenciesList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ProjectExternalDependency> list, ProjectExternalDependency dependency,
                                            int index, boolean selected, boolean hasFocus) {

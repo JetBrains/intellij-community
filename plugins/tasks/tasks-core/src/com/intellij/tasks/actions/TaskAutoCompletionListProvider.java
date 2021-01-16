@@ -62,7 +62,7 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
 
   @Override
   protected InsertHandler<LookupElement> createInsertHandler(@NotNull final Task task) {
-    return new InsertHandler<LookupElement>() {
+    return new InsertHandler<>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
         Document document = context.getEditor().getDocument();

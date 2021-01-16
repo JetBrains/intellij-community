@@ -438,7 +438,7 @@ public final class PyToxTest extends PyEnvTestCase {
 
       assertThat(checkedInterpreters)
         .describedAs(String.format("No all interpreters from tox.ini used (test tree \n%s\n )", getTestTree(runner.getTestProxy(), 0)))
-        .are(new Condition<String>() {
+        .are(new Condition<>() {
           @Override
           public boolean matches(String value) {
             return expectedInterpreters.contains(value);

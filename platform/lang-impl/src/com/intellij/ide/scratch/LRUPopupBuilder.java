@@ -170,7 +170,7 @@ public abstract class LRUPopupBuilder<T> {
 
     List<T> combinedItems = ContainerUtil.concat(lru, items, extra);
     BaseListPopupStep<T> step =
-      new BaseListPopupStep<T>(myTitle, combinedItems) {
+      new BaseListPopupStep<>(myTitle, combinedItems) {
         @NotNull
         @Override
         public String getTextFor(T t) {

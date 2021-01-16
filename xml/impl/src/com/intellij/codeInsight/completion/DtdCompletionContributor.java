@@ -23,7 +23,7 @@ public class DtdCompletionContributor extends CompletionContributor {
     "NMTOKEN", "NMTOKENS", "SYSTEM", "PUBLIC"
   };
 
-  private static final InsertHandler<LookupElement> INSERT_HANDLER = new BasicInsertHandler<LookupElement>() {
+  private static final InsertHandler<LookupElement> INSERT_HANDLER = new BasicInsertHandler<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       super.handleInsert(context, item);
@@ -43,7 +43,7 @@ public class DtdCompletionContributor extends CompletionContributor {
   };
 
   public DtdCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement(), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,

@@ -16,7 +16,7 @@ public class ServiceViewStartupActivity implements StartupActivity.DumbAware {
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
 
     if (ServiceModel.CONTRIBUTOR_EP_NAME.getExtensionList().isEmpty()) {
-      ServiceModel.CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ExtensionPointListener<ServiceViewContributor<?>>() {
+      ServiceModel.CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull ServiceViewContributor<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
           ServiceViewManager.getInstance(project);

@@ -41,7 +41,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     .maximumSize(1000)
     .expireAfterAccess(10, TimeUnit.MINUTES)
     .build(
-      new CacheLoader<VirtualFile, String>() {
+      new CacheLoader<>() {
         @Override
         public String load(VirtualFile key) throws Exception {
           return readAttributeFromFile(key);

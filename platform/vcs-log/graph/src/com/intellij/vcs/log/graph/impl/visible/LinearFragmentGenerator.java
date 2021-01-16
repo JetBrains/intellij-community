@@ -41,14 +41,14 @@ public class LinearFragmentGenerator {
 
   @NotNull private final Set<Integer> myPinnedNodes;
 
-  private final Function<Integer, List<Integer>> upNodesFun = new Function<Integer, List<Integer>>() {
+  private final Function<Integer, List<Integer>> upNodesFun = new Function<>() {
     @Override
     public List<Integer> fun(Integer integer) {
       return myLinearGraph.getNodes(integer, UP);
     }
   };
 
-  private final Function<Integer, List<Integer>> downNodesFun = new Function<Integer, List<Integer>>() {
+  private final Function<Integer, List<Integer>> downNodesFun = new Function<>() {
     @Override
     public List<Integer> fun(Integer integer) {
       return myLinearGraph.getNodes(integer, DOWN);

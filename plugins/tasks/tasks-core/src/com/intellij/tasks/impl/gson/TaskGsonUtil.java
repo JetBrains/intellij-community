@@ -18,7 +18,7 @@ public final class TaskGsonUtil {
   private TaskGsonUtil() {
   }
 
-  public static final JsonDeserializer<Date> DATE_DESERIALIZER = new JsonDeserializer<Date>() {
+  public static final JsonDeserializer<Date> DATE_DESERIALIZER = new JsonDeserializer<>() {
     @Override
     public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
       return TaskUtil.parseDate(json.getAsString());

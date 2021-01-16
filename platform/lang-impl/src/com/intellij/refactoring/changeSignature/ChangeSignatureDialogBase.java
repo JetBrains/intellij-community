@@ -397,7 +397,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
 
   protected JPanel createParametersPanel(boolean hasTabsInDialog) {
-    myParametersTable = new TableView<ParameterTableModelItem>(myParametersTableModel) {
+    myParametersTable = new TableView<>(myParametersTableModel) {
 
       @Override
       public void removeEditor() {

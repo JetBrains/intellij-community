@@ -64,7 +64,7 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
       if (processor.isInplaceRenameSupported()) {
         final StartMarkAction startMarkAction = StartMarkAction.canStart(editor);
         if (startMarkAction == null || processor.substituteElementToRename(elementToRename, editor) == elementToRename) {
-          processor.substituteElementToRename(elementToRename, editor, new Pass<PsiElement>() {
+          processor.substituteElementToRename(elementToRename, editor, new Pass<>() {
             @Override
             public void pass(PsiElement element) {
               final MemberInplaceRenamer renamer = createMemberRenamer(element, (PsiNameIdentifierOwner)elementToRename, editor);

@@ -116,7 +116,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
                                               macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro));
-    macros.sort(new Comparator<Macro>() {
+    macros.sort(new Comparator<>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {
         String name1 = macro1.getName();
@@ -148,7 +148,7 @@ public final class MacrosDialog extends DialogWrapper {
     }
 
     final Item finalFirstMacro = firstMacro;
-    myMacrosList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<Item>() {
+    myMacrosList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
       @Override
       public String getTextFor(Item value) {
         return value.toString(); //NON-NLS

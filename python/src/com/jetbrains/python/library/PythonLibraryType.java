@@ -32,7 +32,7 @@ import javax.swing.*;
  * python library type should be used if library paths to be included in Python Path
  */
 public class PythonLibraryType extends LibraryType<DummyLibraryProperties> {
-  private static final PersistentLibraryKind<DummyLibraryProperties> LIBRARY_KIND = new PersistentLibraryKind<DummyLibraryProperties>("python") {
+  private static final PersistentLibraryKind<DummyLibraryProperties> LIBRARY_KIND = new PersistentLibraryKind<>("python") {
     @NotNull
     @Override
     public DummyLibraryProperties createDefaultProperties() {

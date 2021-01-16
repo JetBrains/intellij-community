@@ -107,7 +107,7 @@ public class IndexCacheManagerImpl implements CacheManager {
     if (result.isEmpty()) return true;
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
+    Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(VirtualFile virtualFile) {
         if (virtualFile.isValid()) {

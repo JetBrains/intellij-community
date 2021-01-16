@@ -30,7 +30,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
   private boolean myHelpersVersionChecked = false;
 
-  private Set<String> myRemoteRoots = new TreeSet<String>();
+  private Set<String> myRemoteRoots = new TreeSet<>();
 
   private boolean myInitialized = false;
 

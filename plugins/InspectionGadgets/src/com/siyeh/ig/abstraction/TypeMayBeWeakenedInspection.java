@@ -109,7 +109,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       if (editor == null) return;
       String hint = InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup");
-      ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(hint, myCandidates) {
+      ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(hint, myCandidates) {
         @Override
         public PopupStep onChosen(String selectedValue, boolean finalChoice) {
           CommandProcessor.getInstance().executeCommand(project, () -> addClass(selectedValue, descriptor.getPsiElement()),

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DomFilePattern<Self extends DomFilePattern<Self>> extends XmlFilePattern<Self> {
   public DomFilePattern(final Class<? extends DomElement> aClass) {
-    super(new InitialPatternCondition<XmlFile>(XmlFile.class) {
+    super(new InitialPatternCondition<>(XmlFile.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         return o instanceof XmlFile && DomManager.getDomManager(((XmlFile)o).getProject()).getFileElement((XmlFile)o, aClass) != null;

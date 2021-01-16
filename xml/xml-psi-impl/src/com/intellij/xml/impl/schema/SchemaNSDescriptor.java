@@ -41,14 +41,14 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
 
   @NonNls private static final String NAME_ATTR_NAME = "name";
 
-  private static final Validator<XmlTag> ELEMENT_VALIDATOR = new Validator<XmlTag>() {
+  private static final Validator<XmlTag> ELEMENT_VALIDATOR = new Validator<>() {
     @Override
     public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
       final boolean hasRefAttribute = tag.getAttributeValue(REF_ATTR_NAME) != null;
 
       if (hasRefAttribute) {
-        for(XmlAttribute attr:tag.getAttributes()) {
+        for (XmlAttribute attr : tag.getAttributes()) {
           final String name = attr.getName();
 
           if (name.indexOf(':') == -1 &&
@@ -95,7 +95,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
   };
 
-  private static final Validator<XmlTag> ATTRIBUTE_VALIDATOR = new Validator<XmlTag>() {
+  private static final Validator<XmlTag> ATTRIBUTE_VALIDATOR = new Validator<>() {
     @Override
     public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
@@ -124,7 +124,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
   };
 
-  private static final XmlUtil.DuplicationInfoProvider<XmlTag> SCHEMA_ATTR_DUP_INFO_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlTag>() {
+  private static final XmlUtil.DuplicationInfoProvider<XmlTag> SCHEMA_ATTR_DUP_INFO_PROVIDER = new XmlUtil.DuplicationInfoProvider<>() {
     @Override
     public String getName(@NotNull final XmlTag t) {
       return t.getAttributeValue(NAME_ATTR_NAME);
@@ -143,7 +143,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
   };
 
-  private static final Validator<XmlTag> ELEMENT_AND_ATTR_VALIDATOR = new Validator<XmlTag>() {
+  private static final Validator<XmlTag> ELEMENT_AND_ATTR_VALIDATOR = new Validator<>() {
     @Override
     public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;

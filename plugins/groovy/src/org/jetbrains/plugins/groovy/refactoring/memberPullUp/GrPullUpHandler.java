@@ -116,7 +116,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
 
 
     mySubclass = aClass;
-    GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<GrMember>() {
+    GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<>() {
       @Override
       public boolean includeMember(GrMember element) {
         return true;

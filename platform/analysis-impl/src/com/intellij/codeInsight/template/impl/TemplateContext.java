@@ -28,14 +28,14 @@ import java.util.stream.Collectors;
 public final class TemplateContext {
   private final Map<String, Boolean> myContextStates = new HashMap<>();
 
-  private static final ClearableLazyValue<Map<String, String>> INTERN_MAP = new ClearableLazyValue<Map<String, String>>() {
+  private static final ClearableLazyValue<Map<String, String>> INTERN_MAP = new ClearableLazyValue<>() {
     private final AtomicBoolean isListenerAdded = new AtomicBoolean();
 
     @NotNull
     @Override
     protected Map<String, String> compute() {
       if (isListenerAdded.compareAndSet(false, true)) {
-        TemplateContextTypes.TEMPLATE_CONTEXT_EP.getValue().addExtensionPointListener(new ExtensionPointAdapter<TemplateContextType>() {
+        TemplateContextTypes.TEMPLATE_CONTEXT_EP.getValue().addExtensionPointListener(new ExtensionPointAdapter<>() {
           @Override
           public void areaReplaced(@NotNull ExtensionsArea oldArea) {
             drop();
@@ -174,7 +174,7 @@ public final class TemplateContext {
 
   @NotNull
   public static Lazy<Map<String, TemplateContextType>> getIdToType() {
-    return LazyKt.lazy(new Function0<Map<String, TemplateContextType>>() {
+    return LazyKt.lazy(new Function0<>() {
       @Override
       public Map<String, TemplateContextType> invoke() {
         Map<String, TemplateContextType> idToType = new HashMap<>();

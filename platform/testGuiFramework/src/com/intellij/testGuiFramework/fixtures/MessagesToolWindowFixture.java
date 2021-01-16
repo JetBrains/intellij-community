@@ -101,7 +101,7 @@ public class MessagesToolWindowFixture extends ToolWindowFixture {
 
     @NotNull
     private ErrorTreeElement doFindMessage(@NotNull final ErrorTreeElementKind kind, @NotNull final MessageMatcher matcher) {
-      ErrorTreeElement found = execute(new GuiQuery<ErrorTreeElement>() {
+      ErrorTreeElement found = execute(new GuiQuery<>() {
         @Override
         @Nullable
         protected ErrorTreeElement executeInEDT() throws Throwable {
@@ -276,7 +276,7 @@ public class MessagesToolWindowFixture extends ToolWindowFixture {
       // HyperlinkEvent, simulating a click on the actual hyperlink.
       assertThat(myTarget).isInstanceOf(EditableNotificationMessageElement.class);
 
-      final JEditorPane editorComponent = execute(new GuiQuery<JEditorPane>() {
+      final JEditorPane editorComponent = execute(new GuiQuery<>() {
         @Override
         protected JEditorPane executeInEDT() throws Throwable {
           EditableNotificationMessageElement message = (EditableNotificationMessageElement)myTarget;
@@ -286,7 +286,7 @@ public class MessagesToolWindowFixture extends ToolWindowFixture {
       });
       assertNotNull(editorComponent);
 
-      String text = execute(new GuiQuery<String>() {
+      String text = execute(new GuiQuery<>() {
         @Override
         protected String executeInEDT() throws Throwable {
           return editorComponent.getText();

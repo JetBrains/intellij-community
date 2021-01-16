@@ -78,7 +78,7 @@ public final class LightTempDirTestFixtureImpl extends BaseFixture implements Te
 
   @Override
   public @NotNull VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir, @NotNull VirtualFileFilter filter) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<>() {
       @Override
       public VirtualFile compute() {
         VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);

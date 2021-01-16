@@ -54,7 +54,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
     setTitle(LangBundle.message("dialog.title.manage.project.templates"));
     final ProjectTemplate[] templates =
       new ArchivedTemplatesFactory().createTemplates(ProjectTemplatesFactory.CUSTOM_GROUP, new WizardContext(null, getDisposable()));
-    myTemplatesList = new JBList<>(new CollectionListModel<ProjectTemplate>(Arrays.asList(templates)) {
+    myTemplatesList = new JBList<>(new CollectionListModel<>(Arrays.asList(templates)) {
       @Override
       public void remove(int index) {
         ProjectTemplate template = getElementAt(index);

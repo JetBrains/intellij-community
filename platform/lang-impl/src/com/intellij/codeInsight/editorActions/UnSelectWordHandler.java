@@ -106,7 +106,7 @@ public class UnSelectWordHandler extends EditorActionHandler.ForEachCaret {
     final Ref<TextRange> maximumRange = new Ref<>();
 
     final int finalCursorOffset = cursorOffset;
-    SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<TextRange>() {
+    SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<>() {
       @Override
       public boolean process(TextRange range) {
         range = expandToFoldingBoundaries(range);

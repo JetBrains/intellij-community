@@ -48,7 +48,7 @@ public abstract class ExcludedFilesPatternForm {
     private final ValueEditor<String> myValueEditor;
 
     private PatternField() {
-      myValueEditor = new TextFieldValueEditor<String>(this, "Pattern", "") {
+      myValueEditor = new TextFieldValueEditor<>(this, "Pattern", "") {
         @NotNull
         @Override
         public String parseValue(@Nullable String text) throws InvalidDataException {
@@ -77,7 +77,7 @@ public abstract class ExcludedFilesPatternForm {
           return err;
         }
       };
-      myValueEditor.addListener(new ValueEditor.Listener<String>() {
+      myValueEditor.addListener(new ValueEditor.Listener<>() {
         @Override
         public void valueChanged(@NotNull String newValue) {
           updateOnValue(newValue);

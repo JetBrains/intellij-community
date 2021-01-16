@@ -504,30 +504,34 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     rootMarker2.done(ROOT);
     DiffTree.diff(
       new ASTStructure(root), builder2.getLightTree(),
-      new ShallowNodeComparator<ASTNode, LighterASTNode>() {
+      new ShallowNodeComparator<>() {
         @NotNull
         @Override
         public ThreeState deepEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return ThreeState.UNSURE;
-  }
+        }
+
         @Override
         public boolean typesEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return true;
         }
+
         @Override
         public boolean hashCodesEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return true;
         }
       },
-      new DiffTreeChangeBuilder<ASTNode, LighterASTNode>() {
+      new DiffTreeChangeBuilder<>() {
         @Override
         public void nodeReplaced(@NotNull ASTNode oldChild, @NotNull LighterASTNode newChild) {
           fail("replaced(" + oldChild + "," + newChild.getTokenType() + ")");
         }
+
         @Override
         public void nodeDeleted(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
           fail("deleted(" + oldParent + "," + oldNode + ")");
         }
+
         @Override
         public void nodeInserted(@NotNull ASTNode oldParent, @NotNull LighterASTNode newNode, int pos) {
           fail("inserted(" + oldParent + "," + newNode.getTokenType() + ")");

@@ -45,7 +45,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   private final Project myProject;
   private final SimpleTree myTree;
 
-  private final Comparator<String> myGoalOrderComparator = new Comparator<String>() {
+  private final Comparator<String> myGoalOrderComparator = new Comparator<>() {
 
     private Map<String, Integer> standardGoalOrder;
 

@@ -25,7 +25,7 @@ public class CompletionSorterImpl extends CompletionSorter {
 
   public static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
     final String id = weigher.toString();
-    return new ClassifierFactory<LookupElement>(id) {
+    return new ClassifierFactory<>(id) {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
         return new CachingComparingClassifier(next, weigher);

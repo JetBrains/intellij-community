@@ -27,7 +27,7 @@ public class GroovyBinaryExpressionPattern extends GroovyExpressionPattern<GrBin
   }
 
   public GroovyBinaryExpressionPattern left(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<GrBinaryExpression>("left") {
+    return with(new PatternCondition<>("left") {
       @Override
       public boolean accepts(@NotNull final GrBinaryExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.accepts(psiBinaryExpression.getLeftOperand(), context);
@@ -36,7 +36,7 @@ public class GroovyBinaryExpressionPattern extends GroovyExpressionPattern<GrBin
   }
 
   public GroovyBinaryExpressionPattern right(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<GrBinaryExpression>("right") {
+    return with(new PatternCondition<>("right") {
       @Override
       public boolean accepts(@NotNull final GrBinaryExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.accepts(psiBinaryExpression.getRightOperand(), context);
@@ -45,7 +45,7 @@ public class GroovyBinaryExpressionPattern extends GroovyExpressionPattern<GrBin
   }
 
   public GroovyBinaryExpressionPattern operation(final ElementPattern pattern) {
-    return with(new PatternCondition<GrBinaryExpression>("operation") {
+    return with(new PatternCondition<>("operation") {
       @Override
       public boolean accepts(@NotNull final GrBinaryExpression psiBinaryExpression, final ProcessingContext context) {
         return pattern.accepts(psiBinaryExpression.getOperationTokenType(), context);

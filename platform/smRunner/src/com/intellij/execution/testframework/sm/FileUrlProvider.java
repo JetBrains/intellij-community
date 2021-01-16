@@ -135,7 +135,7 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
     
     if (elementAtLine instanceof PsiPlainText && offset > 0) {
       int offsetInPlainTextFile = offset;
-      return new PsiLocation<PsiPlainText>(project, (PsiPlainText)elementAtLine) {
+      return new PsiLocation<>(project, (PsiPlainText)elementAtLine) {
         @Nullable
         @Override
         public OpenFileDescriptor getOpenFileDescriptor() {

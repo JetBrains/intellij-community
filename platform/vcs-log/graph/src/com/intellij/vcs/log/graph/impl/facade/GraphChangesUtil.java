@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class GraphChangesUtil {
-  public static final GraphChanges<Integer> SOME_CHANGES = new GraphChanges<Integer>() {
+  public static final GraphChanges<Integer> SOME_CHANGES = new GraphChanges<>() {
     @NotNull
     @Override
     public Collection<Node<Integer>> getChangedNodes() {

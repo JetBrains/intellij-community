@@ -83,7 +83,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
   @Nullable
   @Override
   protected JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
-    return new DefaultJvmElementVisitor<Boolean>() {
+    return new DefaultJvmElementVisitor<>() {
       @Override
       public Boolean visitClass(@NotNull JvmClass clazz) {
         PsiElement sourceElement = clazz.getSourceElement();

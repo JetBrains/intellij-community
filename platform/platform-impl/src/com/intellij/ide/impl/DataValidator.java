@@ -25,19 +25,19 @@ public abstract class DataValidator<T> {
   private static final Logger LOG = Logger.getInstance(DataValidator.class);
 
   private static final Map<String, DataValidator<?>> ourValidators = new HashMap<>();
-  private static final DataValidator<VirtualFile> VIRTUAL_FILE_VALIDATOR = new DataValidator<VirtualFile>() {
+  private static final DataValidator<VirtualFile> VIRTUAL_FILE_VALIDATOR = new DataValidator<>() {
     @Override
     public VirtualFile findInvalid(@NotNull final String dataId, @NotNull VirtualFile file, @NotNull final Object dataSource) {
       return file.isValid() ? null : file;
     }
   };
-  private static final DataValidator<Project> PROJECT_VALIDATOR = new DataValidator<Project>() {
+  private static final DataValidator<Project> PROJECT_VALIDATOR = new DataValidator<>() {
     @Override
     public Project findInvalid(@NotNull final String dataId, @NotNull final Project project, @NotNull final Object dataSource) {
       return project.isDisposed() ? project : null;
     }
   };
-  private static final DataValidator<Editor> EDITOR_VALIDATOR = new DataValidator<Editor>() {
+  private static final DataValidator<Editor> EDITOR_VALIDATOR = new DataValidator<>() {
     @Override
     public Editor findInvalid(@NotNull final String dataId, @NotNull final Editor editor, @NotNull final Object dataSource) {
       return editor.isDisposed() ? editor : null;

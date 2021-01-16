@@ -96,11 +96,11 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testCantRerun() {
     runPythonTest(
-      new PyUnitTestLikeProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/testRunner/env/unit", "test_with_skips_and_errors.py",
-                                                                            config -> {
-                                                                              // Second rerun should lead to exception
-                                                                              return createTestRunner(config.increaseRerunCount(2));
-                                                                            }) {
+      new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test_with_skips_and_errors.py",
+                                                     config -> {
+                                                       // Second rerun should lead to exception
+                                                       return createTestRunner(config.increaseRerunCount(2));
+                                                     }) {
         @Override
         protected void exceptionThrown(@NotNull Throwable e, @NotNull PyUnitTestProcessRunner runner) {
           assertEquals("Wrong type of exception", e.getClass(), ExecutionException.class);
@@ -658,8 +658,8 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // PY-24407
   @Test
   public void testWorkingDirectoryDependsOnRelativeImport() {
-    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPythonsUnittestName(),
-                                                                           PyUnitTestConfiguration.class) {
+    runPythonTest(new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(),
+                                                    PyUnitTestConfiguration.class) {
       @NotNull
       @Override
       protected List<PsiElement> getPsiElementsToRightClickOn() {
@@ -841,8 +841,8 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerObeysDefaultDir() {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPythonsUnittestName(),
-                                                                 PyUnitTestConfiguration.class) {
+      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(),
+                                          PyUnitTestConfiguration.class) {
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override

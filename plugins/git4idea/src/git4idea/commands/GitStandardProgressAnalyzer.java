@@ -116,7 +116,7 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
     }
     // counting progress
     final double[] totalProgress = new double[1];
-    myOperationsProgress.forEachEntry(new TObjectDoubleProcedure<Operation>() {
+    myOperationsProgress.forEachEntry(new TObjectDoubleProcedure<>() {
       @Override
       public boolean execute(Operation operation, double progress) {
         totalProgress[0] += operation.myFractionInTotal * progress;

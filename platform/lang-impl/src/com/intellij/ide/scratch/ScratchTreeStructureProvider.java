@@ -88,7 +88,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     for (RootType rootType : RootType.getAllRootTypes()) {
       registerRootTypeUpdater(project, rootType, onUpdate, disposable, disposables);
     }
-    RootType.ROOT_EP.addExtensionPointListener(new ExtensionPointListener<RootType>() {
+    RootType.ROOT_EP.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull RootType rootType, @NotNull PluginDescriptor pluginDescriptor) {
         registerRootTypeUpdater(project, rootType, onUpdate, disposable, disposables);
@@ -312,7 +312,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
                                                                  @NotNull ViewSettings settings,
                                                                  @NotNull PsiFileSystemItemFilter filter) {
       final List<AbstractTreeNode<?>> result = new ArrayList<>();
-      PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
+      PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<>() {
         @Override
         public boolean execute(@NotNull PsiFileSystemItem element) {
           if (!filter.shouldShow(element)) {

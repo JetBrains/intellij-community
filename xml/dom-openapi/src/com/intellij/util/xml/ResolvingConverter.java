@@ -218,7 +218,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @deprecated see {@link com.intellij.util.xml.converters.values.BooleanValueConverter}
    */
   @Deprecated
-  public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
+  public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<>() {
     @Override
     public Boolean fromString(final String s, final ConvertContext context) {
       if ("true".equalsIgnoreCase(s)) {
@@ -232,7 +232,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
 
     @Override
     public String toString(final Boolean t, final ConvertContext context) {
-      return t == null? null:t.toString();
+      return t == null ? null : t.toString();
     }
 
     @Override

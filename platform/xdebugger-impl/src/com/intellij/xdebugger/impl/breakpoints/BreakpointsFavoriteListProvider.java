@@ -102,7 +102,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   private void replicate(DefaultMutableTreeNode source, AbstractTreeNode<?> destination, List<? super AbstractTreeNode<Object>> destinationChildren) {
     List<AbstractTreeNode<Object>> copyChildren = new ArrayList<>();
-    AbstractTreeNode<Object> copy = new AbstractTreeNode<Object>(myProject, source.getUserObject()) {
+    AbstractTreeNode<Object> copy = new AbstractTreeNode<>(myProject, source.getUserObject()) {
       @NotNull
       @Override
       public Collection<? extends AbstractTreeNode<?>> getChildren() {

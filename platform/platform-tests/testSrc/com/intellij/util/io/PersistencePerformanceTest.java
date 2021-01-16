@@ -146,7 +146,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
 
   @NotNull
   private static PersistentHashMap<String, Record> createMap(File file) throws IOException {
-    return new PersistentHashMap<>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
+    return new PersistentHashMap<>(file, new EnumeratorStringDescriptor(), new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Record value) throws IOException {
         out.writeInt(value.magnitude);

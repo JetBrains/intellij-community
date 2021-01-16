@@ -946,7 +946,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     @NotNull
     private Graph<Module> moduleGraph(final boolean includeTests) {
-      return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
+      return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
         @NotNull
         @Override
         public Collection<Module> getNodes() {

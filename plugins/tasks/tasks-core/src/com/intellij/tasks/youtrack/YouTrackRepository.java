@@ -116,7 +116,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   @Override
   public CancellableConnection createCancellableConnection() {
     PostMethod method = new PostMethod(getUrl() + "/rest/user/login");
-    return new HttpTestConnection<PostMethod>(method) {
+    return new HttpTestConnection<>(method) {
       @Override
       protected void doTest(PostMethod method) throws Exception {
         login(method);

@@ -333,7 +333,7 @@ class FileDownloaderImpl implements FileDownloader {
     final String presentableUrl = description.getPresentableDownloadUrl();
     indicator.setText(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
 
-    return HttpRequests.request(description.getDownloadUrl()).connect(new HttpRequests.RequestProcessor<File>() {
+    return HttpRequests.request(description.getDownloadUrl()).connect(new HttpRequests.RequestProcessor<>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         int size = request.getConnection().getContentLength();

@@ -55,7 +55,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
   public static final EntityRefInsertHandler ENTITY_INSERT_HANDLER = new EntityRefInsertHandler();
 
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
-  private static final InsertHandler<LookupElementDecorator<LookupElement>> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
+  private static final InsertHandler<LookupElementDecorator<LookupElement>> QUOTE_EATER = new InsertHandlerDecorator<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
       final char completionChar = context.getCompletionChar();
@@ -72,7 +72,8 @@ public final class XmlCompletionContributor extends CompletionContributor {
             editor.getCaretModel().moveToOffset(tailOffset + 1);
           }
         }
-      } else {
+      }
+      else {
         item.getDelegate().handleInsert(context);
       }
     }
@@ -80,7 +81,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
 
   public XmlCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new EmmetAbbreviationCompletionProvider());
-    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -95,7 +96,8 @@ public final class XmlCompletionContributor extends CompletionContributor {
           String prefix = matcher.getPrefix();
           if (prefix.startsWith("&")) {
             prefix = prefix.substring(1);
-          } else if (prefix.contains("&")) {
+          }
+          else if (prefix.contains("&")) {
             prefix = prefix.substring(prefix.indexOf("&") + 1);
           }
 
@@ -105,7 +107,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
     });
     extend(CompletionType.BASIC,
            psiElement().inside(XmlPatterns.xmlAttributeValue()),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -139,7 +141,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
              }
            });
     extend(CompletionType.BASIC, psiElement().withElementType(XmlTokenType.XML_DATA_CHARACTERS),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -284,7 +286,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
     }
 
     final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
-    final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<PsiElement>() {
+    final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {
         if (element instanceof XmlEntityDecl) {

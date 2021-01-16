@@ -20,7 +20,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
   public void testSufficiency() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SETTINGS.isEnvConfiguration()) {
 
-      Set<String> tags = new HashSet<String>();
+      Set<String> tags = new HashSet<>();
       List<String> roots = getDefaultPythonRoots();
       if (roots.size() == 0) {
         return;         // not on env agent

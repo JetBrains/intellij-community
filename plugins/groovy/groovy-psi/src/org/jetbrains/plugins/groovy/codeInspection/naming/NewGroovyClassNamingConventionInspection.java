@@ -26,29 +26,29 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
   }
 
   private static NamingConvention<PsiClass> wrapClassExtension(NamingConvention<PsiClass> ex) {
-    return new NamingConvention<PsiClass>() {
-        @Override
-        public boolean isApplicable(PsiClass member) {
-          return ex.isApplicable(member);
-        }
+    return new NamingConvention<>() {
+      @Override
+      public boolean isApplicable(PsiClass member) {
+        return ex.isApplicable(member);
+      }
 
-        @Override
-        public String getElementDescription() {
-          return ex.getElementDescription();
-        }
+      @Override
+      public String getElementDescription() {
+        return ex.getElementDescription();
+      }
 
-        @Override
-        public String getShortName() {
-          String shortName = ex.getShortName();
-          if (shortName.startsWith("JUnit")) return shortName;
-          return GROOVY + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
-        }
+      @Override
+      public String getShortName() {
+        String shortName = ex.getShortName();
+        if (shortName.startsWith("JUnit")) return shortName;
+        return GROOVY + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
+      }
 
-        @Override
-        public NamingConventionBean createDefaultBean() {
-          return ex.createDefaultBean();
-        }
-      };
+      @Override
+      public NamingConventionBean createDefaultBean() {
+        return ex.createDefaultBean();
+      }
+    };
   }
 
   @Override

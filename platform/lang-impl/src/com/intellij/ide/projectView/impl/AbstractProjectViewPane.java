@@ -133,7 +133,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     project.getMessageBus().connect(this).subscribe(ProblemListener.TOPIC, problemListener);
     Disposer.register(project, this);
 
-    TreeStructureProvider.EP.addExtensionPointListener(project, new ExtensionPointListener<TreeStructureProvider>() {
+    TreeStructureProvider.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull TreeStructureProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         rebuildCompletely(false);
@@ -144,7 +144,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         rebuildCompletely(true);
       }
     }, this);
-    ProjectViewNodeDecorator.EP.addExtensionPointListener(project, new ExtensionPointListener<ProjectViewNodeDecorator>() {
+    ProjectViewNodeDecorator.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ProjectViewNodeDecorator extension, @NotNull PluginDescriptor pluginDescriptor) {
         rebuildCompletely(false);

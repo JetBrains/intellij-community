@@ -114,7 +114,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected ComboPopup createPopup() {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
       //noinspection unchecked
-      return new DarculaJBPopupComboPopup<Object>(comboBox);
+      return new DarculaJBPopupComboPopup<>(comboBox);
     }
     return new CustomComboPopup(comboBox);
   }

@@ -159,7 +159,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     multicaster.addDocumentListener(listener, this);
     multicaster.addCaretListener(listener, this);
 
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull FileEditorProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         String editorTypeId = provider.getEditorTypeId();

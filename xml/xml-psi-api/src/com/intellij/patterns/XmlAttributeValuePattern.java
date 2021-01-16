@@ -12,12 +12,13 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValue,XmlAttributeValuePattern>{
-  static final XmlAttributeValuePattern XML_ATTRIBUTE_VALUE_PATTERN = new XmlAttributeValuePattern(new InitialPatternCondition<XmlAttributeValue>(XmlAttributeValue.class) {
-    @Override
-    public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-      return o instanceof XmlAttributeValue;
-    }
-  });
+  static final XmlAttributeValuePattern XML_ATTRIBUTE_VALUE_PATTERN = new XmlAttributeValuePattern(
+    new InitialPatternCondition<>(XmlAttributeValue.class) {
+      @Override
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        return o instanceof XmlAttributeValue;
+      }
+    });
 
   public XmlAttributeValuePattern(InitialPatternCondition<XmlAttributeValue> condition) {
     super(condition);
@@ -35,7 +36,7 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
 
 
   public XmlAttributeValuePattern withLocalName(ElementPattern<String> namePattern) {
-    return with(new PsiNamePatternCondition<XmlAttributeValue>("withLocalName", namePattern) {
+    return with(new PsiNamePatternCondition<>("withLocalName", namePattern) {
       @Override
       public String getPropertyValue(@NotNull final Object o) {
         if (o instanceof XmlAttributeValue) {
@@ -72,7 +73,7 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
 
 
   public XmlAttributeValuePattern withNamespace(ElementPattern<String> namePattern) {
-    return with(new PsiNamePatternCondition<XmlAttributeValue>("withNamespace", namePattern) {
+    return with(new PsiNamePatternCondition<>("withNamespace", namePattern) {
       @Override
       public String getPropertyValue(@NotNull final Object o) {
         if (o instanceof XmlAttributeValue) {
@@ -87,7 +88,7 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
   }
 
   public XmlAttributeValuePattern withValue(final StringPattern valuePattern) {
-    return with(new PatternCondition<XmlAttributeValue>("withValue") {
+    return with(new PatternCondition<>("withValue") {
       @Override
       public boolean accepts(@NotNull XmlAttributeValue xmlAttributeValue, ProcessingContext context) {
         return valuePattern.accepts(xmlAttributeValue.getValue(), context);

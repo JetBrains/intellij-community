@@ -65,7 +65,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
       VcsHistorySession copy = mySession.copyWithCachedRevision();
       ApplicationManager.getApplication().invokeLater(() -> myContentPanel.setHistorySession(copy), o -> Disposer.isDisposed(this));
     };
-    myBuffer = new BufferedListConsumer<VcsFileRevision>(5, sessionRefresher, 1000) {
+    myBuffer = new BufferedListConsumer<>(5, sessionRefresher, 1000) {
       @Override
       protected void invokeConsumer(@NotNull Runnable consumerRunnable) {
         // Do not invoke in arbitrary background thread as due to parallel execution this could lead to cases when invokeLater() (from

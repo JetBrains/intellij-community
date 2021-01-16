@@ -405,7 +405,7 @@ public final class HgHistoryUtil {
     HgVersion version = hgvcs.getVersion();
     String[] templates = ArrayUtilRt.toStringArray(HgBaseLogParser.constructDefaultTemplate(version));
     HgCommandResult result = getLogResult(project, root, version, limit, params, HgChangesetUtil.makeTemplate(templates));
-    return getCommitRecords(project, result, new HgBaseLogParser<TimedVcsCommit>() {
+    return getCommitRecords(project, result, new HgBaseLogParser<>() {
 
       @Override
       protected TimedVcsCommit convertDetails(@NotNull String rev,

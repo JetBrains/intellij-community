@@ -118,7 +118,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         updateExecutionPoint(file, false);
       }
     });
-    messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
+    messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
         if (!(breakpoint instanceof XLineBreakpoint)) {

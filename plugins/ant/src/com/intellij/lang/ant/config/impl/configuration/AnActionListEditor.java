@@ -43,7 +43,7 @@ public class AnActionListEditor<T> extends JPanel {
   public void addAddAction(final Factory<? extends T> newItemFactory) {
     ReorderableListController<T>.AddActionDescription description = myForm.getListActionsBuilder().addAddAction(
       AntBundle.message("add.action.name"), newItemFactory, true);
-    description.addPostHandler(new ReorderableListController.ActionNotification<T>() {
+    description.addPostHandler(new ReorderableListController.ActionNotification<>() {
       @Override
       public void afterActionPerformed(T value) {
         myAdded.add(value);
@@ -54,7 +54,7 @@ public class AnActionListEditor<T> extends JPanel {
 
   public void addRemoveButtonForAnt(final Condition<? super T> removeCondition, @NlsActions.ActionText String actionName) {
     final ReorderableListController<T>.RemoveActionDescription description = myForm.getListActionsBuilder().addRemoveAction(actionName);
-    description.addPostHandler(new ReorderableListController.ActionNotification<List<T>>() {
+    description.addPostHandler(new ReorderableListController.ActionNotification<>() {
       @Override
       public void afterActionPerformed(List<T> list) {
         for (T item : list) {

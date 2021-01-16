@@ -83,9 +83,11 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
   // @formatter:on
 
   public ShFilePathCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement().inFile(StandardPatterns.instanceOf(ShFile.class)), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement().inFile(StandardPatterns.instanceOf(ShFile.class)), new CompletionProvider<>() {
       @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
         String originalText = getTextWithEnvVarReplacement(parameters);
 
         if (originalText != null) {

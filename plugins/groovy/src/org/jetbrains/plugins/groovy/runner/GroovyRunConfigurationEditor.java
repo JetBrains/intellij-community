@@ -58,20 +58,21 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
       VirtualFile script = ScriptFileUtil.findScriptFileByPath(scriptPath.getText());
       return script != null && !fileIndex.isInTestSourceContent(script);
     };
-    myJrePathEditor.setDefaultJreSelector(new SdkFromModuleDependencies<ModulesComboBox>(modulesComboBox, ModulesComboBox::getSelectedModule, productionOnly) {
-      @Override
-      public void addChangeListener(@NotNull Runnable listener) {
-        super.addChangeListener(listener);
-        scriptPath.getChildComponent().getDocument().addDocumentListener(
-          new DocumentAdapter() {
-            @Override
-            protected void textChanged(@NotNull DocumentEvent e) {
-              listener.run();
+    myJrePathEditor.setDefaultJreSelector(
+      new SdkFromModuleDependencies<>(modulesComboBox, ModulesComboBox::getSelectedModule, productionOnly) {
+        @Override
+        public void addChangeListener(@NotNull Runnable listener) {
+          super.addChangeListener(listener);
+          scriptPath.getChildComponent().getDocument().addDocumentListener(
+            new DocumentAdapter() {
+              @Override
+              protected void textChanged(@NotNull DocumentEvent e) {
+                listener.run();
+              }
             }
-          }
-        );
-      }
-    });
+          );
+        }
+      });
     myAnchor = UIUtil.mergeComponentsWithAnchor(
       myScriptPathComponent,
       myCommonJavaParametersPanel,

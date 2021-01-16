@@ -36,7 +36,7 @@ public final class XmlRefCountHolder {
   private static final Key<CachedValue<XmlRefCountHolder>> xmlRefCountHolderKey = Key.create("xml ref count holder");
 
   private static final UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object> CACHE =
-    new UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object>() {
+    new UserDataCache<>() {
       @Override
       protected CachedValue<XmlRefCountHolder> compute(final XmlFile file, final Object p) {
         return CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {

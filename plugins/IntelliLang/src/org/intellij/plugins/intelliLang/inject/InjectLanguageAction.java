@@ -223,7 +223,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   }
 
   public static boolean doChooseLanguageToInject(Editor editor, final Processor<? super Injectable> onChosen) {
-    ColoredListCellRenderer<Injectable> renderer = new ColoredListCellRenderer<Injectable>() {
+    ColoredListCellRenderer<Injectable> renderer = new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends Injectable> list,
                                            Injectable language,

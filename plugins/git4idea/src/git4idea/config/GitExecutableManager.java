@@ -50,7 +50,7 @@ public class GitExecutableManager {
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
   public GitExecutableManager() {
-    myVersionCache = new CachingFileTester<GitVersion>() {
+    myVersionCache = new CachingFileTester<>() {
       @NotNull
       @Override
       protected GitVersion testExecutable(@NotNull GitExecutable executable) throws VcsException, ParseException {

@@ -77,7 +77,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> contributors = filterDumb(getContributorList());
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    Processor<ChooseByNameContributor> processor = new ReadActionProcessor<ChooseByNameContributor>() {
+    Processor<ChooseByNameContributor> processor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(@NotNull ChooseByNameContributor contributor) {
         try {

@@ -41,7 +41,7 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
     });
   }
 
-  private final KeyDescriptor<TodoIndexEntry> myKeyDescriptor = new KeyDescriptor<TodoIndexEntry>() {
+  private final KeyDescriptor<TodoIndexEntry> myKeyDescriptor = new KeyDescriptor<>() {
     @Override
     public int getHashCode(final TodoIndexEntry value) {
       return value.hashCode();

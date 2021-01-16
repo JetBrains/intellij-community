@@ -316,7 +316,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       });
     }
-    myExclusionHandler = new ExclusionHandlerEx<DefaultMutableTreeNode>() {
+    myExclusionHandler = new ExclusionHandlerEx<>() {
       @Override
       public boolean isNodeExclusionAvailable(@NotNull DefaultMutableTreeNode node) {
         return node instanceof UsageNode;

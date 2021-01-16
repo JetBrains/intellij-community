@@ -11,18 +11,19 @@ import java.util.Iterator;
 
 public interface Externalizer<T> {
   @NonNls String VALUE_ATTRIBUTE = "value";
-  Externalizer<String> STRING = new BaseExternalizer<String>(){
+  Externalizer<String> STRING = new BaseExternalizer<>() {
     @Override
     public String readValue(Element dataElement) {
       return dataElement.getAttributeValue(VALUE_ATTRIBUTE);
     }
   };
-  Externalizer<Integer> INTEGER = new BaseExternalizer<Integer>() {
+  Externalizer<Integer> INTEGER = new BaseExternalizer<>() {
     @Override
     public Integer readValue(Element dataElement) {
       try {
         return new Integer(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
-      } catch(NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         return null;
       }
     }
@@ -35,7 +36,7 @@ public interface Externalizer<T> {
       dataElement.setAttribute(VALUE_ATTRIBUTE, value.toString());
     }
   }
-  Externalizer<Boolean> BOOLEAN = new BaseExternalizer<Boolean>() {
+  Externalizer<Boolean> BOOLEAN = new BaseExternalizer<>() {
     @Override
     public Boolean readValue(Element dataElement) {
       return Boolean.valueOf(dataElement.getAttributeValue(VALUE_ATTRIBUTE));

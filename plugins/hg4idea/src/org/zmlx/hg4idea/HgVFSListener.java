@@ -318,10 +318,10 @@ public final class HgVFSListener extends VcsVFSListener {
   @Override
   protected void performMoveRename(@NotNull List<MovedFileInfo> movedFiles) {
     final List<MovedFileInfo> failedToMove = new ArrayList<>();
-    (new VcsBackgroundTask<MovedFileInfo>(myProject,
-                                          HgBundle.message("hg4idea.move.progress"),
-                                          VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
-                                          movedFiles) {
+    (new VcsBackgroundTask<>(myProject,
+                             HgBundle.message("hg4idea.move.progress"),
+                             VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
+                             movedFiles) {
       @Override
       public void onFinished() {
         if (!failedToMove.isEmpty()) {
@@ -332,12 +332,13 @@ public final class HgVFSListener extends VcsVFSListener {
       private void handleRenameError() {
         NotificationAction viewFilesAction =
           NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files"), () -> {
-          DialogWrapper dialog =
-            new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
-          dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
-          dialog.show();
-        });
-        NotificationAction retryAction = NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
+            DialogWrapper dialog =
+              new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
+            dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
+            dialog.show();
+          });
+        NotificationAction retryAction =
+          NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
         VcsNotifier.getInstance(myProject)
           .notifyError(RENAME_FAILED,
                        HgBundle.message("hg4idea.rename.error"),

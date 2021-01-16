@@ -514,8 +514,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testClosestSrcIsWorkDirOnNewConfig() {
     runPythonTest(
-      new CreateConfigurationTestTask<PyTestConfiguration>(myFrameworkName,
-                                                           PyTestConfiguration.class) {
+      new CreateConfigurationTestTask<>(myFrameworkName,
+                                        PyTestConfiguration.class) {
         @NotNull
         @Override
         protected List<PsiElement> getPsiElementsToRightClickOn() {
@@ -624,7 +624,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationByContext() {
     runPythonTest(
-      new CreateConfigurationTestTask<PyTestConfiguration>(myFrameworkName, PyTestConfiguration.class) {
+      new CreateConfigurationTestTask<>(myFrameworkName, PyTestConfiguration.class) {
 
 
         @NotNull
@@ -743,8 +743,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testProduceConfigurationOnFile() {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyTestConfiguration>(myFrameworkName,
-                                                             PyTestConfiguration.class, "spam.py") {
+      new CreateConfigurationByFileTask<>(myFrameworkName,
+                                          PyTestConfiguration.class, "spam.py") {
         @NotNull
         @Override
         protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {

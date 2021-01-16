@@ -40,19 +40,19 @@ public class SphinxDirectiveCompletionContributor extends CompletionContributor 
 
   public SphinxDirectiveCompletionContributor() {
     extend(CompletionType.BASIC, DIRECTIVE_PATTERN,
-       new CompletionProvider<CompletionParameters>() {
-         @Override
-         protected void addCompletions(@NotNull CompletionParameters parameters,
-                                       @NotNull ProcessingContext context,
-                                       @NotNull CompletionResultSet result) {
-           Sdk sdk = ProjectRootManager.getInstance(parameters.getPosition().getProject()).getProjectSdk();
-           if (sdk != null) {
-             for (String tag : RestUtil.SPHINX_DIRECTIVES) {
-               result.addElement(LookupElementBuilder.create(tag));
+           new CompletionProvider<>() {
+             @Override
+             protected void addCompletions(@NotNull CompletionParameters parameters,
+                                           @NotNull ProcessingContext context,
+                                           @NotNull CompletionResultSet result) {
+               Sdk sdk = ProjectRootManager.getInstance(parameters.getPosition().getProject()).getProjectSdk();
+               if (sdk != null) {
+                 for (String tag : RestUtil.SPHINX_DIRECTIVES) {
+                   result.addElement(LookupElementBuilder.create(tag));
+                 }
+               }
              }
            }
-         }
-       }
        );
   }
 }

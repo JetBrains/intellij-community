@@ -798,7 +798,7 @@ public class FoldingModelSupport {
 
   @NotNull
   private Iterable<FoldedBlock> getFoldedBlocks() {
-    return () -> new Iterator<FoldedBlock>() {
+    return () -> new Iterator<>() {
       private int myGroupIndex = 0;
       private int myBlockIndex = 0;
 
@@ -1046,7 +1046,7 @@ public class FoldingModelSupport {
   protected static <T, V> Iterator<V> map(@Nullable final List<T> list, @NotNull final Function<? super T, ? extends V> mapping) {
     if (list == null) return null;
     final Iterator<T> it = list.iterator();
-    return new Iterator<V>() {
+    return new Iterator<>() {
       @Override
       public boolean hasNext() {
         return it.hasNext();

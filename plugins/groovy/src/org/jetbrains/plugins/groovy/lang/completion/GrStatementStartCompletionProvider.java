@@ -44,7 +44,7 @@ class GrStatementStartCompletionProvider extends CompletionProvider<CompletionPa
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
-    result.addElement(LookupElementBuilder.create("if").bold().withInsertHandler(new InsertHandler<LookupElement>() {
+    result.addElement(LookupElementBuilder.create("if").bold().withInsertHandler(new InsertHandler<>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
         if (context.getCompletionChar() != ' ') {

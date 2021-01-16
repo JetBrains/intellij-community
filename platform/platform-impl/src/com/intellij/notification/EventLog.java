@@ -148,7 +148,7 @@ public final class EventLog {
 
     List<AnAction> actions = notification.getActions();
     if (!actions.isEmpty()) {
-      String text = "<p>" + StringUtil.join(actions, new Function<AnAction, String>() {
+      String text = "<p>" + StringUtil.join(actions, new Function<>() {
         private int index;
 
         @Override

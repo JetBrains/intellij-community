@@ -226,7 +226,7 @@ public final class TestDataNavigationElementFactory {
       if (relativePath == null) {
         // cannot calculate module/project relative path, use absolute path
 
-        return new SmartList<>(new Pair<String, SimpleTextAttributes>(
+        return new SmartList<>(new Pair<>(
           String.format("%s (%s)", myFile.getName(), file.getParent().getPath() + "/"), // NON-NLS
           SimpleTextAttributes.REGULAR_ATTRIBUTES));
       }

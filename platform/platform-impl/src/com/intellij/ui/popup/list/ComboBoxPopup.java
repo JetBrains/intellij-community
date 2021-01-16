@@ -45,9 +45,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   private static <T> MyBasePopupState<T> popupStateFromContext(@NotNull Context<T> context,
                                                                @NotNull Consumer<? super T> onItemSelected,
                                                                @Nullable T selectedItem) {
-    MyBasePopupState<T> step = new MyBasePopupState<T>(onItemSelected,
-                                                       () -> context.getModel(),
-                                                       () -> context.getRenderer()) {
+    MyBasePopupState<T> step = new MyBasePopupState<>(onItemSelected,
+                                                      () -> context.getModel(),
+                                                      () -> context.getRenderer()) {
       @Override
       public void canceled() {
         context.onPopupStepCancelled();

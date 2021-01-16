@@ -31,7 +31,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   private static final Map<Class<? extends DomElement>, DomResolveConverter> ourCache =
     ConcurrentFactoryMap.createMap(key -> new DomResolveConverter(key));
   private final boolean myAttribute;
-  private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>>() {
+  private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<>() {
     @Override
     @NotNull
     protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
@@ -39,7 +39,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
       //noinspection ConstantConditions
       if (domManager == null) throw new AssertionError("Null DomManager for " + scope.getClass());
       final Project project = domManager.getProject();
-      return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
+      return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<>() {
         @Override
         public Result<Map<String, DomElement>> compute() {
           final Map<String, DomElement> map = new HashMap<>();
@@ -53,14 +53,13 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
             if (name != null && !map.containsKey(name)) {
               map.put(name, element);
             }
-          } else {
+          }
+          else {
             for (final DomElement child : DomUtil.getDefinedChildren(element, true, myAttribute)) {
               visitDomElement(child, map);
             }
           }
-
         }
-
       }, false);
     }
   };

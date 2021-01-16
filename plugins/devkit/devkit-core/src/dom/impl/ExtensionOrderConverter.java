@@ -54,7 +54,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       return PsiReference.EMPTY_ARRAY;
     }
 
-    return new ReferenceSetBase<PsiReference>(orderValue, element, 0, ',') {
+    return new ReferenceSetBase<>(orderValue, element, 0, ',') {
       @Override
       protected List<PsiReference> createReferences(TextRange range, int index) {
         String orderPart = range.substring(orderValue);

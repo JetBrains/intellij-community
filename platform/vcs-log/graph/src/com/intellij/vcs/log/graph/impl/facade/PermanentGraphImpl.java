@@ -136,7 +136,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
   @NotNull
   @Override
   public List<GraphCommit<CommitId>> getAllCommits() {
-    return new AbstractList<GraphCommit<CommitId>>() {
+    return new AbstractList<>() {
       @Override
       public GraphCommit<CommitId> get(int index) {
         CommitId commitId = myPermanentCommitsInfo.getCommitId(index);

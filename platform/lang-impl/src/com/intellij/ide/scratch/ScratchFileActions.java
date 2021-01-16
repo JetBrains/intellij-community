@@ -282,7 +282,7 @@ public final class ScratchFileActions {
 
     @NotNull
     protected Function<VirtualFile, Language> fileLanguage(@NotNull Project project) {
-      return new Function<VirtualFile, Language>() {
+      return new Function<>() {
         final ScratchFileService fileService = ScratchFileService.getInstance();
 
         @Override

@@ -404,7 +404,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       TreeUtil.ensureSelection(myTree);
       return Promises.resolvedPromise(path);
     };
-    Function<TreePath, Promise<TreePath>> fallback = new Function<TreePath, Promise<TreePath>>() {
+    Function<TreePath, Promise<TreePath>> fallback = new Function<>() {
       @Override
       public Promise<TreePath> fun(TreePath path) {
         if (path == null && stage[0] == 2) {

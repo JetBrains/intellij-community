@@ -62,7 +62,7 @@ public abstract class DownloadManager {
 
     File file = null;
     try {
-      file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<File>() {
+      file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<>() {
         @Override
         public File process(@NotNull HttpRequests.Request request) throws IOException {
           String name = Integer.toHexString(System.identityHashCode(this)) + "_" +

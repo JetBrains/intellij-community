@@ -31,7 +31,7 @@ public class JBCheckBoxFixture extends JComponentFixture<JBCheckBoxFixture, JBCh
 
   public static JBCheckBoxFixture findByText(@NotNull String text, @Nullable Container root, @NotNull Robot robot, boolean waitUntilFound) {
 
-    GenericTypeMatcher<JBCheckBox> matcher = new GenericTypeMatcher<JBCheckBox>(JBCheckBox.class) {
+    GenericTypeMatcher<JBCheckBox> matcher = new GenericTypeMatcher<>(JBCheckBox.class) {
       @Override
       protected boolean isMatching(@NotNull JBCheckBox box) {
         return (box.getText() != null && StringUtil.toLowerCase(box.getText()).equals(StringUtil.toLowerCase(text)));
@@ -43,7 +43,7 @@ public class JBCheckBoxFixture extends JComponentFixture<JBCheckBoxFixture, JBCh
   //Attention: could be found more than one instance of JBCheckBox!
   public static JBCheckBoxFixture findByPartOfText(@NotNull String partOfText, Container root, @NotNull Robot robot, boolean waitUntilFound) {
 
-    GenericTypeMatcher<JBCheckBox> matcher = new GenericTypeMatcher<JBCheckBox>(JBCheckBox.class) {
+    GenericTypeMatcher<JBCheckBox> matcher = new GenericTypeMatcher<>(JBCheckBox.class) {
       @Override
       protected boolean isMatching(@NotNull JBCheckBox box) {
         return (box.getText() != null && StringUtil.toLowerCase(box.getText()).contains(StringUtil.toLowerCase(partOfText)));

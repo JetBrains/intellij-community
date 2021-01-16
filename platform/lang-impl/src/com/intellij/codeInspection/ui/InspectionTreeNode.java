@@ -21,7 +21,7 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public abstract class InspectionTreeNode implements TreeNode {
-  private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
+  private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<>() {
     @Override
     public int computeHashCode(LevelAndCount[] object) {
       return Arrays.hashCode(object);

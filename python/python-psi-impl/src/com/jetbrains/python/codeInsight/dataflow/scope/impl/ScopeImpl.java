@@ -300,7 +300,7 @@ public class ScopeImpl implements Scope {
       }
 
       private void processNamedElement(@NotNull PsiNamedElement element) {
-        namedElements.computeIfAbsent(element.getName(), __ -> new LinkedHashSet<PsiNamedElement>()).add(element);
+        namedElements.computeIfAbsent(element.getName(), __ -> new LinkedHashSet<>()).add(element);
       }
     });
 

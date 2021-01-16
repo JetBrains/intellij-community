@@ -85,7 +85,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.inspection");
 
     final GotoInspectionModel model = new GotoInspectionModel(project);
-    showNavigationPopup(e, model, new GotoActionCallback<Object>() {
+    showNavigationPopup(e, model, new GotoActionCallback<>() {
       @Override
       protected ChooseByNameFilter<Object> createFilter(@NotNull ChooseByNamePopup popup) {
         popup.setSearchInAnyPlace(true);

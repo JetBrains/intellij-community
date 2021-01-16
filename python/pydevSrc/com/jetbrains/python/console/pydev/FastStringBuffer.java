@@ -365,22 +365,22 @@ public final class FastStringBuffer {
 
         @Override
         public Iterator<Character> iterator() {
-            return new Iterator<Character>(){
+            return new Iterator<>() {
 
-                @Override
-                public boolean hasNext() {
-                    return i > 0;
-                }
+              @Override
+              public boolean hasNext() {
+                return i > 0;
+              }
 
-                @Override
-                public Character next() {
-                    return fastStringBuffer.value[--i];
-                }
+              @Override
+              public Character next() {
+                return fastStringBuffer.value[--i];
+              }
 
-                @Override
-                public void remove() {
-                    throw new RuntimeException("Not implemented");
-                }
+              @Override
+              public void remove() {
+                throw new RuntimeException("Not implemented");
+              }
             };
         }
     }

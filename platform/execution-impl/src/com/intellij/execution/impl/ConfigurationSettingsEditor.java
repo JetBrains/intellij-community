@@ -82,10 +82,10 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
 
       if (myRunnerEditors.size() > 0) {
         myCompound.addEditor(getRunnersTabName(),
-                             new CompositeSettingsEditor<RunnerAndConfigurationSettings>(getFactory()) {
+                             new CompositeSettingsEditor<>(getFactory()) {
                                @Override
                                public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
-                                 return new CompositeSettingsBuilder<RunnerAndConfigurationSettings>() {
+                                 return new CompositeSettingsBuilder<>() {
                                    @Override
                                    public Collection<SettingsEditor<RunnerAndConfigurationSettings>> getEditors() {
                                      return myRunnerEditors;

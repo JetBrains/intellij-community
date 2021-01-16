@@ -564,7 +564,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override
   protected ComboPopup createPopup() {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
-      return new DarculaJBPopupComboPopup<Object>(comboBox) {
+      return new DarculaJBPopupComboPopup<>(comboBox) {
         @Override
         public void configureList(@NotNull JList<Object> list) {
           super.configureList(list);

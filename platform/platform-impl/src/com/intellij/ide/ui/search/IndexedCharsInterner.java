@@ -17,13 +17,13 @@ import org.jetbrains.annotations.NotNull;
 final class IndexedCharsInterner {
   private int[] idToIndex = new int[10];
 
-  private final OpenTHashSet<CharSequence> mySet = new OpenTHashSet<CharSequence>(10, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE) {
+  private final OpenTHashSet<CharSequence> mySet = new OpenTHashSet<>(10, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE) {
     @Override
     protected void rehash(int newCapacity) {
       Object[] oldSet = _set;
       int oldSize = mySet.size();
       super.rehash(newCapacity);
-      for (int i = 0; i < oldSize-1; i++) {
+      for (int i = 0; i < oldSize - 1; i++) {
         int oldIndex = idToIndex[i];
         CharSequence oldString = (CharSequence)oldSet[oldIndex];
         int newIndex = index(oldString);

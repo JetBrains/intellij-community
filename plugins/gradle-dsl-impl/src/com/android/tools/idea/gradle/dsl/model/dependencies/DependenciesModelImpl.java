@@ -72,7 +72,7 @@ public class DependenciesModelImpl extends GradleDslBlockModel implements Depend
                @NotNull List<? super T> dest);
   }
 
-  private final static Fetcher<ArtifactDependencyModel> ourArtifactFetcher = new Fetcher<ArtifactDependencyModel>() {
+  private final static Fetcher<ArtifactDependencyModel> ourArtifactFetcher = new Fetcher<>() {
     @Override
     public void fetch(@NotNull String configurationName,
                       @NotNull GradleDslElement element,
@@ -109,7 +109,7 @@ public class DependenciesModelImpl extends GradleDslBlockModel implements Depend
     }
   };
 
-  private final static Fetcher<ModuleDependencyModel> ourModuleFetcher = new Fetcher<ModuleDependencyModel>() {
+  private final static Fetcher<ModuleDependencyModel> ourModuleFetcher = new Fetcher<>() {
     @Override
     public void fetch(@NotNull String configurationName,
                       @NotNull GradleDslElement element,
@@ -129,7 +129,7 @@ public class DependenciesModelImpl extends GradleDslBlockModel implements Depend
     }
   };
 
-  private final static Fetcher<FileDependencyModel> ourFileFetcher = new Fetcher<FileDependencyModel>() {
+  private final static Fetcher<FileDependencyModel> ourFileFetcher = new Fetcher<>() {
     @Override
     public void fetch(@NotNull String configurationName,
                       @NotNull GradleDslElement element,
@@ -146,7 +146,7 @@ public class DependenciesModelImpl extends GradleDslBlockModel implements Depend
     }
   };
 
-  private final static Fetcher<FileTreeDependencyModel> ourFileTreeFetcher = new Fetcher<FileTreeDependencyModel>() {
+  private final static Fetcher<FileTreeDependencyModel> ourFileTreeFetcher = new Fetcher<>() {
     @Override
     public void fetch(@NotNull String configurationName,
                       @NotNull GradleDslElement element,
@@ -166,7 +166,7 @@ public class DependenciesModelImpl extends GradleDslBlockModel implements Depend
     }
   };
 
-  private final static Fetcher<DependencyModel> ourAllFetcher = new Fetcher<DependencyModel>() {
+  private final static Fetcher<DependencyModel> ourAllFetcher = new Fetcher<>() {
     @Override
     public void fetch(@NotNull String configurationName,
                       @NotNull GradleDslElement element,

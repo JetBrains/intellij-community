@@ -34,7 +34,7 @@ public interface TextComponentAccessor<T extends Component> {
   /**
    * The accessor that gets and changes whole text
    */
-  TextComponentAccessor<JTextField> TEXT_FIELD_WHOLE_TEXT = new TextComponentAccessor<JTextField>() {
+  TextComponentAccessor<JTextField> TEXT_FIELD_WHOLE_TEXT = new TextComponentAccessor<>() {
     @Override
     public String getText(JTextField textField) {
       return textField.getText();
@@ -49,7 +49,7 @@ public interface TextComponentAccessor<T extends Component> {
   /**
    * The accessor that replaces selection or whole text if there is no selection
    */
-  TextComponentAccessor<JTextField> TEXT_FIELD_SELECTED_TEXT = new TextComponentAccessor<JTextField>() {
+  TextComponentAccessor<JTextField> TEXT_FIELD_SELECTED_TEXT = new TextComponentAccessor<>() {
     @Override
     public String getText(JTextField textField) {
       String selectedText = textField.getSelectedText();
@@ -58,15 +58,19 @@ public interface TextComponentAccessor<T extends Component> {
 
     @Override
     public void setText(JTextField textField, @NotNull String text) {
-      if (textField.getSelectedText() != null) textField.replaceSelection(text);
-      else textField.setText(text);
+      if (textField.getSelectedText() != null) {
+        textField.replaceSelection(text);
+      }
+      else {
+        textField.setText(text);
+      }
     }
   };
 
   /**
    * The accessor that gets and changes whole text
    */
-  TextComponentAccessor<JComboBox> STRING_COMBOBOX_WHOLE_TEXT = new TextComponentAccessor<JComboBox>() {
+  TextComponentAccessor<JComboBox> STRING_COMBOBOX_WHOLE_TEXT = new TextComponentAccessor<>() {
     @Override
     public String getText(JComboBox comboBox) {
       Object item = comboBox.getEditor().getItem();
@@ -81,7 +85,7 @@ public interface TextComponentAccessor<T extends Component> {
   /**
    * The accessor that gets and changes whole text
    */
-  TextComponentAccessor<TextFieldWithHistory> TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT = new TextComponentAccessor<TextFieldWithHistory>() {
+  TextComponentAccessor<TextFieldWithHistory> TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT = new TextComponentAccessor<>() {
     @Override
     public String getText(TextFieldWithHistory textField) {
       return textField.getText();
@@ -96,7 +100,7 @@ public interface TextComponentAccessor<T extends Component> {
   /**
    * The accessor that gets and changes whole text
    */
-  TextComponentAccessor<TextFieldWithStoredHistory> TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT = new TextComponentAccessor<TextFieldWithStoredHistory>() {
+  TextComponentAccessor<TextFieldWithStoredHistory> TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT = new TextComponentAccessor<>() {
     @Override
     public String getText(TextFieldWithStoredHistory textField) {
       return textField.getText();

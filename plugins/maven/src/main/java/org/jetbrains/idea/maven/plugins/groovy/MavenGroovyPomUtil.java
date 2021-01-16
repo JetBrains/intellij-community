@@ -17,7 +17,7 @@ public final class MavenGroovyPomUtil {
 
   @NotNull
   public static List<String> getGroovyMethodCalls(PsiElement psiElement) {
-    LinkedList<String> methodCallInfo = new LinkedList<String>();
+    LinkedList<String> methodCallInfo = new LinkedList<>();
     for (GrMethodCall current = PsiTreeUtil.getParentOfType(psiElement, GrMethodCall.class);
          current != null;
          current = PsiTreeUtil.getParentOfType(current, GrMethodCall.class)) {

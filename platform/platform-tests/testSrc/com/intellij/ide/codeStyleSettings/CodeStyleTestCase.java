@@ -59,7 +59,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   @NotNull
   protected CodeStyleSettings importSettings() throws SchemeImportException {
     final CodeStyleScheme targetScheme = new CodeStyleSchemeImpl("Test", false, null);
-    SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<CodeStyleScheme>() {
+    SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<>() {
       @NotNull
       @Override
       public CodeStyleScheme createNewScheme(@Nullable String name) {

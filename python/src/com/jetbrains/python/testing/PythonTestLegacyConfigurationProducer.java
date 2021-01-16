@@ -202,7 +202,7 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
 
   protected boolean isTestFolder(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
     @NonNls final String name = virtualFile.getName();
-    final HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
+    final HashSet<VirtualFile> roots = new HashSet<>();
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
       roots.addAll(PyUtil.getSourceRoots(module));

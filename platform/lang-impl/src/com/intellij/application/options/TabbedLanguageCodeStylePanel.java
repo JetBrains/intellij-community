@@ -67,7 +67,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     super(language, currentSettings, settings);
     myPredefinedCodeStyles = getPredefinedStyles();
     CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(
-      new ExtensionPointListener<CodeStyleSettingsProvider>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
@@ -81,7 +81,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
                                      @NotNull PluginDescriptor pluginDescriptor) {
           if (!extension.hasSettingsPage() && getDefaultLanguage() == extension.getLanguage()) {
             final String tabTitle = extension.getConfigurableDisplayName();
-            for (int i = 0; i < myTabbedPane.getTabCount(); i ++) {
+            for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
               if (myTabbedPane.getTitleAt(i).equals(tabTitle)) {
                 myTabbedPane.removeTabAt(i);
                 myTabs.stream().filter(

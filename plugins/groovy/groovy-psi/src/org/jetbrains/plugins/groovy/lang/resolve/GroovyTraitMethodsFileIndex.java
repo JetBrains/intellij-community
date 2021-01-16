@@ -53,7 +53,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
         return StringUtil.endsWith(file.getNameSequence(), HELPER_SUFFIX);
       }
     };
-    myIndexer = new SingleEntryIndexer<ByteArraySequence>(false) {
+    myIndexer = new SingleEntryIndexer<>(false) {
       @Override
       protected ByteArraySequence computeValue(@NotNull FileContent inputData) {
         return serialize(index(inputData.getFile(), inputData.getContent()));

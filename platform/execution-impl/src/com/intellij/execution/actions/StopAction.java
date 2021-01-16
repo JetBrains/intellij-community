@@ -148,7 +148,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
 
       IPopupChooserBuilder<HandlerItem> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(items)
-        .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<HandlerItem>() {
+        .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
           @Nullable
           @Override
           public String getTextFor(HandlerItem item) {

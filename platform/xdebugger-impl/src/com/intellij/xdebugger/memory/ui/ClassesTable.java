@@ -143,7 +143,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     diffColumn.setMinWidth(JBUIScale.scale(DIFF_COLUMN_MIN_WIDTH));
 
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
-    sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
+    sorter.setRowFilter(new RowFilter<>() {
       @Override
       public boolean include(Entry<? extends DiffViewTableModel, ? extends Integer> entry) {
         int ix = entry.getIdentifier();
@@ -151,8 +151,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         DiffValue diff = myCounts.getOrDefault(ref, UNKNOWN_VALUE);
 
         boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
-          || myOnlyWithInstances && !diff.hasInstance()
-          || myOnlyTracked && myParent.getStrategy(ref) == null;
+                                            || myOnlyWithInstances && !diff.hasInstance()
+                                            || myOnlyTracked && myParent.getStrategy(ref) == null;
         return !(isFilteringOptionsRefused) && myMatcher.matches(ref.name());
       }
     });

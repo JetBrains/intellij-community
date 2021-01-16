@@ -142,7 +142,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected MouseListener createMouseListener() {
-    return new MouseEventAdapter<MouseListener>(super.createMouseListener()) {
+    return new MouseEventAdapter<>(super.createMouseListener()) {
       @Override
       public void mouseDragged(MouseEvent event) {
         JTree tree = (JTree)event.getSource();

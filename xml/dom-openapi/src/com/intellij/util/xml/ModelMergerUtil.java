@@ -59,7 +59,7 @@ public class ModelMergerUtil {
   @Nullable
   public static <T, V> V getImplementation(final T element, final Class<V> clazz) {
     if (element == null) return null;
-    CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>() {
+    CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<>() {
       @Override
       public boolean process(final T t) {
         return !ReflectionUtil.isAssignable(clazz, t.getClass()) || super.process(t);
@@ -72,7 +72,7 @@ public class ModelMergerUtil {
   @NotNull
   public static <T, V> Collection<V> getImplementations(final T element, final Class<V> clazz) {
     if (element == null) return Collections.emptyList();
-    CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>() {
+    CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<>() {
       @Override
       public boolean process(final T t) {
         return !ReflectionUtil.isAssignable(clazz, t.getClass()) || super.process(t);

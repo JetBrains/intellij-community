@@ -13,7 +13,7 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
  */
 public abstract class IdeaPluginImpl implements IdeaPlugin {
 
-  private final NullableLazyValue<String> myPluginId = new VolatileNullableLazyValue<String>() {
+  private final NullableLazyValue<String> myPluginId = new VolatileNullableLazyValue<>() {
     @Nullable
     @Override
     protected String compute() {

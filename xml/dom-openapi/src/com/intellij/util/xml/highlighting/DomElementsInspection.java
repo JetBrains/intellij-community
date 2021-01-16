@@ -60,7 +60,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   public void checkFileElement(DomFileElement<T> domFileElement, final DomElementAnnotationHolder holder) {
     final DomHighlightingHelper helper =
       DomElementAnnotationsManager.getInstance(domFileElement.getManager().getProject()).getHighlightingHelper();
-    final Consumer<DomElement> consumer = new Consumer<DomElement>() {
+    final Consumer<DomElement> consumer = new Consumer<>() {
       @Override
       public void consume(final DomElement element) {
         checkChildren(element, this);

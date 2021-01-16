@@ -70,7 +70,7 @@ public final class RenameRefactoringDialogFixture extends IdeaDialogFixture<Rena
 
     public String getHtml() {
       final JTextComponent component = robot().finder().find(target(), JTextComponentMatcher.any());
-      return GuiActionRunner.execute(new GuiQuery<String>() {
+      return GuiActionRunner.execute(new GuiQuery<>() {
         @Override
         protected String executeInEDT() throws Throwable {
           return component.getText();

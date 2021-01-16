@@ -85,8 +85,9 @@ public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJ
     if (file == null) return false;
 
     LocalSearchScope scope = new LocalSearchScope(file);
-    return ReferencesSearch.search(targetClass, scope).forEach(new Processor<PsiReference>() {
+    return ReferencesSearch.search(targetClass, scope).forEach(new Processor<>() {
       int count = 0;
+
       @Override
       public boolean process(PsiReference reference) {
         return ++count < 2;

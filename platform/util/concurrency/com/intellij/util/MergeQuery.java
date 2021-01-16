@@ -29,7 +29,7 @@ public class MergeQuery<T> extends AbstractQuery<T>{
 
     AsyncFuture<Boolean> fq = myQuery1.forEachAsync(consumer);
 
-    fq.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result) {
+    fq.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<>(result) {
       @Override
       public void onSuccess(Boolean value) {
         if (value.booleanValue()) {

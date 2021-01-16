@@ -18,7 +18,7 @@ public class DirContainer extends Container {
     @Override
     public List<LayoutFileSet> build(TempFileFactory temp) {
         List<LayoutFileSet> unprefixed = super.build(temp);
-        List<LayoutFileSet> prefixed = new ArrayList<LayoutFileSet>();
+        List<LayoutFileSet> prefixed = new ArrayList<>();
 
         for (LayoutFileSet set : unprefixed) {
             LayoutFileSet copy = createCopy(set);

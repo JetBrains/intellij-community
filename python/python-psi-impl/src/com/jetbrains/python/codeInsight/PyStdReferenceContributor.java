@@ -30,7 +30,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 public class PyStdReferenceContributor extends PsiReferenceContributor {
   private static class Holder {
     private static final PatternCondition<PsiElement> IN_OPTIONAL_PARENTHESIS_INSIDE_ASSIGNMENT =
-      new PatternCondition<PsiElement>("in optional parenthesis inside assignment") {
+      new PatternCondition<>("in optional parenthesis inside assignment") {
         @Override
         public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
           PsiElement parent = element.getParent();

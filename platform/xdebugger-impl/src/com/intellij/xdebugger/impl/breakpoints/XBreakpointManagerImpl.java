@@ -84,7 +84,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       }
     });
 
-    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<XBreakpointType>() {
+    XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull XBreakpointType type, @NotNull PluginDescriptor pluginDescriptor) {
         //noinspection unchecked

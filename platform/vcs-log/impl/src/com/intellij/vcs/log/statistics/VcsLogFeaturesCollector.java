@@ -116,7 +116,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
   @NotNull
   private static VcsLogUiProperties createDefaultPropertiesInstance() {
-    return new VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State>(new VcsLogApplicationSettings()) {
+    return new VcsLogUiPropertiesImpl<>(new VcsLogApplicationSettings()) {
       @NotNull private final State myState = new State();
 
       @NotNull

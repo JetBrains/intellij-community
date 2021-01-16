@@ -874,7 +874,7 @@ public final class MvcModuleStructureUtil {
   }
 
   public static Library findUserLibrary(@NotNull Module module, @NotNull final String name) {
-    CommonProcessors.FindProcessor<Library> processor = new CommonProcessors.FindProcessor<Library>() {
+    CommonProcessors.FindProcessor<Library> processor = new CommonProcessors.FindProcessor<>() {
       @Override
       protected boolean accept(Library library) {
         String libraryName = library.getName();

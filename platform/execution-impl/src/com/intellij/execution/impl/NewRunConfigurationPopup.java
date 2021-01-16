@@ -85,7 +85,7 @@ public final class NewRunConfigurationPopup {
       return createAddTreePopup(project, creator, selectedConfigurationType, showTitle);
     }
 
-    BaseListPopupStep<ConfigurationType> step = new BaseListPopupStep<ConfigurationType>(
+    BaseListPopupStep<ConfigurationType> step = new BaseListPopupStep<>(
       showTitle ? ExecutionBundle.message("add.new.run.configuration.action2.name") : null, typesToShow) {
 
       @Override
@@ -130,7 +130,7 @@ public final class NewRunConfigurationPopup {
       private ListPopupStep<?> getSupStep(final ConfigurationType type) {
         final ConfigurationFactory[] factories = type.getConfigurationFactories();
         Arrays.sort(factories, (factory1, factory2) -> factory1.getName().compareToIgnoreCase(factory2.getName()));
-        return new BaseListPopupStep<ConfigurationFactory>(
+        return new BaseListPopupStep<>(
           ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
 
           @Override
@@ -223,7 +223,7 @@ public final class NewRunConfigurationPopup {
 
     final AtomicBoolean isAutoSelectionPassed = new AtomicBoolean(selectedConfigurationType == null);
 
-    BaseTreePopupStep<Object> treePopupStep = new BaseTreePopupStep<Object>(
+    BaseTreePopupStep<Object> treePopupStep = new BaseTreePopupStep<>(
       project,
       showTitle ? ExecutionBundle.message("add.new.run.configuration.action2.name") : null, structure
     ) {

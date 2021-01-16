@@ -78,7 +78,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @Override
   public void connect(final @NotNull Runnable onFinished) {
     doDisconnect();
-    connectIfNeeded(new ServerConnector.ConnectionCallback<D>() {
+    connectIfNeeded(new ServerConnector.ConnectionCallback<>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> serverRuntimeInstance) {
         onFinished.run();
@@ -119,7 +119,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @Override
   public void deploy(final @NotNull DeploymentTask<D> task,
                      final java.util.function.@NotNull Consumer<? super String> onDeploymentStarted) {
-    connectIfNeeded(new ConnectionCallbackBase<D>() {
+    connectIfNeeded(new ConnectionCallbackBase<>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         LocalDeploymentImpl<?> deployment = new LocalDeploymentImpl<>(instance,
@@ -157,7 +157,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   @Override
   public void computeDeployments(final @NotNull Runnable onFinished) {
-    connectIfNeeded(new ConnectionCallbackBase<D>() {
+    connectIfNeeded(new ConnectionCallbackBase<>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         computeDeployments(instance, onFinished);
@@ -319,7 +319,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     }
 
     setStatus(ConnectionStatus.CONNECTING);
-    myConnector.connect(new ServerConnector.ConnectionCallback<D>() {
+    myConnector.connect(new ServerConnector.ConnectionCallback<>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         setStatus(ConnectionStatus.CONNECTED);

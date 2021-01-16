@@ -68,7 +68,7 @@ public class TextFilter extends FilterAction {
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
       private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
@@ -83,30 +83,30 @@ public class TextFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createParallelGroup()
-                .addGroup(
-                  layout.createSequentialGroup()
-                        .addComponent(myTextLabel)
-                        .addComponent(myTextField)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
-                        .addComponent(myHelpLabel)
-                )
-                .addGroup(
-                  layout.createSequentialGroup()
-                        .addComponent(myHierarchyCheckBox)
-                )
+            .addGroup(
+              layout.createSequentialGroup()
+                .addComponent(myTextLabel)
+                .addComponent(myTextField)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+                .addComponent(myHelpLabel)
+            )
+            .addGroup(
+              layout.createSequentialGroup()
+                .addComponent(myHierarchyCheckBox)
+            )
         );
         layout.setVerticalGroup(
           layout.createSequentialGroup()
-                .addGroup(
-                  layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(myTextLabel)
-                        .addComponent(myTextField)
-                        .addComponent(myHelpLabel)
-                )
-                .addGroup(
-                  layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(myHierarchyCheckBox)
-                )
+            .addGroup(
+              layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(myTextLabel)
+                .addComponent(myTextField)
+                .addComponent(myHelpLabel)
+            )
+            .addGroup(
+              layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(myHierarchyCheckBox)
+            )
         );
       }
 

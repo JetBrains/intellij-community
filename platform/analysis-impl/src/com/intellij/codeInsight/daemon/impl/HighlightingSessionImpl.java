@@ -39,7 +39,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     myEditorColorsScheme = editorColorsScheme;
     myProject = psiFile.getProject();
     myDocument = psiFile.getOriginalFile().getViewProvider().getDocument();
-    myEDTQueue = new TransferToEDTQueue<Runnable>("Apply highlighting results", runnable -> {
+    myEDTQueue = new TransferToEDTQueue<>("Apply highlighting results", runnable -> {
       runnable.run();
       return true;
     }, __ -> myProject.isDisposed() || getProgressIndicator().isCanceled()) {

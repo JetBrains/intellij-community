@@ -38,7 +38,7 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
-    return new DataIndexer<String, Void, FileContent>() {
+    return new DataIndexer<>() {
       @NotNull
       @Override
       public Map<String, Void> map(@NotNull FileContent inputData) {

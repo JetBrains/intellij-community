@@ -226,7 +226,7 @@ public class VcsStructureChooser extends DialogWrapper {
     selectedLabel.setBorder(JBUI.Borders.empty(2, 0));
     panel.add(selectedLabel, BorderLayout.SOUTH);
 
-    mySelectionManager.setSelectionChangeListener(new PlusMinus<VirtualFile>() {
+    mySelectionManager.setSelectionChangeListener(new PlusMinus<>() {
       @Override
       public void plus(VirtualFile virtualFile) {
         mySelectedFiles.add(virtualFile);

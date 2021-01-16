@@ -377,7 +377,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   private class ImageZoomModelImpl implements ImageZoomModel {
     private boolean myZoomLevelChanged;
-    private final NotNullValue<Double> IMAGE_MAX_ZOOM_FACTOR = new NotNullValue<Double>() {
+    private final NotNullValue<Double> IMAGE_MAX_ZOOM_FACTOR = new NotNullValue<>() {
       @NotNull
       @Override
       public Double initialize() {
@@ -386,7 +386,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
         if (IfsUtil.isSVG(file)) {
           try {
-            return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()), ScaleContext.create(editor.getComponent())));
+            return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()),
+                                                          ScaleContext.create(editor.getComponent())));
           }
           catch (Throwable t) {
             Logger.getInstance(ImageEditorUI.class).warn(t);

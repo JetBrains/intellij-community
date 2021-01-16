@@ -40,7 +40,7 @@ import static com.intellij.patterns.StandardPatterns.instanceOf;
 public class CustomFileTypeCompletionContributor extends CompletionContributor implements DumbAware {
   public CustomFileTypeCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inFile(psiFile().withFileType(instanceOf(CustomSyntaxTableFileType.class))),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -66,7 +66,7 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor i
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords2());
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords3());
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords4());
-               
+
                WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, Collections.emptySet());
              }
            });

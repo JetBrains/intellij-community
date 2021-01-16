@@ -590,7 +590,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
 
     @NotNull
     public Iterator<Item> iterate(@Nullable Item start, boolean fwd) {
-      return new JBIterator<Item>() {
+      return new JBIterator<>() {
         @Override
         protected Item nextImpl() {
           return stop();
@@ -601,7 +601,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     @NotNull
     public Iterator<Item> iterate(@Nullable Item start, boolean fwd, boolean wrap) {
       if (!wrap || start == null) return iterate(start, fwd);
-      return new JBIterator<Item>() {
+      return new JBIterator<>() {
         boolean wrapped = false;
         Iterator<Item> it = iterate(start, fwd);
 

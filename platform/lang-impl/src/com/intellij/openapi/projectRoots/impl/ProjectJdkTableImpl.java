@@ -107,7 +107,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
         }
       }
     });
-    SdkType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<SdkType>() {
+    SdkType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull SdkType extension, @NotNull PluginDescriptor pluginDescriptor) {
         loadSdkType(extension);

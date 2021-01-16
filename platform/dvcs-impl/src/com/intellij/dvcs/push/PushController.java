@@ -210,7 +210,7 @@ public final class PushController implements Disposable {
 
     //noinspection unchecked
     myView2Model.put(repoNode, (MyRepoModel<Repository, PushSource, PushTarget>)model);
-    repoPanel.addRepoNodeListener(new RepositoryNodeListener<T>() {
+    repoPanel.addRepoNodeListener(new RepositoryNodeListener<>() {
       @Override
       public void onTargetChanged(T newTarget) {
         repoNode.setChecked(true);

@@ -39,7 +39,7 @@ import com.intellij.util.xml.stubs.model.Foo;
 public abstract class DomStubTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final String HTTP_FOO_DTD = "http://foo.dtd";
-  private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<Foo>(Foo.class, "foo", HTTP_FOO_DTD) {
+  private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<>(Foo.class, "foo", HTTP_FOO_DTD) {
     @Override
     public boolean hasStubs() {
       return true;

@@ -91,12 +91,12 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   @NotNull
   @Override
   public DataIndexer<String, Set<SchemaTypeInfo>, FileContent> getIndexer() {
-    return new DataIndexer<String, Set<SchemaTypeInfo>, FileContent>() {
+    return new DataIndexer<>() {
       @NotNull
       @Override
       public Map<String, Set<SchemaTypeInfo>> map(@NotNull FileContent inputData) {
         final Map<String, Set<SchemaTypeInfo>> map = new HashMap<>();
-        final MultiMap<SchemaTypeInfo,SchemaTypeInfo> multiMap =
+        final MultiMap<SchemaTypeInfo, SchemaTypeInfo> multiMap =
           XsdComplexTypeInfoBuilder.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         for (SchemaTypeInfo key : multiMap.keySet()) {
           map.put(NsPlusTag.INSTANCE.encode(Pair.create(key.getNamespaceUri(), key.getTagName())), new HashSet<>(multiMap.get(key)));
@@ -109,7 +109,7 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   @NotNull
   @Override
   public DataExternalizer<Set<SchemaTypeInfo>> getValueExternalizer() {
-    return new DataExternalizer<Set<SchemaTypeInfo>>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Set<SchemaTypeInfo> value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.size());

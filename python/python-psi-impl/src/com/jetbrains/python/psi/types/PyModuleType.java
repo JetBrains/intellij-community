@@ -158,7 +158,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       return;
     }
 
-    final Set<String> seen = new HashSet<String>();
+    final Set<String> seen = new HashSet<>();
     if (!processImplicitlyImportedByImportElements(anchor, footHold,
                                                    importElements, name -> filter.test(name) && seen.add(name),
                                                    resultProcessor)) {

@@ -342,7 +342,7 @@ public class SFormsFastMapDirect {
         if (ent != null) {
           final int key = i == 0 ? ikey : (i == 1 ? ikey + VarExprent.STACK_BASE : -ikey);
 
-          list.add(new Entry<Integer, FastSparseSet<Integer>>() {
+          list.add(new Entry<>() {
 
             private final Integer var = key;
             private final FastSparseSet<Integer> val = ent;

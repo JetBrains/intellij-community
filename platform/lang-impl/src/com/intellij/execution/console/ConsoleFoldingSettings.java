@@ -26,7 +26,7 @@ public final class ConsoleFoldingSettings implements PersistentStateComponent<Co
     for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
       patternList(regexp.negate).add(regexp.substring);
     }
-    CustomizableConsoleFoldingBean.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CustomizableConsoleFoldingBean>() {
+    CustomizableConsoleFoldingBean.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         patternList(extension.negate).add(extension.substring);

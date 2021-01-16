@@ -65,10 +65,10 @@ public final class XmlPsiUtil {
   @Nullable
   public static XmlElement findElement(@NotNull final XmlElement parent, @NotNull final IElementType.Predicate predicate){
     final Ref<XmlElement> result = new Ref<>();
-    parent.processElements(new PsiElementProcessor<PsiElement>(){
+    parent.processElements(new PsiElementProcessor<>() {
       @Override
-      public boolean execute(@NotNull PsiElement element){
-        if(element instanceof XmlElement && predicate.matches(element.getNode().getElementType())){
+      public boolean execute(@NotNull PsiElement element) {
+        if (element instanceof XmlElement && predicate.matches(element.getNode().getElementType())) {
           result.set((XmlElement)element);
           return false;
         }

@@ -209,7 +209,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   @NotNull
   protected Comparator<PsiElement> createComparator(@NotNull GotoData gotoData) {
-    return new Comparator<PsiElement>() {
+    return new Comparator<>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
         return getComparingObject(o1).compareTo(getComparingObject(o2));

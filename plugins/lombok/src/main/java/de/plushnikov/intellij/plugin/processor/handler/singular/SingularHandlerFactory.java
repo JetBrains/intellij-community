@@ -20,26 +20,27 @@ public final class SingularHandlerFactory {
   private static final String[] GUAVA_MAPS = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_MAP, SingularCollectionClassNames.GUAVA_IMMUTABLE_BI_MAP, SingularCollectionClassNames.GUAVA_IMMUTABLE_SORTED_MAP};
   private static final String[] GUAVA_TABLE = new String[]{SingularCollectionClassNames.GUAVA_IMMUTABLE_TABLE};
 
-  private static final Set<String> COLLECTION_TYPES = new HashSet<String>() {{
-    addAll(toSet(SingularCollectionClassNames.JAVA_LANG_ITERABLE, SingularCollectionClassNames.JAVA_UTIL_COLLECTION, SingularCollectionClassNames.JAVA_UTIL_LIST));
+  private static final Set<String> COLLECTION_TYPES = new HashSet<>() {{
+    addAll(toSet(SingularCollectionClassNames.JAVA_LANG_ITERABLE, SingularCollectionClassNames.JAVA_UTIL_COLLECTION,
+                 SingularCollectionClassNames.JAVA_UTIL_LIST));
     addAll(toSet(JAVA_SETS));
   }};
 
-  private static final Set<String> GUAVA_COLLECTION_TYPES = new HashSet<String>() {{
+  private static final Set<String> GUAVA_COLLECTION_TYPES = new HashSet<>() {{
     addAll(toSet(GUAVA_COLLECTIONS));
     addAll(toSet(GUAVA_SETS));
   }};
 
-  private static final Set<String> MAP_TYPES = new HashSet<String>() {{
+  private static final Set<String> MAP_TYPES = new HashSet<>() {{
     addAll(toSet(JAVA_MAPS));
   }};
-  private static final Set<String> GUAVA_MAP_TYPES = new HashSet<String>() {{
+  private static final Set<String> GUAVA_MAP_TYPES = new HashSet<>() {{
     addAll(toSet(GUAVA_MAPS));
   }};
-  private static final Set<String> GUAVA_TABLE_TYPES = new HashSet<String>() {{
+  private static final Set<String> GUAVA_TABLE_TYPES = new HashSet<>() {{
     addAll(toSet(GUAVA_TABLE));
   }};
-  private static final Set<String> VALID_SINGULAR_TYPES = new HashSet<String>() {{
+  private static final Set<String> VALID_SINGULAR_TYPES = new HashSet<>() {{
     addAll(COLLECTION_TYPES);
     addAll(MAP_TYPES);
     addAll(GUAVA_COLLECTION_TYPES);

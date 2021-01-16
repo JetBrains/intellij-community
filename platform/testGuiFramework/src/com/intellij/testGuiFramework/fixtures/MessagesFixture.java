@@ -146,7 +146,7 @@ public class MessagesFixture<C extends Container> implements ContainerFixture<C>
 
   @NotNull
   static JDialog findByTitle(@NotNull Robot robot, @NotNull final String title, @NotNull Timeout timeout) {
-    return GuiTestUtil.INSTANCE.waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    return GuiTestUtil.INSTANCE.waitUntilFound(robot, null, new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {
@@ -159,7 +159,7 @@ public class MessagesFixture<C extends Container> implements ContainerFixture<C>
 
   @NotNull
   static JDialog findAny(@NotNull Robot robot, @NotNull Timeout timeout) {
-    return GuiTestUtil.INSTANCE.waitUntilFound(robot, null, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    return GuiTestUtil.INSTANCE.waitUntilFound(robot, null, new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return isMessageDialog(dialog);
@@ -200,19 +200,19 @@ public class MessagesFixture<C extends Container> implements ContainerFixture<C>
 
   @NotNull
   private static JPanel getSheetPanel(@NotNull Robot robot, @NotNull Container root, @NotNull Timeout timeout) {
-    return GuiTestUtil.INSTANCE.waitUntilFound(robot, root, new GenericTypeMatcher<JPanel>(JPanel.class) {
-        @Override
-        protected boolean isMatching(@NotNull JPanel panel) {
-          if (panel.getClass().getName().startsWith(SheetController.class.getName()) && panel.isShowing()) {
-            SheetController controller = findSheetController(panel);
-            JPanel sheetPanel1 = field("mySheetPanel").ofType(JPanel.class).in(controller).get();
-            if (sheetPanel1 == panel) {
-              return true;
-            }
+    return GuiTestUtil.INSTANCE.waitUntilFound(robot, root, new GenericTypeMatcher<>(JPanel.class) {
+      @Override
+      protected boolean isMatching(@NotNull JPanel panel) {
+        if (panel.getClass().getName().startsWith(SheetController.class.getName()) && panel.isShowing()) {
+          SheetController controller = findSheetController(panel);
+          JPanel sheetPanel1 = field("mySheetPanel").ofType(JPanel.class).in(controller).get();
+          if (sheetPanel1 == panel) {
+            return true;
           }
-          return false;
         }
-      }, timeout);
+        return false;
+      }
+    }, timeout);
   }
 
   @Nullable
@@ -224,7 +224,7 @@ public class MessagesFixture<C extends Container> implements ContainerFixture<C>
   public static String getTitle(@NotNull JPanel sheetPanel, @NotNull Robot robot) {
     final JEditorPane messageTextPane = getMessageTextPane(sheetPanel);
 
-    JEditorPane titleTextPane = robot.finder().find(sheetPanel, new GenericTypeMatcher<JEditorPane>(JEditorPane.class) {
+    JEditorPane titleTextPane = robot.finder().find(sheetPanel, new GenericTypeMatcher<>(JEditorPane.class) {
       @Override
       protected boolean isMatching(@NotNull JEditorPane editorPane) {
         return editorPane != messageTextPane;
@@ -238,7 +238,7 @@ public class MessagesFixture<C extends Container> implements ContainerFixture<C>
   public String getMessage() {
     final JTextPane textPane = robot().finder().findByType(target(), JTextPane.class);
     //noinspection ConstantConditions
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected String executeInEDT() throws Throwable {
         return StringUtil.notNullize(textPane.getText());
@@ -257,7 +257,7 @@ public class MessagesFixture<C extends Container> implements ContainerFixture<C>
     public String getTitle(){
       final JEditorPane messageTextPane = getMessageTextPane(target());
 
-      JEditorPane titleTextPane = robot().finder().find(target(), new GenericTypeMatcher<JEditorPane>(JEditorPane.class) {
+      JEditorPane titleTextPane = robot().finder().find(target(), new GenericTypeMatcher<>(JEditorPane.class) {
         @Override
         protected boolean isMatching(@NotNull JEditorPane editorPane) {
           return editorPane != messageTextPane;

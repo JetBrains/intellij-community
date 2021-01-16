@@ -62,7 +62,7 @@ final class VarianceUtil {
   static boolean containsDeepIn(@NotNull PsiType rootType,
                                 @NotNull PsiTypeParameter parameter,
                                 @NotNull PsiSubstitutor superClassSubstitutor, boolean ignoreWildcardT) {
-    return rootType.accept(new PsiTypeVisitor<Boolean>() {
+    return rootType.accept(new PsiTypeVisitor<>() {
       @NotNull
       @Override
       public Boolean visitClassType(@NotNull PsiClassType classType) {

@@ -254,7 +254,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   private static final Comparator<HgCommittedChangeList> BRANCH_COLUMN_COMPARATOR =
     (o1, o2) -> Comparing.compare(o1.getBranch(), o2.getBranch());
 
-  private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
+  private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<>() {
     @Override
     public String getTitle() {
       return HgBundle.message("hg4idea.changelist.column.branch");

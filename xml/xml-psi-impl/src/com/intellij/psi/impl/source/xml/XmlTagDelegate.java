@@ -429,7 +429,7 @@ public abstract class XmlTagDelegate {
 
   @Nullable
   XmlElementDescriptor getDescriptor() {
-    return CachedValuesManager.getCachedValue(myTag, new CachedValueProvider<XmlElementDescriptor>() {
+    return CachedValuesManager.getCachedValue(myTag, new CachedValueProvider<>() {
       @Override
       public Result<XmlElementDescriptor> compute() {
         XmlElementDescriptor descriptor =

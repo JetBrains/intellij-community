@@ -157,7 +157,7 @@ public final class ResourceBundlePropertiesUpdateManager {
       ContainerUtil.map(resourceBundle.getPropertiesFiles(), PropertiesOrder::new);
 
     final boolean[] isAlphaSorted = new boolean[]{true};
-    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<String>() {
+    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<String> getNodes() {

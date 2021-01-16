@@ -149,11 +149,12 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   @Override
   @NotNull
   public DataIndexer<String, XsdNamespaceBuilder, FileContent> getIndexer() {
-    return new DataIndexer<String, XsdNamespaceBuilder, FileContent>() {
+    return new DataIndexer<>() {
       @Override
       @NotNull
       public Map<String, XsdNamespaceBuilder> map(@NotNull final FileContent inputData) {
-        XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
+        XsdNamespaceBuilder builder =
+          XsdNamespaceBuilder.computeNamespace(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         String namespace = builder.getNamespace();
         return Collections.singletonMap(ObjectUtils.notNull(namespace, LOCAL_SCHEMA_ID), builder);
       }
@@ -165,7 +166,7 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   @NotNull
   @Override
   public DataExternalizer<XsdNamespaceBuilder> getValueExternalizer() {
-    return new DataExternalizer<XsdNamespaceBuilder>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, XsdNamespaceBuilder value) throws IOException {
         IOUtil.writeUTF(out, value.getNamespace() != null ? value.getNamespace() : NULL_STRING);

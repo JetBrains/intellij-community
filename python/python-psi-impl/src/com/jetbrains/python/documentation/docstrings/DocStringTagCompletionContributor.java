@@ -36,7 +36,7 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
 
   public DocStringTagCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().withParent(DOCSTRING_PATTERN),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,

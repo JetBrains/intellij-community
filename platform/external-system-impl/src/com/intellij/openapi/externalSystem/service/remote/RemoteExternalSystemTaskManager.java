@@ -37,7 +37,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
 
   /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link RemoteExternalSystemProjectResolverImpl}. */
   RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> NULL_OBJECT =
-    new RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings>() {
+    new RemoteExternalSystemTaskManager<>() {
 
       @Override
       public void executeTasks(@NotNull ExternalSystemTaskId id,
@@ -48,8 +48,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
       }
 
       @Override
-      public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws ExternalSystemException
-      {
+      public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws ExternalSystemException {
         return false;
       }
 

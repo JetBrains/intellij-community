@@ -245,7 +245,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     ArrayList<String> conflicts = new ArrayList<>();
     PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
-    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new Hash.Strategy<PsiMethod > () {
+    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new Hash.Strategy<>() {
       @Override
       public int hashCode(@Nullable PsiMethod method) {
         return method == null ? 0 : method.getSignature(PsiSubstitutor.EMPTY).hashCode();
@@ -253,7 +253,10 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
 
       @Override
       public boolean equals(@Nullable PsiMethod method1, @Nullable PsiMethod method2) {
-        return method1 == method2 || (method1 != null && method2 != null && method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY)));
+        return method1 == method2 ||
+               (method1 != null &&
+                method2 != null &&
+                method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY)));
       }
     });
 

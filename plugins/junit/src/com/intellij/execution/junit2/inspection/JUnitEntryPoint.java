@@ -50,7 +50,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
           if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, !isJUnit5, true)) {
             return true;
           }
-          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
+          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<>() {
             @Override
             protected boolean accept(PsiClass psiClass) {
               return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);

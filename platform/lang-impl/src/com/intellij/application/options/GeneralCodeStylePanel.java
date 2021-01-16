@@ -129,7 +129,7 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       ourSelectedTabIndex = myTabbedPane.getSelectedIndex();
     });
     EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<GeneralCodeStyleOptionsProviderEP>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull GeneralCodeStyleOptionsProviderEP extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {

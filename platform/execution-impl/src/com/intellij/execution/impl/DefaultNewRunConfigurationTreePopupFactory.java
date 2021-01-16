@@ -27,7 +27,7 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
   private List<ConfigurationType> myOtherTypes;
 
   public DefaultNewRunConfigurationTreePopupFactory() {
-    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<ConfigurationType>() {
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull ConfigurationType extension, @NotNull PluginDescriptor pluginDescriptor) {
         myTypesToShow = null;

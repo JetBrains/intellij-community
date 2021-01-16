@@ -62,7 +62,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
 
   @Override
   protected <P extends RunConfigurationBase<?>> List<SettingsEditorFragment<P, ?>> createFragments(@NotNull P configuration) {
-    return Collections.singletonList(new CoverageFragment<P>(configuration));
+    return Collections.singletonList(new CoverageFragment<>(configuration));
   }
 
   @Override

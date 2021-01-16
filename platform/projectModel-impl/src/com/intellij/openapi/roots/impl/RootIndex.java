@@ -389,7 +389,7 @@ class RootIndex {
       myRootInfo = rootInfo;
       myAllRoots = myRootInfo.getAllRoots();
       int cacheSize = Math.max(25, myAllRoots.size() / 100 * 2);
-      myCache = new SynchronizedSLRUCache<VirtualFile, List<OrderEntry>>(cacheSize, cacheSize) {
+      myCache = new SynchronizedSLRUCache<>(cacheSize, cacheSize) {
         @NotNull
         @Override
         public List<OrderEntry> createValue(@NotNull VirtualFile key) {
@@ -398,7 +398,7 @@ class RootIndex {
       };
       int dependentUnloadedModulesCacheSize = ModuleManager.getInstance(project).getModules().length / 2;
       myDependentUnloadedModulesCache =
-        new SynchronizedSLRUCache<Module, Set<String>>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
+        new SynchronizedSLRUCache<>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
           @NotNull
           @Override
           public Set<String> createValue(@NotNull Module key) {

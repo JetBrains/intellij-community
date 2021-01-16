@@ -354,7 +354,7 @@ public class TailRecursionInspection extends BaseInspection {
     }
 
     private static Graph<Integer> buildGraph(PsiParameter[] parameters, PsiExpression[] arguments) {
-      final InboundSemiGraph<Integer> graph = new InboundSemiGraph<Integer>() {
+      final InboundSemiGraph<Integer> graph = new InboundSemiGraph<>() {
         @NotNull
         @Override
         public Collection<Integer> getNodes() {

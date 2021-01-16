@@ -103,7 +103,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
         return;
       }
       IntroduceTargetChooser.showChooser(editor, expressions,
-                                         new Pass<GrExpression>() {
+                                         new Pass<>() {
                                            @Override
                                            public void pass(final GrExpression selectedValue) {
                                              invokeImpl(selectedValue, document);

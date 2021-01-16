@@ -142,12 +142,13 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   }
 
   private static TestFrameworkPropertyListener<Boolean> createComparatorPropertyListener(TestFrameworkRunningModel model) {
-    return new TestFrameworkPropertyListener<Boolean>() {
+    return new TestFrameworkPropertyListener<>() {
       @Override
       public void onChanged(Boolean value) {
         try {
           //todo reflection to avoid binary incompatibility with substeps plugin
-          final AbstractTestTreeBuilderBase builder = (AbstractTestTreeBuilderBase)model.getClass().getMethod("getTreeBuilder").invoke(model);
+          final AbstractTestTreeBuilderBase builder =
+            (AbstractTestTreeBuilderBase)model.getClass().getMethod("getTreeBuilder").invoke(model);
           if (builder != null) {
             builder.setTestsComparator(model);
           }

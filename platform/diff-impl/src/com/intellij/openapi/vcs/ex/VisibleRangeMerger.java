@@ -207,7 +207,7 @@ public class VisibleRangeMerger<T> {
     }
 
 
-    FlagsProvider<Unit> EMPTY = new FlagsProvider<Unit>() {
+    FlagsProvider<Unit> EMPTY = new FlagsProvider<>() {
       @Override
       public @NotNull Unit getFlags(@NotNull Range range) {
         return Unit.INSTANCE;

@@ -123,7 +123,7 @@ public class PackageSearchServiceTest {
 
   private static Map<String, String> getQueryMap(URI uri) {
     String[] params = uri.getQuery().split("&");
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, String> map = new HashMap<>();
 
     for (String param : params) {
       String[] split = param.split("=");

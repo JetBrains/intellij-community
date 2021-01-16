@@ -214,7 +214,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   private enum Behavior {
     NextPage, JumpToSpot;
 
-    private static final Native<Behavior> CURRENT = new Native<Behavior>() {
+    private static final Native<Behavior> CURRENT = new Native<>() {
       @NotNull
       @Override
       public Behavior produce() {
@@ -248,7 +248,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   private enum Style {
     Legacy, Overlay;
 
-    private static final Native<Style> CURRENT = new Native<Style>() {
+    private static final Native<Style> CURRENT = new Native<>() {
       @Override
       public void run() {
         Style oldStyle = get();

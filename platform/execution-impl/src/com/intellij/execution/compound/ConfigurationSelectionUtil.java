@@ -67,7 +67,7 @@ public final class ConfigurationSelectionUtil {
           return FINAL_CHOICE;
         }
         else {
-          return new BaseListPopupStep<ExecutionTarget>(null, getTargets(selectedConfigs)) {
+          return new BaseListPopupStep<>(null, getTargets(selectedConfigs)) {
             @Override
             public boolean isSpeedSearchEnabled() {
               return true;

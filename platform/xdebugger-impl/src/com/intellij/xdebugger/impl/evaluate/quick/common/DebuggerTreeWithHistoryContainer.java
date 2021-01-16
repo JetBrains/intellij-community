@@ -156,7 +156,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
       TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object node = path.getLastPathComponent();
-        myTreeCreator.createDescriptorByNode(node, new ResultConsumer<D>() {
+        myTreeCreator.createDescriptorByNode(node, new ResultConsumer<>() {
           @Override
           public void onSuccess(final D value) {
             if (value != null) {

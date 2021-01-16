@@ -305,7 +305,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     Element moduleElement = new Element(MODULE);
-    moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+    moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<>() {
       @Override
       public String compute() {
         final Module module = getModule();

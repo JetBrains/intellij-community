@@ -38,7 +38,7 @@ public class NullCheckingFactory implements TypeAdapterFactory {
       return null;
     }
     final TypeAdapter<T> defaultAdapter = gson.getDelegateAdapter(this, type);
-    return new TypeAdapter<T>() {
+    return new TypeAdapter<>() {
       @Override
       public void write(JsonWriter out, T value) throws IOException {
         defaultAdapter.write(out, value);

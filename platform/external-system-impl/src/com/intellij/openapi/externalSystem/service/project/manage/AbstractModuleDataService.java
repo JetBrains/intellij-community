@@ -135,7 +135,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via external system)
       final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(created);
 
-      RootPolicy<Object> visitor = new RootPolicy<Object>() {
+      RootPolicy<Object> visitor = new RootPolicy<>() {
         @Override
         public Object visitLibraryOrderEntry(@NotNull LibraryOrderEntry libraryOrderEntry, Object value) {
           modifiableRootModel.removeOrderEntry(libraryOrderEntry);
@@ -471,7 +471,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
 
-    noOrderAwareItems.sort(new Comparator<OrderEntry>() {
+    noOrderAwareItems.sort(new Comparator<>() {
       @Override
       public int compare(OrderEntry o1, OrderEntry o2) {
         return o1.toString().compareTo(o2.toString());

@@ -63,7 +63,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
         invokeOnTarget(list.get(0), file, editor, project);
       }
       else {
-        IntroduceTargetChooser.showIntroduceTargetChooser(editor, list, new Pass<Target>() {
+        IntroduceTargetChooser.showIntroduceTargetChooser(editor, list, new Pass<>() {
           @Override
           public void pass(final Target target) {
             invokeOnTarget(target, file, editor, project);
@@ -150,13 +150,13 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
                                 @NotNull Editor editor,
                                 @NotNull Project project) {
     Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = getOccurrenceOptions(target, usages);
-    OccurrencesChooser<Object> chooser = new OccurrencesChooser<Object>(editor) {
+    OccurrencesChooser<Object> chooser = new OccurrencesChooser<>(editor) {
       @Override
       protected TextRange getOccurrenceRange(Object occurrence) {
         return IntroduceHandler.this.getOccurrenceRange(occurrence);
       }
     };
-    chooser.showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
+    chooser.showChooser(new Pass<>() {
       @Override
       public void pass(final OccurrencesChooser.ReplaceChoice choice) {
         AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);

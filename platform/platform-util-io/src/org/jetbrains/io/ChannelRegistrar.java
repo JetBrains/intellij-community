@@ -70,7 +70,7 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
       this.clientChannels.clear();
 
       final CountDownLatch countDown = new CountDownLatch(clientChannels.length + 1);
-      GenericFutureListener<ChannelFuture> listener = new GenericFutureListener<ChannelFuture>() {
+      GenericFutureListener<ChannelFuture> listener = new GenericFutureListener<>() {
         @Override
         public void operationComplete(@NotNull ChannelFuture future) {
           try {

@@ -123,7 +123,7 @@ public class FragmentGenerator {
 
   @NotNull
   private static Condition<Integer> createStopFunction(final int maxNodeCount) {
-    return new Condition<Integer>() {
+    return new Condition<>() {
       private int count = maxNodeCount;
 
       @Override

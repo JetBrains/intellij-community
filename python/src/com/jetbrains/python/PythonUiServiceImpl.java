@@ -112,7 +112,7 @@ public final class PythonUiServiceImpl extends PythonUiService {
     final ElementsChooser<String> chooser = new ElementsChooser<>(true);
     chooser.setElements(supportedInSettings, false);
     chooser.markElements(ContainerUtil.filter(ourVersions, supportedInSettings::contains));
-    chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
+    chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<>() {
       @Override
       public void elementMarkChanged(String element, boolean isMarked) {
         ourVersions.clear();
@@ -234,12 +234,12 @@ public final class PythonUiServiceImpl extends PythonUiService {
 
   @Override
   public <E> JComboBox<E> createComboBox(E[] items) {
-    return new ComboBox<E>(items);
+    return new ComboBox<>(items);
   }
 
   @Override
   public <E> JComboBox<E> createComboBox(E[] items, int width) {
-    return new ComboBox<E>(items, width);
+    return new ComboBox<>(items, width);
   }
 
   @Override

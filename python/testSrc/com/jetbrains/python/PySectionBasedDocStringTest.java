@@ -99,7 +99,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
 
   @Nullable
   private String findFirstDocString() {
-    final PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
+    final PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<>() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
         if (element instanceof PyStringLiteralExpression && element.getFirstChild().getNode().getElementType() == PyTokenTypes.DOCSTRING) {

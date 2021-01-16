@@ -68,7 +68,7 @@ public abstract class GradleDslFile extends GradlePropertiesDslElement {
   @NotNull private final ElementList myGlobalProperties = new ElementList();
   @NotNull private final VirtualFile myFile;
   @NotNull private final Project myProject;
-  @NotNull private final Set<GradleDslFile> myChildModuleDslFiles = new HashSet<GradleDslFile>();
+  @NotNull private final Set<GradleDslFile> myChildModuleDslFiles = new HashSet<>();
   @NotNull private final GradleDslWriter myGradleDslWriter;
   @NotNull private final GradleDslParser myGradleDslParser;
 

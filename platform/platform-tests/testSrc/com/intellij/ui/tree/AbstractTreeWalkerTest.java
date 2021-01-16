@@ -154,7 +154,7 @@ public class AbstractTreeWalkerTest {
   }
 
   private static TreeVisitor createFinder(TreeNode node) {
-    return new TreeVisitor.ByComponent<TreeNode, Object>(node, o -> o) {
+    return new TreeVisitor.ByComponent<>(node, o -> o) {
       @Override
       protected boolean contains(@NotNull Object pathComponent, @NotNull TreeNode thisComponent) {
         while (pathComponent != thisComponent && thisComponent != null) thisComponent = thisComponent.getParent();

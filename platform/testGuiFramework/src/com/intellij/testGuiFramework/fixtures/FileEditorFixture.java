@@ -55,7 +55,7 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public VirtualFile getCurrentFile() {
-    return execute(new GuiQuery<VirtualFile>() {
+    return execute(new GuiQuery<>() {
       @Nullable
       @Override
       protected VirtualFile executeInEDT() {
@@ -86,7 +86,7 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public String getCurrentFileName() {
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected String executeInEDT() {
         VirtualFile currentFile = getCurrentFile();
@@ -157,7 +157,7 @@ public class FileEditorFixture extends EditorFixture {
       @Override
       public boolean test() {
         //noinspection ConstantConditions
-        return execute(new GuiQuery<Boolean>() {
+        return execute(new GuiQuery<>() {
           @Override
           protected Boolean executeInEDT() {
             FileEditor[] editors = FileEditorManager.getInstance(myFrame.getProject()).getEditors(file);
@@ -247,7 +247,7 @@ public class FileEditorFixture extends EditorFixture {
 
   @NotNull
   public EditorFixture waitUntilErrorAnalysisFinishes() {
-    FileFixture file = execute(new GuiQuery<FileFixture>() {
+    FileFixture file = execute(new GuiQuery<>() {
       @Override
       protected FileFixture executeInEDT() {
         return getCurrentFileFixture();
@@ -270,7 +270,7 @@ public class FileEditorFixture extends EditorFixture {
     pause(new Condition("Wait when virtual file is created...") {
       @Override
       public boolean test() {
-        virtualFileReference.set(execute(new GuiQuery<VirtualFile>() {
+        virtualFileReference.set(execute(new GuiQuery<>() {
           @Override
           protected VirtualFile executeInEDT() {
             return getCurrentFile();
@@ -357,7 +357,7 @@ public class FileEditorFixture extends EditorFixture {
    * Clicks to the editor's center to get focus to the editor
    */
   public void clickCenter() {
-    Editor selectedTextEditor = execute(new GuiQuery<Editor>() {
+    Editor selectedTextEditor = execute(new GuiQuery<>() {
                                           @Override
                                           protected Editor executeInEDT() {
                                             return myManager.getSelectedTextEditor();

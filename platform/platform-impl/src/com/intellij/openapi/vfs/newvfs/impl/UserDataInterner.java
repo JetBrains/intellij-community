@@ -13,7 +13,7 @@ import java.util.Map;
  * @author peter
  */
 final class UserDataInterner {
-  private static final Map<MapReference, MapReference> ourCache = new LinkedHashMap<MapReference, MapReference>(20, true) {
+  private static final Map<MapReference, MapReference> ourCache = new LinkedHashMap<>(20, true) {
     @Override
     protected boolean removeEldestEntry(Map.Entry<MapReference, MapReference> eldest) {
       return size() > 15;

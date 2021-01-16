@@ -51,7 +51,7 @@ public class RenameDialogFixture extends IdeaDialogFixture<RenameDialog> {
     SwingUtilities.invokeLater(
       () -> handler.invoke(element.getProject(), new PsiElement[] { element }, SimpleDataContext.getProjectContext(element.getProject())));
     final Ref<RenameDialog> ref = new Ref<>();
-    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (!RefactoringBundle.message("rename.title").equals(dialog.getTitle()) || !dialog.isShowing()) {
@@ -71,7 +71,7 @@ public class RenameDialogFixture extends IdeaDialogFixture<RenameDialog> {
   @NotNull
   public String getNewName() {
     //noinspection ConstantConditions
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected String executeInEDT() throws Throwable {
         String text = robot().finder().findByType(target(), EditorTextField.class).getText();
@@ -99,7 +99,7 @@ public class RenameDialogFixture extends IdeaDialogFixture<RenameDialog> {
    */
   public boolean warningExists(@Nullable final String warningText) {
     //noinspection ConstantConditions
-    return execute(new GuiQuery<Boolean>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected Boolean executeInEDT() throws Throwable {
         JComponent errorTextPane = field("myErrorText").ofType(JComponent.class).in(getDialogWrapper()).get();

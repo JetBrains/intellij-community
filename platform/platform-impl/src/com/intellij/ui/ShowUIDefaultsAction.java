@@ -257,7 +257,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   return new TextCopyProvider() {
                     @Override
                     public Collection<String> getTextLinesToCopy() {
-                      List<String> result = new ArrayList<String>();
+                      List<String> result = new ArrayList<>();
                       String tail = rows.length > 1 ? "," : "";
                       for (int row : rows) {
                         Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);

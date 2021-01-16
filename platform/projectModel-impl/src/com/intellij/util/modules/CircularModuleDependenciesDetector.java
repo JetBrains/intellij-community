@@ -19,7 +19,7 @@ import java.util.*;
 public final class CircularModuleDependenciesDetector {
   @NotNull
   private static <T extends ModuleRootModel> Graph<T> createGraphGenerator(@NotNull Map<Module, T> models) {
-    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<T>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<T> getNodes() {

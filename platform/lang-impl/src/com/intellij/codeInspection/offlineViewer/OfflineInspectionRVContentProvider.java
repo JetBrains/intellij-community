@@ -49,6 +49,7 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
     return false;
   }
 
+  @SuppressWarnings("Convert2Diamond")
   @Override
   public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionToolWrapper wrapper,

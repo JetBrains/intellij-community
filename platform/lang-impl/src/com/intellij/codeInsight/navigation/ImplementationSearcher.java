@@ -87,7 +87,7 @@ public class ImplementationSearcher {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          search(element, editor).forEach(new PsiElementProcessorAdapter<PsiElement>(collectProcessor){
+          search(element, editor).forEach(new PsiElementProcessorAdapter<>(collectProcessor) {
             @Override
             public boolean processInReadAction(PsiElement element) {
               return !accept(element) || super.processInReadAction(element);
@@ -113,7 +113,7 @@ public class ImplementationSearcher {
   public abstract static class BackgroundableImplementationSearcher extends ImplementationSearcher {
     @Override
     protected PsiElement[] searchDefinitions(PsiElement element, Editor editor) {
-      CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<PsiElement>() {
+      CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<>() {
         @Override
         public boolean process(PsiElement element) {
           processElement(element);

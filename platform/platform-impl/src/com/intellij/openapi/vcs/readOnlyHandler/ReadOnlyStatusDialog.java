@@ -63,7 +63,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   }
 
   private void initFileList() {
-    myFileList.setModel(new AbstractListModel<VirtualFile>() {
+    myFileList.setModel(new AbstractListModel<>() {
       @Override
       public int getSize() {
         return myFiles.size();
@@ -84,16 +84,21 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
         String defaultChangelist = handleType.getDefaultChangelist();
         myChangelist.setModel(new CollectionComboBoxModel<>(changelists, defaultChangelist));
 
-        myChangelist.setRenderer(new ColoredListCellRenderer<String>() {
+        myChangelist.setRenderer(new ColoredListCellRenderer<>() {
           @Override
-          protected void customizeCellRenderer(@NotNull JList<? extends String> list, @NlsSafe String value, int index, boolean selected, boolean hasFocus) {
+          protected void customizeCellRenderer(@NotNull JList<? extends String> list,
+                                               @NlsSafe String value,
+                                               int index,
+                                               boolean selected,
+                                               boolean hasFocus) {
             if (value == null) return;
             String trimmed = StringUtil.first(value, 50, true);
             if (value.equals(defaultChangelist)) {
               append(trimmed, selected ? SELECTED_BOLD_ATTRIBUTES : BOLD_ATTRIBUTES);
             }
             else {
-              append(trimmed, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+              append(trimmed,
+                     selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
             }
           }
         });

@@ -140,7 +140,7 @@ public class SphinxBaseCommand {
         cmd.setExePath(executablePath);
       }
       else {
-        cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, new ArrayList<String>());
+        cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, new ArrayList<>());
       }
     }
 

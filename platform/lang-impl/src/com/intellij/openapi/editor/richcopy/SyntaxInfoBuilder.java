@@ -209,7 +209,7 @@ public final class SyntaxInfoBuilder {
       }
     }
 
-    private final Comparator<IteratorWrapper> RANGE_SORTER = new Comparator<IteratorWrapper>() {
+    private final Comparator<IteratorWrapper> RANGE_SORTER = new Comparator<>() {
       @Override
       public int compare(IteratorWrapper o1, IteratorWrapper o2) {
         if (o1 == null) {

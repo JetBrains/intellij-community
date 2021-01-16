@@ -42,7 +42,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
   public PySuperMethodCompletionContributor() {
     extend(CompletionType.BASIC,
            psiElement().afterLeafSkipping(psiElement().whitespace(), psiElement().withElementType(PyTokenTypes.DEF_KEYWORD)),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -67,15 +67,17 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                    if (!seenNames.contains(superMethod.getName())) {
                      StringBuilder builder = new StringBuilder();
                      builder.append(superMethod.getName())
-                            .append(superMethod.getParameterList().getText());
+                       .append(superMethod.getParameterList().getText());
                      if (superMethod.getAnnotation() != null) {
                        builder.append(" ")
-                              .append(superMethod.getAnnotation().getText())
-                              .append(":");
-                     } else if (superMethod.getTypeComment() != null) {
+                         .append(superMethod.getAnnotation().getText())
+                         .append(":");
+                     }
+                     else if (superMethod.getTypeComment() != null) {
                        builder.append(":  ")
-                              .append(superMethod.getTypeComment().getText());
-                     } else {
+                         .append(superMethod.getTypeComment().getText());
+                     }
+                     else {
                        builder.append(":");
                      }
                      LookupElementBuilder element = LookupElementBuilder.create(builder.toString());

@@ -105,7 +105,7 @@ public abstract class CompletionService {
 
     AtomicBoolean typoTolerant = new AtomicBoolean();
 
-    BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<CompletionResult>() {
+    BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<>() {
       @Override
       public void startBatch() {
         if (consumer instanceof BatchConsumer) {

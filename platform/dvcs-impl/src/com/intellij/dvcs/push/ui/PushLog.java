@@ -313,7 +313,7 @@ public final class PushLog extends JPanel implements DataProvider {
     labelPanel.setBackground(RenderingUtil.getBackground(myTree));
     final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.getString("push.edit.all.targets"), null);
     linkLabel.setBorder(JBUI.Borders.empty(2));
-    linkLabel.setListener(new LinkListener<String>() {
+    linkLabel.setListener(new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel<String> aSource, String aLinkData) {
         if (linkLabel.isEnabled()) {

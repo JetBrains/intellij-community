@@ -11,13 +11,14 @@ import java.util.*;
 public class UsageHistory {
   // the last element is the most recent
   @SuppressWarnings("unchecked")
-  private final Map<ConfigurableUsageTarget, String> myHistory = new LinkedHashMap<ConfigurableUsageTarget, String>((EqualityPolicy<ConfigurableUsageTarget>)EqualityPolicy.IDENTITY) {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<ConfigurableUsageTarget, String> eldest) {
-      // todo configure history depth limit
-      return size() > 15;
-    }
-  };
+  private final Map<ConfigurableUsageTarget, String> myHistory =
+    new LinkedHashMap<>((EqualityPolicy<ConfigurableUsageTarget>)EqualityPolicy.IDENTITY) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<ConfigurableUsageTarget, String> eldest) {
+        // todo configure history depth limit
+        return size() > 15;
+      }
+    };
 
   public void add(@NotNull ConfigurableUsageTarget usageTarget) {
     final String descriptiveName = usageTarget.getLongDescriptiveName();

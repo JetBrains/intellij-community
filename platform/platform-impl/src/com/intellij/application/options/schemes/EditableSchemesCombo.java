@@ -132,7 +132,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private void createCombo() {
-    myComboBox = new SchemesCombo<T>() {
+    myComboBox = new SchemesCombo<>() {
       @Override
       protected boolean supportsProjectSchemes() {
         return mySchemesPanel.supportsProjectSchemes();
@@ -153,8 +153,8 @@ public class EditableSchemesCombo<T extends Scheme> {
       protected SimpleTextAttributes getSchemeAttributes(T scheme) {
         SchemesModel<T> model = mySchemesPanel.getModel();
         SimpleTextAttributes baseAttributes = !useBoldForNonRemovableSchemes() || model.canDeleteScheme(scheme)
-               ? SimpleTextAttributes.REGULAR_ATTRIBUTES
-               : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+                                              ? SimpleTextAttributes.REGULAR_ATTRIBUTES
+                                              : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         if (mySchemesPanel.highlightNonDefaultSchemes() && model.canResetScheme(scheme) && model.differsFromDefault(scheme)) {
           return baseAttributes.derive(-1, MODIFIED_ITEM_FOREGROUND, null, null);
         }

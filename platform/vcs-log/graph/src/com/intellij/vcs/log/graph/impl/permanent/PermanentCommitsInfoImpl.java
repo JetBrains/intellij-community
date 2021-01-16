@@ -64,7 +64,7 @@ public final class PermanentCommitsInfoImpl<CommitId> implements PermanentCommit
         return graphCommits.get(index).getId();
       }
     }, 30);
-    return new AbstractList<Integer>() {
+    return new AbstractList<>() {
       @NotNull
       @Override
       public Integer get(int index) {

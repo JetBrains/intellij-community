@@ -48,7 +48,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     EP_INTENTION_ACTIONS.forEachExtensionSafe(extension -> actions.add(new IntentionActionWrapper(extension)));
     myActions = ContainerUtil.createLockFreeCopyOnWriteList(actions);
 
-    EP_INTENTION_ACTIONS.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
+    EP_INTENTION_ACTIONS.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull IntentionActionBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         myActions.add(new IntentionActionWrapper(extension));

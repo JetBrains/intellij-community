@@ -229,7 +229,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         for (int r = 0; r < CHUNK_ROW_SIZE; r++) {
           System.arraycopy(data[roffset * CHUNK_ROW_SIZE + r], coffset * CHUNK_COL_SIZE, chunkData[r], 0, CHUNK_COL_SIZE);
         }
-        myChunkCache.put(key, new ListenableFuture<ArrayChunk>() {
+        myChunkCache.put(key, new ListenableFuture<>() {
           @Override
           public void addListener(@NotNull Runnable listener, @NotNull Executor executor) {
 

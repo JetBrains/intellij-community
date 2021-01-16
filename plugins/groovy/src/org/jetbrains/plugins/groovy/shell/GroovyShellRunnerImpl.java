@@ -34,7 +34,7 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
 
   private final GroovyShellConfig myShellRunner;
   private final Module myModule;
-  private final Consumer<Module> myStarter = new Consumer<Module>() {
+  private final Consumer<Module> myStarter = new Consumer<>() {
     @Override
     public void consume(Module module) {
       doRunShell(myShellRunner, module);

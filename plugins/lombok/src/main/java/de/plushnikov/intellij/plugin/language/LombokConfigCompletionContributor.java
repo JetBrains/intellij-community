@@ -68,41 +68,49 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.BASIC,
       PsiJavaPatterns.psiElement(LombokConfigTypes.VALUE).withLanguage(LombokConfigLanguage.INSTANCE),
-      new CompletionProvider<CompletionParameters>() {
-        @Override
-        public void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet resultSet) {
-          PsiElement psiElement = parameters.getPosition().getParent();
-          if (psiElement instanceof LombokConfigProperty) {
-            final String configPropertyKey = StringUtil.notNullize(LombokConfigPsiUtil.getKey((LombokConfigProperty) psiElement));
-            if (booleanOptions.contains(configPropertyKey)) {
-              resultSet.addElement(LookupElementBuilder.create("true"));
-              resultSet.addElement(LookupElementBuilder.create("false"));
-            } else if (flagUsageOptions.contains(configPropertyKey)) {
-              resultSet.addElement(LookupElementBuilder.create("WARNING"));
-              resultSet.addElement(LookupElementBuilder.create("ERROR"));
-            } else if (flagUsageAllowable.contains(configPropertyKey)) {
-              resultSet.addElement(LookupElementBuilder.create("ALLOW"));
-              resultSet.addElement(LookupElementBuilder.create("WARNING"));
-            } else if (LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER.equals(configPropertyKey) || LOMBOK_TOSTRING_CALL_SUPER.equals(configPropertyKey)) {
-              resultSet.addElement(LookupElementBuilder.create("CALL"));
-              resultSet.addElement(LookupElementBuilder.create("SKIP"));
-              resultSet.addElement(LookupElementBuilder.create("WARN"));
-            }
-          }
-        }
-      }
+           new CompletionProvider<>() {
+             @Override
+             public void addCompletions(@NotNull CompletionParameters parameters,
+                                        @NotNull ProcessingContext context,
+                                        @NotNull CompletionResultSet resultSet) {
+               PsiElement psiElement = parameters.getPosition().getParent();
+               if (psiElement instanceof LombokConfigProperty) {
+                 final String configPropertyKey = StringUtil.notNullize(LombokConfigPsiUtil.getKey((LombokConfigProperty)psiElement));
+                 if (booleanOptions.contains(configPropertyKey)) {
+                   resultSet.addElement(LookupElementBuilder.create("true"));
+                   resultSet.addElement(LookupElementBuilder.create("false"));
+                 }
+                 else if (flagUsageOptions.contains(configPropertyKey)) {
+                   resultSet.addElement(LookupElementBuilder.create("WARNING"));
+                   resultSet.addElement(LookupElementBuilder.create("ERROR"));
+                 }
+                 else if (flagUsageAllowable.contains(configPropertyKey)) {
+                   resultSet.addElement(LookupElementBuilder.create("ALLOW"));
+                   resultSet.addElement(LookupElementBuilder.create("WARNING"));
+                 }
+                 else if (LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER.equals(configPropertyKey) ||
+                          LOMBOK_TOSTRING_CALL_SUPER.equals(configPropertyKey)) {
+                   resultSet.addElement(LookupElementBuilder.create("CALL"));
+                   resultSet.addElement(LookupElementBuilder.create("SKIP"));
+                   resultSet.addElement(LookupElementBuilder.create("WARN"));
+                 }
+               }
+             }
+           }
     );
 
     extend(CompletionType.BASIC,
       PsiJavaPatterns.psiElement(LombokConfigTypes.KEY).withLanguage(LombokConfigLanguage.INSTANCE),
-      new CompletionProvider<CompletionParameters>() {
-        @Override
-        public void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet resultSet) {
-          for (String contribution : allOptions) {
-            resultSet.addElement(LookupElementBuilder.create(contribution));
-          }
-        }
-      }
+           new CompletionProvider<>() {
+             @Override
+             public void addCompletions(@NotNull CompletionParameters parameters,
+                                        @NotNull ProcessingContext context,
+                                        @NotNull CompletionResultSet resultSet) {
+               for (String contribution : allOptions) {
+                 resultSet.addElement(LookupElementBuilder.create(contribution));
+               }
+             }
+           }
     );
   }
 }

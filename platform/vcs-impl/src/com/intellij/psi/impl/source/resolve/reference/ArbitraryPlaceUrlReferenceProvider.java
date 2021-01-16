@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
-  private static final UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object> ourRefsCache = new UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object>("psielement.url.refs") {
+  private static final UserDataCache<CachedValue<PsiReference[]>, PsiElement, Object> ourRefsCache =
+    new UserDataCache<>("psielement.url.refs") {
       private final AtomicReference<GlobalPathReferenceProvider> myReferenceProvider = new AtomicReference<>();
 
       @Override

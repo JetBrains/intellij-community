@@ -54,7 +54,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
   }
 
   public LiveTemplateCompletionContributor() {
-    extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -145,7 +145,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
                                            CompletionResultSet result,
                                            boolean isAutopopup) {
     if (!templatesShown.getAndSet(true)) {
-      result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<String>("type after non-identifier") {
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<>("type after non-identifier") {
         @Override
         public boolean accepts(@NotNull String s, ProcessingContext context) {
           return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2));

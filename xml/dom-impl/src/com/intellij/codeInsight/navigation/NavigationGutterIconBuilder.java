@@ -225,7 +225,7 @@ public class NavigationGutterIconBuilder<T> {
   @NotNull
   private static <T> NotNullFactory<T> evaluateAndForget(@NotNull NotNullLazyValue<T> lazyValue) {
     final Ref<NotNullLazyValue<T>> ref = Ref.create(lazyValue);
-    return new NotNullFactory<T>() {
+    return new NotNullFactory<>() {
       volatile T value;
 
       @NotNull

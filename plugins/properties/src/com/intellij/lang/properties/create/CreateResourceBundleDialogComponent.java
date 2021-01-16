@@ -304,7 +304,7 @@ public final class CreateResourceBundleDialogComponent {
       locales = Collections.emptyList();
       restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), PropertiesFile::getLocale);
     }
-    myLocalesModel = new CollectionListModel<Locale>(locales) {
+    myLocalesModel = new CollectionListModel<>(locales) {
       @Override
       public void add(@NotNull List<? extends Locale> elements) {
         final List<Locale> currentItems = getItems();
@@ -404,12 +404,13 @@ public final class CreateResourceBundleDialogComponent {
 
   @NotNull
   private ColoredListCellRenderer<Locale> getLocaleRenderer() {
-    return new ColoredListCellRenderer<Locale>() {
+    return new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Locale locale, int index, boolean selected, boolean hasFocus) {
         if (PropertiesUtil.DEFAULT_LOCALE == locale) {
           append(PropertiesBundle.message("create.resource.bundle.default.locale.presentation"));
-        } else {
+        }
+        else {
           append(myLocaleSuffixes.getOrDefault(locale, locale.toString()));
           append(PropertiesUtil.getPresentableLocale(locale), SimpleTextAttributes.GRAY_ATTRIBUTES);
         }

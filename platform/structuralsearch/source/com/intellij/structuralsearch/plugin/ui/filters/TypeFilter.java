@@ -74,12 +74,13 @@ public class TypeFilter extends FilterAction {
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
       private final JLabel myTypeLabel = new JLabel(SSRBundle.message("type.label"));
       private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
       private final JCheckBox myRegexCheckBox = new JCheckBox(SSRBundle.message("regex.check.box"), false);
+
       {
         myRegexCheckBox.addActionListener(e -> {
           final FileType fileType = myRegexCheckBox.isSelected() ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE;
@@ -87,6 +88,7 @@ public class TypeFilter extends FilterAction {
           myTextField.setDocument(document);
         });
       }
+
       private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("type.filter.help.text"));
 
       @Override
@@ -132,7 +134,7 @@ public class TypeFilter extends FilterAction {
         final boolean regex = myConstraint.isRegexExprType();
         myTextField.setFileType(myShowRegex && regex ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE);
         myTextField.setText((myConstraint.isInvertExprType() ? "!" : "") +
-                            (regex ? myConstraint.getNameOfExprType() : myConstraint.getExpressionTypes()))  ;
+                            (regex ? myConstraint.getNameOfExprType() : myConstraint.getExpressionTypes()));
         myHierarchyCheckBox.setSelected(myConstraint.isExprTypeWithinHierarchy());
         myRegexCheckBox.setSelected(myShowRegex && regex);
         myRegexCheckBox.setVisible(myShowRegex);

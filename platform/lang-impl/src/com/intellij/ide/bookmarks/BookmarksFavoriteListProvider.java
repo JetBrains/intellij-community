@@ -59,7 +59,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
     myChildren.clear();
     List<Bookmark> bookmarks = BookmarkManager.getInstance(myProject).getValidBookmarks();
     for (Bookmark bookmark : bookmarks) {
-      AbstractTreeNode<Bookmark> child = new AbstractTreeNode<Bookmark>(myProject, bookmark) {
+      AbstractTreeNode<Bookmark> child = new AbstractTreeNode<>(myProject, bookmark) {
         @NotNull
         @Override
         public Collection<? extends AbstractTreeNode<Bookmark>> getChildren() {

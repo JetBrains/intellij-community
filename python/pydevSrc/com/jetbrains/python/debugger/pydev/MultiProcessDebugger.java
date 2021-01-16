@@ -511,7 +511,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
 
     private Set<String> collectThreads(RemoteDebugger debugger) {
-      Set<String> result = new HashSet<String>();
+      Set<String> result = new HashSet<>();
       for (Map.Entry<String, RemoteDebugger> entry : myMultiProcessDebugger.myThreadRegistry.myThreadIdToDebugger.entrySet()) {
         if (entry.getValue() == debugger) {
           result.add(entry.getKey());

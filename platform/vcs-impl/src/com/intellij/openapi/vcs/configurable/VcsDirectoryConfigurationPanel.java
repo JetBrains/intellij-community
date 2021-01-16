@@ -183,7 +183,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private final ColumnInfo<MapInfo, String> VCS_SETTING =
-    new ColumnInfo<MapInfo, String>(VcsBundle.message("column.name.configure.vcses.vcs")) {
+    new ColumnInfo<>(VcsBundle.message("column.name.configure.vcses.vcs")) {
       @Override
       public String valueOf(final MapInfo object) {
         return object.mapping.getVcs();
@@ -205,7 +205,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       public TableCellRenderer getRenderer(final MapInfo info) {
         return new ColoredTableCellRenderer() {
           @Override
-          protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          protected void customizeCellRenderer(@NotNull JTable table,
+                                               Object value,
+                                               boolean selected,
+                                               boolean hasFocus,
+                                               int row,
+                                               int column) {
             if (info == MapInfo.SEPARATOR) {
               if (!selected) {
                 setBackground(UIUtil.getDecoratedRowColor());

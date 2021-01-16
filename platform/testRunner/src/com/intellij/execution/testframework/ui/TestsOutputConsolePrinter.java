@@ -39,12 +39,12 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
 
   private int myMarkOffset = 0;
 
-  private final TestFrameworkPropertyListener<Boolean> myPropertyListener = new TestFrameworkPropertyListener<Boolean>() {
-        @Override
-        public void onChanged(final Boolean value) {
-          if (!value.booleanValue()) myMarkOffset = 0;
-        }
-      };
+  private final TestFrameworkPropertyListener<Boolean> myPropertyListener = new TestFrameworkPropertyListener<>() {
+    @Override
+    public void onChanged(final Boolean value) {
+      if (!value.booleanValue()) myMarkOffset = 0;
+    }
+  };
 
   public TestsOutputConsolePrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView, @NotNull TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myConsole = testsOutputConsoleView.getConsole();

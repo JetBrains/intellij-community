@@ -159,7 +159,7 @@ public final class ServersTreeStructure {
       }
 
       ListPopup popup =
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Object>(popupTitle, runConfigsAndTypes) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(popupTitle, runConfigsAndTypes) {
           @Override
           public Icon getIconFor(Object runConfigOrSourceType) {
             return runConfigOrSourceType != null ? serverType.getIcon() : null;

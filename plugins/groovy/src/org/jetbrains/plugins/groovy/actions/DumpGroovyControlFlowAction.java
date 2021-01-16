@@ -38,7 +38,7 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
       passInner(controlFlowOwners.get(0));
     }
     else {
-      IntroduceTargetChooser.showChooser(editor, controlFlowOwners, new Pass<GrControlFlowOwner>() {
+      IntroduceTargetChooser.showChooser(editor, controlFlowOwners, new Pass<>() {
                                            @Override
                                            public void pass(GrControlFlowOwner grExpression) {
                                              passInner(grExpression);

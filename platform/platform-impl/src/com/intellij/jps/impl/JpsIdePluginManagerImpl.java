@@ -62,7 +62,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
     if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
       final Ref<Boolean> initial = new Ref<>(Boolean.TRUE);
-      JpsPluginBean.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
+      JpsPluginBean.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull JpsPluginBean extension, @NotNull PluginDescriptor pluginDescriptor) {
           if (initial.get()) {

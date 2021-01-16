@@ -48,7 +48,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
   private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
   public static final String ABBREVIATION = "<abbreviation>";
-  public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
+  public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(TemplateImpl o1, TemplateImpl o2) {
       int compareKey = compareCaseInsensitively(o1.getKey(), o2.getKey());

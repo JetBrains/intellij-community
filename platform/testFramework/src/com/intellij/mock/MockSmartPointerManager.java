@@ -26,7 +26,7 @@ public class MockSmartPointerManager extends SmartPointerManager {
   @NotNull
   @Override
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
-    return new SmartPsiElementPointer<E>() {
+    return new SmartPsiElementPointer<>() {
       @Override
       public E getElement() {
         return element;

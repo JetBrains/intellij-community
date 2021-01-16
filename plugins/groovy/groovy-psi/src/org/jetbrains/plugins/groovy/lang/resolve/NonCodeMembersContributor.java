@@ -78,7 +78,7 @@ public abstract class NonCodeMembersContributor {
   public static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
 
   static {
-    EP_NAME.addExtensionPointListener(new ExtensionPointListener<NonCodeMembersContributor>() {
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull NonCodeMembersContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
         dropCache();

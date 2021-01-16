@@ -74,7 +74,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
 
   public void testShouldntParseNonDomFiles() throws Throwable {
     for (int i = 0; i < 420; i++) {
-      getDomManager().registerFileDescription(new DomFileDescription<MyChildElement>(MyChildElement.class, "foo") {
+      getDomManager().registerFileDescription(new DomFileDescription<>(MyChildElement.class, "foo") {
 
         @Override
         public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
@@ -82,7 +82,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase {
           return super.isMyFile(file, module);
         }
       }, getTestRootDisposable());
-      getDomManager().registerFileDescription(new DomFileDescription<MyChildElement>(MyChildElement.class, "bar") {
+      getDomManager().registerFileDescription(new DomFileDescription<>(MyChildElement.class, "bar") {
 
         @Override
         public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
