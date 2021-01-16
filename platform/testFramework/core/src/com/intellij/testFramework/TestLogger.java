@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 public final class TestLogger extends Log4jBasedLogger {
   TestLogger(@NotNull Logger logger) {
     super(logger);
@@ -77,8 +80,46 @@ public final class TestLogger extends Log4jBasedLogger {
     }
   }
 
+  /**
+   * {@link com.intellij.openapi.application.impl.ApplicationInfoImpl} reflective access not to introduce dependency on platform core module
+   */
+  @SuppressWarnings("CallToPrintStackTrace")
+  private static class ApplicationInfoImpl {
+    static final ApplicationInfoImpl INSTANCE = new ApplicationInfoImpl();
+    private final Method isInStressTestMethod;
+
+    private ApplicationInfoImpl() {
+      Method method;
+      try {
+        Class<?> applicationInfoImplClass = Class.forName("com.intellij.openapi.application.impl.ApplicationInfoImpl");
+        method = applicationInfoImplClass.getMethod("isInStressTest");
+      }
+      catch (ClassNotFoundException | NoSuchMethodException e) {
+        e.printStackTrace();
+        method = null;
+      }
+      isInStressTestMethod = method;
+    }
+
+    boolean isInStressTest() {
+      if (isInStressTestMethod == null) {
+        return false;
+      }
+      try {
+        return (boolean)isInStressTestMethod.invoke(null);
+      }
+      catch (IllegalAccessException | InvocationTargetException e) {
+        e.printStackTrace();
+        return false;
+      }
+    }
+  }
+
   @Override
   public boolean isDebugEnabled() {
+    if (ApplicationInfoImpl.INSTANCE.isInStressTest()) {
+      return super.isDebugEnabled();
+    }
     return true;
   }
 }
