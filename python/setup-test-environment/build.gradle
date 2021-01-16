@@ -123,7 +123,7 @@ envs {
   createPython("python3.9",
                python39version,
                ["pytest", "pytest-xdist"],
-               "python3.9\npython3\npytest\nxdist",
+               "python3.9\npython3\npytest\nxdist\npackaging",
                true)
 
   // For tox
