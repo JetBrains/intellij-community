@@ -28,6 +28,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.foundation.NSDefaults;
@@ -209,7 +210,7 @@ public final class TouchBarsManager {
   }
 
   public static boolean isTouchBarEnabled() {
-    return isTouchBarAvailable() && isEnabled;
+    return isTouchBarAvailable() && isEnabled && Registry.is("ide.mac.touchbar.enabled");
   }
 
   public static void reloadAll() {
