@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.idea.editor.quickDoc
 
-import com.intellij.codeInsight.CodeInsightTestCase
+import com.intellij.codeInsight.JavaCodeInsightTestCase
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
 import com.intellij.ide.hierarchy.LanguageTypeHierarchy
 import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase
@@ -23,7 +23,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class QuickDocInHierarchyTest : CodeInsightTestCase() {
+class QuickDocInHierarchyTest : JavaCodeInsightTestCase() {
     override fun getTestDataPath() = IDEA_TEST_DATA_DIR.resolve("kdoc/inTypeHierarchy").slashedPath
 
     fun testSimple() {

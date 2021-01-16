@@ -7,12 +7,13 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import org.jetbrains.kotlin.test.KotlinTestUtils.*
 import java.io.File
 
 @Suppress("DEPRECATION")
 @Deprecated("Use KotlinLightCodeInsightFixtureTestCase instead")
-abstract class KotlinLightCodeInsightTestCase : com.intellij.testFramework.LightCodeInsightTestCase() {
+abstract class KotlinLightCodeInsightTestCase : com.intellij.testFramework.LightJavaCodeInsightTestCase() {
     open fun getTestDataDirectory(): File {
         val clazz = this::class.java
         val root = getTestsRoot(clazz)

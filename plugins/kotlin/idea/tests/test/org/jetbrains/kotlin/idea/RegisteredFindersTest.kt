@@ -32,7 +32,7 @@ class RegisteredFindersTest : KotlinLightCodeInsightFixtureTestCase() {
             "BundledGroovyClassFinder"
         )
 
-        project.getExtensions<PsiElementFinder>(PsiElementFinder.EP_NAME).forEach { finder ->
+        PsiElementFinder.EP.getExtensions(project).forEach { finder ->
             if (finder is NonClasspathClassFinder) {
                 val name = finder::class.java.simpleName
                 val isKnown = expectedFindersNames.remove(name) || optionalFindersNames.contains(name)

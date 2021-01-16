@@ -6,17 +6,30 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.task.TaskData
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.Function
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.junit.Ignore
 import org.junit.Test
 
 class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
@@ -324,14 +337,62 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    @Ignore
     @Test
     fun testTestTasksAreImported() {
         importProjectFromTestData()
 
         @Suppress("DEPRECATION")
-        val testTasks = GradleTestRunConfigurationProducer.getTasksToRun(myTestFixture.module)
+        val testTasks = getTasksToRun(myTestFixture.module)
 
         assertTrue("There should be at least one test task", testTasks.isNotEmpty())
+    }
+
+    @Deprecated("restored from org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer#getTasksToRun")
+    fun getTasksToRun(module: Module): List<String> {
+        for (provider in GradleTestTasksProvider.EP_NAME.extensions) {
+            val tasks = provider.getTasks(module)
+            if (!ContainerUtil.isEmpty(tasks)) {
+                return tasks
+            }
+        }
+        val externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module)
+            ?: return ContainerUtil.emptyList()
+        val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+            ?: return ContainerUtil.emptyList()
+        val externalProjectInfo = ExternalSystemUtil.getExternalProjectInfo(module.project, GradleConstants.SYSTEM_ID, projectPath)
+            ?: return ContainerUtil.emptyList()
+        val tasks: List<String>
+        val gradlePath = GradleProjectResolverUtil.getGradlePath(module)
+            ?: return ContainerUtil.emptyList()
+        val taskPrefix = if (StringUtil.endsWithChar(gradlePath, ':')) gradlePath else "$gradlePath:"
+        val moduleNode = GradleProjectResolverUtil.findModule(externalProjectInfo.externalProjectStructure, projectPath)
+            ?: return ContainerUtil.emptyList()
+        val taskNode: DataNode<TaskData>?
+        val sourceSetId = StringUtil.substringAfter(externalProjectId, moduleNode.data.externalName + ':')
+        taskNode = if (sourceSetId == null) {
+            ExternalSystemApiUtil.find(
+                moduleNode, ProjectKeys.TASK
+            ) { node: DataNode<TaskData> ->
+                node.data.isTest &&
+                        StringUtil.equals(
+                            "test",
+                            node.data.name
+                        ) || StringUtil.equals(taskPrefix + "test", node.data.name)
+            }
+        } else {
+            ExternalSystemApiUtil.find(
+                moduleNode, ProjectKeys.TASK
+            ) { node: DataNode<TaskData> ->
+                node.data.isTest && StringUtil.startsWith(node.data.name, sourceSetId)
+            }
+        }
+        if (taskNode == null) return ContainerUtil.emptyList()
+        val taskName = StringUtil.trimStart(taskNode.data.name, taskPrefix)
+        tasks = listOf(taskName)
+        return ContainerUtil.map(
+            tasks
+        ) { task: String -> taskPrefix + task }
     }
 
     @Test

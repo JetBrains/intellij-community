@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionTestCase;
+import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
@@ -19,7 +19,7 @@ import static com.intellij.testFramework.RunAll.runAll;
 import static org.jetbrains.kotlin.test.KotlinTestUtils.getTestDataFileName;
 import static org.jetbrains.kotlin.test.KotlinTestUtils.getTestsRoot;
 
-abstract public class KotlinCompletionTestCase extends CompletionTestCase {
+abstract public class KotlinCompletionTestCase extends JavaCompletionTestCase {
     private Ref<Disposable> vfsDisposable;
 
     @Override

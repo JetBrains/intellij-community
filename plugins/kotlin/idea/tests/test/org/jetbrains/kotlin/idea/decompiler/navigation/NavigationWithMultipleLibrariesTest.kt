@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.ModuleTestCase
+import com.intellij.testFramework.JavaModuleTestCase
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.project.LibrarySourceInfo
@@ -125,7 +125,7 @@ class NavigationToSingleJarInMultipleLibrariesTest : AbstractNavigationWithMulti
     }
 }
 
-abstract class AbstractNavigationWithMultipleLibrariesTest : ModuleTestCase() {
+abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase() {
     abstract fun getTestDataDirectory(): File
 
     protected fun module(name: String, srcPath: String) = createModuleFromTestData(srcPath, name, StdModuleTypes.JAVA, true)

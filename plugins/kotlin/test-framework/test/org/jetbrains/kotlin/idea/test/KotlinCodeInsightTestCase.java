@@ -16,7 +16,7 @@
 
 package org.jetbrains.kotlin.idea.test;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import static com.intellij.testFramework.RunAll.runAll;
  * Please use KotlinLightCodeInsightFixtureTestCase as the base class for all new tests.
  */
 @Deprecated
-public abstract class KotlinCodeInsightTestCase extends CodeInsightTestCase {
+public abstract class KotlinCodeInsightTestCase extends JavaCodeInsightTestCase {
     private Ref<Disposable> vfsDisposable;
 
     @Override
