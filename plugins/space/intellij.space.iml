@@ -88,7 +88,23 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="intellij-markdown" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="kotlin-scripting-intellij" type="repository">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-intellij:1.4.0-release-329">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-intellij/1.4.0-release-329/kotlin-scripting-intellij-1.4.0-release-329.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.4.0-release-329/kotlin-script-runtime-1.4.0-release-329.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.0-release-329/kotlin-scripting-common-1.4.0-release-329.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="space-idea-sdk" level="project" />
     <orderEntry type="library" name="ktor-server-jetty" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson" level="project" />
@@ -124,22 +140,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
-    <orderEntry type="module-library" scope="PROVIDED">
-      <library name="kotlin-scripting-intellij" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-intellij:1.4.10">
-          <exclude>
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-script-runtime" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-scripting-common" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-intellij/1.4.10/kotlin-scripting-intellij-1.4.10.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module-library">
       <library name="kotlin-scripting-dependencies" type="repository">
         <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:1.4.10">
@@ -177,7 +178,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.android.kotlin-dependencies" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.java.psi.impl" />
   </component>
 </module>
