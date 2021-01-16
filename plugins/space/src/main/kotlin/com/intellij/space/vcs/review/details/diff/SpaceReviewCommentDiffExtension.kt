@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.diff
 
 import circlet.code.api.*
@@ -14,6 +14,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.util.Disposer
 import com.intellij.space.components.SpaceWorkspaceComponent
 import libraries.coroutines.extra.Lifetime
+import runtime.reactive.LoadingValue
 
 class SpaceReviewCommentDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer,
@@ -22,7 +23,7 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
 
     val ws = SpaceWorkspaceComponent.getInstance().workspace.value ?: return
     val diffRequestData = request.getUserData(SpaceDiffKeys.DIFF_REQUEST_DATA) ?: return
-    val changes = diffRequestData.changes
+    val changes = diffRequestData.changes.value as? LoadingValue.Loaded ?: return
     val reviewers: List<CodeReviewParticipant> = diffRequestData.participantsVm?.reviewers?.value ?: emptyList()
     val selectedSpaceChange = diffRequestData.selectedChange
     val discussions = changes.value?.get(selectedSpaceChange.repository)?.discussions ?: return

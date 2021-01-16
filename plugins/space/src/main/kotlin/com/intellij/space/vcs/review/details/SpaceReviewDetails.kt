@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 
@@ -48,7 +48,7 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
       uiDisposable = Disposer.newDisposable()
       Disposer.register(parentDisposable, uiDisposable as Disposable)
 
-      val detailsTabInfo = TabInfo(SpaceReviewInfoTabPanel(detailsVm)).apply {
+      val detailsTabInfo = TabInfo(SpaceReviewInfoTabPanel(parentDisposable, detailsVm)).apply {
         text = SpaceBundle.message("review.tab.name.details")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null

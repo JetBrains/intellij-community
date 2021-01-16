@@ -1,23 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.code.api.ChangeInReview
 import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
+import libraries.klogging.logger
 import org.jetbrains.annotations.Nullable
+import runtime.reactive.LoadingValue
+import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.event.TreeSelectionListener
 
@@ -26,11 +33,16 @@ internal interface SpaceDiffFileProvider {
 }
 
 internal object SpaceReviewChangesTreeFactory {
-  fun create(project: Project,
-             parentPanel: JComponent,
-             changesVm: SpaceReviewChangesVm,
-             spaceDiffFileProvider: SpaceDiffFileProvider): JComponent {
+  private val LOG = logger<SpaceReviewChangesTreeFactory>()
 
+  fun create(
+    project: Project,
+    parentDisposable: Disposable,
+    parentPanel: JComponent,
+    changesVm: SpaceReviewChangesVm,
+    spaceDiffFileProvider: SpaceDiffFileProvider
+  ): JComponent {
+    val loadingPane = JBLoadingPanel(BorderLayout(), parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     val tree = object : ChangesTree(project, false, false) {
 
 
@@ -42,21 +54,32 @@ internal object SpaceReviewChangesTreeFactory {
         }
 
         changesVm.changes.forEach(changesVm.lifetime) {
-          it ?: return@forEach
           removeTreeSelectionListener(listener)
-
           val builder = TreeModelBuilder(project, grouping)
+          when (it) {
+            is LoadingValue.Loaded -> {
+              loadingPane.stopLoading()
+              it.value.forEach { (repo, changesWithDiscussion) ->
+                val spaceRepoInfo = changesWithDiscussion.spaceRepoInfo
+                val repoNode = SpaceRepositoryNode(repo, spaceRepoInfo != null)
+                val changes = changesWithDiscussion.changesInReview
+                addChanges(builder, repoNode, changes, spaceRepoInfo)
+              }
 
-          it.forEach { (repo, changesWithDiscussion) ->
-            val spaceRepoInfo = changesWithDiscussion.spaceRepoInfo
-            val repoNode = SpaceRepositoryNode(repo, spaceRepoInfo != null)
-
-            val changes = changesWithDiscussion.changesInReview
-            addChanges(builder, repoNode, changes, spaceRepoInfo)
-            updateTreeModel(builder.build())
+              addTreeSelectionListener(listener)
+            }
+            LoadingValue.Loading -> {
+              loadingPane.startLoading()
+              setEmptyText("")
+            }
+            is LoadingValue.Failure -> {
+              loadingPane.stopLoading()
+              LOG.info(it.error) { "Could not load changes for selected commits" }
+              setEmptyText(SpaceBundle.message("review.changes.browser.failure.text"))
+            }
           }
 
-          addTreeSelectionListener(listener)
+          updateTreeModel(builder.build())
           if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
         }
       }
@@ -89,7 +112,9 @@ internal object SpaceReviewChangesTreeFactory {
       if (tree.isShowing) tree.getData(it) else null
     }
     tree.installPopupHandler(ActionManager.getInstance().getAction("space.review.changes.popup") as ActionGroup)
-    return ScrollPaneFactory.createScrollPane(tree, true)
+    return loadingPane.apply {
+      add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
+    }
   }
 
   private fun addChanges(builder: TreeModelBuilder,

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.englishFullName
 import circlet.code.api.CodeReviewRecord
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -36,7 +37,10 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>) : BorderLayoutPanel() {
+internal class SpaceReviewInfoTabPanel(
+  parentDisposable: Disposable,
+  detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>
+) : BorderLayoutPanel() {
   init {
     val infoPanel = BorderLayoutPanel().apply {
       val titleComponent = HtmlEditorPane().apply {
@@ -144,6 +148,7 @@ internal class SpaceReviewInfoTabPanel(detailsVm: SpaceReviewDetailsVm<out CodeR
 
     val tree = SpaceReviewChangesTreeFactory.create(
       detailsVm.ideaProject,
+      parentDisposable,
       this,
       detailsVm.allChangesVm,
       object : SpaceDiffFileProvider {

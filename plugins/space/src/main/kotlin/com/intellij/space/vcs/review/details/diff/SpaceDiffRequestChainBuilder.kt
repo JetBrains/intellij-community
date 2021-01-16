@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.diff
 
 import circlet.client.api.ProjectKey
@@ -18,13 +18,13 @@ import com.intellij.space.vcs.review.details.ChangesWithDiscussion
 import com.intellij.space.vcs.review.details.SpaceReviewChange
 import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import libraries.coroutines.extra.Lifetime
-import runtime.reactive.Property
+import runtime.reactive.LoadingProperty
 import runtime.reactive.SequentialLifetimes
 
 internal data class SpaceReviewDiffRequestData(
   val diffExtensionLifetimes: SequentialLifetimes,
   val spaceDiffVm: SpaceDiffVm,
-  val changes: Property<Map<String, ChangesWithDiscussion>?>,
+  val changes: LoadingProperty<Map<String, ChangesWithDiscussion>?>,
   val selectedChange: SpaceReviewChange,
   val participantsVm: SpaceReviewParticipantsVm?
 )
@@ -55,7 +55,7 @@ private class SpaceDiffRequestProducer(
   private val project: Project,
   private val requestProducerLifetime: Lifetime,
   private val spaceDiffVm: SpaceDiffVm,
-  private val changes: Property<Map<String, ChangesWithDiscussion>?>,
+  private val changes: LoadingProperty<Map<String, ChangesWithDiscussion>?>,
   private val spaceReviewChange: SpaceReviewChange,
 ) : DiffRequestProducer {
   override fun getName(): String = spaceReviewChange.filePath.path
@@ -73,7 +73,7 @@ private class SpaceDiffRequestProducer(
 
   private fun createSpaceDiffRequest(projectKey: ProjectKey,
                                      selectedCommitHashes: List<String>,
-                                     changes: Property<Map<String, ChangesWithDiscussion>?>): SimpleDiffRequest {
+                                     changes: LoadingProperty<Map<String, ChangesWithDiscussion>?>): SimpleDiffRequest {
     val pair = spaceDiffVm.spaceReviewDiffLoader.loadDiff(project, projectKey, spaceReviewChange, selectedCommitHashes)
 
     val diffRequestData = SpaceReviewDiffRequestData(SequentialLifetimes(requestProducerLifetime),

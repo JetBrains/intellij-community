@@ -92,6 +92,7 @@ internal class SpaceReviewCommitListPanel(
   ): JComponent {
     val tree = SpaceReviewChangesTreeFactory.create(
       reviewDetailsVm.ideaProject,
+      parentDisposable,
       this,
       changesVm,
       object : SpaceDiffFileProvider {
