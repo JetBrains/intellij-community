@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.ui
 
 import circlet.platform.client.XPagedListOnFlux
@@ -7,7 +7,6 @@ import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.delay
 import libraries.coroutines.extra.launch
 import runtime.Ui
-import runtime.reactive.MutableProperty
 import runtime.reactive.Property
 import runtime.reactive.SequentialLifetimes
 import java.awt.event.AdjustmentEvent
@@ -35,14 +34,10 @@ fun <T> bindScroll(
       if (force || !vm.isLoading.value) {
         vm.xList.value?.let { value ->
           if ((last == -1 || list.model.size < last + 10) && value.hasMore()) {
-            vm.isLoading.value = true
             launch(lifetime, Ui) {
               value.more()
               updateScroll(true)
             }
-          }
-          else {
-            vm.isLoading.value = false
           }
         }
       }
@@ -60,13 +55,13 @@ fun <T> bindScroll(
 }
 
 interface LoadableListVm {
-  val isLoading: MutableProperty<Boolean>
+  val isLoading: Property<Boolean>
 
   val xList: Property<LoadableListAdapter?>
 }
 
 data class LoadableListVmImpl(
-  override val isLoading: MutableProperty<Boolean>,
+  override val isLoading: Property<Boolean>,
   override val xList: Property<LoadableListAdapter?>
 ) : LoadableListVm
 

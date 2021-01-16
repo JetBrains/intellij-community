@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.selector
 
 import circlet.client.api.*
@@ -20,9 +20,7 @@ import com.intellij.space.vcs.review.details.SpaceReviewDetailsVm
 import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
-import runtime.reactive.MutableProperty
-import runtime.reactive.Property
-import runtime.reactive.map
+import runtime.reactive.*
 
 internal class SpaceReviewersSelectorVm(override val lifetime: Lifetime,
                                         val review: CodeReviewRecord,
@@ -35,12 +33,10 @@ internal class SpaceReviewersSelectorVm(override val lifetime: Lifetime,
   private val codeReviewService: CodeReviewService = client.codeReview
   private val projectService: Projects = client.pr
 
-  val isLoading: MutableProperty<Boolean> = Property.createMutable(false)
-
   val searchText: MutableProperty<String> = Property.createMutable("")
 
-  val reviewersIds: Property<Set<TID>> = map(participantsVm.reviewers) {
-    it?.map { it.user.id }?.toSet() ?: emptySet()
+  val reviewersIds: Property<Set<TID>> = map(participantsVm.reviewers) { reviewers ->
+    reviewers.map { it.user.id }.toSet()
   }
 
   val possibleReviewers: Property<XPagedListOnFlux<CheckedReviewer>> = map(searchText) { text ->
@@ -72,4 +68,12 @@ internal class SpaceReviewersSelectorVm(override val lifetime: Lifetime,
       }
     }
   }
+
+  val isLoading: Property<Boolean> = lifetime.flatten(
+    lifetime.map(possibleReviewers) { reviewList ->
+      lifetime.mapInit(reviewList.isLoading, false) {
+        it
+      }
+    }
+  )
 }
