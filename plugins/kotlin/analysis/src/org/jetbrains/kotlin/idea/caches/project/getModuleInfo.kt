@@ -290,9 +290,9 @@ private fun OrderEntry.toIdeaModuleInfo(
     when (this) {
         is LibraryOrderEntry -> {
             val library = library ?: return emptyList()
-            if (ProjectRootsUtil.isLibraryClassFile(project, virtualFile) && !treatAsLibrarySource) {
+            if (!treatAsLibrarySource && ProjectRootsUtil.isLibraryClassFile(project, virtualFile)) {
                 return createLibraryInfo(project, library)
-            } else if (ProjectRootsUtil.isLibraryFile(project, virtualFile) || treatAsLibrarySource) {
+            } else if (treatAsLibrarySource || ProjectRootsUtil.isLibraryFile(project, virtualFile)) {
                 return createLibraryInfo(project, library).map { it.sourcesModuleInfo }
             }
         }
