@@ -116,7 +116,7 @@ class LessonMessagePane : JTextPane() {
 
     StyleConstants.setLeftIndent(TASK_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
     StyleConstants.setRightIndent(TASK_PARAGRAPH_STYLE, 0f)
-    StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, 20.0f)
+    StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, 24.0f)
     StyleConstants.setSpaceBelow(TASK_PARAGRAPH_STYLE, 0.0f)
     StyleConstants.setLineSpacing(TASK_PARAGRAPH_STYLE, 0.2f)
 
@@ -376,15 +376,11 @@ class LessonMessagePane : JTextPane() {
     g2d.color = needColor
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-    val r2d: RoundRectangle2D = if (!SystemInfo.isMac)
-      RoundRectangle2D.Double(topLineX - activeTaskInset, topLineY - activeTaskInset - JBUIScale.scale(1),
-                              this.bounds.width - UISettings.instance.checkIndent.toDouble() - insets.right * 1.0f + 2 * activeTaskInset, textHeight + 2 * activeTaskInset - JBUIScale.scale(2),
-                              arc.toDouble(), arc.toDouble())
-    else
-      RoundRectangle2D.Double(topLineX - activeTaskInset, topLineY - activeTaskInset - JBUIScale.scale(1),
-                              this.bounds.width - UISettings.instance.checkIndent.toDouble() - insets.right * 1.0f + 2 * activeTaskInset, textHeight + 2 * activeTaskInset - JBUIScale.scale(2),
-                              arc.toDouble(), arc.toDouble())
-    g2d.draw(r2d)
+    val xOffset = topLineX - activeTaskInset
+    val yOffset = topLineY - activeTaskInset
+    val width = this.bounds.width - activeTaskInset - xOffset - JBUIScale.scale(2) // 1 + 1 line width
+    val height = textHeight + 2 * activeTaskInset - JBUIScale.scale(2)
+    g2d.draw(RoundRectangle2D.Double(xOffset, yOffset, width, height, arc.toDouble(), arc.toDouble()))
     g2d.color = color
   }
 
@@ -409,6 +405,6 @@ class LessonMessagePane : JTextPane() {
     //arc & indent for shortcut back plate
     private val arc by lazy { JBUI.scale(4) }
     private val indent by lazy { JBUI.scale(2) }
-    private val activeTaskInset by lazy { JBUI.scale(8) }
+    private val activeTaskInset by lazy { JBUI.scale(12) }
   }
 }

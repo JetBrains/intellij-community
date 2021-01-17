@@ -71,7 +71,9 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
 
     preferredSize = Dimension(UISettings.instance.width, 100)
-    border = UISettings.instance.emptyBorder
+    with (UISettings.instance) {
+      border = EmptyBorder(northInset, JBUI.scale(18), southInset, JBUI.scale(18))
+    }
   }
 
   private fun initFooterPanel(lesson: Lesson) {
@@ -80,13 +82,13 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     shiftedFooter.layout = BoxLayout(shiftedFooter, BoxLayout.Y_AXIS)
     shiftedFooter.isFocusable = false
     shiftedFooter.isOpaque = false
-    shiftedFooter.border = MatteBorder(1, 0, 0, 0, UISettings.instance.separatorColor)
+    shiftedFooter.border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.instance.separatorColor)
 
     val footerContent = JPanel()
     footerContent.isOpaque = false
-    footerContent.layout = VerticalLayout(5)
+    footerContent.layout = VerticalLayout(JBUI.scale(5))
     footerContent.add(JLabel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text")).also {
-      it.font = UISettings.instance.helpHeaderFont
+      it.font = UISettings.instance.getFont(1).deriveFont(Font.BOLD)
     })
     for (helpLink in lesson.helpLinks) {
       val text = helpLink.key
@@ -113,13 +115,13 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonPanel.isOpaque = false
 
     moduleNameLabel.name = "moduleNameLabel"
-    moduleNameLabel.font = UISettings.instance.moduleNameFont
+    moduleNameLabel.font = UISettings.instance.getFont(1)
     moduleNameLabel.isFocusable = false
     moduleNameLabel.border = UISettings.instance.checkmarkShiftBorder
 
     lessonNameLabel.name = "lessonNameLabel"
     lessonNameLabel.border = UISettings.instance.checkmarkShiftBorder
-    lessonNameLabel.font = UISettings.instance.lessonHeaderFont
+    lessonNameLabel.font = UISettings.instance.getFont(5).deriveFont(Font.BOLD)
     lessonNameLabel.alignmentX = Component.LEFT_ALIGNMENT
     lessonNameLabel.isFocusable = false
 
@@ -128,7 +130,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.isOpaque = false
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
     lessonMessagePane.margin = JBUI.emptyInsets()
-    lessonMessagePane.border = EmptyBorder(0, 0, UISettings.instance.beforeButtonGap, UISettings.instance.eastInset)
+    lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(24), JBUI.scale(21))
     lessonMessagePane.maximumSize = Dimension(UISettings.instance.width, 10000)
 
     //Set Next Button UI
@@ -141,7 +143,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
 
     buttonPanel.name = "buttonPanel"
-    buttonPanel.border = UISettings.instance.checkmarkShiftButtonBorder
+    buttonPanel.border = EmptyBorder(0, UISettings.instance.checkIndent - JButton().insets.left, 0, 0)
     buttonPanel.isOpaque = false
     buttonPanel.isFocusable = false
     buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
@@ -150,7 +152,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
     //shift right for checkmark
     lessonPanel.add(moduleNameLabel)
-    lessonPanel.add(UISettings.rigidGap(UISettings::moduleNameLessonGap))
+    lessonPanel.add(Box.createVerticalStrut(JBUI.scale(20)))
     lessonPanel.add(lessonNameLabel)
     lessonPanel.add(lessonMessagePane)
     lessonPanel.add(buttonPanel)

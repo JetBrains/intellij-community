@@ -121,7 +121,7 @@ class LanguageChoosePanel(private val toolWindow: LearnToolWindow?,
       isFocusable = false
 
       add(caption)
-      add(Box.createVerticalStrut(UISettings.instance.afterCaptionGap))
+      add(Box.createVerticalStrut(JBUI.scale(12)))
       add(description)
       add(Box.createVerticalStrut(UISettings.instance.groupGap))
       if (place == LanguageChoosePanelPlace.TOOL_WINDOW) border = UISettings.instance.checkmarkShiftBorder

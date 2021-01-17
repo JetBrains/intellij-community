@@ -7,13 +7,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
 import java.awt.Color
-import java.awt.Dimension
 import java.awt.Font
-import javax.swing.Box
-import javax.swing.JButton
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
-import kotlin.reflect.KProperty1
 
 @Suppress("MemberVisibilityCanBePrivate")
 class UISettings {
@@ -23,52 +19,31 @@ class UISettings {
 
   //MAIN INSETS
   val northInset: Int by lazy { JBUI.scale(24) }
-  val westInset: Int by lazy { JBUI.scale(19) }
-  val southInset: Int by lazy { JBUI.scale(32) }
-  val eastInset: Int by lazy { JBUI.scale(32) }
-  val checkWidth: Int by lazy { FeaturesTrainerIcons.Img.Checkmark.iconWidth }
-  val checkRightIndent: Int by lazy { 5 }
+  val westInset: Int by lazy { JBUI.scale(24) }
+  val southInset: Int by lazy { JBUI.scale(24) }
+  val eastInset: Int by lazy { JBUI.scale(24) }
+
+  val verticalModuleItemInset: Int by lazy { JBUI.scale(8) }
 
   //GAPS
-  val headerGap: Int by lazy { JBUI.scale(2) }
-  val moduleGap: Int by lazy { JBUI.scale(20) }
-  val descriptionGap: Int by lazy { JBUI.scale(100) }
   val progressCourseGap: Int by lazy { JBUI.scale(4) }
-  val lessonGap: Int by lazy { JBUI.scale(12) }
+  val progressModuleGap: Int by lazy { JBUI.scale(2) }
   val radioButtonGap: Int by lazy { JBUI.scale(3) }
 
-  val lessonNameGap: Int by lazy { JBUI.scale(5) }
-  val beforeButtonGap: Int by lazy { JBUI.scale(24) }
-  val afterButtonGap: Int by lazy { JBUI.scale(44) }
-  val afterCaptionGap: Int by lazy { JBUI.scale(12) }
   val groupGap: Int by lazy { JBUI.scale(24) }
-  val moduleNameSeparatorGap: Int by lazy { JBUI.scale(5) }
-  val moduleNameLessonsGap: Int by lazy { JBUI.scale(10) }
-  val moduleNameLessonGap: Int by lazy { JBUI.scale(32) }
   val languagePanelButtonsGap: Int by lazy { JBUI.scale(8) }
 
   //FONTS
-  val fontSize: Float
-    get() = JBUI.Fonts.label().size2D
-  //TODO: remove in 2021.1
-  val fontFace: String
-    get() = JBUI.Fonts.label().fontName
-  val modulesHeaderFont: Font
-    get() = JBUI.Fonts.label().deriveFont(Font.BOLD).deriveFont(fontSize + JBUI.scale(3))
-  val modulesFont: Font
-    get() = JBUI.Fonts.label().deriveFont(Font.BOLD)
-  val moduleNameFont: Font
-    get() = JBUI.Fonts.label().deriveFont(fontSize + 1)
   val plainFont: Font
     get() = JBUI.Fonts.label()
-  val italicFont: Font
-    get() = plainFont.deriveFont(Font.ITALIC)
+  val fontSize: Float
+    get() = plainFont.size2D
+  val modulesFont: Font
+    get() = plainFont.deriveFont(Font.BOLD)
   val boldFont: Font
     get() = plainFont.deriveFont(Font.BOLD)
-  val lessonHeaderFont: Font
-    get() = JBUI.Fonts.label().deriveFont(fontSize + 5).deriveFont(Font.BOLD)
-  val helpHeaderFont: Font
-    get() = JBUI.Fonts.label().deriveFont(fontSize + 1).deriveFont(Font.BOLD)
+
+  fun getFont(relatedUnscaledSize: Int): Font = plainFont.deriveFont(fontSize + JBUI.scale(relatedUnscaledSize))
 
   //COLORS
   val defaultTextColor = JBColor(Color(30, 30, 30), Color(208, 208, 208))
@@ -90,12 +65,6 @@ class UISettings {
   //BORDERS
   val emptyBorder: Border
     get() = EmptyBorder(northInset, westInset, southInset, eastInset)
-  val emptyBorderWithNoEastHalfNorth: Border
-    get() = EmptyBorder(northInset / 2, westInset, southInset, 0)
-  val eastBorder: Border
-    get() = EmptyBorder(0, 0, 0, eastInset)
-  val smallEastBorder: Border
-    get() = EmptyBorder(0, 0, 0, eastInset / 4)
 
   val radioButtonBorder: Border
     get() = EmptyBorder(radioButtonGap, 0, radioButtonGap, 0)
@@ -103,28 +72,12 @@ class UISettings {
   val checkmarkShiftBorder: Border
     get() = EmptyBorder(0, checkIndent, 0, 0)
 
-  val checkmarkShiftButtonBorder: Border by lazy {
-    return@lazy EmptyBorder(0, checkIndent - JButton().insets.left, 0, 0)
-  }
-
   val checkIndent: Int
-    get() = checkWidth + checkRightIndent
+    get() = JBUI.scale(FeaturesTrainerIcons.Img.Checkmark.iconWidth + 5)
 
   companion object {
-    val instance: training.ui.UISettings
-      get() = ApplicationManager.getApplication().getService(training.ui.UISettings::class.java)
-
-    fun rigidGap(gapName: String, gapSize: Int, isVertical: Boolean = true): Box.Filler {
-      val rigidArea = if (isVertical) Box.createRigidArea(Dimension(0, gapSize)) else Box.createRigidArea(Dimension(gapSize, 0))
-      rigidArea.name = gapName
-      return rigidArea as Box.Filler
-    }
-
-    fun rigidGap(settingsValue: KProperty1<training.ui.UISettings, Int>, isVertical: Boolean = true): Box.Filler {
-      val value = settingsValue.get(instance)
-      return rigidGap(settingsValue.name, value, isVertical)
-    }
+    val instance: UISettings
+      get() = ApplicationManager.getApplication().getService(UISettings::class.java)
   }
-
 }
 

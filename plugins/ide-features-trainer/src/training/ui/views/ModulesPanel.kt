@@ -15,6 +15,7 @@ import training.util.learningProgressString
 import training.util.openLinkInBrowser
 import training.util.wrapWithUrlPanel
 import java.awt.BorderLayout
+import java.awt.Font
 import javax.swing.Box
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -61,13 +62,13 @@ class ModulesPanel : JPanel() {
     val primaryLanguageId = langSupport.primaryLanguage
     val language = Language.findLanguageByID(primaryLanguageId) ?: return
     headerContent.add(JLabel(LearnBundle.message("modules.panel.header", language.displayName)).also {
-      it.font = UISettings.instance.modulesHeaderFont
+      it.font = UISettings.instance.getFont(3).deriveFont(Font.BOLD)
     })
     headerContent.add(JLabel(learningProgressString(CourseManager.instance.lessonsForModules)).also {
       it.foreground = UISettings.instance.moduleProgressColor
     })
 
-    headerContent.add(Box.createVerticalStrut(UISettings.instance.northInset))
+    headerContent.add(Box.createVerticalStrut(UISettings.instance.northInset - UISettings.instance.verticalModuleItemInset))
     add(headerContent, BorderLayout.PAGE_START)
   }
 
@@ -76,20 +77,21 @@ class ModulesPanel : JPanel() {
 
     val footerContent = JPanel()
     footerContent.isOpaque = false
-    footerContent.layout = VerticalLayout(4)
-    footerContent.add(Box.createVerticalStrut(8))
+    footerContent.layout = VerticalLayout(0)
+    footerContent.add(Box.createVerticalStrut(JBUI.scale(15)))
     val linkLabel = LinkLabel<Any>(LearnBundle.message("feedback.link.text"), null) { _, _ ->
       openLinkInBrowser(linkForFeedback)
     }
     footerContent.add(linkLabel.wrapWithUrlPanel())
+    footerContent.add(Box.createVerticalStrut(JBUI.scale(4)))
     footerContent.add(JLabel(LearnBundle.message("feedback.link.hint")).also {
       it.foreground = UISettings.instance.moduleProgressColor
-      it.font = it.font.deriveFont(it.font.size2D - 1)
+      it.font = UISettings.instance.getFont(-1)
     })
 
     val shiftedFooter = JPanel()
     shiftedFooter.name = "footerModulePanel"
-    shiftedFooter.layout = HorizontalLayout(1)
+    shiftedFooter.layout = HorizontalLayout(JBUI.scale(1))
     shiftedFooter.isFocusable = false
     shiftedFooter.isOpaque = false
     shiftedFooter.border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.instance.separatorColor)
