@@ -663,6 +663,10 @@ public final class ActionsTreeUtil {
     return KeyMapBundle.message("main.toolbar.title");
   }
 
+  public static String getExperimentalToolbar(){
+    return KeyMapBundle.message("experimental.toolbar.title");
+  }
+
   @Nls
   public static String getEditorPopup() {
     return KeyMapBundle.message("editor.popup.menu.title");

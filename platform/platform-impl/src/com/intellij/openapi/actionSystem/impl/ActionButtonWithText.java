@@ -236,7 +236,7 @@ public class ActionButtonWithText extends ActionButton {
     return icon instanceof EmptyIcon || icon == null ? 0 : JBUI.scale(ICON_TEXT_SPACE);
   }
 
-  private int getMnemonicCharIndex(String text) {
+  protected int getMnemonicCharIndex(String text) {
     final int mnemonicIndex = myPresentation.getDisplayedMnemonicIndex();
     if (mnemonicIndex != -1) {
       return mnemonicIndex;

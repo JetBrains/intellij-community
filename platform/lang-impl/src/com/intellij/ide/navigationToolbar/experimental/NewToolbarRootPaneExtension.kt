@@ -5,6 +5,7 @@ import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -42,7 +43,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   }
 
   private val myPanelWrapper = JPanel(BorderLayout())
-  private val myPanel: JPanel = object : JPanel(MigLayout("fillx,novisualpadding,ins 0 5 0 5,righttoleft", "[shrink 1][grow, shrink 2][shrink 0]")) {
+  private val myPanel: JPanel = object : JPanel(MigLayout("fillx,novisualpadding,ins 0 ${JBUI.scale(5)} 0 ${JBUI.scale(2)},righttoleft", "[shrink 1][shrink 2]push[shrink 0]")) {
     init {
       isOpaque = true
       border = BorderFactory.createEmptyBorder()
@@ -51,9 +52,9 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
       return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
     }
   }
-  private val myRightPanel: JPanel = JPanel(MigLayout("ins 0, fillx, novisualpadding"))
-  private val myCenterPanel: JPanel = JPanel(MigLayout("ins 0, fillx, novisualpadding"))
-  private val myLeftPanel: JPanel = JPanel(MigLayout("ins 0, fillx, novisualpadding"))
+  private val myRightPanel: JPanel = JPanel(MigLayout("ins 0, gap ${JBUI.scale(4)}, fillx, novisualpadding"))
+  private val myCenterPanel: JPanel = JPanel(MigLayout("ins 0, gap ${JBUI.scale(4)}, fillx, novisualpadding"))
+  private val myLeftPanel: JPanel = JPanel(MigLayout("ins 0, gap ${JBUI.scale(4)}, fillx, novisualpadding"))
 
   private val registryListener = object : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
@@ -63,18 +64,6 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
   init {
     Registry.get(navBarKey).addListener(registryListener, this)
-    myPanelWrapper.add(myPanel, BorderLayout.CENTER)
-    myPanel.add(myRightPanel, "growx, align trailing, width pref, shrink 0")
-    myPanel.add(myCenterPanel, "growx, align trailing")
-    myPanel.add(myLeftPanel, "growx, align leading")
-
-    val newToolbarActions = ActionManager.getInstance().getAction("NewToolbarActions")
-
-    val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
-    addGroupComponent(myLeftPanel, "align leading", *(listChildren[0] as ActionGroup).getChildren(null))
-    addGroupComponent(myCenterPanel, "align trailing, width pref", *(listChildren[1] as ActionGroup).getChildren(null))
-    addGroupComponent(myRightPanel, "align trailing, width pref!", *(listChildren[2] as ActionGroup).getChildren(null))
-
     revalidate()
     myProject.messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener { revalidate() })
 
@@ -98,6 +87,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
             toolbar.updateActionsImmediately()
             toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
             toolbar.border = JBUI.Borders.empty()
+            toolbar.addNotify()
             panel.add(toolbar, layoutConstrains)
           }
 
@@ -115,6 +105,24 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   }
 
   override fun revalidate() {
+    myPanelWrapper.removeAll()
+    myPanel.removeAll()
+    myRightPanel.removeAll()
+    myCenterPanel.removeAll()
+    myLeftPanel.removeAll()
+
+    myPanelWrapper.add(myPanel, BorderLayout.CENTER)
+    myPanel.add(myRightPanel, "growx, align trailing, width pref, shrink 0")
+    myPanel.add(myCenterPanel, "growx, align leading")
+    myPanel.add(myLeftPanel, "growx, align leading")
+
+    val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction("NewToolbarActions")
+
+    val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
+    addGroupComponent(myLeftPanel, "align leading", *(listChildren[0] as ActionGroup).getChildren(null))
+    addGroupComponent(myCenterPanel, "align leading, width 0:pref:max", *(listChildren[1] as ActionGroup).getChildren(null))
+    addGroupComponent(myRightPanel, "align trailing, width pref!", *(listChildren[2] as ActionGroup).getChildren(null))
+
     val toolbarSettingsService = ToolbarSettings.Companion.getInstance()
     if (toolbarSettingsService is ExperimentalToolbarSettings) {
       myPanel.isVisible = toolbarSettingsService.showNewToolbar && !instance.presentationMode

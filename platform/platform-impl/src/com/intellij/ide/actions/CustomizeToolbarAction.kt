@@ -4,9 +4,5 @@ package com.intellij.ide.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-class CustomizeToolbarAction: DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    //TODO for the new toolbar
-    //RIDER-49001
-  }
+class CustomizeToolbarAction: CustomizeUIAction() {
 }

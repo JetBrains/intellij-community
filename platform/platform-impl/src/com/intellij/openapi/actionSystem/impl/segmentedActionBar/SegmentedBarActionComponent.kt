@@ -91,7 +91,6 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
         }
 
         private var isActive = false
-        private var visibleItemsCount = 0
 
         override fun getInsets(): Insets {
           return JBUI.emptyInsets()
@@ -176,14 +175,14 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
         }
 
         override fun paintBorder(g: Graphics) {
-          if(visibleItemsCount > 1 || paintBorderAroundOneItem) {
+          if(isActive || paintBorderAroundOneItem) {
             painter.paintActionBarBorder(this, g)
           }
         }
 
         override fun paint(g: Graphics) {
           super.paint(g)
-          if(visibleItemsCount > 1 || paintBorderAroundOneItem) {
+          if(isActive || paintBorderAroundOneItem) {
             painter.paintActionBarBorder(this, g)
           }
         }
@@ -205,7 +204,6 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
         override fun actionsUpdated(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
           val filtered = newVisibleActions.filter { isSuitableAction(it) }
           isActive = filtered.size > 1
-          visibleItemsCount = newVisibleActions.size
           super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
         }
 

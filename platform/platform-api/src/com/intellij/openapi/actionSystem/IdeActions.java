@@ -110,6 +110,7 @@ public interface IdeActions {
 
   @NonNls String GROUP_MAIN_MENU = "MainMenu";
   @NonNls String GROUP_MAIN_TOOLBAR = "MainToolBar";
+  @NonNls String GROUP_EXPERIMENTAL_TOOLBAR = "NewToolbarActions";
   @NonNls String GROUP_EDITOR_POPUP = "EditorPopupMenu";
   @NonNls String GROUP_BASIC_EDITOR_POPUP = "BasicEditorPopupMenu";
   @NonNls String GROUP_CONSOLE_EDITOR_POPUP = "ConsoleEditorPopupMenu";
