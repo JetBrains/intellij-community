@@ -20,14 +20,48 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
+ * Q: Why is [KtSearchEverywhereEqualityProvider] implemented as bunch of methods but not as bunch of extension points?
+ * A: Because we want to make sure that "native Psi vs KtLightElement" is checked first
+ *
  * @see NativePsiAndKtLightElementEqualityProviderTest
+ * @see KtFileAndKtClassForFacadeTest
  */
 class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
     override fun compareItems(
         newItem: SearchEverywhereFoundElementInfo,
         alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
     ): SEEqualElementsActionType {
-        return compareNativePsiAndKtLightElement(newItem, alreadyFoundItems)
+        return compareNativePsiAndKtLightElement(newItem, alreadyFoundItems).takeIf { it != DoNothing }
+            ?: compareKtFileAndKtClassForFacade(newItem, alreadyFoundItems)
+    }
+
+    private fun compareKtFileAndKtClassForFacade(
+        newItem: SearchEverywhereFoundElementInfo,
+        alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
+    ): SEEqualElementsActionType {
+        val newItemKt = newItem.toKtElement()
+        val newItemElem = newItem.element
+        return alreadyFoundItems
+            .map { alreadyFoundItem ->
+                val alreadyFoundItemKt = alreadyFoundItem.toKtElement()
+                val alreadyFoundItemElem = alreadyFoundItem.element
+
+                val (file, classForFacade) = when {
+                    newItemKt is KtFile && alreadyFoundItemElem is KtLightClassForFacade -> newItemKt to alreadyFoundItemElem
+                    alreadyFoundItemKt is KtFile && newItemElem is KtLightClassForFacade -> alreadyFoundItemKt to newItemElem
+                    else -> return@map DoNothing
+                }
+
+                if (
+                    PsiManager.getInstance(file.project).areElementsEquivalent(classForFacade.files.singleOrNull(), file) &&
+                    classForFacade.fqName.shortName().asString().removeSuffix("Kt") == file.virtualFile.nameWithoutExtension
+                ) {
+                    if (SearchEverywhereFoundElementInfo.COMPARATOR.compare(newItem, alreadyFoundItem) > 0) Replace(alreadyFoundItem)
+                    else Skip
+                } else DoNothing
+            }
+            .reduceOrNull { acc, actionType -> acc.combine(actionType) }
+            ?: DoNothing
     }
 
     private fun compareNativePsiAndKtLightElement(
