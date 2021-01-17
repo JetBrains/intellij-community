@@ -115,11 +115,11 @@ object FileUtils {
   fun ensureDirectoryExists(f: File): Boolean = f.exists() || f.mkdirs()
 
   private fun splitJarPath(path: String): Pair<String, String> {
-    val lastIndexOf = path.lastIndexOf(".jar!")
+    val lastIndexOf = path.lastIndexOf(".jar!/")
     if (lastIndexOf == -1) throw IOException("Invalid Jar path format")
     val splitIdx = lastIndexOf + 4 // ".jar"
     val filePath = path.substring(0, splitIdx)
-    val pathInsideJar = path.substring(splitIdx + 1 ,path.length)
+    val pathInsideJar = path.substring(splitIdx + 2 ,path.length) // remove "!/"
     return Pair(filePath, pathInsideJar)
   }
 }
