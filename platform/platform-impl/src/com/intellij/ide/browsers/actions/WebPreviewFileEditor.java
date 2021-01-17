@@ -47,7 +47,7 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
             alarm.cancelAllRequests();
             alarm.addRequest(() -> reloadHtml(document), 100);
           }
-        });
+        }, alarm);
       }
     }
   }
