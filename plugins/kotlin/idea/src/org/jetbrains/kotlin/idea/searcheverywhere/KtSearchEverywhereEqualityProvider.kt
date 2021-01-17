@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtFile
  * A: Because we want to make sure that "native Psi vs KtLightElement" is checked first
  *
  * @see NativePsiAndKtLightElementEqualityProviderTest
+ * @see KtFileAndKtClassEqualityProviderTest
  * @see KtFileAndKtClassForFacadeTest
  */
 class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
@@ -32,7 +33,32 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
         alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
     ): SEEqualElementsActionType {
         return compareNativePsiAndKtLightElement(newItem, alreadyFoundItems).takeIf { it != DoNothing }
-            ?: compareKtFileAndKtClassForFacade(newItem, alreadyFoundItems)
+            ?: compareKtFileAndKtClassForFacade(newItem, alreadyFoundItems).takeIf { it != DoNothing }
+            ?: compareKtFileAndKtClass(newItem, alreadyFoundItems)
+    }
+
+    private fun compareKtFileAndKtClass(
+        newItem: SearchEverywhereFoundElementInfo,
+        alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
+    ): SEEqualElementsActionType {
+        val newItemKt = newItem.toKtElement() ?: return DoNothing
+        return alreadyFoundItems
+            .map { alreadyFoundItem ->
+                val alreadyFoundItemKt = alreadyFoundItem.toKtElement() ?: return@map DoNothing
+
+                val (klass, file) = when {
+                    newItemKt is KtClass && alreadyFoundItemKt is KtFile -> newItemKt to alreadyFoundItemKt
+                    alreadyFoundItemKt is KtClass && newItemKt is KtFile -> alreadyFoundItemKt to newItemKt
+                    else -> return@map DoNothing
+                }
+
+                if (klass.isTopLevel() && klass.parent == file && file.findFacadeClass() == null) {
+                    // Prefer to show classes over files
+                    if (newItemKt == klass) Replace(alreadyFoundItem) else Skip
+                } else DoNothing
+            }
+            .reduceOrNull { acc, actionType -> acc.combine(actionType) }
+            ?: DoNothing
     }
 
     private fun compareKtFileAndKtClassForFacade(
