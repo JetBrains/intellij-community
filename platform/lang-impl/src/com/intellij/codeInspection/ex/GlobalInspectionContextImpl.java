@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -75,6 +75,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.*;
+import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenInspectionFinished;
+
 public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private static final boolean INSPECT_INJECTED_PSI = SystemProperties.getBooleanProperty("idea.batch.inspections.inspect.injected.psi", true);
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextImpl.class);
@@ -84,6 +87,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
 
   private final NotNullLazyValue<? extends ContentManager> myContentManager;
+  private final InspectListener myInspectTopicPublisher;
   private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
@@ -93,6 +97,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
     myContentManager = contentManager;
+    myInspectTopicPublisher = project.getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
+
   }
 
   private @NotNull ContentManager getContentManager() {
@@ -427,7 +433,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
           ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
           ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
-          tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
+          reportWhenInspectionFinished(
+            myInspectTopicPublisher,
+            toolWrapper,
+            GLOBAL_SIMPLE,
+            () -> {
+              tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
+            });
           InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
           BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, CONVERT, toolPresentation);
           return true;
@@ -560,7 +572,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             }
           }
           ThrowableRunnable<RuntimeException> runnable = () -> {
-            tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
+            reportWhenInspectionFinished(
+              myInspectTopicPublisher,
+              toolWrapper,
+              GLOBAL,
+              () -> {
+                tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
+              });
+
             //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
             if ((canBeExternalUsages || tool.getAdditionalJobs(this) != null) &&
                 tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
