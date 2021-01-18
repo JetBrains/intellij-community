@@ -11,10 +11,10 @@ import java.io.IOException;
 
 public class SerializedStubTreeDataExternalizer implements DataExternalizer<SerializedStubTree> {
   @NotNull
-  private final SerializationManagerEx mySerializationManager;
+  private final StubTreeSerializer mySerializationManager;
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
-  public SerializedStubTreeDataExternalizer(@NotNull SerializationManagerEx manager, @NotNull StubForwardIndexExternalizer<?> externalizer) {
+  public SerializedStubTreeDataExternalizer(@NotNull StubTreeSerializer manager, @NotNull StubForwardIndexExternalizer<?> externalizer) {
     mySerializationManager = manager;
     myStubIndexesExternalizer = externalizer;
   }

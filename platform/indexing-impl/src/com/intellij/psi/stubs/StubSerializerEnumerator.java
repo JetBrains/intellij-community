@@ -108,14 +108,26 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     myNameToId.put(name, id);
   }
 
-
+  @Nullable
   String getSerializerName(int id) {
     return myIdToName.get(id);
   }
 
-
-  int getSerializerId(String name) {
+  int getSerializerId(@NotNull String name) {
     return myNameToId.getInt(name);
+  }
+
+  @NotNull
+  ObjectStubSerializer<?, ? extends Stub> getSerializer(@NotNull String name) throws SerializerNotFoundException {
+    int id = myNameToId.getInt(name);
+    return getClassById((id1, name1, externalId) -> {
+      return "Missed stub serializer for " + name;
+    }, id);
+  }
+
+  @Nullable
+  String getSerializerName(@NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
+    return myIdToName.get(mySerializerToId.get(serializer));
   }
 
   void copyFrom(@Nullable StubSerializerEnumerator helper) throws IOException {

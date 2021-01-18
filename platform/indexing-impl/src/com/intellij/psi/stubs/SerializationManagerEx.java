@@ -2,7 +2,6 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,20 +13,18 @@ import java.io.OutputStream;
  * This class is intended to manage Stub Serializers {@link ObjectStubSerializer} and stub serialization/deserialization algorithm.
  */
 @ApiStatus.Internal
-public abstract class SerializationManagerEx {
+public abstract class SerializationManagerEx implements StubTreeSerializer {
   public static SerializationManagerEx getInstanceEx() {
     return ServiceManager.getService(SerializationManagerEx.class);
   }
 
-  public abstract void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream);
-
-  @NotNull
-  public abstract Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException;
-
-  @ApiStatus.Experimental
+  /**
+   * @deprecated only kept to support prebuilt stubs
+   */
+  @Deprecated
   public abstract void reSerialize(@NotNull InputStream inStub,
                                    @NotNull OutputStream outStub,
-                                   @NotNull SerializationManagerEx newSerializationManager) throws IOException;
+                                   @NotNull StubTreeSerializer newSerializationManager) throws IOException;
 
   protected abstract void initSerializers();
 

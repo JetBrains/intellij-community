@@ -47,7 +47,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
       mySerializerEnumerator = new StubSerializerEnumerator(openNameStorage(), unmodifiable);
-      myStubSerializationHelper = new StubSerializationHelper(this, mySerializerEnumerator);
+      myStubSerializationHelper = new StubSerializationHelper(mySerializerEnumerator);
     }
     catch (IOException e) {
       nameStorageCrashed();
@@ -108,7 +108,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
         }
         mySerializerEnumerator = new StubSerializerEnumerator(openNameStorage(), myUnmodifiable);
         mySerializerEnumerator.copyFrom(prevEnum);
-        myStubSerializationHelper = new StubSerializationHelper(this, mySerializerEnumerator);
+        myStubSerializationHelper = new StubSerializationHelper(mySerializerEnumerator);
       }
       catch (IOException e) {
         LOG.info(e);
@@ -196,9 +196,9 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   @Override
   public void reSerialize(@NotNull InputStream inStub,
                           @NotNull OutputStream outStub,
-                          @NotNull SerializationManagerEx newSerializationManager) throws IOException {
+                          @NotNull StubTreeSerializer newSerializationManager) throws IOException {
     initSerializers();
-    newSerializationManager.initSerializers();
+    ((SerializationManagerEx)newSerializationManager).initSerializers();
     myStubSerializationHelper.reSerializeStub(new DataInputStream(inStub),
                                               new DataOutputStream(outStub),
                                               ((SerializationManagerImpl)newSerializationManager).myStubSerializationHelper);
@@ -225,6 +225,15 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       }
       mySerializersLoaded = true;
     }
+  }
+
+  @NotNull ObjectStubSerializer<?, ? extends Stub> getSerializer(@NotNull String name) throws SerializerNotFoundException {
+    return mySerializerEnumerator.getSerializer(name);
+  }
+
+  @Nullable
+  public String getSerializerName(@NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
+    return mySerializerEnumerator.getSerializerName(serializer);
   }
 
   public void dropSerializerData() {
