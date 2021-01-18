@@ -4,6 +4,7 @@ package com.intellij.ide.bookmarks.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.ide.bookmarks.BookmarkType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.RowGridLayout
@@ -12,10 +13,7 @@ import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
-import java.awt.Color
-import java.awt.Component
-import java.awt.Cursor
-import java.awt.Dimension
+import java.awt.*
 import java.awt.RenderingHints.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
@@ -107,6 +105,16 @@ internal abstract class MnemonicChooser(
 
   private fun next(source: Component, dx: Int, dy: Int): Component? {
     val point = SwingUtilities.convertPoint(source, offset(dx, source.width), offset(dy, source.height), this)
+    val component = next(source, dx, dy, point)
+    if (component != null || !Registry.`is`("ide.bookmark.mnemonic.chooser.cyclic.scrolling.allowed")) return component
+    if (dx > 0) point.x = 0
+    if (dx < 0) point.x = dx + width
+    if (dy > 0) point.y = 0
+    if (dy < 0) point.y = dy + height
+    return next(source, dx, dy, point)
+  }
+
+  private fun next(source: Component, dx: Int, dy: Int, point: Point): Component? {
     while (contains(point)) {
       val component = SwingUtilities.getDeepestComponentAt(this, point.x, point.y)
       if (component is JButton) return component
