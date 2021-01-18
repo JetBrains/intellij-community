@@ -97,6 +97,12 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   @Override
+  public @NotNull TerminalActionPresentation getSelectAllActionPresentation() {
+    List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.SelectAll");
+    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$SelectAll.text")), strokes);
+  }
+
+  @Override
   public @NotNull TerminalActionPresentation getClearBufferActionPresentation() {
     List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.ClearBuffer");
     if (strokes.isEmpty()) {
