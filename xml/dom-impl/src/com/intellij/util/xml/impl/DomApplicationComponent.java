@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,13 +42,10 @@ public final class DomApplicationComponent {
       return desc == null ? null : desc.createAnnotator();
     }
   );
-  private final Map<Class<?>, DomFileDescription<?>> myClass2Description = ConcurrentFactoryMap.createMap(this::_findFileDescription);
+  private final Map<Class<?>, DomFileDescription<?>> classToDescription = new ConcurrentHashMap<>();
 
-  private final Map<Class<?>, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.create(InvocationCache::new,
-                                                                                                ContainerUtil::createConcurrentSoftValueMap);
-  private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
-    ConcurrentFactoryMap.createMap(VisitorDescription::new);
-
+  private final Map<Class<?>, InvocationCache> myInvocationCaches = ContainerUtil.createConcurrentSoftValueMap();
+  private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions = new ConcurrentHashMap<>();
 
   public DomApplicationComponent() {
     registerDescriptions();
@@ -81,7 +79,7 @@ public final class DomApplicationComponent {
 
     myAcceptingOtherRootTagNamesDescriptions.clear();
     myClass2Annotator.clear();
-    myClass2Description.clear();
+    classToDescription.clear();
 
     myCachedImplementationClasses.clearCache();
     myTypeChooserManager.clearCache();
@@ -112,12 +110,11 @@ public final class DomApplicationComponent {
     }).sum();
   }
 
-  private Stream<DomFileMetaData> allMetas() {
+  private @NotNull Stream<DomFileMetaData> allMetas() {
     return Stream.concat(myRootTagName2FileDescription.values().stream(), myAcceptingOtherRootTagNamesDescriptions.stream());
   }
 
-  @NotNull
-  public synchronized List<DomFileMetaData> getStubBuildingMetadata() {
+  public synchronized @NotNull List<DomFileMetaData> getStubBuildingMetadata() {
     return allMetas().filter(m -> m.hasStubs()).collect(Collectors.toList());
   }
 
@@ -162,16 +159,14 @@ public final class DomApplicationComponent {
     myAcceptingOtherRootTagNamesDescriptions.remove(meta);
   }
 
-  @Nullable
-  public synchronized DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
-    return myClass2Description.get(rootElementClass);
+  public synchronized @Nullable DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
+    return classToDescription.computeIfAbsent(rootElementClass, this::_findFileDescription);
   }
 
-  @Nullable
-  private synchronized DomFileDescription<?> _findFileDescription(Class<?> rootElementClass) {
+  private synchronized @Nullable DomFileDescription<?> _findFileDescription(Class<?> rootElementClass) {
     return allMetas()
       .map(meta -> meta.getDescription())
-      .filter(description -> description != null && description.getRootElementClass() == rootElementClass)
+      .filter(description -> description.getRootElementClass() == rootElementClass)
       .findAny()
       .orElse(null);
   }
@@ -183,7 +178,7 @@ public final class DomApplicationComponent {
   @Nullable
   final Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {
     //noinspection unchecked
-    return myCachedImplementationClasses.get(concreteInterface);
+    return (Class<? extends DomElement>)myCachedImplementationClasses.get(concreteInterface);
   }
 
   public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
@@ -200,11 +195,10 @@ public final class DomApplicationComponent {
   }
 
   final InvocationCache getInvocationCache(Class<?> type) {
-    return myInvocationCaches.get(type);
+    return myInvocationCaches.computeIfAbsent(type, InvocationCache::new);
   }
 
   public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
-    return myVisitorDescriptions.get(aClass);
+    return myVisitorDescriptions.computeIfAbsent(aClass, VisitorDescription::new);
   }
-
 }

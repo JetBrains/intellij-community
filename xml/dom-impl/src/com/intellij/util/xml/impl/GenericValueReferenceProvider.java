@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,10 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
-public class GenericValueReferenceProvider extends PsiReferenceProvider {
+public final class GenericValueReferenceProvider extends PsiReferenceProvider {
   private final static Logger LOG = Logger.getInstance(GenericValueReferenceProvider.class);
 
   @Override
@@ -42,9 +25,11 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     final DomInvocationHandler handler;
     if (psiElement instanceof XmlTag) {
       handler = domManager.getDomHandler((XmlTag)psiElement);
-    } else if (psiElement instanceof XmlAttributeValue && psiElement.getParent() instanceof XmlAttribute) {
+    }
+    else if (psiElement instanceof XmlAttributeValue && psiElement.getParent() instanceof XmlAttribute) {
       handler = domManager.getDomHandler((XmlAttribute)psiElement.getParent());
-    } else {
+    }
+    else {
       return PsiReference.EMPTY_ARRAY;
     }
 
@@ -54,22 +39,23 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
 
     if (psiElement instanceof XmlTag) {
       for (XmlText text : ((XmlTag)psiElement).getValue().getTextElements()) {
-        if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) return PsiReference.EMPTY_ARRAY;
+        if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
+          return PsiReference.EMPTY_ARRAY;
+        }
       }
-    } else {
-      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)psiElement)) return PsiReference.EMPTY_ARRAY;
+    }
+    else if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)psiElement)) {
+      return PsiReference.EMPTY_ARRAY;
     }
 
-    final GenericDomValue domValue = (GenericDomValue)handler.getProxy();
-
+    final GenericDomValue<?> domValue = (GenericDomValue<?>)handler.getProxy();
     final Referencing referencing = handler.getAnnotation(Referencing.class);
     final Object converter;
     if (referencing == null) {
       converter = WrappingConverter.getDeepestConverter(domValue.getConverter(), domValue);
     }
     else {
-      Class<? extends CustomReferenceConverter> clazz = referencing.value();
-      converter = ((ConverterManagerImpl)domManager.getConverterManager()).getInstance(clazz);
+      converter = ConverterManagerImpl.getOrCreateConverterInstance(referencing.value());
     }
     PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter, handler, domManager);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -89,15 +75,16 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     return references;
   }
 
-  private static PsiReference[] createReferences(final GenericDomValue domValue,
-                                                 final XmlElement psiElement,
-                                                 final Object converter,
+  private static PsiReference[] createReferences(GenericDomValue<?> domValue,
+                                                 XmlElement psiElement,
+                                                 Object converter,
                                                  DomInvocationHandler handler,
                                                  DomManager domManager) {
     final XmlFile file = handler.getFile();
     final DomFileDescription<?> description = domManager.getDomFileDescription(file);
     if (description == null) {
-      return PsiReference.EMPTY_ARRAY; // should not happen
+      // should not happen
+      return PsiReference.EMPTY_ARRAY;
     }
 
     List<PsiReference> result = new ArrayList<>();
@@ -112,7 +99,6 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     }
 
     Collections.addAll(result, doCreateReferences(domValue, psiElement, converter, context));
-
     return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
@@ -129,8 +115,6 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       //noinspection unchecked
       return new PsiReference[]{new GenericDomValueReference(domValue)};
     }
-
     return PsiReference.EMPTY_ARRAY;
   }
-
 }
