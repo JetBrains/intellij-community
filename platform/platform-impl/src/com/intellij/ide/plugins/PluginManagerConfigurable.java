@@ -471,12 +471,12 @@ public final class PluginManagerConfigurable
             if (word == null) return null;
             switch (word) {
               case TAG:
-                if (ContainerUtil.isEmpty(myTagsSorted)) { // XXX
+                if (myTagsSorted == null || myTagsSorted.isEmpty()) {
                   Set<String> allTags = new HashSet<>();
                   for (IdeaPluginDescriptor descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
                     if (descriptor instanceof PluginNode) {
                       List<String> tags = ((PluginNode)descriptor).getTags();
-                      if (!ContainerUtil.isEmpty(tags)) {
+                      if (tags != null && !tags.isEmpty()) {
                         allTags.addAll(tags);
                       }
                     }
@@ -495,7 +495,7 @@ public final class PluginManagerConfigurable
               case SORT_BY:
                 return Arrays.asList("downloads", "name", "rating", "updated");
               case ORGANIZATION:
-                if (ContainerUtil.isEmpty(myVendorsSorted)) { // XXX
+                if (myVendorsSorted == null || myVendorsSorted.isEmpty()) {
                   LinkedHashSet<String> vendors = new LinkedHashSet<>();
                   try {
                     ProcessIOExecutorService.INSTANCE.submit(() -> {
