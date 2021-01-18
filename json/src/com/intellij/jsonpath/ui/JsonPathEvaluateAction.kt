@@ -15,12 +15,12 @@ internal class JsonPathEvaluateAction : DumbAwareAction() {
     if (editor != null) {
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
       if (psiFile is JsonFile) {
-        JsonPathEvaluateManager.getInstance(project).evaluateFromJson(psiFile, editor)
+        JsonPathEvaluateManager.getInstance(project).evaluateFromJson(psiFile)
         return
       }
     }
 
-    JsonPathEvaluateManager.getInstance(project).openToolwindow()
+    JsonPathEvaluateManager.getInstance(project).evaluateExpression()
   }
 
   override fun update(e: AnActionEvent) {

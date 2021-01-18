@@ -3,69 +3,60 @@ package com.intellij.jsonpath.ui
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.find.FindBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.json.JsonBundle
 import com.intellij.json.json5.Json5FileType
 import com.intellij.json.psi.JsonFile
 import com.intellij.jsonpath.JsonPathFileType
-import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.EVALUATE_TOOLWINDOW_ID
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
+import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_HISTORY
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_RESULT_KEY
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_SOURCE_KEY
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.serialization.ClassUtil.isPrimitive
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.tabs.impl.SingleHeightTabs
-import com.intellij.util.castSafelyTo
+import com.intellij.ui.components.*
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import com.jayway.jsonpath.*
 import com.jayway.jsonpath.Configuration.ConfigurationBuilder
 import java.awt.BorderLayout
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
-import javax.swing.FocusManager
-import javax.swing.JScrollPane
-import javax.swing.KeyStroke
-import javax.swing.SwingUtilities
+import javax.swing.*
 
-internal class JsonPathEvaluateView(private val project: Project,
-                                    private val mode: JsonPathEvaluateMode) : SimpleToolWindowPanel(false, true), Disposable {
-
-  private val searchTextField: EditorTextField = object : EditorTextField(project, JsonPathFileType.INSTANCE) {
-    init {
-      border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 0, 1)
-    }
-
-    override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-      super.setBounds(x - 1, y, width + 2, height)
-    }
-
+internal abstract class JsonPathEvaluateView(protected val project: Project) : SimpleToolWindowPanel(true, true), Disposable {
+  protected val searchTextField: EditorTextField = object : EditorTextField(project, JsonPathFileType.INSTANCE) {
     override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
       if (e?.keyCode == KeyEvent.VK_ENTER && pressed) {
         evaluate()
@@ -77,16 +68,16 @@ internal class JsonPathEvaluateView(private val project: Project,
     override fun createEditor(): EditorEx {
       val editor = super.createEditor()
 
-      editor.scrollPane.border = JBUI.Borders.empty()
-      editor.component.border = JBUI.Borders.empty(3)
-      editor.component.background = UIUtil.getInactiveTextFieldBackgroundColor()
-      editor.component.isOpaque = true
+      editor?.setBorder(JBUI.Borders.empty())
+      editor.component.border = JBUI.Borders.empty(4, 0, 3, 6)
+      editor.component.isOpaque = false
+      editor.backgroundColor = UIUtil.getTextFieldBackground()
 
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
       if (psiFile != null) {
         psiFile.putUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY, true)
         psiFile.putUserData(JSON_PATH_EVALUATE_SOURCE_KEY, Supplier {
-          PsiDocumentManager.getInstance(project).getPsiFile(sourceEditor.document) as? JsonFile
+          getJsonFile()
         })
       }
 
@@ -94,80 +85,62 @@ internal class JsonPathEvaluateView(private val project: Project,
     }
   }
 
-  private val sourceEditor: Editor
-  private val resultEditor: Editor
+  protected val searchWrapper: JPanel = object : NonOpaquePanel(BorderLayout()) {
+    override fun updateUI() {
+      super.updateUI()
+      this.background = UIUtil.getTextFieldBackground()
+    }
+  }
 
-  private val expressionHighlightingQueue: MergingUpdateQueue = MergingUpdateQueue("JSONPATH_EVALUATE", 1000, true, null, this)
+  val searchComponent: JComponent
+    get() = searchTextField
 
-  private val resultWrapper: JBPanelWithEmptyText = JBPanelWithEmptyText(BorderLayout())
+  protected val resultWrapper: JBPanelWithEmptyText = JBPanelWithEmptyText(BorderLayout())
+  private val resultLabel = JBLabel(JsonBundle.message("jsonpath.evaluate.result"))
+  private val resultEditor: Editor = initJsonEditor("result.json", true, EditorKind.PREVIEW)
+
   private val errorOutputArea: JBTextArea = JBTextArea()
   private val errorOutputContainer: JScrollPane = JBScrollPane(errorOutputArea)
-
   private val evalOptions: MutableSet<Option> = mutableSetOf()
 
   init {
-    sourceEditor = initJsonEditor("source.json", false, EditorKind.UNTYPED)
-    resultEditor = initJsonEditor("result.json", true, EditorKind.PREVIEW)
-
     resultEditor.putUserData(JSON_PATH_EVALUATE_RESULT_KEY, true)
-    resultEditor.castSafelyTo<EditorEx>()?.apply {
-      scrollPane.border = JBUI.Borders.empty()
-    }
-
-    val sourcePanel = BorderLayoutPanel()
-
-    val buttonsGroup = createOptionsGroup()
-
-    val filterToolbar = ActionManager.getInstance().createActionToolbar("JsonPathEvaluateToolbar", buttonsGroup, true)
-    filterToolbar.setTargetComponent(this)
-    filterToolbar.setReservePlaceAutoPopupIcon(false)
-
-    val filtersWrapper = BorderLayoutPanel().apply {
-      border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0)
-      withPreferredHeight(SingleHeightTabs.UNSCALED_PREF_HEIGHT)
-
-      addToCenter(searchTextField)
-      addToRight(filterToolbar.component)
-    }
-
-    sourcePanel.addToTop(filtersWrapper)
-    sourcePanel.addToCenter(sourceEditor.component)
-
+    resultEditor.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0))
+    resultLabel.border = JBUI.Borders.empty(3, 6)
     resultWrapper.emptyText.text = JsonBundle.message("jsonpath.evaluate.no.result")
+    errorOutputContainer.border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0)
+
+    val historyButton = SearchHistoryButton(ShowHistoryAction(), false)
+    val historyButtonWrapper = NonOpaquePanel(BorderLayout())
+    historyButtonWrapper.border = JBUI.Borders.empty(3, 6, 3, 6)
+    historyButtonWrapper.add(historyButton, BorderLayout.NORTH)
+
+    searchWrapper.add(historyButtonWrapper, BorderLayout.WEST)
+    searchWrapper.add(searchTextField, BorderLayout.CENTER)
+    searchWrapper.border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0)
+    searchWrapper.isOpaque = true
+
     errorOutputArea.isEditable = false
     errorOutputArea.wrapStyleWord = true
     errorOutputArea.lineWrap = true
     errorOutputArea.border = JBUI.Borders.empty(10)
 
-    val splitter = OnePixelSplitter(0.5f)
-    splitter.firstComponent = sourcePanel
-    splitter.secondComponent = resultWrapper
-
-    setContent(splitter)
-
     setExpression("$..*")
-    setSource("{\n\n}")
-
-    val messageBusConnection = project.messageBus.connect(this)
-    messageBusConnection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager) {
-        val toolWindow = toolWindowManager.getToolWindow(EVALUATE_TOOLWINDOW_ID)
-        if (toolWindow != null) {
-          splitter.orientation = !toolWindow.anchor.isHorizontal
-        }
-      }
-    })
-
-    sourceEditor.document.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        expressionHighlightingQueue.queue(Update.create(this@JsonPathEvaluateView) {
-          resetExpressionHighlighting()
-        })
-      }
-    })
   }
 
-  private fun resetExpressionHighlighting() {
+  protected fun initToolbar() {
+    val actionGroup = DefaultActionGroup()
+    fillToolbarOptions(actionGroup)
+
+    val toolbar = ActionManager.getInstance().createActionToolbar("JsonPathEvaluateToolbar", actionGroup, true)
+    toolbar.setTargetComponent(this)
+
+    setToolbar(toolbar.component)
+  }
+
+  protected abstract fun getJsonFile(): JsonFile?
+
+  protected fun resetExpressionHighlighting() {
     val jsonPathFile = PsiDocumentManager.getInstance(project).getPsiFile(searchTextField.document)
     if (jsonPathFile != null) {
       // reset inspections in expression
@@ -175,49 +148,61 @@ internal class JsonPathEvaluateView(private val project: Project,
     }
   }
 
-  private fun createOptionsGroup(): ActionGroup {
-    val buttonsGroup = DefaultActionGroup()
-    buttonsGroup.add(DefaultActionGroup(JsonBundle.message("jsonpath.evaluate.options"), true).apply {
-      templatePresentation.icon = AllIcons.General.GearPlain
+  private fun fillToolbarOptions(group: DefaultActionGroup) {
+    val outputComboBox = object : ComboBoxAction() {
+      override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
+        val outputItems = DefaultActionGroup()
+        outputItems.add(OutputOptionAction(false, JsonBundle.message("jsonpath.evaluate.output.values")))
+        outputItems.add(OutputOptionAction(true, JsonBundle.message("jsonpath.evaluate.output.paths")))
+        return outputItems
+      }
 
-      add(OptionToggleAction(Option.AS_PATH_LIST, JsonBundle.message("jsonpath.evaluate.output.paths")))
+      override fun update(e: AnActionEvent) {
+        val presentation = e.presentation
+        if (e.project == null) return
+
+        presentation.text = if (evalOptions.contains(Option.AS_PATH_LIST)) {
+          JsonBundle.message("jsonpath.evaluate.output.paths")
+        }
+        else {
+          JsonBundle.message("jsonpath.evaluate.output.values")
+        }
+      }
+
+      override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+        val panel = JPanel(GridBagLayout())
+        panel.add(JLabel(JsonBundle.message("jsonpath.evaluate.output.option")),
+                  GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0))
+        panel.add(super.createCustomComponent(presentation, place),
+                  GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0))
+        return panel
+      }
+    }
+
+    group.add(outputComboBox)
+
+    group.add(DefaultActionGroup(JsonBundle.message("jsonpath.evaluate.options"), true).apply {
+      templatePresentation.icon = AllIcons.General.Settings
+
       add(OptionToggleAction(Option.SUPPRESS_EXCEPTIONS, JsonBundle.message("jsonpath.evaluate.suppress.exceptions")))
       add(OptionToggleAction(Option.ALWAYS_RETURN_LIST, JsonBundle.message("jsonpath.evaluate.return.list")))
       add(OptionToggleAction(Option.DEFAULT_PATH_LEAF_TO_NULL, JsonBundle.message("jsonpath.evaluate.nullize.missing.leaf")))
       add(OptionToggleAction(Option.REQUIRE_PROPERTIES, JsonBundle.message("jsonpath.evaluate.require.all.properties")))
     })
-
-    return buttonsGroup
   }
 
-  override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
-    if (pressed && e?.keyCode == KeyEvent.VK_ESCAPE) {
-      val focusOwner = FocusManager.getCurrentManager().focusOwner
-
-      if (SwingUtilities.isDescendingFrom(focusOwner, sourceEditor.component)) {
-        searchTextField.requestFocus()
-        return true
-      }
-    }
-    return super.processKeyBinding(ks, e, condition, pressed)
-  }
-
-  private fun initJsonEditor(fileName: String, isViewer: Boolean, kind: EditorKind): Editor {
+  protected fun initJsonEditor(fileName: String, isViewer: Boolean, kind: EditorKind): Editor {
     val sourceVirtualFile = LightVirtualFile(fileName, Json5FileType.INSTANCE, "")
     val sourceFile = PsiManager.getInstance(project).findFile(sourceVirtualFile)!!
     val document = PsiDocumentManager.getInstance(project).getDocument(sourceFile)!!
 
-    return EditorFactory.getInstance().createEditor(document, project, sourceVirtualFile, isViewer, kind)
+    val editor = EditorFactory.getInstance().createEditor(document, project, sourceVirtualFile, isViewer, kind)
+    editor.settings.isLineNumbersShown = false
+    return editor
   }
 
   fun setExpression(jsonPathExpr: String) {
     searchTextField.text = jsonPathExpr
-  }
-
-  fun setSource(json: String) {
-    WriteAction.run<Throwable> {
-      sourceEditor.document.setText(json)
-    }
   }
 
   private fun setResult(result: String) {
@@ -232,6 +217,8 @@ internal class JsonPathEvaluateView(private val project: Project,
 
     if (!resultWrapper.components.contains(resultEditor.component)) {
       resultWrapper.removeAll()
+      resultWrapper.add(resultLabel, BorderLayout.NORTH)
+
       resultWrapper.add(resultEditor.component, BorderLayout.CENTER)
       resultWrapper.revalidate()
       resultWrapper.repaint()
@@ -245,6 +232,8 @@ internal class JsonPathEvaluateView(private val project: Project,
 
     if (!resultWrapper.components.contains(errorOutputArea)) {
       resultWrapper.removeAll()
+      resultWrapper.add(resultLabel, BorderLayout.NORTH)
+
       resultWrapper.add(errorOutputContainer, BorderLayout.CENTER)
       resultWrapper.revalidate()
       resultWrapper.repaint()
@@ -252,8 +241,8 @@ internal class JsonPathEvaluateView(private val project: Project,
   }
 
   private fun evaluate() {
+    val expression = searchTextField.text
     val jsonPath: JsonPath = try {
-      val expression = searchTextField.text
       if (expression.isBlank()) return
       JsonPath.compile(expression)
     }
@@ -262,12 +251,19 @@ internal class JsonPathEvaluateView(private val project: Project,
       return
     }
 
+    addJSONPathToHistory(expression)
+
     val config = ConfigurationBuilder()
       .options(evalOptions)
       .build()
 
+    val json = getJsonFile()?.text
+    if (json == null) {
+      setError(JsonBundle.message("jsonpath.evaluate.file.not.found"))
+      return
+    }
+
     val jsonDocument: DocumentContext = try {
-      val json = sourceEditor.document.text
       JsonPath.parse(json, config)
     }
     catch (e: IllegalArgumentException) {
@@ -317,9 +313,20 @@ internal class JsonPathEvaluateView(private val project: Project,
   }
 
   override fun dispose() {
-    val editorFactory = EditorFactory.getInstance()
-    editorFactory.releaseEditor(sourceEditor)
-    editorFactory.releaseEditor(resultEditor)
+    EditorFactory.getInstance().releaseEditor(resultEditor)
+  }
+
+  private inner class OutputOptionAction(private val enablePaths: Boolean, @NlsActions.ActionText message: String) : DumbAwareAction(
+    message) {
+    override fun actionPerformed(e: AnActionEvent) {
+      if (enablePaths) {
+        evalOptions.add(Option.AS_PATH_LIST)
+      }
+      else {
+        evalOptions.remove(Option.AS_PATH_LIST)
+      }
+      evaluate()
+    }
   }
 
   private inner class OptionToggleAction(private val option: Option, @NlsActions.ActionText message: String) : ToggleAction(message) {
@@ -335,6 +342,103 @@ internal class JsonPathEvaluateView(private val project: Project,
         evalOptions.remove(option)
       }
       evaluate()
+    }
+  }
+
+  private class SearchHistoryButton constructor(action: AnAction, focusable: Boolean) :
+    ActionButton(action, action.templatePresentation.clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+
+    override fun getDataContext(): DataContext {
+      return DataManager.getInstance().getDataContext(this)
+    }
+
+    override fun getPopState(): Int {
+      return if (isSelected) SELECTED else super.getPopState()
+    }
+
+    override fun getIcon(): Icon {
+      if (isEnabled && isSelected) {
+        val selectedIcon = myPresentation.selectedIcon
+        if (selectedIcon != null) return selectedIcon
+      }
+      return super.getIcon()
+    }
+
+    init {
+      setLook(ActionButtonLook.INPLACE_LOOK)
+      isFocusable = focusable
+      updateIcon()
+    }
+  }
+
+  private fun getExpressionHistory(): List<String> {
+    return PropertiesComponent.getInstance().getValue(JSON_PATH_EVALUATE_HISTORY)?.split('\n') ?: emptyList()
+  }
+
+  private fun setExpressionHistory(history: Collection<String>) {
+    PropertiesComponent.getInstance().setValue(JSON_PATH_EVALUATE_HISTORY, history.joinToString("\n"))
+  }
+
+  private fun addJSONPathToHistory(path: String) {
+    if (path.isBlank()) return
+
+    val history = ArrayDeque(getExpressionHistory())
+    if (!history.contains(path)) {
+      history.addFirst(path)
+      if (history.size > 10) {
+        history.removeLast()
+      }
+      setExpressionHistory(history)
+    } else {
+      if (history.firstOrNull() == path) {
+        return
+      }
+      history.remove(path)
+      history.addFirst(path)
+      setExpressionHistory(history)
+    }
+  }
+
+  private inner class ShowHistoryAction : DumbAwareAction(FindBundle.message("find.search.history"), null,
+                                                          AllIcons.Actions.SearchWithHistory) {
+    private val popupState: PopupState<JBPopup?> = PopupState.forPopup()
+
+    override fun actionPerformed(e: AnActionEvent) {
+      if (popupState.isRecentlyHidden) return
+
+      val historyList = JBList(getExpressionHistory())
+      showCompletionPopup(searchWrapper, historyList, searchTextField, popupState)
+    }
+
+    init {
+      registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), searchTextField)
+    }
+
+    private fun showCompletionPopup(toolbarComponent: JComponent?,
+                                    list: JList<String>,
+                                    textField: EditorTextField,
+                                    popupState: PopupState<JBPopup?>) {
+      val builder: PopupChooserBuilder<*> = JBPopupFactory.getInstance().createListPopupBuilder(list)
+      val popup = builder
+        .setMovable(false)
+        .setResizable(false)
+        .setRequestFocus(true)
+        .setItemChoosenCallback(Runnable {
+          val selectedValue = list.selectedValue
+          if (selectedValue != null) {
+            textField.text = selectedValue
+            IdeFocusManager.getGlobalInstance().requestFocus(textField, false)
+          }
+        })
+        .createPopup()
+
+      popupState.prepareToShow(popup)
+      if (toolbarComponent != null) {
+        popup.showUnderneathOf(toolbarComponent)
+      }
+      else {
+        popup.showUnderneathOf(textField)
+      }
     }
   }
 }

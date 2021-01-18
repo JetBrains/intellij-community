@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil
 
 internal class JsonPathExportEvaluateResultAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT) ?: return
+    val project = e.project ?: return
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
     if (editor.getUserData(JSON_PATH_EVALUATE_RESULT_KEY) != true) return
