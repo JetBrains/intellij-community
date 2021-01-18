@@ -177,7 +177,7 @@ public class JBUI {
    * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static <T extends JBScalableIcon> T scale(@NotNull T icon) {
     return JBUIScale.scaleIcon(icon);
@@ -187,7 +187,7 @@ public class JBUI {
    * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     //noinspection unchecked
@@ -1275,7 +1275,7 @@ public class JBUI {
    * @deprecated Use {@link UserScaleContext}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static class BaseScaleContext extends UserScaleContext {
     @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
     public boolean update(@Nullable BaseScaleContext ctx) {
@@ -1291,7 +1291,7 @@ public class JBUI {
    * @deprecated Use {@link com.intellij.ui.scale.ScaleContext}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings({"ClassNameSameAsAncestorName", "MethodOverridesStaticMethodOfSuperclass"})
   public static final class ScaleContext extends com.intellij.ui.scale.ScaleContext {
     private ScaleContext() {
@@ -1328,7 +1328,7 @@ public class JBUI {
    * @deprecated Use {@link JBScalableIcon}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings("DeprecatedIsStillUsed")
   public abstract static class JBIcon<T extends JBScalableIcon> extends JBScalableIcon {
     public JBIcon() {

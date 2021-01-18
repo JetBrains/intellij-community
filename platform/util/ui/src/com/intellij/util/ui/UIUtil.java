@@ -3309,7 +3309,7 @@ public final class UIUtil {
    * @deprecated use {@link JreHiDpiUtil#isJreHiDPI(Graphics2D)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static boolean isJreHiDPI(@Nullable Graphics2D g) {
     return JreHiDpiUtil.isJreHiDPI(g);
   }
@@ -3319,7 +3319,7 @@ public final class UIUtil {
    */
   @SuppressWarnings("SpellCheckingInspection")
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static @NotNull Color getPanelBackgound() {
     return getPanelBackground();
   }
