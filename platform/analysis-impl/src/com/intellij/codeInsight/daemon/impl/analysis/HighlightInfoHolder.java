@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +33,18 @@ import java.util.List;
 
 public class HighlightInfoHolder {
   private final PsiFile myContextFile;
-  private final HighlightInfoFilter[] myFilters;
   private final AnnotationSession myAnnotationSession;
   private int myErrorCount;
   private final List<HighlightInfo> myInfos = new ArrayList<>(5);
+  private final Getter<HighlightInfoFilter[]> myFilters;
 
   public HighlightInfoHolder(@NotNull PsiFile contextFile, HighlightInfoFilter @NotNull ... filters) {
+    myContextFile = contextFile;
+    myAnnotationSession = new AnnotationSession(contextFile);
+    myFilters = () -> filters;
+  }
+
+  public HighlightInfoHolder(@NotNull PsiFile contextFile, Getter<HighlightInfoFilter[]> filters) {
     myContextFile = contextFile;
     myAnnotationSession = new AnnotationSession(contextFile);
     myFilters = filters;
@@ -96,7 +103,7 @@ public class HighlightInfoHolder {
   }
 
   private boolean accepted(@NotNull HighlightInfo info) {
-    for (HighlightInfoFilter filter : myFilters) {
+    for (HighlightInfoFilter filter : myFilters.get()) {
       if (!filter.accept(info, getContextFile())) return false;
     }
     return true;
