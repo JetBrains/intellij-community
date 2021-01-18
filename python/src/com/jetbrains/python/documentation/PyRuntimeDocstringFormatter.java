@@ -44,7 +44,7 @@ public class PyRuntimeDocstringFormatter {
     }
     if (sdk == null) {
       LOG.warn("Python SDK for docstring formatter " + format +  " is not found");
-      return HtmlChunk.p().attr("color", ColorUtil.toHtmlColor(JBColor.RED)).addText(missingInterpreterMessage).toString();
+      return HtmlChunk.p().attr("color", ColorUtil.toHtmlColor(JBColor.RED)).addRaw(missingInterpreterMessage).toString();
     }
 
     final String sdkHome = sdk.getHomePath();
