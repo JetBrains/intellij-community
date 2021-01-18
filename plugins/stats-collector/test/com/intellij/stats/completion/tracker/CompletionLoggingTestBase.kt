@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.completion.ml.tracker.CompletionFactorsInitializer
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.completion.Action
 import com.intellij.stats.completion.events.CompletionStartedEvent
@@ -47,7 +48,7 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
         trackedEvents.add(event)
       }
     }
-    return CompletionFileLogger("installation-uid", "completion-uid", "0", "", eventLogger)
+    return CompletionFileLogger("installation-uid", "completion-uid", "0", Language.ANY.displayName, eventLogger)
   }
 
   override fun setUp() {
