@@ -24,9 +24,9 @@ SET USER_JDK64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_option
 SET BITS=
 SET USER_JDK_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
 IF EXIST "%USER_JDK64_FILE%" (
-  SET /P JDK=<%USER_JDK64_FILE%
+  SET /P JDK=<"%USER_JDK64_FILE%"
 ) ELSE (
-  IF EXIST "%USER_JDK_FILE%" SET /P JDK=<%USER_JDK_FILE%
+  IF EXIST "%USER_JDK_FILE%" SET /P JDK=<"%USER_JDK_FILE%"
 )
 IF NOT "%JDK%" == "" (
   IF NOT EXIST "%JDK%" SET JDK="%IDE_HOME%\%JDK%"
