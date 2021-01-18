@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +26,8 @@ import java.util.Map;
 public abstract class ArchiveHandler {
   public static final long DEFAULT_LENGTH = 0L;
   public static final long DEFAULT_TIMESTAMP = -1L;
+  public static final FileAttributes DIRECTORY_ATTRIBUTES =
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE);
 
   protected static class EntryInfo {
     public final EntryInfo parent;
@@ -58,15 +60,18 @@ public abstract class ArchiveHandler {
     return myPath;
   }
 
-  @Nullable
-  public FileAttributes getAttributes(@NotNull String relativePath) {
-    if (relativePath.isEmpty()) {
-      return Files.exists(myPath.toPath()) ? new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE) : null;
+  public @Nullable FileAttributes getAttributes(@NotNull String relativePath) {
+    if (!relativePath.isEmpty()) {
+      EntryInfo e = getEntryInfo(relativePath);
+      if (e != null) {
+        return new FileAttributes(e.isDirectory, false, false, false, e.length, e.timestamp, false, FileAttributes.CaseSensitivity.SENSITIVE);
+      }
     }
-    else {
-      EntryInfo entry = getEntryInfo(relativePath);
-      return entry != null ? new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false, entry.isDirectory ? FileAttributes.CaseSensitivity.SENSITIVE: FileAttributes.CaseSensitivity.UNKNOWN) : null;
+    else if (Files.exists(myPath.toPath())) {
+      return DIRECTORY_ATTRIBUTES;
     }
+
+    return null;
   }
 
   public String @NotNull [] list(@NotNull String relativePath) {
