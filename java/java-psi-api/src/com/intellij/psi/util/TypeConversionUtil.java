@@ -331,7 +331,9 @@ public final class TypeConversionUtil {
   }
 
   /**
-   * Check if sealed class can be narrowed down to a given interface.
+   * Check if sealed class can be narrowed down to a given class.
+   * Check performed only if sealed class or class that it should be narrowed down to is an interface.
+   * 
    * Sealed class can be narrowed down to an interface in one of the following cases:
    * <ul>
    *  <li>sealed class implements interface
@@ -351,6 +353,7 @@ public final class TypeConversionUtil {
    * <p>See JEP-397 for more details.</p>
    */
   public static boolean canConvertSealedTo(@NotNull PsiClass sealedClass, @NotNull PsiClass psiClass) {
+    if (!sealedClass.isInterface() && !psiClass.isInterface()) return true;
     PsiReferenceList permitsList = sealedClass.getPermitsList();
     List<PsiClass> sealedSubClasses = new SmartList<>();
     boolean hasClassInheritors;

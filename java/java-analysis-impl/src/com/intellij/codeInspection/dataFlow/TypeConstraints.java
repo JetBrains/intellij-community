@@ -376,8 +376,10 @@ public final class TypeConstraints {
       }
       if (other instanceof ExactClass) {
         PsiClass otherClass = ((ExactClass)other).myClass;
-        if (otherClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(otherClass, myClass);
-        if (myClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(myClass, otherClass);
+        if (myClass.isInterface() || otherClass.isInterface()) {
+          if (otherClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(otherClass, myClass);
+          if (myClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(myClass, otherClass);
+        }
         if (myClass.isInterface() && otherClass.isInterface()) return true;
         if (myClass.isInterface() && !otherClass.hasModifierProperty(PsiModifier.FINAL)) return true;
         if (otherClass.isInterface() && !myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
