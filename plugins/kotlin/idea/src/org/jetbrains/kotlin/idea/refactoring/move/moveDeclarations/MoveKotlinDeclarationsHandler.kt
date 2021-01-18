@@ -33,6 +33,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getPackage
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinSelectNestedClassRefactoringDialog
@@ -72,7 +73,6 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
         targetPackageName: String,
         targetDirectory: PsiDirectory?,
         targetFile: KtFile?,
-        freezeTargets: Boolean,
         moveToPackage: Boolean,
         moveCallback: MoveCallback?
     ) = MoveKotlinTopLevelDeclarationsDialog(
@@ -81,7 +81,6 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
         targetPackageName,
         targetDirectory,
         targetFile,
-        freezeTargets,
         moveToPackage,
         moveCallback
     ).show()
@@ -100,13 +99,7 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
 class MoveKotlinDeclarationsHandler internal constructor(private val handlerActions: MoveKotlinDeclarationsHandlerActions) :
     MoveHandlerDelegate() {
 
-    private var freezeTargets: Boolean = true
-
     constructor() : this(defaultHandlerActions)
-
-    constructor(freezeTargets: Boolean) : this() {
-        this.freezeTargets = freezeTargets
-    }
 
     private fun getUniqueContainer(elements: Array<out PsiElement>): PsiElement? {
         val allTopLevel = elements.all { isTopLevelInFileOrScript(it) }
@@ -218,7 +211,6 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
                     targetPackageName,
                     targetDirectory,
                     targetFile,
-                    freezeTargets,
                     moveToPackage,
                     callback
                 )
