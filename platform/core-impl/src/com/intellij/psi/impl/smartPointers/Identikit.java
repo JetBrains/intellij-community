@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
-import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -144,11 +143,11 @@ public abstract class Identikit {
 
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(this)
-        .add("class", myElementClassName)
-        .add("elementType", myElementTypeId)
-        .add("fileLanguage", myFileLanguageId)
-        .toString();
+      return "Identikit(" +
+             "class='" + myElementClassName + '\'' +
+             ", elementType=" + myElementTypeId +
+             ", fileLanguage='" + myFileLanguageId + '\'' +
+             ')';
     }
 
     @Override
@@ -172,7 +171,7 @@ public abstract class Identikit {
     }
   }
 
-  static class ByAnchor extends Identikit {
+  static final class ByAnchor extends Identikit {
     private final ByType myElementInfo;
     private final ByType myAnchorInfo;
     private final SmartPointerAnchorProvider myAnchorProvider;
@@ -221,5 +220,4 @@ public abstract class Identikit {
       return myAnchorInfo.isForPsiFile();
     }
   }
-
 }

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -204,6 +203,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           // another thread has just committed it, everything's fine
           continue;
         }
+        @SuppressWarnings("TestOnlyProblems")
         boolean success = doCommitWithoutReparse(document);
         LOG.error("Committed document in uncommitted set: " + document + ", force-committed=" + success);
       }
@@ -258,7 +258,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                                                              true, myProject);
   }
 
-  @VisibleForTesting
+  @TestOnly
   public boolean doCommitWithoutReparse(@NotNull Document document) {
     return finishCommitInWriteAction(document, Collections.emptyList(), Collections.emptyList(), true, true);
   }
@@ -1005,7 +1005,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         // we can end up outside write action here if the document has forUseInNonAWTThread=true
         ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() ->
           ((AbstractFileViewProvider)viewProvider).onContentReload());
-      } 
+      }
       else if (FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
         ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() ->
           ((FileManagerImpl)fileManager).firePropertyChangedForUnloadedPsi());
