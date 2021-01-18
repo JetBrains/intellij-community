@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
@@ -8,12 +8,12 @@ import com.intellij.debugger.ui.breakpoints.EditInstanceFiltersDialog;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.text.LiteralFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -136,7 +136,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
     boolean changed = false;
     try {
-      String text = myPassCountField.getText().trim();
+      String text = LiteralFormatUtil.removeUnderscores(myPassCountField.getText().trim());
       int filter = !text.isEmpty() ? Integer.parseInt(text) : 0;
       if (filter < 0) filter = 0;
       changed = properties.setCOUNT_FILTER(filter);
