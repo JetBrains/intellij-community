@@ -110,10 +110,6 @@ public abstract class XmlExtension {
     return false;
   }
 
-  public boolean isImplicitlyLabelledTag(@NotNull XmlTag tag) {
-    return false;
-  }
-
   public HighlightInfoType getHighlightInfoType(XmlFile file) {
     return HighlightInfoType.ERROR;
   }
