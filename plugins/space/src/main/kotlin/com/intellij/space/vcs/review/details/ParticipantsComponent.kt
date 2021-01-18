@@ -96,7 +96,8 @@ internal open class ParticipantsComponent(
       users?.forEach { codeReviewParticipant ->
         val memberProfile = codeReviewParticipant.user.resolve()
         val fullName = memberProfile.englishFullName() // NON-NLS
-        val reviewerLabel = JLabel(avatarProvider.getIcon(memberProfile)).apply {
+        val reviewerLabel = JBLabel(avatarProvider.getIcon(memberProfile)).apply {
+          setCopyable(true)
           toolTipText = fullName
           text = fullName
         }

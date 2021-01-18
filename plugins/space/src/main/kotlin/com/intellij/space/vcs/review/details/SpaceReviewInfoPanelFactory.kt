@@ -37,12 +37,14 @@ import javax.swing.JPanel
 internal object SpaceReviewInfoPanelFactory {
   internal fun create(detailsVm: SpaceReviewDetailsVm<*>): JComponent = BorderLayoutPanel().apply {
     val titleComponent = HtmlEditorPane().apply {
-      font = font.deriveFont((font.size * 1.2).toFloat())
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+      font = font.deriveFont((font.size * 1.3).toFloat())
     }
 
     val createdByComponent = JBLabel().apply {
       font = JBUI.Fonts.smallFont()
       foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
+      setCopyable(true)
     }
 
     detailsVm.createdBy.forEach(detailsVm.lifetime) {
