@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
 import java.io.File
 import java.lang.System.Logger
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
 /**
  * Executes a Java class in a forked JVM.
@@ -44,8 +45,10 @@ fun runJava(mainClass: String,
 
     val exitCode = process.waitFor()
     if (exitCode != 0) {
-      throw RuntimeException("Cannot execute $mainClass (exitCode=$exitCode, args=$args, vmOptions=$jvmArgs, " +
-                             "classPath=${classPathStringBuilder.substring("-classpath".length)})")
+      // do not throw error, but log as error to reduce bloody groovy stacktrace
+      logger.debug { "classPath=${classPathStringBuilder.substring("-classpath".length)})" }
+      logger.log(Logger.Level.ERROR, null as ResourceBundle?,
+                 "Cannot execute $mainClass (exitCode=$exitCode, args=$args, vmOptions=$jvmArgs")
     }
   }
   finally {
