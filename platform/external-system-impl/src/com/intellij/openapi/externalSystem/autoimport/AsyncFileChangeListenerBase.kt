@@ -73,26 +73,19 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
 
       when (each) {
         is VFilePropertyChangeEvent -> if (each.isRename) {
-          val oldFile = each.file
-          val parent = oldFile.parent
           before {
-            process(oldFile, each)
+            process(each.file, each)
           }
           after {
-            val newName = each.newValue as String
-            val newFile = parent?.findChild(newName)
-            if (newFile != null) process(newFile, each)
+            process(each.file, each)
           }
         }
         is VFileMoveEvent -> {
-          val oldFile = each.file
-          val name = oldFile.name
           before {
-            process(oldFile, each)
+            process(each.file, each)
           }
           after {
-            val newFile = each.newParent.findChild(name)
-            if (newFile != null) process(newFile, each)
+            process(each.file, each)
           }
         }
         is VFileCopyEvent -> after {
