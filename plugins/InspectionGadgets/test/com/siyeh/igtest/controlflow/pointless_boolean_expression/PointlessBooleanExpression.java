@@ -97,6 +97,11 @@ class PointlessBooleanExpression {
     if (b = true)
       System.out.println("i == 1");
     System.out.println(b);
+
+    if (i == 1 && (<warning descr="'b &= true' can be simplified to 'b'">b &= true</warning>)) { }
+    if (i == 1 && (<warning descr="'b &= false' can be simplified to 'b=false'">b &= false</warning>)) { }
+    if (<warning descr="'b &= true' can be simplified to 'b'">b &= true</warning>) {}
+    if (<warning descr="'b &= false' can be simplified to 'b=false'">b &= false</warning>) {}
   }
 }
 class Presley {
