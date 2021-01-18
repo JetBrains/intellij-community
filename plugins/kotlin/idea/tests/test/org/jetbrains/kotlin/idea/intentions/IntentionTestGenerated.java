@@ -10723,6 +10723,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/joinDeclarationAndAssignment/singleConstructor.kt");
         }
 
+        @TestMetadata("usedInAssignment.kt")
+        public void testUsedInAssignment() throws Exception {
+            runTest("testData/intentions/joinDeclarationAndAssignment/usedInAssignment.kt");
+        }
+
         @TestMetadata("usedLocal.kt")
         public void testUsedLocal() throws Exception {
             runTest("testData/intentions/joinDeclarationAndAssignment/usedLocal.kt");

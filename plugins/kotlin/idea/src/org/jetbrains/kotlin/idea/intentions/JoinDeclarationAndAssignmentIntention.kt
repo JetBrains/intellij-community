@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.core.unblockDocument
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -58,12 +59,16 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         }
 
         val assignment = findAssignment(element) ?: return null
-        if (assignment.right?.let {
-                hasNoLocalDependencies(it, element) && assignment.analyze().let { context ->
-                    (element.isVar && !element.isLocal) ||
-                            equalNullableTypes(it.getType(context), context[BindingContext.TYPE, element.typeReference])
-                }
-            } != true) return null
+        val assignmentRight = assignment.right ?: return null
+        val context = assignment.analyze()
+        val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element]
+        if (assignmentRight.anyDescendantOfType<KtNameReferenceExpression> {
+                context[BindingContext.REFERENCE_TARGET, it] == propertyDescriptor
+            }) return null
+        if (!assignmentRight.let {
+                hasNoLocalDependencies(it, element) && ((element.isVar && !element.isLocal) ||
+                        equalNullableTypes(it.getType(context), context[BindingContext.TYPE, element.typeReference]))
+            }) return null
 
         return TextRange((element.modifierList ?: element.valOrVarKeyword).startOffset, (element.typeReference ?: element).endOffset)
     }
