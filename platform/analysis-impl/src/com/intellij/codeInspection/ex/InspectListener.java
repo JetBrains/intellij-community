@@ -4,10 +4,17 @@ package com.intellij.codeInspection.ex;
 public interface InspectListener {
   default void inspectionFinished(long start, long finish, long threadId, InspectionToolWrapper<?, ?> tool, InspectionKind kind) {}
 
+  default void activityFinished(long start, long finish, long threadId, ActivityKind activityKind) {}
+
   enum InspectionKind {
     LOCAL,
     LOCAL_PRIORITY,
     GLOBAL_SIMPLE,
     GLOBAL
+  }
+
+  enum ActivityKind {
+    REFERENCE_SEARCH,
+    GLOBAL_POST_RUN_ACTIVITIES
   }
 }

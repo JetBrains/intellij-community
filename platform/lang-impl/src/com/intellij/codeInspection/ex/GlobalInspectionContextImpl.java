@@ -76,6 +76,7 @@ import java.util.concurrent.*;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.*;
+import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenActivityFinished;
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenInspectionFinished;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
@@ -564,7 +565,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         try {
           if (tool.isGraphNeeded()) {
             try {
-              ((RefManagerImpl)getRefManager()).findAllDeclarations();
+              reportWhenActivityFinished(
+                myInspectTopicPublisher,
+                InspectListener.ActivityKind.REFERENCE_SEARCH,
+                () -> {
+                  ((RefManagerImpl)getRefManager()).findAllDeclarations();
+                });
             }
             catch (Throwable e) {
               getStdJobDescriptors().BUILD_GRAPH.setDoneAmount(0);
@@ -601,7 +607,16 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
       }
     }
+    reportWhenActivityFinished(
+      myInspectTopicPublisher,
+      InspectListener.ActivityKind.GLOBAL_POST_RUN_ACTIVITIES,
+      () -> {
+        processPostRunActivities(needRepeatSearchRequest);
+      });
+    addProblemsToView(globalTools);
+  }
 
+  private void processPostRunActivities(List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest) {
     for (GlobalInspectionContextExtension<?> extension : myExtensions.values()) {
       try {
         extension.performPostRunActivities(needRepeatSearchRequest, this);
@@ -613,8 +628,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         LOG.error(e);
       }
     }
-
-    addProblemsToView(globalTools);
   }
 
   public ActionCallback initializeViewIfNeeded() {
