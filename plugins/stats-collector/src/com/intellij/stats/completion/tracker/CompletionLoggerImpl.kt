@@ -1,22 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.ui.UISettings
-import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.stats.completion.events.*
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.util.CompletionUtil
-import com.intellij.completion.ml.util.prefix
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.stats.completion.LookupState
+import com.intellij.stats.completion.events.*
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
                            private val bucket: String,
-                           private val language: Language,
+                           private val languageName: String,
                            private val eventLogger: CompletionEventLogger) : CompletionLogger() {
   private val stateManager = LookupStateManager()
 
@@ -35,7 +33,7 @@ class CompletionFileLogger(private val installationUID: String,
 
     val event = CompletionStartedEvent(
       ideVersion, pluginVersion, mlRankingVersion,
-      installationUID, completionUID, language.displayName,
+      installationUID, completionUID, languageName,
       isExperimentPerformed, experimentVersion,
       state, userFactors, contextFactors,
       prefixLength = prefixLength, bucket = bucket,
@@ -60,13 +58,13 @@ class CompletionFileLogger(private val installationUID: String,
   }
 
   override fun customMessage(message: String, timestamp: Long) {
-    val event = CustomMessageEvent(installationUID, completionUID, message, bucket, timestamp, language.displayName)
+    val event = CustomMessageEvent(installationUID, completionUID, message, bucket, timestamp, languageName)
     eventLogger.log(event)
   }
 
   override fun afterCharTyped(c: Char, lookup: LookupImpl, prefixLength: Int, timestamp: Long) {
     val state = stateManager.update(lookup, true)
-    val event = TypeEvent(installationUID, completionUID, state, prefixLength, bucket, timestamp, language.displayName)
+    val event = TypeEvent(installationUID, completionUID, state, prefixLength, bucket, timestamp, languageName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)
@@ -74,7 +72,7 @@ class CompletionFileLogger(private val installationUID: String,
 
   override fun downPressed(lookup: LookupImpl, timestamp: Long) {
     val state = stateManager.update(lookup, false)
-    val event = DownPressedEvent(installationUID, completionUID, state, bucket, timestamp, language.displayName)
+    val event = DownPressedEvent(installationUID, completionUID, state, bucket, timestamp, languageName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)
@@ -82,21 +80,21 @@ class CompletionFileLogger(private val installationUID: String,
 
   override fun upPressed(lookup: LookupImpl, timestamp: Long) {
     val state = stateManager.update(lookup, false)
-    val event = UpPressedEvent(installationUID, completionUID, state, bucket, timestamp, language.displayName)
+    val event = UpPressedEvent(installationUID, completionUID, state, bucket, timestamp, languageName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)
   }
 
   override fun completionCancelled(explicitly: Boolean, performance: Map<String, Long>, timestamp: Long) {
-    val event = CompletionCancelledEvent(installationUID, completionUID, performance, explicitly, bucket, timestamp, language.displayName)
+    val event = CompletionCancelledEvent(installationUID, completionUID, performance, explicitly, bucket, timestamp, languageName)
     eventLogger.log(event)
   }
 
   override fun itemSelectedByTyping(lookup: LookupImpl, performance: Map<String, Long>, timestamp: Long) {
     val state = stateManager.update(lookup, true)
 
-    val event = TypedSelectEvent(installationUID, completionUID, state, state.selectedId, performance, bucket, timestamp, language.displayName)
+    val event = TypedSelectEvent(installationUID, completionUID, state, state.selectedId, performance, bucket, timestamp, languageName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)
@@ -105,7 +103,7 @@ class CompletionFileLogger(private val installationUID: String,
   override fun itemSelectedCompletionFinished(lookup: LookupImpl, completionChar: Char, performance: Map<String, Long>, timestamp: Long) {
     val state = stateManager.update(lookup, true)
     val event = ExplicitSelectEvent(installationUID, completionUID, state, state.selectedId, performance, completionChar,  bucket,
-                                    timestamp, language.displayName)
+                                    timestamp, languageName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)
@@ -114,7 +112,7 @@ class CompletionFileLogger(private val installationUID: String,
   override fun afterBackspacePressed(lookup: LookupImpl, prefixLength: Int, timestamp: Long) {
     val state = stateManager.update(lookup, true)
 
-    val event = BackspaceEvent(installationUID, completionUID, state, prefixLength, bucket, timestamp, language.displayName)
+    val event = BackspaceEvent(installationUID, completionUID, state, prefixLength, bucket, timestamp, languageName)
     event.fillCompletionParameters()
 
     eventLogger.log(event)

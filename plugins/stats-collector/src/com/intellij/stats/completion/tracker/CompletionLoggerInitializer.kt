@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -29,7 +29,7 @@ class CompletionLoggerInitializer : LookupTracker() {
       "php" to 0.2,
       "kotlin" to 0.2,
       "java" to 0.1,
-      "ecmascript 6" to 0.2,
+      "javascript" to 0.2,
       "typescript" to 0.5,
       "c/c++" to 0.5,
       "c#" to 0.1,
@@ -64,7 +64,7 @@ class CompletionLoggerInitializer : LookupTracker() {
   private fun actionsTracker(lookup: LookupImpl,
                              storage: MutableLookupStorage,
                              experimentInfo: ExperimentInfo): CompletionActionsListener {
-    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(storage.language)
+    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language))
     val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentInfo)
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }
@@ -78,8 +78,17 @@ class CompletionLoggerInitializer : LookupTracker() {
       return false
     }
 
-    val logSessionChance = LOGGED_SESSIONS_RATIO.getOrDefault(language.displayName.toLowerCase(), 1.0)
+    val logSessionChance = LOGGED_SESSIONS_RATIO.getOrDefault(getLoggingLanguageName(language).toLowerCase(), 1.0)
     return Random.nextDouble() < logSessionChance
+  }
+
+  private fun getLoggingLanguageName(language: Language): String {
+    Language.findLanguageByID("JavaScript")?.let { js ->
+      if (language.isKindOf(js) && !language.displayName.contains("TypeScript", ignoreCase = true)) {
+        return "JavaScript"
+      }
+    }
+    return language.displayName
   }
 
   private class LookupActionsListener private constructor(): AnActionListener {

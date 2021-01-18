@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Document
@@ -62,7 +61,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
     val loggerProvider = CompletionFileLoggerProvider()
 
-    val logger = loggerProvider.newCompletionLogger(Language.ANY)
+    val logger = loggerProvider.newCompletionLogger("")
 
     val documentMock = mock(Document::class.java).apply {
       `when`(text).thenReturn("")
