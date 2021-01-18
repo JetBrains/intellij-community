@@ -380,6 +380,10 @@
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor"/>
     <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.flake8.Flake8SuppressingCommentLocalityDetector"/>
 
+    <!-- # type: ignore -->
+    <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.typeignore.TypeIgnoreInspectionSuppressor"/>
+    <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.typeignore.TypeIgnoreSuppressingCommentLocalityDetector"/>
+
     <!-- Pipenv -->
     <editorFactoryListener implementation="com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcher"/>
 

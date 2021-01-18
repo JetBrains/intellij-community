@@ -36,6 +36,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyTypingAnnotationInjector extends PyInjectorBase {
   public static final Pattern RE_TYPING_ANNOTATION = Pattern.compile("\\s*\\S+(\\[.*\\])?\\s*");
 
+  private static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("#\\s*type:\\s*ignore(\\[[^]#]*])?\\s*($|(#.*))", Pattern.CASE_INSENSITIVE);
+
   @Override
   protected PyInjectionUtil.InjectionResult registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     // Handles only string literals containing quoted types
@@ -85,7 +87,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     final String annotationText = PyTypingTypeProvider.getTypeCommentValue(text);
     if (annotationText != null) {
       final Language language;
-      if (PyTypingTypeProvider.IGNORE_PATTERN.matcher(annotationText).matches()) {
+      if (PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(text).matches()) {
         language = null;
       }
       else if (isFunctionTypeComment(host)) {
@@ -136,5 +138,12 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
 
   private static boolean isTypingAnnotation(@NotNull String s) {
     return RE_TYPING_ANNOTATION.matcher(s).matches();
+  }
+
+  public static boolean isTypeIgnoreComment(@NotNull PsiElement comment) {
+    if (!(comment instanceof PsiComment)) return false;
+    String text = comment.getText();
+    if (text == null) return false;
+    return TYPE_IGNORE_PATTERN.matcher(text).matches();
   }
 }

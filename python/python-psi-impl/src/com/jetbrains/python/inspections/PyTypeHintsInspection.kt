@@ -133,7 +133,7 @@ class PyTypeHintsInspection : PyInspection() {
 
       if (node is PyTypeCommentOwner &&
           node is PyAnnotationOwner &&
-          node.typeCommentAnnotation.let { it != null && !PyTypingTypeProvider.IGNORE_PATTERN.matcher(it).matches() }) {
+          node.typeComment?.text.let { it != null && !PyTypingTypeProvider.TYPE_IGNORE_PATTERN.matcher(it).matches() }) {
         val message = PyPsiBundle.message("INSP.type.hints.type.specified.both.in.type.comment.and.annotation")
 
         if (node is PyFunction) {
