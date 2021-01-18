@@ -14,7 +14,7 @@ import java.text.ChoiceFormat
 
 class DevKitPropertiesQuotesValidationInspection : PropertiesInspectionBase() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    if (!DevKitInspectionBase.isAllowed(holder)) {
+    if (!DevKitInspectionBase.isAllowed(holder.file)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     return object : PsiElementVisitor() {
