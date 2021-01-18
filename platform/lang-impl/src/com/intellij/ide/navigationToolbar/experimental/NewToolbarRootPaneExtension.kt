@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.project.Project
@@ -21,16 +20,12 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.SeparatorOrientation
-import com.intellij.util.containers.stream
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NotNull
 import java.awt.BorderLayout
-import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -44,11 +39,13 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   }
 
   private val myPanelWrapper = JPanel(BorderLayout())
-  private val myPanel: JPanel = object : JPanel(MigLayout("fillx,novisualpadding,ins 0 ${JBUI.scale(5)} 0 ${JBUI.scale(2)},righttoleft", "[shrink 1][shrink 2]push[shrink 0]")) {
+  private val myPanel: JPanel = object : JPanel(
+    MigLayout("fillx,novisualpadding,ins 0 ${JBUI.scale(5)} 0 ${JBUI.scale(2)},righttoleft", "[shrink 1][shrink 2]push[shrink 0]")) {
     init {
       isOpaque = true
       border = BorderFactory.createEmptyBorder()
     }
+
     override fun getComponentGraphics(graphics: Graphics?): Graphics {
       return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
     }
@@ -71,41 +68,26 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
   }
 
   private fun addGroupComponent(panel: JPanel, layoutConstrains: String, vararg children: AnAction) {
-      for (c in children) {
-        when (c) {
-          is CustomComponentAction -> {
-            val toolbar = ActionManager.getInstance ().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
-                                                                           DefaultActionGroup(c), true) as ActionToolbarImpl
-            toolbar.updateActionsImmediately()
-            toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
-            toolbar.border = JBUI.Borders.empty()
-            toolbar.minimumSize = Dimension(0, 0)
-            toolbar.addNotify()
-            panel.add(toolbar, "$layoutConstrains, shrink 0")
+    for (c in children) {
+      when (c) {
+        is Separator -> {
+          panel.add(SeparatorComponent(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(),
+                                       SeparatorOrientation.VERTICAL),
+                    "$layoutConstrains, height 80%!")
+        }
 
-          }
-          is Separator -> {
-            panel.add(SeparatorComponent(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(),
-                                         SeparatorOrientation.VERTICAL),
-                      "$layoutConstrains, height 80%!")
-          }
-          is ActionGroup -> {
-            val toolbar = ActionManager.getInstance ().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
-                                                                                              c, true) as ActionToolbarImpl
-            toolbar.updateActionsImmediately()
-            toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
-            toolbar.border = JBUI.Borders.empty()
-            toolbar.addNotify()
-            panel.add(toolbar, layoutConstrains)
-          }
-
-          is AnAction -> {
-            val actionButton = ActionButton(c, myPresentationFactory.getPresentation(c), ActionPlaces.NEW_TOOLBAR,
-                                            ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
-            panel.add(actionButton, layoutConstrains)
-          }
+        else -> {
+          val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
+                                                                        if (c is ActionGroup) c else DefaultActionGroup(c),
+                                                                        true) as ActionToolbarImpl
+          toolbar.updateActionsImmediately()
+          toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
+          toolbar.border = JBUI.Borders.empty()
+          toolbar.addNotify()
+          panel.add(toolbar, if (c is CustomComponentAction) "$layoutConstrains, shrink 0" else layoutConstrains)
         }
       }
+    }
   }
 
   override fun getKey(): String {
