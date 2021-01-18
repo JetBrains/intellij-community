@@ -118,6 +118,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Update indexes
     indexes.entityAdded(pEntityData, this)
 
+    LOG.debug { "New entity added: $clazz-${pEntityData.id}" }
+
     return pEntityData.createEntity(this)
   }
 
@@ -216,9 +218,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   override fun removeEntity(e: WorkspaceEntity) {
+    LOG.debug { "Removing ${e.javaClass}..." }
     e as WorkspaceEntityBase
     val removedEntities = removeEntity(e.id)
-    removedEntities.forEach { this.changeLog.addRemoveEvent(it) }
+
+    removedEntities.forEach {
+      LOG.debug { "Cascade removing: ${ClassToIntConverter.getClassOrDie(it.clazz)}-${it.arrayId}" }
+      this.changeLog.addRemoveEvent(it)
+    }
   }
 
   private fun ArrayListMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
