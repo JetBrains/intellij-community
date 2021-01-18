@@ -13,7 +13,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
-import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -135,20 +134,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
-      private var insideGetData = 0
-
       override fun getData(dataId: String): Any? {
-        insideGetData++
-        try {
-          return when {
-            PlatformDataKeys.HELP_ID.`is`(dataId) -> executor.helpId
-            insideGetData == 1 -> DataManager.getInstance().getDataContext(contentManager.component).getData(dataId)
-            else -> null
-          }
-        }
-        finally {
-          insideGetData--
-        }
+        if (PlatformDataKeys.HELP_ID.`is`(dataId)) return executor.helpId
+        return null
       }
     })
     ContentManagerWatcher.watchContentManager(toolWindow, contentManager)
