@@ -29,11 +29,14 @@ public interface TargetPopupPresentationBuilder {
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPopupPresentationBuilder containerText(@Nls @Nullable String text);
 
+  @Contract(value = "_, _ -> new", pure = true)
+  @NotNull TargetPopupPresentationBuilder containerText(@Nls @Nullable String text, @Nullable TextAttributes attributes);
+
   /**
    * @see com.intellij.codeInsight.navigation.UtilKt#fileStatusAttributes
    */
-  @Contract(value = "_, _ -> new", pure = true)
-  @NotNull TargetPopupPresentationBuilder containerText(@Nls @Nullable String text, @Nullable TextAttributes attributes);
+  @Contract(value = "_ -> new", pure = true)
+  @NotNull TargetPopupPresentationBuilder containerTextAttributes(@Nullable TextAttributes attributes);
 
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPopupPresentationBuilder locationText(@Nls @Nullable String text);

@@ -44,6 +44,10 @@ internal data class TargetPopupPresentationBuilderImpl(
     return copy(containerText = text, containerTextAttributes = attributes)
   }
 
+  override fun containerTextAttributes(attributes: TextAttributes?): TargetPopupPresentationBuilder {
+    return copy(containerTextAttributes = attributes)
+  }
+
   override fun locationText(text: String?): TargetPopupPresentationBuilder {
     return copy(locationText = text)
   }
