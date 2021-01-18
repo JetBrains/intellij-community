@@ -45,7 +45,7 @@ class GradleActionTest extends GradleHighlightingBaseTest {
            ' implementation("group:artifact") {\n' +
            '  version { <caret> }\n' +
            '}') {
-      closureDelegateTest(GRADLE_API_TASKS_JAVADOC_JAVADOC, 1)
+      closureDelegateTest("org.gradle.api.artifacts.MutableVersionConstraint", 1)
     }
   }
 }
