@@ -18,6 +18,16 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     assertContainsElements(variants, "bar.func", "baz.quux.func");
   }
 
+  public void testQualifiedNamesAlwaysMatchedByFirstComponentOfQualifierWithEmptyAttributeName() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertNotNull(variants);
+    assertDoesntContain(variants, "foo.bar.func");
+    assertContainsElements(variants, "bar.func", "bar.func1");
+  }
+
   public void testQualifiedNameMatcherTest() {
     QualifiedNameMatcher matcher = new QualifiedNameMatcher(QualifiedName.fromDottedString("foo.bar.baz"));
     assertTrue(matcher.prefixMatches("foo.bar.baz"));
@@ -33,6 +43,20 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     assertTrue(matcher.prefixMatches("foo.bar.xxx.baz"));
     assertFalse(matcher.prefixMatches("foo.bar.baz.xxx"));
     assertFalse(matcher.prefixMatches("xxx.foo.bar.baz"));
+  }
+
+  public void testImportForModuleFunctionIsAdded() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+  }
+
+  public void testImportForModuleClassIsAdded() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
   }
 
   @Override
