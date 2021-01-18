@@ -2,21 +2,12 @@
 package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewRecord
-import com.intellij.ide.BrowserUtil
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
-import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.utils.SpaceUrls
-import com.intellij.space.utils.formatPrettyDateTime
-import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SideBorder
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 
 internal class SpaceReviewInfoTabPanel(
@@ -44,6 +35,8 @@ internal class SpaceReviewInfoTabPanel(
       secondComponent = BorderLayoutPanel()
         .addToTop(treeActionsToolbarPanel)
         .addToCenter(tree)
+      isOpaque = true
+      background = UIUtil.getListBackground()
     }.also {
       addToCenter(it)
     }

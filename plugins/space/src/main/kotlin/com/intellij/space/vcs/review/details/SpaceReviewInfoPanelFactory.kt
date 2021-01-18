@@ -4,6 +4,7 @@ package com.intellij.space.vcs.review.details
 import circlet.client.api.englishFullName
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.space.messages.SpaceBundle
@@ -29,6 +30,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.FlowLayout
+import java.beans.PropertyChangeListener
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -118,6 +120,7 @@ internal object SpaceReviewInfoPanelFactory {
 
     val contentPanel: JPanel = ScrollablePanel(VerticalLayout(JBUI.scale(8))).apply {
       border = JBUI.Borders.empty(8)
+      isOpaque = false
       add(projectDetails)
 
       if (detailsVm is MergeRequestDetailsVm) {
@@ -130,13 +133,16 @@ internal object SpaceReviewInfoPanelFactory {
       add(openTimelineLinkLabel)
       add(actionsPanel)
     }.also { scrollablePanel ->
-      ScrollPaneFactory.createScrollPane(scrollablePanel, true)
+      ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
+        isOpaque = false
+        viewport.isOpaque = false
+      }
     }
 
     return topLevelPanel.apply {
+      andOpaque()
+      background = UIUtil.getListBackground()
       addToCenter(contentPanel)
-      UIUtil.setOpaqueRecursively(this, true)
-      UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
     }
   }
 
@@ -165,7 +171,10 @@ private fun addListPanel(panel: JPanel, label: JLabel, jComponent: JComponent) {
 private fun optionButton(builder: () -> List<SpaceReviewAction>): JBOptionButton {
   val actions = builder()
   val options: Array<Action> = actions.tail().toTypedArray()
-  return JBOptionButton(actions.firstOrNull(), options.ifEmpty { null })
+  return JBOptionButton(actions.firstOrNull(), options.ifEmpty { null }).apply {
+    isOpaque = false
+    background = UIUtil.getListBackground()
+  }
 }
 
 private fun createDirectionPanel(detailsVm: MergeRequestDetailsVm): NonOpaquePanel {
@@ -180,13 +189,29 @@ private fun createDirectionPanel(detailsVm: MergeRequestDetailsVm): NonOpaquePan
     val target = detailsVm.targetBranchInfo.value?.displayName // NON-NLS
     val source = detailsVm.sourceBranchInfo.value?.displayName // NON-NLS
 
-    add(JLabel("$repo: "))
-    add(JLabel(target), CC())
-    add(JLabel(" ${UIUtil.leftArrow()} ").apply {
+    if (target == null || source == null) return@apply
+
+    val repoLabel = JLabel("$repo${FontUtil.spaceAndThinSpace()}/${FontUtil.spaceAndThinSpace()}")
+      .apply { foreground = CurrentBranchComponent.TEXT_COLOR }
+    add(repoLabel)
+    add(branchLabel(target), CC())
+    add(JLabel("${FontUtil.spaceAndThinSpace()}${UIUtil.leftArrow()}${FontUtil.spaceAndThinSpace()}").apply {
       foreground = CurrentBranchComponent.TEXT_COLOR
-      border = JBUI.Borders.empty(0, 5)
     })
-    add(JLabel(source), CC())
+    add(branchLabel(source), CC())
   }
 }
+
+private fun branchLabel(@NlsContexts.Label text: String): JBLabel {
+  return JBLabel(text).apply {
+    border = JBUI.Borders.empty(0, 3)
+    addPropertyChangeListener("UI", PropertyChangeListener {
+      foreground = CurrentBranchComponent.TEXT_COLOR
+      background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
+    })
+    foreground = CurrentBranchComponent.TEXT_COLOR
+    background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
+  }.andOpaque()
+}
+
 
