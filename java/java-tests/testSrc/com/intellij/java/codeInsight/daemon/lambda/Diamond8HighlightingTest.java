@@ -113,6 +113,8 @@ public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testNestedDiamondsAnonymousCase() { doTest();}
 
+  public void testDiamondsUncheckedWarning() { doTest();}
+
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
