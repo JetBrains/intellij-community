@@ -396,7 +396,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
     myDisposeHelper.dispose(() -> {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
-      if (myLifeSpanHandler != null) myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
       if (myLoadHandler != null) myCefClient.removeLoadHandler(myLoadHandler, myCefBrowser);
       myCefBrowser.stopLoad();
       myCefBrowser.close(true);
