@@ -409,7 +409,7 @@ public final class MavenDomUtil {
                                                        @Nullable Editor editor,
                                                        @NotNull final MavenId id) {
 
-    return createDomDependency(model.getDependencies(), editor, (MavenCoordinate)id);
+    return createDomDependency(model.getDependencies(), editor, id);
   }
 
 

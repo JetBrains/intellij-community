@@ -491,7 +491,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                          null,
                                          importingSettings.isDownloadSourcesAutomatically(),
                                          importingSettings.isDownloadDocsAutomatically(),
-                                         (AsyncPromise<DownloadResult>)null);
+                                         null);
           }
 
           if (!projectWithChanges.first.hasReadingProblems() && projectWithChanges.first.hasUnresolvedPlugins()) {

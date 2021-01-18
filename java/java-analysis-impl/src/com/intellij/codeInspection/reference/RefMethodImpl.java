@@ -290,7 +290,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
     setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(body));
-    refUtil.addTypeReference((UElement)method, method.getReturnType(), getRefManager(), this);
+    refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
 
     for (RefParameter parameter : getParameters()) {
       UParameter uParameter = parameter.getUastElement();

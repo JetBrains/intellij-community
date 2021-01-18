@@ -2,8 +2,6 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class DownloadAllSourcesAndDocsAction extends MavenProjectsManagerAction {
@@ -22,7 +20,6 @@ public class DownloadAllSourcesAndDocsAction extends MavenProjectsManagerAction 
 
   @Override
   protected void perform(@NotNull MavenProjectsManager manager) {
-    manager.scheduleArtifactsDownloading(manager.getProjects(), null, mySources, myDocs,
-                                         (AsyncPromise<MavenArtifactDownloader.DownloadResult>)null);
+    manager.scheduleArtifactsDownloading(manager.getProjects(), null, mySources, myDocs, null);
   }
 }
