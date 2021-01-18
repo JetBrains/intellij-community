@@ -2,14 +2,25 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import java.util.*
 
 interface SEResultsEqualityProvider {
-  enum class SEEqualElementsActionType {
-    DO_NOTHING, SKIP, REPLACE
+  sealed class SEEqualElementsActionType {
+    object DoNothing : SEEqualElementsActionType() {
+      override fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType = another
+    }
+    object Skip : SEEqualElementsActionType() {
+      override fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType = if (another is Replace) another else this
+    }
+    data class Replace(val toBeReplaced: List<SearchEverywhereFoundElementInfo>) : SEEqualElementsActionType() {
+      constructor(toBeReplaced: SearchEverywhereFoundElementInfo) : this(listOf(toBeReplaced))
+
+      override fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType =
+        if (another is Replace) Replace(toBeReplaced + another.toBeReplaced) else this
+    }
+    abstract fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType
   }
 
-  fun compareItems(newItem: SearchEverywhereFoundElementInfo, alreadyFoundItem: SearchEverywhereFoundElementInfo): SEEqualElementsActionType
+  fun compareItems(newItem: SearchEverywhereFoundElementInfo, alreadyFoundItems: List<SearchEverywhereFoundElementInfo>): SEEqualElementsActionType
 
   companion object {
     @JvmStatic
@@ -20,11 +31,11 @@ interface SEResultsEqualityProvider {
     fun composite(providers: Collection<SEResultsEqualityProvider>): SEResultsEqualityProvider {
       return object : SEResultsEqualityProvider {
         override fun compareItems(newItem: SearchEverywhereFoundElementInfo,
-                                  alreadyFoundItem: SearchEverywhereFoundElementInfo): SEEqualElementsActionType {
+                                  alreadyFoundItems: List<SearchEverywhereFoundElementInfo>): SEEqualElementsActionType {
           return providers.asSequence()
-                   .map { provider: SEResultsEqualityProvider -> provider.compareItems(newItem, alreadyFoundItem) }
-                   .firstOrNull { action: SEEqualElementsActionType -> action != SEEqualElementsActionType.DO_NOTHING }
-                 ?: SEEqualElementsActionType.DO_NOTHING
+                   .map { provider: SEResultsEqualityProvider -> provider.compareItems(newItem, alreadyFoundItems) }
+                   .firstOrNull { action: SEEqualElementsActionType -> action != SEEqualElementsActionType.DoNothing }
+                 ?: SEEqualElementsActionType.DoNothing
         }
       }
     }
