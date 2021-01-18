@@ -588,9 +588,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
-        if (ktChangeInfo.checkUsedParameters) {
-            checkParametersToDelete(ktChangeInfo, result)
-            findReceiverUsages(ktChangeInfo, result)
+        val parametersToRemove = ktChangeInfo.parametersToRemove
+        val isRemoveReceiver = ktChangeInfo.isRemoveReceiver
+        if (ktChangeInfo.checkUsedParameters && function is KtCallableDeclaration) {
+            checkParametersToDelete(function, parametersToRemove, result)
+            if (isRemoveReceiver) findReceiverUsages(function, result)
         }
 
         for (parameter in ktChangeInfo.getNonReceiverParameters()) {
@@ -633,20 +635,28 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
 
         for (usageInfo in usageInfos) {
-            if (usageInfo !is KotlinCallerUsage) continue
-            val callerDescriptor = usageInfo.element?.resolveToDescriptorIfAny() ?: continue
-            findParameterDuplicationInCaller(result, ktChangeInfo, usageInfo.element!!, callerDescriptor)
+            when (usageInfo) {
+                is KotlinCallableDefinitionUsage<*> -> {
+                    val declaration = usageInfo.declaration as? KtCallableDeclaration ?: continue
+                    if (ktChangeInfo.checkUsedParameters) {
+                        checkParametersToDelete(declaration, parametersToRemove, result)
+                        if (isRemoveReceiver) findReceiverUsages(declaration, result)
+                    }
+                }
+                is KotlinCallerUsage -> {
+                    val callerDescriptor = usageInfo.element?.resolveToDescriptorIfAny() ?: continue
+                    findParameterDuplicationInCaller(result, ktChangeInfo, usageInfo.element!!, callerDescriptor)
+                }
+            }
         }
 
         return result
     }
 
-    private fun findReceiverUsages(changeInfo: KotlinChangeInfo, result: MultiMap<PsiElement, String>) {
-        val callableDeclaration = changeInfo.method as? KtCallableDeclaration ?: return
-        val newReceiverInfo = changeInfo.receiverParameterInfo
-        val originalReceiverInfo = changeInfo.methodDescriptor.receiver
-        if (newReceiverInfo != null || originalReceiverInfo == null || originalReceiverInfo in changeInfo.getNonReceiverParameters()) return
-        
+    private fun findReceiverUsages(
+        callableDeclaration: KtCallableDeclaration,
+        result: MultiMap<PsiElement, String>,
+    ) {
         var hasUsage = false
         callableDeclaration.accept(referenceExpressionRecursiveVisitor(fun(referenceExpression: KtReferenceExpression) {
             if (hasUsage) return
@@ -675,16 +685,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
     }
 
-    private fun checkParametersToDelete(info: KotlinChangeInfo, result: MultiMap<PsiElement, String>) {
-        val callableDeclaration = info.method as? KtCallableDeclaration ?: return
-        val methodDescriptor = info.methodDescriptor
-        val toRemove = BooleanArray(methodDescriptor.parametersCount) { true }
-        for (parameter in info.newParameters) {
-            parameter.oldIndex.takeIf { it >= 0 }?.let { oldIndex ->
-                toRemove[oldIndex] = false
-            }
-        }
-
+    private fun checkParametersToDelete(
+        callableDeclaration: KtCallableDeclaration,
+        toRemove: BooleanArray,
+        result: MultiMap<PsiElement, String>,
+    ) {
         val scope = LocalSearchScope(callableDeclaration)
         for ((i, parameter) in callableDeclaration.valueParameters.withIndex()) {
             if (toRemove[i]) {

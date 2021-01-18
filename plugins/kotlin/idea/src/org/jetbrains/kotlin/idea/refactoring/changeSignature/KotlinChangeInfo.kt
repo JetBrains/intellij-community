@@ -119,6 +119,22 @@ open class KotlinChangeInfo(
     var originalToCurrentMethods: Map<PsiMethod, PsiMethod> = emptyMap()
         private set
 
+    val parametersToRemove: BooleanArray get() {
+        val toRemove = BooleanArray(methodDescriptor.parametersCount) { true }
+        for (parameter in newParameters) {
+            parameter.oldIndex.takeIf { it >= 0 }?.let { oldIndex ->
+                toRemove[oldIndex] = false
+            }
+        }
+
+        return toRemove
+    }
+
+    val isRemoveReceiver: Boolean get() {
+        val originalReceiverInfo = methodDescriptor.receiver
+        return receiverParameterInfo == null && originalReceiverInfo != null && originalReceiverInfo !in getNonReceiverParameters()
+    }
+
     fun getOldParameterIndex(oldParameterName: String): Int? = oldNameToParameterIndex[oldParameterName]
 
     override fun isParameterTypesChanged(): Boolean = true

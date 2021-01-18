@@ -421,6 +421,24 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    fun testRemoveParameterInParentConflict() {
+        doTestConflict {
+            removeParameter(0)
+        }
+    }
+
+    fun testRemoveParameterInParentConflict2() {
+        doTestConflict {
+            removeParameter(0)
+        }
+    }
+
+    fun testRemoveParameterInParentConflict3() {
+        doTestConflict {
+            removeParameter(0)
+        }
+    }
+
     fun testRemoveUsedReceiverExplicitThis() {
         doTestConflict {
             removeParameter(0)
@@ -833,6 +851,18 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testRemoveReceiverConflict() {
+        doTestConflict { removeParameter(0) }
+    }
+
+    fun testRemoveReceiverInParentConflict() {
+        doTestConflict { removeParameter(0) }
+    }
+
+    fun testRemoveReceiverInParentConflict2() {
+        doTestConflict { removeParameter(0) }
+    }
+
+    fun testRemoveReceiverInParentConflict3() {
         doTestConflict { removeParameter(0) }
     }
 
