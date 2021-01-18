@@ -275,14 +275,13 @@ final class ClassLoaderConfigurator {
     }
     else if (descriptor.descriptorPath == null && idString.equals("com.intellij.diagram")) {
       // multiple packages - intellij.diagram and intellij.diagram.impl modules
-      return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
-                                   descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory) {
-        @Override
-        protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
-          return super.isDefinitelyAlienClass(name, packagePrefix) &&
-                 !name.startsWith("com.intellij.diagram.");
-        }
-      };
+      return createPluginClassLoaderWithExtraPackage(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                                     "com.intellij.diagram.");
+    }
+    else if (descriptor.descriptorPath == null && idString.equals("com.intellij.struts2")) {
+      // multiple packages - intellij.diagram and intellij.diagram.impl modules
+      return createPluginClassLoaderWithExtraPackage(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
+                                                     "com.intellij.lang.ognl.");
     }
     else if (descriptor.descriptorPath == null && idString.equals("com.intellij.kubernetes") &&
              descriptor.dependenciesDescriptor != null /* old plugin version */) {
@@ -307,6 +306,22 @@ final class ClassLoaderConfigurator {
       return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
                                    descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory);
     }
+  }
+
+  private static @NotNull PluginClassLoader createPluginClassLoaderWithExtraPackage(@NotNull ClassLoader @NotNull [] parentLoaders,
+                                                                                    @NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                                    @NotNull UrlClassLoader.Builder urlClassLoaderBuilder,
+                                                                                    @NotNull ClassLoader coreLoader,
+                                                                                    @Nullable ClassPath.ResourceFileFactory resourceFileFactory,
+                                                                                    @NotNull String customPackage) {
+    return new PluginClassLoader(urlClassLoaderBuilder, parentLoaders,
+                                 descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory) {
+      @Override
+      protected boolean isDefinitelyAlienClass(@NotNull String name, @NotNull String packagePrefix) {
+        return super.isDefinitelyAlienClass(name, packagePrefix) &&
+               !name.startsWith(customPackage);
+      }
+    };
   }
 
   private static final class ContentPredicateBasedPluginClassLoader extends PluginClassLoader {
