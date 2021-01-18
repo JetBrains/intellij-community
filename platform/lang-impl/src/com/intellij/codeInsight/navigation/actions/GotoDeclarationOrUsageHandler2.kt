@@ -10,7 +10,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
@@ -72,11 +72,11 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
 
   private fun showUsages(project: Project, editor: Editor, file: PsiFile, searchTargets: List<TargetVariant>) {
     require(searchTargets.isNotEmpty())
-    val contextMap: Map<String, Any> = mapOf(
-      CommonDataKeys.PSI_FILE.name to file,
-      CommonDataKeys.EDITOR.name to editor
-    )
-    val dataContext = SimpleDataContext.getSimpleContext(contextMap, DataContext.EMPTY_CONTEXT)
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PSI_FILE, file)
+      .add(CommonDataKeys.EDITOR, editor)
+      .add(PlatformDataKeys.CONTEXT_COMPONENT, editor.contentComponent)
+      .build()
     showUsages(project, dataContext, searchTargets)
   }
 
