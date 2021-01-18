@@ -96,12 +96,12 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.PROJECT) {
       listOf(
         JavaSearchEverywhereLesson(it),
+        FindInFilesLesson(it, lang, "src/warehouse/FindInFilesSample.java"),
         JavaFileStructureLesson(it),
         JavaDeclarationAndUsagesLesson(it),
         JavaInheritanceHierarchyLesson(it),
         JavaRecentFilesLesson(it),
         JavaOccurrencesLesson(it),
-        FindInFilesLesson(it, lang, "src/warehouse/FindInFilesSample.java")
       )
     },
     LearningModule(name = LessonsBundle.message("run.debug.module.name"),
