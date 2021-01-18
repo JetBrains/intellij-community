@@ -20,8 +20,14 @@ import kotlin.random.Random
 
 class CompletionLoggerInitializer : LookupTracker() {
   companion object {
-    private fun shouldInitialize(): Boolean =
-      (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()) || ApplicationManager.getApplication().isUnitTestMode
+    private const val COMPLETION_EVALUATION_HEADLESS = "completion.evaluation.headless"
+
+    private fun shouldInitialize(): Boolean {
+      val app = ApplicationManager.getApplication()
+      return app.isEAP && StatisticsUploadAssistant.isSendAllowed()
+             || app.isHeadlessEnvironment && java.lang.Boolean.getBoolean(COMPLETION_EVALUATION_HEADLESS)
+             || app.isUnitTestMode
+    }
 
     private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
       "python" to 0.5,
