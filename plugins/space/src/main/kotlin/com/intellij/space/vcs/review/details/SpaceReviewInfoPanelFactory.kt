@@ -35,7 +35,9 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal object SpaceReviewInfoPanelFactory {
-  internal fun create(detailsVm: SpaceReviewDetailsVm<*>): JComponent = BorderLayoutPanel().apply {
+  internal fun create(detailsVm: SpaceReviewDetailsVm<*>): JComponent {
+    val topLevelPanel = BorderLayoutPanel()
+
     val titleComponent = HtmlEditorPane().apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       font = font.deriveFont((font.size * 1.3).toFloat())
@@ -100,15 +102,10 @@ internal object SpaceReviewInfoPanelFactory {
 
         participantsVm.controlVm.forEach(detailsVm.lifetime) {
           actionsPanel.setContent(createActionButton(detailsVm, it))
-          actionsPanel.validate()
-          actionsPanel.repaint()
-          validate()
-          repaint()
+          topLevelPanel.validate()
+          topLevelPanel.repaint()
         }
       }
-
-      validate()
-      repaint()
     }
 
     val openTimelineLinkLabel = LinkLabel.create(SpaceBundle.message("review.details.view.timeline.link.action")) {
@@ -119,7 +116,7 @@ internal object SpaceReviewInfoPanelFactory {
       )
     }
 
-    val contentPanel: JPanel = ScrollablePanel(VerticalLayout(JBUI.scale(6))).apply {
+    val contentPanel: JPanel = ScrollablePanel(VerticalLayout(JBUI.scale(8))).apply {
       border = JBUI.Borders.empty(8)
       add(projectDetails)
 
@@ -129,16 +126,18 @@ internal object SpaceReviewInfoPanelFactory {
 
       add(titleComponent)
       add(createdByComponent)
-      add(usersPanel)
-      add(actionsPanel)
+      add(usersPanel, VerticalLayout.FILL_HORIZONTAL)
       add(openTimelineLinkLabel)
+      add(actionsPanel)
+    }.also { scrollablePanel ->
+      ScrollPaneFactory.createScrollPane(scrollablePanel, true)
     }
 
-    val scrollPane = ScrollPaneFactory.createScrollPane(contentPanel, true)
-
-    addToCenter(scrollPane)
-    UIUtil.setOpaqueRecursively(scrollPane, false)
-    UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
+    return topLevelPanel.apply {
+      addToCenter(contentPanel)
+      UIUtil.setOpaqueRecursively(this, true)
+      UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
+    }
   }
 
   private fun createActionButton(detailsVm: SpaceReviewDetailsVm<*>, controlVM: ParticipantStateControlVM): JComponent? {

@@ -20,11 +20,13 @@ import com.intellij.util.ui.WrapLayout
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.Property
 import runtime.reactive.SequentialLifetimes
+import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.SwingConstants
 
 internal class AuthorsComponent(
   detailsVm: SpaceReviewDetailsVm<out CodeReviewRecord>,
@@ -73,13 +75,9 @@ internal open class ParticipantsComponent(
   @NlsContexts.Label labelText: String
 ) : Lifetimed by detailsVm {
 
-
-  val panel: NonOpaquePanel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, JBUI.scale(5), JBUI.scale(5))).apply {
-    border = JBUI.Borders.empty(6, 0, 6, 0)
-  }
+  val panel: NonOpaquePanel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
 
   private val avatarProvider = SpaceAvatarProvider(detailsVm.lifetime, panel, avatarSizeIntValue)
-
 
   val label: JLabel = JLabel(labelText).apply {
     foreground = UIUtil.getContextHelpForeground()
@@ -88,25 +86,24 @@ internal open class ParticipantsComponent(
 
   open fun additionalControls(): List<JComponent> = emptyList()
 
-
   init {
     participantsVm.forEach(detailsVm.lifetime) { users ->
       panel.removeAll()
 
-      users?.forEach { codeReviewParticipant ->
+      users?.forEachIndexed { index, codeReviewParticipant ->
         val memberProfile = codeReviewParticipant.user.resolve()
         val fullName = memberProfile.englishFullName() // NON-NLS
-        val reviewerLabel = JBLabel(avatarProvider.getIcon(memberProfile)).apply {
-          setCopyable(true)
+        val reviewerLabel = JLabel(fullName, avatarProvider.getIcon(memberProfile), SwingConstants.LEFT).apply {
+          border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
           toolTipText = fullName
-          text = fullName
         }
         avatarProvider.getIcon(memberProfile)
-        panel.add(Wrapper(reviewerLabel))
-      }
-
-      additionalControls().forEach {
-        panel.add(Wrapper(it))
+        val patricipantPanel = Wrapper(reviewerLabel)
+        val additionalControls = additionalControls()
+        if (index == users.size - 1 && additionalControls.isNotEmpty()) {
+          patricipantPanel.add(additionalControls[0], BorderLayout.LINE_END)
+        }
+        panel.add(patricipantPanel)
       }
 
       panel.validate()
