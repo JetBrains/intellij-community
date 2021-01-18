@@ -8,8 +8,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
+import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -202,33 +202,24 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testInvalidZip() {
-    VirtualFile vf = createJar(
-      "a"
-      , "a/b"
-      , "a/b/c.txt"
-      , "x\\y\\z.txt"
-      , "/x/f.txt"
-      , "d1/aB"
-      , "d1/ab"
-      , "D2/f1"
-      , "d2/f2");
-
-    String rootPath = vf.getPath() + JarFileSystem.JAR_SEPARATOR;
-    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vf);
+    VirtualFile zip = createJar(
+      "/", "a", "a/b", "a/b/c.txt", "x\\y\\z.txt", "/x/f.txt", "d1/aB", "d1/ab", "D2/f1", "//d2//f2", "empty/", "w/../W");
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(zip);
     assertNotNull(jarRoot);
+    int prefixLength = zip.getPath().length() + JarFileSystem.JAR_SEPARATOR.length();
     List<String> entries = new ArrayList<>();
     VfsUtilCore.visitChildrenRecursively(jarRoot, new VirtualFileVisitor<>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!jarRoot.equals(file)) {
-          String path = file.getPath().substring(rootPath.length());
+          String path = file.getPath().substring(prefixLength);
           entries.add(file.isDirectory() ? path + '/' : path);
         }
         return true;
       }
     });
     assertThat(entries).containsExactlyInAnyOrder(
-      "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/f.txt", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2");
+      "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/f.txt", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2", "empty/");
   }
 
   @Test

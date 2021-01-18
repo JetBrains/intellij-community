@@ -2,18 +2,15 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ResourceHandle;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -41,82 +38,19 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   protected @NotNull Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
     Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
-    map.put("", createRootEntry());
 
+    Logger logger = Logger.getInstance(ZipHandlerBase.class);
     Enumeration<? extends ZipEntry> entries = zip.entries();
     while (entries.hasMoreElements()) {
-      getOrCreate(entries.nextElement(), map, zip);
+      ZipEntry ze = entries.nextElement();
+      processEntry(map, logger, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
+        CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
+        long fileStamp = USE_CRC_INSTEAD_OF_TIMESTAMP ? ze.getCrc() : getEntryFileStamp();
+        return new EntryInfo(sequence, false, ze.getSize(), fileStamp, parent);
+      });
     }
 
     return map;
-  }
-
-  private EntryInfo getOrCreate(ZipEntry entry, Map<String, EntryInfo> map, ZipFile zip) {
-    boolean isDirectory = entry.isDirectory();
-    String entryName = entry.getName();
-    if (StringUtil.endsWithChar(entryName, '/')) {
-      entryName = entryName.substring(0, entryName.length() - 1);
-      isDirectory = true;
-    }
-    if (StringUtil.startsWithChar(entryName, '/') || StringUtil.startsWithChar(entryName, '\\')) {
-      entryName = entryName.substring(1);
-    }
-
-    EntryInfo info = map.get(entryName);
-    if (info != null) {
-      if (!isDirectory) {
-        Logger.getInstance(ZipHandlerBase.class).info("Duplicated entry: " + getFile() + "!/" + entryName + ' ' + info.length + '/' + entry.getSize());
-      }
-      return info;
-    }
-
-    Trinity<String, String, String> path = splitPathAndFix(entryName);
-    EntryInfo parentInfo = getOrCreate(path.first, map, zip);
-    if (".".equals(path.second)) {
-      return parentInfo;
-    }
-    long fileStamp = USE_CRC_INSTEAD_OF_TIMESTAMP ? entry.getCrc() : getEntryFileStamp();
-    info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), fileStamp, path.third);
-    return info;
-  }
-
-  private static EntryInfo store(Map<String, EntryInfo> map,
-                                 @Nullable EntryInfo parentInfo,
-                                 CharSequence shortName,
-                                 boolean isDirectory,
-                                 long size,
-                                 long time,
-                                 String entryName) {
-    CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(shortName);
-    EntryInfo info = new EntryInfo(sequence, isDirectory, size, time, parentInfo);
-    map.put(entryName, info);
-    return info;
-  }
-
-  private EntryInfo getOrCreate(String entryName, Map<String, EntryInfo> map, ZipFile zip) {
-    EntryInfo info = map.get(entryName);
-
-    if (info == null) {
-      ZipEntry entry = zip.getEntry(entryName + "/");
-      if (entry != null) {
-        return getOrCreate(entry, map, zip);
-      }
-
-      Trinity<String, String, String> path = splitPathAndFix(entryName);
-      if (entryName.equals(path.first)) {
-        throw new IllegalArgumentException("invalid entry name: '"+entryName+"' in "+zip.getName()+"; after split: "+path);
-      }
-      EntryInfo parentInfo = getOrCreate(path.first, map, zip);
-      entryName = path.third;
-      info = store(map, parentInfo, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, entryName);
-    }
-
-    if (!info.isDirectory) {
-      Logger.getInstance(getClass()).info(zip.getName() + ": " + entryName + " should be a directory");
-      info = store(map, info.parent, info.shortName, true, info.length, info.timestamp, entryName);
-    }
-
-    return info;
   }
 
   public long getEntryCrc(@NotNull String relativePath) throws IOException {

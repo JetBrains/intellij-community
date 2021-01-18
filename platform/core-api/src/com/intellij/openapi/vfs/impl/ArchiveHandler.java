@@ -3,10 +3,12 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -22,6 +24,9 @@ import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 public abstract class ArchiveHandler {
   public static final long DEFAULT_LENGTH = 0L;
@@ -204,51 +209,96 @@ public abstract class ArchiveHandler {
     return new EntryInfo("", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, null);
   }
 
-  @NotNull
-  protected EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
-    EntryInfo entry = map.get(entryName);
-    if (entry == null) {
-      Trinity<String, String, String> path = splitPathAndFix(entryName);
-      EntryInfo parentEntry = getOrCreate(map, path.first);
-      CharSequence shortName = ByteArrayCharSequence.convertToBytesIfPossible(path.second);
-      entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parentEntry);
-      map.put(path.third, entry);
+  /**
+   * Attempts to place an entry with the given name into the entry map.
+   * <p>
+   * The name is normalized (backward slashes are converted into forward ones, then leading, trailing, and duplicate slashes
+   * are removed); empty names and directory traversals are rejected; parent entries are created if needed.
+   *
+   * @param entryFun a routine for producing entry data; when {@code null}, a directory entry is created.
+   */
+  protected final void processEntry(@NotNull Map<String, EntryInfo> map,
+                                    @NotNull String entryName,
+                                    @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
+    processEntry(map, null, entryName, entryFun);
+  }
+
+  protected final void processEntry(@NotNull Map<String, EntryInfo> map,
+                                    @Nullable Logger logger,
+                                    @NotNull String entryName,
+                                    @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
+    String normalizedName = StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
+    if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
+      if (logger != null) logger.info("invalid entry: " + getFile() + "!/" + entryName);
+      return;
+    }
+
+    if (entryFun == null) {
+      directoryEntry(map, logger, normalizedName);
+      return;
+    }
+
+    EntryInfo existing = map.get(normalizedName);
+    if (existing != null) {
+      if (logger != null) logger.info("duplicate entry: " + getFile() + "!/" + normalizedName);
+      return;
+    }
+
+    Pair<String, String> path = split(normalizedName);
+    EntryInfo parent = directoryEntry(map, logger, path.first);
+    map.put(normalizedName, entryFun.apply(parent, path.second));
+  }
+
+  private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {
+    EntryInfo entry = map.get(normalizedName);
+    if (entry == null || !entry.isDirectory) {
+      if (logger != null && entry != null) logger.info("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (normalizedName.isEmpty()) {
+        entry = createRootEntry();
+      }
+      else {
+        Pair<String, String> path = split(normalizedName);
+        EntryInfo parent = directoryEntry(map, logger, path.first);
+        entry = new EntryInfo(ByteArrayCharSequence.convertToBytesIfPossible(path.second), true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
+      }
+      map.put(normalizedName, entry);
     }
     return entry;
   }
 
-  /**
-   * @deprecated Use {@link #splitPathAndFix(String)} instead to correctly handle invalid entry names
-   */
-  @NotNull
-  @Deprecated
-  protected Pair<String, String> splitPath(@NotNull String entryName) {
-    int p = entryName.lastIndexOf('/');
-    String parentName = p > 0 ? entryName.substring(0, p) : "";
-    String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-    return Pair.create(parentName, shortName);
+  private static Pair<String, String> split(String normalizedName) {
+    int p = normalizedName.lastIndexOf('/');
+    String parentPath = p > 0 ? normalizedName.substring(0, p) : "";
+    String shortName = p > 0 ? normalizedName.substring(p + 1) : normalizedName;
+    return pair(parentPath, shortName);
   }
 
-  /**
-   * @return parentName, shortName, fixedEntryName
-   */
-  @NotNull
-  protected Trinity<String, String, String> splitPathAndFix(@NotNull String entryName) {
-    int slashP = entryName.lastIndexOf('/');
-    // There are crazy jar files with backslash-containing entries inside (IDEA-228441)
-    // Under Windows we can't create files with backslash in the name
-    // and although in Unix we can, we prefer not to, to maintain consistency to avoid subtle bugs when the code which confuses file separators with slashes
-    int p = Math.max(slashP, entryName.lastIndexOf('\\'));
-
-    String parentName = p > 0 ? entryName.substring(0, p) : "";
-    String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-    String fixedParent = parentName.replace('\\', '/');
-    //noinspection StringEquality
-    if (fixedParent != parentName || slashP == -1 && p != -1) {
-      parentName = fixedParent;
-      entryName = parentName + '/' + shortName;
+  /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
+  @Deprecated
+  protected @NotNull EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
+    EntryInfo entry = map.get(entryName);
+    if (entry == null) {
+      int slashP = entryName.lastIndexOf('/');
+      int p = Math.max(slashP, entryName.lastIndexOf('\\'));
+      String parentName = p > 0 ? entryName.substring(0, p) : "";
+      String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
+      String fixedParent = parentName.replace('\\', '/');
+      //noinspection StringEquality
+      if (fixedParent != parentName || slashP == -1 && p != -1) {
+        parentName = fixedParent;
+        entryName = parentName + '/' + shortName;
+      }
+      EntryInfo parent = getOrCreate(map, parentName);
+      entry = new EntryInfo(ByteArrayCharSequence.convertToBytesIfPossible(shortName), true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
+      map.put(entryName, entry);
     }
-    return Trinity.create(parentName, shortName, entryName);
+    return entry;
+  }
+
+  /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
+  @Deprecated
+  protected @NotNull Pair<String, String> splitPath(@NotNull String entryName) {
+    return split(entryName);
   }
 
   public abstract byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException;
