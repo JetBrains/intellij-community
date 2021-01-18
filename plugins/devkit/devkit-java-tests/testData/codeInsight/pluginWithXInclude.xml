@@ -15,7 +15,7 @@
         <bar implementation="java.util.ArrayList"/>
         <extensionX/>
         <extension2/>
-        <<error descr="Cannot resolve extension point 'foo.extensionUnknown' in dependencies&nbsp;(Reference: Plugin Dependencies)">extensionUnknown</error>/>
+        <<error descr="Cannot resolve extension point 'foo.extensionUnknown' in dependencies (Reference: Plugin Dependencies)">extensionUnknown</error>/>
     </extensions>
 
     <xi:include href="<error descr="Cannot resolve file 'INVALID_VALUE.xml'">INVALID_VALUE.xml</error>"/>
