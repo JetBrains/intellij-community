@@ -95,7 +95,6 @@ public final class FoldingUtil {
         for (sectionEnd = sectionStart + 1;
              sectionEnd < allRegions.length && allRegions[sectionEnd].getStartOffset() == allRegions[sectionStart].getStartOffset();
              sectionEnd++) {
-          ;
         }
         current = sectionEnd;
       }
