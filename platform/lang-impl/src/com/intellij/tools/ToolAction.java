@@ -115,6 +115,6 @@ public class ToolAction extends AnAction implements DumbAware {
       VirtualFile editorFile = editor == null ? null : editor.getFile();
       builder.add(VIRTUAL_FILE, editorFile);
     }
-    return builder.noUI().build();
+    return builder.build();
   }
 }

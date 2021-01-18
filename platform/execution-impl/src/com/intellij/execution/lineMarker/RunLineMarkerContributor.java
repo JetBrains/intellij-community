@@ -76,7 +76,6 @@ public abstract class RunLineMarkerContributor {
       return null;
     }
     DataContext dataContext = SimpleDataContext.builder()
-      .noUI()
       .add(CommonDataKeys.PROJECT, element.getProject())
       .add(CommonDataKeys.PSI_ELEMENT, element)
       .build();

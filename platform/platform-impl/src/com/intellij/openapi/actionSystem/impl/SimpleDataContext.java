@@ -7,13 +7,10 @@ import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,10 +26,6 @@ public final class SimpleDataContext implements DataContext {
   @Override
   public Object getData(@NotNull String dataId) {
     Object result = getDataFromSelfOrParent(dataId);
-
-    if (result == null && PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
-      result = IdeFocusManager.getGlobalInstance().getFocusOwner();
-    }
 
     if (result == null) {
       GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
@@ -108,11 +101,6 @@ public final class SimpleDataContext implements DataContext {
         myMap.put(dataKey.getName(), value);
       }
       return this;
-    }
-
-    @NotNull
-    public Builder noUI() {
-      return add(PlatformDataKeys.CONTEXT_COMPONENT, new JLabel());
     }
 
     @NotNull
