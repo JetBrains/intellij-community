@@ -19,7 +19,6 @@ package com.intellij.pom.tree.events.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -162,13 +161,13 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   @Override
-  public TreeElement @NotNull [] getAffectedChildren() {
-    return getAllChanges().keySet().toArray(TreeElement.EMPTY_ARRAY);
+  public ASTNode @NotNull [] getAffectedChildren() {
+    return getAllChanges().keySet().toArray(ASTNode.EMPTY_ARRAY);
   }
 
   @Override
   public ChangeInfoImpl getChangeByChild(ASTNode child) {
-    return getAllChanges().get((TreeElement)child);
+    return getAllChanges().get(child);
   }
 
   public List<ASTNode> getInitialChildren() {

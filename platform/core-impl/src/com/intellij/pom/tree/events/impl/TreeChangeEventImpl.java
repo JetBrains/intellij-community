@@ -9,7 +9,6 @@ import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -44,7 +43,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   @Override
   public TreeChange getChangesByElement(@NotNull ASTNode element) {
-    return myChangedElements.get((CompositeElement)element);
+    return myChangedElements.get(element);
   }
 
   public void addElementaryChange(@NotNull ASTNode parent) {
