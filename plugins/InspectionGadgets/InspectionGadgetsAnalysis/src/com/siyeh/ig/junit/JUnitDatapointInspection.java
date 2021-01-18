@@ -43,8 +43,12 @@ public class JUnitDatapointInspection extends BaseInspection {
                                                                               final String memberDescription) {
         final boolean dataPointAnnotated = AnnotationUtil.isAnnotated(member, DATAPOINT_FQN, 0);
         if (dataPointAnnotated) {
-          final String errorMessage = getPublicStaticErrorMessage(member, false, true);
-          if (errorMessage != null) {
+          final String errorMessage = JUnitErrorMessageKt.getPublicStaticErrorMessage(
+            member.hasModifierProperty(PsiModifier.STATIC),
+            member.hasModifierProperty(PsiModifier.PUBLIC),
+            true
+          );
+          if (!errorMessage.isEmpty()) {
             final PsiElement identifier = member.getNameIdentifier();
             registerError(identifier != null ? identifier : member,
                           InspectionGadgetsBundle
@@ -52,41 +56,6 @@ public class JUnitDatapointInspection extends BaseInspection {
                           "Make " + memberDescription + " " + errorMessage, DATAPOINT_FQN);
           }
         }
-      }
-
-      private String getPublicStaticErrorMessage(PsiModifierListOwner field, boolean shouldBeNonStatic, boolean shouldBeStatic) {
-        String errorMessage = null;
-        final boolean hasStatic = field.hasModifierProperty(PsiModifier.STATIC);
-        final boolean hasPublic = field.hasModifierProperty(PsiModifier.PUBLIC);
-        if (!hasPublic) {
-          if (shouldBeStatic) {
-            if (!hasStatic) {
-              errorMessage = "'public' and 'static'";
-            }
-            else {
-              errorMessage = "'public'";
-            }
-          }
-          else {
-            if (!hasStatic) {
-              errorMessage = "'public'";
-            }
-            else {
-              errorMessage = "'public' and non-static";
-            }
-          }
-        }
-        else {
-          if (!hasStatic) {
-            if (shouldBeStatic) {
-              errorMessage = "'static'";
-            }
-          }
-          else if (shouldBeNonStatic) {
-            errorMessage = "non-static";
-          }
-        }
-        return errorMessage;
       }
     };
   }
