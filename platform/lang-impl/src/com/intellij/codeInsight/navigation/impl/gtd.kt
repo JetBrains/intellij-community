@@ -86,7 +86,7 @@ private class TargetGTDActionData(private val project: Project, private val targ
     val result = SmartList<GTDSingleTarget>()
     for ((symbol, navigationProvider) in targetData.targets) {
       for (navigationTarget in SymbolNavigationService.getInstance().getNavigationTargets(project, symbol)) {
-        val navigatable = navigationTarget.navigatable ?: continue
+        val navigatable = navigationTarget.navigatable
         result += GTDSingleTarget(navigatable, navigationTarget, navigationProvider)
       }
     }

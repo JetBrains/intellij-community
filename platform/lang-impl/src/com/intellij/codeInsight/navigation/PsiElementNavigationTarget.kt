@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.ide.util.EditSourceUtil
+import com.intellij.navigation.EmptyNavigatable
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.pom.Navigatable
@@ -17,7 +18,7 @@ class PsiElementNavigationTarget(private val myElement: PsiElement) : Navigation
 
   override fun isValid(): Boolean = myElement.isValid
 
-  override fun getNavigatable(): Navigatable? = myNavigatable
+  override fun getNavigatable(): Navigatable = myNavigatable ?: EmptyNavigatable.INSTANCE
 
   override fun getTargetPresentation(): TargetPopupPresentation = targetPopupPresentation(myElement)
 
