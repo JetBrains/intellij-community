@@ -11,7 +11,6 @@ import com.intellij.lang.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -23,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbAware;
@@ -36,7 +34,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.LanguageSubstitutor;
@@ -125,18 +122,6 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
         }
       }
 
-      @Override
-      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN)) || !isEditable(file)) {
-          return;
-        }
-
-        RootType rootType = getRootType(file);
-        if (rootType != null) {
-          rootType.fileClosed(file, source);
-        }
-      }
-
       boolean isEditable(@NotNull VirtualFile file) {
         return FileDocumentManager.getInstance().getDocument(file) != null;
       }
@@ -158,14 +143,6 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
 
       @Override
       public void extensionRemoved(@NotNull RootType rootType, @NotNull PluginDescriptor pluginDescriptor) {
-        VirtualFile rootFile = LocalFileSystem.getInstance().findFileByPath(getRootPath(rootType));
-        if (rootFile != null) {
-          processOpenFiles((file, manager) -> {
-            if (VfsUtilCore.isAncestor(rootFile, file, true)) {
-              rootType.fileClosed(file, manager);
-            }
-          });
-        }
         myIndex.resetIndex();
         for (Project project : ProjectManager.getInstance().getOpenProjects()) {
           FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
@@ -175,12 +152,11 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
   }
 
   private static void processOpenFiles(@NotNull BiConsumer<? super VirtualFile, ? super FileEditorManager> consumer) {
-    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       FileEditorManager editorManager = FileEditorManager.getInstance(project);
-      for (VirtualFile virtualFile : ReadAction.compute(() -> editorManager.getOpenFiles())) {
-        if (fileDocumentManager.getDocument(virtualFile) != null) {
-          consumer.accept(virtualFile, editorManager);
+      for (VirtualFile file : editorManager.getOpenFiles()) {
+        if (file.isValid() && !file.isDirectory()) {
+          consumer.accept(file, editorManager);
         }
       }
     }
