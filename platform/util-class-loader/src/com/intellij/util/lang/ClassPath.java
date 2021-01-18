@@ -146,14 +146,9 @@ public final class ClassPath {
     return result;
   }
 
-  /** @deprecated adding URLs to classpath at runtime could lead to hard-to-debug errors */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  void addURL(Path path) {
-    addFiles(Collections.singletonList(path));
-  }
-
-  private synchronized void addFiles(List<Path> files) {
+  /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
+  @ApiStatus.Internal
+  synchronized void addFiles(@NotNull List<Path> files) {
     for (int i = files.size() - 1; i >= 0; i--) {
       this.files.add(files.get(i));
     }

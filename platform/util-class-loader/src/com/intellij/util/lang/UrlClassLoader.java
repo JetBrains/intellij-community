@@ -45,10 +45,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    */
   @SuppressWarnings("unused")
   final void appendToClassPathForInstrumentation(@NotNull String jar) {
-    Path file = Paths.get(jar);
-    //noinspection deprecation
-    classPath.addURL(file);
-    files.add(file);
+    addFiles(Collections.singletonList(Paths.get(jar)));
   }
 
   /**
@@ -164,9 +161,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
   public final void addURL(@NotNull URL url) {
-    Path file = Paths.get(url.getPath());
-    classPath.addURL(file);
-    files.add(file);
+    addFiles(Collections.singletonList(Paths.get(url.getPath())));
+  }
+
+  @ApiStatus.Internal
+  public final void addFiles(@NotNull List<Path> files) {
+    classPath.addFiles(files);
+    this.files.addAll(files);
   }
 
   public final @NotNull List<URL> getUrls() {

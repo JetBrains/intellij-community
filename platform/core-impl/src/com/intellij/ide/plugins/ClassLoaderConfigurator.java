@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -607,20 +605,13 @@ final class ClassLoaderConfigurator {
     getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
     ClassLoader loader = ClassLoaderConfigurator.class.getClassLoader();
     try {
-      Class<?> loaderClass = loader.getClass();
-      if (loaderClass.getName().endsWith(".BootstrapClassLoaderUtil$TransformingLoader")) {
-        loaderClass = loaderClass.getSuperclass();
-      }
-
-      // `UrlClassLoader#addURL` can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
-      MethodHandle addURL = MethodHandles.lookup().findVirtual(loaderClass, "addURL", MethodType.methodType(void.class, URL.class));
-      for (Path pathElement : classPath) {
-        addURL.invoke(loader, localFileToUrl(pathElement, descriptor));
-      }
+      // `UrlClassLoader#addPath` can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
+      MethodHandle addFiles = MethodHandles.lookup().findVirtual(loader.getClass(), "addFiles", MethodType.methodType(void.class, List.class));
+      addFiles.invoke(loader, classPath);
       return loader;
     }
-    catch (Throwable t) {
-      throw new IllegalStateException("An unexpected core classloader: " + loader.getClass(), t);
+    catch (Throwable e) {
+      throw new IllegalStateException("An unexpected core classloader: " + loader, e);
     }
   }
 
@@ -646,16 +637,6 @@ final class ClassLoaderConfigurator {
           setPluginClassLoaderForMainAndSubPlugins(dependency.subDescriptor, classLoader);
         }
       }
-    }
-  }
-
-  private static @NotNull URL localFileToUrl(@NotNull Path file, @NotNull IdeaPluginDescriptor descriptor) {
-    try {
-      // it is important not to have traversal elements in classpath
-      return file.normalize().toUri().toURL();
-    }
-    catch (MalformedURLException e) {
-      throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
     }
   }
 
