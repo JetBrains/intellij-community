@@ -13,26 +13,44 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.execution.testframework.SearchForTestsTask
+import com.intellij.execution.testframework.export.TestResultsXmlFormatter
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.java.execution.AbstractTestFrameworkIntegrationTest
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.junit.Test
+import java.io.StringWriter
+import java.util.*
+import javax.xml.transform.OutputKeys
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.sax.SAXTransformerFactory
+import javax.xml.transform.sax.TransformerHandler
+import javax.xml.transform.stream.StreamResult
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -66,6 +84,21 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
     (ExecutionManager.getInstance(project) as? ExecutionManagerImpl)?.let {
       defaultForceCompilationInTests = it.forceCompilationInTests
       it.forceCompilationInTests = true
+    }
+  }
+
+  override fun setUpModule() {
+    super.setUpModule()
+
+    val libraryDescriptor = JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0")
+    AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor)
+
+    val contentRoot = LocalFileSystem.getInstance().findFileByPath(
+      "${PathManagerEx.getCommunityHomePath()}/platform/remote-servers/target-integration-tests/targetApp")!!
+    ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel ->
+      val contentEntry = model.addContentEntry(contentRoot)
+      contentEntry.addSourceFolder(contentRoot.url + "/src", false)
+      contentEntry.addSourceFolder(contentRoot.url + "/tests", true)
     }
   }
 
@@ -184,7 +217,8 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
     Unit
   }
 
-  private fun processOutputReader(filter: (ProcessEvent, Key<*>) -> Boolean): CompletableDeferred<String> {
+  private fun processOutputReader(demandZeroExitCode: Boolean = true,
+                                  filter: (ProcessEvent, Key<*>) -> Boolean): CompletableDeferred<String> {
     val textDeferred = CompletableDeferred<String>()
     RunConfigurationExtension.EP_NAME.point.registerExtension(
       object : RunConfigurationExtension() {
@@ -198,8 +232,12 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
         override fun attachToProcess(configuration: RunConfigurationBase<*>, handler: ProcessHandler, runnerSettings: RunnerSettings?) {
           GlobalScope.launch {
-            textDeferred.complete(handler.collectOutput(filter))
+            textDeferred.complete(handler.collectOutput(demandZeroExitCode, filter))
           }
+        }
+
+        override fun getSerializationId(): String {
+          return "JavaTargetTestBase::RunConfigurationExtension"
         }
       },
       LoadingOrder.ANY,
@@ -208,7 +246,8 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
     return textDeferred
   }
 
-  private suspend fun ProcessHandler.collectOutput(handler: (event: ProcessEvent, outputType: Key<*>) -> Boolean): String =
+  private suspend fun ProcessHandler.collectOutput(demandZeroExitCode: Boolean = true,
+                                                   handler: (event: ProcessEvent, outputType: Key<*>) -> Boolean): String =
     suspendCancellableCoroutine { continuation ->
       val wholeOutput = StringBuilder()
       val stdout = StringBuilder()
@@ -219,7 +258,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
         override fun processTerminated(event: ProcessEvent) {
           event.text?.let(wholeOutput::append)
-          if (event.exitCode == 0) {
+          if (event.exitCode == 0 || !demandZeroExitCode) {
             continuation.resume(stdout.toString())
           }
           else {
@@ -250,6 +289,156 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
           }
         }
       }
+    }
+  }
+
+  @Test
+  fun `test junit tests - run all`() {
+    val connectInUnitTestModeProperty = System.getProperty(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY)
+    System.setProperty(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY, "true")
+    try {
+      doTestRunRunAllJUnitTests()
+    }
+    finally {
+      if (connectInUnitTestModeProperty == null) {
+        System.clearProperty(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY)
+      }
+      else {
+        System.setProperty(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY, connectInUnitTestModeProperty)
+      }
+    }
+  }
+
+  private fun doTestRunRunAllJUnitTests() {
+    val runConfiguration = JUnitConfiguration("All JUnit tests Run Configuration", project).also { conf ->
+      conf.setModule(module)
+      conf.defaultTargetName = targetName
+
+      conf.persistentData.changeList = "All"
+      conf.persistentData.TEST_OBJECT = "package"
+    }
+    runBlocking {
+      val executor = DefaultRunExecutor.getRunExecutorInstance()
+      val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        ExecutionEnvironmentBuilder(project, executor).runProfile(runConfiguration).build()
+      }
+
+      val textDeferred = processOutputReader(demandZeroExitCode = false) { _, _ ->
+        true
+      }
+
+      var runContentDescriptor: RunContentDescriptor
+      // withDeletingExcessiveEditors {
+      withTimeout(300_000) {
+        runContentDescriptor = CompletableDeferred<RunContentDescriptor>()
+          .also { deferred ->
+            executionEnvironment.setCallback { deferred.complete(it) }
+            withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+              executionEnvironment.runner.execute(executionEnvironment)
+            }
+          }
+          .await()
+      }
+      //  }
+
+      val output = withTimeout(300_000) { textDeferred.await() }
+
+      assertNotNull(runContentDescriptor)
+
+      val resultsViewer = (runContentDescriptor.executionConsole as SMTRunnerConsoleView).resultsViewer
+
+      val transformerFactory = TransformerFactory.newInstance() as SAXTransformerFactory
+      val handler: TransformerHandler = transformerFactory.newTransformerHandler()
+      handler.transformer.setOutputProperty(OutputKeys.INDENT, "yes")
+      handler.transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4")
+
+      val writer = StringWriter()
+      handler.setResult(StreamResult(writer))
+      TestResultsXmlFormatter.execute(resultsViewer.root, runConfiguration, resultsViewer.properties, handler)
+      val testrun = JDOMUtil.load(writer.toString())
+      assertNotNull(writer.toString(), testrun)
+      testrun.removeAttribute("footerText")
+      testrun.removeAttribute("duration")
+      val rootChild = Objects.requireNonNull(testrun.getChild("root"), writer.toString())
+      rootChild.removeChild("output")
+      val configChild = Objects.requireNonNull(testrun.getChild("config"), writer.toString())
+      configChild.removeChild("target")
+      for (child in testrun.getChildren("suite")) {
+        child.removeAttribute("duration")
+        for (testChild in child.getChildren("test")) {
+          testChild.removeAttribute("duration")
+          testChild.removeAttribute("outp")
+        }
+      }
+
+      assertEquals(output,
+                   "<testrun name=\"All JUnit tests Run Configuration\">\n" +
+                   "  <count name=\"total\" value=\"2\" />\n" +
+                   "  <count name=\"failed\" value=\"1\" />\n" +
+                   "  <count name=\"passed\" value=\"1\" />\n" +
+                   "  <config configId=\"JUnit\" name=\"All JUnit tests Run Configuration\">\n" +
+                   "    <module name=\"test junit tests - run all\" />\n" +
+                   "    <option name=\"TEST_OBJECT\" value=\"package\" />\n" +
+                   "    <method v=\"2\" />\n" +
+                   "  </config>\n" +
+                   "  <root name=\"&lt;default package&gt;\" location=\"java:suite://&lt;default package&gt;\" />\n" +
+                   "  <suite locationUrl=\"java:suite://SomeTest\" name=\"SomeTest\" status=\"passed\">\n" +
+                   "    <test locationUrl=\"java:test://SomeTest/testSomething\" name=\"testSomething()\" metainfo=\"\" status=\"passed\" />\n" +
+                   "  </suite>\n" +
+                   "  <suite locationUrl=\"java:suite://AlsoTest\" name=\"AlsoTest\" status=\"failed\">\n" +
+                   "    <test locationUrl=\"java:test://AlsoTest/testShouldFail\" name=\"testShouldFail()\" metainfo=\"\" status=\"failed\">\n" +
+                   "      <diff actual=\"5\" expected=\"4\" />\n" +
+                   "      <output type=\"stderr\">org.opentest4j.AssertionFailedError: \n" +
+                   "\tat org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:54)\n" +
+                   "\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:195)\n" +
+                   "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)\n" +
+                   "\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:147)\n" +
+                   "\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:326)\n" +
+                   "\tat AlsoTest.testShouldFail(AlsoTest.java:10)\n" +
+                   "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
+                   "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n" +
+                   "\tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n" +
+                   "\tat java.base/java.lang.reflect.Method.invoke(Method.java:567)\n" +
+                   "\tat org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:515)\n" +
+                   "\tat org.junit.jupiter.engine.execution.ExecutableInvoker.invoke(ExecutableInvoker.java:115)\n" +
+                   "\tat org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda\$invokeTestMethod\$6(TestMethodTestDescriptor.java:171)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:72)\n" +
+                   "\tat org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:167)\n" +
+                   "\tat org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:114)\n" +
+                   "\tat org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:59)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda\$executeRecursively\$5(NodeTestTask.java:131)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:72)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:127)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:107)\n" +
+                   "\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1540)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:38)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda\$executeRecursively\$5(NodeTestTask.java:136)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:72)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:127)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:107)\n" +
+                   "\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1540)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:38)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda\$executeRecursively\$5(NodeTestTask.java:136)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:72)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:127)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:107)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:32)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:52)\n" +
+                   "\tat org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:51)\n" +
+                   "\tat org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:220)\n" +
+                   "\tat org.junit.platform.launcher.core.DefaultLauncher.lambda\$execute\$6(DefaultLauncher.java:188)\n" +
+                   "\tat org.junit.platform.launcher.core.DefaultLauncher.withInterceptedStreams(DefaultLauncher.java:202)\n" +
+                   "\tat org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:181)\n" +
+                   "\tat org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:128)\n" +
+                   "\tat com.intellij.junit5.JUnit5IdeaTestRunner.startRunnerWithArgs(JUnit5IdeaTestRunner.java:71)\n" +
+                   "\tat com.intellij.rt.junit.IdeaTestRunner\$Repeater.startRunnerWithArgs(IdeaTestRunner.java:33)\n" +
+                   "\tat com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:220)\n" +
+                   "\tat com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:53)</output>\n" +
+                   "    </test>\n" +
+                   "  </suite>\n" +
+                   "</testrun>",
+                   JDOMUtil.write(testrun))
+
     }
   }
 }

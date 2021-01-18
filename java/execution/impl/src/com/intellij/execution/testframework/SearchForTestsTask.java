@@ -24,7 +24,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +38,7 @@ import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class SearchForTestsTask extends Task.Backgroundable {
+  public static final String CONNECT_IN_UNIT_TEST_MODE_PROPERTY = "SearchForTestsTask.connect.in.unit.test.mode";
 
   private static final Logger LOG = Logger.getInstance(SearchForTestsTask.class);
   protected Socket mySocket;
@@ -64,7 +64,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   }
 
   public void startSearch() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !Boolean.getBoolean(CONNECT_IN_UNIT_TEST_MODE_PROPERTY)) {
       try {
         search();
       }

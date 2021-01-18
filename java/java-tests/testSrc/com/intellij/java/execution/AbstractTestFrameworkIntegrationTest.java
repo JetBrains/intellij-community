@@ -114,7 +114,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     return processOutput;
   }
 
-  protected static void addMavenLibs(Module module,
+  public static void addMavenLibs(Module module,
                                      JpsMavenRepositoryLibraryDescriptor descriptor) throws Exception {
     addMavenLibs(module, descriptor, getRepoManager());
   }
