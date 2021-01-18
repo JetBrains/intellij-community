@@ -31,7 +31,7 @@ public class VisualStudioCustomFoldingProvider extends CustomFoldingProvider {
 
   @Override
   public boolean isCustomRegionEnd(String elementText) {
-    return elementText.contains("endregion");
+    return elementText.contains("endregion") && elementText.matches("[/*#-]*\\s*endregion.*");
   }
 
   @Override
