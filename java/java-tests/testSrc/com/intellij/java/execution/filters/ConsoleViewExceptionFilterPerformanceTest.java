@@ -1,11 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution.filters;
 
+import com.intellij.execution.filters.ExceptionFilters;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.impl.ConsoleViewImplTest;
+import com.intellij.execution.process.NopProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -17,7 +23,7 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
     return JAVA_11;
   }
 
-  public void testManyExceptions() {
+  public void testExceptionFilterPerformance() {
     String trace = "java.lang.RuntimeException\n" +
                    "\tat ExceptionTest.main(ExceptionTest.java:5)\n" +
                    "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
@@ -33,8 +39,17 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
                        "        }\n" +
                        "    }\n" +
                        "}");
-    PlatformTestUtil.startPerformanceTest("Many exceptions", 16_000, () -> {
-      ConsoleViewImpl console = ConsoleViewImplTest.createConsole(true, getProject());
+    PlatformTestUtil.startPerformanceTest("Many exceptions", 10_000, () -> {
+      // instantiate console with exception filters only to avoid failures due to Node/Ruby/etc dog-slow sloppy regex-based filters
+      TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
+      consoleBuilder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(getProject())));
+      ((TextConsoleBuilderImpl)consoleBuilder).setUsePredefinedMessageFilter(false);
+      ConsoleViewImpl console = (ConsoleViewImpl)consoleBuilder.getConsole();
+      console.getComponent(); // initConsoleEditor()
+      ProcessHandler processHandler = new NopProcessHandler();
+      processHandler.startNotify();
+      console.attachToProcess(processHandler);
+
       try {
         console.setUpdateFoldingsEnabled(false); // avoid spending time on foldings
         console.print("start\n", ConsoleViewContentType.NORMAL_OUTPUT);
