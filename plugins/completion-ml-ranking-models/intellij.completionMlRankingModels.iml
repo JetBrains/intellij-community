@@ -44,9 +44,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-rust-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.0.3" />
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.1.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0.0.3/completion-ranking-rust-0.0.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0.1.1/completion-ranking-rust-0.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
