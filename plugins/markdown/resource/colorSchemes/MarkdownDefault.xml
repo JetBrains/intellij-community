@@ -31,4 +31,10 @@
       <option name="FOREGROUND" value="871094" />
     </value>
   </option>
+  <option name="MARKDOWN_PERSON">
+    <value>
+      <option name="EFFECT_TYPE" value="4" />
+      <option name="EFFECT_COLOR" value="000000" />
+    </value>
+  </option>
 </list>
