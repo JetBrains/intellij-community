@@ -22,9 +22,9 @@ import kotlin.system.exitProcess
 
 private fun createDaemonProcessCommandLine(vararg args: String): ProcessBuilder {
   return ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
-                        *ProcessMediatorDaemonRuntimeClasspath.getProperties().map { (k, v) -> "-D$k=$v" }.toTypedArray(),
+                        *DaemonProcessRuntimeClasspath.getProperties().map { (k, v) -> "-D$k=$v" }.toTypedArray(),
                         "-cp", System.getProperty("java.class.path"),
-                        ProcessMediatorDaemonRuntimeClasspath.getMainClass().name,
+                        DaemonProcessRuntimeClasspath.getMainClass().name,
                         *args)
 }
 

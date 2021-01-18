@@ -19,7 +19,7 @@ import java.io.IOException
 import java.nio.file.Path
 
 
-class ElevationDaemonLauncher : ProcessMediatorDaemonLauncher() {
+class ElevationDaemonProcessLauncher : DaemonProcessLauncher() {
   fun launchDaemon(): ProcessMediatorDaemon {
     return launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
   }

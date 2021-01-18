@@ -5,8 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
+import com.intellij.execution.process.mediator.daemon.DaemonProcessRuntimeClasspath
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemonRuntimeClasspath
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
@@ -19,7 +19,7 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 
 
-open class ProcessMediatorDaemonLauncher : ProcessHandshakeLauncher<Handshake, DaemonHandshakeTransport, ProcessMediatorDaemon>() {
+open class DaemonProcessLauncher : ProcessHandshakeLauncher<Handshake, DaemonHandshakeTransport, ProcessMediatorDaemon>() {
   override fun handshakeSucceeded(handshake: Handshake,
                                   transport: DaemonHandshakeTransport,
                                   processHandler: BaseOSProcessHandler): ProcessMediatorDaemon {
@@ -43,9 +43,10 @@ open class ProcessMediatorDaemonLauncher : ProcessHandshakeLauncher<Handshake, D
 
   protected fun createCommandLine(transport: DaemonHandshakeTransport): GeneralCommandLine {
     val daemonLaunchOptions = transport.getDaemonLaunchOptions()
-    return createJavaVmCommandLine(ProcessMediatorDaemonRuntimeClasspath.getProperties(),
-                                   ProcessMediatorDaemonRuntimeClasspath.getClasspathClasses())
-      .withParameters(ProcessMediatorDaemonRuntimeClasspath.getMainClass().name)
+    return createJavaVmCommandLine(
+      DaemonProcessRuntimeClasspath.getProperties(),
+      DaemonProcessRuntimeClasspath.getClasspathClasses())
+      .withParameters(DaemonProcessRuntimeClasspath.getMainClass().name)
       .withParameters(daemonLaunchOptions.asCmdlineArgs())
   }
 

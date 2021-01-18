@@ -21,7 +21,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 class ElevationServiceImpl : ElevationService, Disposable {
   private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-  private val connectionManager = ProcessMediatorConnectionManager(ElevationDaemonLauncher()::launchDaemon,
+  private val connectionManager = ProcessMediatorConnectionManager(ElevationDaemonProcessLauncher()::launchDaemon,
                                                                    ::createProcessMediatorClient).apply {
     ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
       override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {

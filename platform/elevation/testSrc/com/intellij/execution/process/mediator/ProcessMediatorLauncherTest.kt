@@ -2,12 +2,12 @@
 package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
-import com.intellij.execution.process.mediator.launcher.ProcessMediatorDaemonLauncher
+import com.intellij.execution.process.mediator.launcher.DaemonProcessLauncher
 import com.intellij.execution.process.mediator.util.blockingGet
 import org.junit.jupiter.api.TestInfo
 
 internal class ProcessMediatorLauncherTest : ProcessMediatorTest() {
   override fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
-    return ProcessMediatorDaemonLauncher().launchAsync().blockingGet()
+    return DaemonProcessLauncher().launchAsync().blockingGet()
   }
 }

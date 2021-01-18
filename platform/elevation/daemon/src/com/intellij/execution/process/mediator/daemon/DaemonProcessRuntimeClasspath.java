@@ -28,10 +28,10 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("RedundantArrayCreation")  // using arrays to allow trailing comma
-public class ProcessMediatorDaemonRuntimeClasspath {
+public class DaemonProcessRuntimeClasspath {
 
   private static final List<Class<?>> CLASSPATH_CLASSES = List.of(new Class<?>[]{
-    ProcessMediatorDaemonMainKt.class,
+    DaemonProcessMainKt.class,
     DaemonLaunchOptions.class,
     ProcessMediatorProto.class,
 
@@ -66,7 +66,7 @@ public class ProcessMediatorDaemonRuntimeClasspath {
   });
 
   public static @NotNull Class<?> getMainClass() {
-    return ProcessMediatorDaemonMainKt.class;
+    return DaemonProcessMainKt.class;
   }
 
   public static @NotNull List<@NotNull Class<?>> getClasspathClasses() {
