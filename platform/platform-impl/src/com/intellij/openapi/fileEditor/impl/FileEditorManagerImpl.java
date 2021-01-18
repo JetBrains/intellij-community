@@ -975,7 +975,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
       if (windowAncestor != null &&
           windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
-        EditorsSplitters.focusDefaultComponentInSplittersIfPresent(myProject);
+        JComponent component = composite.getPreferredFocusedComponent();
+        if (component != null) {
+          component.requestFocus();
+        }
         IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
       }
     }
