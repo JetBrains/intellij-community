@@ -513,6 +513,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    for (int i = 0; i < x; i++) {\n" +
     "      y += (y ^ 0x123) << 2;\n" +
     "    }\n" +
+    "    for (int a: X) { System.out.print(a); }\n" +
     "    do {\n" +
     "      try(MyResource r1 = getResource(); MyResource r2 = null) {\n" +
     "        if (0 < x && x < 10) {\n" +
