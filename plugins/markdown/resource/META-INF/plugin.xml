@@ -204,7 +204,9 @@ Includes the following features:</p>
       <group id="Markdown.Highlighting"
              class="com.intellij.openapi.actionSystem.DefaultActionGroup"
              popup="true"
-             icon="AllIcons.Actions.Edit">
+             icon="AllIcons.Actions.Show">
+        <separator key="group.Markdown.Highlighting.Comment.text"/>
+
         <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction"
                 id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction">
         </action>
