@@ -207,6 +207,10 @@ Includes the following features:</p>
              icon="AllIcons.Actions.Show">
         <separator key="group.Markdown.Highlighting.Comment.text"/>
 
+        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightAllEntitiesAction"
+                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightAllEntitiesAction">
+        </action>
+
         <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction"
                 id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction">
         </action>
