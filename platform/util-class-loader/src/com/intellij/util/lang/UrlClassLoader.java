@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 /**
@@ -278,6 +279,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       return classPath.getResource(n.substring(1));
     }
     return resource;
+  }
+
+  public final void processResources(@NotNull String dir,
+                                     @NotNull Predicate<String> fileNameFilter,
+                                     @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+    classPath.processResources(dir, fileNameFilter, consumer);
   }
 
   @Override

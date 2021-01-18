@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -15,6 +16,8 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
 public class JarLoader extends Loader {
@@ -129,6 +132,13 @@ public class JarLoader extends Loader {
       error("url: " + path, e);
       return null;
     }
+  }
+
+  @Override
+  void processResources(@NotNull String dir,
+                        @NotNull Predicate<String> fileNameFilter,
+                        @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+    zipFile.processResources(dir, fileNameFilter, consumer);
   }
 
   protected final void error(@NotNull String message, @NotNull Throwable t) {

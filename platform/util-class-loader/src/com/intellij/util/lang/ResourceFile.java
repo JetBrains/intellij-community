@@ -6,6 +6,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
 public interface ResourceFile extends Closeable {
@@ -16,5 +19,8 @@ public interface ResourceFile extends Closeable {
   @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) throws IOException;
 
   @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
+    throws IOException;
+
+  void processResources(@NotNull String dir, @NotNull Predicate<String> nameFilter, @NotNull BiConsumer<String, InputStream> consumer)
     throws IOException;
 }

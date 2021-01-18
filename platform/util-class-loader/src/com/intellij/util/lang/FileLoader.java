@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 final class FileLoader extends Loader {
   private static final EnumSet<StandardOpenOption> READ_OPTIONS = EnumSet.of(StandardOpenOption.READ);
@@ -49,6 +51,23 @@ final class FileLoader extends Loader {
 
     rootDirAbsolutePathLength = path.toString().length();
     this.isClassPathIndexEnabled = isClassPathIndexEnabled;
+  }
+
+  @Override
+  void processResources(@NotNull String dir, @NotNull Predicate<String> fileNameFilter, @NotNull BiConsumer<String, InputStream> consumer)
+    throws IOException {
+    try (DirectoryStream<Path> paths = Files.newDirectoryStream(path.resolve(dir))) {
+      for (Path childPath : paths) {
+        String name = path.relativize(childPath).toString();
+        if (fileNameFilter.test(name) && Files.isRegularFile(childPath)) {
+          try (InputStream stream = new BufferedInputStream(Files.newInputStream(childPath))) {
+            consumer.accept(name, stream);
+          }
+        }
+      }
+    }
+    catch (NotDirectoryException | NoSuchFileException ignore) {
+    }
   }
 
   @Override

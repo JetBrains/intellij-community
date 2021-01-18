@@ -15,6 +15,8 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.security.ProtectionDomain;
 import java.util.Enumeration;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -144,6 +146,12 @@ public final class JdkZipResourceFile implements ResourceFile {
       protectionDomain = null;
     }
     return classConsumer.consumeClassData(className, bytes, jarLoader, protectionDomain);
+  }
+
+  @Override
+  public void processResources(@NotNull String dir,
+                               @NotNull Predicate<String> filter,
+                               @NotNull BiConsumer<String, InputStream> consumer) {
   }
 
   @Override

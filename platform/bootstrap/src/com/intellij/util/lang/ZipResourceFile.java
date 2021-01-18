@@ -20,6 +20,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -43,6 +45,21 @@ public final class ZipResourceFile implements ResourceFile {
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
+    }
+  }
+
+  @Override
+  public void processResources(@NotNull String dir,
+                               @NotNull Predicate<String> nameFilter,
+                               @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+    int minNameLength = dir.length() + 2;
+    for (ImmutableZipEntry entry : zipFile.getEntries()) {
+      String name = entry.getName();
+      if (name.length() >= minNameLength && name.startsWith(dir) && name.charAt(dir.length()) == '/' && nameFilter.test(name)) {
+        try (DirectByteBufferBackedInputStream stream = new DirectByteBufferBackedInputStream(entry.getByteBuffer(zipFile))) {
+          consumer.accept(name, stream);
+        }
+      }
     }
   }
 

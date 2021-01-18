@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -21,6 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
@@ -312,6 +314,29 @@ public final class ClassPath {
     }
     else {
       return new UncachedResourceEnumeration(name, this);
+    }
+  }
+
+  void processResources(@NotNull String dir,
+                        @NotNull Predicate<String> fileNameFilter,
+                        @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+    if (useCache && allUrlsWereProcessed) {
+      Collection<Loader> loaderSet = new LinkedHashSet<>();
+      // getLoadersByName compute package name by name, so, add ending slash
+      cache.collectLoaders(dir + '/', loaderSet);
+      if (loaderSet.isEmpty()) {
+        return;
+      }
+      for (Loader loader : loaderSet) {
+        loader.processResources(dir, fileNameFilter, consumer);
+      }
+    }
+    else {
+      int index = 0;
+      Loader loader;
+      while ((loader = getLoader(index++)) != null) {
+        loader.processResources(dir, fileNameFilter, consumer);
+      }
     }
   }
 
