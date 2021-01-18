@@ -5,8 +5,7 @@ import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
+import org.jetbrains.annotations.Nullable;
 
 public class ModifyModuleStatementUsageInfo extends UsageInfo {
   private final PsiJavaModule myModuleDescriptor;
@@ -25,9 +24,9 @@ public class ModifyModuleStatementUsageInfo extends UsageInfo {
     return myModuleDescriptor;
   }
 
-  @NotNull
+  @Nullable
   public PsiPackageAccessibilityStatement getModuleStatement() {
-    return (PsiPackageAccessibilityStatement)Objects.requireNonNull(getElement());
+    return (PsiPackageAccessibilityStatement)getElement();
   }
 
   @NotNull
