@@ -185,6 +185,7 @@ final class DistributionJARsBuilder {
       addModule("intellij.platform.statistics", "stats.jar")
       addModule("intellij.platform.statistics.uploader", "stats.jar")
       addModule("intellij.platform.statistics.config", "stats.jar")
+      addModule("intellij.platform.statistics.validator", "stats.jar")
       addModule("intellij.platform.statistics.devkit")
 
       addModule("intellij.relaxng", "intellij-xml.jar")
