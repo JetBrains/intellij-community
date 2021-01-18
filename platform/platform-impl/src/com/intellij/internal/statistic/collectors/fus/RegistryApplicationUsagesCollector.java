@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.*;
 
 public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("platform.registry", 2);
+  private static final EventLogGroup GROUP = new EventLogGroup("platform.registry", 3);
   private static final StringEventField REGISTRY_KEY = EventFields.StringValidatedByCustomRule("id", "registry_key");
 
   private static final VarargEventId REGISTRY = GROUP.registerVarargEvent("registry", REGISTRY_KEY, EventFields.PluginInfo);
