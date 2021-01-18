@@ -28,6 +28,7 @@ class UISettings {
   //GAPS
   val progressCourseGap: Int by lazy { JBUI.scale(4) }
   val progressModuleGap: Int by lazy { JBUI.scale(2) }
+  val expandAndModuleGap: Int by lazy { JBUI.scale(10) }
   val radioButtonGap: Int by lazy { JBUI.scale(3) }
 
   val groupGap: Int by lazy { JBUI.scale(24) }

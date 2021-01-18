@@ -63,10 +63,11 @@ class LearningItems : JPanel() {
   private fun createLessonItem(lesson: Lesson): JPanel {
     val result = JPanel()
     result.isOpaque = false
-    result.layout = HorizontalLayout(JBUI.scale(10))
+    result.layout = HorizontalLayout(0)
     result.border = EmptyBorder(JBUI.scale(7), JBUI.scale(7), JBUI.scale(6), JBUI.scale(7))
     val checkmarkIconLabel = createLabelIcon(if (lesson.passed) FeaturesTrainerIcons.Img.GreenCheckmark else EmptyIcon.ICON_16)
     result.add(createLabelIcon(EmptyIcon.ICON_16))
+    result.add(Box.createHorizontalStrut(UISettings.instance.expandAndModuleGap))
     result.add(checkmarkIconLabel)
 
     val name = LinkLabel<Any>(lesson.name, null)
@@ -81,7 +82,7 @@ class LearningItems : JPanel() {
         }
         CourseManager.instance.openLesson(project, lesson)
       }, null)
-    name.font = UISettings.instance.getFont(-1)
+    result.add(Box.createHorizontalStrut(JBUI.scale(4)))
     result.add(name)
     return result
   }
@@ -108,7 +109,7 @@ class LearningItems : JPanel() {
 
     result.toolTipText = module.description
 
-    result.layout = HorizontalLayout(JBUI.scale(10))
+    result.layout = HorizontalLayout(UISettings.instance.expandAndModuleGap)
 
     result.border = EmptyBorder(JBUI.scale(8), JBUI.scale(7), JBUI.scale(10), JBUI.scale(7))
 
