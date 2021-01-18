@@ -22,9 +22,11 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalColor;
-import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.model.*;
+import com.jediterm.terminal.model.SelectionUtil;
+import com.jediterm.terminal.model.StyleState;
+import com.jediterm.terminal.model.TerminalSelection;
+import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.model.hyperlinks.LinkResult;
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem;
@@ -50,7 +52,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
-  private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
 
@@ -67,7 +68,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
                           @Nullable TerminalExecutionConsole console,
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
-    mySettingsProvider = settingsProvider;
     myCompositeFilterWrapper = new CompositeFilterWrapper(project, console, this);
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
@@ -138,11 +138,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
-  protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
-    return new JBTerminalStarter(terminal, connector);
-  }
-
-  @Override
   protected JScrollBar createScrollBar() {
     JBScrollBar bar = new JBScrollBar();
     bar.putClientProperty(JBScrollPane.Alignment.class, JBScrollPane.Alignment.RIGHT);
@@ -169,11 +164,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = super.getActions();
     if (isInTerminalToolWindow()) {
-      actions.add(new TerminalAction(mySettingsProvider.getNewSessionActionPresentation(), input -> {
+      JBTerminalSystemSettingsProviderBase settingsProvider = getSettingsProvider();
+      actions.add(new TerminalAction(settingsProvider.getNewSessionActionPresentation(), input -> {
         myListener.onNewSession();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(mySettingsProvider.getCloseSessionActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getCloseSessionActionPresentation(), input -> {
         myListener.onSessionClosed();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
@@ -181,26 +177,26 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       actions.add(TerminalSplitAction.create(true, myListener).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
       actions.add(TerminalSplitAction.create(false, myListener).withMnemonicKey(KeyEvent.VK_H));
       if (myListener != null && myListener.isGotoNextSplitTerminalAvailable()) {
-        actions.add(mySettingsProvider.getGotoNextSplitTerminalAction(myListener, true));
-        actions.add(mySettingsProvider.getGotoNextSplitTerminalAction(myListener, false));
+        actions.add(settingsProvider.getGotoNextSplitTerminalAction(myListener, true));
+        actions.add(settingsProvider.getGotoNextSplitTerminalAction(myListener, false));
       }
-      actions.add(new TerminalAction(mySettingsProvider.getPreviousTabActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getPreviousTabActionPresentation(), input -> {
         myListener.onPreviousTabSelected();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(mySettingsProvider.getNextTabActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getNextTabActionPresentation(), input -> {
         myListener.onNextTabSelected();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(mySettingsProvider.getMoveTabRightActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getMoveTabRightActionPresentation(), input -> {
         myListener.moveTabRight();
         return true;
       }).withMnemonicKey(KeyEvent.VK_R).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabRight()));
-      actions.add(new TerminalAction(mySettingsProvider.getMoveTabLeftActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getMoveTabLeftActionPresentation(), input -> {
         myListener.moveTabLeft();
         return true;
       }).withMnemonicKey(KeyEvent.VK_L).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabLeft()));
-      actions.add(new TerminalAction(mySettingsProvider.getShowTabsActionPresentation(), input -> {
+      actions.add(new TerminalAction(settingsProvider.getShowTabsActionPresentation(), input -> {
         myListener.showTabs();
         return true;
       }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
@@ -280,8 +276,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     start();
   }
 
-  public JBTerminalSystemSettingsProviderBase getSettingsProvider() {
-    return mySettingsProvider;
+  public @NotNull JBTerminalSystemSettingsProviderBase getSettingsProvider() {
+    return (JBTerminalSystemSettingsProviderBase)mySettingsProvider;
   }
 
   public void moveDisposable(@NotNull Disposable newParent) {
