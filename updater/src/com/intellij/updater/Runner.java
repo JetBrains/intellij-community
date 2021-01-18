@@ -35,6 +35,7 @@ public class Runner {
     return ourCaseSensitiveFs;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     initLogger();
     try {
@@ -52,6 +53,7 @@ public class Runner {
     }
     catch (Throwable t) {
       logger().error("internal error", t);
+      t.printStackTrace(System.err);
       System.exit(2);
     }
   }
