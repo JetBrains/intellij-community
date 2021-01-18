@@ -523,7 +523,7 @@ public final class PsiTypesUtil {
    * Implicit type arguments of types based on inner classes of generic outer classes are explicitly checked
    */
   public static boolean mentionsTypeParameters(@Nullable PsiType type, Set<PsiTypeParameter> typeParameters) {
-    return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters, false);
+    return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters);
   }
 
   /**
@@ -535,13 +535,14 @@ public final class PsiTypesUtil {
       PsiMethod method = (PsiMethod)element;
       PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       if (PsiUtil.isRawSubstitutor(method, substitutor)) {
-        Set<PsiTypeParameter> typeParameters = new HashSet<>(substitutor.getSubstitutionMap().keySet());
-        for (PsiTypeParameter parameter : method.getTypeParameters()) {
-          typeParameters.remove(parameter);
-        }
         for (PsiParameter t : method.getParameterList().getParameters()) {
-          if (mentionsTypeParametersOrUnboundedWildcard(t.getType(), typeParameters, true)) {
-            return true;
+          PsiType type = t.getType().getDeepComponentType();
+          if (type instanceof PsiClassType) {
+            PsiClass aClass = ((PsiClassType)type).resolveGenerics().getElement();
+            if (aClass instanceof PsiTypeParameter || 
+                aClass != null && PsiUtil.typeParametersIterator(aClass).hasNext()) {
+              return true;
+            }
           }
         }
         return false;
@@ -551,8 +552,7 @@ public final class PsiTypesUtil {
   }
 
   private static boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
-                                                                   Set<PsiTypeParameter> typeParameters,
-                                                                   boolean acceptUnboundedWildcard) {
+                                                                   Set<PsiTypeParameter> typeParameters) {
     if (type == null) return false;
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
@@ -563,10 +563,8 @@ public final class PsiTypesUtil {
       @Override
       public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
-        if (bound != null) {
-          return bound.accept(this);
-        }
-        return acceptUnboundedWildcard;
+        return bound != null ? bound.accept(this) 
+                             : Boolean.valueOf(false);
       }
 
       @Override
