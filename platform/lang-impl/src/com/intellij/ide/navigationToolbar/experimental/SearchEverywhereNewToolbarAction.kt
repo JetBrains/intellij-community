@@ -27,8 +27,7 @@ import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener {
-  private val defaultWidth = 135
-  private val extendedWidth = 230
+
   private var hotKeyWasUsed = Registry.`is`("ide.suppress.double.click.handler")
   private var subscribedForDoubleShift = false
 
@@ -54,7 +53,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
 
     return object : ActionButtonWithText(this, presentation, place,
-                                         Dimension(defaultWidth, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)) {
+                                         ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       init {
         presentation.icon = AllIcons.Actions.Search
         presentation.text = if (hotKeyWasUsed) {
@@ -93,12 +92,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       override fun paint(g: Graphics?) {
         foreground = DISABLED_TEXT_COLOR
         background = searchFieldBackground()
-        if (hotKeyWasUsed) {
-          size = Dimension(JBUI.scale(defaultWidth), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
-        }
-        else {
-          size = Dimension(JBUI.scale(extendedWidth), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
-        }
         super.paint(g)
       }
 

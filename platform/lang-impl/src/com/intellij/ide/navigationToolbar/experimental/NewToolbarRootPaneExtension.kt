@@ -27,6 +27,7 @@ import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NotNull
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -73,8 +74,15 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
       for (c in children) {
         when (c) {
           is CustomComponentAction -> {
-            val component = c.createCustomComponent(myPresentationFactory.getPresentation(c), ActionPlaces.NEW_TOOLBAR)
-            panel.add(component, "$layoutConstrains, shrink 0")
+            val toolbar = ActionManager.getInstance ().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
+                                                                           DefaultActionGroup(c), true) as ActionToolbarImpl
+            toolbar.updateActionsImmediately()
+            toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
+            toolbar.border = JBUI.Borders.empty()
+            toolbar.minimumSize = Dimension(0, 0)
+            toolbar.addNotify()
+            panel.add(toolbar, "$layoutConstrains, shrink 0")
+
           }
           is Separator -> {
             panel.add(SeparatorComponent(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(),
