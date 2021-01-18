@@ -148,18 +148,18 @@
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-scripting-common" />
             <dependency maven-id="org.jetbrains:annotations" />
           </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/1.4.10/kotlin-scripting-dependencies-1.4.10.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.4.10/kotlin-scripting-common-1.4.10.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="kotlin-scripting-jvm" type="repository">
         <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.4.10">
           <exclude>
