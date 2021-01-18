@@ -21,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
@@ -63,7 +66,7 @@ public class EditorTracker implements Disposable {
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       Project project = event.getEditor().getProject();
-      if (project != null) {
+      if (project != null && !project.isDisposed()) {
         getInstance(project).editorCreated(event);
       }
     }
@@ -71,7 +74,7 @@ public class EditorTracker implements Disposable {
     @Override
     public void editorReleased(@NotNull EditorFactoryEvent event) {
       Project project = event.getEditor().getProject();
-      if (project != null) {
+      if (project != null && !project.isDisposed()) {
         getInstance(project).editorReleased(event);
       }
     }
