@@ -110,6 +110,8 @@ class UISettingsState : BaseState() {
   var hideKnownExtensionInTabs by property(false)
   var showTreeIndentGuides by property(false)
   var compactTreeIndents by property(false)
+  @get:OptionTag("USE_FIXED_SIZE_TABS")
+  var useFixedSizeTabs by property(false);
 
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)

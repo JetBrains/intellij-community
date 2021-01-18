@@ -26,3 +26,4 @@ internal val showTabsInOneRow                    get() = CheckboxDescriptor(mess
 internal val showTabsInMultipleRows              get() = CheckboxDescriptor(message("radio.editor.tabs.in.multiple.rows"), PropertyBinding({ !ui.scrollTabLayoutInEditor }, { ui.scrollTabLayoutInEditor = !it }))
 internal val openInPreviewTabIfPossible          get() = CheckboxDescriptor(message("checkbox.smart.tab.preview"), ui::openInPreviewTabIfPossible, message("checkbox.smart.tab.preview.inline.help"))
 internal val useSmallFont                        get() = CheckboxDescriptor(message("checkbox.use.small.font.for.labels"), ui::useSmallLabelsOnTabs)
+internal val useFixedSizeTabs                    get() = CheckboxDescriptor(message("checkbox.editor.tabs.fixed.size"), ui::useFixedSizeTabs)

@@ -121,6 +121,7 @@ public class TableLayout extends TabLayout {
     int eachY = insets.top;
     TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
     boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
+    boolean useFixedSizeTabs = UISettings.getInstance().getState().getUseFixedSizeTabs();
 
     if (!myTabs.isHideTabs()) {
       data = computeLayoutTable(visibleInfos);
@@ -145,7 +146,7 @@ public class TableLayout extends TabLayout {
           label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
 
           int width;
-          if (label.isPinned() && showPinnedTabsSeparately) {
+          if ((label.isPinned() && showPinnedTabsSeparately) || useFixedSizeTabs) {
             width = label.getNotStrictPreferredSize().width;
           }
           else if (i < eachRow.myColumns.size() - 1 || !toAjust) {
