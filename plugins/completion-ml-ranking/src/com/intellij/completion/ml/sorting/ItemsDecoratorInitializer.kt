@@ -97,8 +97,8 @@ class ItemsDecoratorInitializer : LookupTracker() {
       lookup.addPresentationCustomizer(object : LookupCellRenderer.ItemPresentationCustomizer {
         override fun customizePresentation(item: LookupElement,
                                            presentation: LookupElementPresentation): LookupElementPresentation {
-          val shouldShowRelevant = lookup.getUserData(HAS_RELEVANT_KEY) == true && shouldShowRelevant(storage)
-          val shouldShowDiff = lookup.getUserData(POSITION_CHANGED_KEY) == true && shouldShowDiff(storage)
+          val shouldShowRelevant = lookup.getUserData(HAS_RELEVANT_KEY) ?: false
+          val shouldShowDiff = lookup.getUserData(POSITION_CHANGED_KEY) ?: false
           if (!shouldShowRelevant && !shouldShowDiff) return presentation
 
           val isRelevant = item.getUserData(IS_RELEVANT_KEY) ?: false
