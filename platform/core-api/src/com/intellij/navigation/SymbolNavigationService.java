@@ -4,7 +4,9 @@ package com.intellij.navigation;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +29,9 @@ public interface SymbolNavigationService {
 
   @NotNull
   Collection<? extends NavigationTarget> getNavigationTargets(@NotNull Project project, @NotNull Symbol symbol);
+
+  @Contract("_ -> new")
+  @NotNull NavigationTarget psiFileNavigationTarget(@NotNull PsiFile file);
 
   /**
    * Please use {@link TargetPopupPresentation#builder}
