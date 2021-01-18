@@ -49,8 +49,6 @@ class NewJavaToKotlinConverter(
         override val oldServices = oldConverterServices
     }
 
-    private val LOG = Logger.getInstance(JavaToKotlinConverter::class.java)
-
     val phasesCount = J2KConversionPhase.values().size
 
     override fun filesToKotlin(

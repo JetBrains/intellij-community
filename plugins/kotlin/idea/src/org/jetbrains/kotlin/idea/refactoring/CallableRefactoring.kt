@@ -56,7 +56,9 @@ abstract class CallableRefactoring<out T : CallableDescriptor>(
     val callableDescriptor: T,
     @NlsContexts.Command val commandName: String
 ) {
-    private val LOG = Logger.getInstance(CallableRefactoring::class.java)
+    companion object  {
+        private val LOG = Logger.getInstance(CallableRefactoring::class.java)
+    }
 
     private val kind = (callableDescriptor as? CallableMemberDescriptor)?.kind ?: DECLARATION
 

@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -81,9 +81,6 @@ class KotlinChangeSignature(
     callableDescriptor,
     commandName ?: RefactoringBundle.message("changeSignature.refactoring.name")
 ) {
-
-    private val LOG = Logger.getInstance(KotlinChangeSignature::class.java)
-
     override fun forcePerformForSelectedFunctionOnly() = configuration.forcePerformForSelectedFunctionOnly()
 
     private fun runSilentRefactoring(descriptor: KotlinMethodDescriptor) {
@@ -263,6 +260,10 @@ class KotlinChangeSignature(
         }
         //choose at random
         return descriptorsForSignatureChange.first()
+    }
+
+    companion object {
+        private val LOG = logger<KotlinChangeSignature>()
     }
 }
 

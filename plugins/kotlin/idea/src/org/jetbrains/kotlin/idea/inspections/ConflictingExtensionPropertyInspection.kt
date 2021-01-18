@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -178,7 +179,9 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
     }
 
     private class DeleteRedundantExtensionAction(property: KtProperty) : KotlinQuickFixAction<KtProperty>(property) {
-        private val LOG = Logger.getInstance(DeleteRedundantExtensionAction::class.java)
+        companion object {
+            private val LOG = logger<DeleteRedundantExtensionAction>()
+        }
 
         override fun getFamilyName() = KotlinBundle.message("delete.redundant.extension.property")
         override fun getText() = familyName

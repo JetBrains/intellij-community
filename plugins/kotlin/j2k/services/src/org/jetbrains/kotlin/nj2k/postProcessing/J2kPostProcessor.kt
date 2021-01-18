@@ -34,8 +34,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class NewJ2kPostProcessor : PostProcessor {
-    @Suppress("PrivatePropertyName")
-    private val LOG = Logger.getInstance("@org.jetbrains.kotlin.nj2k.postProcessing.NewJ2kPostProcessor")
+    companion object {
+        private val LOG = Logger.getInstance("@org.jetbrains.kotlin.nj2k.postProcessing.NewJ2kPostProcessor")
+    }
 
     override fun insertImport(file: KtFile, fqName: FqName) {
         runUndoTransparentActionInEdt(inWriteAction = true) {

@@ -115,8 +115,9 @@ class OldJavaToKotlinConverter(
     private val settings: ConverterSettings,
     private val services: JavaToKotlinConverterServices
 ) : JavaToKotlinConverter() {
-
-    private val LOG = Logger.getInstance("#org.jetbrains.kotlin.j2k.JavaToKotlinConverter")
+    companion object {
+        private val LOG = Logger.getInstance("#org.jetbrains.kotlin.j2k.JavaToKotlinConverter")
+    }
 
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
