@@ -32,8 +32,4 @@ public final class JavaCodeStyleSettingsFacadeImpl extends JavaCodeStyleSettings
     return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
   }
 
-  @Override
-  public boolean isGenerateFinalLocals() {
-    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS;
-  }
 }
