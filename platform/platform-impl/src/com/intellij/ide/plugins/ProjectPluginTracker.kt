@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ProjectPluginTracker(
-  internal val project: Project,
+  internal val projectName: String,
   private val state: ProjectPluginTrackerState,
 ) {
 

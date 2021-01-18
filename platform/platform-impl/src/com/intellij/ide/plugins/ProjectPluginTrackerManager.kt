@@ -64,6 +64,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
   }
 
   private var applicationShuttingDown = false
+  internal val statesByProject get() = state.trackers
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
@@ -99,25 +100,19 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
   }
 
   fun createPluginTracker(project: Project): ProjectPluginTracker {
+    val projectName = project.name
     val workspaceId = if (project.isDefault) null else project.stateStore.projectWorkspaceId
-    val key = workspaceId ?: project.name
+
     return ProjectPluginTracker(
-      project,
-      state.trackers.getOrPut(key) { ProjectPluginTracker.Companion.ProjectPluginTrackerState() },
+      projectName,
+      statesByProject.getOrPut(workspaceId ?: projectName) { ProjectPluginTracker.Companion.ProjectPluginTrackerState() },
     )
   }
 
-  fun stopTrackingPerProject(
-    pluginIds: Collection<PluginId>,
-    project: Project?,
-  ) {
-    if (project == null) return
-
-    state
-      .trackers
-      .values
-      .map { ProjectPluginTracker(project, it) }
-      .forEach { state -> state.stopTrackingPerProject(pluginIds) }
+  fun stopTrackingPerProject(pluginIds: Collection<PluginId>) {
+    statesByProject
+      .map { ProjectPluginTracker(it.key, it.value) }
+      .forEach { it.stopTrackingPerProject(pluginIds) }
   }
 
   @JvmOverloads
@@ -135,7 +130,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     fun startTrackingPerProject(enable: Boolean) = createPluginTracker(project!!).startTrackingPerProject(pluginIds, enable)
 
-    fun stopTrackingPerProject() = stopTrackingPerProject(pluginIds, project)
+    fun stopTrackingPerProject() = stopTrackingPerProject(pluginIds)
 
     fun loadPlugins() = loadPlugins(descriptors)
 

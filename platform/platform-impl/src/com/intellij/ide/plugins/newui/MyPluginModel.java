@@ -161,8 +161,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       ProjectPluginTrackerManager
         .getInstance()
-        .stopTrackingPerProject(List.of(pluginId),
-                                getProject());
+        .stopTrackingPerProject(List.of(pluginId));
     }
 
     boolean installsRequiringRestart = myInstallsRequiringRestart;
