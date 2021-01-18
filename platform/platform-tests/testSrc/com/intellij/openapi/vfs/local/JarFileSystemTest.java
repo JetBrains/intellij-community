@@ -320,8 +320,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertEquals("Hello.class", UsefulTestCase.assertOneElement(JarFileSystem.getInstance().list(jarRoot.findFileByRelativePath("com"))));
   }
 
-  @NotNull
-  private VirtualFile createJar(String @NotNull ... entryNames) {
+  private VirtualFile createJar(String... entryNames) {
     String[] namesAndTexts = Arrays.stream(entryNames).flatMap(n -> Stream.of(n, null)).toArray(String[]::new);
     File jar = IoTestUtil.createTestJar(tempDir.newFile("p.jar"), namesAndTexts);
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);

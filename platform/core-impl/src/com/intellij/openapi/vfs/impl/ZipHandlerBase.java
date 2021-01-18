@@ -31,8 +31,8 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   @Override
   protected @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException {
-    try (ResourceHandle<ZipFile> existingZipRef = acquireZipHandle()) {
-      return buildEntryMapForZipFile(existingZipRef.get());
+    try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
+      return buildEntryMapForZipFile(zipRef.get());
     }
   }
 

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.ByteArrayCharSequence;
 import gnu.trove.THashMap;
@@ -60,8 +59,7 @@ public abstract class ArchiveHandler {
     myPath = new File(path);
   }
 
-  @NotNull
-  public File getFile() {
+  public @NotNull File getFile() {
     return myPath;
   }
 
@@ -81,13 +79,13 @@ public abstract class ArchiveHandler {
 
   public String @NotNull [] list(@NotNull String relativePath) {
     EntryInfo entry = getEntryInfo(relativePath);
-    if (entry == null || !entry.isDirectory) return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    if (entry == null || !entry.isDirectory) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     AddonlyKeylessHash<EntryInfo, Object> result = getParentChildrenMap();
 
     Object o = result.get(entry);
     if (o == null) {
-      return ArrayUtilRt.EMPTY_STRING_ARRAY; // directories without children
+      return ArrayUtil.EMPTY_STRING_ARRAY; // directories without children
     }
     if (o instanceof EntryInfo) {
       return new String[] {((EntryInfo)o).shortName.toString()};
@@ -101,7 +99,6 @@ public abstract class ArchiveHandler {
     return names;
   }
 
-  @NotNull
   private AddonlyKeylessHash<EntryInfo, Object> getParentChildrenMap() {
     AddonlyKeylessHash<EntryInfo, Object> map = SoftReference.dereference(myChildrenEntries);
     if (map == null) {
@@ -130,7 +127,7 @@ public abstract class ArchiveHandler {
     return map;
   }
 
-  private @NotNull AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
+  private AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
     THashMap<EntryInfo, List<EntryInfo>> map = new THashMap<>();
     for (EntryInfo info : getEntriesMap().values()) {
       if (info.isDirectory && !map.containsKey(info)) map.put(info, new SmartList<>());
@@ -167,13 +164,11 @@ public abstract class ArchiveHandler {
     }
   }
 
-  @Nullable
-  protected EntryInfo getEntryInfo(@NotNull String relativePath) {
+  protected @Nullable EntryInfo getEntryInfo(@NotNull String relativePath) {
     return getEntriesMap().get(relativePath);
   }
 
-  @NotNull
-  protected Map<String, EntryInfo> getEntriesMap() {
+  protected @NotNull Map<String, EntryInfo> getEntriesMap() {
     Map<String, EntryInfo> map = SoftReference.dereference(myEntries);
     if (map == null) {
       synchronized (myLock) {
@@ -201,11 +196,9 @@ public abstract class ArchiveHandler {
     return map;
   }
 
-  @NotNull
-  protected abstract Map<String, EntryInfo> createEntriesMap() throws IOException;
+  protected abstract @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException;
 
-  @NotNull
-  protected EntryInfo createRootEntry() {
+  protected @NotNull EntryInfo createRootEntry() {
     return new EntryInfo("", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, null);
   }
 
@@ -303,8 +296,7 @@ public abstract class ArchiveHandler {
 
   public abstract byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException;
 
-  @NotNull
-  public InputStream getInputStream(@NotNull String relativePath) throws IOException {
+  public @NotNull InputStream getInputStream(@NotNull String relativePath) throws IOException {
     return new BufferExposingByteArrayInputStream(contentsToByteArray(relativePath));
   }
 
