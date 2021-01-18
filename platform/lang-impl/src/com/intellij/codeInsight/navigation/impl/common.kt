@@ -10,6 +10,7 @@ import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.impl.PsiOrigin
 import com.intellij.model.psi.impl.TargetData
+import com.intellij.navigation.EmptyNavigatable
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -75,15 +76,14 @@ internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
   }
 }
 
-internal fun gtdTargetNavigatable(targetElement: PsiElement): Navigatable? {
-  return gtdTarget(targetElement)?.let(::psiNavigatable)
+internal fun gtdTargetNavigatable(targetElement: PsiElement): Navigatable {
+  val target = TargetElementUtil.getInstance().getGotoDeclarationTarget(targetElement, targetElement.navigationElement)
+               ?: return EmptyNavigatable.INSTANCE
+  return psiNavigatable(target)
 }
 
-private fun gtdTarget(targetElement: PsiElement): PsiElement? {
-  return TargetElementUtil.getInstance().getGotoDeclarationTarget(targetElement, targetElement.navigationElement)
-}
-
-internal fun psiNavigatable(targetElement: PsiElement): Navigatable? {
+internal fun psiNavigatable(targetElement: PsiElement): Navigatable {
   return targetElement as? Navigatable
          ?: EditSourceUtil.getDescriptor(targetElement)
+         ?: EmptyNavigatable.INSTANCE
 }
