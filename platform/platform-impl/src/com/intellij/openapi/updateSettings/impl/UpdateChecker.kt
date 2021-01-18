@@ -312,18 +312,28 @@ object UpdateChecker {
 
   private fun getBrokenPlugins(): Map<PluginId, Set<String>> {
     val currentBuild = ApplicationInfoImpl.getInstance().build
-    return MarketplaceRequests.getInstance().getBrokenPlugins()
-      .filter {
-        val originalUntil = BuildNumber.fromString(it.originalUntil) ?: currentBuild
-        val originalSince = BuildNumber.fromString(it.originalSince) ?: currentBuild
-        val until = BuildNumber.fromString(it.until) ?: currentBuild
-        val since = BuildNumber.fromString(it.since) ?: currentBuild
-        (currentBuild in originalSince..originalUntil) && (currentBuild !in since..until)
+
+    val map = HashMap<PluginId, MutableSet<String>>()
+    for (item in MarketplaceRequests.getInstance().getBrokenPlugins()) {
+      try {
+        val originalUntil = BuildNumber.fromString(item.originalUntil?.trim()?.takeIf { it.isNotEmpty() } ?: continue, item.id,
+                                                   null) ?: currentBuild
+        val originalSince = BuildNumber.fromString(item.originalSince?.trim()?.takeIf { it.isNotEmpty() } ?: continue, item.id,
+                                                   null) ?: currentBuild
+        val until = BuildNumber.fromString(item.until) ?: currentBuild
+        val since = BuildNumber.fromString(item.since) ?: currentBuild
+        if (currentBuild !in originalSince..originalUntil || currentBuild in since..until) {
+          continue
+        }
+
+        map.computeIfAbsent(PluginId.getId(item.id)) { HashSet() }.add(item.version)
       }
-      .groupBy { it.id }.entries
-      .associate { (pluginId, brokenPlugins) ->
-        PluginId.getId(pluginId) to brokenPlugins.mapTo(HashSet()) { it.version }
+      catch (e: Exception) {
+        LOG.error("cannot parse $item", e)
+        continue
       }
+    }
+    return map
   }
 
   private fun getIncompatiblePlugins(newBuildNumber: BuildNumber?,

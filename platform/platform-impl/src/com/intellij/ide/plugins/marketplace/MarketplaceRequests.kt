@@ -66,10 +66,6 @@ open class MarketplaceRequests {
   private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded("${PLUGIN_MANAGER_URL}/api/search/aggregation/organizations")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
-  private val MARKETPLACE_TAGS_URL = Urls.newFromEncoded(
-    "${PLUGIN_MANAGER_URL}/api/search/aggregation/tags"
-  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
-
   private val JETBRAINS_PLUGINS_URL = Urls.newFromEncoded(
     "${PLUGIN_MANAGER_URL}/api/search/plugins?organization=JetBrains&max=1000"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
@@ -200,7 +196,9 @@ open class MarketplaceRequests {
   fun getAllPluginsTags(): List<String> {
     try {
       return HttpRequests
-        .request(MARKETPLACE_TAGS_URL)
+        .request(Urls.newFromEncoded(
+            "${PLUGIN_MANAGER_URL}/api/search/aggregation/tags"
+          ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST)))
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
@@ -246,13 +244,11 @@ open class MarketplaceRequests {
   }
 
   @Throws(IOException::class)
-  fun <T> readOrUpdateFile(
-    file: Path?,
-    url: String,
-    indicator: ProgressIndicator?,
-    @Nls indicatorMessage: String,
-    parser: (Reader) -> T
-  ): T {
+  fun <T> readOrUpdateFile(file: Path?,
+                           url: String,
+                           indicator: ProgressIndicator?,
+                           @Nls indicatorMessage: String,
+                           parser: (Reader) -> T): T {
     val eTag = if (file == null) null else loadEtagForFile(file)
     return HttpRequests
       .request(url)
@@ -283,6 +279,10 @@ open class MarketplaceRequests {
             connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
           }
           return@connect Files.newBufferedReader(file).use(parser)
+        }
+        catch (e: HttpRequests.HttpStatusException) {
+          LOG.warn("Cannot load data from $url (statusCode=${e.statusCode})", e)
+          throw e
         }
         catch (e: Exception) {
           val fileText = file?.readText()
