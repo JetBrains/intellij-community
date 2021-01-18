@@ -25,10 +25,12 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   private final Project myProject;
   private LanguageLevel myLanguageLevel;
   private LanguageLevel myCurrentLevel;
+  private final LanguageLevelChangeListener myLanguageLevelChangeListener;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
     setDefault(project.isDefault() ? true : null);
+    myLanguageLevelChangeListener = myProject.getMessageBus().syncPublisher(LANGUAGE_LEVEL_CHANGED_TOPIC);
   }
 
   public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {
@@ -92,6 +94,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Override
   public void languageLevelsChanged() {
     if (!myProject.isDefault()) {
+      myLanguageLevelChangeListener.onLanguageLevelsChanged();
       ProjectRootManager.getInstance(myProject).incModificationCount();
       JavaLanguageLevelPusher.pushLanguageLevel(myProject);
     }
