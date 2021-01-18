@@ -40,7 +40,9 @@ public class Utils {
 
       if (REQUIRED_FREE_SPACE > 0) {
         FileStore fs = Files.getFileStore(dir);
-        if (fs.getUsableSpace() < REQUIRED_FREE_SPACE) throw new IOException("Not enough free space on '" + fs + "'");
+        if (fs.getUsableSpace() < REQUIRED_FREE_SPACE) {
+          throw new IOException("Not enough free space on '" + fs + "' (" + (REQUIRED_FREE_SPACE / 1_000_000) + " MB required");
+        }
       }
 
       myTempDir = Files.createTempDirectory(dir, "idea.updater.files.").toFile();
