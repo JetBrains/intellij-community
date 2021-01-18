@@ -80,7 +80,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(), window -> window.getId().equals(tabId));
     if (logWindow != null) {
       LOG.debug("Selected log window '" + logWindow + "'");
-      VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TAB_NAVIGATED, null);
+      VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TAB_NAVIGATED, null, myProject);
       myRefresher.refresherActivated(logWindow.getRefresher(), false);
     }
   }
