@@ -163,8 +163,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return processHandler;
   }
 
-  private Function<String, List<String>> createParametersPatcher(TargetedCommandLineBuilder targetedCommandLineBuilder,
-                                                                 TargetEnvironment remoteEnvironment) {
+  private Function<String, List<String>> createParametersPatcher(@NotNull TargetedCommandLineBuilder targetedCommandLineBuilder,
+                                                                 @NotNull TargetEnvironment remoteEnvironment) {
     boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
     int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
     String workingDirsFilePath = myWorkingDirsFile.getAbsolutePath();

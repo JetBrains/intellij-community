@@ -4,6 +4,7 @@ package com.intellij.execution;
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.target.TargetEnvironment;
@@ -65,6 +66,13 @@ public class TargetDebuggerConnectionUtil {
                                                                    @NotNull TargetEnvironmentRequest request,
                                                                    @Nullable TargetEnvironmentConfiguration configuration) {
     final int remotePort;
+    JavaParameters javaParameters;
+    try {
+      javaParameters = javaCommandLineState.getJavaParameters();
+    } catch (ExecutionException e){
+      return null;
+    }
+
     {
       Integer remotePort2 = requiredDebuggerTargetPort(javaCommandLineState, request);
       if (remotePort2 == null) {
@@ -95,7 +103,7 @@ public class TargetDebuggerConnectionUtil {
 
       RemoteConnection remoteConnection = new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remoteAddressForVmParams)
         .suspend(true)
-        .create(javaCommandLineState.getJavaParameters());
+        .create(javaParameters);
 
       remoteConnection.setApplicationAddress(String.valueOf(remotePort));
       if (java9plus) {

@@ -154,10 +154,6 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    if (state instanceof JavaCommandLine) {
-      patchJavaCommandLineParams((JavaCommandLine)state, env);
-    }
-
     if (!isExecutorSupportedOnTarget(env)) {
       throw new ExecutionException(
         ExecutionBundle.message("run.configuration.action.is.supported.for.local.machine.only", env.getExecutor().getActionName())
@@ -165,6 +161,10 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute java run configuration async", () -> {
+      if (state instanceof JavaCommandLine) {
+        patchJavaCommandLineParams((JavaCommandLine)state, env);
+      }
+
       return executeJavaState(state, env, null);
     });
   }
