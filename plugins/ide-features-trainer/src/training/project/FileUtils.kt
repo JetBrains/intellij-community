@@ -18,7 +18,7 @@ object FileUtils {
                                   jarPath: String,
                                   destinationFilter: FileFilter? = null): Boolean {
     val splitJarPath = splitJarPath(jarPath)
-    val jarFile = JarFile(splitJarPath.first)
+    val jarFile = JarFile(URL(splitJarPath.first).file)
     val prefix = splitJarPath.second
 
     val entries = jarFile.entries()
@@ -49,7 +49,7 @@ object FileUtils {
   fun copyResourcesRecursively(originUrl: URL, destination: File, destinationFilter: FileFilter? = null): Boolean {
     try {
       if (originUrl.protocol == URLUtil.JAR_PROTOCOL) {
-        copyJarResourcesRecursively(destination, URL(originUrl.file).file, destinationFilter)
+        copyJarResourcesRecursively(destination, originUrl.file, destinationFilter)
       }
       else if (originUrl.protocol == URLUtil.FILE_PROTOCOL) {
         copyDirWithDestFilter(File(originUrl.path), destination, destinationFilter)
