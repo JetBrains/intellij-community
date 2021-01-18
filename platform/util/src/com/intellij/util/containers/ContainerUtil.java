@@ -84,6 +84,16 @@ public class ContainerUtil {
   }
 
   /**
+   * @deprecated Use {@link THashMap#THashMap(Map)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Contract(pure = true)
+  public static @NotNull <K, V> THashMap<K, V> newTroveMap() {
+    return new THashMap<>();
+  }
+
+  /**
    * @deprecated Use {@link THashMap#THashMap(TObjectHashingStrategy)}
    */
   @Deprecated
