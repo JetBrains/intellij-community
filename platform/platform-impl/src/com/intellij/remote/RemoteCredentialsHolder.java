@@ -33,6 +33,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   @NonNls public static final String USE_AUTH_AGENT = "USE_AUTH_AGENT";
   @NonNls public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
   @NonNls public static final String PASSPHRASE = "PASSPHRASE";
+  @NonNls public static final String CONNECTION_CONFIG_PATCH = "sshConnectionConfigPatch";
 
   @NonNls public static final String SSH_PREFIX = "ssh://";
 
@@ -50,6 +51,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private boolean myStorePassword;
   private boolean myStorePassphrase;
   private @NotNull AuthType myAuthType = AuthType.PASSWORD;
+  private @Nullable SshConnectionConfigPatch myConnectionConfigPatch;
 
   public RemoteCredentialsHolder() {}
 
@@ -174,6 +176,17 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myAuthType = authType;
   }
 
+  @Nullable
+  @Override
+  public SshConnectionConfigPatch getConnectionConfigPatch() {
+    return myConnectionConfigPatch;
+  }
+
+  @Override
+  public void setConnectionConfigPatch(@Nullable SshConnectionConfigPatch patch) {
+    myConnectionConfigPatch = patch;
+  }
+
   @NotNull
   public String getSerializedUserName() {
     return StringUtil.notNullize(myUserName);
@@ -229,6 +242,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     to.setPrivateKeyFile(from.getPrivateKeyFile());
     to.setStorePassword(from.isStorePassword());
     to.setStorePassphrase(from.isStorePassphrase());
+    to.setConnectionConfigPatch(from.getConnectionConfigPatch());
   }
 
   public void load(Element element) {
@@ -311,6 +325,9 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
       password = null;
     }
     PasswordSafe.getInstance().set(createAttributes(memoryOnly), new Credentials(getUserName(), password));
+
+    // getConnectionConfigPatch() is omitted intentionally.
+    // It's expected that the options will be set with SSH settings by one of `copyTo` calls.
   }
 
   @NotNull
@@ -336,6 +353,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     if (!myPrivateKeyFile.equals(holder.myPrivateKeyFile)) return false;
     if (!Objects.equals(myPassphrase, holder.myPassphrase)) return false;
     if (myAuthType != holder.myAuthType) return false;
+    if (!Objects.equals(myConnectionConfigPatch, holder.myConnectionConfigPatch)) return false;
 
     return true;
   }
@@ -351,6 +369,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     result = 31 * result + (myStorePassword ? 1 : 0);
     result = 31 * result + (myStorePassphrase ? 1 : 0);
     result = 31 * result + myAuthType.hashCode();
+    result = 31 * result + (myConnectionConfigPatch != null ? myConnectionConfigPatch.hashCode() : 0);
     return result;
   }
 }

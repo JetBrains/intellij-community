@@ -3,9 +3,11 @@ package com.intellij.remote;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+// TODO Merge with MutableRemoteCredentials. There's no any direct inheritor of RemoteCredentials.
 public interface RemoteCredentials {
   @NlsSafe @NotNull String getHost();
 
@@ -29,6 +31,11 @@ public interface RemoteCredentials {
 
   boolean isStorePassphrase();
 
+  @ApiStatus.Experimental
+  default @Nullable SshConnectionConfigPatch getConnectionConfigPatch() {
+    return null;
+  }
+
   /**
    * By default when user connects to a remote server, host fingerprint should be verified via
    * <pre>~/.ssh/known_hosts</pre> file and user should explicitly confirm connection if he never
@@ -36,6 +43,8 @@ public interface RemoteCredentials {
    * (for example, when connecting to Vagrant VM), confirmation should be skipped.
    *
    * @return true if host key verification should be skipped.
+   *
+   * TODO Replace with {@link #getConnectionConfigPatch()}.
    */
   default boolean isSkippingHostKeyVerification() {
     return false;

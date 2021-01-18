@@ -2,6 +2,46 @@
 package com.intellij.remote
 
 import org.jetbrains.annotations.ApiStatus
+import java.time.Duration
+
+/**
+ * Additional options overridable in SSH Connections settings. This config must have the highest priority across all other configuration
+ * ways. Every field is nullable. Null means that the value should keep its default value.
+ *
+ * @param serverAliveInterval How often to send keep-alive messages in OpenSSH format. Overrides `ServerAliveInterval` section of
+ *  OpenSSH configs. If the duration is zero or negative, keep-alive messages are forcibly disabled.
+ */
+@ApiStatus.Experimental
+data class SshConnectionConfigPatch(
+  var hostKeyVerifier: HostKeyVerifier?,
+  var serverAliveInterval: Duration?,
+) {
+  /**
+   * @param hashKnownHosts Indicates that host names and addresses should be hashed while being added to the known hosts file.
+   * @param strictHostKeyChecking How the SSH client should react on a host key which's not mentioned in the known hosts file.
+   */
+  data class HostKeyVerifier(
+    var hashKnownHosts: Boolean?,
+    var strictHostKeyChecking: StrictHostKeyChecking?,
+  ) {
+    constructor() : this(null, null)
+
+    fun withHashKnownHosts(value: Boolean): HostKeyVerifier = apply { hashKnownHosts = value }
+    fun withStrictHostKeyChecking(value: StrictHostKeyChecking): HostKeyVerifier = apply { strictHostKeyChecking = value }
+  }
+
+  constructor() : this(
+    hostKeyVerifier = null,
+    serverAliveInterval = null,
+  )
+
+  fun withHostKeyVerifier(value: HostKeyVerifier): SshConnectionConfigPatch = apply { hostKeyVerifier = value }
+  fun withServerAliveInterval(value: Duration): SshConnectionConfigPatch = apply { serverAliveInterval = value }
+
+  fun deepCopy(): SshConnectionConfigPatch = copy(
+    hostKeyVerifier = hostKeyVerifier?.copy(),
+  )
+}
 
 @ApiStatus.Experimental
 enum class StrictHostKeyChecking {
