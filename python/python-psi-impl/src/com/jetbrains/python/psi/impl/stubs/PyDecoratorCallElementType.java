@@ -40,12 +40,13 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   @Override
   @NotNull
   public PyDecoratorStub createStub(@NotNull PyDecorator psi, StubElement parentStub) {
-    return new PyDecoratorStubImpl(psi.getQualifiedName(), parentStub);
+    return new PyDecoratorStubImpl(psi.getQualifiedName(), psi.hasArgumentList(), parentStub);
   }
 
   @Override
   public void serialize(@NotNull PyDecoratorStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     QualifiedName.serialize(stub.getQualifiedName(), dataStream);
+    dataStream.writeBoolean(stub.hasArgumentList());
   }
 
   @Override
@@ -61,6 +62,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   @NotNull
   public PyDecoratorStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     QualifiedName q_name = QualifiedName.deserialize(dataStream);
-    return new PyDecoratorStubImpl(q_name, parentStub);
+    boolean hasArgumentList = dataStream.readBoolean();
+    return new PyDecoratorStubImpl(q_name, hasArgumentList, parentStub);
   }
 }

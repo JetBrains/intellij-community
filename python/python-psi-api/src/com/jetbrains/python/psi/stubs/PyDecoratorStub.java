@@ -16,8 +16,8 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.psi.PyDecorator;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.PyDecorator;
 
 public interface PyDecoratorStub extends StubElement<PyDecorator> {
 
@@ -26,5 +26,8 @@ public interface PyDecoratorStub extends StubElement<PyDecorator> {
    */
   QualifiedName getQualifiedName();
 
-  //PyFunction getTarget();
+  /**
+   * @return true if invocation has a form of {@code @foo(...)}.
+   */
+  boolean hasArgumentList();
 }

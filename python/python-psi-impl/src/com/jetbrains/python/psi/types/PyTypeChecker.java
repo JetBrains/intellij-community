@@ -625,7 +625,7 @@ public final class PyTypeChecker {
     if (type instanceof PyFunctionType) {
       final PyCallable callable = ((PyFunctionType)type).getCallable();
       if (callable instanceof PyDecoratable &&
-          PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyDecoratable)callable, context)) {
+          PyKnownDecoratorUtil.hasChangingReturnTypeDecorator((PyDecoratable)callable, context)) {
         return true;
       }
     }
@@ -640,13 +640,59 @@ public final class PyTypeChecker {
     return false;
   }
 
+  @NotNull
+  public static Map<PyGenericType, PyType>
+  getSubstitutionsWithUnresolvedReturnGenerics(@NotNull Collection<PyCallableParameter> parameters,
+                                               @Nullable PyType returnType,
+                                               @Nullable Map<PyGenericType, PyType> substitutions,
+                                               @NotNull TypeEvalContext context) {
+    Map<PyGenericType, PyType> result = ContainerUtil.isEmpty(substitutions)
+                                        ? new HashMap<>()
+                                        : new HashMap<>(substitutions);
+    Set<Object> visited = new HashSet<>();
+    Set<PyGenericType> returnTypeGenerics = new HashSet<>();
+    collectGenerics(returnType, context, returnTypeGenerics, visited);
+    if (returnTypeGenerics.isEmpty()) {
+      return result;
+    }
+    for (PyGenericType alreadyKnown : result.keySet()) {
+      if (!returnTypeGenerics.remove(alreadyKnown)) {
+        returnTypeGenerics.remove(invert(alreadyKnown));
+      }
+    }
+    if (returnTypeGenerics.isEmpty()) {
+      return result;
+    }
+
+    visited.clear();
+    Set<PyGenericType> paramGenerics = new HashSet<>();
+    for (PyCallableParameter parameter : parameters) {
+      PyType paramType = parameter.getArgumentType(context);
+      collectGenerics(paramType, context, paramGenerics, visited);
+    }
+
+    for (PyGenericType returnTypeGeneric : returnTypeGenerics) {
+      if (!paramGenerics.contains(returnTypeGeneric) && !paramGenerics.contains(invert(returnTypeGeneric))) {
+        result.put(returnTypeGeneric, returnTypeGeneric);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static <T extends PyInstantiableType<T>> T invert(@NotNull PyInstantiableType<T> instantiable) {
+    return instantiable.isDefinition() ? instantiable.toInstance() : instantiable.toClass();
+  }
+
   public static boolean hasGenerics(@Nullable PyType type, @NotNull TypeEvalContext context) {
     final Set<PyGenericType> collected = new HashSet<>();
     collectGenerics(type, context, collected, new HashSet<>());
     return !collected.isEmpty();
   }
 
-  private static void collectGenerics(@Nullable PyType type, @NotNull TypeEvalContext context, @NotNull Set<? super PyGenericType> collected,
+  private static void collectGenerics(@Nullable PyType type,
+                                      @NotNull TypeEvalContext context,
+                                      @NotNull Set<? super PyGenericType> collected,
                                       @NotNull Set<? super PyType> visited) {
     if (visited.contains(type)) {
       return;
@@ -696,17 +742,10 @@ public final class PyTypeChecker {
         final PyGenericType typeVar = (PyGenericType)type;
         PyType substitution = substitutions.get(typeVar);
         if (substitution == null) {
-          if (!typeVar.isDefinition()) {
-            final PyInstantiableType<?> classType = as(substitutions.get(typeVar.toClass()), PyInstantiableType.class);
-            if (classType != null) {
-              substitution = classType.toInstance();
-            }
-          }
-          else {
-            final PyInstantiableType<?> instanceType = as(substitutions.get(typeVar.toInstance()), PyInstantiableType.class);
-            if (instanceType != null) {
-              substitution = instanceType.toClass();
-            }
+          final PyInstantiableType<?> invertedTypeVar = invert(typeVar);
+          final PyInstantiableType<?> invertedSubstitution = as(substitutions.get(invertedTypeVar), PyInstantiableType.class);
+          if (invertedSubstitution != null) {
+            substitution = invert(invertedSubstitution);
           }
         }
         if (substitution instanceof PyGenericType && !typeVar.equals(substitution) && substitutions.containsKey(substitution)) {
