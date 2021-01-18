@@ -13,3 +13,14 @@ fun InspectListener.reportWhenInspectionFinished(toolWrapper: InspectionToolWrap
     throw e
   }
 }
+
+fun InspectListener.reportWhenActivityFinished(activityKind: InspectListener.ActivityKind, activity: Runnable) {
+  val start = System.nanoTime()
+  try {
+    activity.run()
+    activityFinished(start, System.nanoTime(), Thread.currentThread().id, activityKind)
+  } catch (e: Throwable ) {
+    activityFinished(start, System.nanoTime(), Thread.currentThread().id, activityKind)
+    throw e
+  }
+}
