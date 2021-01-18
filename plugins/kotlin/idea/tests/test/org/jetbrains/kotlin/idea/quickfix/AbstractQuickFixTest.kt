@@ -5,8 +5,13 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.*
+import com.intellij.codeInsight.intention.impl.CachedIntentions
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
@@ -19,6 +24,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -227,7 +233,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         val text = myFixture.editor.document.text
         val actionHint = ActionHint.parse(myFixture.file, text)
         if (!actionHint.shouldPresent()) {
-            val actions = myFixture.availableIntentions
+            myFixture.doHighlighting()
+            val intentions = ShowIntentionActionsHandler.calcIntentions(project, editor, file)
+            val cachedIntentions = CachedIntentions.create(project, file, editor, intentions)
+            cachedIntentions.wrapAndUpdateGutters()
+            val actions = cachedIntentions.allActions.map { it.action }.toMutableList()
 
             val prefix = "class "
             if (actionHint.expectedText.startsWith(prefix)) {

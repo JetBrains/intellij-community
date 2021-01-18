@@ -9,6 +9,8 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.impl.CachedIntentions
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.ide.highlighter.JavaFileType
@@ -279,7 +281,10 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     private val availableActions: List<IntentionAction>
         get() {
             myFixture.doHighlighting()
-            return myFixture.availableIntentions
+            val intentions = ShowIntentionActionsHandler.calcIntentions(project, editor, file)
+            val cachedIntentions = CachedIntentions.create(project, file, editor, intentions)
+            cachedIntentions.wrapAndUpdateGutters()
+            return cachedIntentions.allActions.map { it.action }
         }
 
     class TestFile internal constructor(val path: String, val content: String)
