@@ -30,7 +30,9 @@ public abstract class XDebugView implements Disposable {
 
   protected final void requestClear() {
     if (ApplicationManager.getApplication().isUnitTestMode()) { // no delay in tests
-      clear();
+      if (!myClearAlarm.isDisposed()) {
+        clear();
+      }
     }
     else {
       myClearAlarm.cancelAndRequest();
