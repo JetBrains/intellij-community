@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
 import com.intellij.openapi.application.Application;
@@ -68,9 +68,9 @@ public interface Pointer<T> {
    * into the {@code restoration} function to allow caching the pointer in the restored value.
    */
   @Contract(value = "_, _, _ -> new", pure = true)
-  static <T, U> @NotNull Pointer<T> delegatingPointer2(@NotNull Pointer<? extends U> underlyingPointer,
-                                                       @NotNull Object key,
-                                                       @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
+  static <T, U> @NotNull Pointer<T> uroborosPointer(@NotNull Pointer<? extends U> underlyingPointer,
+                                                    @NotNull Object key,
+                                                    @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
     return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, key, restoration);
   }
 }
