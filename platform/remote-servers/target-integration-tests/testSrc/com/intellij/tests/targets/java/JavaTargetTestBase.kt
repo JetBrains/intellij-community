@@ -40,8 +40,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import junit.framework.TestCase
 import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
+import org.jdom.Content
+import org.jdom.Text
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.junit.Test
 import java.io.StringWriter
@@ -359,15 +362,23 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
       assertNotNull(writer.toString(), testrun)
       testrun.removeAttribute("footerText")
       testrun.removeAttribute("duration")
-      val rootChild = Objects.requireNonNull(testrun.getChild("root"), writer.toString())
+      val rootChild = Objects.requireNonNull(testrun.getChild("root"), "$output \n\n\n\n\n $writer")
       rootChild.removeChild("output")
-      val configChild = Objects.requireNonNull(testrun.getChild("config"), writer.toString())
+      val configChild = Objects.requireNonNull(testrun.getChild("config"), "$output \n\n\n\n\n $writer")
       configChild.removeChild("target")
       for (child in testrun.getChildren("suite")) {
         child.removeAttribute("duration")
         for (testChild in child.getChildren("test")) {
           testChild.removeAttribute("duration")
-          testChild.removeAttribute("outp")
+
+          // Stacktrace for LocalJavaTargetTest differs here due to usage of AppMainV2 in ProcessProxyFactoryImpl;
+          // let's mask that; AppMainV2 won't be used in production, only when running from sources
+          testChild.getChild("output")?.let {
+            val content = it.getContent(0)
+            TestCase.assertEquals(writer.toString(), Content.CType.Text, content.cType)
+            val contentText = content.value
+            it.setContent(Text(contentText.substring(0, contentText.length.coerceAtMost(600))))
+          }
         }
       }
 
@@ -396,44 +407,7 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
                    "\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:326)\n" +
                    "\tat AlsoTest.testShouldFail(AlsoTest.java:10)\n" +
                    "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
-                   "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n" +
-                   "\tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n" +
-                   "\tat java.base/java.lang.reflect.Method.invoke(Method.java:567)\n" +
-                   "\tat org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:515)\n" +
-                   "\tat org.junit.jupiter.engine.execution.ExecutableInvoker.invoke(ExecutableInvoker.java:115)\n" +
-                   "\tat org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda\$invokeTestMethod\$6(TestMethodTestDescriptor.java:171)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:72)\n" +
-                   "\tat org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:167)\n" +
-                   "\tat org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:114)\n" +
-                   "\tat org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:59)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda\$executeRecursively\$5(NodeTestTask.java:131)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:72)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:127)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:107)\n" +
-                   "\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1540)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:38)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda\$executeRecursively\$5(NodeTestTask.java:136)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:72)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:127)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:107)\n" +
-                   "\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1540)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:38)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda\$executeRecursively\$5(NodeTestTask.java:136)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:72)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:127)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:107)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:32)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:52)\n" +
-                   "\tat org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:51)\n" +
-                   "\tat org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:220)\n" +
-                   "\tat org.junit.platform.launcher.core.DefaultLauncher.lambda\$execute\$6(DefaultLauncher.java:188)\n" +
-                   "\tat org.junit.platform.launcher.core.DefaultLauncher.withInterceptedStreams(DefaultLauncher.java:202)\n" +
-                   "\tat org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:181)\n" +
-                   "\tat org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:128)\n" +
-                   "\tat com.intellij.junit5.JUnit5IdeaTestRunner.startRunnerWithArgs(JUnit5IdeaTestRunner.java:71)\n" +
-                   "\tat com.intellij.rt.junit.IdeaTestRunner\$Repeater.startRunnerWithArgs(IdeaTestRunner.java:33)\n" +
-                   "\tat com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:220)\n" +
-                   "\tat com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:53)</output>\n" +
+                   "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(</output>\n" +
                    "    </test>\n" +
                    "  </suite>\n" +
                    "</testrun>",
