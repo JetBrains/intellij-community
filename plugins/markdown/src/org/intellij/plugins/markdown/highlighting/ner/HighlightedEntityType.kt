@@ -8,39 +8,17 @@ import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
-import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightDatesAction
-import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightMoneyAction
-import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction
-import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightPersonsAction
-import org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightOrganizationsAction
+import org.intellij.plugins.markdown.ui.actions.styling.highlighting.*
 
-internal enum class HighlightedEntityType(private val highlightingKey: TextAttributesKey, private val priority: Int) {
-  Date(MarkdownHighlighterColors.DATE, 1) {
-    override val isEnabled: Boolean
-      get() = HighlightDatesAction.isHighlightingEnabled
-  },
+internal enum class HighlightedEntityType(private val highlightingKey: TextAttributesKey, private val priority: Int, val highlightingManager: EntityHighlightingManager) {
+  Date(MarkdownHighlighterColors.DATE, 1, DatesHighlightingManager),
+  Money(MarkdownHighlighterColors.MONEY, 1, MoneyHighlightingManager),
+  Number(MarkdownHighlighterColors.NUMBER, 0, NumbersHighlightingManager),
+  Person(MarkdownHighlighterColors.PERSON, 1, PersonsHighlightingManager),
+  Organization(MarkdownHighlighterColors.ORGANIZATION, 1, OrganizationsHighlightingManager);
 
-  Money(MarkdownHighlighterColors.MONEY, 1) {
-    override val isEnabled: Boolean
-      get() = HighlightMoneyAction.isHighlightingEnabled
-  },
-
-  Number(MarkdownHighlighterColors.NUMBER, 0) {
-    override val isEnabled: Boolean
-      get() = HighlightNumbersAction.isHighlightingEnabled
-  },
-
-  Person(MarkdownHighlighterColors.PERSON, 1) {
-    override val isEnabled: Boolean
-      get() = HighlightPersonsAction.isHighlightingEnabled
-  },
-
-  Organization(MarkdownHighlighterColors.ORGANIZATION, 1) {
-    override val isEnabled: Boolean
-      get() = HighlightOrganizationsAction.isHighlightingEnabled
-  };
-
-  abstract val isEnabled: Boolean
+  val isEnabled
+    get() = highlightingManager.isHighlightingEnabled
 
   fun applyHighlightingTo(ranges: Collection<TextRange>, markupModel: MarkupModel) {
     if (isEnabled) {
