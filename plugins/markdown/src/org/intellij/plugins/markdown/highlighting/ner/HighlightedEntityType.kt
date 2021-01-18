@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.MarkupModel
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
@@ -17,11 +18,10 @@ internal enum class HighlightedEntityType(private val highlightingKey: TextAttri
   Person(MarkdownHighlighterColors.PERSON, 1, PersonsHighlightingManager),
   Organization(MarkdownHighlighterColors.ORGANIZATION, 1, OrganizationsHighlightingManager);
 
-  val isEnabled
-    get() = highlightingManager.isHighlightingEnabled
+  fun isEnabled(project: Project) = highlightingManager.isHighlightingEnabled(project)
 
-  fun applyHighlightingTo(ranges: Collection<TextRange>, markupModel: MarkupModel) {
-    if (isEnabled) {
+  fun applyHighlightingTo(ranges: Collection<TextRange>, markupModel: MarkupModel, project: Project) {
+    if (isEnabled(project)) {
       for (range in ranges) {
         val highlighter = markupModel.addRangeHighlighter(highlightingKey,
                                                           range.startOffset, range.endOffset,

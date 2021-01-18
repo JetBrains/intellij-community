@@ -50,11 +50,11 @@ class MarkdownNamedEntitiesExternalAnnotator : ExternalAnnotator<MyDocumentInfo,
     val markupModel = DocumentMarkupModel.forDocument(document, file.project, true)
 
     ApplicationManager.getApplication().invokeLater {
-      HighlightedEntityType.Date.applyHighlightingTo(entities.dates, markupModel)
-      HighlightedEntityType.Money.applyHighlightingTo(entities.money, markupModel)
-      HighlightedEntityType.Number.applyHighlightingTo(entities.numbers, markupModel)
-      HighlightedEntityType.Person.applyHighlightingTo(entities.persons, markupModel)
-      HighlightedEntityType.Organization.applyHighlightingTo(entities.organizations, markupModel)
+      HighlightedEntityType.Date.applyHighlightingTo(entities.dates, markupModel, file.project)
+      HighlightedEntityType.Money.applyHighlightingTo(entities.money, markupModel, file.project)
+      HighlightedEntityType.Number.applyHighlightingTo(entities.numbers, markupModel, file.project)
+      HighlightedEntityType.Person.applyHighlightingTo(entities.persons, markupModel, file.project)
+      HighlightedEntityType.Organization.applyHighlightingTo(entities.organizations, markupModel, file.project)
     }
   }
 

@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.ui.actions.styling.highlighting.NumbersHigh
 class MarkdownNumberHighlightingAnnotator : Annotator {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (!NumbersHighlightingManager.isHighlightingEnabled || element.elementType !== MarkdownTokenTypes.TEXT) {
+    if (!NumbersHighlightingManager.isHighlightingEnabled(element.project) || element.elementType !== MarkdownTokenTypes.TEXT) {
       return
     }
 

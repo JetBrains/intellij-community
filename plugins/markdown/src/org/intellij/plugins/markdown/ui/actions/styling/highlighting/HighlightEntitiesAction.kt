@@ -5,10 +5,14 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.project.Project
 import com.intellij.util.FileContentUtilCore
 
 abstract class HighlightEntitiesAction(private val highlightingManager: EntityHighlightingManager): ToggleAction() {
-  override fun isSelected(e: AnActionEvent) = highlightingManager.isHighlightingEnabled
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val project = e.project ?: return false
+    return highlightingManager.isHighlightingEnabled(project)
+  }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) = highlightingManager.setHighlightingEnabled(state, e)
 }
@@ -16,11 +20,11 @@ abstract class HighlightEntitiesAction(private val highlightingManager: EntityHi
 abstract class EntityHighlightingManager(private val key: String) {
   private fun makeEnabledKey(key: String) = "markdown.highlight.$key.enabled"
 
-  val isHighlightingEnabled: Boolean
-    get() = PropertiesComponent.getInstance().getBoolean(makeEnabledKey(key), true)
+  fun isHighlightingEnabled(project: Project) = PropertiesComponent.getInstance(project).getBoolean(makeEnabledKey(key), true)
 
   fun setHighlightingEnabled(value: Boolean, e: AnActionEvent) {
-    PropertiesComponent.getInstance().setValue(makeEnabledKey(key), value, true)
+    val project = e.project ?: return
+    PropertiesComponent.getInstance(project).setValue(makeEnabledKey(key), value, true)
 
     val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     FileContentUtilCore.reparseFiles(virtualFile)

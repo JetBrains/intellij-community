@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import org.intellij.plugins.markdown.highlighting.ner.HighlightedEntityType
 
 class HighlightAllEntitiesAction : ToggleAction() {
-  override fun isSelected(e: AnActionEvent): Boolean = HighlightedEntityType.values().all(HighlightedEntityType::isEnabled)
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val project = e.project ?: return false
+    return HighlightedEntityType.values().all { it.isEnabled(project) }
+  }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val allSelected = isSelected(e)
