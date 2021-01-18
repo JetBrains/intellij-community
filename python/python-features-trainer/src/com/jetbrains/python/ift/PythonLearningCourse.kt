@@ -108,11 +108,11 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
       listOf(
-        PythonDeclarationAndUsagesLesson(it),
+        PythonSearchEverywhereLesson(it),
         FindInFilesLesson(it, lang, "src/warehouse/find_in_files_sample.py"),
+        PythonDeclarationAndUsagesLesson(it),
         PythonFileStructureLesson(it),
         PythonRecentFilesLesson(it),
-        PythonSearchEverywhereLesson(it),
       )
     },
     LearningModule(name = LessonsBundle.message("run.debug.module.name"),
