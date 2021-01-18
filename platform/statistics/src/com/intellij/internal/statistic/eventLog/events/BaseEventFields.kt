@@ -96,6 +96,15 @@ data class BooleanEventField(override val name: String): PrimitiveEventField<Boo
   }
 }
 
+data class AnonymizedEventField(override val name: String): PrimitiveEventField<String?>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#hash}")
+
+  override fun addData(fuData: FeatureUsageData, value: String?) {
+    fuData.addAnonymizedValue(name, value)
+  }
+}
+
 data class EnumEventField<T : Enum<*>>(override val name: String,
                                        private val enumClass: Class<T>,
                                        private val transform: (T) -> String): PrimitiveEventField<T>() {
