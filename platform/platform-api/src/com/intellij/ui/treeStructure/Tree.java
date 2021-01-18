@@ -856,6 +856,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         Rectangle bounds = getPathBounds(path);
         if (bounds != null) {
           component.setBounds(bounds); // initialize size to layout complex renderer
+          component.doLayout();
           return SwingUtilities.getDeepestComponentAt(component, x - bounds.x, y - bounds.y);
         }
       }

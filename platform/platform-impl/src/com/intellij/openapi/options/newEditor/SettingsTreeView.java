@@ -810,6 +810,15 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   }
 
   private static final class MyTreeUi extends WideSelectionTreeUI {
+    @Override
+    public Rectangle getPathBounds(JTree tree, TreePath path) {
+      Rectangle bounds = super.getPathBounds(tree, path);
+      if (bounds != null) {
+        bounds.width = Math.max(bounds.width, tree.getWidth() - bounds.x);
+      }
+      return bounds;
+    }
+
     boolean processMouseEvent(MouseEvent event) {
       if (tree instanceof SimpleTree) {
         SimpleTree tree = (SimpleTree)super.tree;
