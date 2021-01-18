@@ -11,7 +11,7 @@ import java.util.List;
 
 public class ActionUpdaterTest extends LightPlatformTestCase {
   public void testActionGroupCanBePerformed() {
-    CanBePerformedGroup canBePerformedGroup = new CanBePerformedGroup(true);
+    CanBePerformedGroup canBePerformedGroup = new CanBePerformedGroup(true, true);
     DefaultActionGroup popupGroup = new PopupGroup(canBePerformedGroup);
     ActionGroup actionGroup = new DefaultActionGroup(popupGroup);
     List<AnAction> actions = testExpandActionGroup(actionGroup);
@@ -19,8 +19,15 @@ public class ActionUpdaterTest extends LightPlatformTestCase {
   }
 
   public void testActionGroupCanBePerformedButNotVisible() {
-    CanBePerformedGroup canBePerformedGroup = new CanBePerformedGroup(false);
+    CanBePerformedGroup canBePerformedGroup = new CanBePerformedGroup(false, false);
     ActionGroup actionGroup = new DefaultActionGroup(new PopupGroup(canBePerformedGroup));
+    List<AnAction> actions = testExpandActionGroup(actionGroup);
+    assertEmpty(actions);
+  }
+
+  public void testActionGroupCanBePerformedButNotEnabled() {
+    CanBePerformedGroup canBePerformedGroup = new CanBePerformedGroup(true, false);
+    ActionGroup actionGroup = new DefaultCompactActionGroup(new PopupGroup(canBePerformedGroup));
     List<AnAction> actions = testExpandActionGroup(actionGroup);
     assertEmpty(actions);
   }
@@ -46,9 +53,11 @@ public class ActionUpdaterTest extends LightPlatformTestCase {
 
   private static class CanBePerformedGroup extends DefaultActionGroup {
     private final boolean myVisible;
+    private final boolean myEnabled;
 
-    private CanBePerformedGroup(boolean visible) {
+    private CanBePerformedGroup(boolean visible, boolean enabled) {
       myVisible = visible;
+      myEnabled = enabled;
     }
 
     @Override
@@ -58,7 +67,8 @@ public class ActionUpdaterTest extends LightPlatformTestCase {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(myVisible);
+      e.getPresentation().setVisible(myVisible);
+      e.getPresentation().setEnabled(myEnabled);
     }
   }
 }

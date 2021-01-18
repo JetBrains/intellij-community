@@ -425,7 +425,7 @@ final class ActionUpdater {
           return true;
         }
         if (strategy.canBePerformed.test(childGroup) &&
-            (checkVisible && presentation.isVisible()) || (checkEnabled && presentation.isEnabled())) {
+            ((checkVisible && presentation.isVisible()) || (checkEnabled && presentation.isEnabled()))) {
           return true;
         }
       }
