@@ -32,7 +32,10 @@ internal object GHPRDetailsComponent {
 
   fun create(securityService: GHPRSecurityService,
              avatarIconsProvider: GHAvatarIconsProvider,
-             branchesModel: GHPRBranchesModel, detailsModel: GHPRDetailsModel, stateModel: GHPRStateModel): JComponent {
+             branchesModel: GHPRBranchesModel,
+             detailsModel: GHPRDetailsModel,
+             metadataModel: GHPRMetadataModel,
+             stateModel: GHPRStateModel): JComponent {
     val actionManager = ActionManager.getInstance()
 
     val branches = GHPRBranchesPanel.create(branchesModel)
@@ -46,7 +49,7 @@ internal object GHPRDetailsComponent {
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@ActionLink
       ActionUtil.invokeAction(action, it.source as ActionLink, ActionPlaces.UNKNOWN, null, null)
     }
-    val metadata = GHPRMetadataPanelFactory(detailsModel, avatarIconsProvider).create()
+    val metadata = GHPRMetadataPanelFactory(metadataModel, avatarIconsProvider).create()
     val state = GHPRStatePanel(securityService, stateModel).also {
       detailsModel.addAndInvokeDetailsChangedListener {
         it.select(detailsModel.state, true)

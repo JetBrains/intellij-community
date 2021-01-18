@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -41,7 +44,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.*
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitsBrowserComponent.COMMITS_LIST_KEY
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -213,16 +219,18 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                 dataContext.gitRemoteCoordinates.repository,
                                                 disposable)
 
-      val detailsModel = GHPRDetailsModelImpl(model,
-                                              dataContext.securityService,
-                                              dataContext.repositoryDataService,
-                                              dataProvider.detailsData)
+      val detailsModel = GHPRDetailsModelImpl(model)
+
+      val metadataModel = GHPRMetadataModelImpl(model,
+                                                dataContext.securityService,
+                                                dataContext.repositoryDataService,
+                                                dataProvider.detailsData)
 
       val stateModel = GHPRStateModelImpl(project, dataProvider.stateData, dataProvider.changesData, model, disposable)
 
       GHPRDetailsComponent.create(dataContext.securityService,
                                   dataContext.avatarIconsProvider,
-                                  branchesModel, detailsModel, stateModel)
+                                  branchesModel, detailsModel, metadataModel, stateModel)
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }
