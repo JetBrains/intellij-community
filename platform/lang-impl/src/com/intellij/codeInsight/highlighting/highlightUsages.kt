@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Internal
 
 package com.intellij.codeInsight.highlighting
@@ -80,7 +80,7 @@ internal fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges {
   val declarationWrite: Boolean = (psiTarget != null) && (detector != null) && detector.isDeclarationWriteAccess(psiTarget)
   for (declaration: PsiSymbolDeclaration in declarations) {
     HighlightUsagesHandler.collectHighlightRanges(
-      declaration.declaringElement, declaration.declarationRange, if (declarationWrite) writeDeclarationRanges else readDeclarationRanges
+      declaration.declaringElement, declaration.rangeInDeclaringElement, if (declarationWrite) writeDeclarationRanges else readDeclarationRanges
     )
   }
 
