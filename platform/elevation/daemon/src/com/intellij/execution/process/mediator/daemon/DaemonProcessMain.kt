@@ -3,10 +3,6 @@
 
 package com.intellij.execution.process.mediator.daemon
 
-import com.intellij.execution.process.mediator.handshake.HandshakeFileWriter
-import com.intellij.execution.process.mediator.handshake.HandshakeSocketWriter
-import com.intellij.execution.process.mediator.handshake.HandshakeStreamWriter
-import com.intellij.execution.process.mediator.handshake.HandshakeWriter
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.MachUtil
 import com.intellij.execution.process.mediator.util.UnixUtil
@@ -15,6 +11,11 @@ import io.grpc.ServerBuilder
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.io.IOException
+import java.io.OutputStream
+import java.net.InetAddress
+import java.net.Socket
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.system.exitProcess
@@ -29,7 +30,7 @@ private fun createDaemonProcessCommandLine(vararg args: String): ProcessBuilder 
 }
 
 private fun trampoline(launchOptions: DaemonLaunchOptions): Nothing {
-  openHandshakeWriter(launchOptions.handshakeOption).use { handshakeWriter ->
+  openHandshakeOutputStream(launchOptions.handshakeOption).use { handshakeWriter ->
     val daemonOptions = launchOptions.copy(trampoline = false,
                                            handshakeOption = DaemonLaunchOptions.HandshakeOption.Stdout)
     val daemonProcess = createDaemonProcessCommandLine(*daemonOptions.asCmdlineArgs().toTypedArray())
@@ -48,7 +49,7 @@ private fun trampoline(launchOptions: DaemonLaunchOptions): Nothing {
       val handshake = daemonProcess.inputStream.use(Handshake::parseDelimitedFrom)
                       ?: throw IOException("Premature EOF while reading handshake")
 
-      handshakeWriter.writeHandshake(handshake)
+      writeHandshake(handshakeWriter, handshake)
     }
     catch (e: Throwable) {
       if (e is IOException) System.err.println("[trampoline] Unable to relay handshake: ${e.message}")
@@ -64,16 +65,16 @@ private fun trampoline(launchOptions: DaemonLaunchOptions): Nothing {
   exitProcess(0)
 }
 
-private fun openHandshakeWriter(handshakeOption: DaemonLaunchOptions.HandshakeOption?): HandshakeWriter? =
+private fun openHandshakeOutputStream(handshakeOption: DaemonLaunchOptions.HandshakeOption?): OutputStream? =
   when (handshakeOption) {
     null -> null
-    DaemonLaunchOptions.HandshakeOption.Stdout -> HandshakeStreamWriter(System.out)
-    is DaemonLaunchOptions.HandshakeOption.File -> HandshakeFileWriter(handshakeOption.path)
-    is DaemonLaunchOptions.HandshakeOption.Port -> HandshakeSocketWriter(handshakeOption.port)
+    DaemonLaunchOptions.HandshakeOption.Stdout -> System.out
+    is DaemonLaunchOptions.HandshakeOption.File -> Files.newOutputStream(handshakeOption.path, StandardOpenOption.WRITE)
+    is DaemonLaunchOptions.HandshakeOption.Port -> Socket(InetAddress.getLoopbackAddress(), handshakeOption.port).getOutputStream()
   }
 
-private fun HandshakeWriter?.writeHandshake(handshake: Handshake) {
-  this?.write(handshake::writeDelimitedTo) ?: println(handshake)
+private fun writeHandshake(outputStream: OutputStream?, handshake: Handshake) {
+  outputStream?.let { handshake.writeDelimitedTo(it) } ?: println(handshake)
 }
 
 // the order matters
@@ -106,7 +107,7 @@ fun main(args: Array<String>) {
 
   val daemon: ProcessMediatorServerDaemon
 
-  openHandshakeWriter(launchOptions.handshakeOption).use { handshakeWriter ->
+  openHandshakeOutputStream(launchOptions.handshakeOption).use { handshakeWriter ->
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val credentials = DaemonClientCredentials.generate()
     daemon = ProcessMediatorServerDaemon(coroutineScope, ServerBuilder.forPort(0), credentials)
@@ -123,7 +124,7 @@ fun main(args: Array<String>) {
         .setPid(ProcessHandle.current().pid())
         .build()
 
-      handshakeWriter.writeHandshake(handshake)
+      writeHandshake(handshakeWriter, handshake)
     }
     catch (e: Throwable) {
       if (e is IOException) System.err.println("Unable to write handshake: ${e.message}")
