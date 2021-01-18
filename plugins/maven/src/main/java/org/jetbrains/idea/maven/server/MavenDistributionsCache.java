@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,31 +18,36 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class MavenDistributionResolver {
+public class MavenDistributionsCache {
   private final ConcurrentMap<String, String> myWorkingDirToMultimoduleMap = ContainerUtil.createConcurrentWeakMap();
+  private final ConcurrentMap<String, String> myVmSettingsMap = ContainerUtil.createConcurrentWeakMap();
   private final ConcurrentMap<String, MavenDistribution> myMultimoduleDirToWrapperedMavenDistributionsMap = new ConcurrentHashMap<>();
   private final Project myProject;
   private final ClearableLazyValue<MavenDistribution> mySettingsDistribution = ClearableLazyValue.create(() -> getSettingsDistribution());
 
-  public MavenDistributionResolver(Project project) {
+  public MavenDistributionsCache(Project project) {
     myProject = project;
   }
 
-  public static MavenDistributionResolver getInstance(Project project) {
-    return ServiceManager.getService(project, MavenDistributionResolver.class);
+  public static MavenDistributionsCache getInstance(Project project) {
+    return ServiceManager.getService(project, MavenDistributionsCache.class);
   }
 
   public void cleanCaches() {
     mySettingsDistribution.drop();
     myWorkingDirToMultimoduleMap.clear();
     myMultimoduleDirToWrapperedMavenDistributionsMap.clear();
+    myVmSettingsMap.clear();
   }
 
   public @NotNull MavenDistribution getSettingsDistribution() {
@@ -54,6 +60,32 @@ public class MavenDistributionResolver {
     }
     else {
       return distribution;
+    }
+  }
+
+  public @NotNull String getVmOptions(@Nullable String workingDirectory) {
+    if (!useWrapper() || workingDirectory == null) {
+      return MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().importingSettings.getVmOptionsForImporter();
+    }
+
+    String multiModuleDir = myWorkingDirToMultimoduleMap.computeIfAbsent(workingDirectory, this::resolveMultimoduleDirectory);
+    return myVmSettingsMap.computeIfAbsent(multiModuleDir, this::readVmOptions);
+  }
+
+  private @NotNull String readVmOptions(@NotNull String multiModuleDir) {
+    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
+    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(multiModuleDir);
+    if (baseDir == null) return settings.importingSettings.getVmOptionsForImporter();
+    VirtualFile mvn = baseDir.findChild(".mvn");
+    if (mvn == null) return settings.importingSettings.getVmOptionsForImporter();
+    VirtualFile jdkOpts = mvn.findChild("jvm.config");
+    if (jdkOpts == null) return settings.importingSettings.getVmOptionsForImporter();
+    try {
+      return new String(jdkOpts.contentsToByteArray(true), jdkOpts.getCharset());
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn(e);
+      return settings.importingSettings.getVmOptionsForImporter();
     }
   }
 
@@ -126,7 +158,31 @@ public class MavenDistributionResolver {
   }
 
   private @NotNull String resolveMultimoduleDirectory(@NotNull String workingDirectory) {
-    return MavenServerManager.getMultimoduleDirectory(myProject, workingDirectory);
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
+    if (!manager.isMavenizedProject()) {
+      return FileUtil.toSystemIndependentName(calculateMultimoduleDirUpToFileTree(workingDirectory));
+    }
+    return FileUtil.toSystemIndependentName(manager.getRootProjects().stream()
+                                              .map(p -> p.getDirectory())
+                                              .filter(rpDirectory -> FileUtil.isAncestor(rpDirectory, workingDirectory, false))
+                                              .findFirst()
+                                              .orElse(workingDirectory));
+  }
+
+  private @NotNull String calculateMultimoduleDirUpToFileTree(String directory) {
+    VirtualFile path = LocalFileSystem.getInstance().findFileByPath(directory);
+    if(path == null) return directory;
+    Collection<String> knownWorkingDirs = myWorkingDirToMultimoduleMap.values();
+    for (String known: knownWorkingDirs) {
+      if(FileUtil.isAncestor(known, directory, false)) {
+        return known;
+      }
+    }
+    return MavenUtil.getVFileBaseDir(path).getPath();
+  }
+
+  public @NotNull String getMultimoduleDirectory(@NotNull String workingDirectory) {
+    return myWorkingDirToMultimoduleMap.computeIfAbsent(workingDirectory, this::resolveMultimoduleDirectory);
   }
 
   private boolean useWrapper() {

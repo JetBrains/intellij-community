@@ -26,11 +26,12 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MavenServerConnector implements @NotNull Disposable {
   public static final Logger LOG = Logger.getInstance(MavenServerConnector.class);
-  private final Object mutex = new Object();
-
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
   private final RemoteMavenServerDownloadListener
     myDownloadListener = new RemoteMavenServerDownloadListener();
@@ -45,10 +46,10 @@ public class MavenServerConnector implements @NotNull Disposable {
   private final String myMultimoduleDirectory;
   private @NotNull final MavenDistribution myDistribution;
   private final String myVmOptions;
-  private int connectedProjects;
+  private AtomicBoolean myConnectStarted = new AtomicBoolean(false);
 
   private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
-  private final AsyncPromise<MavenServer> myServerPromise;
+  private final AsyncPromise<MavenServer> myServerPromise = new AsyncPromise<>();
 
 
   public MavenServerConnector(@NotNull Project project,
@@ -65,7 +66,13 @@ public class MavenServerConnector implements @NotNull Disposable {
     myVmOptions = vmOptions;
     myJdk = jdk;
     myMultimoduleDirectory = multimoduleDirectory;
-    myServerPromise = connect();
+    myServerPromise.onError(e -> {
+    }); //Promise w/o error handler sends all exceptions to analyzer, we don't need them
+
+  }
+
+  boolean isNew(){
+    return !myConnectStarted.get();
   }
 
   public boolean isCompatibleWith(Sdk jdk, String vmOptions, MavenDistribution distribution) {
@@ -77,16 +84,13 @@ public class MavenServerConnector implements @NotNull Disposable {
     }
     return StringUtil.equals(vmOptions, myVmOptions);
   }
-
   //@SuppressWarnings("SSBasedInspection") //need tests refactoring
-  private AsyncPromise<MavenServer> connect() {
-    AsyncPromise<MavenServer> serverPromise = new AsyncPromise<>();
-
-    serverPromise.onError(e -> {
-    }); //Promise w/o error handler sends all exceptions to analyzer, we don't need them
-
+  void connect() {
+    if(!myConnectStarted.compareAndSet(false, true)){
+      return;
+    }
     Runnable startRunnable = () -> {
-      StartServerTask task = new StartServerTask(serverPromise);
+      StartServerTask task = new StartServerTask();
       if(ApplicationManager.getApplication().isUnitTestMode()) {
         task.run(null);
       } else {
@@ -101,21 +105,20 @@ public class MavenServerConnector implements @NotNull Disposable {
     else {
       ApplicationManager.getApplication().invokeLater(startRunnable);
     }
-    return serverPromise;
   }
 
   private MavenServer getServer() {
     try {
-      synchronized (myServerPromise) {
         while (!myServerPromise.isDone()) {
-          myServerPromise.wait(100);
-          if(myProject.isDisposed()){
+          try {
+            return myServerPromise.get(100, TimeUnit.MILLISECONDS);
+          } catch (Exception ignore){}
+          if (myProject.isDisposed()) {
             throw new CannotStartServerException("Project already disposed");
           }
           ProgressManager.checkCanceled();
         }
         return myServerPromise.get();
-      }
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -197,11 +200,6 @@ public class MavenServerConnector implements @NotNull Disposable {
 
 
   public void shutdown(boolean wait) {
-    synchronized (mutex){
-      if (connectedProjects-- > 0) {
-        return;
-      }
-    }
     shutdownForce(wait);
   }
 
@@ -316,11 +314,9 @@ public class MavenServerConnector implements @NotNull Disposable {
   }
 
   private class StartServerTask extends Task.Backgroundable {
-    private final AsyncPromise<MavenServer> myServerPromise;
 
-    StartServerTask(AsyncPromise<MavenServer> serverPromise) {
+    StartServerTask() {
       super(MavenServerConnector.this.myProject, SyncBundle.message("progress.title.starting.maven.server"), true);
-      myServerPromise = serverPromise;
     }
 
     @Override

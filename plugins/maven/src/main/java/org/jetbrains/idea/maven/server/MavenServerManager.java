@@ -22,16 +22,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import org.apache.commons.lang.SystemUtils;
-import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
@@ -100,54 +97,36 @@ public final class MavenServerManager implements Disposable {
   }
 
   public MavenServerConnector getConnector(@NotNull Project project, @NotNull String workingDirectory) {
-    String multimoduleDirectory = getMultimoduleDirectory(project, workingDirectory);
+    String multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirectory);
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
     Sdk jdk = getJdk(project, settings);
 
     MavenServerConnector connector = null;
     synchronized (myMultimoduleDirToConnectorMap) {
-      connector = myMultimoduleDirToConnectorMap.get(multimoduleDirectory);
+      connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
     }
-    if (connector == null) {
-      return registerNewConnector(project, jdk, multimoduleDirectory);
-    }
-    if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
-      connector.shutdown(false);
-      return registerNewConnector(project, jdk, multimoduleDirectory);
+    if(connector.isNew()) {
+      connector.connect();
+    } else {
+      if(!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
+        connector.shutdown(false);
+        synchronized (myMultimoduleDirToConnectorMap) {
+          connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
+        }
+        connector.connect();
+      }
     }
     return connector;
-  }
-
-  static @NotNull String getMultimoduleDirectory(@NotNull Project project, @NotNull String directory) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    if (!manager.isMavenizedProject()) {
-      return FileUtil.toSystemIndependentName(calculateMultimoduleDirUpToFileTree(directory));
-    }
-    return FileUtil.toSystemIndependentName(manager.getRootProjects().stream()
-      .map(p -> p.getDirectory())
-      .filter(rpDirectory -> FileUtil.isAncestor(rpDirectory, directory, false))
-      .findFirst()
-      .orElse(directory));
-  }
-
-  private static @NotNull String calculateMultimoduleDirUpToFileTree(String directory) {
-    VirtualFile path = LocalFileSystem.getInstance().findFileByPath(directory);
-    if(path == null) return directory;
-    return MavenUtil.getVFileBaseDir(path).getPath();
   }
 
   private MavenServerConnector registerNewConnector(Project project,
                                                     Sdk jdk,
                                                     String multimoduleDirectory) {
-    MavenDistribution distribution = MavenDistributionResolver.getInstance(project).getMavenDistribution(multimoduleDirectory);
-    String vmOptions = readVmOptions(project, multimoduleDirectory);
+    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
+    String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector = new MavenServerConnector(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
-    synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector);
-    }
     registerDisposable(project, connector);
-
     return connector;
   }
 
@@ -161,22 +140,6 @@ public final class MavenServerManager implements Disposable {
     });
   }
 
-  private static String readVmOptions(Project project, String multimoduleDirectory) {
-    MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(multimoduleDirectory);
-    if (baseDir == null) return settings.importingSettings.getVmOptionsForImporter();
-    VirtualFile mvn = baseDir.findChild(".mvn");
-    if (mvn == null) return settings.importingSettings.getVmOptionsForImporter();
-    VirtualFile jdkOpts = mvn.findChild("jvm.config");
-    if (jdkOpts == null) return settings.importingSettings.getVmOptionsForImporter();
-    try {
-      return new String(jdkOpts.contentsToByteArray(true), StandardCharsets.UTF_8);
-    }
-    catch (IOException e) {
-      MavenLog.LOG.warn(e);
-      return settings.importingSettings.getVmOptionsForImporter();
-    }
-  }
 
   private static Integer getDebugPort(Project project) {
     if ((project.isDefault() && Registry.is("maven.server.debug.default")) ||
@@ -212,8 +175,9 @@ public final class MavenServerManager implements Disposable {
                                               Sdk jdk,
                                               String multimoduleDirectory) {
 
-    MavenDistribution distribution = MavenDistributionResolver.getInstance(project).getMavenDistribution(multimoduleDirectory);
-    String vmOptions = readVmOptions(project, multimoduleDirectory);
+    MavenDistributionsCache cache = MavenDistributionsCache.getInstance(project);
+    MavenDistribution distribution = cache.getMavenDistribution(multimoduleDirectory);
+    String vmOptions = cache.getVmOptions(multimoduleDirectory);
     return connector.isCompatibleWith(jdk, vmOptions, distribution);
   }
 
@@ -489,7 +453,7 @@ public final class MavenServerManager implements Disposable {
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
         StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
-      return MavenDistributionResolver.resolveEmbeddedMavenHome().getMavenHome();
+      return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome();
     }
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;

@@ -43,8 +43,7 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenDistribution;
-import org.jetbrains.idea.maven.server.MavenDistributionResolver;
-import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -113,7 +112,7 @@ public class MavenResumeAction extends AnAction {
     if (generalSettings == null) {
       MavenDistribution maven = MavenDistribution.fromSettings(runConfiguration.getProject());
       if (maven == null) {
-        String version = MavenDistributionResolver.resolveEmbeddedMavenHome().getVersion();
+        String version = MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion();
         MavenLog.LOG
           .warn("Cannot determine maven version from run configuration and project settings, use embedded as version: " + version);
         return version;

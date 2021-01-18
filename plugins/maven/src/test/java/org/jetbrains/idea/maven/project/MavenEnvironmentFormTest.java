@@ -5,7 +5,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.idea.maven.server.MavenDistributionResolver;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +25,7 @@ public class MavenEnvironmentFormTest extends UsefulTestCase {
                                        Collections.singleton(MavenServerManager.BUNDLED_MAVEN_3)));
     assertThat(panel,
                t -> assertDoesntContain(t.getHistory(),
-                                        MavenDistributionResolver.resolveEmbeddedMavenHome().getMavenHome().getAbsolutePath()));
+                                        MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().getAbsolutePath()));
   }
 
   @Test

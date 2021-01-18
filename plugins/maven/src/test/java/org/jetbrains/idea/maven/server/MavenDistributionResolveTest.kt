@@ -44,7 +44,8 @@ class MavenDistributionResolveTest : MavenImportingTestCase() {
     MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
     importProject()
     val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
-    assertEquals(MavenDistributionResolver.resolveEmbeddedMavenHome().mavenHome.canonicalPath, connector.mavenDistribution.mavenHome.canonicalPath)
+    assertEquals(
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.canonicalPath, connector.mavenDistribution.mavenHome.canonicalPath)
     assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.message == "Cannot install wrapped maven, set Bundled Maven" }
   }
 
@@ -57,7 +58,8 @@ class MavenDistributionResolveTest : MavenImportingTestCase() {
     MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
     importProject()
     val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
-    assertEquals(MavenDistributionResolver.resolveEmbeddedMavenHome().mavenHome.canonicalPath, connector.mavenDistribution.mavenHome.canonicalPath)
+    assertEquals(
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.canonicalPath, connector.mavenDistribution.mavenHome.canonicalPath)
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>2</version>")
@@ -103,7 +105,8 @@ class MavenDistributionResolveTest : MavenImportingTestCase() {
     MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = FileUtil.toSystemDependentName("path/to/unexisted/maven/home");
     importProject()
     val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
-    assertEquals(MavenDistributionResolver.resolveEmbeddedMavenHome().mavenHome.canonicalPath, connector.mavenDistribution.mavenHome.canonicalPath)
+    assertEquals(
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.canonicalPath, connector.mavenDistribution.mavenHome.canonicalPath)
     //assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }
   }
 
@@ -117,7 +120,7 @@ class MavenDistributionResolveTest : MavenImportingTestCase() {
         ex.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0)
         ex.responseHeaders.add("Content-Type", "application/zip")
         ZipOutputStream(ex.responseBody).use { zos ->
-          ZipUtil.addDirToZipRecursively(zos, null, MavenDistributionResolver.resolveEmbeddedMavenHome().mavenHome.parentFile,
+          ZipUtil.addDirToZipRecursively(zos, null, MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.parentFile,
                                          "", null, null)
         }
         ex.close()
