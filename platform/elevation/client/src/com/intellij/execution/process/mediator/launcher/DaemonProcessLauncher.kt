@@ -3,10 +3,10 @@ package com.intellij.execution.process.mediator.launcher
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseOSProcessHandler
+import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
 import com.intellij.execution.process.mediator.daemon.DaemonProcessRuntimeClasspath
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
@@ -19,18 +19,21 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 
 
-open class DaemonProcessLauncher : ProcessHandshakeLauncher<Handshake, DaemonHandshakeTransport, ProcessMediatorDaemon>() {
+open class DaemonProcessLauncher(
+  private val clientBuilder: ProcessMediatorClient.Builder,
+) : ProcessHandshakeLauncher<Handshake, DaemonHandshakeTransport, ProcessMediatorConnection>() {
+
   override fun handshakeSucceeded(handshake: Handshake,
                                   transport: DaemonHandshakeTransport,
-                                  processHandler: BaseOSProcessHandler): ProcessMediatorDaemon {
+                                  processHandler: BaseOSProcessHandler): ProcessMediatorConnection {
     val daemonProcessHandle = ProcessHandle.of(handshake.pid).orNull()
                               // Use the launcher process handle instead unless it's a short-living trampoline.
                               // In particular, this happens on Windows, where we can't access a process owned by another user.
                               ?: processHandler.process.toHandle().takeUnless { transport.getDaemonLaunchOptions().trampoline }
 
-    return ProcessMediatorDaemonImpl(daemonProcessHandle,
-                                     handshake.port,
-                                     DaemonClientCredentials(handshake.token))
+    val credentials = DaemonClientCredentials(handshake.token)
+
+    return ProcessMediatorConnection.createDaemonConnection(daemonProcessHandle, handshake.port, credentials, clientBuilder)
   }
 
   override fun createHandshakeTransport(): DaemonHandshakeTransport {

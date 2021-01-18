@@ -15,25 +15,27 @@ import com.intellij.execution.process.mediator.launcher.ProcessMediatorConnectio
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
-import io.grpc.ManagedChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
 
 class ElevationServiceImpl : ElevationService, Disposable {
   private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-  private val connectionManager = ProcessMediatorConnectionManager(ElevationDaemonProcessLauncher()::launchDaemon,
-                                                                   ::createProcessMediatorClient).apply {
-    ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
-      override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {
-        adjustQuota(newValue)
-      }
-    })
-  }.also {
-    Disposer.register(this, it)
-  }
 
-  private fun createProcessMediatorClient(channel: ManagedChannel): ProcessMediatorClient {
-    return ProcessMediatorClient(coroutineScope, channel, ElevationSettings.getInstance().quotaOptions)
+  private val connectionManager = run {
+    val clientBuilder = ProcessMediatorClient.Builder(coroutineScope, ElevationSettings.getInstance().quotaOptions)
+    val daemonLauncher = ElevationDaemonProcessLauncher(clientBuilder)
+
+    ProcessMediatorConnectionManager {
+      daemonLauncher.launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
+    }.apply {
+      ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
+        override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {
+          adjustQuota(newValue)
+        }
+      })
+    }.also {
+      Disposer.register(this, it)
+    }
   }
 
   override fun createProcessHandler(commandLine: GeneralCommandLine): MediatedProcessHandler {
@@ -56,14 +58,14 @@ class ElevationServiceImpl : ElevationService, Disposable {
   private fun <R> tryRelaunchingDaemonUntilHaveQuotaPermit(block: (ProcessMediatorClient) -> R): R {
     val maxAttempts = MAX_RELAUNCHING_DAEMON_UNTIL_HAVE_QUOTA_PERMIT_ATTEMPTS
     for (attempt in 1..maxAttempts) {
-      val client = connectionManager.launchDaemonAndConnectClientIfNeeded()
+      val connection = connectionManager.launchDaemonAndConnectIfNeeded()
       try {
-        return block(client)
+        return block(connection.client)
       }
       catch (e: QuotaExceededException) {
         if (attempt > 1) ElevationLogger.LOG.warn("Repeated quota exceeded error after $attempt attempts; " +
                                                   "quota options: ${ElevationSettings.getInstance().quotaOptions}", e)
-        connectionManager.parkClient(client)
+        connectionManager.parkConnection(connection)
       }
     }
     throw ExecutionException(ElevationBundle.message("dialog.message.unable.to.configure.elevation.daemon.after.attempts",

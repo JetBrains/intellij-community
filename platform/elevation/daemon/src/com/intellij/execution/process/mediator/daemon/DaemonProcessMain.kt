@@ -128,7 +128,7 @@ fun main(args: Array<String>) {
     }
     catch (e: Throwable) {
       if (e is IOException) System.err.println("Unable to write handshake: ${e.message}")
-      daemon.stop()
+      daemon.requestShutdown()
       throw e
     }
   }
@@ -146,7 +146,7 @@ fun main(args: Array<String>) {
   Runtime.getRuntime().addShutdownHook(
     Thread {
       System.err.println("Shutting down gRPC server since JVM is shutting down")
-      daemon.stop()
+      daemon.requestShutdown()
     }
   )
   leaderProcessHandle?.onExit()?.whenComplete { handle, _ ->

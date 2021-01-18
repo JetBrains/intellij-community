@@ -3,15 +3,10 @@ package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.client.MediatedProcess
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
-import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
+import com.intellij.execution.process.mediator.launcher.ProcessMediatorConnection
+import com.intellij.execution.process.mediator.launcher.startInProcessServer
 import com.intellij.execution.process.mediator.rt.MediatedProcessTestMain
 import com.intellij.openapi.util.io.FileUtil
-import io.grpc.ManagedChannel
-import io.grpc.inprocess.InProcessChannelBuilder
-import io.grpc.inprocess.InProcessServerBuilder
-import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -35,28 +30,19 @@ open class ProcessMediatorTest {
     }
   })
 
-  private lateinit var client: ProcessMediatorClient
-  private lateinit var daemon: ProcessMediatorDaemon
+  private lateinit var connection: ProcessMediatorConnection
+  private val client: ProcessMediatorClient get() = connection.client
 
-  protected open fun createProcessMediatorDaemon(testInfo: TestInfo): ProcessMediatorDaemon {
+  protected open fun createProcessMediatorConnection(coroutineScope: CoroutineScope, testInfo: TestInfo): ProcessMediatorConnection {
     val bindName = testInfo.testMethod.orElse(null)?.name ?: testInfo.displayName
-    val credentials = DaemonClientCredentials.generate()
-    return object : ProcessMediatorServerDaemon(coroutineScope, InProcessServerBuilder.forName(bindName).directExecutor(), credentials) {
-      override fun createChannel(): ManagedChannel {
-        return InProcessChannelBuilder.forName(bindName)
-          .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
-          .directExecutor().build()
-      }
-    }
+    return ProcessMediatorConnection.startInProcessServer(coroutineScope, bindName)
   }
 
   private val TIMEOUT_MS = 3000.toLong()
 
   @BeforeEach
   fun start(testInfo: TestInfo) {
-    daemon = createProcessMediatorDaemon(testInfo)
-    val channel = daemon.createChannel()
-    client = ProcessMediatorClient(coroutineScope, channel)
+    connection = createProcessMediatorConnection(coroutineScope, testInfo)
   }
 
   @AfterEach
@@ -65,13 +51,7 @@ open class ProcessMediatorTest {
       delay(TIMEOUT_MS)
       deferred.completeExceptionally(TimeoutException("tearDown() timed out"))
     }
-    try {
-      client.close()
-    }
-    finally {
-      daemon.stop()
-      daemon.blockUntilShutdown()
-    }
+    connection.close()
     watchdogJob.cancel()
     runBlocking {
       deferred.complete(Unit)

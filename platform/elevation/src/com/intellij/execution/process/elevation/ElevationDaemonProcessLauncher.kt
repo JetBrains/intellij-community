@@ -4,8 +4,8 @@ package com.intellij.execution.process.elevation
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.DaemonLaunchOptions
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
 import com.intellij.execution.process.mediator.launcher.*
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -19,11 +19,7 @@ import java.io.IOException
 import java.nio.file.Path
 
 
-class ElevationDaemonProcessLauncher : DaemonProcessLauncher() {
-  fun launchDaemon(): ProcessMediatorDaemon {
-    return launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
-  }
-
+class ElevationDaemonProcessLauncher(clientBuilder: ProcessMediatorClient.Builder) : DaemonProcessLauncher(clientBuilder) {
   override fun createHandshakeTransport(): DaemonHandshakeTransport {
     // Unix sudo may take different forms, and not all of them are reliable in terms of process lifecycle management,
     // input/output redirection, and so on. To overcome the limitations we use an RSA-secured channel for initial communication

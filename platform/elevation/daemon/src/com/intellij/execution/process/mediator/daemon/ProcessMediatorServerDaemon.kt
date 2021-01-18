@@ -10,13 +10,12 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.plus
+import java.io.Closeable
 
 @Suppress("LeakingThis")
-open class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
-                                       builder: ServerBuilder<*>,
-                                       credentials: DaemonClientCredentials) : ProcessMediatorDaemon,
-                                                                               CoroutineScope by coroutineScope {
-
+class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
+                                  builder: ServerBuilder<*>,
+                                  credentials: DaemonClientCredentials) : CoroutineScope by coroutineScope, Closeable {
   private val quotaManager = TimeQuotaManager(this)
   private val processManager = ProcessManager(this + quotaManager.asJob())
 
@@ -36,8 +35,9 @@ open class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
       }
   }
 
-  override fun stop() {
+  override fun close() {
     requestShutdown()
+    blockUntilShutdown()
   }
 
   fun requestShutdown(): Unit = synchronized(server) {
@@ -54,8 +54,9 @@ open class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
     }
   }
 
-  override fun blockUntilShutdown() {
+  fun blockUntilShutdown() {
     server.awaitTermination()
+    System.err.println("Server terminated")
   }
 
   inner class DaemonService : DaemonGrpcKt.DaemonCoroutineImplBase() {

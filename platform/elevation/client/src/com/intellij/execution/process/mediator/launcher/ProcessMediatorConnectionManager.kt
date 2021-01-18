@@ -2,86 +2,63 @@
 package com.intellij.execution.process.mediator.launcher
 
 import com.intellij.execution.process.mediator.ProcessMediatorLogger
-import com.intellij.execution.process.mediator.client.ProcessMediatorClient
-import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorDaemon
-import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import io.grpc.ManagedChannel
-import io.grpc.inprocess.InProcessChannelBuilder
-import io.grpc.inprocess.InProcessServerBuilder
-import io.grpc.stub.MetadataUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlin.coroutines.EmptyCoroutineContext
 
-class ProcessMediatorConnectionManager(private val launchDaemon: () -> ProcessMediatorDaemon,
-                                       private val createClient: (ManagedChannel) -> ProcessMediatorClient) : Disposable {
+class ProcessMediatorConnectionManager(private val connectionProvider: () -> ProcessMediatorConnection) : Disposable {
   private var isDisposed = false  // synchronized on this
-  private val parkedClients = mutableListOf<ProcessMediatorClient>()  // synchronized on this
+  private val parkedConnections = mutableListOf<ProcessMediatorConnection>()  // synchronized on this
 
-  private val activeClientLazy = SynchronizedClearableLazy {
-    launchDaemonAndConnectClient()
+  private val activeConnectionLazy = SynchronizedClearableLazy {
+    launchDaemonAndConnect()
   }
 
-  @get:JvmName("getOrCreateClient")
-  private val activeClient: ProcessMediatorClient by activeClientLazy
+  @get:JvmName("getOrCreateConnection")
+  private val activeConnection: ProcessMediatorConnection by activeConnectionLazy
 
-  fun launchDaemonAndConnectClientIfNeeded() = activeClient
-  private fun getActiveClientOrNull() = activeClientLazy.valueIfInitialized
+  fun launchDaemonAndConnectIfNeeded() = activeConnection
+  private fun getActiveConnectionOrNull() = activeConnectionLazy.valueIfInitialized
 
-  fun parkClient(expectedClient: ProcessMediatorClient) {
+  fun parkConnection(expectedConnection: ProcessMediatorConnection) {
     synchronized(this) {
-      if (activeClientLazy.compareAndDrop(expectedClient)) {
-        parkedClients.add(expectedClient)
+      if (activeConnectionLazy.compareAndDrop(expectedConnection)) {
+        parkedConnections.add(expectedConnection)
       }
     }
   }
 
   fun adjustQuota(quotaOptions: QuotaOptions) {
     synchronized(this) {
-      for (client in parkedClients) {
+      for (connection in parkedConnections) {
         try {
-          client.adjustQuotaBlocking(quotaOptions)
+          connection.client.adjustQuotaBlocking(quotaOptions)
         }
         catch (e: Exception) {
-          ProcessMediatorLogger.LOG.warn("Unable to adjust quota for client $client")
+          ProcessMediatorLogger.LOG.warn("Unable to adjust quota for connection $connection")
         }
       }
-      getActiveClientOrNull()?.adjustQuotaBlocking(quotaOptions)
+      getActiveConnectionOrNull()?.client?.adjustQuotaBlocking(quotaOptions)
     }
   }
 
-  private fun launchDaemonAndConnectClient(): ProcessMediatorClient = synchronized(this) {
+  private fun launchDaemonAndConnect(): ProcessMediatorConnection = synchronized(this) {
     check(!isDisposed) { "Already disposed" }
 
     val debug = false
-    val daemon = if (debug) createInProcessDaemonForDebugging(CoroutineScope(EmptyCoroutineContext)) else launchDaemon()
-    val channel = daemon.createChannel()
-    return createClient(channel)
-  }
+    if (debug) return ProcessMediatorConnection.startInProcessServer()
 
-  private fun createInProcessDaemonForDebugging(coroutineScope: CoroutineScope): ProcessMediatorDaemon {
-    val bindName = "testing${parkedClients.size}"
-    val credentials = DaemonClientCredentials.generate()
-    return object : ProcessMediatorServerDaemon(coroutineScope, InProcessServerBuilder.forName(bindName).directExecutor(), credentials) {
-      override fun createChannel(): ManagedChannel {
-        return InProcessChannelBuilder.forName(bindName)
-          .intercept(MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata()))
-          .directExecutor().build()
-      }
-    }
+    return connectionProvider()
   }
 
   override fun dispose() {
     synchronized(this) {
       if (isDisposed) return
       isDisposed = true
-      for (client in parkedClients) {
-        client.close()
+      for (connection in parkedConnections) {
+        connection.close()
       }
-      activeClientLazy.drop()?.close()
+      activeConnectionLazy.drop()?.close()
     }
   }
 }

@@ -3,13 +3,15 @@ package com.intellij.execution.process.mediator.client
 
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
+import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
 import com.intellij.execution.process.mediator.grpc.LoggingClientInterceptor
 import com.intellij.execution.process.mediator.rpc.*
 import com.intellij.execution.process.mediator.util.childSupervisorScope
+import io.grpc.Channel
 import io.grpc.ClientInterceptors
-import io.grpc.ManagedChannel
+import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -19,18 +21,16 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import java.io.Closeable
 import java.io.File
-import java.util.concurrent.TimeUnit
 
-class ProcessMediatorClient(
+class ProcessMediatorClient private constructor(
   coroutineScope: CoroutineScope,
-  private val channel: ManagedChannel,
-  initialQuotaOptions: QuotaOptions = QuotaOptions.UNLIMITED,
+  channel: Channel,
+  initialQuotaOptions: QuotaOptions,
 ) : CoroutineScope by coroutineScope.childSupervisorScope(),
     Closeable {
-  private val loggingChannel = ClientInterceptors.intercept(channel, LoggingClientInterceptor)
 
-  private val processManagerStub = ProcessManagerGrpcKt.ProcessManagerCoroutineStub(loggingChannel)
-  private val daemonStub = DaemonGrpcKt.DaemonCoroutineStub(loggingChannel)
+  private val processManagerStub = ProcessManagerGrpcKt.ProcessManagerCoroutineStub(channel)
+  private val daemonStub = DaemonGrpcKt.DaemonCoroutineStub(channel)
 
   init {
     // send this request even if doesn't really change the quota, just so we know the server is up and running
@@ -155,7 +155,17 @@ class ProcessMediatorClient(
     }
     finally {
       cancel()
-      channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
+    }
+  }
+
+  data class Builder(private val coroutineScope: CoroutineScope,
+                     private val quotaOptions: QuotaOptions = QuotaOptions.UNLIMITED) {
+    fun createClient(channel: Channel,
+                     credentials: DaemonClientCredentials): ProcessMediatorClient {
+      val authInterceptor = MetadataUtils.newAttachHeadersInterceptor(credentials.asMetadata())
+      val interceptedChannel = ClientInterceptors.intercept(channel, LoggingClientInterceptor, authInterceptor)
+
+      return ProcessMediatorClient(coroutineScope, interceptedChannel, quotaOptions)
     }
   }
 }
