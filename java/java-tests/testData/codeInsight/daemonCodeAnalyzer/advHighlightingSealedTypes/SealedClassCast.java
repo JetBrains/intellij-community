@@ -32,6 +32,9 @@ interface Foo {
   sealed interface W permits X {}
   final class X implements W {}
   
+  sealed class Recursive1 permits <error descr="Invalid permits clause: 'Recursive2' must directly extend 'Recursive1'">Recursive2</error> {}
+  sealed class Recursive2 permits <error descr="Invalid permits clause: 'Recursive1' must directly extend 'Recursive2'">Recursive1</error> {}
+  
   static void testA(A a) {
     if (<error descr="Inconvertible types; cannot cast 'Foo.A' to 'Foo'">a instanceof Foo</error>)
       System.out.println("It's a Foo");
