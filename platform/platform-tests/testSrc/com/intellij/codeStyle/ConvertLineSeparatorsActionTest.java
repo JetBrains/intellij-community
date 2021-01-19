@@ -36,8 +36,10 @@ public class ConvertLineSeparatorsActionTest extends HeavyPlatformTestCase {
   @NotNull
   private VirtualFile checkConvert(@NotNull String oldContent, @NotNull AbstractConvertLineSeparatorsAction action, @NotNull String expectedContent) throws IOException {
     VirtualFile vf = getTempDir().createVirtualFile(".txt", oldContent);
-    DataContext context = SimpleDataContext
-      .getSimpleContext(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new VirtualFile[]{vf}, SimpleDataContext.getProjectContext(getProject()));
+    DataContext context = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, getProject())
+      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{vf})
+      .build();
     action.actionPerformed(AnActionEvent.createFromDataContext("", null, context));
     String newContent = FileUtil.loadFile(new File(vf.getPath()));
     assertEquals(expectedContent, newContent);

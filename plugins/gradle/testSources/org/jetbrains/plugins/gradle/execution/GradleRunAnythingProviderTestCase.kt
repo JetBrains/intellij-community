@@ -75,8 +75,7 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
   }
 
   private fun withVariantsFor(context: RunAnythingContext, command: String, action: (List<String>) -> Unit) {
-    val contextKey = RunAnythingProvider.EXECUTING_CONTEXT.name
-    val dataContext = SimpleDataContext.getSimpleContext(contextKey, context, myDataContext)
+    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext)
     val variants = provider.getValues(dataContext, "gradle $command")
     action(variants.map { StringUtil.trimStart(it, "gradle ") })
   }
@@ -111,7 +110,7 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
         }
       }
     )
-    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT.name, context, myDataContext)
+    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext)
     provider.execute(dataContext, "gradle $command")
 
     for (i in 0..5000) {

@@ -27,9 +27,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.List;
 
+import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 
 public class CopyReferencePopup extends DumbAwareAction {
@@ -101,7 +102,7 @@ public class CopyReferencePopup extends DumbAwareAction {
 
             ActionUtil.performDumbAwareUpdate(true, action, event, false);
 
-            Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+            Editor editor = EDITOR.getData(dataContext);
             java.util.List<PsiElement> elements = CopyReferenceUtil.getElementsToCopy(editor, dataContext);
             String qualifiedName = null;
             if (action instanceof CopyPathProvider) {
@@ -164,13 +165,8 @@ public class CopyReferencePopup extends DumbAwareAction {
   @NotNull
   private static DataContext cloneDataContext(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    HashMap<String, Object> map = new HashMap<>();
-    map.put(CommonDataKeys.PSI_ELEMENT.getName(), CommonDataKeys.PSI_ELEMENT.getData(dataContext));
-    map.put(CommonDataKeys.PROJECT.getName(), CommonDataKeys.PROJECT.getData(dataContext));
-    map.put(LangDataKeys.PSI_ELEMENT_ARRAY.getName(), LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext));
-    map.put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
-    map.put(CommonDataKeys.EDITOR.getName(), CommonDataKeys.EDITOR.getData(dataContext));
-
-    return SimpleDataContext.getSimpleContext(map, DataContext.EMPTY_CONTEXT);
+    return SimpleDataContext.builder()
+      .addAll(dataContext, PSI_ELEMENT, PROJECT, PSI_ELEMENT_ARRAY, VIRTUAL_FILE_ARRAY, EDITOR)
+      .build();
   }
 }

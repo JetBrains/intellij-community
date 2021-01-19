@@ -618,7 +618,7 @@ class Intf {
     def dataContext = SimpleDataContext.getProjectContext(project)
     PsiFile file = ObjectUtils.tryCast(context, PsiFile.class)
     if (file != null) {
-      dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_FILE.name, file, dataContext)
+      dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_FILE, file, dataContext)
     }
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
   }

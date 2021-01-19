@@ -41,8 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
@@ -106,14 +104,12 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
 
   private static DataContext createDataContext(Component contextComponent, String newName, PsiElement newElementToRename) {
     DataContext context = DataManager.getInstance().getDataContext(contextComponent);
-    Map<String, Object> data = new HashMap<>(2);
-    if (newName != null) {
-      data.put(PsiElementRenameHandler.DEFAULT_NAME.getName(), newName);
-    }
-    if (newElementToRename != null) {
-      data.put(LangDataKeys.PSI_ELEMENT_ARRAY.getName(), new PsiElement[] {newElementToRename});
-    }
-    return data.isEmpty() ? context : SimpleDataContext.getSimpleContext(data, context);
+    if (newName == null && newElementToRename == null) return context;
+    return SimpleDataContext.builder()
+      .setParent(context)
+      .add(PsiElementRenameHandler.DEFAULT_NAME, newName)
+      .add(LangDataKeys.PSI_ELEMENT_ARRAY, newElementToRename == null ? null : new PsiElement[]{newElementToRename})
+      .build();
   }
 
   @NotNull

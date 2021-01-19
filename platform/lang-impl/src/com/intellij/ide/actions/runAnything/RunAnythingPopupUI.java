@@ -68,7 +68,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -468,13 +467,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private DataContext getDataContext() {
-    HashMap<String, Object> dataMap = new HashMap<>();
-    dataMap.put(CommonDataKeys.PROJECT.getName(), getProject());
-    dataMap.put(LangDataKeys.MODULE.getName(), getModule());
-    dataMap.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory());
-    dataMap.put(RunAnythingAction.EXECUTOR_KEY.getName(), getExecutor());
-    dataMap.put(RunAnythingProvider.EXECUTING_CONTEXT.getName(), myChooseContextAction.getSelectedContext());
-    return SimpleDataContext.getSimpleContext(dataMap, null);
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, getProject())
+      .add(LangDataKeys.MODULE, getModule())
+      .add(CommonDataKeys.VIRTUAL_FILE, getWorkDirectory())
+      .add(RunAnythingAction.EXECUTOR_KEY, getExecutor())
+      .add(RunAnythingProvider.EXECUTING_CONTEXT, myChooseContextAction.getSelectedContext())
+      .build();
   }
 
   public void initMySearchField() {

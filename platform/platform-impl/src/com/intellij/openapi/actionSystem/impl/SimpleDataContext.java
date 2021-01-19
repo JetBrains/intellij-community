@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ public final class SimpleDataContext implements DataContext {
   private final Map<String, Object> myDataId2Data;
   private final DataContext myParent;
 
-  private SimpleDataContext(@NotNull Map<String, Object> dataId2data, DataContext parent) {
+  private SimpleDataContext(@NotNull Map<String, Object> dataId2data, @Nullable DataContext parent) {
     myDataId2Data = dataId2data;
     myParent = parent;
   }
@@ -50,12 +51,17 @@ public final class SimpleDataContext implements DataContext {
   }
 
   @NotNull
-  public static <T> DataContext getSimpleContext(@NotNull DataKey<? super T> dataKey, @NotNull T data, DataContext parent) {
+  public static <T> DataContext getSimpleContext(@NotNull DataKey<? super T> dataKey, @NotNull T data, @Nullable DataContext parent) {
     return new SimpleDataContext(Map.of(dataKey.getName(), data), parent);
   }
 
+  /**
+   * @see SimpleDataContext#builder()
+   * @deprecated prefer type-safe {@link SimpleDataContext#builder()} where possible.
+   */
+  @Deprecated
   @NotNull
-  public static DataContext getSimpleContext(@NotNull Map<String,Object> dataId2data, DataContext parent) {
+  public static DataContext getSimpleContext(@NotNull Map<String, Object> dataId2data, @Nullable DataContext parent) {
     return new SimpleDataContext(dataId2data, parent);
   }
 
@@ -81,17 +87,17 @@ public final class SimpleDataContext implements DataContext {
     return new Builder(null);
   }
 
-  @NotNull
-  public static Builder builder(@Nullable DataContext parent) {
-    return new Builder(parent);
-  }
-
   public final static class Builder {
-    private final DataContext myParent;
+    private DataContext myParent;
     private Map<String, Object> myMap;
 
     Builder(DataContext parent) {
       myParent = parent;
+    }
+
+    public Builder setParent(@Nullable DataContext parent) {
+      myParent = parent;
+      return this;
     }
 
     @NotNull
@@ -104,8 +110,18 @@ public final class SimpleDataContext implements DataContext {
     }
 
     @NotNull
-    public SimpleDataContext build() {
-      return new SimpleDataContext(myMap, myParent);
+    public Builder addAll(@NotNull DataContext dataContext, DataKey<?> @NotNull ... keys) {
+      for (DataKey<?> key : keys) {
+        //noinspection unchecked
+        add((DataKey<Object>)key, dataContext.getData(key));
+      }
+      return this;
+    }
+
+    @NotNull
+    public DataContext build() {
+      if (myMap == null && myParent == null) return EMPTY_CONTEXT;
+      return new SimpleDataContext(myMap != null ? myMap : Collections.emptyMap(), myParent);
     }
   }
 }

@@ -133,10 +133,11 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     PsiElement context = myPsiContext != null ? myPsiContext.getElement() : null;
     PsiFile file = context == null ? null : context.getContainingFile();
 
-    Map<String, Object> map = new HashMap<>();
-    map.put(CommonDataKeys.PSI_ELEMENT.getName(), context);
-    map.put(CommonDataKeys.PSI_FILE.getName(), file);
-    return SimpleDataContext.getSimpleContext(map, parentContext);
+    return SimpleDataContext.builder()
+      .setParent(parentContext)
+      .add(CommonDataKeys.PSI_ELEMENT, context)
+      .add(CommonDataKeys.PSI_FILE, file)
+      .build();
   }
 
   @Nullable

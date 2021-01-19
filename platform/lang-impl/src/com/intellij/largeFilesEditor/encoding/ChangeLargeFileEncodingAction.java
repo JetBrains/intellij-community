@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,13 +72,12 @@ class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
 
   private static DataContext wrapInDataContext(VirtualFile vFile, Editor editor, Component componentParent) {
     DataContext parent = DataManager.getInstance().getDataContext(componentParent);
-    return SimpleDataContext.getSimpleContext(
-      ContainerUtil.<String, Object>immutableMapBuilder()
-        .put(CommonDataKeys.VIRTUAL_FILE.getName(), vFile)
-        .put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), new VirtualFile[]{vFile})
-        .put(CommonDataKeys.PROJECT.getName(), editor.getProject())
-        .put(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor.getComponent())
-        .build(),
-      parent);
+    return SimpleDataContext.builder()
+      .setParent(parent)
+      .add(CommonDataKeys.VIRTUAL_FILE, vFile)
+      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{vFile})
+      .add(CommonDataKeys.PROJECT, editor.getProject())
+      .add(PlatformDataKeys.CONTEXT_COMPONENT, editor.getComponent())
+      .build();
   }
 }

@@ -34,7 +34,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -196,14 +195,13 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     Editor editor = getEditor();
     DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
     VirtualFile selectedFile = getSelectedFile();
-    return SimpleDataContext.getSimpleContext(
-      ContainerUtil.<String, Object>immutableMapBuilder()
-        .put(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile)
-        .put(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(), selectedFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {selectedFile})
-        .put(CommonDataKeys.PROJECT.getName(), getProject())
-        .put(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent())
-        .build(),
-      parent);
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.VIRTUAL_FILE, selectedFile)
+      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, selectedFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {selectedFile})
+      .add(CommonDataKeys.PROJECT, getProject())
+      .add(PlatformDataKeys.CONTEXT_COMPONENT, editor == null ? null : editor.getComponent())
+      .setParent(parent)
+      .build();
   }
 
   @Override
