@@ -20,9 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.openapi.util.Disposer.newDisposable;
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
-
 public class DisposerTest extends TestCase {
   private MyDisposable myRoot;
 
@@ -306,11 +303,11 @@ public class DisposerTest extends TestCase {
   }
 
   public void testIncest() {
-    Disposable parent = newDisposable("parent");
-    Disposable child = newDisposable("child");
+    Disposable parent = Disposer.newDisposable("parent");
+    Disposable child = Disposer.newDisposable("child");
     Disposer.register(parent, child);
 
-    Disposable grand = newDisposable("grand");
+    Disposable grand = Disposer.newDisposable("grand");
     Disposer.register(child, grand);
 
     try {
@@ -328,20 +325,20 @@ public class DisposerTest extends TestCase {
   }
 
   public void testRemoveOnlyChildren() {
-    Disposable parent = newDisposable("parent");
-    Disposable child = newDisposable("child");
+    Disposable parent = Disposer.newDisposable("parent");
+    Disposable child = Disposer.newDisposable("child");
     Disposer.register(parent, child);
 
-    Disposable grand = newDisposable("grand");
+    Disposable grand = Disposer.newDisposable("grand");
     Disposer.register(child, grand);
 
     try {
       Disposer.disposeChildren(parent, null);
-      assertThat(Disposer.isDisposed(parent)).isFalse();
-      assertThat(Disposer.findRegisteredObject(parent, child)).isNull();
-      assertThat(Disposer.findRegisteredObject(child, grand)).isNull();
+      assertFalse(Disposer.isDisposed(parent));
+      assertNull(Disposer.findRegisteredObject(parent, child));
+      assertNull(Disposer.findRegisteredObject(child, grand));
       Disposer.dispose(parent);
-      assertThat(Disposer.isDisposed(parent)).isTrue();
+      assertTrue(Disposer.isDisposed(parent));
     }
     finally {
       Disposer.dispose(grand);
@@ -351,27 +348,27 @@ public class DisposerTest extends TestCase {
   }
 
   public void testRemoveOnlyChildrenByCondition() {
-    Disposable parent = newDisposable("parent");
-    Disposable child1 = newDisposable("child1");
-    Disposable child2 = newDisposable("child2");
+    Disposable parent = Disposer.newDisposable("parent");
+    Disposable child1 = Disposer.newDisposable("child1");
+    Disposable child2 = Disposer.newDisposable("child2");
     Disposer.register(parent, child1);
     Disposer.register(parent, child2);
 
-    Disposable grand1 = newDisposable("grand1");
+    Disposable grand1 = Disposer.newDisposable("grand1");
     Disposer.register(child1, grand1);
 
     try {
       Disposer.disposeChildren(parent, disposable -> disposable == child1);
-      assertThat(Disposer.isDisposed(parent)).isFalse();
-      assertThat(Disposer.findRegisteredObject(parent, child1)).isNull();
-      assertThat(Disposer.findRegisteredObject(child1, grand1)).isNull();
+      assertFalse(Disposer.isDisposed(parent));
+      assertNull(Disposer.findRegisteredObject(parent, child1));
+      assertNull(Disposer.findRegisteredObject(child1, grand1));
 
-      assertThat(Disposer.isDisposed(child2)).isFalse();
-      assertThat(Disposer.findRegisteredObject(parent, child2)).isNotNull();
+      assertFalse(Disposer.isDisposed(child2));
+      assertNotNull(Disposer.findRegisteredObject(parent, child2));
 
       Disposer.dispose(parent);
-      assertThat(Disposer.isDisposed(parent)).isTrue();
-      assertThat(Disposer.findRegisteredObject(parent, child2)).isNull();
+      assertTrue(Disposer.isDisposed(parent));
+      assertNull(Disposer.findRegisteredObject(parent, child2));
     }
     finally {
       Disposer.dispose(grand1);
@@ -382,13 +379,13 @@ public class DisposerTest extends TestCase {
   }
 
   public void testMustNotRegisterWithAlreadyDisposed() {
-    Disposable disposable = newDisposable();
+    Disposable disposable = Disposer.newDisposable();
     Disposer.register(myRoot, disposable);
 
     Disposer.dispose(disposable);
 
     try {
-      Disposer.register(disposable, newDisposable());
+      Disposer.register(disposable, Disposer.newDisposable());
       fail("Must not be able to register with already disposed parent");
     }
     catch (IncorrectOperationException ignored) {
@@ -397,20 +394,20 @@ public class DisposerTest extends TestCase {
   }
 
   public void testRegisterThenDisposeThenRegisterAgain() {
-    Disposable disposable = newDisposable();
+    Disposable disposable = Disposer.newDisposable();
     Disposer.register(myRoot, disposable);
 
     Disposer.dispose(disposable);
     Disposer.register(myRoot, disposable);
-    Disposer.register(disposable, newDisposable());
+    Disposer.register(disposable, Disposer.newDisposable());
   }
 
   public void testDisposeDespiteExceptions() {
     DefaultLogger.disableStderrDumping(myRoot);
 
-    Disposable parent = newDisposable();
-    Disposable first = newDisposable();
-    Disposable last = newDisposable();
+    Disposable parent = Disposer.newDisposable();
+    Disposable first = Disposer.newDisposable();
+    Disposable last = Disposer.newDisposable();
 
     Disposer.register(parent, first);
     Disposer.register(parent, () -> { throw new AssertionError("Expected"); });
@@ -438,8 +435,8 @@ public class DisposerTest extends TestCase {
   public void testMustNotAllowToRegisterDuringParentDisposal() {
     DefaultLogger.disableStderrDumping(myRoot);
 
-    Disposable parent = newDisposable("parent");
-    Disposable last = newDisposable("child");
+    Disposable parent = Disposer.newDisposable("parent");
+    Disposable last = Disposer.newDisposable("child");
 
     Disposer.register(parent, () -> Disposer.register(parent, last));
 
@@ -506,7 +503,7 @@ public class DisposerTest extends TestCase {
     assertEquals(disposable0, disposable1);
 
     // for children
-    Disposable parent = newDisposable();
+    Disposable parent = Disposer.newDisposable();
     Disposer.register(parent, disposable0);
     Disposer.register(parent, disposable1);
     Disposer.dispose(parent);
@@ -568,5 +565,10 @@ public class DisposerTest extends TestCase {
     run.clear();
     Disposer.dispose(disposable1);
     assertSame(child1, UsefulTestCase.assertOneElement(run));
+  }
+
+  public void testMustNotAllowToRegisterToItself() {
+    Disposable d = Disposer.newDisposable();
+    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> Disposer.register(d, d));
   }
 }
