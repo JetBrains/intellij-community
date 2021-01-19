@@ -79,7 +79,7 @@ public abstract class WslDistributionManager implements Disposable {
 
   private @NotNull WSLDistribution getOrCreateDistributionByMsId(@NonNls @NotNull String msId, boolean overrideCaseInsensitively) {
     if (msId.isEmpty()) {
-      throw new IllegalStateException("WSL msId is empty");
+      throw new IllegalArgumentException("WSL msId is empty");
     }
     // reuse previously created WSLDistribution instances to avoid re-calculating Host IP / WSL IP
     WSLDistribution d = myMsIdToDistributionCache.get(msId);
