@@ -19,10 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
-import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.intellij.refactoring.util.MoveRenameUsageInfo
-import com.intellij.refactoring.util.RefactoringUIUtil
-import com.intellij.refactoring.util.TextOccurrencesUtil
+import com.intellij.refactoring.util.*
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -589,10 +586,8 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
 
         val parametersToRemove = ktChangeInfo.parametersToRemove
-        val isRemoveReceiver = ktChangeInfo.isRemoveReceiver
         if (ktChangeInfo.checkUsedParameters && function is KtCallableDeclaration) {
             checkParametersToDelete(function, parametersToRemove, result)
-            if (isRemoveReceiver) findReceiverUsages(function, result)
         }
 
         for (parameter in ktChangeInfo.getNonReceiverParameters()) {
@@ -640,17 +635,43 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     val declaration = usageInfo.declaration as? KtCallableDeclaration ?: continue
                     if (ktChangeInfo.checkUsedParameters) {
                         checkParametersToDelete(declaration, parametersToRemove, result)
-                        if (isRemoveReceiver) findReceiverUsages(declaration, result)
                     }
                 }
+
                 is KotlinCallerUsage -> {
                     val callerDescriptor = usageInfo.element?.resolveToDescriptorIfAny() ?: continue
                     findParameterDuplicationInCaller(result, ktChangeInfo, usageInfo.element!!, callerDescriptor)
+                }
+
+                is KotlinWrapperForJavaUsageInfos -> {
+                    findConflictsInJavaUsages(ktChangeInfo, usageInfo, result)
                 }
             }
         }
 
         return result
+    }
+
+    private fun findConflictsInJavaUsages(
+        changeInfo: KotlinChangeInfo,
+        wrapper: KotlinWrapperForJavaUsageInfos,
+        result: MultiMap<PsiElement, String>,
+    ) {
+        if (!changeInfo.checkUsedParameters) return
+
+        val javaChangeInfo = wrapper.javaChangeInfo
+        val javaUsageInfos = wrapper.javaUsageInfos
+        val parametersToRemove = javaChangeInfo.toRemoveParm()
+
+        for (javaUsage in javaUsageInfos) {
+            if (javaUsage !is OverriderUsageInfo) continue
+
+            val javaMethod = javaUsage.overridingMethod
+            val baseMethod = javaUsage.baseMethod
+            if (baseMethod != javaChangeInfo.method) continue
+
+            JavaChangeSignatureUsageProcessor.ConflictSearcher.checkParametersToDelete(javaMethod, parametersToRemove, result)
+        }
     }
 
     private fun findReceiverUsages(
@@ -691,8 +712,15 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         result: MultiMap<PsiElement, String>,
     ) {
         val scope = LocalSearchScope(callableDeclaration)
-        for ((i, parameter) in callableDeclaration.valueParameters.withIndex()) {
-            if (toRemove[i]) {
+        val valueParameters = callableDeclaration.valueParameters
+        val hasReceiver = valueParameters.size != toRemove.size
+        if (hasReceiver && toRemove[0]) {
+            findReceiverUsages(callableDeclaration, result)
+        }
+
+        for ((i, parameter) in valueParameters.withIndex()) {
+            val index = (if (hasReceiver) 1 else 0) + i
+            if (toRemove[index]) {
                 registerConflictIfUsed(parameter, scope, result)
             }
         }

@@ -120,19 +120,22 @@ open class KotlinChangeInfo(
         private set
 
     val parametersToRemove: BooleanArray get() {
-        val toRemove = BooleanArray(methodDescriptor.parametersCount) { true }
+        val originalReceiver = methodDescriptor.receiver
+        val hasReceiver = methodDescriptor.receiver != null
+        val receiverShift = if (hasReceiver) 1 else 0
+
+        val toRemove = BooleanArray(receiverShift + methodDescriptor.parametersCount) { true }
+        if (hasReceiver) {
+            toRemove[0] = receiverParameterInfo == null && hasReceiver && originalReceiver !in getNonReceiverParameters()
+        }
+
         for (parameter in newParameters) {
             parameter.oldIndex.takeIf { it >= 0 }?.let { oldIndex ->
-                toRemove[oldIndex] = false
+                toRemove[receiverShift + oldIndex] = false
             }
         }
 
         return toRemove
-    }
-
-    val isRemoveReceiver: Boolean get() {
-        val originalReceiverInfo = methodDescriptor.receiver
-        return receiverParameterInfo == null && originalReceiverInfo != null && originalReceiverInfo !in getNonReceiverParameters()
     }
 
     fun getOldParameterIndex(oldParameterName: String): Int? = oldNameToParameterIndex[oldParameterName]
