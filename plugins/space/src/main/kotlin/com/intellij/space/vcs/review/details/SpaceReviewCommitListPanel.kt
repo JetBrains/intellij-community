@@ -4,6 +4,7 @@ package com.intellij.space.vcs.review.details
 import circlet.code.api.CodeReviewRecord
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.space.vcs.review.details.SpaceReviewCommit.subject
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.testFramework.LightVirtualFile
@@ -75,7 +76,7 @@ internal class SpaceReviewCommitListPanel(
         val parents = commit.parents.map { id -> HashImpl.build(id) }
         val root = selectedCommit.spaceRepoInfo?.repository?.root ?: unknownRoot
         val message = commit.message.trimEnd('\n')
-        val subject = message.substringBefore("\n\n")
+        val subject = commit.subject()
         val author = VcsUserImpl(commit.author.name, commit.author.email)
         val committer = VcsUserImpl(commit.committer.name, commit.committer.email)
         VcsCommitMetadataImpl(hash, parents, commit.commitDate, root, subject, author, message, committer, commit.authorDate)

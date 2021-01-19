@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
+import com.intellij.space.vcs.review.details.SpaceReviewCommit.subject
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -48,7 +49,7 @@ internal class SpaceCommitRenderer : ListCellRenderer<SpaceReviewCommitListItem>
     }
 
     messageComponent.clear()
-    messageComponent.append(value.commitWithGraph.commit.message, // NON-NLS
+    messageComponent.append(value.commitWithGraph.commit.subject(), // NON-NLS
                             SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getListForeground(isSelected, true)))
     SpeedSearchUtil.applySpeedSearchHighlighting(list, messageComponent, true, isSelected)
 
