@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -11,10 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.stream.Stream;
 
 /**
@@ -215,5 +212,13 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
                                                                    @NotNull Class<?> cacheId,
                                                                    @NotNull Function<? super @NotNull K, ? extends @NotNull V> valueMapper) {
     return ExtensionProcessingHelper.computeIfAbsent(getPointImpl(null), key, cacheId, valueMapper);
+  }
+
+  /**
+   * Cache some value per extension point.
+   */
+  @ApiStatus.Experimental
+  public final <@NotNull V> @NotNull V computeIfAbsent(@NotNull Class<?> cacheId, @NotNull Supplier<? extends @NotNull V> valueMapper) {
+    return ExtensionProcessingHelper.computeIfAbsent(getPointImpl(null), cacheId, valueMapper);
   }
 }

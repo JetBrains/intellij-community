@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 // Separate class to keep ExtensionPointImpl class implementation clear and readable,
 // such simple util code better to keep separately.
@@ -123,6 +124,14 @@ public final class ExtensionProcessingHelper {
     // Or to have double look-up (map for valueProducer, map for key), or using of composite key. Java GC is quite good, so, composite key.
     ConcurrentMap<SimpleImmutableEntry<K, Class<?>>, V> cache = point.getCacheMap();
     return cache.computeIfAbsent(new SimpleImmutableEntry<>(key, cacheId), entry -> valueProducer.apply(entry.getKey()));
+  }
+
+  @ApiStatus.Internal
+  public static <@NotNull T, @NotNull V> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
+                                                                    @NotNull Class<?> cacheId,
+                                                                    @NotNull Supplier<? extends V> valueProducer) {
+    ConcurrentMap<Class<?>, V> cache = point.getCacheMap();
+    return cache.computeIfAbsent(cacheId, __ -> valueProducer.get());
   }
 
   private static <CACHE_KEY, K, T, V> @Nullable V doGetByKey(@NotNull ExtensionPoint<T> point,

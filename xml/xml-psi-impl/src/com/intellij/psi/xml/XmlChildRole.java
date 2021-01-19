@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XmlChildRole {
-
   RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
     @Override
     public ASTNode findChild(@NotNull ASTNode parent) {
@@ -38,7 +37,7 @@ public interface XmlChildRole {
 
 
   RoleFinder START_TAG_END_FINDER = new DefaultRoleFinder(() -> {
-    return StartTagEndTokenProvider.EP_NAME.computeIfAbsent(XmlChildRole.class, XmlChildRole.class, s -> {
+    return StartTagEndTokenProvider.EP_NAME.computeIfAbsent(XmlChildRole.class, () -> {
       IElementType[] elementTypes = new IElementType[]{XmlTokenType.XML_TAG_END};
       for (StartTagEndTokenProvider tokenProvider : StartTagEndTokenProvider.EP_NAME.getExtensionList()) {
         elementTypes = ArrayUtil.mergeArrays(elementTypes, tokenProvider.getTypes());

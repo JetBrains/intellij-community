@@ -79,8 +79,7 @@ public class ConverterManagerImpl implements ConverterManager {
 
   static <T> T getOrCreateConverterInstance(Class<T> clazz) {
     //noinspection unchecked
-    return (T)DomImplementationClassEP.CONVERTER_EP_NAME
-      .computeIfAbsent(ConverterManagerImpl.class, ConverterManagerImpl.class, __ -> new MyClassValue()).get(clazz);
+    return (T)DomImplementationClassEP.CONVERTER_EP_NAME.computeIfAbsent(ConverterManagerImpl.class, () -> new MyClassValue()).get(clazz);
   }
 
   @SuppressWarnings("unchecked")
