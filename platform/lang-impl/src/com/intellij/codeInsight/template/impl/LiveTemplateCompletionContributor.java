@@ -144,6 +144,8 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
                                            Map<TemplateImpl, String> templates,
                                            CompletionResultSet result,
                                            boolean isAutopopup) {
+    if (templates.isEmpty()) return;
+
     if (!templatesShown.getAndSet(true)) {
       result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<>("type after non-identifier") {
         @Override
