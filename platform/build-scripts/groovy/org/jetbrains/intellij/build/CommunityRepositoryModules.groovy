@@ -263,7 +263,6 @@ final class CommunityRepositoryModules {
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
-      withProjectLibrary("ktor-server-jetty")
     },
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
