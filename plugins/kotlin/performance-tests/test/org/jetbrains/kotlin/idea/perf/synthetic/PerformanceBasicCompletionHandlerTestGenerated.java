@@ -1014,9 +1014,14 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
             runTest("../completion/testData/handlers/basic/typeArgsForGenericFun/WithParamFunc_LambdaDefaultOverriddenArgument2.kt");
         }
 
-        @TestMetadata("WithParamFunc_LambdaExplicitArgument.kt")
-        public void testWithParamFunc_LambdaExplicitArgument() throws Exception {
-            runTest("../completion/testData/handlers/basic/typeArgsForGenericFun/WithParamFunc_LambdaExplicitArgument.kt");
+        @TestMetadata("WithParamFunc_LambdaExplicitInferrable.kt")
+        public void testWithParamFunc_LambdaExplicitInferrable() throws Exception {
+            runTest("../completion/testData/handlers/basic/typeArgsForGenericFun/WithParamFunc_LambdaExplicitInferrable.kt");
+        }
+
+        @TestMetadata("WithParamFunc_LambdaExplicitNonInferrable.kt")
+        public void testWithParamFunc_LambdaExplicitNonInferrable() throws Exception {
+            runTest("../completion/testData/handlers/basic/typeArgsForGenericFun/WithParamFunc_LambdaExplicitNonInferrable.kt");
         }
 
         @TestMetadata("WithParamFunc_LambdaSingleExplicitArgument.kt")

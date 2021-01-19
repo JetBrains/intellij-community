@@ -1,31 +1,18 @@
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.OptionalParametersHelper
-import org.jetbrains.kotlin.idea.inspections.collections.isFunctionOfAnyKind
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.contains
-import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.sam.SamConversionOracle
-import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.ErrorType
 
 data class TypeArgsWithOffset(val args: KtTypeArgumentList, val offset: Int)
 var UserDataHolder.argList: TypeArgsWithOffset? by UserDataProperty(Key("KotlinInsertTypeArgument.ARG_LIST"))
@@ -120,64 +107,14 @@ private fun callExprToUpdateExists(position: PsiElement): Boolean {
     return callBeforeDot.requiresTypeParams()
 }
 
-@OptIn(FrontendInternals::class)
 private fun KtCallExpression.requiresTypeParams(): Boolean {
     if (typeArguments.isNotEmpty()) return false
 
-    val resolutionFacade = getResolutionFacade()
     val bindingContext = analyze(BodyResolveMode.PARTIAL)
     val resolvedCall = getResolvedCall(bindingContext) ?: return false
     if (resolvedCall.typeArguments.isEmpty()) return false
 
-    val samConversionOracle = resolutionFacade.frontendService<SamConversionOracle>()
-    return !typeParametersCanBeInferred(project, samConversionOracle, resolvedCall)
-}
-
-@OptIn(ExperimentalStdlibApi::class)
-private fun typeParametersCanBeInferred(
-    project: Project,
-    samConversionOracle: SamConversionOracle,
-    resolvedCall: ResolvedCall<out CallableDescriptor>
-): Boolean {
-    fun typeParameterIsProbablyInferrable(desc: ValueParameterDescriptor): Boolean {
-        val valueArgument = resolvedCall.valueArguments[desc]
-        if (!desc.type.isFunctionOrFunctionalInterface(samConversionOracle)) {
-            return valueArgument !is DefaultValueArgument
-        }
-
-        if (valueArgument is DefaultValueArgument) {
-            val defaultValue = OptionalParametersHelper.defaultParameterValueExpression(desc, project)
-            return defaultValue !is KtLambdaExpression
-        }
-
-        return valueArgument?.arguments?.none { (it as KtValueArgument).isLambdaArgument() } == true
-    }
-
-    fun typeParameterPresentInTypes(inferenceRelevantTypes: List<KotlinType>, typeParamDesc: TypeParameterDescriptor): Boolean =
-        inferenceRelevantTypes.any { typeParamDesc in it }
-
-
-    val typeParamDescriptors = resolvedCall.typeArguments.keys
-
-    val inferenceRelevantTypes = buildList {
-        resolvedCall.valueArguments.keys // valueArguments is aware of default values as well
-            .filter(::typeParameterIsProbablyInferrable)
-            .mapTo(this) { resolvedCall.candidateDescriptor.valueParameters[it.index].type }
-
-        val extensionReceiverParamType = resolvedCall.candidateDescriptor.extensionReceiverParameter?.type
-        extensionReceiverParamType?.let { add(it) }
-    }
-
-    return typeParamDescriptors.all { typeParameterPresentInTypes(inferenceRelevantTypes, it) }
-}
-
-private fun KotlinType.isFunctionOrFunctionalInterface(samConversion: SamConversionOracle): Boolean =
-    isFunctionOfAnyKind() || samConversion.isPossibleSamType(this)
-
-private fun KtValueArgument.isLambdaArgument(): Boolean {
-    val itsTrailingLambda = this is KtLambdaArgument
-    val itsLambdaInParenthesis = getChildOfType<KtLambdaExpression>() != null
-    return itsTrailingLambda || itsLambdaInParenthesis
+    return resolvedCall.typeArguments.values.any { type -> type is ErrorType }
 }
 
 private fun KtExpression.getPreviousInQualifiedChain(): KtExpression? {
