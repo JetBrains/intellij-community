@@ -69,7 +69,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    *  to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
    */
   // multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators
-  private static final Map<ProgressIndicator, List<ProgressIndicator>> nonStandardIndicators = new HashMap<>();
+  private static final Map<ProgressIndicator, Collection<ProgressIndicator>> nonStandardIndicators = new ConcurrentHashMap<>();
 
   /** true if running in non-cancelable section started with
    * {@link #executeNonCancelableSection(Runnable)} in this thread
@@ -83,7 +83,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
 
     myCheckCancelledFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-      for (List<ProgressIndicator> indicators : nonStandardIndicators.values()) {
+      for (Collection<ProgressIndicator> indicators : nonStandardIndicators.values()) {
         for (ProgressIndicator indicator : indicators) {
           try {
             indicator.checkCanceled();
@@ -646,7 +646,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
         boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
         if (!isStandard) {
-          nonStandardIndicators.computeIfAbsent(thisIndicator, __ -> new ArrayList<>()).add(thisIndicator);
+          nonStandardIndicators.computeIfAbsent(thisIndicator, __ -> ContainerUtil.createLockFreeCopyOnWriteList()).add(thisIndicator);
           startBackgroundNonStandardIndicatorsPing();
         }
 
@@ -671,11 +671,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
             threadsUnderIndicator.remove(thisIndicator);
           }
           boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
-          if (!isStandard) {
-            nonStandardIndicators.remove(thisIndicator);
-            if (nonStandardIndicators.isEmpty()) {
-              stopBackgroundNonStandardIndicatorsPing();
-            }
+          if (!isStandard && nonStandardIndicators.remove(thisIndicator) != null && nonStandardIndicators.isEmpty()) {
+            stopBackgroundNonStandardIndicatorsPing();
           }
           // by this time oldIndicator may have been canceled
         }
