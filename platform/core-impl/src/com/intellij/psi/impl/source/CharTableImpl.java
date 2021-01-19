@@ -6,7 +6,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.ReflectionUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,7 +183,7 @@ public final class CharTableImpl implements CharTable {
   static {
     addStringsFromClassToStatics(CommonClassNames.class);
   }
-  public static void addStringsFromClassToStatics(@NotNull Class aClass) {
+  public static void addStringsFromClassToStatics(@NotNull Class<?> aClass) {
     for (Field field : aClass.getDeclaredFields()) {
       if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
       if ((field.getModifiers() & Modifier.PUBLIC) == 0) continue;
@@ -195,7 +195,7 @@ public final class CharTableImpl implements CharTable {
     }
   }
 
-  private static final class StringHashToCharSequencesMap extends TIntObjectHashMap<Object> {
+  private static final class StringHashToCharSequencesMap extends Int2ObjectOpenHashMap<Object> {
     private StringHashToCharSequencesMap(int capacity, float loadFactor) {
       super(capacity, loadFactor);
     }
@@ -238,51 +238,43 @@ public final class CharTableImpl implements CharTable {
       return get(sequence, 0, sequence.length());
     }
 
-    @NotNull
-    private CharSequence add(@NotNull CharSequence sequence) {
-      return add(sequence, 0, sequence.length());
-    }
-
-    @NotNull
-    private CharSequence add(CharSequence sequence, int startOffset, int endOffset) {
-      int hashCode = subSequenceHashCode(sequence, startOffset, endOffset);
-      return getOrAddSubSequenceWithHashCode(hashCode, sequence, startOffset, endOffset);
+    private void add(@NotNull CharSequence sequence) {
+      int endOffset = sequence.length();
+      int hashCode = subSequenceHashCode(sequence, 0, endOffset);
+      getOrAddSubSequenceWithHashCode(hashCode, sequence, 0, endOffset);
     }
 
     @NotNull
     private CharSequence getOrAddSubSequenceWithHashCode(int hashCode, @NotNull CharSequence sequence, int startOffset, int endOffset) {
-      int index = index(hashCode);
+      Object value = get(hashCode);
       String addedSequence;
 
-      if (index < 0) {
+      if (value == null) {
         addedSequence = createSequence(sequence, startOffset, endOffset);
         put(hashCode, addedSequence);
       }
+      else if (value instanceof CharSequence) {
+        CharSequence existingSequence = (CharSequence)value;
+        if (charSequenceSubSequenceEquals(existingSequence, sequence, startOffset, endOffset)) {
+          return existingSequence;
+        }
+        addedSequence = createSequence(sequence, startOffset, endOffset);
+        put(hashCode, new CharSequence[]{existingSequence, addedSequence});
+      }
+      else if (value instanceof CharSequence[]) {
+        CharSequence[] existingSequenceArray = (CharSequence[])value;
+        for (CharSequence cs : existingSequenceArray) {
+          if (charSequenceSubSequenceEquals(cs, sequence, startOffset, endOffset)) {
+            return cs;
+          }
+        }
+        addedSequence = createSequence(sequence, startOffset, endOffset);
+        CharSequence[] newSequenceArray = ArrayUtil.append(existingSequenceArray, addedSequence, CharSequence[]::new);
+        put(hashCode, newSequenceArray);
+      }
       else {
-        Object value = _values[index];
-        if (value instanceof CharSequence) {
-          CharSequence existingSequence = (CharSequence)value;
-          if (charSequenceSubSequenceEquals(existingSequence, sequence, startOffset, endOffset)) {
-            return existingSequence;
-          }
-          addedSequence = createSequence(sequence, startOffset, endOffset);
-          put(hashCode, new CharSequence[]{existingSequence, addedSequence});
-        }
-        else if (value instanceof CharSequence[]) {
-          CharSequence[] existingSequenceArray = (CharSequence[])value;
-          for (CharSequence cs : existingSequenceArray) {
-            if (charSequenceSubSequenceEquals(cs, sequence, startOffset, endOffset)) {
-              return cs;
-            }
-          }
-          addedSequence = createSequence(sequence, startOffset, endOffset);
-          CharSequence[] newSequenceArray = ArrayUtil.append(existingSequenceArray, addedSequence, CharSequence[]::new);
-          put(hashCode, newSequenceArray);
-        }
-        else {
-          assert false : value.getClass();
-          return null;
-        }
+        assert false : value.getClass();
+        return null;
       }
       return addedSequence;
     }
