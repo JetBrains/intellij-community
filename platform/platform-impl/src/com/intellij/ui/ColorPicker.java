@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -422,7 +423,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha, boolean showAlphaAsPercent) {
-    if(!isEnoughSpaceToShowPopup()) {
+    if( !isEnoughSpaceToShowPopup() || !Registry.is("ide.new.color.picker")) {
       Color color = showDialog(IdeFocusManager.getGlobalInstance().getFocusOwner(), IdeBundle.message("dialog.title.choose.color"),
                                currentColor, showAlpha, null, showAlphaAsPercent);
       if (color != null) {
