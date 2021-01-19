@@ -83,7 +83,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
 
   @Override
   public void apply(@NotNull VcsConfiguration settings) throws ConfigurationException {
-    setCommitFromLocalChanges(myCommitFromLocalChanges.isSelected());
+    setCommitFromLocalChanges(myProject, myCommitFromLocalChanges.isSelected());
     settings.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = myShowUnversionedFiles.isSelected();
     settings.CLEAR_INITIAL_COMMIT_MESSAGE = myClearInitialCommitMessage.isSelected();
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyCommitMessage.isSelected();

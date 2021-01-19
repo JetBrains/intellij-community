@@ -69,7 +69,7 @@ public class RefreshAction extends AnAction implements DumbAware {
       Collection<Change> changesAfterUpdate = changeListManager.getAllChanges();
       Collection<FilePath> unversionedAfter = changeListManager.getUnversionedFilesPaths();
 
-      logRefreshActionPerformed(changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter, wasUpdatingBefore);
+      logRefreshActionPerformed(project, changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter, wasUpdatingBefore);
     });
   }
 }

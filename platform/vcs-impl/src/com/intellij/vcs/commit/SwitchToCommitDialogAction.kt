@@ -17,7 +17,7 @@ private class SwitchToCommitDialogAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    setCommitFromLocalChanges(false)
+    setCommitFromLocalChanges(e.project, false)
 
     val commitAction = ActionManager.getInstance().getAction(ACTION_CHECKIN_PROJECT) ?: return
     invokeAction(commitAction, e.dataContext, e.place, e.inputEvent, null)

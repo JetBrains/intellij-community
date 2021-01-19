@@ -3,13 +3,15 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 
 private const val VCS_GROUP = "vcs"
 private const val REFRESH_ACTION_ID = "changes.view.refresh"
 
-fun logRefreshActionPerformed(changesBefore: MutableCollection<Change>,
+fun logRefreshActionPerformed(project: Project,
+                              changesBefore: MutableCollection<Change>,
                               changesAfter: MutableCollection<Change>,
                               unversionedBefore: Collection<FilePath>,
                               unversionedAfter: Collection<FilePath>,
@@ -26,5 +28,5 @@ fun logRefreshActionPerformed(changesBefore: MutableCollection<Change>,
     .addData("changesDelta", changes.size)
     .addData("unversionedDelta", unversioned.size)
 
-  FUCounterUsageLogger.getInstance().logEvent(VCS_GROUP, REFRESH_ACTION_ID, data)
+  FUCounterUsageLogger.getInstance().logEvent(project, VCS_GROUP, REFRESH_ACTION_ID, data)
 }
