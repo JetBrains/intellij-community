@@ -31,10 +31,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.FlowLayout
 import java.beans.PropertyChangeListener
-import javax.swing.Action
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 
 internal object SpaceReviewInfoPanelFactory {
   internal fun create(detailsVm: SpaceReviewDetailsVm<*>): JComponent {
@@ -118,7 +115,7 @@ internal object SpaceReviewInfoPanelFactory {
       )
     }
 
-    val contentPanel: JPanel = ScrollablePanel(VerticalLayout(JBUI.scale(8))).apply {
+    val contentPanel: JScrollPane = ScrollablePanel(VerticalLayout(JBUI.scale(8))).apply {
       border = JBUI.Borders.empty(8)
       isOpaque = false
       add(projectDetails)
@@ -132,7 +129,7 @@ internal object SpaceReviewInfoPanelFactory {
       add(usersPanel, VerticalLayout.FILL_HORIZONTAL)
       add(openTimelineLinkLabel)
       add(actionsPanel)
-    }.also { scrollablePanel ->
+    }.let { scrollablePanel ->
       ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
         isOpaque = false
         viewport.isOpaque = false
