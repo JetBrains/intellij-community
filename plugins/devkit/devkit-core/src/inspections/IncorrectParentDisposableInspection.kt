@@ -31,7 +31,7 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
       }
     }, arrayOf(UCallExpression::class.java))
 
-  private val sdkLink = "https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html#choosing-a-disposable-parent"
+  private val sdkLink = "https://plugins.jetbrains.com/docs/intellij/disposers.html?from=IncorrectParentDisposable#choosing-a-disposable-parent"
 
   private fun checkCallExpression(node: UCallExpression, holder: ProblemsHolder) {
     val psiMethod = node.resolve() ?: return

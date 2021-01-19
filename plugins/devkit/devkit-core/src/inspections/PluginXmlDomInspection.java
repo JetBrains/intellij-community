@@ -91,7 +91,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   @NonNls
   public static final String DEPENDENCIES_DOC_URL =
-    "https://jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_dependencies.html";
+    "https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html?from=DevkitPluginXmlInspection";
 
   public List<String> myRegistrationCheckIgnoreClassList = new ExternalizableStringSet();
 

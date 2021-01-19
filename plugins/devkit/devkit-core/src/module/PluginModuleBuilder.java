@@ -109,7 +109,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     final BorderLayoutPanel panel = JBUI.Panels.simplePanel(0, 4);
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
     linkLabel.setHtmlText(DevKitBundle.message("module.wizard.devkit.simple.plugin.label"));
-    linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
+    linkLabel.setHyperlinkTarget("https://plugins.jetbrains.com/docs/intellij/getting-started.html?from=DevkitPluginModuleWizard");
     panel.addToCenter(linkLabel);
 
     final JComponent component = step.getComponent();

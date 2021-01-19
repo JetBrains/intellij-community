@@ -159,7 +159,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
 
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
     linkLabel.setHtmlText(DevKitBundle.message("module.wizard.gradle.learn.title"));
-    linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system.html");
+    linkLabel.setHyperlinkTarget("https://plugins.jetbrains.com/docs/intellij/gradle-build-system.html?from=DevkitGradleProjectWizard");
     return linkLabel;
   }
 

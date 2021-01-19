@@ -67,7 +67,7 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
                            .append(DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.component.usage"))
                            .nbsp()
                            .append(HtmlChunk
-                                     .link("https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html",
+                                     .link("https://plugins.jetbrains.com/docs/intellij/plugin-components.html?from=DevkitPluginXmlDynamicInspection",
                                            DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.component.usage.docs.link.title")))
                            .wrapWithHtmlBody()
                            .toString());
