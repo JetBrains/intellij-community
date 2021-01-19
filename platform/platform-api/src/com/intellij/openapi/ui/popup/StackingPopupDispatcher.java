@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -9,6 +10,10 @@ import java.awt.event.KeyEvent;
 public abstract class StackingPopupDispatcher implements IdePopupEventDispatcher {
 
   public abstract boolean isPopupFocused();
+
+  public @Nullable JBPopup getFocusedPopup() {
+    return null;
+  }
 
   public abstract void onPopupShown(JBPopup popup, boolean inStack);
   public abstract void onPopupHidden(JBPopup popup);

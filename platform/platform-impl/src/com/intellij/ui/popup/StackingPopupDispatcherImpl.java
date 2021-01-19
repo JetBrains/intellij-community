@@ -240,7 +240,8 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
     return getFocusedPopup() != null;
   }
 
-  private JBPopup getFocusedPopup() {
+  @Override
+  public @Nullable JBPopup getFocusedPopup() {
     for (JBPopup each : myAllPopups) {
       if (each != null && each.isFocused()) return each;
     }
