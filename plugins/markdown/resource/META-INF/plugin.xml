@@ -82,7 +82,6 @@ Includes the following features:</p>
                              instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable">
     </applicationConfigurable>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
-    <!--<projectService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownProjectSettings" configurationSchemaKey="markdown.settings"/>-->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
@@ -151,7 +150,6 @@ Includes the following features:</p>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension"/>
-    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.FontStylesExtension"/>
 
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension"/>
 
@@ -204,10 +202,6 @@ Includes the following features:</p>
     </action>
 
     <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
-      <action class="org.intellij.plugins.markdown.settings.MarkdownFontSettingsAction"
-              id="org.intellij.plugins.markdown.settings.fontSettings.MarkdownFontFamilyAction">
-      </action>
-      <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"
               id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"
               icon="AllIcons.General.LayoutEditorOnly">
