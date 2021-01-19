@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -53,7 +53,6 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     myDocManager = PsiDocumentManager.getInstance(project);
 
     MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.addChangeListener(project, this::clearInjectorCache, this);
-
     LanguageInjector.EXTENSION_POINT_NAME.addChangeListener(this::clearInjectorCache, this);
 
     project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -98,7 +97,8 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     final PsiFile file = injectedElement.getContainingFile();
     final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
-      PsiElement host = FileContextUtil.getFileContext(file); // use utility method in case the file's overridden getContext()
+      // use utility method in case the file's overridden getContext()
+      PsiElement host = FileContextUtil.getFileContext(file);
       if (host instanceof PsiLanguageInjectionHost) {
         return (PsiLanguageInjectionHost)host;
       }
@@ -126,7 +126,9 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   private static DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    if (file == null) return null;
+    if (file == null) {
+      return null;
+    }
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
     return document instanceof DocumentWindow ? (DocumentWindow)document : null;
   }
@@ -177,7 +179,9 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   private void clearInjectorCache() {
     cachedInjectors = null;
-    if (myProject.isDisposed() || myProject.isDefault()) return;
+    if (myProject.isDisposed() || myProject.isDefault()) {
+      return;
+    }
 
     for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
@@ -368,10 +372,14 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   private final Map<Class<?>, MultiHostInjector[]> myInjectorsClone = new HashMap<>();
+
   @TestOnly
   public static void pushInjectors(@NotNull Project project) {
-    InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
-    if (cachedManager == null) return;
+    InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getServiceIfCreated(InjectedLanguageManager.class);
+    if (cachedManager == null) {
+      return;
+    }
+
     try {
       assert cachedManager.myInjectorsClone.isEmpty() : cachedManager.myInjectorsClone;
     }
@@ -383,17 +391,23 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @TestOnly
   public static void checkInjectorsAreDisposed(@NotNull Project project) {
-    InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
+    InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getServiceIfCreated(InjectedLanguageManager.class);
     if (cachedManager == null) {
       return;
     }
 
     try {
       ClassMapCachingNulls<MultiHostInjector> cached = cachedManager.cachedInjectors;
-      if (cached == null) return;
+      if (cached == null) {
+        return;
+      }
+
       for (Map.Entry<Class<?>, MultiHostInjector[]> entry : cached.getBackingMap().entrySet()) {
         Class<?> key = entry.getKey();
-        if (cachedManager.myInjectorsClone.isEmpty()) return;
+        if (cachedManager.myInjectorsClone.isEmpty()) {
+          return;
+        }
+
         MultiHostInjector[] oldInjectors = cachedManager.myInjectorsClone.get(key);
         for (MultiHostInjector injector : entry.getValue()) {
           if (ArrayUtil.indexOf(oldInjectors, injector) == -1) {

@@ -31,9 +31,9 @@ public abstract class Loader {
 
   abstract @Nullable Resource getResource(@NotNull String name);
 
-  void processResources(@NotNull String dir, @NotNull Predicate<String> fileNameFilter, @NotNull BiConsumer<String, InputStream> consumer)
-    throws IOException {
-  }
+  abstract void processResources(@NotNull String dir,
+                                 @NotNull Predicate<String> fileNameFilter,
+                                 @NotNull BiConsumer<String, InputStream> consumer) throws IOException;
 
   public abstract Map<Loader.Attribute, String> getAttributes() throws IOException;
 
