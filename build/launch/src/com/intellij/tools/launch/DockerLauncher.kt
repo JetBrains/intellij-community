@@ -22,24 +22,27 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     // we try to make everything the same as on the host folder, e.g. UID, paths
     val username = System.getProperty("user.name")
     val uid = UnixSystem().uid.toString()
-    val userHome = File(System.getProperty("user.home")).canonicalFile
+    val userHomePath = File(System.getProperty("user.home"))
 
-    if (!userHome.exists()) error("Home directory ${userHome.canonicalPath} of user=$username, uid=$uid does not exist")
+    // e.g. ~/.m2/ will be /mnt/cache/.m2 on TC
+    fun File.pathNotResolvingSymlinks() = this.absoluteFile.normalize().path
+
+    if (!userHomePath.exists()) error("Home directory ${userHomePath.pathNotResolvingSymlinks()} of user=$username, uid=$uid does not exist")
 
     val imageName = "$UBUNTU_18_04_WITH_USER_TEMPLATE-user-$username-uid-$uid"
 
     val buildArgs = mapOf(
       "USER_NAME" to username,
       "USER_ID" to UnixSystem().uid.toString(),
-      "USER_HOME" to userHome.canonicalPath
+      "USER_HOME" to userHomePath.pathNotResolvingSymlinks()
     )
 
     dockerBuild(imageName, buildArgs)
 
     val containerIdFile = File.createTempFile("cwm.docker.cid", "")
 
-    fun File.readonly() = "--volume=${this.canonicalPath}:${this.canonicalPath}:ro"
-    fun File.writeable() = "--volume=${this.canonicalPath}:${this.canonicalPath}:rw"
+    fun File.readonly() = "--volume=${this.pathNotResolvingSymlinks()}:${this.pathNotResolvingSymlinks()}:ro"
+    fun File.writeable() = "--volume=${this.pathNotResolvingSymlinks()}:${this.pathNotResolvingSymlinks()}:rw"
 
     // docker can create these under root, so we create them ourselves
     Files.createDirectories(paths.logFolder.toPath())
@@ -54,7 +57,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       "--cap-add=NET_ADMIN",
 
       "--cidfile",
-      containerIdFile.canonicalPath,
+      containerIdFile.pathNotResolvingSymlinks(),
 
       // -u=USER_NAME will throw if user does not exist, but -u=UID will not
       "--user=$username",
@@ -132,7 +135,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     if (containerIdFile.exists())
       assert(containerIdFile.delete())
 
-    val containerIdPath = containerIdFile.canonicalFile.toPath()
+    val containerIdPath = containerIdFile.pathNotResolvingSymlinks()
 
     val dockerRunPb = ProcessBuilder(dockerCmd)
     dockerRunPb.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
