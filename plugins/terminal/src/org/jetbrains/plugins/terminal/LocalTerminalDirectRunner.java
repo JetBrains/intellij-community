@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -24,17 +25,20 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
+import com.pty4j.PtyProcessBuilder;
 import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -145,12 +149,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  public PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    return createProcess(directory, null);
-  }
-
-  @Override
-  protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
+  public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options,
+                                           @Nullable JBTerminalWidget widget) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
 
     String[] command = ArrayUtil.toStringArray(getInitialCommand(envs));
@@ -163,17 +163,24 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
+    String commandHistoryFilePath = ShellTerminalWidget.getCommandHistoryFilePath(widget);
     if (commandHistoryFilePath != null) {
       envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
     }
 
-    String workingDir = getWorkingDirectory(directory);
+    String workingDir = getWorkingDirectory(options.getWorkingDirectory());
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
       long startNano = System.nanoTime();
-      PtyProcess process = PtyProcess.exec(command, envs, workingDir);
+      PtyProcessBuilder builder = new PtyProcessBuilder(command)
+        .setEnvironment(envs)
+        .setDirectory(workingDir)
+        .setInitialColumns(options.getInitialColumns())
+        .setInitialRows(options.getInitialRows());
+      PtyProcess process = builder.start();
       if (LOG.isDebugEnabled()) {
         LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
+                  " [" + options.getInitialColumns() + "," + options.getInitialRows() + "]" +
                   " (" + TimeoutUtil.getDurationMillis(startNano) + " ms)");
       }
       return process;
@@ -219,11 +226,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
 
       @Override
-      protected void resizeImmediately() {
+      public void resize(@NotNull Dimension termWinSize) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("resizeImmediately to " + getPendingTermSize());
+          LOG.debug("resize to " + termWinSize);
         }
-        super.resizeImmediately();
+        super.resize(termWinSize);
       }
     };
   }

@@ -30,8 +30,6 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import com.jediterm.terminal.RequestOrigin;
-import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.TerminalSession;
 import com.pty4j.windows.WinPtyException;
@@ -80,7 +78,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   private void doRun() {
     // Create Server process
     try {
-      final T process = createProcess(null);
+      final T process = createProcess(new TerminalProcessOptions(null, null, null), null);
 
       UIUtil.invokeLaterIfNeeded(() -> initConsoleUI(process));
     }
@@ -89,9 +87,24 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
   }
 
-  protected abstract T createProcess(@Nullable String directory) throws ExecutionException;
+  public @NotNull T createProcess(@NotNull TerminalProcessOptions options, @Nullable JBTerminalWidget widget) throws ExecutionException {
+    return createProcess(options.getWorkingDirectory(), null);
+  }
 
-  @ApiStatus.Experimental
+  /**
+   * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  protected T createProcess(@Nullable String directory) throws ExecutionException {
+    throw new AssertionError("Call createProcess(TerminalProcessOptions, JBTerminalWidget)");
+  }
+
+  /**
+   * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     return createProcess(directory);
   }
@@ -156,7 +169,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     openSessionInDirectory(terminal, null);
   }
 
-  public static void createAndStartSession(@NotNull JBTerminalWidget terminal, @NotNull TtyConnector ttyConnector) {
+  private static void createAndStartSession(@NotNull JBTerminalWidget terminal, @NotNull TtyConnector ttyConnector) {
     TerminalSession session = terminal.createTerminalSession(ttyConnector);
     session.start();
   }
@@ -204,23 +217,10 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        // Create Server process
-        final T process = createProcess(directory, ShellTerminalWidget.getCommandHistoryFilePath(terminalWidget));
+        T process = createProcess(new TerminalProcessOptions(directory,
+                                                             size != null ? size.width : null,
+                                                             size != null ? size.height : null), terminalWidget);
         TtyConnector connector = createTtyConnector(process);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Initial resize to " + size);
-        }
-        if (size != null) {
-          // Resize ASAP once the process started.
-          // Even though it will be resized in invokeLater, it takes some time until invokeLater is executed.
-          // Sometimes it's enough to have cropped output, if the output is restricted by the terminal width.
-          try {
-            TerminalStarter.resizeTerminal(terminalWidget.getTerminal(), connector, size, RequestOrigin.User);
-          }
-          catch (Exception e) {
-            LOG.info("Cannot resize right after creation, process.isAlive: " + process.isAlive(), e);
-          }
-        }
 
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
