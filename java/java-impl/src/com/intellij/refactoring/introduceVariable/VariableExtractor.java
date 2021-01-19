@@ -314,8 +314,14 @@ final class VariableExtractor {
         if (prevSibling instanceof PsiErrorElement) {
           prevStatement = PsiTreeUtil.getPrevSiblingOfType(prevSibling, PsiStatement.class);
         }
-        else if (prevSibling instanceof PsiStatement && prevSibling.getLastChild() instanceof PsiErrorElement) {
-          prevStatement = prevSibling;
+        else if (prevSibling instanceof PsiStatement) {
+          PsiElement lastChild = prevSibling;
+          while (lastChild != null && !(lastChild instanceof PsiErrorElement)) {
+            lastChild = lastChild.getLastChild();
+          }
+          if (lastChild != null) {
+            prevStatement = prevSibling;
+          }
         }
         if (prevStatement == null) break;
         // Let's try to find more valid context to be able to reparse
