@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -20,8 +20,8 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcsUtil.VcsUtil;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** should work under _external_ lock
  * just logic here: do modifications to group of change lists
  */
-public class ChangeListWorker {
+public final class ChangeListWorker {
   private final static Logger LOG = Logger.getInstance(ChangeListWorker.class);
   @NotNull private final Project myProject;
   @NotNull private final DelayedNotificator myDelayedNotificator;
@@ -900,7 +900,7 @@ public class ChangeListWorker {
     return change;
   }
 
-  private static class ListData {
+  private static final class ListData {
     @NotNull public final String id;
 
     @NotNull public String name;
@@ -942,11 +942,11 @@ public class ChangeListWorker {
     return String.format("ChangeListWorker{ default = %s, lists = {\n%s }\ntrackers = %s\n}", myDefault.id, lists, trackers);
   }
 
-
-  public static class ChangeListUpdater implements ChangeListManagerGate {
+  public static final class ChangeListUpdater implements ChangeListManagerGate {
     private final ChangeListWorker myWorker;
 
-    private final Map<String, OpenTHashSet<Change>> myChangesBeforeUpdateMap = FactoryMap.create(it -> new OpenTHashSet<>());
+    @SuppressWarnings("SSBasedInspection")
+    private final Map<String, ObjectOpenHashSet<Change>> myChangesBeforeUpdateMap = FactoryMap.create(it -> new ObjectOpenHashSet<>());
 
     private static final String CONFLICT_CHANGELIST_ID = "";
     private final Map<FilePath, String> myListsForPathsBeforeUpdate = new HashMap<>();
@@ -968,8 +968,7 @@ public class ChangeListWorker {
         putPathBeforeUpdate(ChangesUtil.getBeforePath(change), list.id);
         putPathBeforeUpdate(ChangesUtil.getAfterPath(change), list.id);
 
-        OpenTHashSet<Change> changes = myChangesBeforeUpdateMap.get(list.id);
-        changes.add(change);
+        myChangesBeforeUpdateMap.get(list.id).add(change);
       });
 
       List<Change> removedChanges = removeChangesUnderScope(scope);
@@ -1115,7 +1114,7 @@ public class ChangeListWorker {
     private void doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
                                        @NotNull List<? super Change> removedChanges,
                                        @NotNull List<? super Change> addedChanges) {
-      OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
+      ObjectOpenHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
 
       Set<Change> listChanges = new HashSet<>(myWorker.getChangesIn(list));
 
@@ -1131,7 +1130,7 @@ public class ChangeListWorker {
     }
 
     @Nullable
-    private static Change findOldChange(@NotNull OpenTHashSet<Change> changesBeforeUpdate, @NotNull Change newChange) {
+    private static Change findOldChange(@NotNull ObjectOpenHashSet<Change> changesBeforeUpdate, @NotNull Change newChange) {
       Change oldChange = changesBeforeUpdate.get(newChange);
       if (oldChange != null && sameBeforeRevision(oldChange, newChange) &&
           newChange.getFileStatus().equals(oldChange.getFileStatus())) {

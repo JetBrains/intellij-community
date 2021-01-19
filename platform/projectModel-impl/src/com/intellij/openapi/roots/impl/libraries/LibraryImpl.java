@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -28,7 +28,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
@@ -714,7 +713,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void disposeMyPointers() {
-    for (VirtualFilePointerContainer container : new THashSet<>(myRoots.values())) {
+    for (VirtualFilePointerContainer container : new HashSet<>(myRoots.values())) {
       container.killAll();
     }
     if (myExcludedRoots != null) {

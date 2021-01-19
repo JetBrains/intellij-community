@@ -48,7 +48,7 @@ final class ClassMapCachingNulls<T> {
     return value;
   }
 
-  private @Nullable List<T> getFromBackingMap(Class<?> aClass) {
+  private @Nullable List<T> getFromBackingMap(@NotNull Class<?> aClass) {
     T[] value = myBackingMap.get(aClass);
     Set<T> result = null;
     if (value != null) {
@@ -57,15 +57,18 @@ final class ClassMapCachingNulls<T> {
       Collections.addAll(result, value);
     }
 
-    result = addFromUpper(result, aClass.getSuperclass());
-    for (Class<?> superclass : aClass.getInterfaces()) {
-      result = addFromUpper(result, superclass);
+    Class<?> superClass = aClass.getSuperclass();
+    if (superClass != null) {
+      result = addFromUpper(result, superClass);
+    }
+    for (Class<?> superInterface : aClass.getInterfaces()) {
+      result = addFromUpper(result, superInterface);
     }
 
     return result == null ? null : ContainerUtil.findAll(myOrderingArray, result::contains);
   }
 
-  private @Nullable Set<T> addFromUpper(Set<T> value, Class<?> superclass) {
+  private @Nullable Set<T> addFromUpper(@Nullable Set<T> value, @NotNull Class<?> superclass) {
     T[] fromUpper = get(superclass);
     if (fromUpper != null) {
       assert fromUpper.length != 0;
@@ -78,7 +81,7 @@ final class ClassMapCachingNulls<T> {
     return value;
   }
 
-  Map<Class<?>, T[]> getBackingMap() {
+  @NotNull Map<Class<?>, T[]> getBackingMap() {
     return myBackingMap;
   }
 }

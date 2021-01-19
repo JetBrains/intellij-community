@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -8,13 +8,13 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.projectModel.ProjectModelBundle;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 @ApiStatus.Internal
 public abstract class ModuleLibraryTableBase implements LibraryTable, LibraryTable.ModifiableModel {
@@ -43,9 +43,11 @@ public abstract class ModuleLibraryTableBase implements LibraryTable, LibraryTab
 
   @Override
   public Library @NotNull [] getLibraries() {
-    final ArrayList<Library> result = new ArrayList<>();
-    final Iterator<Library> libraryIterator = getLibraryIterator();
-    ContainerUtil.addAll(result, libraryIterator);
+    List<Library> result = new ArrayList<>();
+    Iterator<Library> libraryIterator = getLibraryIterator();
+    while (libraryIterator.hasNext()) {
+      result.add(libraryIterator.next());
+    }
     return result.toArray(Library.EMPTY_ARRAY);
   }
 

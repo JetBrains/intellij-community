@@ -20,6 +20,7 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Pair;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -52,7 +53,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   private final Set<String> stopWords;
 
-  private volatile @NotNull Map<kotlin.Pair<String, String>, Set<String>> highlightOptionToSynonym = Collections.emptyMap();
+  private volatile @NotNull Map<Pair<String, String>, Set<String>> highlightOptionToSynonym = Collections.emptyMap();
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
@@ -496,7 +497,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     Set<String> result = new HashSet<>(options);
     initialize();
     for (String option : options) {
-      Set<String> synonyms = highlightOptionToSynonym.get(new kotlin.Pair<>(option, configurable.getId()));
+      Set<String> synonyms = highlightOptionToSynonym.get(new Pair<>(option, configurable.getId()));
       if (synonyms != null) {
         result.addAll(synonyms);
       }

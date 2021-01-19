@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -33,7 +33,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -53,6 +52,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -938,7 +938,7 @@ public final class GitUtil {
   @NotNull
   public static Collection<Change> findCorrespondentLocalChanges(@NotNull ChangeListManager changeListManager,
                                                                  @NotNull Collection<? extends Change> originalChanges) {
-    OpenTHashSet<Change> allChanges = new OpenTHashSet<>(changeListManager.getAllChanges());
+    ObjectOpenHashSet<Change> allChanges = new ObjectOpenHashSet<>(changeListManager.getAllChanges());
     return ContainerUtil.mapNotNull(originalChanges, allChanges::get);
   }
 

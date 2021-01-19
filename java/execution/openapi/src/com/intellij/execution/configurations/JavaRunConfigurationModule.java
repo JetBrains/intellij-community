@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -14,7 +12,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,11 +20,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author spleaner
- */
 public class JavaRunConfigurationModule extends RunConfigurationModule {
-
   private final boolean myClassesInLibraries;
 
   public JavaRunConfigurationModule(@NotNull Project project, boolean classesInLibs) {
@@ -36,8 +29,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     myClassesInLibraries = classesInLibs;
   }
 
-  @Nullable
-  public PsiClass findClass(final String qualifiedName) {
+  public @Nullable PsiClass findClass(final String qualifiedName) {
     if (qualifiedName == null) return null;
     return JavaExecutionUtil.findMainClass(getProject(), qualifiedName, getSearchScope());
   }
@@ -59,7 +51,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiClass[] possibleClasses = className == null ? PsiClass.EMPTY_ARRAY : JavaPsiFacade.getInstance(project).findClasses(className, GlobalSearchScope.projectScope(project));
-    final Set<Module> modules = new THashSet<>();
+    final Set<Module> modules = new HashSet<>();
     for (PsiClass aClass : possibleClasses) {
       Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
       if (module != null) {
@@ -96,7 +88,6 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     checkForWarning();
     return checkClassName(className, expectedClassMessage);
   }
-
 
   public PsiClass checkClassName(final String className, final @NlsContexts.DialogMessage String errorMessage) throws RuntimeConfigurationException {
     if (className == null || className.length() == 0) {
