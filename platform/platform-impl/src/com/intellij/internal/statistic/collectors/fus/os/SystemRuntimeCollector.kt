@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
+import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
 import java.util.*
 
@@ -24,6 +25,10 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val result = HashSet<MetricEvent>()
     result.add(CORES.metric(Runtime.getRuntime().availableProcessors()))
+
+    val osMxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
+    val totalPhysicalMemory = osMxBean.totalPhysicalMemorySize shr 20
+    result.add(MEMORY_SIZE.metric(totalPhysicalMemory.toInt()))
 
     for (gc in ManagementFactory.getGarbageCollectorMXBeans()) {
       result.add(GC.metric(gc.name))
@@ -68,9 +73,10 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "-Xms", "-Xmx", "-XX:SoftRefLRUPolicyMSPerMB", "-XX:ReservedCodeCacheSize"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 6)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 7)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
+    private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("megabytes"))
     private val GC: EventId1<String?> = GROUP.registerEvent("garbage.collector",
       EventFields.String(
         "name",
