@@ -266,7 +266,7 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
   }
 
   private static Path findSaxonJar(Path xsltDebuggerClassesRoot, String jarFile) {
-    Path transformerFile = xsltDebuggerClassesRoot.getParent().resolve("lib/rt").resolve(jarFile);
+    Path transformerFile = xsltDebuggerClassesRoot.getParent().resolve("rt").resolve(jarFile);
     if (!Files.exists(transformerFile)) {
       //running from sources
       Path libDir = getPluginEngineDirInSources().resolve("impl/lib");
