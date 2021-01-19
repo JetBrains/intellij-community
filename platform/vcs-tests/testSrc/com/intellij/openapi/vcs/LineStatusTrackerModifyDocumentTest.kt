@@ -812,4 +812,53 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       assertRangesEmpty()
     }
   }
+
+  fun testSuboptimalBaseRevisionUpdate() {
+    val javadoc = """
+      /**
+       * Javadoc
+       */_
+    """.trimIndent()
+
+    val methodBody = """
+      public static void main(String[] args) {
+          System.out.println("Hello");
+          System.out.println("World");
+      }_
+    """.trimIndent()
+
+    val suffix = """
+      tracker.doFrozen(Runnable {
+        simpleTracker.setBaseRevision(parseInput(" 23"))
+      })_
+    """.trimIndent()
+
+    test(javadoc + methodBody + "_" + suffix) {
+      (1 th "}_").insertAfter("_" + methodBody)
+      ("Javadoc").insertAfter(" with modification")
+
+      tracker.doFrozen(Runnable {
+        simpleTracker.setBaseRevision(parseInput(javadoc + methodBody + "_" + methodBody + "_" + suffix))
+      })
+
+      assertRanges(Range(1, 2, 1, 2))
+    }
+
+    testPartial(javadoc + methodBody + "_" + suffix) {
+      (1 th "}_").insertAfter("_" + methodBody)
+      ("Javadoc").insertAfter(" with modification")
+
+      createChangelist("Test")
+      range(1).moveTo("Test")
+
+      tracker.doFrozen(Runnable {
+        partialTracker.setBaseRevision(parseInput(javadoc + methodBody + "_" + methodBody + "_" + suffix))
+      })
+
+      // we could not merge misaligned compensating addition and deletion because they belong to different changelists
+      assertRanges(Range(1, 2, 1, 2),
+                   Range(3, 3, 3, 8),
+                   Range(7, 12, 12, 12))
+    }
+  }
 }
