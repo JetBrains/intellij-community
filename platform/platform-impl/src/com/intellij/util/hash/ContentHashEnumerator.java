@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 @ApiStatus.Internal
-public final class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[]> {
+public class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[]> {
 
   private static final int SIGNATURE_LENGTH = 20; // in bytes
 
