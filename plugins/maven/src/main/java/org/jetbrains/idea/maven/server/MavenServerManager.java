@@ -15,11 +15,8 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -39,7 +36,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.function.Predicate;
@@ -109,6 +105,7 @@ public final class MavenServerManager implements Disposable {
       connector.connect();
     } else {
       if(!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
+        MavenLog.LOG.info("Maven connector in " + multimoduleDirectory + " is incompatible, restarting");
         connector.shutdown(false);
         synchronized (myMultimoduleDirToConnectorMap) {
           connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
@@ -125,6 +122,7 @@ public final class MavenServerManager implements Disposable {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
+    MavenLog.LOG.info("Creating new maven connector for " + project + " in " + multimoduleDirectory);
     MavenServerConnector connector = new MavenServerConnector(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
     registerDisposable(project, connector);
     return connector;

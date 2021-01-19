@@ -321,6 +321,7 @@ public class MavenServerConnector implements @NotNull Disposable {
 
     @Override
     public void run(@Nullable ProgressIndicator indicator) {
+      MavenLog.LOG.info("Connecting maven connector in " + myMultimoduleDirectory);
       try {
         if (myDebugPort != null) {
           //noinspection UseOfSystemOutOrSystemErr
@@ -338,8 +339,10 @@ public class MavenServerConnector implements @NotNull Disposable {
 
         server.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
         myServerPromise.setResult(server);
+        MavenLog.LOG.info("Connector in " + myMultimoduleDirectory  + " has been connected");
       }
       catch (Throwable e) {
+        MavenLog.LOG.warn("Cannot connect connector in " + myMultimoduleDirectory, e);
         myServerPromise.setError(e);
       }
     }
