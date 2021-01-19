@@ -377,7 +377,7 @@ public class JBZipFile implements Closeable {
     /* the starting disk number        */ + WORD
     /* zipfile comment length          */ + SHORT;
 
-  private static final int CFD_LOCATOR_OFFSET =
+  private static final int CFD_LOCATOR_SIZE =
     /* end of central dir signature    */ WORD
     /* number of this disk             */ + SHORT
     /* number of the disk with the     */
@@ -385,8 +385,7 @@ public class JBZipFile implements Closeable {
     /* total number of entries in      */
     /* the central dir on this disk    */ + SHORT
     /* total number of entries in      */
-    /* the central dir                 */ + SHORT
-    /* size of the central directory   */ + WORD;
+    /* the central dir                 */ + SHORT;
 
   /**
    * Searches for the &quot;End of central dir record&quot;, parses
@@ -421,10 +420,11 @@ public class JBZipFile implements Closeable {
     if (!found) {
       throw new ZipException("archive is not a ZIP archive");
     }
-    archive.seek(off + CFD_LOCATOR_OFFSET);
+    archive.seek(off + CFD_LOCATOR_SIZE);
     byte[] cfdOffset = new byte[WORD];
     archive.readFully(cfdOffset);
-    currentCfdOffset = ZipLong.getValue(cfdOffset);
+    // Determine CFDH as java ZipFile does.
+    currentCfdOffset = off - ZipLong.getValue(cfdOffset);
     archive.seek(currentCfdOffset);
   }
 
