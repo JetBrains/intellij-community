@@ -262,11 +262,6 @@ fun disposeApplicationAndCheckForLeaks() {
     l.catchAndStoreExceptions { UIUtil.dispatchAllInvocationEvents() }
 
     l.catchAndStoreExceptions {
-      val app = ApplicationManager.getApplication() as? ApplicationImpl
-      if (app != null) {
-        println(app.writeActionStatistics())
-      }
-      println(ActionUtil.ActionPauses.STAT.statistics())
       println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
       println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
     }

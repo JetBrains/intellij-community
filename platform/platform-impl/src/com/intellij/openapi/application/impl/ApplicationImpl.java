@@ -6,7 +6,6 @@ import com.intellij.CommonBundle;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.*;
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
@@ -16,7 +15,6 @@ import com.intellij.idea.ApplicationLoader;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -137,10 +135,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     mySaveAllowed = !(isUnitTestMode || isHeadless);
 
     if (!isUnitTestMode && !isHeadless) {
-      Disposer.register(this, Disposer.newDisposable(), "ui");
+      Disposable uiRootDisposable = Disposer.newDisposable();
+      Disposer.register(this, uiRootDisposable, "ui");
     }
-
-    gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
     AtomicReference<Thread> edtThread = new AtomicReference<>();
@@ -369,20 +366,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     service.shutdownAppScheduledExecutorService();
 
     Disposer.dispose(myLastDisposable);
-
-    if (gatherStatistics) {
-      //noinspection TestOnlyProblems
-      LOG.info(writeActionStatistics());
-      LOG.info(ActionUtil.ActionPauses.STAT.statistics());
-      //noinspection TestOnlyProblems
-      LOG.info(service.statistics()
-               + "; ProcessIOExecutorService threads: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
-    }
-  }
-
-  @TestOnly
-  public @NotNull String writeActionStatistics() {
-    return ActionPauses.WRITE.statistics();
   }
 
   @Override
@@ -1153,19 +1136,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myWriteActionPending;
   }
 
-  private final boolean gatherStatistics;
-  private static class ActionPauses {
-    private static final PausesStat WRITE = new PausesStat("Write action");
-  }
-
   private void startWrite(@NotNull Class<?> clazz) {
     if (!isWriteAccessAllowed()) {
       assertIsWriteThread("Write access is allowed from write thread only");
     }
     boolean writeActionPending = myWriteActionPending;
-    if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
-      ActionPauses.WRITE.started();
-    }
     myWriteActionPending = true;
     try {
       ActivityTracker.getInstance().inc();
@@ -1206,9 +1181,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     finally {
       myWriteActionsStack.pop();
-      if (gatherStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
-        ActionPauses.WRITE.finished("write action ("+clazz+")");
-      }
       if (myWriteActionsStack.size() == myWriteStackBase) {
         releaseWriteLock();
       }
