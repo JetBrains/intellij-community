@@ -48,8 +48,9 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       this.add(volumeParameter(canonical, isWritable))
 
       // there's no consistency as to whether symlinks are resolved in user code, so we'll try our best and provide both
-      if (canonical != volume.pathNotResolvingSymlinks())
-        this.add(volumeParameter(canonical, isWritable))
+      val notResolvingSymlinks = volume.pathNotResolvingSymlinks()
+      if (canonical != notResolvingSymlinks)
+        this.add(volumeParameter(notResolvingSymlinks, isWritable))
     }
 
     fun MutableList<String>.addReadonly(volume: File) = addVolume(volume, false)
