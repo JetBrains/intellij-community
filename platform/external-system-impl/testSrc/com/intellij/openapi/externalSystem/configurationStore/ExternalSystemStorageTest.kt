@@ -6,12 +6,9 @@ import com.intellij.facet.FacetType
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.MockSubFacetType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -61,7 +58,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 class ExternalSystemStorageTest {
   companion object {
@@ -279,12 +275,58 @@ class ExternalSystemStorageTest {
   @Test
   fun `save imported facet in imported module`() = saveProjectInExternalStorageAndCheckResult("importedFacetInImportedModule") { project, projectDir ->
     val imported = ModuleManager.getInstance(project).newModule(projectDir.resolve("imported.iml").systemIndependentPath, ModuleTypeId.JAVA_MODULE)
-    val facetManager = FacetManager.getInstance(imported)
-    val model = facetManager.createModifiableModel()
-    val source = ExternalProjectSystemRegistry.getInstance().getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID)
-    model.addFacet(facetManager.createFacet(MockFacetType.getInstance(), "imported", null), source)
-    model.commit()
+    addFacet(imported, ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID, "imported")
     ExternalSystemModulePropertyManager.getInstance(imported).setMavenized(true)
+  }
+
+  private fun addFacet(module: Module, externalSystemId: String?, facetName: String) {
+    val facetManager = FacetManager.getInstance(module)
+    val model = facetManager.createModifiableModel()
+    val source = externalSystemId?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
+    model.addFacet(facetManager.createFacet(MockFacetType.getInstance(), facetName, null), source)
+    runWriteActionAndWait { model.commit() }
+  }
+
+  @Test
+  fun `edit imported facet in internal storage with regular facet`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("singleModuleFromExternalSystemInInternalStorage", "mixedFacetsInInternalStorage") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      addFacet(module, null, "regular")
+      runBlocking { project.stateStore.save() }
+      addFacet(module, "GRADLE", "imported")
+    }
+  }
+
+  @Test
+  fun `edit regular facet in internal storage with imported facet`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("singleModuleFromExternalSystemInInternalStorage", "mixedFacetsInInternalStorage") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      addFacet(module, "GRADLE", "imported")
+      runBlocking { project.stateStore.save() }
+      addFacet(module, null, "regular")
+    }
+  }
+
+  @Test
+  fun `edit imported facet in external storage with regular facet`() {
+    loadModifySaveAndCheck("singleModuleFromExternalSystem", "mixedFacetsInExternalStorage") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      addFacet(module, null, "regular")
+      runBlocking { project.stateStore.save() }
+      addFacet(module, "GRADLE", "imported")
+    }
+  }
+
+  @Test
+  fun `edit regular facet in external storage with imported facet`() {
+    loadModifySaveAndCheck("singleModuleFromExternalSystem", "mixedFacetsInExternalStorage") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      addFacet(module, "GRADLE", "imported")
+      runBlocking { project.stateStore.save() }
+      addFacet(module, null, "regular")
+    }
   }
 
   @Test
