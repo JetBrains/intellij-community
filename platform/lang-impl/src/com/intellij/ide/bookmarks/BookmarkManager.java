@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.IdeBundle;
@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -222,12 +223,17 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   public Bookmark findEditorBookmark(@NotNull Document document, int line) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return null;
+    return findBookmark(file, line);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Bookmark findBookmark(@NotNull VirtualFile file, int line) {
     return ContainerUtil.find(myBookmarks.get(file), bookmark -> bookmark.getLine() == line);
   }
 
   @Nullable
   public Bookmark findFileBookmark(@NotNull VirtualFile file) {
-    return ContainerUtil.find(myBookmarks.get(file), bookmark -> bookmark.getLine() == -1);
+    return findBookmark(file, -1);
   }
 
   @Nullable

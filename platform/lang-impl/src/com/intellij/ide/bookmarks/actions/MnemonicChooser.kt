@@ -4,6 +4,9 @@ package com.intellij.ide.bookmarks.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.ide.bookmarks.BookmarkType
+import com.intellij.lang.LangBundle
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -17,6 +20,7 @@ import java.awt.*
 import java.awt.RenderingHints.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
+import java.lang.ref.WeakReference
 import javax.swing.*
 
 private val ASSIGNED_BACKGROUND = namedColor("AssignedMnemonic.background", 0xF7C777, 0x665632)
@@ -35,6 +39,8 @@ internal abstract class MnemonicChooser(
   private val manager: BookmarkManager,
   private val current: BookmarkType
 ) : BorderLayoutPanel(), KeyListener {
+
+  var reference: WeakReference<JBPopup>? = null
 
   init {
     isFocusCycleRoot = true
@@ -58,10 +64,21 @@ internal abstract class MnemonicChooser(
 
   private fun buttons() = UIUtil.uiTraverser(this).traverse().filter(JButton::class.java)
 
-  fun getPreferableFocusComponent() = buttons().first()
+  fun createPopup(cancelKey: Boolean) = JBPopupFactory.getInstance().createComponentPopupBuilder(this, buttons().first())
+    .setTitle(LangBundle.message("popup.title.bookmark.mnemonic"))
+    .setCancelKeyEnabled(cancelKey)
+    .setFocusable(true)
+    .setRequestFocus(true)
+    .setMovable(false)
+    .setResizable(false)
+    .createPopup()
+    .also { reference = WeakReference(it) }
 
-  protected abstract fun onChosen(type: BookmarkType)
-  protected abstract fun onCancelled()
+  protected open fun onChosen(type: BookmarkType) = onCancelled()
+  protected open fun onCancelled() {
+    reference?.get()?.cancel()
+    reference = null
+  }
 
   private fun createButtons(predicate: (BookmarkType) -> Boolean) = JPanel(SHARED_LAYOUT).apply {
     border = JBUI.Borders.empty(5)

@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.BookmarkType;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -15,12 +14,15 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated use {@link ChooseBookmarkTypeAction} instead
+ */
+@Deprecated
 public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
   private boolean myPopupShown;
 
@@ -67,32 +69,27 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         }
       }
 
-      final JBPopup[] popup = new JBPopup[1];
-
-      MnemonicChooser mc = new MnemonicChooser(bookmarks, BookmarkType.get(bookmark.getMnemonic())) {
+      JBPopup popup = new MnemonicChooser(bookmarks, BookmarkType.get(bookmark.getMnemonic())) {
         @Override
         protected void onChosen(@NotNull BookmarkType type) {
           char c = type.getMnemonic();
-          popup[0].cancel();
+          super.onChosen(type);
           bookmarks.setMnemonic(bookmark, c);
         }
 
         @Override
         protected void onCancelled() {
-          popup[0].cancel();
+          super.onCancelled();
           bookmarks.removeBookmark(bookmark);
         }
-      };
+      }.createPopup(false);
 
-      popup[0] = JBPopupFactory.getInstance().createComponentPopupBuilder(mc, mc.getPreferableFocusComponent()).
-        setTitle(LangBundle.message("popup.title.bookmark.mnemonic")).
-        setFocusable(true).
-        setRequestFocus(true).
-        setMovable(false).
-        setCancelKeyEnabled(false).
-        setResizable(false).
-        createPopup();
-      popup[0].addListener(new JBPopupListener() {
+      popup.addListener(new JBPopupListener() {
+        @Override
+        public void beforeShown(@NotNull LightweightWindowEvent event) {
+          myPopupShown = true;
+        }
+
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           myPopupShown = false;
@@ -102,7 +99,7 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         }
       });
 
-      popup[0].showInBestPositionFor(e.getDataContext());
+      popup.showInBestPositionFor(e.getDataContext());
       myPopupShown = true;
     }
   }
