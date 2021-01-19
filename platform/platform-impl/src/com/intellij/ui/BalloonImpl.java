@@ -613,7 +613,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
           // Set the accessible parent so that screen readers don't announce
           // a window context change -- the tooltip is "logically" hosted
           // inside the component (e.g. editor) it appears on top of.
-          AccessibleContextUtil.setParent((Component)myContent, myOriginalFocusOwner);
+          AccessibleContextUtil.setParent(myContent, myOriginalFocusOwner);
 
           // Set the focus to "myContent"
           myFocusManager.requestFocus(getContentToFocus(), true);
