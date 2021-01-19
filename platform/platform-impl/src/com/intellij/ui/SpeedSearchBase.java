@@ -583,7 +583,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       project = null;
     }
     if (mySearchPopup != null) {
-      UIEventLogger.IncrementalSearchCancelled.log(myComponent.getClass());
+      UIEventLogger.IncrementalSearchCancelled.log(project, myComponent.getClass());
       if (myPopupLayeredPane != null) {
         myPopupLayeredPane.remove(mySearchPopup);
         myPopupLayeredPane.validate();

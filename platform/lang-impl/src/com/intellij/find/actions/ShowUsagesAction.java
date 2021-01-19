@@ -606,7 +606,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   private static @Nullable FindUsagesOptions showDialog(@NotNull FindUsagesHandlerBase handler) {
-    UIEventLogger.ShowUsagesPopupShowSettings.log();
+    UIEventLogger.ShowUsagesPopupShowSettings.log(handler.getProject());
     AbstractFindUsagesDialog dialog;
     if (handler instanceof FindUsagesHandlerUi) {
       dialog = ((FindUsagesHandlerUi)handler).getFindUsagesDialog(false, false, false);
