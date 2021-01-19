@@ -730,7 +730,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
       }
       if (!myHolder.hasErrorResults()) {
-        myHolder.add(HighlightClassUtil.checkClassRestrictedKeyword(myLanguageLevel, identifier));
+        myHolder.add(HighlightClassUtil.checkClassContextualKeyword(myLanguageLevel, identifier));
       }
       if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         myHolder.add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
@@ -1317,7 +1317,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
     }
     if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) {
-      myHolder.add(HighlightUtil.checkRestrictedIdentifierReference(ref, (PsiClass)resolved, myLanguageLevel));
+      myHolder.add(HighlightUtil.checkContextualKeywordReference(ref, (PsiClass)resolved, myLanguageLevel));
     }
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, myFile, myInsideConstructorOfClass));

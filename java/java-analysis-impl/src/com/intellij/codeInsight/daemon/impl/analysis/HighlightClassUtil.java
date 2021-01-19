@@ -42,7 +42,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -312,11 +311,11 @@ public final class HighlightClassUtil {
            firstChild.getText().startsWith("#!");
   }
 
-  static HighlightInfo checkClassRestrictedKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {
+  static HighlightInfo checkClassContextualKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {
     String className = identifier.getText();
-    if (isRestrictedIdentifier(className, level)) {
+    if (isContextualKeyword(className, level)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .descriptionAndTooltip(JavaErrorBundle.message("restricted.identifier", className))
+        .descriptionAndTooltip(JavaErrorBundle.message("contextual.keyword", className))
         .range(identifier)
         .create();
     }
@@ -328,7 +327,7 @@ public final class HighlightClassUtil {
    * @param level language level
    * @return true if given name cannot be used as a type name at given language level
    */
-  public static boolean isRestrictedIdentifier(String typeName, @NotNull LanguageLevel level) {
+  public static boolean isContextualKeyword(String typeName, @NotNull LanguageLevel level) {
     return PsiKeyword.VAR.equals(typeName) && HighlightingFeature.LVTI.isSufficient(level) ||
            PsiKeyword.YIELD.equals(typeName) && HighlightingFeature.SWITCH_EXPRESSION.isSufficient(level) ||
            PsiKeyword.RECORD.equals(typeName) && HighlightingFeature.RECORDS.isSufficient(level) ||

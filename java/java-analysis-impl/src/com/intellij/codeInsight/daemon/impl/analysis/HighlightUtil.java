@@ -423,12 +423,12 @@ public final class HighlightUtil {
     return highlightInfo;
   }
 
-  static HighlightInfo checkRestrictedIdentifierReference(@NotNull PsiJavaCodeReferenceElement ref,
-                                                          @NotNull PsiClass resolved,
-                                                          @NotNull LanguageLevel languageLevel) {
+  static HighlightInfo checkContextualKeywordReference(@NotNull PsiJavaCodeReferenceElement ref,
+                                                       @NotNull PsiClass resolved,
+                                                       @NotNull LanguageLevel languageLevel) {
     String name = resolved.getName();
-    if (HighlightClassUtil.isRestrictedIdentifier(name, languageLevel)) {
-      String message = JavaErrorBundle.message("restricted.identifier.reference", name);
+    if (HighlightClassUtil.isContextualKeyword(name, languageLevel)) {
+      String message = JavaErrorBundle.message("contextual.keyword.reference", name);
       PsiElement range = ObjectUtils.notNull(ref.getReferenceNameElement(), ref);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(range).create();
     }
