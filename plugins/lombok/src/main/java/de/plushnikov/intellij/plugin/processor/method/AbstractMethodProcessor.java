@@ -56,9 +56,6 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
 
   protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
                                                    @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
-    if (null == nameHint) {
-      return true;
-    }
     return true;
   }
 

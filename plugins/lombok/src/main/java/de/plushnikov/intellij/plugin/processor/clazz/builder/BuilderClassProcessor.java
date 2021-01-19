@@ -31,6 +31,7 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
     return ApplicationManager.getApplication().getService(BuilderHandler.class);
   }
 
+  @Override
   protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
                                                    @NotNull PsiAnnotation psiAnnotation) {
     if (null == nameHint) {

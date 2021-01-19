@@ -27,6 +27,7 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
     super(PsiClass.class, LombokClassNames.BUILDER);
   }
 
+  @Override
   protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
                                                    @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
     if (null == nameHint) {

@@ -56,10 +56,6 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
                                                    @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
-    if (null == nameHint) {
-      return true;
-    }
-
     return true;
   }
 
