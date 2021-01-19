@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.recorder.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import java.awt.Container
 import java.awt.Dimension
@@ -30,6 +31,6 @@ class GuiScriptEditorFrame : JFrame("GUI Script Editor"), Disposable {
     guiScriptEditorPanel = GuiScriptEditorPanel()
     contentPane = guiScriptEditorPanel.panel as Container
     pack()
-    Disposer.register(Disposer.get("ui"),this)
+    Disposer.register(ApplicationManager.getApplication(), this)
   }
 }
