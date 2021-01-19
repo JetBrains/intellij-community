@@ -430,6 +430,19 @@ public class InspectionTree extends Tree {
       }
     }
 
+    InspectionTreeNode nodeToSelect = null;
+    if (selected.length == 1) {
+      final Object selectedNode = selected[0].getLastPathComponent();
+      if (selectedNode instanceof InspectionTreeNode) {
+        final var children = ((InspectionTreeNode) selectedNode).myParent.myChildren;
+        if (children != null && children.myChildren.length > 1) {
+          final int index = ArrayUtil.indexOf(children.myChildren, selectedNode);
+          final boolean last = index + 1 == children.myChildren.length;
+          nodeToSelect = children.myChildren[index + (last ? -1 : 1)];
+        }
+      }
+    }
+
     if (toRemove.isEmpty()) return;
     Set<InspectionTreeNode> parents = new THashSet<>();
     for (InspectionTreeNode node : toRemove) {
@@ -443,8 +456,13 @@ public class InspectionTree extends Tree {
     for (InspectionTreeNode parent : parents) {
       parent.dropProblemCountCaches();
     }
-    TreePath commonPath = TreePathUtil.findCommonAncestor(pathsToSelect);
-    if (commonPath != null) TreeUtil.selectPath(this, commonPath);
+
+    if (nodeToSelect == null) {
+      TreePath commonPath = TreePathUtil.findCommonAncestor(pathsToSelect);
+      if (commonPath != null) TreeUtil.selectPath(this, commonPath);
+    } else {
+      TreeUtil.selectNode(this, nodeToSelect);
+    }
 
     revalidate();
     repaint();
