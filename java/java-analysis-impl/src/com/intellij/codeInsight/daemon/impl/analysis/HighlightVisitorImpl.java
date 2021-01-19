@@ -43,7 +43,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -1979,14 +1982,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
 
-  public static class PreviewFeatureVisitor extends JavaElementVisitor {
-    public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
-    public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
+  private static class PreviewFeatureVisitor extends JavaElementVisitor {
 
     private final LanguageLevel myLanguageLevel;
     private final HighlightInfoHolder myHolder;
 
-    public PreviewFeatureVisitor(LanguageLevel level, HighlightInfoHolder holder) {
+    private PreviewFeatureVisitor(LanguageLevel level, HighlightInfoHolder holder) {
       myLanguageLevel = level;
       myHolder = holder;
     }
@@ -2106,8 +2107,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     /**
      * This method validates that the language level of the project where the context accesses
-     * the owner that is annotated with either {@link HighlightVisitorImpl.PreviewFeatureVisitor#JDK_INTERNAL_PREVIEW_FEATURE}
-     * or {@link HighlightVisitorImpl.PreviewFeatureVisitor#JDK_INTERNAL_JAVAC_PREVIEW_FEATURE} is sufficient
+     * the owner that is annotated with either {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE}
+     * or {@link HighlightingFeature#JDK_INTERNAL_JAVAC_PREVIEW_FEATURE} is sufficient
      *
      * @param context the expression to examine
      * @param level the current language level
@@ -2122,7 +2123,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (context == null) return null;
       if (owner == null) return null;
 
-      final PsiAnnotation annotation = getPreviewFeatureAnnotation(owner);
+      final PsiAnnotation annotation = HighlightingFeature.getPreviewFeatureAnnotation(owner);
       final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
       if (feature == null) return null;
 
@@ -2163,39 +2164,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           .orElse(null);
       }
       return null;
-    }
-
-    @Nullable
-    @Contract(value = "null -> null", pure = true)
-    public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable final PsiModifierListOwner owner) {
-      if (owner == null) return null;
-
-      final PsiAnnotation annotation = getAnnotation(owner);
-      if (annotation != null) return annotation;
-
-      if (owner instanceof PsiMember && !owner.hasModifier(JvmModifier.STATIC)) {
-        final PsiMember member = (PsiMember)owner;
-        final PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
-        if (result != null) return result;
-      }
-
-      final PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
-      if (psiPackage  == null) return null;
-
-      final PsiAnnotation packageAnnotation = getAnnotation(psiPackage);
-      if (packageAnnotation != null) return packageAnnotation;
-
-      final PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
-      if (module == null) return null;
-
-      return getAnnotation(module);
-    }
-
-    private static PsiAnnotation getAnnotation(@NotNull PsiModifierListOwner owner) {
-      final PsiAnnotation annotation = owner.getAnnotation(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE);
-      if (annotation != null) return annotation;
-
-      return owner.getAnnotation(JDK_INTERNAL_PREVIEW_FEATURE);
     }
   }
 }
