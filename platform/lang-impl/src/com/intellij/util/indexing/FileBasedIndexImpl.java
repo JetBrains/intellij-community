@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.FlushingDaemon;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
@@ -49,14 +48,16 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
-import com.intellij.util.indexing.impl.MapReduceIndex;
-import com.intellij.util.indexing.impl.storage.*;
-import com.intellij.util.indexing.roots.IndexableFilesContributor;
-import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.VfsEventsMerger;
+import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
+import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
+import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
+import com.intellij.util.indexing.roots.IndexableFilesContributor;
+import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -631,6 +632,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
     ProgressManager.checkCanceled();
+    SlowOperations.assertSlowOperationsAreAllowed();
     getChangedFilesCollector().ensureUpToDate();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
