@@ -11,10 +11,11 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.isOneLiner
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.getWhenConditionSubjectCandidate
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.IfToWhenIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.branches
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.util.psi.patternMatching.matches
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
@@ -39,15 +40,11 @@ class CascadeIfInspection : AbstractKotlinInspection() {
             ) return
 
             var current: KtIfExpression? = expression
+            var lastSubjectCandidate: KtExpression? = null
             while (current != null) {
-                when (val condition = current.condition) {
-                    is KtBinaryExpression -> when (condition.operationToken) {
-                        KtTokens.ANDAND, KtTokens.OROR -> return
-                    }
-                    is KtUnaryExpression -> when (condition.operationToken) {
-                        KtTokens.EXCL -> return
-                    }
-                }
+                val subjectCandidate = current.condition.getWhenConditionSubjectCandidate(checkConstants = false) ?: return
+                if (lastSubjectCandidate != null && !lastSubjectCandidate.matches(subjectCandidate)) return
+                lastSubjectCandidate = subjectCandidate
                 current = current.`else` as? KtIfExpression
             }
 

@@ -879,6 +879,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("cannotIntroduceSubject.kt")
+        public void testCannotIntroduceSubject() throws Exception {
+            runTest("testData/inspectionsLocal/cascadeIf/cannotIntroduceSubject.kt");
+        }
+
         @TestMetadata("complex.kt")
         public void testComplex() throws Exception {
             runTest("testData/inspectionsLocal/cascadeIf/complex.kt");

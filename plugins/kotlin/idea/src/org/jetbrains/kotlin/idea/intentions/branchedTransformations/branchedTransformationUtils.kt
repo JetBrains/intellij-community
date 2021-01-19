@@ -47,13 +47,7 @@ fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtEx
 
         for (condition in conditions) {
             if (condition !is KtWhenConditionWithExpression) return null
-
             val candidate = condition.expression?.getWhenConditionSubjectCandidate(checkConstants) ?: return null
-            if (candidate !is KtNameReferenceExpression
-                && (candidate as? KtQualifiedExpression)?.selectorExpression !is KtNameReferenceExpression
-                && candidate !is KtThisExpression
-            ) return null
-
             if (lastCandidate == null) {
                 lastCandidate = candidate
             } else if (!lastCandidate.matches(candidate)) {
@@ -65,28 +59,32 @@ fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtEx
     return lastCandidate
 }
 
-private fun KtExpression?.getWhenConditionSubjectCandidate(checkConstants: Boolean): KtExpression? = when (this) {
-    is KtIsExpression -> leftHandSide
-
-    is KtBinaryExpression -> {
-        val lhs = left
-        val rhs = right
-        when (operationToken) {
-            KtTokens.IN_KEYWORD, KtTokens.NOT_IN -> lhs
-            KtTokens.EQEQ ->
-                lhs?.takeIf { it.hasCandidateNameReferenceExpression(checkConstants) }
-                    ?: rhs?.takeIf { it.hasCandidateNameReferenceExpression(checkConstants) }
-            KtTokens.OROR -> {
-                val leftCandidate = lhs.getWhenConditionSubjectCandidate(checkConstants)
-                val rightCandidate = rhs.getWhenConditionSubjectCandidate(checkConstants)
-                if (leftCandidate.matches(rightCandidate)) leftCandidate else null
+fun KtExpression?.getWhenConditionSubjectCandidate(checkConstants: Boolean): KtExpression? {
+    fun KtExpression?.getCandidate(): KtExpression? = when (this) {
+        is KtIsExpression -> leftHandSide
+        is KtBinaryExpression -> {
+            val lhs = left
+            val rhs = right
+            when (operationToken) {
+                KtTokens.IN_KEYWORD, KtTokens.NOT_IN -> lhs
+                KtTokens.EQEQ ->
+                    lhs?.takeIf { it.hasCandidateNameReferenceExpression(checkConstants) }
+                        ?: rhs?.takeIf { it.hasCandidateNameReferenceExpression(checkConstants) }
+                KtTokens.OROR -> {
+                    val leftCandidate = lhs.getCandidate()
+                    val rightCandidate = rhs.getCandidate()
+                    if (leftCandidate.matches(rightCandidate)) leftCandidate else null
+                }
+                else -> null
             }
-            else -> null
         }
-
+        else -> null
     }
-
-    else -> null
+    return getCandidate()?.takeIf {
+        it is KtNameReferenceExpression
+                || (it as? KtQualifiedExpression)?.selectorExpression is KtNameReferenceExpression
+                || it is KtThisExpression
+    }
 }
 
 private fun KtExpression.hasCandidateNameReferenceExpression(checkConstants: Boolean): Boolean {
