@@ -6,16 +6,15 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
 import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 
-object GHPRStatisticsCollector : ProjectUsagesCollector() {
+object GHPRStatisticsCollector {
 
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 1)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 2)
 
   class Counters : CounterUsagesCollector() {
     override fun getGroup() = COUNTERS_GROUP
@@ -41,19 +40,19 @@ object GHPRStatisticsCollector : ProjectUsagesCollector() {
 
   fun logTimelineOpened(project: Project) {
     val count = FileEditorManager.getInstance(project).openFiles.count { it is GHPRTimelineVirtualFile }
-    TIMELINE_OPENED_EVENT.log(count)
+    TIMELINE_OPENED_EVENT.log(project, count)
   }
 
   fun logDiffOpened(project: Project) {
     val count = FileEditorManager.getInstance(project).openFiles.count { it is GHPRDiffVirtualFile }
-    DIFF_OPENED_EVENT.log(count)
+    DIFF_OPENED_EVENT.log(project, count)
   }
 
   fun logMergedEvent(method: GithubPullRequestMergeMethod) {
     MERGED_EVENT.log(method)
   }
 
-  fun logEnterpriseServerMeta(server: GithubServerPath, meta: GHEnterpriseServerMeta) {
-    SERVER_META_EVENT.log(server.toUrl(), meta.installedVersion)
+  fun logEnterpriseServerMeta(project: Project, server: GithubServerPath, meta: GHEnterpriseServerMeta) {
+    SERVER_META_EVENT.log(project, server.toUrl(), meta.installedVersion)
   }
 }

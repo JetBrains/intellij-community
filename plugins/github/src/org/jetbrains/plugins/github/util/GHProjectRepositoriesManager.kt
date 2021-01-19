@@ -95,7 +95,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     for (server in authenticatedServers) {
       if (server.isGithubDotCom) continue
       service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).successOnEdt {
-        GHPRStatisticsCollector.logEnterpriseServerMeta(server, it)
+        GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, it)
       }
     }
   }
