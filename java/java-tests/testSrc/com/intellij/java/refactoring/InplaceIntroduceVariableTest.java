@@ -228,9 +228,13 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testHeavilyBrokenFile5() {
     doTest(null);
   }
-  
+
   public void testHeavilyBrokenFile6() {
     doTest(null);
+  }
+
+  public void testHeavilyBrokenFile7() {
+    doTestReplaceChoice("Replace all 0 occurrences");
   }
 
   public void testAnnotationArgument() {
