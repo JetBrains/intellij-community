@@ -114,7 +114,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
 
     if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-      createLightWeightPopup(title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
+      createLightWeightPopup(project, title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
     }
     else {
       Messages.showInputDialog(project, message, title, null, initialText, validator, TextRange.from(initialText.length(), 0));
@@ -165,7 +165,8 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
   }
 
-  private static JBPopup createLightWeightPopup(@NlsContexts.PopupTitle String title,
+  private static JBPopup createLightWeightPopup(@Nullable Project project,
+                                                @NlsContexts.PopupTitle String title,
                                                 String initialText,
                                                 @NotNull PsiDirectory directory,
                                                 CreateGroupHandler validator,
@@ -179,7 +180,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     contentPanel.setApplyAction(event -> {
       for (CompletionItem it : contentPanel.getSelectedItems()) {
-        it.reportToStatistics();
+        it.reportToStatistics(project);
       }
 
       // if there are selected suggestions, we need to create the selected folders (not the path in the text field)
@@ -332,12 +333,12 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       this.icon = icon;
     }
 
-    public void reportToStatistics() {
+    public void reportToStatistics(@Nullable Project project) {
       Class contributorClass = contributor.getClass();
       String nameToReport = getPluginInfo(contributorClass).isSafeToReport()
                             ? contributorClass.getSimpleName() : "third.party";
 
-      FUCounterUsageLogger.getInstance().logEvent("create.directory.dialog",
+      FUCounterUsageLogger.getInstance().logEvent(project, "create.directory.dialog",
                                                   "completion.variant.chosen",
                                                   new FeatureUsageData().addData("contributor", nameToReport));
     }
