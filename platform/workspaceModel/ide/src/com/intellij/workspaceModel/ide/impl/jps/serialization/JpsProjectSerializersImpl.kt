@@ -322,15 +322,20 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
     }
 
-    val entitiesToSave = storage.entitiesBySource { it in affectedSources }.toMutableMap()
+    val sourcesStoredInternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
+      .filter { !it.storedExternally }
+      .associateBy { it.internalFile }
+    //entities added via JPS and imported entities stored in internal storage must be passed to serializers together, otherwise incomplete data will be stored
+    val entitiesToSave = storage.entitiesBySource { source ->
+      source in affectedSources
+      || sourcesStoredInternally[source]?.let { it in affectedSources } == true
+      || source is JpsImportedEntitySource && !source.storedExternally && source.internalFile in affectedSources
+    }
     val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
       it.internalFile
     }
     val sourcesStoredExternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
       .filter { it.storedExternally }
-      .associateBy { it.internalFile }
-    val sourcesStoredInternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
-      .filter { !it.storedExternally }
       .associateBy { it.internalFile }
 
     val obsoleteSources = affectedSources - entitiesToSave.keys
@@ -339,11 +344,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       if (fileUrl != null) {
         val affectedImportedSourceStoredExternally = when {
           source is JpsImportedEntitySource && source.storedExternally -> sourcesStoredInternally[source.internalFile]
-          source is JpsImportedEntitySource && !source.storedExternally -> {
-            val entitiesBySource = storage.entitiesBySource { it == source.internalFile }
-            if (entitiesBySource.isNotEmpty()) entitiesToSave.putAll(entitiesBySource)
-            sourcesStoredExternally[source.internalFile]
-          }
+          source is JpsImportedEntitySource && !source.storedExternally -> sourcesStoredExternally[source.internalFile]
           else -> null
         }
         // Cleanup old entity source in the following cases:
