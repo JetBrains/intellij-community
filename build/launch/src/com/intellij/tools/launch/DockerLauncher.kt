@@ -41,8 +41,19 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     val containerIdFile = File.createTempFile("cwm.docker.cid", "")
 
-    fun File.readonly() = "--volume=${this.pathNotResolvingSymlinks()}:${this.pathNotResolvingSymlinks()}:ro"
-    fun File.writeable() = "--volume=${this.pathNotResolvingSymlinks()}:${this.pathNotResolvingSymlinks()}:rw"
+    fun MutableList<String>.addVolume(volume: File, isWritable: Boolean) {
+      fun volumeParameter(volume: String, isWritable: Boolean) = "--volume=$volume:$volume:${if (isWritable) "rw" else "ro"}"
+
+      val canonical = volume.canonicalPath
+      this.add(volumeParameter(canonical, isWritable))
+
+      // there's no consistency as to whether symlinks are resolved in user code, so we'll try our best and provide both
+      if (canonical != volume.pathNotResolvingSymlinks())
+        this.add(volumeParameter(canonical, isWritable))
+    }
+
+    fun MutableList<String>.addReadonly(volume: File) = addVolume(volume, false)
+    fun MutableList<String>.addWritable(volume: File) = addVolume(volume, true)
 
     // docker can create these under root, so we create them ourselves
     Files.createDirectories(paths.logFolder.toPath())
@@ -60,45 +71,42 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       containerIdFile.pathNotResolvingSymlinks(),
 
       // -u=USER_NAME will throw if user does not exist, but -u=UID will not
-      "--user=$username",
-
-      // RW
-      //paths.tempFolder.writeable(),
-      paths.logFolder.writeable(),
-      paths.configFolder.writeable(),
-      paths.systemFolder.writeable(),
-      paths.outputRootFolder.writeable(), // classpath index making a lot of noise in stderr
-
-      // RO
-      paths.javaHomeFolder.readonly(),
-
-      // jars
-      paths.communityBinFolder.readonly(),
-      paths.communityRootFolder.resolve("lib").readonly(),
-      paths.ultimateRootFolder.resolve("lib").readonly(),
-      paths.ultimateRootFolder.resolve("plugins").readonly(),
-      paths.ultimateRootFolder.resolve("contrib").readonly(),
-
-      // a lot of jars in classpaths, /plugins, /xml, so we'll just mount the whole root
-      paths.communityRootFolder.readonly(),
-
-      // main jar itself
-      paths.launcherFolder.readonly(),
-
-      // ~/.m2
-      paths.mavenHomeFolder.readonly(),
-
-      // gold & tmp files for it
-      paths.ultimateRootFolder.resolve("platform/intellij-client-tests/data").writeable(),
-
-      // quiche
-      paths.ultimateRootFolder.resolve(".idea").readonly(),
-      paths.communityRootFolder.resolve("build/download").writeable()
+      "--user=$username"
     )
 
-    paths.dockerVolumesToWritable.forEach { (volume, isWritable) ->
-      dockerCmd.add(if (isWritable) volume.writeable() else volume.readonly())
-    }
+    // **** RW ****
+    //paths.tempFolder.writeable(),
+    dockerCmd.addWritable(paths.logFolder)
+    dockerCmd.addWritable(paths.configFolder)
+    dockerCmd.addWritable(paths.systemFolder)
+    dockerCmd.addWritable(paths.outputRootFolder) // classpath index making a lot of noise in stderr
+    dockerCmd.addWritable(paths.ultimateRootFolder.resolve("platform/intellij-client-tests/data")) // gold & tmp files for it
+    dockerCmd.addWritable(paths.communityRootFolder.resolve("build/download")) //quiche
+
+    // **** RO ****
+    dockerCmd.addReadonly(paths.javaHomeFolder)
+
+    // jars
+    dockerCmd.addReadonly(paths.communityBinFolder)
+    dockerCmd.addReadonly(paths.communityRootFolder.resolve("lib"))
+    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("lib"))
+    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("plugins"))
+    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve("contrib"))
+
+    // a lot of jars in classpaths, /plugins, /xml, so we'll just mount the whole root
+    dockerCmd.addReadonly(paths.communityRootFolder)
+
+    // main jar itself
+    dockerCmd.addReadonly(paths.launcherFolder)
+
+    // ~/.m2
+    dockerCmd.addReadonly(paths.mavenHomeFolder)
+    
+    // quiche
+    dockerCmd.addReadonly(paths.ultimateRootFolder.resolve(".idea"))
+
+    // user-provided volumes
+    paths.dockerVolumesToWritable.forEach { (volume, isWriteable) -> dockerCmd.addVolume(volume, isWriteable) }
 
     options.exposedPorts.forEach {
       dockerCmd.add("-p")
