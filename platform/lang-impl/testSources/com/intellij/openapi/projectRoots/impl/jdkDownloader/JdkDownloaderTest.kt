@@ -5,7 +5,6 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.idea.TestFor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -178,7 +177,6 @@ class JdkDownloaderTest : LightPlatformTestCase() {
     }
   }
 
-  @TestFor(issues = ["IDEA-231609"])
   fun `test unpacking tar gz with root`() = testUnpacking(
     mockTarGZ.copy(
       packageRootPrefix = "TheApp",
@@ -190,7 +188,6 @@ class JdkDownloaderTest : LightPlatformTestCase() {
     assertThat((installDir.resolve("QPCV")).resolve("ggg.txt")).isRegularFile()
   }
 
-  @TestFor(issues = ["IDEA-231609"])
   fun `test unpacking tar gz with root WSL`() {
     if (SystemInfo.isWindows) return
 
@@ -264,7 +261,6 @@ class JdkDownloaderTest : LightPlatformTestCase() {
     assertThat(installDir.resolve("folder").resolve("file")).isRegularFile()
   }
 
-  @TestFor(issues = ["IDEA-231609"])
   fun `test unpacking zip package path`() = testUnpacking(mockZip.copy(packageToBinJavaPrefix = "folder")) {
     assertThat(javaHome.resolve("readme2")).isDirectory()
     assertThat(javaHome.resolve("file")).isRegularFile()
@@ -272,7 +268,6 @@ class JdkDownloaderTest : LightPlatformTestCase() {
     assertThat(installDir.resolve("folder").resolve("file")).isRegularFile()
   }
 
-  @TestFor(issues = ["IDEA-231609"])
   fun `test unpacking zip package path WSL`() {
     if (SystemInfo.isWindows) return
 
