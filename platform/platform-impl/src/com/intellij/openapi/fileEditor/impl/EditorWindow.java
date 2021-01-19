@@ -950,6 +950,10 @@ public final class EditorWindow {
     }
     boolean wasPinned = editorComposite.isPinned();
     editorComposite.setPinned(pinned);
+    if (editorComposite.isPreview()) {
+      editorComposite.setPreview(false);
+      myOwner.updateFileStyle(file);
+    }
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread()) {
       ObjectUtils.consumeIfCast(getTabbedPane().getTabs(), JBTabsImpl.class, JBTabsImpl::doLayout);
     }
