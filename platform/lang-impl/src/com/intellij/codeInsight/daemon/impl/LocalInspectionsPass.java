@@ -192,24 +192,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     setProgressLimit(toolWrappers.size() * 2L);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset());
 
-    try {
-      List<InspectionContext> init = visitPriorityElementsAndInit(
-        InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside)),
-        iManager, isOnTheFly, progress, inside, session);
-      Set<PsiFile> alreadyVisitedInjected =
-        inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
-      visitRestElementsAndCleanup(progress, outside, session, init);
-      inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
-      ProgressManager.checkCanceled();
+    List<InspectionContext> init = visitPriorityElementsAndInit(
+      InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside)),
+      iManager, isOnTheFly, progress, inside, session);
+    Set<PsiFile> alreadyVisitedInjected =
+      inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
+    visitRestElementsAndCleanup(progress, outside, session, init);
+    inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
+    ProgressManager.checkCanceled();
 
-      myInfos = new ArrayList<>();
-      addHighlightsFromResults(myInfos);
+    myInfos = new ArrayList<>();
+    addHighlightsFromResults(myInfos);
 
-      if (isOnTheFly) {
-        highlightRedundantSuppressions(toolWrappers, iManager, inside, outside);
-      }
-    } catch (Throwable e) {
-      throw e;
+    if (isOnTheFly) {
+      highlightRedundantSuppressions(toolWrappers, iManager, inside, outside);
     }
   }
 
