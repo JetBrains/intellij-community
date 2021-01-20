@@ -787,7 +787,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       });
       String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER);
       if (!shortcutText.isEmpty()) {
-        getTextEditor().setToolTipText(VcsLogBundle.message("vcs.log.filter.search.tooltip", shortcutText));
+        getTextEditor().setToolTipText(VcsLogBundle.message("vcs.log.filter.text.hash.tooltip", shortcutText));
       }
     }
 
