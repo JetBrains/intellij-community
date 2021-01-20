@@ -4,10 +4,10 @@ package org.intellij.plugins.markdown.highlighting.ner
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.newRange
 import com.intellij.refactoring.suggested.oldRange
 import com.intellij.refactoring.suggested.range
@@ -21,15 +21,11 @@ internal object MarkdownNamedEntitiesDocumentListener : DocumentListener {
     }
 
     val document = event.document
-    val changedRange = event.oldRange
-
-    val project = ProjectManager.getInstance().openProjects.firstOrNull { project ->
-      project.isInitialized &&
-      !project.isDisposed &&
-      PsiDocumentManager.getInstance(project).getCachedPsiFile(document) != null
-    } ?: return
-
+    val virtualFile = FileDocumentManager.getInstance().getFile(document)
+    val project = virtualFile?.let(::guessProjectForFile) ?: return
     val markupModel = DocumentMarkupModel.forDocument(document, project, false) ?: return
+
+    val changedRange = event.oldRange
 
     for (highlighter in markupModel.allHighlighters) {
       val highlightedRange = highlighter.range ?: continue
