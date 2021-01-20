@@ -795,7 +795,6 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/python/intellij.python.community.plugin.tests.iml" filepath="$PROJECT_DIR$/intellij/python/intellij.python.community.plugin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/python/testFramework/intellij.python.community.testFramework.iml" filepath="$PROJECT_DIR$/intellij/python/testFramework/intellij.python.community.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/python/testSrc/intellij.python.community.tests.iml" filepath="$PROJECT_DIR$/intellij/python/testSrc/intellij.python.community.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/python/conda/intellij.python.conda.iml" filepath="$PROJECT_DIR$/intellij/python/conda/intellij.python.conda.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/python/python-copyright/intellij.python.copyright.iml" filepath="$PROJECT_DIR$/intellij/python/python-copyright/intellij.python.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/python/python-features-trainer/intellij.python.featuresTrainer.iml" filepath="$PROJECT_DIR$/intellij/python/python-features-trainer/intellij.python.featuresTrainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/python/python-grazie/intellij.python.grazie.iml" filepath="$PROJECT_DIR$/intellij/python/python-grazie/intellij.python.grazie.iml" />
