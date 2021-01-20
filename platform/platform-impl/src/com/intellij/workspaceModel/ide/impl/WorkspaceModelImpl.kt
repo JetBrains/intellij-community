@@ -67,6 +67,10 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     }
   }
 
+  fun blockDelayedLoading() {
+    loadedFromCache = false
+  }
+
   internal fun printInfoAboutTracedEntity(storage: WorkspaceEntityStorage, storageDescription: String) {
     if (entityToTrace != null) {
       log.info("Traced entity from $storageDescription: ${storage.resolve(entityToTrace)?.configurationXmlTag}")

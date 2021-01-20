@@ -32,8 +32,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
+import com.intellij.util.PlatformUtils
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
@@ -62,8 +62,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
           LOG.debug { "Project component initialized" }
-          if (project === this@JpsProjectModelSynchronizer.project
-              && !(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+          val workspaceModelImpl = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+          if (blockCidrDelayedUpdate()) workspaceModelImpl.blockDelayedLoading()
+          if (project === this@JpsProjectModelSynchronizer.project && !workspaceModelImpl.loadedFromCache) {
             LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
             loadRealProject(project)
             project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
@@ -213,13 +214,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     var childActivity = activity.startChild("(wm) Prepare serializers")
-    fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
-    val externalStoragePath = project.getExternalConfigurationDir()
-    //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process
-    val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
-    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false,
-                                                                        virtualFileManager, externalStorageConfigurationManager)
-    this.serializers.set(serializers)
+    val serializers = prepareSerializers()
     registerListener()
     val builder = WorkspaceEntityStorageBuilder.create()
 
@@ -270,6 +265,32 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       val modulesToLoad = HashSet(modulePathsToLoad)
       ModuleManagerEx.getInstanceEx(project).unloadNewlyAddedModulesIfPossible(modulesToLoad, unloaded)
     }
+  }
+
+  // FIXME: 21.01.2021 This is a fix for OC-21192
+  // We do disable delayed loading of JPS model if modules.xml file missing (what happens because of bug if you open a project in 2020.3)
+  fun blockCidrDelayedUpdate(): Boolean {
+    if (!PlatformUtils.isCidr()) return false
+
+    val currentSerializers = prepareSerializers() as JpsProjectSerializersImpl
+    if (currentSerializers.moduleSerializers.isNotEmpty()) return false
+    return currentSerializers.moduleListSerializersByUrl.keys.all { !JpsPathUtil.urlToFile(it).exists() }
+  }
+
+  private fun prepareSerializers(): JpsProjectSerializers {
+    val existingSerializers = this.serializers.get()
+    if (existingSerializers != null) return existingSerializers
+
+    val configLocation: JpsProjectConfigLocation = project.configLocation!!
+    fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
+    val externalStoragePath = project.getExternalConfigurationDir()
+    //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process
+    val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
+    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false,
+                                                                        virtualFileManager, externalStorageConfigurationManager)
+
+    this.serializers.set(serializers)
+    return serializers
   }
 
   fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
