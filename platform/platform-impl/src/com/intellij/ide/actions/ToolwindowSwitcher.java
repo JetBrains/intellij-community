@@ -33,8 +33,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -46,31 +49,28 @@ public class ToolwindowSwitcher extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
-    invokePopup(project);
+    final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+    invokePopup(project, new ToolWindowsComparator(toolWindowManager.getRecentToolWindows()), null, null);
   }
 
-  public static void invokePopup(Project project) {
-    invokePopup(project, null);
-  }
+  public static void invokePopup(Project project,
+                                 @NotNull Comparator<ToolWindow> comparator,
+                                 @Nullable Predicate<ToolWindow> filter,
+                                 @Nullable RelativePoint point) {
+    if (filter == null) filter = window -> true;
 
-  public static void invokePopup(Project project, @Nullable RelativePoint point) {
     if (popup != null) {
       gotoNextElement(popup);
       return;
     }
-    List<ToolWindow> toolWindows = new ArrayList<>();
     final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
-    for (String id : toolWindowManager.getToolWindowIds()) {
-      final ToolWindow tw = toolWindowManager.getToolWindow(id);
-      if (tw != null && tw.isAvailable() && tw.isShowStripeButton()) {
-        toolWindows.add(tw);
-      }
-    }
+    List<ToolWindow> toolWindows = getToolWindows(project, filter);
 
-    ArrayList<String> recentToolWindows = toolWindowManager.getRecentToolWindows();
-    toolWindows.sort(new ToolWindowsComparator(recentToolWindows));
+    if (toolWindows.isEmpty()) return;
+    toolWindows.sort(comparator);
     IPopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(toolWindows);
-    ToolWindow selected = toolWindowManager.getActiveToolWindowId() == null ? toolWindows.get(0) : toolWindows.get(1);
+    ToolWindow selected =
+      toolWindowManager.getActiveToolWindowId() == null || toolWindows.size() == 1 ? toolWindows.get(0) : toolWindows.get(1);
 
     popup = builder
                 .setRenderer(new ToolWindowsWidgetCellRenderer())
@@ -92,6 +92,13 @@ public class ToolwindowSwitcher extends DumbAwareAction {
     } else {
       popup.showCenteredInCurrentWindow(project);
     }
+  }
+
+  @NotNull
+  public static List<ToolWindow> getToolWindows(@NotNull Project project, @NotNull Predicate<ToolWindow> filter) {
+    final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+    return Arrays.stream(toolWindowManager.getToolWindowIds()).map(toolWindowManager::getToolWindow)
+      .filter(tw -> tw != null && tw.isAvailable() && tw.isShowStripeButton() && filter.test(tw)).collect(Collectors.toList());
   }
 
   private static void gotoNextElement(JBPopup popup) {

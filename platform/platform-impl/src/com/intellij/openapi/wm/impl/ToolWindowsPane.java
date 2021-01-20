@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -36,6 +37,7 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -80,10 +82,19 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private boolean isWideScreen;
   private boolean leftHorizontalSplit;
   private boolean rightHorizontalSplit;
-  private final IdeLeftToolbar myTwToolbar;
+  private List<String> myDefaultRightButtons = new ArrayList<>();
+  private List<String> myDefaultLeftButtons = new ArrayList<>();
+  private List<String> myDefaultBottomButtons = new ArrayList<>();
 
-  ToolWindowsPane(@NotNull JFrame frame, @NotNull Disposable parentDisposable, IdeLeftToolbar twToolbar) {
-    myTwToolbar = twToolbar;
+  private final ToolwindowToolbar myLeftToolbar;
+  private final ToolwindowToolbar myRightToolbar;
+
+  ToolWindowsPane(@NotNull JFrame frame,
+                  @NotNull Disposable parentDisposable,
+                  @Nullable ToolwindowToolbar leftSidebar,
+                  @Nullable ToolwindowToolbar rightSidebar) {
+    myLeftToolbar = leftSidebar;
+    myRightToolbar = rightSidebar;
     setOpaque(false);
     this.frame = frame;
 
@@ -544,10 +555,70 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     revalidate();
   }
 
-  public void onStripeButtonAdded(@NotNull Project project, @NotNull StripeButton button) {
-    if (button.toolWindow.isAvailable() && button.toolWindow.getIcon() != null && Registry.is("ide.new.stripes.ui")) {
-      myTwToolbar.addStripeButton(project, button);
+  void onStripeButtonRemoved(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    if (!Registry.is("ide.new.stripes.ui")) return;
+
+    if (!toolWindow.isAvailable() || toolWindow.getIcon() == null) return;
+    toolWindow.setVisibleOnLargeStripe(false);
+
+    ToolWindowAnchor anchor = toolWindow.getLargeStripeAnchor();
+    if (ToolWindowAnchor.LEFT.equals(anchor) || ToolWindowAnchor.BOTTOM.equals(anchor)) {
+      myLeftToolbar.removeStripeButton(project, toolWindow, anchor);
     }
+    else if (ToolWindowAnchor.RIGHT.equals(anchor)) {
+      myRightToolbar.removeStripeButton(project, toolWindow, anchor);
+    }
+
+    updateToolbars();
+  }
+
+  void onStripeButtonAdded(@NotNull Project project,
+                           @NotNull ToolWindow toolWindow,
+                           @NotNull ToolWindowAnchor actualAnchor,
+                           @NotNull Comparator<ToolWindow> comparator) {
+    if (!Registry.is("ide.new.stripes.ui")) return;
+
+    ensureDefaultInitialized(project);
+
+    ToolWindowAnchor toolWindowAnchor = toolWindow.getAnchor();
+    if (toolWindowAnchor == ToolWindowAnchor.LEFT && myDefaultLeftButtons.contains(toolWindow.getId())
+        || toolWindowAnchor == ToolWindowAnchor.RIGHT && myDefaultRightButtons.contains(toolWindow.getId())
+        || toolWindowAnchor == ToolWindowAnchor.BOTTOM && myDefaultBottomButtons.contains(toolWindow.getId())) {
+      toolWindow.setVisibleOnLargeStripe(true);
+      actualAnchor = toolWindowAnchor;
+    }
+
+    toolWindow.setLargeStripeAnchor(actualAnchor);
+
+    if (!toolWindow.isAvailable() || toolWindow.getIcon() == null || !toolWindow.isVisibleOnLargeStripe()) return;
+
+    if (ToolWindowAnchor.LEFT.equals(actualAnchor) || ToolWindowAnchor.BOTTOM.equals(actualAnchor)) {
+      myLeftToolbar.addStripeButton(project, actualAnchor, comparator, toolWindow);
+    }
+    else if (ToolWindowAnchor.RIGHT.equals(actualAnchor)) {
+      myRightToolbar.addStripeButton(project, actualAnchor, comparator, toolWindow);
+    }
+    updateToolbars();
+  }
+
+  private void ensureDefaultInitialized(@NotNull Project project) {
+    String key = "NEW_TOOLWINDOW_STRIPE_DEFAULTS";
+    if (PropertiesComponent.getInstance(project).isTrueValue(key)) {
+      return;
+    }
+
+    myDefaultLeftButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.LEFT);
+    myDefaultRightButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.RIGHT);
+    myDefaultBottomButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.BOTTOM);
+
+    PropertiesComponent.getInstance(project).setValue(key, true);
+  }
+
+  void updateToolbars() {
+    myLeftToolbar.updateButtons();
+    myLeftToolbar.revalidate();
+    myRightToolbar.updateButtons();
+    myRightToolbar.revalidate();
   }
 
   @FunctionalInterface

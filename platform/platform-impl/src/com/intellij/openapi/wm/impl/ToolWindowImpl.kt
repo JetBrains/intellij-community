@@ -250,6 +250,18 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun getAnchor() = windowInfo.anchor
 
+  override fun getLargeStripeAnchor() = windowInfo.largeStripeAnchor
+
+  override fun setLargeStripeAnchor(anchor: ToolWindowAnchor) {
+    toolWindowManager.setLargeStripeAnchor(id, anchor)
+  }
+
+  override fun isVisibleOnLargeStripe() = windowInfo.isVisibleOnLargeStripe
+
+  override fun setVisibleOnLargeStripe(visible: Boolean) {
+    toolWindowManager.setVisibleOnLargeStripe(id, visible)
+  }
+
   override fun setAnchor(anchor: ToolWindowAnchor, runnable: Runnable?) {
     EDT.assertIsEdt()
     toolWindowManager.setToolWindowAnchor(id, anchor)

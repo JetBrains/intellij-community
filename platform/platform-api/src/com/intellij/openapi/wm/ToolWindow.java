@@ -80,6 +80,15 @@ public interface ToolWindow extends BusyObject {
   @NotNull
   ToolWindowAnchor getAnchor();
 
+  boolean isVisibleOnLargeStripe();
+
+  void setVisibleOnLargeStripe(boolean visible);
+
+  @NotNull
+  ToolWindowAnchor getLargeStripeAnchor();
+
+  void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor);
+
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */

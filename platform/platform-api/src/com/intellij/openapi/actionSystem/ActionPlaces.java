@@ -152,7 +152,7 @@ public abstract class ActionPlaces {
 
   public static final String QUICK_SWITCH_SCHEME_POPUP = "QuickSwitchSchemePopup";
 
-  public static final String TOOLWINDOW_SIDE_BAR = "ToolwindowSideBar";
+  public static final String TOOLWINDOW_TOOLBAR_BAR = "ToolwindowToolbar";
 
   /* Rider */
   public static final String RIDER_UNIT_TESTS_LEFT_TOOLBAR = "UnitTests.LeftToolbar";

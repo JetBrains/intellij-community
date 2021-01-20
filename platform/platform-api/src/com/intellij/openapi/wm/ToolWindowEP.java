@@ -33,6 +33,12 @@ public class ToolWindowEP implements PluginAware {
   public String anchor;
 
   /**
+   * The stripe side bar on which large toolwindow icon are displayed ("left", "right" or "bottom").
+   */
+  @Attribute
+  public String largeStripeAnchor;
+
+  /**
    * @deprecated Use {@link #secondary}
    */
   @Attribute

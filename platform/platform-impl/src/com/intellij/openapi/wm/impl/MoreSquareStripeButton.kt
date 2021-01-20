@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -7,16 +7,20 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.project.DumbAware
-import com.intellij.ui.ToggleActionButton
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import java.awt.Point
+import java.util.function.Predicate
 
-class MoreSquareStripeButton(toolwindowSideBar: IdeLeftToolbar) :
-  ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_SIDE_BAR, Dimension(40, 24)) {
+class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar) :
+  ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 24)) {
 
   companion object {
+    val largeStripeToolwindowPredicate: Predicate<ToolWindow> = Predicate { !it.isVisibleOnLargeStripe }
+
     fun createPresentation(): Presentation {
       return Presentation().apply {
         icon = AllIcons.Actions.MoreHorizontal
@@ -24,12 +28,18 @@ class MoreSquareStripeButton(toolwindowSideBar: IdeLeftToolbar) :
       }
     }
 
-    fun createAction(toolwindowSideBar: IdeLeftToolbar): ToggleActionButton =
-      object : ToggleActionButton(Presentation.NULL_STRING, null), DumbAware {
-        override fun isSelected(e: AnActionEvent?) = false
-        override fun setSelected(e: AnActionEvent?, state: Boolean) {
-          if (e != null) {
-            ToolwindowSwitcher.invokePopup(e.project!!, RelativePoint(toolwindowSideBar, Point(toolwindowSideBar.width, 0)))
+    fun createAction(toolwindowSideBar: ToolwindowToolbar): DumbAwareAction =
+      object : DumbAwareAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+          val moreSquareStripeButton = UIUtil.findComponentOfType(toolwindowSideBar, MoreSquareStripeButton::class.java)
+          ToolwindowSwitcher.invokePopup(e.project!!, Comparator.comparing { toolwindow: ToolWindow -> toolwindow.stripeTitle },
+                                         largeStripeToolwindowPredicate,
+                                         RelativePoint(toolwindowSideBar, Point(toolwindowSideBar.width, moreSquareStripeButton?.y ?: 0)))
+        }
+
+        override fun update(e: AnActionEvent) {
+          e.project?.let {
+            e.presentation.isEnabledAndVisible = ToolwindowSwitcher.getToolWindows(it, largeStripeToolwindowPredicate).isNotEmpty()
           }
         }
       }
