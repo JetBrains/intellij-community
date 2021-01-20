@@ -12,12 +12,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.plus
 import java.io.Closeable
 
-@Suppress("LeakingThis")
 class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
                                   builder: ServerBuilder<*>,
-                                  credentials: DaemonClientCredentials) : CoroutineScope by coroutineScope, Closeable {
-  private val quotaManager = TimeQuotaManager(this)
-  private val processManager = ProcessManager(this + quotaManager.asJob())
+                                  credentials: DaemonClientCredentials) : Closeable {
+  private val quotaManager = TimeQuotaManager(coroutineScope)
+  private val processManager = ProcessManager(coroutineScope + quotaManager.asJob())
 
   private val server: Server
 

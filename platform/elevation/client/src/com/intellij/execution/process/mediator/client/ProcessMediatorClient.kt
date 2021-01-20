@@ -23,11 +23,11 @@ import java.io.Closeable
 import java.io.File
 
 class ProcessMediatorClient private constructor(
-  coroutineScope: CoroutineScope,
+  parentScope: CoroutineScope,
   channel: Channel,
   initialQuotaOptions: QuotaOptions,
-) : CoroutineScope by coroutineScope.childSupervisorScope(),
-    Closeable {
+) : Closeable {
+  internal val coroutineScope: CoroutineScope = parentScope.childSupervisorScope()
 
   private val processManagerStub = ProcessManagerGrpcKt.ProcessManagerCoroutineStub(channel)
   private val daemonStub = DaemonGrpcKt.DaemonCoroutineStub(channel)
@@ -142,19 +142,19 @@ class ProcessMediatorClient private constructor(
   }
 
   fun adjustQuotaBlocking(newOptions: QuotaOptions) {
-    runBlocking(coroutineContext) {
+    runBlocking(coroutineScope.coroutineContext) {
       adjustQuota(newOptions)
     }
   }
 
   override fun close() {
     try {
-      runBlocking(coroutineContext) {
+      runBlocking(coroutineScope.coroutineContext) {
         shutdown()
       }
     }
     finally {
-      cancel()
+      coroutineScope.cancel()
     }
   }
 

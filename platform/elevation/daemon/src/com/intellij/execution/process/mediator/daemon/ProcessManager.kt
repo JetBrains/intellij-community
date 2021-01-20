@@ -14,9 +14,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 typealias Pid = Long
 
-internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable, CoroutineScope by coroutineScope {
+internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
   private val handleMap = ConcurrentHashMap<Pid, Handle>()
-  private val job = Job(coroutineContext[Job])
+  private val job = Job(coroutineScope.coroutineContext[Job])
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Pid {

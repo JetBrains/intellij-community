@@ -41,11 +41,11 @@ internal suspend fun <R : Any> QuotaManager.runIfPermitted(block: suspend () -> 
 internal class TimeQuotaManager(
   coroutineScope: CoroutineScope,
   quotaOptions: QuotaOptions = QuotaOptions.UNLIMITED,
-) : QuotaManager, CoroutineScope by coroutineScope {
+) : QuotaManager {
   private val stopwatchRef: AtomicReference<QuotaStopwatch>
 
-  private val job = Job(coroutineContext[Job])
-  private val timeoutActor = createTimeoutActor(job)
+  private val job = Job(coroutineScope.coroutineContext[Job])
+  private val timeoutActor = coroutineScope.createTimeoutActor(job)
 
   init {
     val stopwatch = QuotaStopwatch.New(quotaOptions)

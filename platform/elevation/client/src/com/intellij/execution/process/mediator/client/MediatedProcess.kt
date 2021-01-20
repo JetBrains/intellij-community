@@ -7,7 +7,7 @@ import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.execution.process.mediator.util.ChannelInputStream
 import com.intellij.execution.process.mediator.util.ChannelOutputStream
 import com.intellij.execution.process.mediator.util.blockingGet
-import com.intellij.execution.process.mediator.util.childSupervisorScope
+import com.intellij.execution.process.mediator.util.childSupervisorJob
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
@@ -15,13 +15,15 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
 import java.io.*
 import java.lang.ref.Cleaner
+import kotlin.coroutines.coroutineContext
 
 private val CLEANER = Cleaner.create()
 
 open class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
                                                pipeStdin: Boolean,
                                                pipeStdout: Boolean,
-                                               pipeStderr: Boolean) : Process(), SelfKiller, CoroutineScope by handle {
+                                               pipeStderr: Boolean) : Process(), SelfKiller {
+
   init {
     @Suppress("LeakingThis")
     CLEANER.register(this, handle::releaseAsync)
@@ -71,7 +73,7 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
   private val stdout: InputStream = if (pipeStdout) createInputStream(1) else NullInputStream
   private val stderr: InputStream = if (pipeStderr) createInputStream(2) else NullInputStream
 
-  private val termination: Deferred<Int> = async {
+  private val termination: Deferred<Int> = handle.rpcScope.async {
     handle.rpc {
       awaitTermination(pid)
     }
@@ -87,7 +89,7 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
   private fun createOutputStream(@Suppress("SameParameterValue") fd: Int): OutputStream {
     val ackFlow = MutableStateFlow<Long?>(0L)
 
-    val channel = actor<ByteString>(capacity = Channel.BUFFERED) {
+    val channel = handle.rpcScope.actor<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
           // NOTE: Must never consume the channel associated with the actor. In fact, the channel IS the actor coroutine,
@@ -111,7 +113,7 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
 
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun createInputStream(fd: Int): InputStream {
-    val channel = produce<ByteString>(capacity = Channel.BUFFERED) {
+    val channel = handle.rpcScope.produce<ByteString>(capacity = Channel.BUFFERED) {
       handle.rpc {
         try {
           readStream(pid, fd).collect(channel::send)
@@ -147,7 +149,7 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
   }
 
   fun destroy(force: Boolean, destroyGroup: Boolean = false) {
-    launch {
+    handle.rpcScope.launch {
       handle.rpc {
         destroyProcess(pid, force, destroyGroup)
       }
@@ -177,12 +179,15 @@ private class MediatedProcessHandle(
   inFile: File?,
   outFile: File?,
   errFile: File?,
-) : CoroutineScope by client.childSupervisorScope() {
+) {
+
+  private val parentScope: CoroutineScope = client.coroutineScope
 
   /** Controls all operations except CreateProcess() and Release(). */
-  private val rpcJob get() = coroutineContext[Job] as CompletableJob
+  private val rpcJob: CompletableJob = parentScope.childSupervisorJob()
+  val rpcScope: CoroutineScope = parentScope + rpcJob
 
-  private val releaseJob = client.launch(start = CoroutineStart.LAZY) {
+  private val releaseJob = parentScope.launch(start = CoroutineStart.LAZY) {
     try {
       rpcJob.cancelAndJoin()
     }
@@ -195,7 +200,7 @@ private class MediatedProcessHandle(
     rpcJob.invokeOnCompletion { start() }
   }
 
-  val pid: Deferred<Long> = client.async {
+  val pid: Deferred<Long> = parentScope.async {
     try {
       client.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
     }
@@ -207,12 +212,12 @@ private class MediatedProcessHandle(
   }
 
   suspend fun <R> rpc(block: suspend ProcessMediatorClient.() -> R): R {
-    (this as CoroutineScope).ensureActive()
-    currentCoroutineContext().ensureActive()
+    rpcScope.ensureActive()
+    coroutineContext.ensureActive()
     // Perform the call in the scope of this handle, so that it is dispatched in the same way
     // as CreateProcess() and Release(). This overrides the parent so that we can await for
     // the call to complete before Release, but we ensure the caller is still able to cancel it.
-    val deferred = (this as CoroutineScope).async {
+    val deferred = rpcScope.async {
       client.block()
     }
     return try {
