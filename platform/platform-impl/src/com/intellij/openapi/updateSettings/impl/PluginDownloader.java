@@ -174,9 +174,11 @@ public final class PluginDownloader {
     String errorMessage = null;
     try {
       myFile = downloadPlugin(indicator);
-      if (!PluginSignatureChecker.checkPluginsSignature(getPluginName(), myFile, indicator)) {
-        myShownErrors = true;
-        return null;
+      if (Registry.is("jetbrains.certificate.signature.check")) {
+        if (!PluginSignatureChecker.checkPluginsSignature(getPluginName(), myFile, indicator)) {
+          myShownErrors = true;
+          return null;
+        }
       }
     }
     catch (IOException ex) {
