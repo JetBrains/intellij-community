@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
-import com.intellij.internal.statistics.metadata.TestGroupFilterRulesBuilder
+import com.intellij.internal.statistic.eventLog.connection.metadata.TestGroupFilterRulesBuilder
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
 import kotlin.test.assertEquals

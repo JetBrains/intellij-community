@@ -24,30 +24,6 @@ import kotlin.collections.HashMap
 class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
   @Test
-  fun test_regex_escapes() {
-    val foo = "[aa] \\ \\p{Lower} (a|b|c) [a-zA-Z_0-9] X?+ X*+ X?? [\\p{L}&&[^\\p{Lu}]] "
-    val pattern = Pattern.compile(RegexpValidationRule.escapeText(foo))
-    assertTrue(pattern.matcher(foo).matches())
-    assert(true)
-  }
-
-  @Test
-  fun test_parse_simple_expression() {
-    assertOrderedEquals(parseSimpleExpression("aa"), "aa")
-    assertOrderedEquals(parseSimpleExpression("aa{bb}cc"), "aa", "{bb}", "cc")
-    assertOrderedEquals(parseSimpleExpression("{bb}{cc}"), "{bb}", "{cc}")
-    assertOrderedEquals(parseSimpleExpression("a{bb}v{cc}d"), "a", "{bb}", "v", "{cc}", "d")
-    assertOrderedEquals(parseSimpleExpression("ccc}ddd"), "ccc}ddd")
-
-    // incorrect
-    assertSize(0, parseSimpleExpression(""))
-    assertSize(0, parseSimpleExpression("{aaaa"))
-    assertSize(0, parseSimpleExpression("{bb}{cc"))
-    assertSize(0, parseSimpleExpression("{bb{vv}vv}"))
-    assertSize(0, parseSimpleExpression("{{v}"))
-  }
-
-  @Test
   fun test_empty_rule() {
     val validator = newValidatorByFile("test_empty_rule.json")
     val eventLogGroup = EventLogGroup("build.gradle.actions", 1)

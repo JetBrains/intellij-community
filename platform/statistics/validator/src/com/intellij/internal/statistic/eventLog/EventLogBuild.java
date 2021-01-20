@@ -11,7 +11,7 @@ import java.util.List;
 
 public final class EventLogBuild implements Comparable<EventLogBuild> {
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
-  public static final @NotNull EventLogBuildParser<EventLogBuild> EVENT_LOG_BUILD_PRODUCER = build -> fromString(build);
+  public static final @NotNull EventLogBuildParser<EventLogBuild> EVENT_LOG_BUILD_PRODUCER = EventLogBuild::fromString;
 
   private final int[] myComponents;
 

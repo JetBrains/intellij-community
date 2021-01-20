@@ -41,7 +41,7 @@ public class EnumValidationRule extends PerformanceCareRule implements FUSRegexp
   @Override
   public String asRegexp() {
     return myEnumValues.stream()
-      .map(s -> RegexpValidationRule.escapeText(s))
+      .map(RegexpValidationRule::escapeText)
       .collect(Collectors.joining("|"));
   }
 

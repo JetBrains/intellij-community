@@ -25,7 +25,8 @@ public final class EventGroupRules {
 
   private final FUSRule[] eventIdRules;
   private final Map<String, FUSRule[]> eventDataRules = new ConcurrentHashMap<>();
-  private final List<String> VALIDATION_TYPES = Arrays.stream(values()).map(it -> it.getDescription()).collect(Collectors.toList());
+  private final List<String> VALIDATION_TYPES =
+    Arrays.stream(values()).map(ValidationResultType::getDescription).collect(Collectors.toList());
   private final List<String> myExcludedFields;
 
   private EventGroupRules(@Nullable Set<String> eventIdRules,
@@ -81,7 +82,8 @@ public final class EventGroupRules {
   public Object validateEventData(@NotNull String key,
                                   @Nullable Object data,
                                   @NotNull EventContext context) {
-    if (VALIDATION_TYPES.contains(data) || myExcludedFields.contains(key)) return data;
+    if (data instanceof String && VALIDATION_TYPES.contains(data)) return data;
+    if (myExcludedFields.contains(key)) return data;
     if (data == null) return REJECTED.getDescription();
 
     if (data instanceof Map<?, ?>) {

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 interface ValidationRuleProducer<T extends FUSRule> {
   /**
    * @param value       validation rule string without prefix and braces (e.g "foo|bar" for {enum:foo|bar})
-   * @return
    */
   @Nullable T createValidationRule(@NotNull String value, @NotNull EventGroupContextData contextData);
 
