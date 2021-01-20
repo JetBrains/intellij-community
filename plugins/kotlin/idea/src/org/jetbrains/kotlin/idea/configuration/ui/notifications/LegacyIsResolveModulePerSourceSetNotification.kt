@@ -13,6 +13,9 @@ import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.lang.ref.WeakReference
+
+private var previouslyShownNotification = WeakReference<Notification>(null)
 
 fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(projectPath: String) {
     notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
@@ -36,8 +39,10 @@ internal fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
     if (PlatformVersion.isAndroidStudio()) return
     if (notificationSuppressState.isSuppressed) return
     if (isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet) return
-
-    createNotification(notificationSuppressState, isResolveModulePerSourceSetSetting).notify(project)
+    if (previouslyShownNotification.get()?.isExpired == false) return
+    val notification = createNotification(notificationSuppressState, isResolveModulePerSourceSetSetting)
+    notification.notify(project)
+    previouslyShownNotification = WeakReference(notification)
 }
 
 private fun createNotification(

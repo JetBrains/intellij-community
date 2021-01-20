@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.configuration.ui.notifications.IsResolveModuleP
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.KOTLIN_UPDATE_IS_RESOLVE_MODULE_PER_SOURCE_SET_GROUP_ID
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.SuppressResolveModulePerSourceSetNotificationState
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.AssumptionViolatedException
@@ -44,6 +45,7 @@ class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase(
                 unlinkExternalProject(projectSetting.externalProjectPath)
             }
         }
+        notifications.forEach { it.expire() }
         super.tearDown()
     }
 
@@ -234,6 +236,39 @@ class LegacyIsResolveModulePerSourceSetNotificationTest : LightPlatformTestCase(
             "Expected new state instance reflecting current state",
             SuppressResolveModulePerSourceSetNotificationState.default(project).isSuppressed
         )
+    }
+
+    fun `test notification is just shown once`() {
+        notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
+            project,
+            notificationSuppressState = TestNotificationSuppressState(isSuppressed = false),
+            isResolveModulePerSourceSetSetting = TestIsResolveModulePerSourceSetSetting(isResolveModulePerSourceSet = false)
+        )
+
+        notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
+            project,
+            notificationSuppressState = TestNotificationSuppressState(isSuppressed = false),
+            isResolveModulePerSourceSetSetting = TestIsResolveModulePerSourceSetSetting(isResolveModulePerSourceSet = false)
+        )
+
+        assertEquals(
+            "Expected exactly one notification fired, because first invocation is not expired yet",
+            1, notifications.size
+        )
+
+        notifications.single().expire()
+
+        notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
+            project,
+            notificationSuppressState = TestNotificationSuppressState(isSuppressed = false),
+            isResolveModulePerSourceSetSetting = TestIsResolveModulePerSourceSetSetting(isResolveModulePerSourceSet = false)
+        )
+
+        assertEquals(
+            "Expected new notification being created because first notification was expired",
+            2, notifications.size
+        )
+
     }
 }
 
