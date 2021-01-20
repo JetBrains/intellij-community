@@ -921,9 +921,9 @@ private class BlocksRefresher(val handlers: List<Handler>,
     processMergeableGroups(blocks) { group ->
       if (group.any { it.isDirty }) {
         processMergedBlocks(group) { mergedBlock ->
-          val freshBlocks = refreshBlock(mergedBlock, fastRefresh)
+          val freshBlocks = refreshMergedBlock(mergedBlock, fastRefresh)
 
-          onRangeRefreshed(mergedBlock, freshBlocks)
+          onRangeRefreshed(mergedBlock.merged, freshBlocks)
 
           newBlocks.addAll(freshBlocks)
         }
@@ -952,7 +952,9 @@ private class BlocksRefresher(val handlers: List<Handler>,
   }
 
   private fun shouldMergeBlocks(block1: Block, block2: Block): Boolean {
-    if (forceMergeNearbyBlocks && block2.range.start2 - block1.range.end2 < NEARBY_BLOCKS_LINES) return true
+    if (forceMergeNearbyBlocks && block2.range.start2 - block1.range.end2 < NEARBY_BLOCKS_LINES) {
+      return true
+    }
     if (isWhitespaceOnlySeparated(block1, block2)) return true
     return false
   }
@@ -966,28 +968,33 @@ private class BlocksRefresher(val handlers: List<Handler>,
   }
 
   private fun processMergedBlocks(group: List<Block>,
-                                  processBlock: (merged: Block) -> Unit) {
+                                  processBlock: (merged: MergedBlock) -> Unit) {
     assert(!group.isEmpty())
 
     var merged: Block? = null
+    val original: MutableList<Block> = mutableListOf()
 
     for (block in group) {
       if (merged == null) {
         merged = block
+        original += block
       }
       else {
         val newMerged = mergeBlocks(merged, block)
         if (newMerged != null) {
           merged = newMerged
+          original += block
         }
         else {
-          processBlock(merged)
+          processBlock(MergedBlock(merged, original.toList()))
+          original.clear()
           merged = block
+          original += merged
         }
       }
     }
 
-    processBlock(merged!!)
+    processBlock(MergedBlock(merged!!, original.toList()))
   }
 
   private fun mergeBlocks(block1: Block, block2: Block): Block? {
@@ -1002,6 +1009,28 @@ private class BlocksRefresher(val handlers: List<Handler>,
       if (!success) return null // merging vetoed
     }
     return merged
+  }
+
+  private fun refreshMergedBlock(mergedBlock: MergedBlock, fastRefresh: Boolean): List<Block> {
+    val freshBlocks = refreshBlock(mergedBlock.merged, fastRefresh)
+
+    if (forceMergeNearbyBlocks && mergedBlock.original.size > 1) {
+      // try reuse original blocks to prevent occasional 'insertion' moves
+      val nonMergedFreshBlocks = mergedBlock.original.flatMap { block ->
+        if (block.isDirty) {
+          refreshBlock(block, fastRefresh)
+        }
+        else {
+          listOf(block)
+        }
+      }
+
+      val oldSize = calcSize(text1, text2, lineOffsets1, lineOffsets2, nonMergedFreshBlocks)
+      val newSize = calcSize(text1, text2, lineOffsets1, lineOffsets2, freshBlocks)
+      if (oldSize <= newSize) return nonMergedFreshBlocks
+    }
+
+    return freshBlocks
   }
 
   private fun refreshBlock(block: Block, fastRefresh: Boolean): List<Block> {
@@ -1030,11 +1059,35 @@ private class BlocksRefresher(val handlers: List<Handler>,
     }
   }
 
+  private fun calcSize(text1: CharSequence,
+                       text2: CharSequence,
+                       lineOffsets1: LineOffsets,
+                       lineOffsets2: LineOffsets,
+                       blocks: List<Block>): Int {
+    var result = 0
+    for (block in blocks) {
+      for (line in block.range.start1 until block.range.end1) {
+        if (!isWhitespaceLine(text1, lineOffsets1, line)) result++
+      }
+      for (line in block.range.start2 until block.range.end2) {
+        if (!isWhitespaceLine(text2, lineOffsets2, line)) result++
+      }
+    }
+    return result
+  }
+
+  private fun isWhitespaceLine(text: CharSequence, lineOffsets: LineOffsets, line: Int): Boolean {
+    val start = lineOffsets.getLineStart(line)
+    val end = lineOffsets.getLineEnd(line)
+    return trimStart(text, start, end) == end
+  }
+
   private fun onRangeRefreshed(before: Block, after: List<Block>) {
     handlers.forEach { it.onRangeRefreshed(before, after) }
   }
 
   data class Result(val newBlocks: List<Block>)
+  data class MergedBlock(val merged: Block, val original: List<Block>)
 
   companion object {
     private const val NEARBY_BLOCKS_LINES = 30
