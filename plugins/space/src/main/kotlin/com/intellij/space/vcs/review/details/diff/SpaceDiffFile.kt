@@ -10,15 +10,15 @@ import com.intellij.testFramework.LightVirtualFile
 import icons.SpaceIcons
 import javax.swing.Icon
 
+internal data class SpaceDiffFileId(val projectKey: String, val reviewKey: String, val reviewId: TID)
+
 internal class SpaceDiffFile(
+  val fileId: SpaceDiffFileId,
   val changesVm: runtime.reactive.Property<SpaceReviewChangesVm>,
   val diffVm: SpaceDiffVm
 ) : LightVirtualFile(SpaceBundle.message("review.diff.tab.title", diffVm.reviewKey),
                      SpaceDiffFileType,
                      ""), DiffContentVirtualFile {
-
-  private val reviewId: TID = diffVm.reviewId
-
   init {
     isWritable = false
   }
@@ -31,19 +31,12 @@ internal class SpaceDiffFile(
 
     other as SpaceDiffFile
 
-    if (diffVm != other.diffVm) return false
-    if (reviewId != other.reviewId) return false
+    if (fileId != other.fileId) return false
 
     return true
   }
 
-  override fun hashCode(): Int {
-    var result = diffVm.hashCode()
-    result = 31 * result + reviewId.hashCode()
-    return result
-  }
-
-
+  override fun hashCode(): Int = fileId.hashCode()
 }
 
 object SpaceDiffFileType : FileType {
