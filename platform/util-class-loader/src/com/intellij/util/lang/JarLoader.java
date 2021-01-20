@@ -51,7 +51,7 @@ public class JarLoader extends Loader {
   }
 
   @Override
-  final @Nullable Class<?> findClass(String fileName, String className, @NotNull ClassPath.ClassDataConsumer classConsumer) throws IOException {
+  final @Nullable Class<?> findClass(@NotNull String fileName, String className, @NotNull ClassPath.ClassDataConsumer classConsumer) throws IOException {
     return zipFile.findClass(fileName, className, this, classConsumer);
   }
 
@@ -128,7 +128,7 @@ public class JarLoader extends Loader {
     try {
       return zipFile.getResource(name, this);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       error("url: " + path, e);
       return null;
     }
@@ -142,11 +142,12 @@ public class JarLoader extends Loader {
   }
 
   protected final void error(@NotNull String message, @NotNull Throwable t) {
+    LoggerRt logger = LoggerRt.getInstance(JarLoader.class);
     if (configuration.errorOnMissingJar) {
-      LoggerRt.getInstance(JarLoader.class).error(message, t);
+      logger.error(message, t);
     }
     else {
-      LoggerRt.getInstance(JarLoader.class).warn(message, t);
+      logger.warn(message, t);
     }
   }
 

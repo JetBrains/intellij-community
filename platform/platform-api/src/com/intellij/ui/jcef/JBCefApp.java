@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
@@ -52,8 +53,9 @@ import java.util.function.Function;
 public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
-  static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroup.create("JCEF errors", NotificationDisplayType.BALLOON, true, null, null, null, null);
+  static final @NotNull NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = NotNullLazyValue.createValue(() -> {
+    return NotificationGroup.create("JCEF errors", NotificationDisplayType.BALLOON, true, null, null, null, null);
+  });
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
@@ -110,7 +112,7 @@ public final class JBCefApp {
             }
             if (proc.waitFor() == 0 && missingLibs.length() > 0) {
               String msg = IdeBundle.message("notification.content.jcef.missingLibs", missingLibs);
-              Notification notification = NOTIFICATION_GROUP.
+              Notification notification = NOTIFICATION_GROUP.getValue().
                 createNotification(IdeBundle.message("notification.title.jcef.startFailure"), msg, NotificationType.ERROR, null);
               //noinspection DialogTitleCapitalization
               notification.addAction(new AnAction(IdeBundle.message("action.jcef.followInstructions")) {
@@ -245,11 +247,6 @@ public final class JBCefApp {
    */
   public static boolean isSupported() {
     return isSupported(false);
-  }
-
-  private static boolean isJavaFXAlreadyInitialized() {
-    return Thread.getAllStackTraces().keySet().stream()
-      .anyMatch(t -> t.getName().startsWith("JavaFX Application Thread"));
   }
 
   private static boolean isSupported(boolean logging) {

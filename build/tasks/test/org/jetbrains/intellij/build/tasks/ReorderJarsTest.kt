@@ -5,8 +5,10 @@ package org.jetbrains.intellij.build.tasks
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.io.Murmur3_32Hash
 import com.intellij.util.lang.JarMemoryLoader
 import com.intellij.util.lang.JdkZipResourceFile
+import com.intellij.util.zip.ImmutableZipEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.io.zip
@@ -14,12 +16,11 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.zip.ZipEntry
 import kotlin.random.Random
 
 private val testDataPath: Path
-  get() = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins/reorderJars")
+  get() = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins/reorderJars")
 
 class ReorderJarsTest {
   @JvmField
@@ -29,6 +30,14 @@ class ReorderJarsTest {
   @JvmField
   @Rule
   val tempDir = TemporaryDirectory()
+
+  @Test
+  fun `dir to create`() {
+    val packageIndexBuilder = PackageIndexBuilder()
+    packageIndexBuilder.add(listOf(ImmutableZipEntry("tsMeteorStubs/meteor-v1.3.1.d.ts", 0, 0, 0, 0, 0)))
+    assertThat(packageIndexBuilder.dirsToCreate).containsExactlyInAnyOrder("tsMeteorStubs")
+    assertThat(packageIndexBuilder.resourcePackageHashSet).containsExactlyInAnyOrder(0, Murmur3_32Hash.MURMUR3_32.hashString("tsMeteorStubs", 0, "tsMeteorStubs".length))
+  }
 
   @Test
   fun `keep all dirs with resources`() {
@@ -81,12 +90,12 @@ class ReorderJarsTest {
     ZipFile(Files.newByteChannel(file)).use { zipFile2 ->
       val entries = zipFile2.entriesInPhysicalOrder.toList()
       assertThat(entries[0].name).isEqualTo(SIZE_ENTRY)
-      val entry = entries[1]
+      val entry = entries[2]
       data = zipFile2.getInputStream(entry).readNBytes(entry.size.toInt())
       assertThat(data).hasSize(548)
       assertThat(entry.name).isEqualTo("org/jetbrains/annotations/Nullable.class")
-      assertThat(entries[2].name).isEqualTo("org/jetbrains/annotations/NotNull.class")
-      assertThat(entries[3].name).isEqualTo("META-INF/MANIFEST.MF")
+      assertThat(entries[3].name).isEqualTo("org/jetbrains/annotations/NotNull.class")
+      assertThat(entries[4].name).isEqualTo("META-INF/MANIFEST.MF")
     }
 
     testOldJarResourceImpl(file, data)
@@ -115,7 +124,8 @@ class ReorderJarsTest {
     ZipFile(file).use { zipFile ->
       val entries: List<ZipEntry> = zipFile.entries.toList()
       assertThat(entries[0].name).isEqualTo(JarMemoryLoader.SIZE_ENTRY)
-      assertThat(entries[1].name).isEqualTo("META-INF/plugin.xml")
+      assertThat(entries[1].name).isEqualTo(PACKAGE_INDEX_NAME)
+      assertThat(entries[2].name).isEqualTo("META-INF/plugin.xml")
     }
   }
 }

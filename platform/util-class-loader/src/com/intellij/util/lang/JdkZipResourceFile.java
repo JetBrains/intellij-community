@@ -112,7 +112,7 @@ public final class JdkZipResourceFile implements ResourceFile {
   }
 
   @Override
-  public @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
+  public @Nullable Class<?> findClass(@NotNull String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException {
     JarMemoryLoader memoryLoader = this.memoryLoader == null ? null : this.memoryLoader.get();
     if (memoryLoader != null) {
@@ -247,16 +247,11 @@ public final class JdkZipResourceFile implements ResourceFile {
         String name = entry.getName();
         if (name.endsWith(ClassPath.CLASS_EXTENSION)) {
           builder.addClassPackageFromName(name);
-          builder.transformClassNameAndAddPossiblyDuplicateNameEntry(name, name.lastIndexOf('/') + 1);
+          builder.andClassName(name);
         }
         else {
           builder.addResourcePackageFromName(name);
-          if (name.endsWith("/")) {
-            builder.addPossiblyDuplicateNameEntry(name, name.lastIndexOf('/', name.length() - 2) + 1, name.length() - 1);
-          }
-          else {
-            builder.addPossiblyDuplicateNameEntry(name, name.lastIndexOf('/') + 1, name.length());
-          }
+          builder.addResourceName(name, name.endsWith("/") ? name.length() - 1 : name.length());
         }
       }
       return builder;

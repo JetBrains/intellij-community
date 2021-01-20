@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.zip;
 
 import com.intellij.util.io.DirectByteBufferPool;
 import com.intellij.util.io.Murmur3_32Hash;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.EnumSet;
 import java.util.function.Consumer;
 import java.util.zip.ZipException;
 
+@ApiStatus.Internal
 public final class ImmutableZipFile implements Closeable {
   private static final int MIN_EOCD_SIZE = 22;
 

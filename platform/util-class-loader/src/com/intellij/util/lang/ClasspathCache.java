@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.util.BloomFilterBase;
@@ -7,29 +7,39 @@ import com.intellij.util.lang.fastutil.StrippedIntOpenHashSet;
 import com.intellij.util.lang.fastutil.StrippedLongOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public final class ClasspathCache {
   private static final double PROBABILITY = 0.005d;
+  private static final IntFunction<Loader[][]> ARRAY_FACTORY = size -> new Loader[size][];
 
-  private final IntObjectHashMap resourcePackageCache = new IntObjectHashMap();
-  private final IntObjectHashMap classPackageCache = new IntObjectHashMap();
+  private static final class PackageCache {
+    final IntObjectHashMap<Loader[]> resourcePackageCache;
+    final IntObjectHashMap<Loader[]> classPackageCache;
 
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    PackageCache() {
+      classPackageCache = new IntObjectHashMap<>(ARRAY_FACTORY);
+      resourcePackageCache = new IntObjectHashMap<>(ARRAY_FACTORY);
+    }
+
+    PackageCache(PackageCache hash) {
+      classPackageCache = hash.classPackageCache;
+      resourcePackageCache = hash.resourcePackageCache;
+    }
+  }
+
+  private final AtomicReference<PackageCache> packageHash = new AtomicReference<>(new PackageCache());
 
   public interface IndexRegistrar {
-    void registerPackageIndex(IntObjectHashMap classMap, IntObjectHashMap resourceMap, Loader loader);
+    void registerPackageIndex(IntObjectHashMap<Loader[]> classMap, IntObjectHashMap<Loader[]> resourceMap, Loader loader);
   }
 
   public static final class LoaderData implements IndexRegistrar {
@@ -61,7 +71,7 @@ public final class ClasspathCache {
     }
 
     @Override
-    public void registerPackageIndex(IntObjectHashMap classMap, IntObjectHashMap resourceMap, Loader loader) {
+    public void registerPackageIndex(IntObjectHashMap<Loader[]> classMap, IntObjectHashMap<Loader[]> resourceMap, Loader loader) {
       for (int classPackageHash : classPackageHashes) {
         addResourceEntry(classPackageHash, classMap, loader);
       }
@@ -83,14 +93,12 @@ public final class ClasspathCache {
       usedNameFingerprints = isNameFilterRequired ? new StrippedLongOpenHashSet() : null;
     }
 
-    void transformClassNameAndAddPossiblyDuplicateNameEntry(@NotNull String name, int start) {
-      int $ = name.indexOf('$', start);
-      int end = $ == -1 ? name.lastIndexOf('.') : $;
-      usedNameFingerprints.add(NameFilter.toNameFingerprint(name, start, end));
+    void andClassName(@NotNull String name) {
+      usedNameFingerprints.add(NameFilter.toNameFingerprint(name, name.length()));
     }
 
-    void addPossiblyDuplicateNameEntry(@NotNull String name, int start, int end) {
-      usedNameFingerprints.add(NameFilter.toNameFingerprint(name, start, end));
+    void addResourceName(@NotNull String name, int end) {
+      usedNameFingerprints.add(NameFilter.toNameFingerprint(name, end));
     }
 
     void addResourcePackageFromName(@NotNull String path) {
@@ -114,12 +122,7 @@ public final class ClasspathCache {
     }
 
     private @NotNull NameFilter createNameFilter() {
-      int uniques = usedNameFingerprints.size();
-      if (uniques > 20_000) {
-        // allow some growth for Idea main loader
-        uniques += (int)(uniques * 0.03d);
-      }
-      NameFilter nameFilter = new NameFilter(uniques, PROBABILITY);
+      NameFilter nameFilter = new NameFilter(usedNameFingerprints.size(), PROBABILITY);
       StrippedLongOpenHashSet.SetIterator iterator = usedNameFingerprints.iterator();
       while (iterator.hasNext()) {
         nameFilter.addNameFingerprint(iterator.nextLong());
@@ -128,7 +131,7 @@ public final class ClasspathCache {
     }
 
     @Override
-    public void registerPackageIndex(IntObjectHashMap classMap, IntObjectHashMap resourceMap, Loader loader) {
+    public void registerPackageIndex(IntObjectHashMap<Loader[]> classMap, IntObjectHashMap<Loader[]> resourceMap, Loader loader) {
       StrippedIntOpenHashSet.SetIterator classIterator = classPackageHashes.iterator();
       while (classIterator.hasNext()) {
         addResourceEntry(classIterator.nextInt(), classMap, loader);
@@ -146,113 +149,51 @@ public final class ClasspathCache {
   }
 
   void clearCache() {
-    classPackageCache.clear();
-    resourcePackageCache.clear();
+    packageHash.set(new PackageCache());
   }
 
-  void applyLoaderData(@NotNull IndexRegistrar registrar, @NotNull Loader loader) {
-    lock.writeLock().lock();
-    try {
-      registrar.registerPackageIndex(classPackageCache, resourcePackageCache, loader);
+  synchronized void applyLoaderData(@NotNull IndexRegistrar registrar, @NotNull Loader loader) {
+    PackageCache oldPackageHash = packageHash.get();
+    PackageCache newPackageHash;
+    do {
+      newPackageHash = new PackageCache(oldPackageHash);
+      registrar.registerPackageIndex(newPackageHash.classPackageCache, newPackageHash.resourcePackageCache, loader);
     }
-    finally {
-      lock.writeLock().unlock();
-    }
+    while (!packageHash.compareAndSet(oldPackageHash, newPackageHash));
   }
 
-  Object getLoadersByName(@NotNull String resourcePath) {
-    lock.readLock().lock();
-    Object o;
-    try {
-      IntObjectHashMap map = resourcePath.endsWith(ClassPath.CLASS_EXTENSION) ? classPackageCache : resourcePackageCache;
-      o = map.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
-    }
-    finally {
-      lock.readLock().unlock();
-    }
-    return o;
+  Loader[] getLoadersByName(@NotNull String resourcePath) {
+    PackageCache packageCache = packageHash.get();
+    IntObjectHashMap<Loader[]> map =
+      resourcePath.endsWith(ClassPath.CLASS_EXTENSION) ? packageCache.classPackageCache : packageCache.resourcePackageCache;
+    return map.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
   }
 
-  void collectLoaders(@NotNull String resourcePath, @NotNull Collection<Loader> loaders) {
-    Object o = getLoadersByName(resourcePath);
-    if (o instanceof Loader) {
-      loaders.add((Loader)o);
-    }
-    else if (o != null) {
-      Collections.addAll(loaders, (Loader[])o);
-    }
-  }
-
-  @Nullable Resource iterateLoaders(@NotNull String resourcePath, @NotNull String name, @NotNull String shortName) {
-    Object o = getLoadersByName(resourcePath);
-    if (o instanceof Loader) {
-      Loader loader = (Loader)o;
-      if (loader.containsName(name, shortName)) {
-        return ClassPath.findInLoader(loader, name);
-      }
-    }
-    else if (o != null) {
-      for (Loader loader : (Loader[])o) {
-        if (loader.containsName(name, shortName)) {
-          Resource result = ClassPath.findInLoader(loader, name);
-          if (result != null) {
-            return result;
-          }
-        }
-      }
-    }
-    return null;
+  Loader[] getClassLoadersByName(@NotNull String resourcePath) {
+    return packageHash.get().classPackageCache.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
   }
 
   static int getPackageNameHash(@NotNull String resourcePath, int endIndex) {
     return endIndex <= 0 ? 0 : Murmur3_32Hash.MURMUR3_32.hashString(resourcePath, 0, endIndex);
   }
 
-  public static void addResourceEntry(int hash, @NotNull IntObjectHashMap map, @NotNull Loader loader) {
-    Object o = map.get(hash);
-    if (o == null) {
-      map.put(hash, loader);
-    }
-    else if (o instanceof Loader) {
-      if (ClassPath.recordLoadingInfo) {
-        assert loader != o;
-      }
-      map.put(hash, new Loader[]{(Loader)o, loader});
+  public static void addResourceEntry(int hash, @NotNull IntObjectHashMap<Loader[]> map, @NotNull Loader loader) {
+    Loader[] loaders = map.get(hash);
+    if (loaders == null) {
+      map.put(hash, new Loader[]{loader});
     }
     else {
-      Loader[] loaderArray = (Loader[])o;
       if (ClassPath.recordLoadingInfo) {
-        for (Loader value : loaderArray) {
+        for (Loader value : loaders) {
           if (loader == value) {
             throw new IllegalStateException("Duplicated loader");
           }
         }
       }
-      Loader[] newArray = Arrays.copyOf(loaderArray, loaderArray.length + 1);
-      newArray[loaderArray.length] = loader;
+      Loader[] newArray = Arrays.copyOf(loaders, loaders.length + 1);
+      newArray[loaders.length] = loader;
       map.put(hash, newArray);
     }
-  }
-
-  static @NotNull String transformName(@NotNull String name) {
-    if (name.isEmpty()) {
-      return name;
-    }
-
-    int nameEnd = name.charAt(name.length() - 1) == '/' ? name.length() - 1 : name.length();
-    name = name.substring(name.lastIndexOf('/', nameEnd - 1) + 1, nameEnd);
-
-    if (name.endsWith(ClassPath.CLASS_EXTENSION)) {
-      int $ = name.indexOf('$');
-      return name.substring(0, $ == -1 ? name.lastIndexOf('.') : $);
-    }
-    return name;
-  }
-
-  static @NotNull String transformClassName(@NotNull String name) {
-    int startIndex = name.lastIndexOf('.') + 1;
-    int $ = name.indexOf('$', startIndex);
-    return name.substring(startIndex, $ == -1 ? name.length() : $);
   }
 
   static final class NameFilter extends BloomFilterBase implements Predicate<String> {
@@ -274,14 +215,15 @@ public final class ClasspathCache {
 
     @Override
     public boolean test(@NotNull String name) {
-      int hash = MURMUR3_32_CUSTOM_SEED.hashString(name, 0, name.length());
-      int hash2 = Murmur3_32Hash.MURMUR3_32.hashString(name, 0, name.length());
+      int end = name.endsWith("/") ? (name.length() - 1) : name.length();
+      int hash = MURMUR3_32_CUSTOM_SEED.hashString(name, 0, end);
+      int hash2 = Murmur3_32Hash.MURMUR3_32.hashString(name, 0, end);
       return maybeContains(hash, hash2);
     }
 
-    private static long toNameFingerprint(@NotNull String name, int start, int end) {
-      int hash = MURMUR3_32_CUSTOM_SEED.hashString(name, start, end);
-      int hash2 = Murmur3_32Hash.MURMUR3_32.hashString(name, start, end);
+    private static long toNameFingerprint(@NotNull String name, int end) {
+      int hash = MURMUR3_32_CUSTOM_SEED.hashString(name, 0, end);
+      int hash2 = Murmur3_32Hash.MURMUR3_32.hashString(name, 0, end);
       return ((long)hash << 32) | (hash2 & 0xFFFFFFFFL);
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.export;
 
 import com.intellij.CommonBundle;
@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PathUtil;
-import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
@@ -47,10 +46,10 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
-import java.net.URL;
 
-public class ExportTestResultsAction extends DumbAwareAction {
+public final class ExportTestResultsAction extends DumbAwareAction {
   private static final String ID = "ExportTestResults";
 
   private static final Logger LOG = Logger.getInstance(ExportTestResultsAction.class.getName());
@@ -262,8 +261,9 @@ public class ExportTestResultsAction extends DumbAwareAction {
     else {
       Source xslSource;
       if (config.getExportFormat() == ExportTestResultsConfiguration.ExportFormat.BundledTemplate) {
-        URL bundledXsltUrl = getClass().getResource("intellij-export.xsl");
-        xslSource = new StreamSource(URLUtil.openStream(bundledXsltUrl));
+        try (InputStream bundledXsltUrl = getClass().getResourceAsStream("intellij-export.xsl")) {
+          xslSource = new StreamSource(bundledXsltUrl);
+        }
       }
       else {
         File xslFile = new File(config.getUserTemplatePath());

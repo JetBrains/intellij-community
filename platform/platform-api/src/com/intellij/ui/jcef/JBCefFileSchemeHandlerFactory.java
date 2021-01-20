@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -26,7 +26,7 @@ import java.util.Random;
  *
  * @author tav
  */
-class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory  {
+final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory  {
   public static final String FILE_SCHEME_NAME = "file";
   public static final String LOADHTML_RANDOM_URL_PREFIX = FILE_SCHEME_NAME + ":///jbcefbrowser/";
 

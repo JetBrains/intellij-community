@@ -1,21 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.IntFunction;
+
 /**
  * Specialized memory saving map implementation for UrlClassLoader to avoid extra dependencies.
  */
-final class IntObjectHashMap {
+final class IntObjectHashMap<T> {
+  private final IntFunction<T[]> arrayFactory;
   private int size;
   private int[] keys;
-  private Object[] values;
-  private Object specialZeroValue;
+  private T[] values;
+  private T specialZeroValue;
   private boolean hasZeroValue;
 
-  IntObjectHashMap() {
+  IntObjectHashMap(IntFunction<T[]> arrayFactory) {
+    this.arrayFactory = arrayFactory;
     keys = new int[4];
-    values = new Object[keys.length];
+    values = arrayFactory.apply(keys.length);
+  }
+
+  IntObjectHashMap(IntObjectHashMap<T> original) {
+    arrayFactory = original.arrayFactory;
+    keys = original.keys;
+    values = original.values;
+    size = original.size;
+    specialZeroValue = original.specialZeroValue;
+    hasZeroValue = original.hasZeroValue;
   }
 
   int size() {
@@ -25,12 +38,12 @@ final class IntObjectHashMap {
   void clear() {
     size = 0;
     keys = new int[4];
-    values = new Object[keys.length];
+    values = arrayFactory.apply(keys.length);
     specialZeroValue = null;
     hasZeroValue = false;
   }
 
-  void put(int key, @NotNull Object value) {
+  void put(int key, @NotNull T value) {
     if (key == 0) {
       specialZeroValue = value;
       hasZeroValue = true;
@@ -74,7 +87,7 @@ final class IntObjectHashMap {
 
   private void rehash() {
     int[] newKeys = new int[keys.length << 1];
-    Object[] newValues = new Object[newKeys.length];
+    T[] newValues = arrayFactory.apply(newKeys.length);
 
     for (int i = keys.length - 1; i >= 0; i--) {
       int key = keys[i];
@@ -87,7 +100,7 @@ final class IntObjectHashMap {
     values = newValues;
   }
 
-  public Object get(int key) {
+  public T get(int key) {
     return key == 0 ? specialZeroValue : values[hashIndex(keys, key)];
   }
 }

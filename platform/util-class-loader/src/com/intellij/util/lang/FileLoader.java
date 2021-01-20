@@ -38,7 +38,8 @@ final class FileLoader extends Loader {
   private static final AtomicLong totalReading = new AtomicLong();
 
   private static final Boolean doFsActivityLogging = false;
-  private static final short ourVersion = 22;
+  // find . -name "classpath.index" -delete
+  private static final short ourVersion = 23;
 
   private final int rootDirAbsolutePathLength;
   private final boolean isClassPathIndexEnabled;
@@ -86,13 +87,13 @@ final class FileLoader extends Loader {
         boolean containsClasses = false;
         boolean containsResources = false;
         for (Path file : dirStream) {
-          String path = file.toString();
+          String path = startDir.relativize(file).toString();
           if (path.endsWith(ClassPath.CLASS_EXTENSION)) {
-            context.transformClassNameAndAddPossiblyDuplicateNameEntry(path, path.lastIndexOf(File.separatorChar) + 1);
+            context.andClassName(path);
             containsClasses = true;
           }
           else {
-            context.addPossiblyDuplicateNameEntry(path, path.lastIndexOf(File.separatorChar) + 1, path.length());
+            context.addResourceName(path, path.length());
             containsResources = true;
             if (!path.endsWith(".svg") && !path.endsWith(".png") && !path.endsWith(".xml")) {
               dirCandidates.addLast(file);
@@ -133,7 +134,7 @@ final class FileLoader extends Loader {
   }
 
   @Override
-  @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException {
+  @Nullable Class<?> findClass(@NotNull String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException {
     Path file = path.resolve(fileName);
     byte[] data;
     try {

@@ -29,8 +29,6 @@ import java.util.function.Predicate;
 public final class ClassPath {
   static final String CLASS_EXTENSION = ".class";
 
-  private static final Loader[] EMPTY_LOADERS = new Loader[0];
-
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
   static final boolean recordLoadingInfo = Boolean.getBoolean("idea.record.classpath.info");
@@ -173,27 +171,12 @@ public final class ClassPath {
     long start = classLoading.startTiming();
     try {
       String fileName = className.replace('.', '/') + CLASS_EXTENSION;
-      String shortName;
       int i;
       if (useCache) {
-        shortName = ClasspathCache.transformClassName(className);
-
-        boolean allUrlsWereProcessed = this.allUrlsWereProcessed;
-        i = allUrlsWereProcessed ? 0 : lastLoaderProcessed.get();
-
-        Object o = cache.getLoadersByName(fileName);
-        if (o instanceof Loader) {
-          Loader loader = (Loader)o;
-          if (loader.containsName(fileName, shortName)) {
-            Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
-            if (result != null) {
-              return result;
-            }
-          }
-        }
-        else if (o != null) {
-          for (Loader loader : (Loader[])o) {
-            if (loader.containsName(fileName, shortName)) {
+        Loader[] loaders = cache.getClassLoadersByName(fileName);
+        if (loaders != null) {
+          for (Loader loader : loaders) {
+            if (loader.containsName(fileName)) {
               Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
               if (result != null) {
                 return result;
@@ -205,15 +188,16 @@ public final class ClassPath {
         if (allUrlsWereProcessed) {
           return null;
         }
+
+        i = lastLoaderProcessed.get();
       }
       else {
         i = 0;
-        shortName = null;
       }
 
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
-        if (useCache && !loader.containsName(fileName, shortName)) {
+        if (useCache && !loader.containsName(fileName)) {
           continue;
         }
 
@@ -234,10 +218,10 @@ public final class ClassPath {
     return null;
   }
 
-  private static @Nullable Class<?> findClassInLoader(String fileName,
-                                                      String className,
-                                                      ClassDataConsumer classConsumer,
-                                                      Loader loader) throws IOException {
+  private static @Nullable Class<?> findClassInLoader(@NotNull String fileName,
+                                                      @NotNull String className,
+                                                      @NotNull ClassDataConsumer classConsumer,
+                                                      @NotNull Loader loader) throws IOException {
     Class<?> result = loader.findClass(fileName, className, classConsumer);
     if (result == null) {
       return null;
@@ -248,38 +232,43 @@ public final class ClassPath {
     return result;
   }
 
-  public @Nullable Resource getResource(@NotNull String resourceName) {
+  public @Nullable Resource findResource(@NotNull String resourceName) {
     long start = resourceLoading.startTiming();
     try {
-      String shortName;
-      Resource resource;
       int i;
       if (useCache) {
-        shortName = ClasspathCache.transformName(resourceName);
-
-        boolean allUrlsWereProcessed = this.allUrlsWereProcessed;
-        i = allUrlsWereProcessed ? 0 : lastLoaderProcessed.get();
-
-        resource = cache.iterateLoaders(resourceName, resourceName, shortName);
-        if (resource != null) {
-          return resource;
+        Loader[] loaders = cache.getLoadersByName(resourceName);
+        if (loaders != null) {
+          for (Loader loader : loaders) {
+            if (loader.containsName(resourceName)) {
+              Resource resource = loader.getResource(resourceName);
+              if (resource != null) {
+                if (loadedClasses != null) {
+                  loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(resourceName, loader.path));
+                }
+                return resource;
+              }
+            }
+          }
         }
-        else if (allUrlsWereProcessed) {
+
+        if (allUrlsWereProcessed) {
           return null;
         }
+
+        i = lastLoaderProcessed.get();
       }
       else {
         i = 0;
-        shortName = null;
       }
 
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
-        if (useCache && !loader.containsName(resourceName, shortName)) {
+        if (useCache && !loader.containsName(resourceName)) {
           continue;
         }
 
-        resource = loader.getResource(resourceName);
+        Resource resource = loader.getResource(resourceName);
         if (resource != null) {
           if (loadedClasses != null) {
             loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(resourceName, loader.path));
@@ -295,22 +284,10 @@ public final class ClassPath {
     return null;
   }
 
-  public Enumeration<URL> getResources(@NotNull String name) {
+  public @NotNull Enumeration<URL> getResources(@NotNull String name) {
     if (useCache && allUrlsWereProcessed) {
-      Collection<Loader> loaderSet = new LinkedHashSet<>();
-      cache.collectLoaders(name, loaderSet);
-
-      if (name.endsWith("/")) {
-        cache.collectLoaders(name.substring(0, name.length() - 1), loaderSet);
-      }
-      else {
-        cache.collectLoaders(name + "/", loaderSet);
-      }
-
-      if (loaderSet.isEmpty()) {
-        return Collections.emptyEnumeration();
-      }
-      return new ResourceEnumeration(name, loaderSet.toArray(EMPTY_LOADERS));
+      Loader[] loaders = cache.getLoadersByName(name);
+      return loaders == null || loaders.length == 0 ? Collections.emptyEnumeration() : new ResourceEnumeration(name, loaders);
     }
     else {
       return new UncachedResourceEnumeration(name, this);
@@ -321,13 +298,12 @@ public final class ClassPath {
                         @NotNull Predicate<String> fileNameFilter,
                         @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
     if (useCache && allUrlsWereProcessed) {
-      Collection<Loader> loaderSet = new LinkedHashSet<>();
       // getLoadersByName compute package name by name, so, add ending slash
-      cache.collectLoaders(dir + '/', loaderSet);
-      if (loaderSet.isEmpty()) {
+      Loader[] loaders = cache.getLoadersByName(dir + '/');
+      if (loaders.length == 0) {
         return;
       }
-      for (Loader loader : loaderSet) {
+      for (Loader loader : loaders) {
         loader.processResources(dir, fileNameFilter, consumer);
       }
     }
@@ -342,10 +318,7 @@ public final class ClassPath {
 
   private @Nullable Loader getLoader(int i) {
     // volatile read
-    if (i < lastLoaderProcessed.get()) {
-      return loaders.get(i);
-    }
-    return getLoaderSlowPath(i);
+    return i < lastLoaderProcessed.get() ? loaders.get(i) : getLoaderSlowPath(i);
   }
 
   private synchronized @Nullable Loader getLoaderSlowPath(int i) {
@@ -478,12 +451,10 @@ public final class ClassPath {
     private int index;
     private Resource resource;
     private final String name;
-    private final String shortName;
     private final Loader[] loaders;
 
     ResourceEnumeration(@NotNull String name, Loader[] loaders) {
       this.name = name;
-      shortName = ClasspathCache.transformName(name);
       this.loaders = loaders;
     }
 
@@ -497,7 +468,7 @@ public final class ClassPath {
         Loader loader;
         while (index < loaders.length) {
           loader = loaders[index++];
-          if (!loader.containsName(name, shortName)) {
+          if (!loader.containsName(name)) {
             resource = null;
             continue;
           }
@@ -535,12 +506,10 @@ public final class ClassPath {
     private int index;
     private Resource resource;
     private final String name;
-    private final String shortName;
     private final ClassPath classPath;
 
     UncachedResourceEnumeration(@NotNull String name, @NotNull ClassPath classPath) {
       this.name = name;
-      shortName = ClasspathCache.transformName(name);
       this.classPath = classPath;
     }
 
@@ -553,7 +522,7 @@ public final class ClassPath {
       try {
         Loader loader;
         while ((loader = classPath.getLoader(index++)) != null) {
-          if (classPath.useCache && !loader.containsName(name, shortName)) {
+          if (classPath.useCache && !loader.containsName(name)) {
             continue;
           }
           resource = loader.getResource(name);
@@ -584,14 +553,6 @@ public final class ClassPath {
       this.resource = null;
       return resource.getURL();
     }
-  }
-
-  static @Nullable Resource findInLoader(@NotNull Loader loader, @NotNull String name) {
-    Resource resource = loader.getResource(name);
-    if (resource != null && loadedClasses != null) {
-      loadedClasses.add(new AbstractMap.SimpleImmutableEntry<>(name, loader.path));
-    }
-    return resource;
   }
 
   private static String @Nullable [] loadManifestClasspath(@NotNull JarLoader loader) {

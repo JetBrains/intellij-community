@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -422,9 +422,9 @@ public final class PathManager {
   /**
    * Attempts to detect classpath entry containing given resource.
    */
-  public static @Nullable String getResourceRoot(@NotNull ClassLoader cl, @NotNull String resourcePath) {
-    URL url = cl.getResource(resourcePath);
-    return url != null ? extractRoot(url, resourcePath) : null;
+  public static @Nullable String getResourceRoot(@NotNull ClassLoader classLoader, @NotNull String resourcePath) {
+    URL url = classLoader.getResource(resourcePath);
+    return url == null ? null : extractRoot(url, resourcePath);
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
@@ -9,10 +9,10 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.BaseSchemeProcessor;
@@ -24,11 +24,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import kotlin.Lazy;
@@ -39,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.*;
 
 @State(
@@ -500,7 +499,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
         try {
           ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
-          readDefTemplate(pluginClassLoader, file, !ep.hidden, pluginClassLoader,
+          readDefTemplate(file, !ep.hidden, pluginClassLoader,
                           PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
         }
         catch (Exception e) {
@@ -518,14 +517,14 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
   private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException {
     for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
-      readDefTemplate(provider, defTemplate, true, provider.getClass().getClassLoader(),
+      readDefTemplate(defTemplate, true, provider.getClass().getClassLoader(),
                       PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
     }
     try {
       String[] hidden = provider.getHiddenLiveTemplateFiles();
       if (hidden != null) {
         for (String s : hidden) {
-          readDefTemplate(provider, s, false, provider.getClass().getClassLoader(),
+          readDefTemplate(s, false, provider.getClass().getClassLoader(),
                           PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
         }
       }
@@ -534,18 +533,30 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  private void readDefTemplate(@NotNull Object requestor,
-                               @NotNull String defTemplate,
-                               boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException {
+  private void readDefTemplate(@NotNull String defTemplate,
+                               boolean registerTemplate,
+                               @NotNull ClassLoader loader,
+                               PluginInfo info) throws JDOMException {
     Element element;
-
     try {
-      URL defaults = DecodeDefaultsUtil.getDefaults(requestor, defTemplate);
-      if (defaults == null) {
-        LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
-        return;
+      InputStream stream;
+      if (defTemplate.startsWith("/")) {
+        stream = loader.getResourceAsStream(appendExt(defTemplate.substring(1)));
       }
-      element = JDOMUtil.load(URLUtil.openStream(defaults));
+      else {
+        stream = loader.getResourceAsStream(appendExt(defTemplate));
+      }
+      if (stream == null) {
+        stream = loader.getResourceAsStream(appendExt("idea/" + defTemplate));
+        if (stream == null) {
+          LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
+          return;
+        }
+        else {
+          LOG.error("Do not rely on implicit `idea/` prefix: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
+        }
+      }
+      element = JDOMUtil.load(stream);
     }
     catch (IOException e) {
       LOG.error("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e);
@@ -557,8 +568,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       for (TemplateImpl template : defGroup.getElements()) {
         String key = template.getKey();
         String groupName = template.getGroupName();
-        if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
-          myPredefinedTemplates.put(Pair.create(key, groupName), info);
+        if (Strings.isNotEmpty(key) && Strings.isNotEmpty(groupName)) {
+          myPredefinedTemplates.put(new Pair<>(key, groupName), info);
         }
       }
 
@@ -569,6 +580,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         }
       }
     }
+  }
+
+  private static String appendExt(@NotNull String head) {
+    return head.endsWith(FileStorageCoreUtil.DEFAULT_EXT) ? head : head + FileStorageCoreUtil.DEFAULT_EXT;
   }
 
   @Nullable
@@ -588,7 +603,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
 
     String groupName = element.getAttributeValue(GROUP);
-    if (StringUtil.isEmpty(groupName)) {
+    if (Strings.isEmpty(groupName)) {
       groupName = defGroupName;
     }
 

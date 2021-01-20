@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.UrlUtilRt;
@@ -53,7 +51,29 @@ public final class URLUtil {
    */
   public static @NotNull InputStream openStream(@NotNull URL url) throws IOException {
     String protocol = url.getProtocol();
-    return protocol.equals(JAR_PROTOCOL) ? openJarStream(url) : url.openStream();
+    if (!protocol.equals(JAR_PROTOCOL)) {
+      return url.openStream();
+    }
+
+    Pair<String, String> paths = splitJarUrl(url.getFile());
+    if (paths == null) {
+      throw new MalformedURLException(url.getFile());
+    }
+
+    ZipFile zipFile = new ZipFile(paths.first);
+    ZipEntry zipEntry = zipFile.getEntry(paths.second);
+    if (zipEntry == null) {
+      zipFile.close();
+      throw new FileNotFoundException("Entry " + paths.second + " not found in " + paths.first);
+    }
+
+    return new FilterInputStream(zipFile.getInputStream(zipEntry)) {
+      @Override
+      public void close() throws IOException {
+        super.close();
+        zipFile.close();
+      }
+    };
   }
 
   public static @NotNull InputStream openResourceStream(@NotNull URL url) throws IOException {
@@ -78,28 +98,6 @@ public final class URLUtil {
       }
       throw ex;
     }
-  }
-
-  private static @NotNull InputStream openJarStream(@NotNull URL url) throws IOException {
-    Pair<String, String> paths = splitJarUrl(url.getFile());
-    if (paths == null) {
-      throw new MalformedURLException(url.getFile());
-    }
-
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(paths.first);
-    ZipEntry zipEntry = zipFile.getEntry(paths.second);
-    if (zipEntry == null) {
-      zipFile.close();
-      throw new FileNotFoundException("Entry " + paths.second + " not found in " + paths.first);
-    }
-
-    return new FilterInputStream(zipFile.getInputStream(zipEntry)) {
-      @Override
-      public void close() throws IOException {
-        super.close();
-        zipFile.close();
-      }
-    };
   }
 
   /**

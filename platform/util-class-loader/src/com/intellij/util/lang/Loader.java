@@ -37,17 +37,17 @@ public abstract class Loader {
 
   public abstract Map<Loader.Attribute, String> getAttributes() throws IOException;
 
-  abstract @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException;
+  abstract @Nullable Class<?> findClass(@NotNull String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException;
 
   abstract @NotNull ClasspathCache.IndexRegistrar buildData() throws IOException;
 
-  final boolean containsName(@NotNull String name, @NotNull String shortName) {
+  final boolean containsName(@NotNull String name) {
     if (name.isEmpty()) {
       return true;
     }
 
     Predicate<String> filter = nameFilter;
-    return filter == null || filter.test(shortName);
+    return filter == null || filter.test(name);
   }
 
   final void setNameFilter(@NotNull Predicate<String> filter) {

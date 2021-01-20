@@ -39,7 +39,6 @@ public final class ZipResourceFile implements ResourceFile {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         if (buffer.getInt() == 1759251304) {
           entryCountToPreload = buffer.getShort() & 0xffff;
-          assert entryCountToPreload > 0;
         }
       });
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -38,7 +38,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
@@ -488,7 +487,6 @@ object DynamicPlugins {
           ActionToolbarImpl.updateAllToolbarsImmediately(true)
           (serviceIfCreated<NotificationsManager>() as? NotificationsManagerImpl)?.expireAll()
           MessagePool.getInstance().clearErrors()
-          DecodeDefaultsUtil.clearResourceCache()
           LaterInvocator.purgeExpiredItems()
 
           for (classLoader in classLoaders) {

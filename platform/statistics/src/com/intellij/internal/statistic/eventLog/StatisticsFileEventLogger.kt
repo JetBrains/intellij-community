@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeVal
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledFuture
@@ -21,7 +20,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val recorderVersion: String,
                                      private val writer: StatisticsEventLogWriter,
                                      private val systemEventIdProvider: StatisticsSystemEventIdProvider) : StatisticsEventLogger, Disposable {
-  protected val logExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId")
+  protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId", 1)
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0

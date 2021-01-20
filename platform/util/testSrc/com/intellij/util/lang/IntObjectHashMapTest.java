@@ -1,43 +1,31 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.Test;
 
 import java.util.Random;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 public class IntObjectHashMapTest {
   @Test
   public void test() {
-    IntObjectHashMap map = new IntObjectHashMap();
-    TIntObjectHashMap<Object> checkMap = new TIntObjectHashMap<>();
-    TIntObjectHashMap<Object> dupesMap = new TIntObjectHashMap<>();
+    IntObjectHashMap<String> map = new IntObjectHashMap<>(size -> new String[size]);
+    Int2ObjectOpenHashMap<String> checkMap = new Int2ObjectOpenHashMap<>();
+    Int2ObjectOpenHashMap<String> dupesMap = new Int2ObjectOpenHashMap<>();
     Random random = new Random();
     for(int i = 0; i < 1000000; ++i) {
       int key = random.nextInt();
       String value = String.valueOf(random.nextInt());
 
-      if (!checkMap.contains(key)) {
+      if (!checkMap.containsKey(key)) {
         map.put(key, value);
         checkMap.put(key, value);
         assertEquals(map.size(), checkMap.size());
-        assertEquals(value, map.get(key));
+        assertThat(map.get(key)).isEqualTo(value);
       }
       else {
         dupesMap.put(key, value);
@@ -46,22 +34,22 @@ public class IntObjectHashMapTest {
 
     dupesMap.put(0, "random string");
 
-    dupesMap.forEachEntry((int k, Object v) -> {
+    for (Int2ObjectMap.Entry<String> entry : dupesMap.int2ObjectEntrySet()) {
+      int k = entry.getIntKey();
+      String v = entry.getValue();
       checkMap.put(k, v);
       map.put(k, v);
       assertEquals(map.size(), checkMap.size());
       assertEquals(v, map.get(k));
-      return true;
-    });
+    }
 
     String value = "random string2";
     checkMap.put(0, value);
     map.put(0, value);
 
-    checkMap.forEachEntry((k, v) -> {
-      assertEquals(v, map.get(k));
-      return true;
-    });
-    assertEquals(map.size(), checkMap.size());
+    for (Int2ObjectMap.Entry<String> entry : checkMap.int2ObjectEntrySet()) {
+      assertEquals(entry.getValue(), map.get(entry.getIntKey()));
+    }
+    assertThat(map.size()).isEqualTo(checkMap.size());
   }
 }

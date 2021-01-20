@@ -263,22 +263,22 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public URL findResource(String name) {
+  public @Nullable URL findResource(@NotNull String name) {
     if (skipFindingResource.get() != null) {
       return null;
     }
-    Resource resource = findResourceImpl(name);
-    return resource == null ? null : resource.getURL();
-  }
 
-  private @Nullable Resource findResourceImpl(@NotNull String name) {
-    String n = toCanonicalPath(name);
-    Resource resource = classPath.getResource(n);
-    // compatibility with existing code, non-standard classloader behavior
-    if (resource == null && n.startsWith("/")) {
-      return classPath.getResource(n.substring(1));
+    Resource resource = classPath.findResource(toCanonicalPath(name));
+    if (resource == null && name.startsWith("/")) {
+      //noinspection SpellCheckingInspection
+      if (name.startsWith("/org/bridj/")) {
+        resource = classPath.findResource(name.substring(1));
+      }
+      else {
+        throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
+      }
     }
-    return resource;
+    return resource == null ? null : resource.getURL();
   }
 
   public final void processResources(@NotNull String dir,
@@ -288,9 +288,9 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public @Nullable InputStream getResourceAsStream(String name) {
+  public @Nullable InputStream getResourceAsStream(@NotNull String name) {
     String normalizedName = toCanonicalPath(name);
-    Resource resource = classPath.getResource(normalizedName);
+    Resource resource = classPath.findResource(normalizedName);
     // compatibility with existing code, non-standard classloader behavior
     if (resource != null) {
       try {
@@ -325,7 +325,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  protected Enumeration<URL> findResources(String name) throws IOException {
+  protected @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
     return classPath.getResources(name);
   }
 

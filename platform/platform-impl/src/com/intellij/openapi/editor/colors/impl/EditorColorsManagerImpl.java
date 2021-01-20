@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.configurationStore.BundledSchemeEP;
@@ -42,9 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
@@ -54,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import java.net.URL;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -416,14 +414,15 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   private static void loadAdditionalTextAttributesForScheme(@NotNull AbstractColorsScheme scheme,
                                                             @NotNull Collection<AdditionalTextAttributesEP> attributesEPs) {
     for (AdditionalTextAttributesEP attributesEP : attributesEPs) {
-      URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
-      if (resource == null) {
+      InputStream resourceStream = attributesEP.getLoaderForClass().getResourceAsStream(StringUtil.trimStart(attributesEP.file, "/"));
+      if (resourceStream == null) {
         LOG.warn("resource not found: " + attributesEP.file);
         continue;
       }
+
       try {
-        Element root = JDOMUtil.load(URLUtil.openStream(resource));
-        Element attrs = ObjectUtils.notNull(root.getChild("attributes"), root);
+        Element root = JDOMUtil.load(resourceStream);
+        Element attrs = Objects.requireNonNullElse(root.getChild("attributes"), root);
         Element colors = root.getChild("colors");
         scheme.readAttributes(attrs);
         if (colors != null) {

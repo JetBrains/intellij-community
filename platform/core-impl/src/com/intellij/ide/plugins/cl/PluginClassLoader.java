@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -353,81 +353,81 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   @Override
-  public final URL findResource(String name) {
-    URL resource = findOwnResource(name);
+  public final @Nullable URL findResource(@NotNull String name) {
+    String canonicalPath = toCanonicalPath(name);
+    Resource resource = classPath.findResource(canonicalPath);
     if (resource != null) {
-      return resource;
+      return resource.getURL();
     }
 
     for (ClassLoader classloader : getAllParents()) {
       if (classloader instanceof PluginClassLoader) {
-        resource = ((PluginClassLoader)classloader).findOwnResource(name);
+        resource = ((PluginClassLoader)classloader).classPath.findResource(canonicalPath);
+        if (resource != null) {
+          return resource.getURL();
+        }
       }
       else {
-        resource = classloader.getResource(name);
-      }
-
-      if (resource != null) {
-        return resource;
+        URL resourceUrl = classloader.getResource(canonicalPath);
+        if (resourceUrl != null) {
+          return resourceUrl;
+        }
       }
     }
 
+    if (name.startsWith("/")) {
+      throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
+    }
     return null;
   }
 
-  private @Nullable URL findOwnResource(String name) {
-    return super.findResource(name);
-  }
-
   @Override
-  public final InputStream getResourceAsStream(String name) {
+  public final @Nullable InputStream getResourceAsStream(@NotNull String name) {
     String canonicalPath = toCanonicalPath(name);
 
-    InputStream stream = getOwnResourceAsStreamByCanonicalPath(canonicalPath);
-    if (stream != null) {
-      return stream;
+    Resource resource = classPath.findResource(canonicalPath);
+    if (resource != null) {
+      try {
+        return resource.getInputStream();
+      }
+      catch (IOException e) {
+        Logger.getInstance(PluginClassLoader.class).error(e);
+      }
     }
 
     for (ClassLoader classloader : getAllParents()) {
       if (classloader instanceof PluginClassLoader) {
-        stream = ((PluginClassLoader)classloader).getOwnResourceAsStreamByCanonicalPath(canonicalPath);
+        resource = ((PluginClassLoader)classloader).classPath.findResource(canonicalPath);
+        if (resource != null) {
+          try {
+            return resource.getInputStream();
+          }
+          catch (IOException e) {
+            Logger.getInstance(PluginClassLoader.class).error(e);
+          }
+        }
       }
       else {
-        stream = classloader.getResourceAsStream(canonicalPath);
-      }
-
-      if (stream != null) {
-        return stream;
+        InputStream stream = classloader.getResourceAsStream(canonicalPath);
+        if (stream != null) {
+          return stream;
+        }
       }
     }
 
+    if (name.startsWith("/")) {
+      throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
+    }
     return null;
   }
 
-  private @Nullable InputStream getOwnResourceAsStreamByCanonicalPath(String canonicalPath) {
-    try {
-      Resource resource = classPath.getResource(canonicalPath);
-      if (resource == null && canonicalPath.startsWith("/")) {
-        throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash");
-      }
-      return resource == null ? null : resource.getInputStream();
-    }
-    catch (IOException e) {
-      return null;
-    }
-  }
-
   @Override
-  public final Enumeration<URL> findResources(String name) throws IOException {
+  public final @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
     List<Enumeration<URL>> resources = new ArrayList<>();
-    resources.add(findOwnResources(name));
+    resources.add(classPath.getResources(name));
     for (ClassLoader classloader : getAllParents()) {
       if (classloader instanceof PluginClassLoader) {
-        try {
-          resources.add(((PluginClassLoader)classloader).findOwnResources(name));
-        }
-        catch (IOException ignore) {
-        }
+        resources.add(((PluginClassLoader)classloader).classPath.getResources(name));
       }
       else {
         try {
@@ -438,10 +438,6 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       }
     }
     return new DeepEnumeration(resources);
-  }
-
-  private Enumeration<URL> findOwnResources(String name) throws IOException {
-    return super.findResources(name);
   }
 
   @SuppressWarnings("UnusedDeclaration")

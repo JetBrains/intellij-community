@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.zip;
 
 import com.intellij.util.io.DirectByteBufferPool;
@@ -15,6 +15,7 @@ import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
+@ApiStatus.Internal
 public final class ImmutableZipEntry {
   private final int uncompressedSize;
   private final int compressedSize;
@@ -28,7 +29,7 @@ public final class ImmutableZipEntry {
   // but not in local file header
   private int dataOffset = -1;
 
-  ImmutableZipEntry(String name, int compressedSize, int uncompressedSize, int headerOffset, int nameLengthInBytes, int method) {
+  public ImmutableZipEntry(String name, int compressedSize, int uncompressedSize, int headerOffset, int nameLengthInBytes, int method) {
     this.name = name;
     this.headerOffset = headerOffset;
     this.nameLengthInBytes = nameLengthInBytes;

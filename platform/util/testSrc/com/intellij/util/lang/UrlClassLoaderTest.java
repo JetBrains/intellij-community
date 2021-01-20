@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
@@ -62,12 +62,7 @@ public class UrlClassLoaderTest {
       assertNotNull(standardCl.findResource(nonCanonicalPathToFile));
 
       String absolutePathToFile = "/dir/a.txt";
-      assertNotNull(customCl.findResource(absolutePathToFile));  // non-standard CL behavior
       assertNull(standardCl.findResource(absolutePathToFile));
-
-      String absoluteNonCanonicalPathToFile = "/dir/a.txt/../a.txt";
-      assertNotNull(customCl.findResource(absoluteNonCanonicalPathToFile));  // non-standard CL behavior
-      assertNull(standardCl.findResource(absoluteNonCanonicalPathToFile));
     }
   }
 
@@ -113,10 +108,9 @@ public class UrlClassLoaderTest {
           futures.add(executor.submit(() -> {
             for (String name : namesToLoad) {
               try {
-                assertThat(findResource(loader, name, random.nextBoolean())).isNotNull();
+                assertThat(findResource(loader, name, random.nextBoolean())).describedAs("cannot find " + name).isNotNull();
               }
-              catch (Throwable e) {
-                System.err.println("Failed loading " + name);
+              catch (IOException e) {
                 ExceptionUtil.rethrow(e);
               }
             }
@@ -164,10 +158,7 @@ public class UrlClassLoaderTest {
     String resourceDirNameWithSlash2_ = "/" + resourceDirNameWithSlash2;
 
     assertThat(findResource(flat, resourceDirNameWithSlash, false)).isNull();
-    assertThat(findResource(flat, resourceDirNameWithSlash_, false)).isNull();
     assertThat(findResource(flat, resourceDirNameWithSlash2, false)).isNotNull();
-    // non-standard CL behavior
-    assertThat(findResource(flat, resourceDirNameWithSlash2_, false)).isNotNull();
 
     try (URLClassLoader recursive2 = new URLClassLoader(new URL[]{theGood.toURI().toURL()})) {
       assertNotNull(recursive2.findResource(resourceDirNameWithSlash2));
@@ -191,7 +182,7 @@ public class UrlClassLoaderTest {
   @Test
   public void testFindDirWhenUsingCache() throws IOException {
     int counter = 1;
-    for (String dirName : new String[]{"dir", "dir/", "dir.class", "dir.class/"}) {
+    for (String dirName : new String[]{"dir", "dir.class", "dir.class"}) {
       for (String resourceName : new String[]{"a.class", "a.txt"}) {
         Path root = tempDir.newDirectory("testFindDirWhenUsingCache" + (counter++)).toPath();
         Path subDir = createTestDir(root.toFile(), dirName).toPath();

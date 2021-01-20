@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 // [tav]: todo: think if we need some more sophisticated way to handle results of sequence of handles (like foldResults() callback)
 @SuppressWarnings({"unused", "UnusedReturnValue"}) // [tav] todo: remove it ( or add*Handler methods not yet used)
-public class JBCefClient implements JBCefDisposable {
+public final class JBCefClient implements JBCefDisposable {
   private static final Logger LOG = Logger.getInstance(JBCefClient.class);
 
   /**
