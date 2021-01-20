@@ -295,7 +295,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
         is GHPRReferencedSubject.Issue -> GHUIUtil.getIssueStateText(reference.state)
         is GHPRReferencedSubject.PullRequest -> GHUIUtil.getPullRequestStateText(reference.state, reference.isDraft)
       }
-      return NonOpaquePanel(HorizontalLayout(JBUIScale.scale(5))).apply {
+      return NonOpaquePanel(HorizontalLayout(5)).apply {
         border = JBUI.Borders.emptyLeft(28)
         add(JLabel(stateIcon).apply {
           toolTipText = stateToolTip

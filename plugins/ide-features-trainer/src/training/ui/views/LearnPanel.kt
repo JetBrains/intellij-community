@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.views
 
 import com.intellij.ide.IdeBundle
@@ -86,7 +86,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
     val footerContent = JPanel()
     footerContent.isOpaque = false
-    footerContent.layout = VerticalLayout(JBUI.scale(5))
+    footerContent.layout = VerticalLayout(5)
     footerContent.add(JLabel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text")).also {
       it.font = UISettings.instance.getFont(1).deriveFont(Font.BOLD)
     })

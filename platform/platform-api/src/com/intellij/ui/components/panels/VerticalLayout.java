@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.panels;
 
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.SwingConstants;
 import java.awt.Component;
@@ -15,7 +16,7 @@ import java.util.ArrayList;
  * This class is intended to lay out added components vertically.
  * It allows to add them into the TOP, CENTER, or BOTTOM group, which are aligned separately.
  * Every group can contain any amount of components. The specified gap is added between components,
- * and the double gap is added between groups of components.
+ * and the double gap is added between groups of components. The gap will be scaled automatically.
  * <p><b>NB!: this class must be modified together with the {@code HorizontalLayout} class accordingly</b></p>
  *
  * @see HorizontalLayout
@@ -35,6 +36,7 @@ public final class VerticalLayout implements LayoutManager2 {
    * Creates a layout with the specified gap.
    * All components will have preferred heights,
    * but their widths will be set according to the container.
+   * The gap will be scaled automatically.
    *
    * @param gap vertical gap between components
    */
@@ -46,6 +48,7 @@ public final class VerticalLayout implements LayoutManager2 {
   /**
    * Creates a layout with the specified gap and vertical alignment.
    * All components will have preferred sizes.
+   * The gap will be scaled automatically.
    *
    * @param gap       vertical gap between components
    * @param alignment horizontal alignment for components
@@ -133,6 +136,7 @@ public final class VerticalLayout implements LayoutManager2 {
 
   @Override
   public void layoutContainer(Container container) {
+    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
     synchronized (container.getTreeLock()) {
       Dimension top = getPreferredSize(myTop);
       Dimension bottom = getPreferredSize(myBottom);
@@ -144,7 +148,7 @@ public final class VerticalLayout implements LayoutManager2 {
 
       int topY = 0;
       if (top != null) {
-        topY = myGap + layout(myTop, 0, width, insets);
+        topY = gap + layout(myTop, 0, width, insets);
       }
       int bottomY = height;
       if (bottom != null) {
@@ -156,15 +160,15 @@ public final class VerticalLayout implements LayoutManager2 {
       if (center != null) {
         int centerY = (height - center.height) / 2;
         if (centerY > topY) {
-          int centerBottomY = centerY + center.height + myGap + myGap;
+          int centerBottomY = centerY + center.height + gap + gap;
           if (centerBottomY > bottomY) {
-            centerY = bottomY - center.height - myGap - myGap;
+            centerY = bottomY - center.height - gap - gap;
           }
         }
         if (centerY < topY) {
           centerY = topY;
         }
-        centerY = myGap + layout(myCenter, centerY, width, insets);
+        centerY = gap + layout(myCenter, centerY, width, insets);
         if (bottomY < centerY) {
           bottomY = centerY;
         }
@@ -176,6 +180,7 @@ public final class VerticalLayout implements LayoutManager2 {
   }
 
   private int layout(ArrayList<Component> list, int y, int width, Insets insets) {
+    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
     for (Component component : list) {
       if (component.isVisible()) {
         Dimension size = component.getPreferredSize();
@@ -190,7 +195,7 @@ public final class VerticalLayout implements LayoutManager2 {
           }
         }
         component.setBounds(x + insets.left, y + insets.top, size.width, size.height);
-        y += size.height + myGap;
+        y += size.height + gap;
       }
     }
     return y;
@@ -211,21 +216,23 @@ public final class VerticalLayout implements LayoutManager2 {
   }
 
   private Dimension getPreferredSize(ArrayList<Component> list) {
+    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
     Dimension result = null;
     for (Component component : list) {
       if (component.isVisible()) {
-        result = join(result, myGap, component.getPreferredSize());
+        result = join(result, gap, component.getPreferredSize());
       }
     }
     return result;
   }
 
   private Dimension getPreferredSize(Container container, boolean aligned) {
+    int gap2 = myGap <= 0 ? 0 : 2 * JBUI.scale(myGap);
     synchronized (container.getTreeLock()) {
       Dimension top = getPreferredSize(myTop);
       Dimension bottom = getPreferredSize(myBottom);
       Dimension center = getPreferredSize(myCenter);
-      Dimension result = join(join(join(null, myGap + myGap, top), myGap + myGap, center), myGap + myGap, bottom);
+      Dimension result = join(join(join(null, gap2, top), gap2, center), gap2, bottom);
       if (result == null) {
         result = new Dimension();
       }
