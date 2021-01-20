@@ -30,8 +30,8 @@ private val CURRENT_FOREGROUND = namedColor("AssignedMnemonic.selectionForegroun
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
-  object : RowGridLayout(0, 4, 1, SwingConstants.CENTER) {
-    override fun getCellSize(sizes: List<Dimension>) = super.getCellSize(sizes).also { it.width = it.height }
+  object : RowGridLayout(0, 4, 2, SwingConstants.CENTER) {
+    override fun getCellSize(sizes: List<Dimension>) = Dimension(JBUI.scale(24), JBUI.scale(28))
   }
 }
 
