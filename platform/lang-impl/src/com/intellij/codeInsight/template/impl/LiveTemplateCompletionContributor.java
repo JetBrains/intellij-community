@@ -144,6 +144,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
                                            Map<TemplateImpl, String> templates,
                                            CompletionResultSet result,
                                            boolean isAutopopup) {
+    // to avoid set `restartCompletionOnPrefixChange` if lookup items doesn't contains templates
     if (templates.isEmpty()) return;
 
     if (!templatesShown.getAndSet(true)) {
