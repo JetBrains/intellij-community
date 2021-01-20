@@ -64,6 +64,9 @@
     />
 
     <statistics.notificationIdsHolder implementation="com.intellij.space.notification.SpaceNotificationIdsHolder"/>
+
+    <virtualFileSystem key="space-diff" implementationClass="com.intellij.space.editor.SpaceDiffComplexPathVirtualFileSystem"/>
+    <virtualFileSystem key="space-chat" implementationClass="com.intellij.space.editor.SpaceChatComplexPathVirtualFileSystem"/>
   </extensions>
 
   <actions>
