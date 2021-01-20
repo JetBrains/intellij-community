@@ -22,7 +22,7 @@ object PluginSignatureChecker {
   private val jetbrainsCertificate: Certificate? by lazy {
     val cert = PluginSignatureChecker.javaClass.classLoader.getResourceAsStream("ca.crt")
     if (cert == null) {
-      LOG.warn("JetBrains certificate not found")
+      LOG.warn(IdeBundle.message("plugin.signature.not.found"))
       null
     }
     else {
@@ -32,7 +32,7 @@ object PluginSignatureChecker {
 
   @JvmStatic
   fun checkPluginsSignature(pluginName: String, pluginFile: File, indicator: ProgressIndicator): Boolean {
-    val jbCert = jetbrainsCertificate.takeIf { it != null } ?: return false
+    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("plugin.signature.not.found"))
     indicator.checkCanceled()
     indicator.text2 = IdeBundle.message("plugin.signature.checker.progress", pluginName)
     indicator.isIndeterminate = true
@@ -48,19 +48,23 @@ object PluginSignatureChecker {
     }
 
     if (errorMessage != null) {
-      val title = IdeBundle.message("plugin.signature.checker.title")
-      val message = IdeBundle.message("plugin.signature.checker.untrusted.message", pluginName, errorMessage)
-      val yesText = IdeBundle.message("plugin.signature.checker.yes")
-      val noText = IdeBundle.message("plugin.signature.checker.no")
-      var result: Int = -1
-      ApplicationManager.getApplication().invokeAndWait(
-        { result = Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) },
-        ModalityState.any()
-      )
-      return result == Messages.YES
+      return processSignatureWarning(pluginName, errorMessage)
     }
 
     return true
+  }
+
+  private fun processSignatureWarning(pluginName: String, errorMessage: String): Boolean {
+    val title = IdeBundle.message("plugin.signature.checker.title")
+    val message = IdeBundle.message("plugin.signature.checker.untrusted.message", pluginName, errorMessage)
+    val yesText = IdeBundle.message("plugin.signature.checker.yes")
+    val noText = IdeBundle.message("plugin.signature.checker.no")
+    var result: Int = -1
+    ApplicationManager.getApplication().invokeAndWait(
+      { result = Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) },
+      ModalityState.any()
+    )
+    return result == Messages.YES
   }
 
 }
