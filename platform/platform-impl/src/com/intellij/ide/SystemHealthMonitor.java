@@ -4,9 +4,8 @@ package com.intellij.ide;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
@@ -116,8 +115,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     Path bin = Path.of(PathManager.getBundledRuntimePath(), SystemInfo.isWindows ? "bin/java.exe" : SystemInfo.isMac ? "Contents/Home/bin/java" : "bin/java");
     if (Files.isRegularFile(bin) && (SystemInfo.isWindows || Files.isExecutable(bin))) {
       try {
-        ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(bin.toString(), "-version"));
-        return output.getExitCode() == 0;
+        return new CapturingProcessHandler(new GeneralCommandLine(bin.toString(), "-version")).runProcess(30_000).getExitCode() == 0;
       }
       catch (ExecutionException e) {
         LOG.debug(e);
