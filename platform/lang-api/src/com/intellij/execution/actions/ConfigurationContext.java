@@ -14,7 +14,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -33,7 +32,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,8 +100,7 @@ public class ConfigurationContext {
       }
     }
     myRuntimeConfiguration = configuration;
-    myDataContext = UIUtil.invokeAndWaitIfNeeded(() ->
-      DataManager.getInstance().getDataContext(PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)));
+    myDataContext = dataContext;
     myModule = module;
     myLocation = location;
     myMultipleSelection = multipleSelection;
