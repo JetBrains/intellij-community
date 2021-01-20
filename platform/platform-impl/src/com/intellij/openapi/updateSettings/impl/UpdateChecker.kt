@@ -312,33 +312,31 @@ object UpdateChecker {
 
   private fun getBrokenPlugins(): Map<PluginId, Set<String>> {
     val currentBuild = ApplicationInfoImpl.getInstance().build
-
-    val map = HashMap<PluginId, MutableSet<String>>()
+    val brokenPluginsMap = HashMap<PluginId, MutableSet<String>>()
     for (item in MarketplaceRequests.getInstance().getBrokenPlugins()) {
       try {
-        val originalUntil = BuildNumber.fromString(item.originalUntil?.trim()?.takeIf { it.isNotEmpty() } ?: continue, item.id,
-                                                   null) ?: currentBuild
-        val originalSince = BuildNumber.fromString(item.originalSince?.trim()?.takeIf { it.isNotEmpty() } ?: continue, item.id,
-                                                   null) ?: currentBuild
+        val parsedOriginalUntil = item.originalUntil?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+        val parsedOriginalSince = item.originalSince?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+        val originalUntil = BuildNumber.fromString(parsedOriginalUntil, item.id, null) ?: currentBuild
+        val originalSince = BuildNumber.fromString(parsedOriginalSince, item.id, null) ?: currentBuild
         val until = BuildNumber.fromString(item.until) ?: currentBuild
         val since = BuildNumber.fromString(item.since) ?: currentBuild
-        if (currentBuild !in originalSince..originalUntil || currentBuild in since..until) {
-          continue
-        }
-
-        map.computeIfAbsent(PluginId.getId(item.id)) { HashSet() }.add(item.version)
+        if (currentBuild !in originalSince..originalUntil || currentBuild in since..until) continue
+        brokenPluginsMap.computeIfAbsent(PluginId.getId(item.id)) { HashSet() }.add(item.version)
       }
       catch (e: Exception) {
         LOG.error("cannot parse $item", e)
         continue
       }
     }
-    return map
+    return brokenPluginsMap
   }
 
-  private fun getIncompatiblePlugins(newBuildNumber: BuildNumber?,
-                                     updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
-                                     toUpdate: MutableMap<PluginId, PluginDownloader>): Collection<IdeaPluginDescriptor>? {
+  private fun getIncompatiblePlugins(
+    newBuildNumber: BuildNumber?,
+    updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
+    toUpdate: MutableMap<PluginId, PluginDownloader>
+  ): Collection<IdeaPluginDescriptor>? {
     if (newBuildNumber == null) {
       return null
     }
