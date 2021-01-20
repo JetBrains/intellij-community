@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.application.ApplicationManager
@@ -275,13 +275,44 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     }
 
     val unknownSdk = object: UnknownSdk {
-      val versionPredicate = versionFilter?.let { Predicate<String> { versionFilter.invoke(it) } }
+      val versionPredicate = versionFilter?.let {
+        object : Predicate<String> {
+          override fun test(t: String) = versionFilter.invoke(t)
+          override fun toString() = versionFilter.toString()
+        }
+      }
+
+      val homePredicate = sdkHomeFilter?.let {
+        object : Predicate<String> {
+          override fun test(t: String) = sdkHomeFilter.invoke(t)
+          override fun toString() = sdkHomeFilter.toString()
+        }
+      }
 
       override fun getSdkName() = this@SdkLookupContextEx.sdkName
       override fun getSdkType() : SdkType = this@SdkLookupContextEx.sdkType
       override fun getSdkVersionStringPredicate() = versionPredicate
-      override fun getSdkHomePredicate() = sdkHomeFilter?.let { filter -> Predicate<String> { path -> filter(path) } }
-      override fun toString() = "SdkLookup{${sdkType.presentableName}, ${versionPredicate} }"
+      override fun getSdkHomePredicate() = homePredicate
+
+      override fun toString() = buildString {
+        append("SdkLookup{${sdkType.presentableName}")
+
+        sdkName?.let {
+          append(", name=$it")
+        }
+
+        versionPredicate?.let {
+          //it makes no sense to call .toString on Kotlin Lambdas
+          append(", withVersionFilter")
+        }
+
+        sdkHomeFilter?.let {
+          //it makes no sense to call .toString on Kotlin Lambdas
+          append(", withSdkHomeFilter")
+        }
+
+        append("}")
+      }
     }
 
     runSdkResolutionUnderProgress(rootProgressIndicator) { indicator ->
