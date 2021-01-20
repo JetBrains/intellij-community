@@ -2,13 +2,17 @@
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.Symbol;
+import com.intellij.model.SymbolResolveResult;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class PsiSymbolServiceImpl implements PsiSymbolService {
 
@@ -24,6 +28,12 @@ public class PsiSymbolServiceImpl implements PsiSymbolService {
   @Override
   public @NotNull PsiSymbolReference asSymbolReference(@NotNull PsiReference reference) {
     return new Psi2SymbolReference(reference);
+  }
+
+  @NotNull
+  @Override
+  public SymbolResolveResult asSymbolResolveResult(@NotNull ResolveResult result) {
+    return SymbolResolveResult.fromSymbol(PsiSymbolService.getInstance().asSymbol(Objects.requireNonNull(result.getElement())));
   }
 
   @Contract(pure = true)

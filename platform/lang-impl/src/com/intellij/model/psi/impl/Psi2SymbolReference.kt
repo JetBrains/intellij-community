@@ -20,7 +20,7 @@ internal class Psi2SymbolReference(private val psiReference: PsiReference) : Psi
     if (psiReference is PsiPolyVariantReference) {
       return psiReference.multiResolve(false).filter {
         it.element != null
-      }
+      }.map(PsiSymbolService.getInstance()::asSymbolResolveResult)
     }
     else {
       val resolved: PsiElement = psiReference.resolve() ?: return emptyList()
