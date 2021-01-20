@@ -403,6 +403,34 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    fun testInvokeOperatorInClass() {
+        doTest {
+            val defaultValueForCall = KtPsiFactory(project).createExpression("42")
+            addParameter(KotlinParameterInfo(
+                originalBaseFunctionDescriptor,
+                -1,
+                "i",
+                KotlinTypeInfo(false, BUILT_INS.intType),
+                null,
+                defaultValueForCall
+            ))
+        }
+    }
+
+    fun testInvokeOperatorInObject() {
+        doTest {
+            val defaultValueForCall = KtPsiFactory(project).createExpression("42")
+            addParameter(KotlinParameterInfo(
+                originalBaseFunctionDescriptor,
+                -1,
+                "i",
+                KotlinTypeInfo(false, BUILT_INS.intType),
+                null,
+                defaultValueForCall
+            ))
+        }
+    }
+
     fun testRemoveUsedReceiver() {
         doTestConflict {
             removeParameter(0)

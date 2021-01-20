@@ -1,5 +1,6 @@
 Checked type of pack.f()
 Checked type of v
+Resolved B(1)
 Resolved c(5)
 Resolved f()(2)
 Resolved listOf(Obj)[0](1)

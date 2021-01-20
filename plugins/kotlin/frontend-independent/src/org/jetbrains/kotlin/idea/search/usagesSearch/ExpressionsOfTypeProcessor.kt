@@ -486,8 +486,8 @@ class ExpressionsOfTypeProcessor(
                     }
 
                     is KtCallExpression -> {
-                        if (element == parent.calleeExpression) {  // constructor invocation
-                            processSuspiciousExpression(parent)
+                        if (element == parent.calleeExpression) {  // constructor or invoke operator invocation
+                            processSuspiciousExpression(element)
                             return true
                         }
                     }

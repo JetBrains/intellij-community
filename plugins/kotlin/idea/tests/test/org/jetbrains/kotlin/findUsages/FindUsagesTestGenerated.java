@@ -94,6 +94,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/conventions/getAsPropertyDelegate.0.kt");
             }
 
+            @TestMetadata("getInObject.0.kt")
+            public void testGetInObject() throws Exception {
+                runTest("testData/findUsages/kotlin/conventions/getInObject.0.kt");
+            }
+
             @TestMetadata("inc.0.kt")
             public void testInc() throws Exception {
                 runTest("testData/findUsages/kotlin/conventions/inc.0.kt");
@@ -107,6 +112,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("invokeExtension.0.kt")
             public void testInvokeExtension() throws Exception {
                 runTest("testData/findUsages/kotlin/conventions/invokeExtension.0.kt");
+            }
+
+            @TestMetadata("invokeInObject.0.kt")
+            public void testInvokeInObject() throws Exception {
+                runTest("testData/findUsages/kotlin/conventions/invokeInObject.0.kt");
             }
 
             @TestMetadata("invokeWithVarArg.0.kt")
