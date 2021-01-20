@@ -16,8 +16,6 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 
 abstract class IndexDataInitializer<T> : Callable<T?> {
-  private val myNestedInitializationTasks: MutableList<ThrowableRunnable<*>> = ArrayList()
-
   override fun call(): T? {
     val started = Instant.now()
     return try {
@@ -33,10 +31,6 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
   protected abstract fun finish(): T?
 
   protected abstract fun prepareTasks(): Collection<ThrowableRunnable<*>>
-
-  protected fun addNestedInitializationTask(nestedInitializationTask: ThrowableRunnable<*>) {
-    myNestedInitializationTasks.add(nestedInitializationTask)
-  }
 
   @Throws(InterruptedException::class)
   private fun runParallelTasks(tasks: Collection<ThrowableRunnable<*>>) {
@@ -61,7 +55,7 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
       taskExecutor.shutdown()
     }
     else {
-      for (callable in myNestedInitializationTasks) {
+      for (callable in tasks) {
         executeTask(callable)
       }
     }
