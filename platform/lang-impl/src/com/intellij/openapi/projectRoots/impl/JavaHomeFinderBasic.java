@@ -309,11 +309,11 @@ public class JavaHomeFinderBasic {
     File installsDir = findAsdfInstallsDir();
     if (installsDir == null) return Collections.emptySet();
     File javasDir = new File(installsDir, "java");
-    return javasDir.isDirectory() ? scanAll(javasDir.toPath(), true) : Collections.emptySet();
+    return safeIsDirectory(javasDir) ? scanAll(javasDir.toPath(), true) : Collections.emptySet();
   }
 
   @Nullable
-  private static File findAsdfInstallsDir() {
+  private File findAsdfInstallsDir() {
     // try to use environment variable for custom data directory
     // https://asdf-vm.com/#/core-configuration?id=environment-variables
     String dataDir = EnvironmentUtil.getValue("ASDF_DATA_DIR");
@@ -321,7 +321,7 @@ public class JavaHomeFinderBasic {
       File primaryDir = new File(dataDir);
       if (primaryDir.isDirectory()) {
         File installsDir = primaryDir.toPath().resolve("installs").toFile();
-        if (installsDir.isDirectory()) return installsDir;
+        if (safeIsDirectory(installsDir)) return installsDir;
       }
     }
 
@@ -331,7 +331,7 @@ public class JavaHomeFinderBasic {
       if (homePath != null) {
         File homeDir = new File(homePath);
         File installsDir = homeDir.toPath().resolve(".asdf").resolve("installs").toFile();
-        if (installsDir.isDirectory()) return installsDir;
+        if (safeIsDirectory(installsDir)) return installsDir;
       }
     }
 
@@ -339,6 +339,19 @@ public class JavaHomeFinderBasic {
     return null;
   }
 
+
+  private boolean safeIsDirectory(@NotNull File dir) {
+    try {
+      return dir.isDirectory();
+    }
+    catch (SecurityException se) {
+      return false; // when a directory is not accessible we should ignore it
+    }
+    catch (Exception e) {
+      log.debug("Failed to check directory existence: unexpected exception " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+      return false;
+    }
+  }
 
   private boolean safeExists(@NotNull Path path) {
     try {
