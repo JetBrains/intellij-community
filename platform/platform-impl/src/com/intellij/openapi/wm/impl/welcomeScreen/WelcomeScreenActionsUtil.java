@@ -46,7 +46,7 @@ public class WelcomeScreenActionsUtil {
     }
   }
 
-  static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+  public static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
     final JBOptionButton myButton;
 
     ToolbarTextButtonWrapper(@NotNull List<AnAction> actions) {
