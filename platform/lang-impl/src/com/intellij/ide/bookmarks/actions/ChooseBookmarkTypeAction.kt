@@ -4,6 +4,7 @@ package com.intellij.ide.bookmarks.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.bookmarks.BookmarkType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -37,11 +38,8 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction() {
           isPopupShown = false
         }
       })
-      val point = event.dataContext.getPointOnGutter()
-      when (point != null) {
-        true -> show(point)
-        else -> showInBestPositionFor(event.dataContext)
-      }
+      context.getPointOnGutter(event.getData(CONTEXT_COMPONENT))?.let { show(it) }
+      ?: showInBestPositionFor(event.dataContext)
     }
   }
 

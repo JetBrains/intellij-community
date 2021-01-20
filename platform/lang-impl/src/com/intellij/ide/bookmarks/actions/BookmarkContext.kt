@@ -6,15 +6,15 @@ import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.ide.bookmarks.BookmarkType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.scale.JBUIScale
+import java.awt.Component
 
 internal data class BookmarkContext(val project: Project, val file: VirtualFile, val editor: Editor?, val line: Int) {
   val manager: BookmarkManager by lazy { BookmarkManager.getInstance(project) }
@@ -40,6 +40,15 @@ internal data class BookmarkContext(val project: Project, val file: VirtualFile,
       else -> manager.setMnemonic(bookmark, type.mnemonic)
     }
   }
+
+  internal fun getPointOnGutter(component: Component?) =
+    if (component !is EditorGutterComponentEx || editor == null || line < 0) null
+    else {
+      RelativePoint(component, editor.logicalPositionToXY(LogicalPosition(line, 0)).apply {
+        x = component.iconAreaOffset
+        y += editor.lineHeight
+      })
+    }
 }
 
 internal val DataContext.editor: Editor?
@@ -56,10 +65,3 @@ internal val DataContext.context: BookmarkContext?
     val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
     return if (file is LightVirtualFile) null else BookmarkContext(project, file, editor, line)
   }
-
-internal fun DataContext.getPointOnGutter(): RelativePoint? {
-  val component = getData(PlatformDataKeys.CONTEXT_COMPONENT) as? EditorGutterComponentEx ?: return null
-  val point = getData(EditorGutterComponentEx.ICON_CENTER_POSITION) ?: return null
-  point.y += JBUIScale.scale(10)
-  return RelativePoint(component, point)
-}
