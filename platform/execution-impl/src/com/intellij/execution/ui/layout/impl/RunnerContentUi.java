@@ -27,6 +27,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
 import com.intellij.ui.*;
@@ -48,6 +50,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
@@ -244,6 +247,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     if (myTabs != null) return;
 
     myTabs = JBRunnerTabs.create(myProject, this);
+    myTabs.getComponent().setOpaque(false);
     myTabs.setDataProvider(dataId -> {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
         TabInfo info = myTabs.getTargetInfo();
@@ -263,7 +267,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     myTabs.getPresentation().setPaintFocus(false).setRequestFocusOnLastFocusedComponent(true);
 
-    NonOpaquePanel wrapper = new MyComponent(new BorderLayout(0, 0));
+    NonOpaquePanel wrapper = new MyComponent();
     wrapper.add(myToolbar, BorderLayout.WEST);
     wrapper.add(myTabs.getComponent(), BorderLayout.CENTER);
     wrapper.setBorder(JBUI.Borders.emptyTop(-1));
@@ -984,8 +988,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void setActions(Wrapper placeHolder, String place, DefaultActionGroup group) {
     String adjustedPlace = place == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : place;
     ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, group, true);
+    tb.setReservePlaceAutoPopupIcon(false);
     tb.setTargetComponent(myComponent);
     tb.getComponent().setBorder(null);
+    tb.getComponent().setOpaque(false);
 
     placeHolder.setContent(tb.getComponent());
   }
@@ -994,9 +1000,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     for (Map.Entry<GridImpl, Wrapper> entry : myMinimizedButtonsPlaceholder.entrySet()) {
       Wrapper eachPlaceholder = entry.getValue();
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.RUNNER_LAYOUT_BUTTON_TOOLBAR, myViewActions, true);
-      tb.setSecondaryActionsIcon(AllIcons.Debugger.RestoreLayout);
+      tb.setSecondaryActionsIcon(AllIcons.Debugger.RestoreLayout, true);
       tb.setSecondaryActionsTooltip(ExecutionBundle.message("runner.content.tooltip.layout.settings"));
       tb.setTargetComponent(myComponent);
+      tb.getComponent().setOpaque(false);
       tb.getComponent().setBorder(null);
       tb.setReservePlaceAutoPopupIcon(false);
       JComponent minimized = tb.getComponent();
@@ -1473,11 +1480,30 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
-    MyComponent(LayoutManager layout) {
-      super(layout);
+    MyComponent() {
+      super(new BorderLayout());
       setOpaque(true);
       setFocusCycleRoot(!ScreenReader.isActive());
       setBorder(new ToolWindowEx.Border(false, false, false, false));
+
+      MouseAdapter adapter = new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecorator.class, myComponent),
+                                       decorator -> decorator.activate(ToolWindowEventSource.ToolWindowHeader));
+        }
+      };
+      addMouseListener(adapter);
+      myTabs.getComponent().addMouseListener(adapter);
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+      InternalDecorator decorator = ComponentUtil.getParentOfType(InternalDecorator.class, myComponent);
+      if (decorator != null && myTabs.getTabCount() > 0) {
+        UIUtil.drawHeader(g, 0, getWidth(), decorator.getHeaderHeight(), decorator.isActive(), true, false, false);
+      }
+      super.paintChildren(g);
     }
 
     @Override

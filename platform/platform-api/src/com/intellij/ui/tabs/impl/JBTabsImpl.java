@@ -22,6 +22,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
@@ -1455,17 +1456,18 @@ public class JBTabsImpl extends JComponent
     revalidateAndRepaint(true);
   }
 
+  @Override
+  public boolean isOpaque() {
+    return super.isOpaque() && !myVisibleInfos.isEmpty();
+  }
+
   protected void revalidateAndRepaint(final boolean layoutNow) {
     if (myVisibleInfos.isEmpty()) {
-      setOpaque(false);
       Component nonOpaque = UIUtil.findUltimateParent(this);
       if (getParent() != null) {
         final Rectangle toRepaint = SwingUtilities.convertRectangle(getParent(), getBounds(), nonOpaque);
         nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height);
       }
-    }
-    else {
-      setOpaque(true);
     }
 
     if (layoutNow) {
@@ -1675,7 +1677,7 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  public static class Toolbar extends JPanel {
+  public static class Toolbar extends NonOpaquePanel {
     public Toolbar(JBTabsImpl tabs, TabInfo info) {
       setLayout(new BorderLayout());
 

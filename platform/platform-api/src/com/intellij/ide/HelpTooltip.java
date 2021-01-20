@@ -253,6 +253,18 @@ public class HelpTooltip {
   }
 
   /**
+   * Clears previously specified title, shortcut, link and description.
+   * @return {@code this}
+   */
+  public HelpTooltip clear() {
+    title = null;
+    shortcut = null;
+    link = null;
+    description = null;
+    return this;
+  }
+
+  /**
    * Toggles whether to hide tooltip automatically on timeout. For default behaviour just don't call this method.
    *
    * @param neverHide {@code true} don't hide, {@code false} otherwise.
@@ -280,6 +292,9 @@ public class HelpTooltip {
    * @param component is the owner component for the tooltip.
    */
   public void installOn(@NotNull JComponent component) {
+    if (component.getClientProperty(TOOLTIP_PROPERTY) == this) {
+      return;
+    }
     getDismissDelay();
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
@@ -419,6 +434,20 @@ public class HelpTooltip {
         instance.masterPopupOpenCondition = null;
       }
     }
+  }
+
+  /**
+   * @return existing {@code HelpTooltip} instance installed on component or new instance if absent.
+   * @param owner a possible {@code HelpTooltip} owner.
+   */
+  @NotNull
+  public static HelpTooltip getOrCreate(@NotNull Component owner) {
+    if (owner instanceof JComponent) {
+      JComponent component = (JComponent)owner;
+      HelpTooltip instance = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
+      if (instance != null) return instance;
+    }
+    return new HelpTooltip();
   }
 
   /**
