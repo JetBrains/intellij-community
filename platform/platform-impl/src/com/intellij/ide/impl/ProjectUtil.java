@@ -2,6 +2,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
@@ -9,13 +10,11 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.JetBrainsProtocolHandler;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -23,11 +22,13 @@ import com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,10 +39,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.*;
@@ -55,7 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -66,6 +64,12 @@ public final class ProjectUtil {
   @NonNls private static final String MODE_ATTACH = "attach";
   private static final String MODE_REPLACE = "replace";
   private static final String MODE_NEW = "new";
+
+  public static final String DEFAULT_PROJECT_NAME = "default";
+  public static final String PROJECTS_DIR = "projects";
+  public static final String PROPERTY_PROJECT_PATH = "%s.project.path";
+
+  private static String ourProjectsPath;
 
   private ProjectUtil() { }
 
@@ -684,5 +688,108 @@ public final class ProjectUtil {
   public static boolean isValidProjectPath(@NotNull Path file) {
     return Files.isDirectory(file.resolve(Project.DIRECTORY_STORE_FOLDER)) ||
            (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
+  }
+
+  @NotNull
+  @SystemDependent
+  public static String getProjectsPath() {
+    Application application = ApplicationManager.getApplication();
+    String fromSettings = application == null || application.isHeadlessEnvironment() ? null :
+                          GeneralSettings.getInstance().getDefaultProjectDirectory();
+    if (StringUtil.isNotEmpty(fromSettings)) {
+      return PathManager.getAbsolutePath(fromSettings);
+    }
+    if (ourProjectsPath == null) {
+      String produceName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
+      String propertyName = String.format(PROPERTY_PROJECT_PATH, produceName);
+      String propertyValue = System.getProperty(propertyName);
+      ourProjectsPath = propertyValue != null
+                        ? PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '\"'))
+                        : PathManager.getConfigPath() + File.separator + PROJECTS_DIR;
+    }
+    return ourProjectsPath;
+  }
+
+  public static @NotNull Path getProjectPath(@NotNull String name) {
+    return Paths.get(getProjectsPath(), name);
+  }
+
+  @Nullable
+  public static Path getProjectFile(@NotNull String name) {
+    Path projectDir = getProjectPath(name);
+    return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)) ? projectDir : null;
+  }
+
+  @Nullable
+  public static Project openOrCreateProject(@NotNull String name) {
+    return openOrCreateProject(name, null);
+  }
+
+  @Nullable
+  public static Project openOrCreateProject(@NotNull String name, @Nullable ProjectCreatedCallback  projectCreatedCallback) {
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> openOrCreateProjectInner(name, projectCreatedCallback));
+  }
+
+  public interface ProjectCreatedCallback {
+    void projectCreated(Project project);
+  }
+
+  @NotNull
+  public static Set<String> getExistingProjectNames() {
+    Set<String> result = new LinkedHashSet<>();
+    File file = new File(getProjectsPath());
+    for (String name : ObjectUtils.notNull(file.list(), ArrayUtilRt.EMPTY_STRING_ARRAY)) {
+      if (getProjectFile(name) != null) {
+        result.add(name);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static Project openOrCreateProjectInner(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
+    Path existingFile = getProjectFile(name);
+    if (existingFile != null) {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      for (Project p : openProjects) {
+        if (!p.isDefault() && isSameProject(existingFile, p)) {
+          focusProjectWindow(p, false);
+          return p;
+        }
+      }
+      return ProjectManagerEx.getInstanceEx().openProject(existingFile, new OpenProjectTask().withRunConfigurators());
+    }
+
+    Path file = getProjectPath(name);
+    boolean created;
+    try {
+      created = (!Files.exists(file) && Files.createDirectories(file) != null) || Files.isDirectory(file);
+    }
+    catch (IOException e) {
+      created = false;
+    }
+
+    Path projectFile = null;
+    if (created) {
+      Project project = ProjectManagerEx.getInstanceEx().newProject(file, OpenProjectTask.newProject(true).withProjectName(name));
+      if (project != null) {
+        if (projectCreatedCallback != null) {
+          projectCreatedCallback.projectCreated(project);
+        }
+        saveAndDisposeProject(project);
+        projectFile = getProjectFile(name);
+      }
+    }
+    if (projectFile == null) {
+      return null;
+    }
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile, new OpenProjectTask().withRunConfigurators());
+  }
+
+  private static void saveAndDisposeProject(@NotNull Project project) {
+    StoreUtil.saveSettings(project, true);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      WriteAction.run(() -> Disposer.dispose(project));
+    });
   }
 }
