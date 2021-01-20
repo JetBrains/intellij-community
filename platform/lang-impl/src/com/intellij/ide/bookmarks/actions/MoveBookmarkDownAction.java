@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.bookmarks.BookmarkBundle;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.ui.UISettings;
@@ -20,7 +20,7 @@ class MoveBookmarkDownAction extends DumbAwareAction {
   private final JList<BookmarkItem> myList;
 
   MoveBookmarkDownAction(Project project, JList<BookmarkItem> list) {
-    super(IdeBundle.message("action.bookmark.move.down"), null, AllIcons.Actions.MoveDown);
+    super(BookmarkBundle.message("action.bookmark.move.down"), null, AllIcons.Actions.MoveDown);
     setEnabledInModalContext(true);
     myProject = project;
     myList = list;

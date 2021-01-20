@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions
 
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.bookmarks.BookmarkBundle
 import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.ide.bookmarks.BookmarkType
-import com.intellij.lang.LangBundle
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
@@ -53,9 +52,9 @@ internal abstract class MnemonicChooser(
         addToTop(JSeparator())
         addToBottom(JPanel(HorizontalLayout(5)).apply {
           border = JBUI.Borders.empty(5, 0)
-          add(HorizontalLayout.LEFT, createLegend(ASSIGNED_BACKGROUND, IdeBundle.message("mnemonic.chooser.legend.assigned.bookmark")))
+          add(HorizontalLayout.LEFT, createLegend(ASSIGNED_BACKGROUND, BookmarkBundle.message("mnemonic.chooser.legend.assigned.bookmark")))
           if (current != BookmarkType.DEFAULT) {
-            add(HorizontalLayout.LEFT, createLegend(CURRENT_BACKGROUND, IdeBundle.message("mnemonic.chooser.legend.current.bookmark")))
+            add(HorizontalLayout.LEFT, createLegend(CURRENT_BACKGROUND, BookmarkBundle.message("mnemonic.chooser.legend.current.bookmark")))
           }
         })
       })
@@ -65,7 +64,7 @@ internal abstract class MnemonicChooser(
   private fun buttons() = UIUtil.uiTraverser(this).traverse().filter(JButton::class.java)
 
   fun createPopup(cancelKey: Boolean) = JBPopupFactory.getInstance().createComponentPopupBuilder(this, buttons().first())
-    .setTitle(LangBundle.message("popup.title.bookmark.mnemonic"))
+    .setTitle(BookmarkBundle.message("popup.title.bookmark.mnemonic"))
     .setCancelKeyEnabled(cancelKey)
     .setFocusable(true)
     .setRequestFocus(true)

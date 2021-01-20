@@ -2,11 +2,9 @@
 package com.intellij.ide.bookmarks;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -329,13 +327,13 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       }
     }
 
-    return IdeBundle.message("bookmark.file.X.line.Y", presentableUrl, getLine() + 1);
+    return BookmarkBundle.message("bookmark.file.X.line.Y", presentableUrl, getLine() + 1);
   }
 
   @NotNull
   @NlsContexts.Tooltip
   private String getBookmarkTooltip() {
-    StringBuilder result = new StringBuilder(IdeBundle.message("bookmark.text"));
+    StringBuilder result = new StringBuilder(BookmarkBundle.message("bookmark.text"));
     if (myMnemonic != 0) {
       result.append(" ").append(myMnemonic);
     }
@@ -351,17 +349,17 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       String shortcutToNavigate = KeymapUtil.getFirstKeyboardShortcutText("GotoBookmark" + myMnemonic);
       if (!shortcutToToggle.isEmpty()) {
         shortcutDescription.append(shortcutToNavigate.isEmpty()
-                                   ? IdeBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle)
-                                   : IdeBundle.message("bookmark.shortcut.to.toggle.and.jump", shortcutToToggle, shortcutToNavigate));
+                                   ? BookmarkBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle)
+                                   : BookmarkBundle.message("bookmark.shortcut.to.toggle.and.jump", shortcutToToggle, shortcutToNavigate));
       } else if (!shortcutToNavigate.isEmpty()){
-        shortcutDescription.append(IdeBundle.message("bookmark.shortcut.to.jump", shortcutToNavigate));
+        shortcutDescription.append(BookmarkBundle.message("bookmark.shortcut.to.jump", shortcutToNavigate));
       }
     }
 
     if (shortcutDescription.length() == 0) {
       String shortcutToToggle = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark");
       if (shortcutToToggle.length() > 0) {
-        shortcutDescription.append(IdeBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle));
+        shortcutDescription.append(BookmarkBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle));
       }
     }
 
@@ -413,7 +411,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     @NotNull
     @Override
     public String getAccessibleName() {
-      return LangBundle.message("accessible.name.icon.bookmark.0", myBookmark.myMnemonic);
+      return BookmarkBundle.message("accessible.name.icon.bookmark.0", myBookmark.myMnemonic);
     }
 
     @Override

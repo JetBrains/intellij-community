@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.bookmarks.BookmarkBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 class ToggleSortBookmarksAction extends ToggleAction {
   ToggleSortBookmarksAction() {
-    super(IdeBundle.message("action.bookmark.toggle.sort"), null, AllIcons.ObjectBrowser.Sorted);
+    super(BookmarkBundle.message("action.bookmark.toggle.sort"), null, AllIcons.ObjectBrowser.Sorted);
     setEnabledInModalContext(true);
   }
 
