@@ -225,6 +225,10 @@ public final class ActionsTreeUtil {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
     AnAction[] children = getActions(actionGroup);
+    if (actionGroup instanceof ActionGroupStub && children.length == 0) {
+      // ActionManagerImpl#preloadActions does not preload action groups, e.g. File | New
+      children = getActions((ActionGroup)actionManager.getAction(((ActionGroupStub)actionGroup).getId()));
+    }
 
     for (AnAction action : children) {
       if (action == null) {
