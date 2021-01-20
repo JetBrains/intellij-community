@@ -36,11 +36,29 @@ open class KotlinStackFrame(stackFrameDescriptorImpl: StackFrameDescriptorImpl) 
 
     override fun getEvaluator() = kotlinEvaluator
 
+    override fun buildLocalVariables(
+        evaluationContext: EvaluationContextImpl,
+        children: XValueChildrenList,
+        localVariables: List<LocalVariableProxyImpl>
+    ) {
+        if (!kotlinVariableViewService.kotlinVariableView) {
+            return super.buildLocalVariables(evaluationContext, children, localVariables)
+        }
+        buildVariablesInKotlinView(evaluationContext, children, localVariables)
+    }
+
     override fun superBuildVariables(evaluationContext: EvaluationContextImpl, children: XValueChildrenList) {
         if (!kotlinVariableViewService.kotlinVariableView) {
             return super.superBuildVariables(evaluationContext, children)
         }
+        buildVariablesInKotlinView(evaluationContext, children, visibleVariables)
+    }
 
+    private fun buildVariablesInKotlinView(
+        evaluationContext: EvaluationContextImpl,
+        children: XValueChildrenList,
+        variables: List<LocalVariableProxyImpl>
+    ) {
         val nodeManager = evaluationContext.debugProcess.xdebugProcess?.nodeManager
 
         fun addItem(variable: LocalVariableProxyImpl) {
@@ -52,7 +70,7 @@ open class KotlinStackFrame(stackFrameDescriptorImpl: StackFrameDescriptorImpl) 
             children.add(JavaValue.create(null, variableDescriptor, evaluationContext, nodeManager, false))
         }
 
-        val (thisVariables, otherVariables) = visibleVariables
+        val (thisVariables, otherVariables) = variables
             .partition { it.name() == THIS || it is ThisLocalVariable }
 
         val existingVariables = ExistingVariables(thisVariables, otherVariables)
