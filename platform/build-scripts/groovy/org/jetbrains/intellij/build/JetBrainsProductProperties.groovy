@@ -14,6 +14,5 @@ abstract class JetBrainsProductProperties extends ProductProperties {
       "intellij.laf.macos",
       "intellij.laf.win10",
     ]
-    productLayout.compatiblePluginsToIgnore.add("intellij.python.conda")
   }
 }
