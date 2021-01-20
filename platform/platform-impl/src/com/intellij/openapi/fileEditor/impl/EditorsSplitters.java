@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -418,20 +419,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   void updateFileColor(@NotNull VirtualFile file) {
     Collection<EditorWindow> windows = findWindows(file);
     for (EditorWindow window : windows) {
-      int index = window.findEditorIndex(window.findFileComposite(file));
-      LOG.assertTrue(index != -1);
-      window.setForegroundAt(index, getManager().getFileColor(file));
-      window.setTextAttributes(index, getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null);
-    }
-  }
-
-  void updateFileStyle(@NotNull VirtualFile file) {
-    Collection<EditorWindow> windows = findWindows(file);
-    for (EditorWindow window : windows) {
       EditorWithProviderComposite composite = window.findFileComposite(file);
       int index = window.findEditorIndex(composite);
       LOG.assertTrue(index != -1);
-      window.setStyleAt(index, composite != null && composite.isPreview() ? SimpleTextAttributes.STYLE_ITALIC : -1);
+      window.setForegroundAt(index, getManager().getFileColor(file));
+      TextAttributes attributes = getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
+      if (composite != null && composite.isPreview()) {
+        var italic = new TextAttributes(null, null, null, null, Font.ITALIC);
+        attributes = (attributes == null) ? italic : TextAttributes.merge(italic, attributes);
+      }
+      window.setTextAttributes(index, attributes);
     }
   }
 

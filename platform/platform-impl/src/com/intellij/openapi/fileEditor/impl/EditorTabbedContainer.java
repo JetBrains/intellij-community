@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -180,10 +179,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   void setForegroundAt(int index, @NotNull Color color) {
     myTabs.getTabAt(index).setDefaultForeground(color);
-  }
-
-  void setStyleAt(int index, @SimpleTextAttributes.StyleAttributeConstant int style) {
-    myTabs.getTabAt(index).setDefaultStyle(style);
   }
 
   void setTextAttributes(int index, @Nullable TextAttributes attributes) {

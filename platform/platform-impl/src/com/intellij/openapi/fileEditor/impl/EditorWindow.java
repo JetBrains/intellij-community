@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -321,10 +320,6 @@ public final class EditorWindow {
     myTabbedPane.setForegroundAt(index, color);
   }
 
-  void setStyleAt(int index, @SimpleTextAttributes.StyleAttributeConstant int style) {
-    myTabbedPane.setStyleAt(index, style);
-  }
-
   void setTextAttributes(int index, @Nullable TextAttributes attributes) {
     myTabbedPane.setTextAttributes(index, attributes);
   }
@@ -569,7 +564,7 @@ public final class EditorWindow {
         myOwner.updateFileIconLater(file);
         myOwner.updateFileColor(file);
       }
-      myOwner.updateFileStyle(editor.getFile());
+      myOwner.updateFileColor(editor.getFile());
       myOwner.setCurrentWindow(this, false);
       hideTabsIfNeeded(editor);
     }
@@ -952,7 +947,7 @@ public final class EditorWindow {
     editorComposite.setPinned(pinned);
     if (editorComposite.isPreview()) {
       editorComposite.setPreview(false);
-      myOwner.updateFileStyle(file);
+      myOwner.updateFileColor(file);
     }
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread()) {
       ObjectUtils.consumeIfCast(getTabbedPane().getTabs(), JBTabsImpl.class, JBTabsImpl::doLayout);

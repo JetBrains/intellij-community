@@ -425,7 +425,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       splitter.findEditorComposites(file).stream()
         .filter(EditorComposite::isPreview)
         .forEach(c -> c.setPreview(false));
-      splitter.updateFileStyle(file);
+      splitter.updateFileColor(file);
     }
   }
 
