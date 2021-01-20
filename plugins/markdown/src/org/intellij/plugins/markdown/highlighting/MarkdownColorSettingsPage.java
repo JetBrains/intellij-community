@@ -150,11 +150,6 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.list_item", MarkdownHighlighterColors.LIST_ITEM_ATTR_KEY);
       put("markdown.editor.colors.html_block", MarkdownHighlighterColors.HTML_BLOCK_ATTR_KEY);
       put("markdown.editor.colors.inline_html", MarkdownHighlighterColors.INLINE_HTML_ATTR_KEY);
-      put("markdown.editor.colors.number", MarkdownHighlighterColors.NUMBER);
-      put("markdown.editor.colors.date", MarkdownHighlighterColors.DATE);
-      put("markdown.editor.colors.money", MarkdownHighlighterColors.MONEY);
-      put("markdown.editor.colors.person", MarkdownHighlighterColors.PERSON);
-      put("markdown.editor.colors.organization", MarkdownHighlighterColors.ORGANIZATION);
     }
 
     public AttributesDescriptor @NotNull [] get() {

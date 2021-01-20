@@ -61,8 +61,6 @@ Includes the following features:</p>
     <bidiRegionsSeparator language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownBidiRegionsSeparator"/>
 
     <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownHighlightingAnnotator"/>
-    <annotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownNumberHighlightingAnnotator"/>
-    <externalAnnotator language="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.ner.MarkdownNamedEntitiesExternalAnnotator"/>
 
     <multiHostInjector implementation="org.intellij.plugins.markdown.injection.CodeFenceInjector"/>
 
@@ -198,35 +196,6 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
               icon="MarkdownIcons.EditorActions.Link">
       </action>
-
-      <separator/>
-
-      <group id="Markdown.Highlighting"
-             class="com.intellij.openapi.actionSystem.DefaultActionGroup"
-             popup="true"
-             icon="AllIcons.Actions.Show">
-        <separator key="group.Markdown.Highlighting.Comment.text"/>
-
-        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightAllEntitiesAction"
-                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightAllEntitiesAction">
-        </action>
-
-        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction"
-                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightNumbersAction">
-        </action>
-        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightDatesAction"
-                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightDatesAction">
-        </action>
-        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightMoneyAction"
-                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightMoneyAction">
-        </action>
-        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightPersonsAction"
-                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightPersonsAction">
-        </action>
-        <action class="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightOrganizationsAction"
-                id="org.intellij.plugins.markdown.ui.actions.styling.highlighting.HighlightOrganizationsAction">
-        </action>
-      </group>
     </group>
 
     <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.CyclicSplitLayoutChangeAction"
