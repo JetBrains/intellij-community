@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -163,6 +164,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
       myPanel = new ScopeEditorPanel(myProject, DependencyValidationManager.getInstance(myProject));
       init();
       myPanel.reset(myScope, null);
+      Disposer.register(getDisposable(), myPanel);
     }
 
     @Override

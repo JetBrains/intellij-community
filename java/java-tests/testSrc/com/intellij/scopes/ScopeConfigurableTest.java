@@ -27,6 +27,7 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
       assertFalse(configurable.isModified());
       configurable.apply();
       assertFalse(configurable.isModified());
+      configurable.disposeUIResources();
     }
     finally {
       manager.removeAllSets();
@@ -45,6 +46,7 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
         assertFalse("Configurable " + configurable + " is modified immediately after creation", configurable.isModified());
         assertTrue(!configurable.isModified());
         configurable.apply();
+        configurable.disposeUIResources();
       }
     }
     finally {
