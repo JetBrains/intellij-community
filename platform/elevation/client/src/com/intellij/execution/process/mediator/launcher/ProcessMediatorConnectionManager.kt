@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.mediator.launcher
 
-import com.intellij.execution.process.mediator.ProcessMediatorLogger
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -29,18 +28,9 @@ class ProcessMediatorConnectionManager(private val connectionProvider: () -> Pro
     }
   }
 
-  fun adjustQuota(quotaOptions: QuotaOptions) {
-    synchronized(this) {
-      for (connection in parkedConnections) {
-        try {
-          connection.client.adjustQuotaBlocking(quotaOptions)
-        }
-        catch (e: Exception) {
-          ProcessMediatorLogger.LOG.warn("Unable to adjust quota for connection $connection")
-        }
-      }
-      getActiveConnectionOrNull()?.client?.adjustQuotaBlocking(quotaOptions)
-    }
+  fun adjustQuota(quotaOptions: QuotaOptions) = synchronized(this) {
+    val connection = getActiveConnectionOrNull() ?: return
+    connection.client.adjustQuotaBlocking(quotaOptions)
   }
 
   private fun launchDaemonAndConnect(): ProcessMediatorConnection = synchronized(this) {
