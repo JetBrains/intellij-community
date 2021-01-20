@@ -67,7 +67,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     return (ObjectStubSerializer<?, Stub>)serializer;
   }
 
-  int getClassId(final @NotNull ObjectStubSerializer<Stub, Stub> serializer) {
+  int getClassId(final @NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
     Integer idValue = mySerializerToId.get(serializer);
     if (idValue == null) {
       String name = serializer.getExternalId();
@@ -127,7 +127,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
 
   @Nullable
   String getSerializerName(@NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
-    return myIdToName.get(mySerializerToId.get(serializer));
+    return myIdToName.get(getClassId(serializer));
   }
 
   void copyFrom(@Nullable StubSerializerEnumerator helper) throws IOException {
