@@ -8,8 +8,10 @@ inline fun <T : AutoCloseable, R> T.runClosingOnFailure(block: T.() -> R): R {
     block()
   }
   catch (e: Throwable) {
-    use {  // to close any resources initialized so far
-      throw e
+    when (this) {
+      is MultiCloseable -> close(e)  // special case to avoid unnecessary suppressed exceptions nesting level
+      else -> use { throw e }
     }
+    error("unreachable")
   }
 }
