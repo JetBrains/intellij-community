@@ -243,6 +243,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                 RunContentManager.getInstance(project).showRunContent(executor, descriptor, environment.contentToReuse)
               }
               activity?.stageStarted("ui.shown")
+              environment.contentToReuse = descriptor
 
               val processHandler = descriptor.processHandler
               if (processHandler != null) {
@@ -271,7 +272,6 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                   }
                 }
               }
-              environment.contentToReuse = descriptor
             }
           }
           .onError(::handleError)
