@@ -8,8 +8,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
+import com.intellij.execution.target.TargetEnvironmentUtil;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestRunnerBundle;
@@ -23,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -71,6 +68,7 @@ public class TestPackage extends TestObject {
     final Module module = getConfiguration().getConfigurationModule().getModule();
     final TestClassFilter classFilter = computeFilter(data);
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
+      private boolean myShouldExecuteFinishMethod = true;
       private final Set<Location<?>> myClasses = new LinkedHashSet<>();
       @Override
       protected void search() {
@@ -104,40 +102,17 @@ public class TestPackage extends TestObject {
         catch (Exception ignored) {
         }
 
-        TargetEnvironmentRequest request = getTargetEnvironmentRequest();
-        if (request != null && !(request instanceof LocalTargetEnvironmentRequest)) {
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            Path parentPath = myTempFile.toPath().getParent();
-            for (TargetEnvironment.UploadRoot uploadRoot : request.getUploadVolumes()) {
-              if (parentPath.equals(uploadRoot.getLocalRootPath())) {
-                TargetProgressIndicator targetProgressIndicator = Objects.requireNonNull(getTargetProgressIndicator());
-                try {
-                  remoteEnvironment.getUploadVolumes().get(uploadRoot).upload(myTempFile.getName(), targetProgressIndicator);
-                }
-                catch (Throwable t) {
-                  LOG.warn(t);
-                  targetProgressIndicator.addSystemLine("");
-                  targetProgressIndicator.stopWithErrorMessage(
-                    JUnitBundle.message("dialog.message.failed.to.upload.list.tests", StringUtil.notNullize(t.getLocalizedMessage())));
-                }
-
-                ApplicationManager.getApplication().invokeLater(super::finish, myProject.getDisposed());
-                return;
-              }
-            }
-            LOG.error("Did not find upload volume for " + parentPath);
-            ApplicationManager.getApplication().invokeLater(super::finish, myProject.getDisposed());
-          });
-        }
+        myShouldExecuteFinishMethod = !TargetEnvironmentUtil.reuploadRootFile(myTempFile, getTargetEnvironmentRequest(),
+                                                                              remoteEnvironment, getTargetProgressIndicator(),
+                                                                              () -> ApplicationManager.getApplication()
+                                                                            .invokeLater(super::finish, myProject.getDisposed()));
       }
 
       @Override
       public void finish() {
-        TargetEnvironmentRequest request = getTargetEnvironmentRequest();
-        if (!(request instanceof LocalTargetEnvironmentRequest)) {
-          return;
+        if (myShouldExecuteFinishMethod) {
+          super.finish();
         }
-        super.finish();
       }
 
       @Override
