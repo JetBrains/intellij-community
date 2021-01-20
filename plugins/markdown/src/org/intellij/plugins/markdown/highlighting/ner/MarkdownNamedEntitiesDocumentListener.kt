@@ -12,8 +12,9 @@ import com.intellij.refactoring.suggested.newRange
 import com.intellij.refactoring.suggested.oldRange
 import com.intellij.refactoring.suggested.range
 
+internal val CHANGED_RANGES = Key.create<Set<TextRange>>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_CHANGED_RANGES")
+
 internal object MarkdownNamedEntitiesDocumentListener : DocumentListener {
-  val CHANGED_RANGES = Key.create<Set<TextRange>>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_CHANGED_RANGES")
 
   override fun beforeDocumentChange(event: DocumentEvent) {
     if (event.isWholeTextReplaced) {

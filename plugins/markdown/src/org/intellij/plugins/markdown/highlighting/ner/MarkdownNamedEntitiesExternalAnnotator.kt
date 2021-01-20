@@ -16,6 +16,8 @@ import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.SmartList
 import java.util.concurrent.atomic.AtomicBoolean
 
+private val HAS_DOCUMENT_LISTENER = Key.create<AtomicBoolean>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_HAS_DOCUMENT_LISTENER")
+
 class MarkdownNamedEntitiesExternalAnnotator : ExternalAnnotator<MyDocumentInfo, MyAnnotationResult>() {
 
   override fun collectInformation(file: PsiFile): MyDocumentInfo? {
@@ -29,8 +31,8 @@ class MarkdownNamedEntitiesExternalAnnotator : ExternalAnnotator<MyDocumentInfo,
 
     tryRegisterDocumentListener(document)
 
-    val listenedChanges = document.getUserData(MarkdownNamedEntitiesDocumentListener.CHANGED_RANGES)
-    document.putUserData(MarkdownNamedEntitiesDocumentListener.CHANGED_RANGES, null)
+    val listenedChanges = document.getUserData(CHANGED_RANGES)
+    document.putUserData(CHANGED_RANGES, null)
 
     val elementsToVisit = listenedChanges?.flatMap {
       file.findElementsIntersectingRange(it)
@@ -70,8 +72,6 @@ class MarkdownNamedEntitiesExternalAnnotator : ExternalAnnotator<MyDocumentInfo,
 
 data class MyDocumentInfo(val document: Document, val file: PsiFile)
 data class MyAnnotationResult(val document: Document, val entities: Entities)
-
-private val HAS_DOCUMENT_LISTENER = Key.create<AtomicBoolean>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_HAS_DOCUMENT_LISTENER")
 
 private fun PsiFile.findElementsIntersectingRange(range: TextRange): Iterable<PsiElement> {
   var startOffset = minOf(range.startOffset - 1, 0)

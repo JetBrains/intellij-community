@@ -7,6 +7,8 @@ import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 
+typealias TextWithOffset = Pair<String, Int>
+
 internal class MarkdownTextsCollectingVisitor : MarkdownRecursiveElementVisitor() {
   val texts = mutableListOf<TextWithOffset>()
 
@@ -20,5 +22,3 @@ internal class MarkdownTextsCollectingVisitor : MarkdownRecursiveElementVisitor(
     texts += element.text to element.startOffset
   }
 }
-
-typealias TextWithOffset = Pair<String, Int>

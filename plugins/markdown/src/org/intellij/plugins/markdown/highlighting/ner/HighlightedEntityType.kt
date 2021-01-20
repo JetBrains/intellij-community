@@ -11,6 +11,8 @@ import com.intellij.openapi.util.TextRange
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.ui.actions.styling.highlighting.*
 
+internal val ENTITY_TYPE = Key.create<HighlightedEntityType>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_ENTITY_TYPE")
+
 internal enum class HighlightedEntityType(private val highlightingKey: TextAttributesKey, private val priority: Int, val highlightingManager: EntityHighlightingManager) {
   Date(MarkdownHighlighterColors.DATE, 1, DatesHighlightingManager),
   Money(MarkdownHighlighterColors.MONEY, 1, MoneyHighlightingManager),
@@ -37,5 +39,3 @@ internal enum class HighlightedEntityType(private val highlightingKey: TextAttri
     }
   }
 }
-
-internal val ENTITY_TYPE = Key.create<HighlightedEntityType>("MARKDOWN_DATE_EXTERNAL_ANNOTATOR_ENTITY_TYPE")
