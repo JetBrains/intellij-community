@@ -56,7 +56,7 @@ class KeymapSynonymsAction : DumbAwareAction() {
     return buildString {
       for ((k,v) in synonyms) {
         append(KeyEvent.getKeyText(k))
-        append(" with ")
+        append(" to ")
         if ((v.mods and KeyEvent.SHIFT_DOWN_MASK) == KeyEvent.SHIFT_DOWN_MASK) {
           append("Shift ")
         }
@@ -141,7 +141,7 @@ typealias Synonym = Pair<Int, KeyWithMods>
 data class KeyWithMods(val key: Int, val mods: Int)
 
 fun parseSynonym(line: String): Synonym {
-  val fromTo = line.split(" WITH ")
+  val fromTo = line.split(" TO ")
   if (fromTo.size != 2) {
     throw RuntimeException("Failed to parse: \"$line\"")
   }
