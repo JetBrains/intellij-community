@@ -244,7 +244,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     @Test
     fun testJsImportTransitive() {
         configureByFiles()
-        importProject()
+        importProject(false)
 
         with(facetSettings) {
             assertEquals("1.3", languageLevel!!.versionString)
