@@ -14,6 +14,9 @@ public class ConditionCoveredByFurtherConditionInspectionTest extends LightJavaI
   public void testMultiCatch() {
     doTest();
   }
+  public void testExpressionSwitch() {
+    doTest();
+  }
 
   @Nullable
   @Override
