@@ -414,7 +414,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     updateFileIcon(file, false);
   }
 
+  /**
+   * Reset the preview tab flag if an internal document change is made.
+   */
   private void resetPreviewFlag(@NotNull VirtualFile file) {
+    if (!FileDocumentManager.getInstance().isFileModified(file)) {
+      return;
+    }
     for (EditorsSplitters splitter : getAllSplitters()) {
       splitter.findEditorComposites(file).stream()
         .filter(EditorComposite::isPreview)
