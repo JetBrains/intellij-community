@@ -239,8 +239,8 @@ public class KotlinLineBreakpointType extends JavaLineBreakpointType implements 
                 if (function != null) {
                     KtElement bodyElement = function.getBodyExpression();
                     if (bodyElement != null) {
-                        SourcePosition linePosition = SourcePosition.createFromElement(bodyElement);
                         return ReadAction.compute(() -> {
+                            SourcePosition linePosition = SourcePosition.createFromElement(bodyElement);
                             if (linePosition != null) {
                                 return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, ordinal));
                             }
