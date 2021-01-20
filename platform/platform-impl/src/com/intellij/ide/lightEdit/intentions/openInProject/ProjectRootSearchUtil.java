@@ -48,12 +48,12 @@ final class ProjectRootSearchUtil {
     if (requiresConfirmation.get()) {
       final VirtualFile newProjectRoot = confirmOrChooseProjectDir(project, result.get());
       if (newProjectRoot != null) {
-        LightEditFeatureUsagesUtil.logOpenFileInProject(New);
+        LightEditFeatureUsagesUtil.logOpenFileInProject(project, New);
       }
       result.set(newProjectRoot);
     }
     else {
-      LightEditFeatureUsagesUtil.logOpenFileInProject(Existing);
+      LightEditFeatureUsagesUtil.logOpenFileInProject(project, Existing);
     }
     return result.get();
   }

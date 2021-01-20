@@ -59,7 +59,7 @@ public final class LightEditUtil {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
       Project project = LightEditService.getInstance().openFile(virtualFile);
-      LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+      LightEditFeatureUsagesUtil.logFileOpen(project, CommandLine);
       return project;
     }
     else {

@@ -194,7 +194,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
     if (LightEdit.owns(project)) {
       LightEditService.getInstance().openFile(file);
-      LightEditFeatureUsagesUtil.logFileOpen(LightEditOpenAction);
+      LightEditFeatureUsagesUtil.logFileOpen(project, LightEditOpenAction);
     }
     else {
       PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);

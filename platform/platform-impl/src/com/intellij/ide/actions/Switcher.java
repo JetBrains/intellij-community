@@ -1189,7 +1189,7 @@ public final class Switcher extends AnAction implements DumbAware {
                 settings.setReuseNotModifiedTabs(false);
                 manager.openFile(file, true, true);
                 if (LightEdit.owns(project)) {
-                  LightEditFeatureUsagesUtil.logFileOpen(RecentFiles);
+                  LightEditFeatureUsagesUtil.logFileOpen(project, RecentFiles);
                 }
                 if (oldValue) {
                   CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);

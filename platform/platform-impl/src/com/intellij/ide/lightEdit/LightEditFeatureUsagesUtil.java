@@ -3,6 +3,8 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 public final class LightEditFeatureUsagesUtil {
 
@@ -34,8 +36,8 @@ public final class LightEditFeatureUsagesUtil {
   private LightEditFeatureUsagesUtil() {
   }
 
-  public static void logFileOpen(OpenPlace openPlace) {
-    FUCounterUsageLogger.getInstance().logEvent(
+  public static void logFileOpen(@Nullable Project project, OpenPlace openPlace) {
+    FUCounterUsageLogger.getInstance().logEvent(project,
       USAGE_GROUP_ID,
       OPEN_FILE_EVENT_ID,
       new FeatureUsageData().addData(OPEN_FILE_EVENT_PLACE, openPlace.name()));
@@ -48,8 +50,9 @@ public final class LightEditFeatureUsagesUtil {
       new FeatureUsageData().addData(AUTOSAVE_MODE_ENABLED_FLAG, isAutosave));
   }
 
-  public static void logOpenFileInProject(ProjectStatus projectStatus) {
-    FUCounterUsageLogger.getInstance().logEvent(
+  public static void logOpenFileInProject(@Nullable Project project,
+                                          ProjectStatus projectStatus) {
+    FUCounterUsageLogger.getInstance().logEvent(project,
       USAGE_GROUP_ID,
       OPEN_IN_PROJECT_EVENT_ID,
       new FeatureUsageData().addData(OPEN_IN_PROJECT_STATUS, projectStatus.name()));

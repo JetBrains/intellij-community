@@ -52,7 +52,7 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
     if (editorInfo != null) {
       Project openProject = findOpenProject(currentFile);
       if (openProject != null) {
-        LightEditFeatureUsagesUtil.logOpenFileInProject(Open);
+        LightEditFeatureUsagesUtil.logOpenFileInProject(project, Open);
       }
       else {
         VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(project, currentFile);
