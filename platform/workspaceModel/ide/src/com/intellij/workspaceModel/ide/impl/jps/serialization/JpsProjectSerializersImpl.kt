@@ -331,7 +331,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     //entities added via JPS and imported entities stored in internal storage must be passed to serializers together, otherwise incomplete data will be stored
     val entitiesToSave = storage.entitiesBySource { source ->
       source in affectedSources
-      || sourcesStoredInternally[source]?.let { it in affectedSources } == true
+      || source in sourcesStoredInternally
       || source is JpsImportedEntitySource && !source.storedExternally && source.internalFile in affectedSources
     }
     val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
