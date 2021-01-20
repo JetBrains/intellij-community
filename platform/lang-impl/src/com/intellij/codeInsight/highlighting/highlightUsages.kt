@@ -113,7 +113,7 @@ private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges {
     .searchPsiSymbolReferences(project, symbol, searchScope)
     .findAll()
   for (ref: PsiSymbolReference in refs) {
-    HighlightUsagesHandler.collectHighlightRanges(ref, readRanges)
+    HighlightUsagesHandler.collectHighlightRanges(ref.element, ref.rangeInElement, readRanges)
   }
 
   val declarations: Collection<PsiSymbolDeclaration> = SearchService.getInstance()
