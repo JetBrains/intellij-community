@@ -47,7 +47,6 @@ IF EXIST "%JAVA_HOME%" SET JDK=%JAVA_HOME%
 
 :check
 SET JAVA_EXE=%JDK%\bin\java.exe
-IF NOT EXIST "%JAVA_EXE%" SET JAVA_EXE=%JDK%\jre\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" (
   ECHO ERROR: cannot start @@product_full@@.
   ECHO No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
