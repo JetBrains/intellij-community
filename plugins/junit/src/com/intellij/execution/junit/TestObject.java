@@ -282,8 +282,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                           boolean ensureOnModulePath) throws CantRunException {
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
-      () -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
+    DumbService dumbService = DumbService.getInstance(project);
+    PsiClass classFromCommon = dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
 
     String launcherVersion = getVersion(classFromCommon);
     if (launcherVersion == null) {
@@ -315,8 +315,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     //add standard engines only if no engine api is present
     if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
-      PsiClass testAnnotation = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
-        () -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
+      PsiClass testAnnotation = dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
       if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
         String moduleNameToMove = "org.junit.jupiter.api";
@@ -338,12 +337,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-        String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
-                         ? jupiterVersion
-                         : "4.12." + StringUtil.getShortName(launcherVersion);
-        downloadDependenciesWhenRequired(project, additionalDependencies,
-                                         //don't include potentially incompatible hamcrest/junit dependency
-                                         new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version, false, ContainerUtil.emptyList()));
+        PsiClass junit4RunnerClass = dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("junit.runner.Version", globalSearchScope));
+        if (junit4RunnerClass != null) { //vintage engine would not detect tests for old junit versions, let's warn about them though
+          String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
+                           ? jupiterVersion
+                           : "4.12." + StringUtil.getShortName(launcherVersion);
+          downloadDependenciesWhenRequired(project, additionalDependencies,
+                                           //don't include potentially incompatible hamcrest/junit dependency
+                                           new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version, false, ContainerUtil.emptyList()));
+        }
       }
     }
 
