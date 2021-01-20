@@ -96,14 +96,6 @@
     <orderEntry type="module" module-name="intellij.platform.elevation" scope="RUNTIME" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/zip-signer-0.8.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="org.jetbrains.marketplace:zip-signer:0.8" level="project" />
   </component>
 </module>
