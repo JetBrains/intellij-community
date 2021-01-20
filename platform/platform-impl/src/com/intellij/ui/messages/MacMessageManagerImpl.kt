@@ -345,8 +345,8 @@ private class NativeMacMessageManager : MacMessages() {
     }
     Foundation.registerObjcClassPair(delegateClass)
 
-    if (!Foundation.addMethod(Foundation.getObjcClass("_NSAlertPanel"), Foundation.createSelector("_changeJustMain"),
-                              ALERT_CHANGE_JUST_MAIN, "v")) {
+    if (SystemInfo.isMacOSBigSur && !Foundation.addMethod(Foundation.getObjcClass("_NSAlertPanel"),
+                                                          Foundation.createSelector("_changeJustMain"), ALERT_CHANGE_JUST_MAIN, "v")) {
       throw RuntimeException("Unable to add `_changeJustMain` method to Objective-C _NSAlertPanel class")
     }
   }
