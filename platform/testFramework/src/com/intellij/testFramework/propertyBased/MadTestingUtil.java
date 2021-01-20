@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -362,10 +362,10 @@ public final class MadTestingUtil {
 
   @NotNull
   public static String getPositionDescription(int offset, Document document) {
-    int line = document.getLineNumber(offset);
+    int line = document.getLineNumber(offset) + 1;
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
-    int column = offset - start;
+    int column = offset - start + 1;
     String prefix = document.getText(new TextRange(start, offset)).trim();
     if (prefix.length() > 30) {
       prefix = "..." + prefix.substring(prefix.length() - 30);
