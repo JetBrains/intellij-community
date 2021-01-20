@@ -71,7 +71,7 @@ class KotlinStructureViewElement(
     override fun getPresentableText(): String? = kotlinPresentation.presentableText
 
     @TestOnly
-    override fun putInfo(info: MutableMap<String, String?>) {
+    override fun putInfo(info: MutableMap<in String, in String?>) {
         // Sanity check for API consistency
         assert(presentation.presentableText == presentableText) { "Two different ways of getting presentableText" }
         assert(presentation.locationString == locationString) { "Two different ways of getting locationString" }
