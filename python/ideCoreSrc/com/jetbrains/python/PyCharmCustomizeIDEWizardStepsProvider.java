@@ -3,8 +3,6 @@ package com.jetbrains.python;
 
 import com.intellij.ide.customize.*;
 import com.intellij.openapi.util.SystemInfo;
-import com.jetbrains.python.conda.PyCharmCustomizeCondaSetupStep;
-import com.jetbrains.python.conda.PythonMinicondaLocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,9 +32,5 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
     }
 
     steps.add(new CustomizeFeaturedPluginsStepPanel(groups));
-
-    if (PythonMinicondaLocator.isInstallerExists()) {
-      steps.add(new PyCharmCustomizeCondaSetupStep());
-    }
   }
 }

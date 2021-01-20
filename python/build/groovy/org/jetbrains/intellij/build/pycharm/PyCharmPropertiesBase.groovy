@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.JetBrainsProductProperties
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 
@@ -217,13 +216,5 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     }
 
     FileUtil.delete(folderWithUnzipContent)
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  static void downloadMiniconda(BuildContext context, String targetDirectory, String osName) {
-    String installer = "Miniconda3-latest-$osName-x86_64.${if (osName == "Windows") "exe" else "sh"}"
-    Path dir = Paths.get(targetDirectory).resolve(PyCharmBuildOptions.minicondaInstallerFolderName)
-    Files.createDirectories(dir)
-    context.ant.get(src: "https://repo.continuum.io/miniconda/$installer", dest: dir.toString())
   }
 }

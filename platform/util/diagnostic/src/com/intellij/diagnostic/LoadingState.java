@@ -109,8 +109,7 @@ public enum LoadingState {
       String className = element.getClassName();
       if (className.contains("com.intellij.util.indexing.IndexInfrastructure")
           || className.contains("com.intellij.psi.impl.search.IndexPatternSearcher")
-          || className.contains("com.jetbrains.performancePlugin.ProjectLoaded")
-          || className.contains("com.jetbrains.python.conda.InstallCondaUtils")) {
+          || className.contains("com.jetbrains.performancePlugin.ProjectLoaded")) {
         return true;
       }
     }
