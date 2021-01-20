@@ -150,13 +150,13 @@ class ItemsDecoratorInitializer : LookupTracker() {
     init {
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.like")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.LIKE)
+          MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.LIKE)
           notification.expire()
         }
       })
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.dislike")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
+          MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
           CompletionMLRankingSettings.getInstance().isShowDiffEnabled = false
           notification.expire()
           ArrowsDisabledNotification().notify(null)
@@ -164,7 +164,7 @@ class ItemsDecoratorInitializer : LookupTracker() {
       })
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.neutral")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
+          MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
           notification.expire()
         }
       })
