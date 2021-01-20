@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -113,7 +114,7 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         String userDir = null;
-        if (!GradleEnvironment.ADJUST_USER_DIR) {
+        if (!Registry.is("gradle.tooling.use.external.process", false) && !GradleEnvironment.ADJUST_USER_DIR) {
           try {
             userDir = System.getProperty("user.dir");
             if (userDir != null) System.setProperty("user.dir", projectDir);

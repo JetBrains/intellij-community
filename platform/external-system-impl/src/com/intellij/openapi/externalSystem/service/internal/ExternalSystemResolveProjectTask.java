@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
@@ -79,8 +81,14 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       ideProject = getIdeProject();
 
       ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
+      boolean isRunOnTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets");
+      TargetEnvironmentConfiguration environmentConfiguration = null;
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(getExternalSystemId())) {
         executionAware.prepareExecution(this, myProjectPath, myIsPreviewMode, progressNotificationListener, ideProject);
+
+        if (!isRunOnTargetsEnabled || environmentConfiguration != null) continue;
+        environmentConfiguration =
+          executionAware.getEnvironmentConfiguration(myProjectPath, myIsPreviewMode, progressNotificationListener, ideProject);
       }
 
       final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
@@ -92,6 +100,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       if (StringUtil.isNotEmpty(myArguments)) {
         settings.withArguments(ParametersListUtil.parse(myArguments));
       }
+      ExternalSystemExecutionAware.setEnvironmentConfiguration(settings, environmentConfiguration);
     }
     catch (Exception e) {
       progressNotificationManager.onFailure(id, e);
