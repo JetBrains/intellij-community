@@ -498,12 +498,17 @@ class KotlinChangeSignatureDialog(
                 parameterInfo
             }
 
+            val parametersWithReceiverInFirstPosition = if (parametersModel.receiver != null)
+                parameters.sortedByDescending { it == parametersModel.receiver }
+            else
+                parameters
+
             return KotlinChangeInfo(
                 methodDescriptor.original,
                 methodName,
                 returnTypeCodeFragment.getTypeInfo(true, forPreview),
                 visibility ?: DescriptorVisibilities.DEFAULT_VISIBILITY,
-                parameters,
+                parametersWithReceiverInFirstPosition,
                 parametersModel.receiver,
                 defaultValueContext
             )
