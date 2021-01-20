@@ -26,7 +26,7 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
 
   override fun getFile(): VirtualFile? {
     val virtualFilePointer = entity.url as VirtualFilePointer
-    return if (virtualFilePointer.isValid) virtualFilePointer.file else null
+    return virtualFilePointer.file
   }
 
   override fun getUrl(): String = entity.url.url

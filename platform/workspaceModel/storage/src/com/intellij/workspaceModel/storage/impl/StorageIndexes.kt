@@ -189,10 +189,7 @@ internal class MutableStorageIndexes(
 
   fun updateIndices(oldEntityId: EntityId, newEntityData: WorkspaceEntityData<*>, builder: AbstractEntityStorage) {
     val newEntityId = newEntityData.createEntityId()
-    builder.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldEntityId)
-      .forEach { (property, vfus) ->
-        virtualFileIndex.index(newEntityId, property, vfus)
-      }
+    virtualFileIndex.updateIndex(oldEntityId, newEntityId, builder.indexes.virtualFileIndex)
     entitySourceIndex.index(newEntityId, newEntityData.entitySource)
     builder.indexes.persistentIdIndex.getEntryById(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }

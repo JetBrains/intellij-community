@@ -27,7 +27,7 @@ class JpsProjectSaveAfterChangesTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = IdeVirtualFileUrlManagerImpl(projectModel.project)
+    virtualFileManager = IdeVirtualFileUrlManagerImpl()
   }
 
   @Test

@@ -20,7 +20,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)
-    if (performUpdate) projectRootManager.rootsChanged.beforeRootsChanged()
+    if (performUpdate && !projectRootManager.isFiringEvent()) projectRootManager.rootsChanged.beforeRootsChanged()
   }
 
   fun changed(event: VersionedStorageChange) {
@@ -29,7 +29,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)
-    if (performUpdate) {
+    if (performUpdate && !projectRootManager.isFiringEvent()) {
       val rootsChangeType = getRootsChangeType(event, project)
       projectRootManager.rootsChanged.rootsChanged(rootsChangeType)
     }
@@ -95,28 +95,29 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     }
   }
 
-  private fun shouldFireRootsChanged(entity: WorkspaceEntity,
-                                     project: Project): Boolean {
-    return when (entity) {
-      // Library changes should not fire any events if the library is not included in any of order entries
-      is LibraryEntity -> libraryHasOrderEntry(entity, project)
-      is LibraryPropertiesEntity -> libraryHasOrderEntry(entity.library, project)
-      is ModuleEntity, is JavaModuleSettingsEntity, is ModuleCustomImlDataEntity, is ModuleGroupPathEntity,
-      is SourceRootEntity, is JavaSourceRootEntity, is JavaResourceRootEntity, is CustomSourceRootPropertiesEntity,
-      is ContentRootEntity -> true
-      else -> false
+  companion object {
+    internal fun shouldFireRootsChanged(entity: WorkspaceEntity, project: Project): Boolean {
+      return when (entity) {
+        // Library changes should not fire any events if the library is not included in any of order entries
+        is LibraryEntity -> libraryHasOrderEntry(entity, project)
+        is LibraryPropertiesEntity -> libraryHasOrderEntry(entity.library, project)
+        is ModuleEntity, is JavaModuleSettingsEntity, is ModuleCustomImlDataEntity, is ModuleGroupPathEntity,
+        is SourceRootEntity, is JavaSourceRootEntity, is JavaResourceRootEntity, is CustomSourceRootPropertiesEntity,
+        is ContentRootEntity -> true
+        else -> false
+      }
     }
-  }
 
-  private fun libraryHasOrderEntry(library: LibraryEntity, project: Project): Boolean {
-    if (library.tableId is LibraryTableId.ModuleLibraryTableId) {
-      return true
+    private fun libraryHasOrderEntry(library: LibraryEntity, project: Project): Boolean {
+      if (library.tableId is LibraryTableId.ModuleLibraryTableId) {
+        return true
+      }
+      val libraryName = library.name
+      ModuleManager.getInstance(project).modules.forEach { module ->
+        val exists = ModuleRootManager.getInstance(module).orderEntries.any { it is LibraryOrderEntry && it.libraryName == libraryName }
+        if (exists) return true
+      }
+      return false
     }
-    val libraryName = library.name
-    ModuleManager.getInstance(project).modules.forEach { module ->
-      val exists = ModuleRootManager.getInstance(module).orderEntries.any { it is LibraryOrderEntry && it.libraryName == libraryName }
-      if (exists) return true
-    }
-    return false
   }
 }

@@ -66,24 +66,6 @@ class EntityStorageSerializationTest {
   }
 
   @Test
-  fun `serialize disposed point`() {
-    val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
-
-    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
-
-    // Disposed file pointers return empty string
-    val pointer = virtualFileManager.fromUrl("")
-
-    builder.addSampleEntity("myString", fileProperty = pointer)
-
-    val stream = ByteArrayOutputStream()
-    val result = serializer.serializeCache(stream, builder.toStorage())
-
-    assertTrue(result is SerializationResult.Fail<*>)
-  }
-
-  @Test
   fun `serialize abstract`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)

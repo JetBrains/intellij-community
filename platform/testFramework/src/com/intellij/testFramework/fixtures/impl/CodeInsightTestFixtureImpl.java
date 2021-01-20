@@ -119,7 +119,6 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFilePointersTracker;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +170,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myReadEditorMarkupModel;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private ResourceBundle[] myMessageBundles = new ResourceBundle[0];
-  private LegacyBridgeTestFilePointersTracker myLegacyBridgeTestFilePointersTracker;
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -1229,8 +1227,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (shouldTrackVirtualFilePointers()) {
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     }
-    myLegacyBridgeTestFilePointersTracker = new LegacyBridgeTestFilePointersTracker(myProjectFixture.getProject());
-    myLegacyBridgeTestFilePointersTracker.startTrackPointersCreatedInTest();
   }
 
   protected boolean shouldTrackVirtualFilePointers() {
@@ -1285,12 +1281,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       () -> disposeRootDisposable(),
       () -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()),
       () -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()),
-      () -> {
-        LegacyBridgeTestFilePointersTracker tracker = myLegacyBridgeTestFilePointersTracker;
-        if (tracker != null) {
-          tracker.disposePointersCreatedInTest();
-        }
-      },
       () -> super.tearDown(),
       () -> {
         if (myVirtualFilePointerTracker != null) {

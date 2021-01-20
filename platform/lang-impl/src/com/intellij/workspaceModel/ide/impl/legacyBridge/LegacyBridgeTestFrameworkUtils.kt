@@ -25,22 +25,3 @@ object LegacyBridgeTestFrameworkUtils {
     }
   }
 }
-
-class LegacyBridgeTestFilePointersTracker(project: Project) {
-  private val enabled = LegacyBridgeProjectLifecycleListener.enabled(project)
-  private val ideVirtualFileUrlManager: IdeVirtualFileUrlManagerImpl?
-
-  init {
-    ideVirtualFileUrlManager = if (enabled) VirtualFileUrlManager.getInstance(project) as IdeVirtualFileUrlManagerImpl else null
-  }
-
-  @ApiStatus.Internal
-  fun startTrackPointersCreatedInTest() {
-    if (enabled) ideVirtualFileUrlManager?.startTrackPointersCreatedInTest()
-  }
-
-  @ApiStatus.Internal
-  fun disposePointersCreatedInTest() {
-    if (enabled) ideVirtualFileUrlManager?.disposePointersCreatedInTest()
-  }
-}

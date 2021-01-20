@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
-import com.intellij.openapi.vfs.impl.LightFilePointerUrl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -15,7 +14,6 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
@@ -133,15 +131,7 @@ class VirtualFileIndexTest {
       temp
     }
 
-    when (env.generate(Generator.integers(0, 1))) {
-      0 -> {
-        manager.fromPath(file.toString())
-      }
-      1 -> {
-        LightFilePointerUrl(JpsPathUtil.pathToUrl(file.toString()))
-      }
-      else -> error("")
-    }
+    manager.fromPath(file.toString())
   }
   
   internal val entityIdGenerator = Generator.from { env ->

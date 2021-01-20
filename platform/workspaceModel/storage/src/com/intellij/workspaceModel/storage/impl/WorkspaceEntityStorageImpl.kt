@@ -389,10 +389,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newEntityId = matchedEntityId.copy(arrayId = newEntity.id)
           replaceMap[newEntityId] = matchedEntityId
 
-          replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
-            .forEach { (property, vfus) ->
-              this.indexes.virtualFileIndex.index(newEntityId, property, vfus)
-            }
+          this.indexes.virtualFileIndex.updateIndex(matchedEntityId, newEntityId, replaceWith.indexes.virtualFileIndex)
           replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(newEntityId, it) }
           replaceWith.indexes.persistentIdIndex.getEntryById(matchedEntityId)?.also { this.indexes.persistentIdIndex.index(newEntityId, it) }
           this.indexes.updateExternalMappingForEntityId(matchedEntityId, newEntityId, replaceWith.indexes)
@@ -557,10 +554,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val entityId = clonedEntityId
 
     updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
-    replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
-      .forEach { (property, vfus) ->
-        this.indexes.virtualFileIndex.index(entityId, property, vfus)
-      }
+    this.indexes.virtualFileIndex.updateIndex(matchedEntityId, entityId, replaceWith.indexes.virtualFileIndex)
     replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(entityId, it) }
     this.indexes.updateExternalMappingForEntityId(matchedEntityId, entityId, replaceWith.indexes)
 

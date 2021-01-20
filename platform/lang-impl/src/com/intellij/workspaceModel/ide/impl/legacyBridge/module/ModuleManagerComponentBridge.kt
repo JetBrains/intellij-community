@@ -34,6 +34,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -125,7 +126,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
           }
 
-          rootsChangeListener.beforeChanged(event)
+          if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
+            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
+            rootsChangeListener.beforeChanged(event)
+          }
         }
 
         override fun changed(event: VersionedStorageChange) {
@@ -175,7 +179,11 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             }
           }
 
-          rootsChangeListener.changed(event)
+          // Roots changed should be sent after syncing with legacy bridge
+          if (!VirtualFileUrlWatcher.getInstance(project).isInsideFilePointersUpdate) {
+            //the old implementation doesn't fire rootsChanged event when roots are moved or renamed, let's keep this behavior for now
+            rootsChangeListener.changed(event)
+          }
         }
       })
     }

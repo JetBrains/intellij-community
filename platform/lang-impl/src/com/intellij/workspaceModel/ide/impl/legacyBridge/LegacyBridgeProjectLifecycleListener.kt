@@ -13,17 +13,16 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.RootsChangeWatcher
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.picocontainer.MutablePicoContainer
 
@@ -51,6 +50,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
 
     container.registerComponent(JpsProjectModelSynchronizer::class.java, JpsProjectModelSynchronizer::class.java, pluginDescriptor, false)
     container.registerComponent(RootsChangeWatcher::class.java, RootsChangeWatcher::class.java, pluginDescriptor, false)
+    container.registerComponent(VirtualFileUrlWatcher::class.java, VirtualFileUrlWatcher::class.java, pluginDescriptor, false)
     container.registerComponent(ModuleManager::class.java, ModuleManagerComponentBridge::class.java, pluginDescriptor, true)
     container.registerComponent(ProjectRootManager::class.java, ProjectRootManagerBridge::class.java, pluginDescriptor, true)
     (container.picoContainer as MutablePicoContainer).unregisterComponent(ExternalModuleListStorage::class.java)

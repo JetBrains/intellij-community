@@ -16,8 +16,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FileContainerDescription
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.JarDirectoryDescription
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.ide.toExternalSource

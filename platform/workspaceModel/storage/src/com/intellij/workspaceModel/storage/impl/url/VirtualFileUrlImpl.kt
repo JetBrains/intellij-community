@@ -10,29 +10,35 @@ import java.nio.file.Path
 /**
  * Represent an URL (in VFS format) of a file or directory.
  */
-internal class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
-  override val url: String
-    get() = manager.getUrlById(id)
+open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
+  private var cachedUrl: String? = null
 
-  override val presentableUrl: String
-    get() {
-      val calculatedUrl = this.url
-      if (calculatedUrl.startsWith("file://")) {
-        return calculatedUrl.substring("file://".length)
-      }
-      else if (calculatedUrl.startsWith("jar://")) {
-        val removedSuffix = calculatedUrl.removeSuffix("!/").removeSuffix("!")
-        return removedSuffix.substring("jar://".length)
-      }
-      return calculatedUrl
+  override fun getUrl(): String {
+    if (cachedUrl == null) {
+      cachedUrl = manager.getUrlById(id)
     }
+    return cachedUrl!!
+  }
 
-  override val fileName: String
-    get() {
-      val fileUrl = url
-      val index = fileUrl.lastIndexOf('/')
-      return if (index >= 0) fileUrl.substring(index + 1) else fileUrl
+  override fun getFileName(): String {
+    val fileUrl = url
+    val index = fileUrl.lastIndexOf('/')
+    return if (index >= 0) fileUrl.substring(index + 1) else fileUrl
+  }
+
+  override fun getPresentableUrl(): String {
+    val calculatedUrl = this.url
+    if (calculatedUrl.startsWith("file://")) {
+      return calculatedUrl.substring("file://".length)
     }
+    else if (calculatedUrl.startsWith("jar://")) {
+      val removedSuffix = calculatedUrl.removeSuffix("!/").removeSuffix("!")
+      return removedSuffix.substring("jar://".length)
+    }
+    return calculatedUrl
+  }
+
+  override fun getSubTreeFileUrls() = manager.getSubtreeVirtualUrlsById(id)
 
   override fun toString(): String = this.url
 

@@ -56,8 +56,8 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
   protected void tearDown() throws Exception {
     try {
       Disposer.dispose(disposable);
-      assertTrue(myVirtualFilePointerManager.numberOfPointers() >= numberOfPointersBefore);
-      assertTrue(myVirtualFilePointerManager.numberOfListeners() >= numberOfListenersBefore);
+      assertEquals(numberOfPointersBefore, myVirtualFilePointerManager.numberOfPointers());
+      assertEquals(numberOfListenersBefore, myVirtualFilePointerManager.numberOfListeners());
     }
     catch (Throwable e) {
       addSuppressedException(e);

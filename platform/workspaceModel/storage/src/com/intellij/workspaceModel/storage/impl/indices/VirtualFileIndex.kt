@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage.impl.indices
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintMap
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -11,6 +11,8 @@ import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.containers.copy
+import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
@@ -35,10 +37,11 @@ internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Objec
 @Suppress("UNCHECKED_CAST")
 open class VirtualFileIndex internal constructor(
   internal open val entityId2VirtualFileUrl: EntityId2Vfu,
-  internal open val vfu2EntityId: Vfu2EntityId
+  internal open val vfu2EntityId: Vfu2EntityId,
+  internal open val entityId2JarDir: BidirectionalMultiMap<EntityId, VirtualFileUrl>
 ): VirtualFileUrlIndex {
   private lateinit var entityStorage: AbstractEntityStorage
-  constructor() : this(EntityId2Vfu(), Vfu2EntityId())
+  constructor() : this(EntityId2Vfu(), Vfu2EntityId(), BidirectionalMultiMap())
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> {
     val result = mutableSetOf<VirtualFileUrl>()
@@ -75,8 +78,10 @@ open class VirtualFileIndex internal constructor(
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
-      entityData.createEntity(entityStorage) to it.key
+      entityData.createEntity(entityStorage) to it.key.substring(it.value.toString().length + 1)
     } ?: emptySequence()
+
+  fun getIndexedJarDirectories() = entityId2JarDir.values
 
   internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
@@ -115,8 +120,9 @@ open class VirtualFileIndex internal constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
     // and call [startWrite] before write.
     override var entityId2VirtualFileUrl: EntityId2Vfu,
-    override var vfu2EntityId: Vfu2EntityId
-  ) : VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId), MutableVirtualFileUrlIndex {
+    override var vfu2EntityId: Vfu2EntityId,
+    override var entityId2JarDir: BidirectionalMultiMap<EntityId, VirtualFileUrl>
+  ) : VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId, entityId2JarDir), MutableVirtualFileUrlIndex {
 
     private var freezed = true
 
@@ -173,6 +179,13 @@ open class VirtualFileIndex internal constructor(
     }
 
     @Synchronized
+    internal fun indexJarDirectories(id: EntityId, virtualFileUrls: Set<VirtualFileUrl>) {
+      entityId2JarDir.removeKey(id)
+      if (virtualFileUrls.isEmpty()) return
+      virtualFileUrls.forEach { entityId2JarDir.put(id, it) }
+    }
+
+    @Synchronized
     internal fun index(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl? = null) {
       startWrite()
       removeByPropertyFromIndexes(id, propertyName)
@@ -180,9 +193,15 @@ open class VirtualFileIndex internal constructor(
       indexVirtualFileUrl(id, propertyName, virtualFileUrl)
     }
 
+    internal fun updateIndex(oldId: EntityId, newId: EntityId, oldIndex: VirtualFileIndex) {
+      oldIndex.getVirtualFileUrlInfoByEntityId(oldId).forEach { (property, vfus) -> index(newId, property, vfus) }
+      oldIndex.entityId2JarDir.getValues(oldId).apply { indexJarDirectories(newId, this.toSet()) }
+    }
+
     @Synchronized
     internal fun removeRecordsByEntityId(id: EntityId) {
       startWrite()
+      entityId2JarDir.removeKey(id)
       val removedValue = entityId2VirtualFileUrl.remove(id) ?: return
       when (removedValue) {
         is Object2ObjectOpenHashMap<*, *> -> removedValue.forEach { (property, vfu) -> removeFromVfu2EntityIdMap(id, property as String, vfu) }
@@ -195,6 +214,7 @@ open class VirtualFileIndex internal constructor(
       startWrite()
       entityId2VirtualFileUrl.clear()
       vfu2EntityId.clear()
+      entityId2JarDir.clear()
     }
 
     @TestOnly
@@ -202,6 +222,7 @@ open class VirtualFileIndex internal constructor(
       startWrite()
       entityId2VirtualFileUrl.putAll(another.entityId2VirtualFileUrl)
       vfu2EntityId.putAll(another.vfu2EntityId)
+      entityId2JarDir.putAll(another.entityId2JarDir)
     }
 
     private fun startWrite() {
@@ -209,11 +230,12 @@ open class VirtualFileIndex internal constructor(
       freezed = false
       entityId2VirtualFileUrl = copyEntityMap(entityId2VirtualFileUrl)
       vfu2EntityId = copyVfuMap(vfu2EntityId)
+      entityId2JarDir = entityId2JarDir.copy()
     }
 
     fun toImmutable(): VirtualFileIndex {
       freezed = true
-      return VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId)
+      return VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId, entityId2JarDir)
     }
 
     private fun indexVirtualFileUrl(id: EntityId, propertyName: String, virtualFileUrl: VirtualFileUrl) {
@@ -332,7 +354,9 @@ open class VirtualFileIndex internal constructor(
     companion object {
       private val LOG = logger<MutableVirtualFileIndex>()
       const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
-      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId)
+      fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.entityId2VirtualFileUrl,
+                                                                                           other.vfu2EntityId,
+                                                                                           other.entityId2JarDir)
     }
   }
 }
@@ -407,6 +431,14 @@ class VirtualFileUrlLibraryRootProperty<T : ModifiableWorkspaceEntityBase<out Wo
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value.map { it.url }.toHashSet())
+
+    val jarDirectories = mutableSetOf<VirtualFileUrl>()
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value.map {
+      if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
+        jarDirectories.add(it.url)
+      }
+      it.url
+    }.toHashSet())
+    thisRef.diff.indexes.virtualFileIndex.indexJarDirectories(thisRef.id, jarDirectories)
   }
 }

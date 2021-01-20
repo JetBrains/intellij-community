@@ -194,7 +194,7 @@ internal class ModuleStoreRenameTest {
       }
     }
 
-    assertThat(stateModificationCount).isEqualTo(rootManager.modificationCountForTests)
+    assertThat(stateModificationCount).isLessThan(rootManager.modificationCountForTests)
   }
 
   private suspend fun saveProjectState() {

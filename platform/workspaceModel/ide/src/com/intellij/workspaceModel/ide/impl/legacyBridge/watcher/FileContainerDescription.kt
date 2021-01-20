@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer
+package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
