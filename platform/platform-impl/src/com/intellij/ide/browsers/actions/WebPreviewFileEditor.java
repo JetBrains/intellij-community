@@ -2,9 +2,8 @@
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -15,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.AnyPsiChangeListener;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nls;
@@ -39,21 +40,30 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
     PsiFile psiFile = PsiManager.getInstance(project).findFile(myFile);
     if (psiFile != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-      reloadHtml(document);
       if (document != null) {
-        document.addDocumentListener(new DocumentListener() {
-          @Override
-          public void documentChanged(@NotNull DocumentEvent event) {
-            alarm.cancelAllRequests();
-            alarm.addRequest(() -> reloadHtml(document), 100);
-          }
-        }, alarm);
+        reloadHtml(document);
+        project.getMessageBus().connect(alarm)
+          .subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
+                     new AnyPsiChangeListener() {
+                       @Override
+                       public void afterPsiChanged(boolean isPhysical) {
+                         PsiFile psi = PsiManager.getInstance(project).findFile(myFile);
+                         if (psi != null) {
+                           Document doc = PsiDocumentManager.getInstance(project).getDocument(psi);
+                           if (doc != null) {
+                             alarm.cancelAllRequests();
+                             alarm.addRequest(() -> reloadHtml(doc), 100);
+                           }
+                         }
+                       }
+                     });
       }
     }
   }
 
-  private void reloadHtml(Document document) {
-    FileDocumentManager.getInstance().saveDocument(document);
+  private void reloadHtml(@NotNull Document document) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    ApplicationManager.getApplication().saveAll();
     myPanel.setHtml(document.getText());
   }
 
