@@ -141,7 +141,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private static JComponent createPopupContent(NavBarPanel panel, int sourceItemIndex, Object[] siblings) {
     class MyList<E> extends JBList<E> implements DataProvider, Queryable {
       @Override
-      public void putInfo(@NotNull Map<String, String> info) {
+      public void putInfo(@NotNull Map<? super String, ? super String> info) {
         panel.putInfo(info);
       }
 

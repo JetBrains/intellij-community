@@ -325,7 +325,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     @Override
-    public void putInfo(@NotNull Map<String, String> info) {
+    public void putInfo(@NotNull Map<? super String, ? super String> info) {
       info.put("editorTab", myTab.getText());
     }
   }

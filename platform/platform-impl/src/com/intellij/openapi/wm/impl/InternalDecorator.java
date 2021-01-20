@@ -401,7 +401,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     info.put("toolWindowTitle", toolWindow.getTitle());
 
     Content selection = toolWindow.getContentManager().getSelectedContent();

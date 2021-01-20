@@ -409,7 +409,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     if (myQueryable != null) {
       myQueryable.putInfo(info);
     }

@@ -524,7 +524,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     PsiFileImpl.putInfo(this, info);
   }
 
