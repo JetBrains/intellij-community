@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.TestModeFlags
 import junit.framework.TestCase
 import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
@@ -297,18 +298,13 @@ abstract class JavaTargetTestBase : ExecutionWithDebuggerToolsTestCase() {
 
   @Test
   fun `test junit tests - run all`() {
-    val connectInUnitTestModeProperty = System.getProperty(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY)
-    System.setProperty(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY, "true")
+    val connectInUnitTestModeValue = TestModeFlags.get(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY)
+    TestModeFlags.set(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY, true)
     try {
       doTestRunRunAllJUnitTests()
     }
     finally {
-      if (connectInUnitTestModeProperty == null) {
-        System.clearProperty(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY)
-      }
-      else {
-        System.setProperty(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY, connectInUnitTestModeProperty)
-      }
+      TestModeFlags.set(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY, connectInUnitTestModeValue)
     }
   }
 
