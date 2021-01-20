@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -15,18 +15,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -124,16 +121,19 @@ public final class VcsInitialization {
 
   private void runInitStep(@NotNull Status current,
                            @NotNull Status next,
-                           @NotNull Condition<VcsStartupActivity> extensionFilter,
+                           @NotNull Predicate<VcsStartupActivity> extensionFilter,
                            @NotNull List<VcsStartupActivity> pendingActivities) {
-    List<VcsStartupActivity> epActivities = ContainerUtil.filter(EP_NAME.getExtensionList(), extensionFilter);
-
     List<VcsStartupActivity> activities = new ArrayList<>();
+    List<VcsStartupActivity> unfilteredActivities = EP_NAME.getExtensionList();
     synchronized (myLock) {
       assert myStatus == current;
       myStatus = next;
 
-      activities.addAll(epActivities);
+      for (VcsStartupActivity activity : unfilteredActivities) {
+        if (extensionFilter.test(activity)) {
+          activities.add(activity);
+        }
+      }
       activities.addAll(pendingActivities);
       pendingActivities.clear();
     }
@@ -143,10 +143,11 @@ public final class VcsInitialization {
 
   private void runActivities(@NotNull List<VcsStartupActivity> activities) {
     Future<?> future = myFuture;
-    if (future != null && future.isCancelled()) return;
+    if (future != null && future.isCancelled()) {
+      return;
+    }
 
-    Collections.sort(activities, Comparator.comparingInt(VcsStartupActivity::getOrder));
-
+    activities.sort(Comparator.comparingInt(VcsStartupActivity::getOrder));
     for (VcsStartupActivity activity : activities) {
       ProgressManager.checkCanceled();
       if (LOG.isDebugEnabled()) {
