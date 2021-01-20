@@ -671,8 +671,26 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
             threadsUnderIndicator.remove(thisIndicator);
           }
           boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
-          if (!isStandard && nonStandardIndicators.remove(thisIndicator) != null && nonStandardIndicators.isEmpty()) {
-            stopBackgroundNonStandardIndicatorsPing();
+          if (!isStandard) {
+            Collection<ProgressIndicator> list = nonStandardIndicators.get(thisIndicator);
+            if (list != null) {
+              if (list.size() == 1) {
+                nonStandardIndicators.remove(thisIndicator);
+                if (nonStandardIndicators.isEmpty()) {
+                  stopBackgroundNonStandardIndicatorsPing();
+                }
+              }
+              else {
+                // remove by identity
+                Iterator<ProgressIndicator> iterator = list.iterator();
+                while (iterator.hasNext()) {
+                  if (iterator.next() == thisIndicator) {
+                    iterator.remove();
+                    break;
+                  }
+                }
+              }
+            }
           }
           // by this time oldIndicator may have been canceled
         }
