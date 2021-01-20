@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.SerializationManagerEx
+import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
 import java.io.File
 import java.io.FileOutputStream
 
@@ -39,5 +40,6 @@ internal object CorruptionMarker {
     PersistentIndicesConfiguration.saveConfiguration()
     FileUtil.delete(corruptionMarker)
     FileBasedIndexInfrastructureExtension.EP_NAME.extensions.forEach { it.resetPersistentState() }
+    FileBasedIndexLayoutSettings.saveCurrentLayout()
   }
 }

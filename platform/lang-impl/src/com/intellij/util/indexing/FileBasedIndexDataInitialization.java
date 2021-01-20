@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -105,6 +106,8 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
       currentVersionCorrupted = currentVersionCorrupted ||
                                 result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
+    boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
+    currentVersionCorrupted = currentVersionCorrupted || storageLayoutChanged;
 
     if (currentVersionCorrupted) {
       CorruptionMarker.dropIndexes();

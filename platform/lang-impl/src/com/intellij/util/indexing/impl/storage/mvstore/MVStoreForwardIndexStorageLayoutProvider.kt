@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.indexing.impl.storage
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.indexing.impl.storage.mvstore
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Ref
@@ -8,6 +8,9 @@ import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.ForwardIndex
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
+import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutProvider
+import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout
 import java.io.IOException
 import org.jetbrains.mvstore.MVStore
 import java.lang.RuntimeException
@@ -18,10 +21,16 @@ import java.lang.Exception
 import java.nio.file.Path
 import java.util.function.Consumer
 
+internal class MVStoreForwardIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
+  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
+    return MVStoreForwardIndexStorageLayout(extension)
+  }
+}
+
 internal class MVStoreForwardIndexStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
   @Throws(IOException::class)
   override fun createOrClearIndexStorage(): IndexStorage<K, V> {
-    return VfsAwareIndexStorageLayout.createOrClearIndexStorage(extension)
+    return DefaultIndexStorageLayout.createOrClearIndexStorage(extension)
   }
 
   @Throws(IOException::class)

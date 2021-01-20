@@ -1479,5 +1479,12 @@
     </action>
 
     <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
+
+    <action id="SwitchFileBasedIndexStorageAction"
+            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"
+            text="Switch File-Based Index Storage"
+            internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
   </actions>
 </idea-plugin>
