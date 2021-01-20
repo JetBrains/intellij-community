@@ -3,7 +3,9 @@ package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewRecord
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.space.editor.SpaceVirtualFilesManager
 import com.intellij.space.vcs.review.details.SpaceReviewCommit.subject
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
@@ -98,7 +100,8 @@ internal class SpaceReviewCommitListPanel(
       changesVm,
       object : SpaceDiffFileProvider {
         override fun getSpaceDiffFile(): SpaceDiffFile {
-          return SpaceDiffFile(reviewDetailsVm.selectedChangesVm, diffVm)
+          return reviewDetailsVm.ideaProject.service<SpaceVirtualFilesManager>()
+            .findOrCreateDiffFile(reviewDetailsVm.selectedChangesVm, diffVm)
         }
       }
     ).apply {

@@ -8,12 +8,13 @@ import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.space.chat.editor.SpaceChatFile
 import com.intellij.space.chat.model.impl.SpaceChatReviewHeaderDetails
+import com.intellij.space.editor.SpaceVirtualFilesManager
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.util.ui.codereview.BaseHtmlEditorPane
@@ -40,7 +41,7 @@ internal fun openReviewInEditor(
 ) {
   val review = ref.resolve()
   val chatRef = review.feedChannel ?: return
-  val chatFile = SpaceChatFile(
+  val chatFile = project.service<SpaceVirtualFilesManager>().findOrCreateChatFile(
     review.key ?: review.id,
     "space-review/${review.key}",
     SpaceBundle.message("review.chat.editor.tab.name", review.key, review.title),

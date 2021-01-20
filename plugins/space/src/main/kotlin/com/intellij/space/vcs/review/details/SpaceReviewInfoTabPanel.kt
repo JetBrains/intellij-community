@@ -3,6 +3,8 @@ package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewRecord
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
+import com.intellij.space.editor.SpaceVirtualFilesManager
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
@@ -22,7 +24,8 @@ internal class SpaceReviewInfoTabPanel(
       detailsVm.allChangesVm,
       object : SpaceDiffFileProvider {
         override fun getSpaceDiffFile(): SpaceDiffFile {
-          return SpaceDiffFile(detailsVm.selectedChangesVm, detailsVm.spaceDiffVm)
+          return detailsVm.ideaProject.service<SpaceVirtualFilesManager>()
+            .findOrCreateDiffFile(detailsVm.selectedChangesVm, detailsVm.spaceDiffVm)
         }
       }
     ).apply {
