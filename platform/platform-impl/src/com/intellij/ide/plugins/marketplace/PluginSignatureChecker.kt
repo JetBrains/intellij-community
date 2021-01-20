@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.marketplace
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.zip.signer.verifier.InvalidSignatureResult
@@ -11,16 +12,27 @@ import org.jetbrains.zip.signer.verifier.MissingSignatureResult
 import org.jetbrains.zip.signer.verifier.SuccessfulVerificationResult
 import org.jetbrains.zip.signer.verifier.ZipVerifier
 import java.io.File
-
-import java.security.KeyStore
-import java.security.cert.X509Certificate
-import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
+import java.security.cert.Certificate
+import java.security.cert.CertificateFactory
 
 object PluginSignatureChecker {
 
+  private val LOG = Logger.getInstance(PluginSignatureChecker::class.java)
+
+  private val jetbrainsCertificate: Certificate? by lazy {
+    val cert = PluginSignatureChecker.javaClass.classLoader.getResourceAsStream("ca.crt")
+    if (cert == null) {
+      LOG.warn("JetBrains certificate not found")
+      null
+    }
+    else {
+      CertificateFactory.getInstance("X.509").generateCertificate(cert)
+    }
+  }
+
   @JvmStatic
   fun checkPluginsSignature(pluginName: String, pluginFile: File, indicator: ProgressIndicator): Boolean {
+    val jbCert = jetbrainsCertificate.takeIf { it != null } ?: return false
     indicator.checkCanceled()
     indicator.text2 = IdeBundle.message("plugin.signature.checker.progress", pluginName)
     indicator.isIndeterminate = true
@@ -29,7 +41,7 @@ object PluginSignatureChecker {
       is InvalidSignatureResult -> verificationResult.errorMessage
       is MissingSignatureResult -> IdeBundle.message("plugin.signature.not.signed")
       is SuccessfulVerificationResult ->
-        if (!verificationResult.isSignedBy(getCertificate())) {
+        if (!verificationResult.isSignedBy(jbCert)) {
           IdeBundle.message("plugin.signature.not.signed.by.jetbrains")
         }
         else null
@@ -51,12 +63,4 @@ object PluginSignatureChecker {
     return true
   }
 
-  //TODO: this method should actually return JetBrains CA
-  private fun getCertificate(): X509Certificate {
-    val trustManagerFactory: TrustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-    trustManagerFactory.init(null as KeyStore?)
-    return trustManagerFactory.trustManagers.filterIsInstance<X509TrustManager>().flatMap {
-      it.acceptedIssuers.toList()
-    }.last()
-  }
 }
