@@ -959,6 +959,16 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ChainOfCalls.kt")
+        public void testChainOfCalls() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForGenericFun/ChainOfCalls.kt");
+        }
+
+        @TestMetadata("ChainOfCallsWithInvoke.kt")
+        public void testChainOfCallsWithInvoke() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForGenericFun/ChainOfCallsWithInvoke.kt");
+        }
+
         @TestMetadata("Extension_receiverInsufficient.kt")
         public void testExtension_receiverInsufficient() throws Exception {
             runTest("testData/handlers/basic/typeArgsForGenericFun/Extension_receiverInsufficient.kt");

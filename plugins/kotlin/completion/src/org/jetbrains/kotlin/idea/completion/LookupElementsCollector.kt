@@ -11,6 +11,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.ElementPattern
+import com.intellij.psi.util.collectDescendantsOfType
+import com.intellij.psi.util.findDescendantOfType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -20,6 +22,7 @@ import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
 import java.util.*
 import kotlin.math.max
@@ -165,10 +168,15 @@ private class JustTypingLookupElementDecorator(element: LookupElement, private v
             }
         }
 
-        argList?.let { (typeArgs, exprOffset) ->
-            val callExpr = context.file.findElementAt(exprOffset)?.parentOfType<KtCallExpression>()
-            callExpr?.let { InsertExplicitTypeArgumentsIntention.applyTo(it, typeArgs, true) }
-        }
+        val (typeArgs, exprOffset) = argList ?: return
+        val beforeCaret = context.file.findElementAt(exprOffset) ?: return
+        val callExpr = when (val beforeCaretExpr = beforeCaret.prevSibling) {
+            is KtCallExpression -> beforeCaretExpr
+            is KtDotQualifiedExpression -> beforeCaretExpr.collectDescendantsOfType<KtCallExpression>().lastOrNull()
+            else -> null
+        } ?: return
+
+        InsertExplicitTypeArgumentsIntention.applyTo(callExpr, typeArgs, true)
     }
 }
 

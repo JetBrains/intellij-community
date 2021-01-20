@@ -8,11 +8,14 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.ErrorType
+
+// Debugging tip: use 'PsiTreeUtilsKt.printTree' to see PSI trees in the runtime. See fun documentation for details.
 
 data class TypeArgsWithOffset(val args: KtTypeArgumentList, val offset: Int)
 var UserDataHolder.argList: TypeArgsWithOffset? by UserDataProperty(Key("KotlinInsertTypeArgument.ARG_LIST"))
@@ -86,7 +89,10 @@ private fun addParamTypes(position: PsiElement): PsiElement {
     if (!InsertExplicitTypeArgumentsIntention.isApplicableTo(callExpression, bindingContext))
         return position
 
-    val exprOffset = callExpression.textOffset // applyTypeArguments modifies PSI, offset is to be calculated before
+    // We need to fix expression offset so that later 'typeArguments' could be inserted into the editor.
+    // See usages of `argList` -> JustTypingLookupElementDecorator#handleInsert.
+
+    val exprOffset = callExpression.endOffset // applyTypeArguments modifies PSI, offset is to be calculated before
     val (typeArguments, newPosition) = applyTypeArguments(callAndDiff, bindingContext) ?: return position
 
     return newPosition.also { it.argList = TypeArgsWithOffset(typeArguments, exprOffset) }
