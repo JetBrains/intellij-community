@@ -1,26 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.intention.impl;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,59 +27,60 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.Pair.pair;
+public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final TokenSet LITERALS = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
 
-public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
+  @NotNull
   @Override
-  @SuppressWarnings("DialogTitleCapitalization" /* "Basic Latin" is a proper noun */)
-  public @NotNull String getFamilyName() {
-    return JavaBundle.message("intention.convert.to.basic.latin");
-  }
-
-  @Override
-  @SuppressWarnings("DialogTitleCapitalization" /* "Basic Latin" is a proper noun */)
-  public @NotNull String getText() {
-    return getFamilyName();
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
-      Pair<PsiElement, Handler> pair = findHandler(element);
-      if (pair != null) {
-        return !IOUtil.isAscii(pair.first.getText());
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      @Nullable
+      @SuppressWarnings("DialogTitleCapitalization" /* "Basic Latin" is a proper noun */)
+      private ProblemDescriptor getProblem(PsiElement element) {
+        if (IOUtil.isAscii(element.getText())) return null;
+        return holder.getManager().createProblemDescriptor(element,
+                                                           (TextRange)null,
+                                                           JavaBundle.message("inspection.convert.to.basic.latin"),
+                                                           ProblemHighlightType.INFORMATION,
+                                                           isOnTheFly,
+                                                           new MyLocalQuickFix());
       }
-    }
-    return false;
-  }
 
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    Pair<PsiElement, Handler> pair = findHandler(element);
-    if (pair == null) return;
-    PsiElement toReplace = pair.first;
-    PsiElement newElement = pair.second.getSubstitution(toReplace);
-    toReplace.replace(newElement);
-  }
-
-  private static class Lazy {
-    private static final Handler[] ourHandlers = {new LiteralHandler(), new DocCommentHandler(), new CommentHandler()};
-  }
-
-  @Nullable
-  private static Pair<PsiElement, Handler> findHandler(PsiElement element) {
-    for (Handler handler : Lazy.ourHandlers) {
-      PsiElement applicable = handler.findApplicable(element);
-      if (applicable != null) {
-        return pair(applicable, handler);
+      @Override
+      public void visitComment(@NotNull PsiComment comment) {
+        super.visitComment(comment);
+        final ProblemDescriptor descriptor = getProblem(comment);
+        if (descriptor != null) {
+          holder.registerProblem(descriptor);
+        }
       }
-    }
-    return null;
+
+      @Override
+      public void visitLiteralExpression(PsiLiteralExpression expression) {
+        super.visitLiteralExpression(expression);
+        if (!(expression instanceof PsiLiteralExpressionImpl)) return;
+        if (!LITERALS.contains(((PsiLiteralExpressionImpl)expression).getLiteralElementType())) {
+          return;
+        }
+        final ProblemDescriptor descriptor = getProblem(expression);
+        if (descriptor != null) {
+          holder.registerProblem(descriptor);
+        }
+
+      }
+
+      @Override
+      public void visitDocComment(PsiDocComment comment) {
+        super.visitDocComment(comment);
+        final ProblemDescriptor descriptor = getProblem(comment);
+        if (descriptor != null) {
+          holder.registerProblem(descriptor);
+        }
+      }
+    };
   }
 
   private abstract static class Handler {
-    abstract @Nullable PsiElement findApplicable(PsiElement element);
-
     PsiElement getSubstitution(PsiElement element) {
       String text = element.getText();
       StringBuilder sb = new StringBuilder();
@@ -108,21 +106,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     protected abstract PsiElement getSubstitution(PsiElementFactory factory, PsiElement element, String newText);
   }
 
-
   private static class LiteralHandler extends Handler {
-    private static final TokenSet LITERALS = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
-
-    @Override
-    PsiElement findApplicable(PsiElement element) {
-      if (element instanceof PsiJavaToken && LITERALS.contains(((PsiJavaToken)element).getTokenType())) {
-        PsiElement parent = element.getParent();
-        if (parent instanceof PsiLiteralExpression) {
-          return parent;
-        }
-      }
-      return null;
-    }
-
     @Override
     protected PsiElement getSubstitution(PsiElementFactory factory, PsiElement element, String newText) {
       return factory.createExpressionFromText(newText, element.getParent());
@@ -136,11 +120,6 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
   private static class DocCommentHandler extends Handler {
     private static TIntObjectHashMap<String> ourEntities;
-
-    @Override
-    PsiElement findApplicable(PsiElement element) {
-      return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
-    }
 
     @Override
     PsiElement getSubstitution(PsiElement element) {
@@ -171,23 +150,23 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
       try {
         String url = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.HTML4_LOOSE_URI, project);
         if (url == null) {
-          Logger.getInstance(ConvertToBasicLatinAction.class).error("Namespace not found: " + XmlUtil.HTML4_LOOSE_URI);
+          Logger.getInstance(ConvertToBasicLatinInspection.class).error("Namespace not found: " + XmlUtil.HTML4_LOOSE_URI);
           return;
         }
         VirtualFile vFile = VfsUtil.findFileByURL(new URL(url));
         if (vFile == null) {
-          Logger.getInstance(ConvertToBasicLatinAction.class).error("Resource not found: " + url);
+          Logger.getInstance(ConvertToBasicLatinInspection.class).error("Resource not found: " + url);
           return;
         }
         PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
         if (!(psiFile instanceof XmlFile)) {
-          Logger.getInstance(ConvertToBasicLatinAction.class).error("Unexpected resource: " + psiFile);
+          Logger.getInstance(ConvertToBasicLatinInspection.class).error("Unexpected resource: " + psiFile);
           return;
         }
         file = (XmlFile)psiFile;
       }
       catch (MalformedURLException e) {
-        Logger.getInstance(ConvertToBasicLatinAction.class).error(e);
+        Logger.getInstance(ConvertToBasicLatinInspection.class).error(e);
         return;
       }
 
@@ -211,10 +190,32 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private static class CommentHandler extends DocCommentHandler {
+  private static class CommentHandler extends DocCommentHandler {}
+
+  private static class MyLocalQuickFix implements LocalQuickFix {
+    @Nls
+    @NotNull
     @Override
-    PsiElement findApplicable(PsiElement element) {
-      return element instanceof PsiComment ? element : null;
+    public String getFamilyName() {
+      return JavaBundle.message("inspection.convert.to.basic.latin");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final Handler handler;
+      if (element instanceof PsiLiteralExpression) {
+        handler = new LiteralHandler();
+      } else if (element instanceof PsiDocComment) {
+        handler = new DocCommentHandler();
+      } else if (element instanceof PsiComment) {
+        handler = new CommentHandler();
+      } else {
+        handler = null;
+      }
+      if (handler == null) return;
+      final PsiElement newElement = handler.getSubstitution(element);
+      element.replace(newElement);
     }
   }
 }
