@@ -5,6 +5,7 @@ import com.intellij.execution.process.mediator.ProcessMediatorLogger
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.io.MultiCloseable
 
 class ProcessMediatorConnectionManager(private val connectionProvider: () -> ProcessMediatorConnection) : Disposable {
   private var isDisposed = false  // synchronized on this
@@ -52,13 +53,15 @@ class ProcessMediatorConnectionManager(private val connectionProvider: () -> Pro
   }
 
   override fun dispose() {
-    synchronized(this) {
+    val connections = synchronized(this) {
       if (isDisposed) return
       isDisposed = true
-      for (connection in parkedConnections) {
-        connection.close()
+
+      activeConnectionLazy.drop()?.let { parkedConnections.add(it) }
+      parkedConnections.toTypedArray().also {
+        parkedConnections.clear()
       }
-      activeConnectionLazy.drop()?.close()
     }
+    MultiCloseable.closeAll(*connections)
   }
 }

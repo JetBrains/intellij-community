@@ -29,6 +29,10 @@ public class MultiCloseable implements AutoCloseable {
     closeAll(cleanupArray, true);
   }
 
+  public static void closeAll(@NotNull AutoCloseable @NotNull ... cleanupArray) throws Exception {
+    closeAll(cleanupArray, false);
+  }
+
   public static void closeAll(@NotNull AutoCloseable @NotNull [] cleanupArray, boolean reversed) throws Exception {
     Throwable throwable = null;
     for (int i = 0; i < cleanupArray.length; i++) {
