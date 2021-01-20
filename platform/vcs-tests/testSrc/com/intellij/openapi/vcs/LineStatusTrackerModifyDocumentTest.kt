@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
+import com.intellij.idea.Bombed
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.ex.Range
+import java.util.*
 
 class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
   fun testInitialEmpty() {
@@ -723,6 +725,7 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  @Bombed(user = "AMP", year = 2021, month = Calendar.JANUARY, day = 20)
   fun testFreeze2() {
     test("X_X_X") {
       (2 th "X_").insertAfter("X_")
@@ -774,6 +777,7 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  @Bombed(user = "AMP", year = 2021, month = Calendar.JANUARY, day = 20)
   fun testFreeze4() {
     test("X_X_X") {
       (2 th "X_").insertAfter("X_")
