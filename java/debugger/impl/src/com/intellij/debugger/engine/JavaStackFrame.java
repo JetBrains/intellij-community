@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProvider {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
@@ -306,12 +307,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
           // add locals
         if (myAutoWatchMode) {
-          for (String var : usedVars.first) {
-            LocalVariableProxyImpl local = visibleVariables.get(var);
-            if (local != null) {
-              children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, local), evaluationContext, myNodeManager));
-            }
-          }
+          List<LocalVariableProxyImpl> localVariables = usedVars.first.stream()
+            .map(var -> visibleVariables.get(var))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+          buildLocalVariables(evaluationContext, children, localVariables);
         }
         else {
           superBuildVariables(evaluationContext, children);
@@ -348,6 +348,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       else {
         throw e;
       }
+    }
+  }
+
+  protected void buildLocalVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children, List<LocalVariableProxyImpl> localVariables) {
+    for (LocalVariableProxyImpl variable : localVariables) {
+        children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, variable), evaluationContext, myNodeManager));
     }
   }
 
