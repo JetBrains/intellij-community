@@ -7,16 +7,15 @@ import org.jetbrains.concurrency.Promises;
 
 public class PrintCommand extends AbstractCommand {
 
-  private final String myText;
+  public static final String PREFIX = CMD_PREFIX + "print";
 
   public PrintCommand(String text, int line) {
-    super("", line);
-    myText = text;
+    super(text, line);
   }
 
   @Override
   protected Promise<Object> _execute(PlaybackContext context) {
-    context.code(myText, getLine());
+    context.code(getText(), getLine());
     return Promises.resolvedPromise();
   }
 }
