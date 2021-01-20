@@ -60,6 +60,11 @@ public class AppendableTerminalDataStream implements TerminalDataStream, Appenda
   }
 
   @Override
+  public boolean isEmpty() {
+    return myPushBackQueue.isEmpty() && myQueue.isEmpty();
+  }
+
+  @Override
   public Appendable append(CharSequence csq) throws IOException {
     return append(csq, 0, csq.length());
   }
