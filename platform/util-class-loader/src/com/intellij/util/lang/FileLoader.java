@@ -87,7 +87,7 @@ final class FileLoader extends Loader {
         boolean containsClasses = false;
         boolean containsResources = false;
         for (Path file : dirStream) {
-          String path = startDir.relativize(file).toString();
+          String path = startDir.relativize(file).toString().replace(File.separatorChar, '/');
           if (path.endsWith(ClassPath.CLASS_EXTENSION)) {
             context.andClassName(path);
             containsClasses = true;
