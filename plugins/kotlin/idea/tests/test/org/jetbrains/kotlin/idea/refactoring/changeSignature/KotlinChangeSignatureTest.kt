@@ -389,6 +389,20 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    fun testAddParameterToAnnotation() {
+        doTest {
+            val defaultValueForCall = KtPsiFactory(project).createExpression("3")
+            addParameter(KotlinParameterInfo(
+                originalBaseFunctionDescriptor,
+                -1,
+                "p3",
+                KotlinTypeInfo(false, BUILT_INS.intType),
+                null,
+                defaultValueForCall
+            ))
+        }
+    }
+
     fun testRemoveUsedReceiver() {
         doTestConflict {
             removeParameter(0)

@@ -19,7 +19,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
-import com.intellij.refactoring.util.*
+import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.refactoring.util.MoveRenameUsageInfo
+import com.intellij.refactoring.util.RefactoringUIUtil
+import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -70,6 +73,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     // This is special 'PsiElement' whose purpose is to wrap JetMethodDescriptor so that it can be kept in the usage list
@@ -242,16 +246,16 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 }
 
                 element is KtReferenceExpression -> {
-                    var parent = element.parent
+                    val parent = element.parent
                     when {
                         parent is KtCallExpression -> result.add(KotlinFunctionCallUsage(parent, functionUsageInfo))
 
-                        parent is KtUserType && parent.parent is KtTypeReference -> {
-                            parent = parent.parent.parent
-
-                            if (parent is KtConstructorCalleeExpression && parent.parent is KtSuperTypeCallEntry)
-                                result.add(KotlinFunctionCallUsage(parent.parent as KtSuperTypeCallEntry, functionUsageInfo))
-                        }
+                        parent is KtUserType && parent.parent is KtTypeReference ->
+                            parent.parent.parent.safeAs<KtConstructorCalleeExpression>()
+                                ?.parent?.safeAs<KtCallElement>()
+                                ?.let {
+                                    result.add(KotlinFunctionCallUsage(it, functionUsageInfo))
+                                }
 
                         element is KtSimpleNameExpression && (functionPsi is KtProperty || functionPsi is KtParameter) ->
                             result.add(KotlinPropertyCallUsage(element))
