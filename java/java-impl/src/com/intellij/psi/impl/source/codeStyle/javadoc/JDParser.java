@@ -272,7 +272,6 @@ public class JDParser {
     int preCount = 0;
     int curPos = 0;
     int firstLineToKeepIndents = -1;
-    int currLine = 0;
     int minIndentWhitespaces = Integer.MAX_VALUE;
 
     while (st.hasMoreTokens()) {
@@ -280,7 +279,7 @@ public class JDParser {
       curPos += token.length();
 
       if (containsTagToKeepIndentsAfter(getLineWithoutAsterisk(token)) && firstLineToKeepIndents < 0) {
-        firstLineToKeepIndents = currLine;
+        firstLineToKeepIndents = list.size();
       }
 
       if (firstLineToKeepIndents >= 0) {
@@ -306,7 +305,6 @@ public class JDParser {
         if (preCount == 0 && firstLineToKeepIndents < 0) token = token.trim();
 
         list.add(token);
-        currLine ++;
 
         if (markers != null) {
           if (lineHasUnclosedPreTag(token)) preCount++;
