@@ -1381,6 +1381,12 @@
                           bundleName="messages.LangBundle"
                           providerClass="com.intellij.util.indexing.impl.storage.mvstore.MVStoreForwardIndexStorageLayoutProvider"
                           version="0"/>
+
+    <fileBasedIndexLayout id="in-memory"
+                          presentableNameKey="in.memory.storage.presentable.name"
+                          bundleName="messages.LangBundle"
+                          providerClass="com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider"
+                          version="0"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

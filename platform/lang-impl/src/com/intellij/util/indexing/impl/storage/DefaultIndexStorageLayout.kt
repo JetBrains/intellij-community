@@ -4,8 +4,6 @@ package com.intellij.util.indexing.impl.storage
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
-import com.intellij.util.indexing.memory.InMemoryForwardIndex
-import com.intellij.util.indexing.memory.InMemoryIndexStorage
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings
 import com.intellij.util.io.IOUtil
 import org.jetbrains.annotations.ApiStatus
@@ -169,17 +167,4 @@ object DefaultIndexStorageLayout {
     }
   }
 
-  class InMemoryStorageLayout<K, V>(private val myExtension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
-    override fun createOrClearIndexStorage(): IndexStorage<K, V> {
-      return InMemoryIndexStorage(myExtension.keyDescriptor)
-    }
-
-    override fun createOrClearForwardIndex(): ForwardIndex {
-      return InMemoryForwardIndex()
-    }
-
-    override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-      return MapForwardIndexAccessor(InputMapExternalizer(myExtension))
-    }
-  }
 }
