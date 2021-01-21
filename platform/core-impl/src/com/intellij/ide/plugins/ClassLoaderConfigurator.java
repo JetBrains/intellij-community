@@ -71,7 +71,6 @@ final class ClassLoaderConfigurator {
         PluginId.getId("org.jetbrains.plugins.ruby"),
         PluginId.getId("com.jetbrains.rubymine.customization"),
         PluginId.getId("JavaScript"),
-        PluginId.getId("com.jetbrains.space"),
         PluginId.getId("Docker"),
         PluginId.getId("com.intellij.diagram"),
         PluginId.getId("org.jetbrains.plugins.github")
@@ -102,6 +101,7 @@ final class ClassLoaderConfigurator {
       PluginId.getId("com.intellij.spring.data"),
       PluginId.getId("com.intellij.spring.boot.run.tests"),
       PluginId.getId("com.intellij.spring.boot"),
+      PluginId.getId("com.jetbrains.space"),
       PluginId.getId("com.intellij.spring"),
     });
   }
