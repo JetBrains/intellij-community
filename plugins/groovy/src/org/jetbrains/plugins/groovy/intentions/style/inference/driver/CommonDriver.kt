@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
@@ -168,13 +168,12 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
         val resolveResult = methodCallExpression.advancedResolve() as? GroovyMethodResult
         val argumentMapping = resolveResult?.candidate?.argumentMapping ?: return
-        for ((type, argument) in argumentMapping.expectedTypes) {
-          val properType = resolveResult.substitutor.substitute(type)
-          val typeParameter = (argument.type?.resolve() as? PsiTypeParameter).takeIf { it in typeParameters } ?: continue
-          if (properType == typeParameter.type()) {
-            continue
-          }
-          constraintCollector.add(TypeConstraint(properType, typeParameter.type(), method))
+        for (argument in argumentMapping.arguments) {
+          val expectedType = (argumentMapping.targetParameter(argument)?.psi as? GrParameter)?.typeGroovy ?: continue
+          val typeInCurrentMethod = (argument.type?.resolve() as? PsiTypeParameter).takeIf { it in typeParameters }?.type() ?: continue
+          val expectedSubstitutedType =
+            resolveResult.substitutor.substitute(expectedType).takeUnless { it == typeInCurrentMethod } ?: continue
+          constraintCollector.add(TypeConstraint(expectedSubstitutedType, typeInCurrentMethod, method))
         }
       }
 
