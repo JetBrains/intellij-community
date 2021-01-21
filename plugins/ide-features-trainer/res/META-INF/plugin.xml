@@ -46,8 +46,6 @@
       implementation="training.statistic.TaskIdRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.KeymapSchemeRuleValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="training.statistic.ShortcutOrNoneRuleValidator"/>
     <statistics.counterUsagesCollector implementationClass="training.statistic.StatisticBase"/>
 
     <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>

@@ -25,7 +25,7 @@ import java.awt.Point
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String, shortcutText: String) {
+internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String) {
   val action = ActionManager.getInstance().getAction(actionId)
   if (action == null) return
 
@@ -72,5 +72,5 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
   balloon = builder.createBalloon()
   balloon.show(RelativePoint(parent, point), Balloon.Position.below)
 
-  StatisticBase.logShortcutClicked(shortcutText, actionId)
+  StatisticBase.logShortcutClicked(actionId)
 }
