@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
@@ -21,22 +19,8 @@ public final class ClasspathCache {
   private static final double PROBABILITY = 0.005d;
   private static final IntFunction<Loader[][]> ARRAY_FACTORY = size -> new Loader[size][];
 
-  private static final class PackageCache {
-    final IntObjectHashMap<Loader[]> resourcePackageCache;
-    final IntObjectHashMap<Loader[]> classPackageCache;
-
-    PackageCache() {
-      classPackageCache = new IntObjectHashMap<>(ARRAY_FACTORY);
-      resourcePackageCache = new IntObjectHashMap<>(ARRAY_FACTORY);
-    }
-
-    PackageCache(PackageCache hash) {
-      classPackageCache = hash.classPackageCache;
-      resourcePackageCache = hash.resourcePackageCache;
-    }
-  }
-
-  private final AtomicReference<PackageCache> packageHash = new AtomicReference<>(new PackageCache());
+  private volatile IntObjectHashMap<Loader[]> classPackageCache = new IntObjectHashMap<>(ARRAY_FACTORY);
+  private volatile IntObjectHashMap<Loader[]> resourcePackageCache = new IntObjectHashMap<>(ARRAY_FACTORY);
 
   public interface IndexRegistrar {
     void registerPackageIndex(IntObjectHashMap<Loader[]> classMap, IntObjectHashMap<Loader[]> resourceMap, Loader loader);
@@ -149,28 +133,26 @@ public final class ClasspathCache {
   }
 
   void clearCache() {
-    packageHash.set(new PackageCache());
+    classPackageCache = new IntObjectHashMap<>(ARRAY_FACTORY);
+    resourcePackageCache = new IntObjectHashMap<>(ARRAY_FACTORY);
   }
 
-  synchronized void applyLoaderData(@NotNull IndexRegistrar registrar, @NotNull Loader loader) {
-    PackageCache oldPackageHash = packageHash.get();
-    PackageCache newPackageHash;
-    do {
-      newPackageHash = new PackageCache(oldPackageHash);
-      registrar.registerPackageIndex(newPackageHash.classPackageCache, newPackageHash.resourcePackageCache, loader);
-    }
-    while (!packageHash.compareAndSet(oldPackageHash, newPackageHash));
+  // executed as part of synchronized getLoaderSlowPath - no concurrent write
+  void applyLoaderData(@NotNull IndexRegistrar registrar, @NotNull Loader loader) {
+    IntObjectHashMap<Loader[]> newClassPackageCache = new IntObjectHashMap<>(classPackageCache);
+    IntObjectHashMap<Loader[]> newResourcePackageCache = new IntObjectHashMap<>(resourcePackageCache);
+    registrar.registerPackageIndex(newClassPackageCache, newResourcePackageCache, loader);
+    classPackageCache = newClassPackageCache;
+    resourcePackageCache = newResourcePackageCache;
   }
 
   Loader[] getLoadersByName(@NotNull String resourcePath) {
-    PackageCache packageCache = packageHash.get();
-    IntObjectHashMap<Loader[]> map =
-      resourcePath.endsWith(ClassPath.CLASS_EXTENSION) ? packageCache.classPackageCache : packageCache.resourcePackageCache;
+    IntObjectHashMap<Loader[]> map = resourcePath.endsWith(ClassPath.CLASS_EXTENSION) ? classPackageCache : resourcePackageCache;
     return map.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
   }
 
   Loader[] getClassLoadersByName(@NotNull String resourcePath) {
-    return packageHash.get().classPackageCache.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
+    return classPackageCache.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
   }
 
   static int getPackageNameHash(@NotNull String resourcePath, int endIndex) {
@@ -178,9 +160,10 @@ public final class ClasspathCache {
   }
 
   public static void addResourceEntry(int hash, @NotNull IntObjectHashMap<Loader[]> map, @NotNull Loader loader) {
-    Loader[] loaders = map.get(hash);
+    int index = map.index(hash);
+    Loader[] loaders = map.getByIndex(index, hash);
     if (loaders == null) {
-      map.put(hash, new Loader[]{loader});
+      map.addByIndex(index, hash, new Loader[]{loader});
     }
     else {
       if (ClassPath.recordLoadingInfo) {
@@ -190,9 +173,10 @@ public final class ClasspathCache {
           }
         }
       }
-      Loader[] newArray = Arrays.copyOf(loaders, loaders.length + 1);
-      newArray[loaders.length] = loader;
-      map.put(hash, newArray);
+      Loader[] newList = new Loader[loaders.length + 1];
+      System.arraycopy(loaders, 0, newList, 0, loaders.length);
+      newList[loaders.length] = loader;
+      map.replaceByIndex(index, hash, newList);
     }
   }
 

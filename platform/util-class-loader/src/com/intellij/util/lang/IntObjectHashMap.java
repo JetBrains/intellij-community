@@ -24,8 +24,8 @@ final class IntObjectHashMap<T> {
 
   IntObjectHashMap(IntObjectHashMap<T> original) {
     arrayFactory = original.arrayFactory;
-    keys = original.keys;
-    values = original.values;
+    keys = original.keys.clone();
+    values = original.values.clone();
     size = original.size;
     specialZeroValue = original.specialZeroValue;
     hasZeroValue = original.hasZeroValue;
@@ -35,12 +35,31 @@ final class IntObjectHashMap<T> {
     return size + (hasZeroValue ? 1 : 0);
   }
 
-  void clear() {
-    size = 0;
-    keys = new int[4];
-    values = arrayFactory.apply(keys.length);
-    specialZeroValue = null;
-    hasZeroValue = false;
+  void replaceByIndex(int index, int key, @NotNull T value) {
+    if (key == 0) {
+      specialZeroValue = value;
+      hasZeroValue = true;
+    }
+    else {
+      values[index] = value;
+    }
+  }
+
+  void addByIndex(int index, int key, @NotNull T value) {
+    if (key == 0) {
+      specialZeroValue = value;
+      hasZeroValue = true;
+      return;
+    }
+
+    if (size >= (2 * values.length) / 3) {
+      rehash();
+      index = hashIndex(keys, key);
+    }
+
+    size++;
+    values[index] = value;
+    keys[index] = key;
   }
 
   void put(int key, @NotNull T value) {
@@ -53,18 +72,18 @@ final class IntObjectHashMap<T> {
     if (size >= (2 * values.length) / 3) {
       rehash();
     }
-    Object previousValue = doPut(keys, values, key, value);
-    if (previousValue == null) {
-      ++size;
+    int index = hashIndex(keys, key);
+    if (values[index] == null) {
+      size++;
+    }
+    values[index] = value;
+    if (keys[index] == 0) {
+      keys[index] = key;
     }
   }
 
-  private static Object doPut(int @NotNull [] keys, Object @NotNull [] values, int key, @NotNull Object value) {
-    int index = hashIndex(keys, key);
-    Object obj = values[index];
-    values[index] = value;
-    if (keys[index] == 0) keys[index] = key;
-    return obj;
+  int index(int key) {
+    return key == 0 ? Integer.MIN_VALUE : hashIndex(keys, key);
   }
 
   private static int hashIndex(int @NotNull [] keys, int key) {
@@ -92,7 +111,11 @@ final class IntObjectHashMap<T> {
     for (int i = keys.length - 1; i >= 0; i--) {
       int key = keys[i];
       if (key != 0) {
-        doPut(newKeys, newValues, key, values[i]);
+        int index = hashIndex(newKeys, key);
+        newValues[index] = values[i];
+        if (newKeys[index] == 0) {
+          newKeys[index] = key;
+        }
       }
     }
 
@@ -102,5 +125,9 @@ final class IntObjectHashMap<T> {
 
   public T get(int key) {
     return key == 0 ? specialZeroValue : values[hashIndex(keys, key)];
+  }
+
+  public T getByIndex(int index, int key) {
+    return key == 0 ? specialZeroValue : values[index];
   }
 }
