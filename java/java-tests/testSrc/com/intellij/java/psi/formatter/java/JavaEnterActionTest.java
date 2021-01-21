@@ -647,4 +647,27 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "}"
     );
   }
+
+  public void testIdea163806() {
+    doTextTest(
+      "java",
+
+      "public class Test {\n" +
+      "    /**\n" +
+      "     * Something<br><caret>\n" +
+      "     */\n" +
+      "    void foo() {\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    /**\n" +
+      "     * Something<br>\n" +
+      "     * <caret>\n" +
+      "     */\n" +
+      "    void foo() {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
