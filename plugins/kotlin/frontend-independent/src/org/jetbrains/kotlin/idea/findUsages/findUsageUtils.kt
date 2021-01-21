@@ -50,18 +50,17 @@ fun KtDeclaration.processAllExactUsages(
         }
     }
 
-    val project = project
     FindUsagesManager(project).getFindUsagesHandler(this, true)?.processElementUsages(
-            this,
-            { usageInfo ->
-                val reference = usageInfo.reference ?: return@processElementUsages true
-                if (reference is LightMemberReference || elementsToCheckReferenceAgainst(reference).any { reference.isReferenceTo(it) }) {
-                    processor(usageInfo)
-                }
-                true
-            },
-            options
-        )
+        this,
+        { usageInfo ->
+            val reference = usageInfo.reference ?: return@processElementUsages true
+            if (reference is LightMemberReference || elementsToCheckReferenceAgainst(reference).any { reference.isReferenceTo(it) }) {
+                processor(usageInfo)
+            }
+            true
+        },
+        options
+    )
 }
 
 fun KtDeclaration.processAllUsages(
