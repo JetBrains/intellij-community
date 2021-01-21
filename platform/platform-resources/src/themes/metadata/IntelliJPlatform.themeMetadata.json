@@ -20,6 +20,18 @@
     },
     {
       "key": "AssignedMnemonic.foreground",
+      "description": "The button text color for the not assigned bookmark mnemonic."
+    },
+    {
+      "key": "AssignedMnemonic.background",
+      "description": "The button background for the not assigned bookmark mnemonic."
+    },
+    {
+      "key": "AssignedMnemonic.borderColor",
+      "description": "The button border color for the not assigned bookmark mnemonic."
+    },
+    {
+      "key": "AssignedMnemonic.foreground",
       "description": "The button text color for the already assigned bookmark mnemonic."
     },
     {
@@ -27,12 +39,20 @@
       "description": "The button background for the already assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.selectionForeground",
+      "key": "AssignedMnemonic.borderColor",
+      "description": "The button border color for the already assigned bookmark mnemonic."
+    },
+    {
+      "key": "CurrentMnemonic.foreground",
       "description": "The button text color for the currently selected bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.selectionBackground",
+      "key": "CurrentMnemonic.background",
       "description": "The button background for the currently selected bookmark mnemonic."
+    },
+    {
+      "key": "CurrentMnemonic.borderColor",
+      "description": "The button border color for the currently selected bookmark mnemonic."
     },
     {
       "key": "BigSpinner.background",

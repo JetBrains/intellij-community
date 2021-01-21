@@ -22,10 +22,13 @@ import java.awt.event.KeyListener
 import java.lang.ref.WeakReference
 import javax.swing.*
 
-private val ASSIGNED_BACKGROUND = namedColor("AssignedMnemonic.background", 0xF7C777, 0x665632)
 private val ASSIGNED_FOREGROUND = namedColor("AssignedMnemonic.foreground", 0x000000, 0xBBBBBB)
-private val CURRENT_BACKGROUND = namedColor("AssignedMnemonic.selectionBackground", 0x3875D6, 0x2F65CA)
-private val CURRENT_FOREGROUND = namedColor("AssignedMnemonic.selectionForeground", 0xFFFFFF, 0xFFFFFF)
+private val ASSIGNED_BACKGROUND = namedColor("AssignedMnemonic.background", 0xF7C777, 0x665632)
+private val ASSIGNED_BORDER = namedColor("AssignedMnemonic.borderColor", ASSIGNED_BACKGROUND)
+
+private val CURRENT_FOREGROUND = namedColor("CurrentMnemonic.foreground", 0xFFFFFF, 0xFEFEFE)
+private val CURRENT_BACKGROUND = namedColor("CurrentMnemonic.background", 0x389FD6, 0x345F85)
+private val CURRENT_BORDER = namedColor("CurrentMnemonic.borderColor", CURRENT_BACKGROUND)
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
@@ -92,10 +95,17 @@ internal abstract class MnemonicChooser(
       type == current -> {
         putClientProperty("JButton.textColor", CURRENT_FOREGROUND)
         putClientProperty("JButton.backgroundColor", CURRENT_BACKGROUND)
+        putClientProperty("JButton.borderColor", CURRENT_BORDER)
       }
       manager.findBookmarkForMnemonic(type.mnemonic) != null -> {
         putClientProperty("JButton.textColor", ASSIGNED_FOREGROUND)
         putClientProperty("JButton.backgroundColor", ASSIGNED_BACKGROUND)
+        putClientProperty("JButton.borderColor", ASSIGNED_BORDER)
+      }
+      else -> {
+        putClientProperty("JButton.textColor", UIManager.getColor("AvailableMnemonic.foreground"))
+        putClientProperty("JButton.backgroundColor", UIManager.getColor("AvailableMnemonic.background"))
+        putClientProperty("JButton.borderColor", UIManager.getColor("AvailableMnemonic.borderColor"))
       }
     }
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
