@@ -25,7 +25,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
-import com.intellij.usages.UsageViewManager
 import com.intellij.util.Query
 import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightClass
 import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightElements
@@ -52,9 +51,7 @@ fun KtDeclaration.processAllExactUsages(
     }
 
     val project = project
-    FindUsagesManager(project, UsageViewManager.getInstance(project))
-        .getFindUsagesHandler(this, true)
-        ?.processElementUsages(
+    FindUsagesManager(project).getFindUsagesHandler(this, true)?.processElementUsages(
             this,
             { usageInfo ->
                 val reference = usageInfo.reference ?: return@processElementUsages true
