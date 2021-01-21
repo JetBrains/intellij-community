@@ -28,7 +28,7 @@ import javax.swing.JPanel
 private val SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", JBColor(0x787878, 0x999999))
 private val BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", JBColor(0xadadad, 0x636569))
 
-internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String, shortcutText: String) {
+internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String) {
   val action = ActionManager.getInstance().getAction(actionId)
   if (action == null) return
 
@@ -75,5 +75,5 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
   balloon = builder.createBalloon()
   balloon.show(RelativePoint(parent, point), Balloon.Position.below)
 
-  StatisticBase.logShortcutClicked(shortcutText, actionId)
+  StatisticBase.logShortcutClicked(actionId)
 }
