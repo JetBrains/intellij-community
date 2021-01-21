@@ -314,7 +314,7 @@ object GHUIUtil {
     val showOwner = if (showServer || alwaysShowOwner) true else needToShowRepositoryOwner(allRepositories)
 
     val builder = StringBuilder()
-    if (showServer) builder.append(repository.serverPath).append("/")
+    if (showServer) builder.append(repository.serverPath.toUrl(false)).append("/")
     if (showOwner) builder.append(repository.repositoryPath.owner).append("/")
     builder.append(repository.repositoryPath.repository)
     return builder.toString()
