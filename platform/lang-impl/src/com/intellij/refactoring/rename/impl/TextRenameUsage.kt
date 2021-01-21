@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.model.Pointer
@@ -16,7 +16,7 @@ import com.intellij.util.text.StringOperation
 
 internal typealias TextReplacement = (newName: String) -> String?
 
-internal class TextUsage(
+internal class TextRenameUsage(
   override val file: PsiFile,
   override val range: TextRange,
   private val textReplacement: TextReplacement
@@ -24,16 +24,16 @@ internal class TextUsage(
 
   override val declaration: Boolean get() = false
 
-  override fun createPointer(): Pointer<out TextUsage> = TextUsagePointer(file, range, textReplacement)
+  override fun createPointer(): Pointer<out TextRenameUsage> = TextUsagePointer(file, range, textReplacement)
 
-  private class TextUsagePointer(file: PsiFile, range: TextRange, private val textReplacement: TextReplacement) : Pointer<TextUsage> {
+  private class TextUsagePointer(file: PsiFile, range: TextRange, private val textReplacement: TextReplacement) : Pointer<TextRenameUsage> {
 
     private val rangePointer: SmartPsiFileRange = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, range)
 
-    override fun dereference(): TextUsage? {
+    override fun dereference(): TextRenameUsage? {
       val file: PsiFile = rangePointer.element ?: return null
       val range: TextRange = rangePointer.range?.let(TextRange::create) ?: return null
-      return TextUsage(file, range, textReplacement)
+      return TextRenameUsage(file, range, textReplacement)
     }
   }
 
@@ -42,7 +42,7 @@ internal class TextUsage(
   private object TextUsageUpdater : FileUpdater {
 
     override fun prepareFileUpdate(usage: ModifiableRenameUsage, newName: String): Collection<FileOperation> {
-      usage as TextUsage
+      usage as TextRenameUsage
       val newText: String = usage.textReplacement(newName) ?: return emptyList()
       return listOf(FileOperation.modifyFile(
         usage.file,
@@ -63,7 +63,7 @@ internal class TextUsage(
     }
 
     fun createTextUsage(file: PsiFile, rangeInFile: TextRange, textReplacement: TextReplacement): RenameUsage {
-      return TextUsage(file, rangeInFile, textReplacement)
+      return TextRenameUsage(file, rangeInFile, textReplacement)
     }
   }
 }

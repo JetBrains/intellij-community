@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.model.Pointer
@@ -140,7 +140,7 @@ private fun Query<out TextOccurrence>.mapToUsages(
 ): Query<out RenameUsage> {
   return mapping { occurrence: TextOccurrence ->
     val rangeInElement = TextRange.from(occurrence.offsetInElement, searchString.length)
-    TextUsage.createTextUsage(occurrence.element, rangeInElement, textReplacement)
+    TextRenameUsage.createTextUsage(occurrence.element, rangeInElement, textReplacement)
   }
 }
 
