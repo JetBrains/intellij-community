@@ -1383,7 +1383,7 @@ public final class BuildManager implements Disposable {
   }
 
   private static void showSnapshotNotificationAfterFinish(@NotNull Project project) {
-    MessageBusConnection busConnection = project.getMessageBus().connect(Disposer.newDisposable());
+    MessageBusConnection busConnection = project.getMessageBus().connect();
     busConnection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
       @Override
       public void buildFinished(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {

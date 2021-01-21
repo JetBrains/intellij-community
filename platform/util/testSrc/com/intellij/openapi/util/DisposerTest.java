@@ -384,22 +384,21 @@ public class DisposerTest extends TestCase {
 
     Disposer.dispose(disposable);
 
-    try {
-      Disposer.register(disposable, Disposer.newDisposable());
-      fail("Must not be able to register with already disposed parent");
-    }
-    catch (IncorrectOperationException ignored) {
-
-    }
+    Disposable newDisposable = Disposer.newDisposable();
+    UsefulTestCase.assertThrows(IncorrectOperationException.class, () -> Disposer.register(disposable, newDisposable));
+    assertFalse(Disposer.isDisposed(newDisposable));
   }
 
-  public void testRegisterThenDisposeThenRegisterAgain() {
+  public void testMustBeAbleToRegisterThenDisposeThenRegisterAgain() {
     Disposable disposable = Disposer.newDisposable();
     Disposer.register(myRoot, disposable);
 
     Disposer.dispose(disposable);
     Disposer.register(myRoot, disposable);
-    Disposer.register(disposable, Disposer.newDisposable());
+    Disposable newDisposable = Disposer.newDisposable();
+    Disposer.register(disposable, newDisposable);
+    assertFalse(Disposer.isDisposed(disposable));
+    assertFalse(Disposer.isDisposed(newDisposable));
   }
 
   public void testDisposeDespiteExceptions() {
