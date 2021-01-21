@@ -272,6 +272,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       val label = LinkLabel<Any?>(action.getName(), null) { source, _ ->
         action.actionPerformed(ActionEvent(source, ActionEvent.ACTION_PERFORMED, null))
       }
+      label.isFocusable = true
       label.isEnabled = action.isEnabled
       label.isVisible = action.getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
 
