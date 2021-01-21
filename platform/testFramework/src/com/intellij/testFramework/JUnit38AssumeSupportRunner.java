@@ -22,15 +22,15 @@ import org.junit.runner.notification.StoppedByUserException;
  * @apiNote it is required only for JUnit3 tests (e.g. void testMyTestName()) 
  * if you use JUnit4 tests style (@Test void testMyTestName()) you don't need it 
  */
-public class JSUnit38AssumeSupportRunner extends JUnit38ClassRunner {
+public class JUnit38AssumeSupportRunner extends JUnit38ClassRunner {
   
   @SuppressWarnings("unused") //used by reflection
-  public JSUnit38AssumeSupportRunner(Class<?> klass) {
+  public JUnit38AssumeSupportRunner(Class<?> klass) {
     super(klass);
   }
 
   @SuppressWarnings("unused") //used by reflection
-  public JSUnit38AssumeSupportRunner(Test test) {
+  public JUnit38AssumeSupportRunner(Test test) {
     super(test);
   }
 
