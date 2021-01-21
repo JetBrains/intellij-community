@@ -1,6 +1,0 @@
-dependencies {
-  implementation group: 'my.test.dep', name: 'artifact', version: 'version', {
-    exclude module: 'module1'
-    exclude module: 'module2'
-  }
-}

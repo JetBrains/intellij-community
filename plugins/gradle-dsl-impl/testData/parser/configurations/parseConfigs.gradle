@@ -1,6 +1,0 @@
-configurations {
-  goodConfig
-
-  compile.transitive = true
-  newConfig.visible = false
-}

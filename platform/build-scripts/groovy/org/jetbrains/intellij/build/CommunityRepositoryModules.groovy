@@ -191,9 +191,10 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
-    plugin("intellij.gradle.dsl") {
-      withModule("intellij.gradle.dsl.impl")
-      withModule("intellij.gradle.dsl.kotlin.impl")
+    plugin("intellij.android.gradle.dsl") {
+      withModule("intellij.android.gradle.dsl")
+      withModule("intellij.android.gradle.dsl.kotlin.impl")
+      withModule("intellij.android.gradle.dsl.impl")
     },
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")

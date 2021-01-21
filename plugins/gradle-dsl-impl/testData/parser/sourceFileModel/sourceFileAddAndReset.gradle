@@ -1,8 +1,0 @@
-android {
-  sourceSets {
-    main {
-      manifest {
-      }
-    }
-  }
-}

@@ -1,3 +1,0 @@
-dependencies {
-  testImplementation(project(":"))
-}

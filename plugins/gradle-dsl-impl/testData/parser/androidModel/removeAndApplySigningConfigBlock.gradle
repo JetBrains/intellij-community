@@ -1,7 +1,0 @@
-android {
-  signingConfigs {
-    config1 {
-    }
-    config2 {}
-  }
-}

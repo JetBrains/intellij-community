@@ -1,6 +1,0 @@
-android {
-  buildTypes {
-    create("typeA") {
-    }
-  }
-}

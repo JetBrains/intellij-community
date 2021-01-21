@@ -1,7 +1,0 @@
-android {
-  buildTypes {
-    ħƁǅẅΣЖא {
-      applicationIdSuffix 'foo'
-    }
-  }
-}

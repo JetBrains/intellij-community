@@ -1,5 +1,0 @@
-ext.hello = 10
-ext {
-  boo = '10'
-  newProp = true
-}

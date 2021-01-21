@@ -1,5 +1,0 @@
-ext {
-  prop1 = [1, "two", "3", 4]
-  prop2 = prop1[0]
-  prop3 = prop1[1]
-}

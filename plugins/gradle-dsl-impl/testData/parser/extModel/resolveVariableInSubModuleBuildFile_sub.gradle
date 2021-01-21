@@ -1,2 +1,0 @@
-ext.xyz = "value_from_sub_module_build_file"
-ext.test = xyz

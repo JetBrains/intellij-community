@@ -1,6 +1,0 @@
-android {
-  externalNativeBuild {
-    ndkBuild {
-    }
-  }
-}

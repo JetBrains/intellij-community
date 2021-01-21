@@ -1,3 +1,0 @@
-def world = 'WORLD'
-def foo = 'bar'
-ext.first = "Hello ${world}"

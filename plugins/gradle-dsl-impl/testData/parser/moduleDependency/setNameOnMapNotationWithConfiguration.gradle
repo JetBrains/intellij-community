@@ -1,3 +1,0 @@
-dependencies {
-  compile project(path: ':androidlib1', configuration: 'flavor1Release')
-}

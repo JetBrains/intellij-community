@@ -1,8 +1,0 @@
-buildscript {
-  repositories {
-    jcenter()
-  }
-  repositories {
-    google()
-  }
-}

@@ -1,9 +1,0 @@
-def resConfigs = ["abc"]
-def zzz = ["def"]
-
-android {
-  defaultConfig {
-    resConfigs = ["ghi"]
-    zzz = ["jkl"]
-  }
-}

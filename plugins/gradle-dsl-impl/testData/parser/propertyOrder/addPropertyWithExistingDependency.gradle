@@ -1,4 +1,0 @@
-ext {
-  prop = "hello"
-  prop2 = prop1
-}

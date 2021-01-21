@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 @RunWith(Parameterized.class)
-public class GradleDependencyUpdaterTestBase extends GradleImportingTestCase {
+public abstract class GradleDependencyUpdaterTestBase extends GradleImportingTestCase {
 
   @NotNull private static final String GROOVY_LANGUAGE = "Groovy";
   @NotNull private static final String KOTLIN_LANGUAGE = "Kotlin";

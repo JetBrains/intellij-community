@@ -1,4 +1,0 @@
-android {
-  dynamicFeatures = [':f']
-  flavorDimensions 'xyz'
-}

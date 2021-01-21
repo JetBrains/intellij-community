@@ -1,7 +1,0 @@
-android {
-  defaultConfig {
-    minSdkVersion(16)
-    targetSdkVersion(23)
-    versionCode = 2
-  }
-}

@@ -1,4 +1,0 @@
-ext {
-  prop1 = "Value"
-  prop2 = "${prop1} + ${prop1}"
-}

@@ -1,6 +1,0 @@
-android {
-  sourceSets {
-    main {
-    }
-  }
-}

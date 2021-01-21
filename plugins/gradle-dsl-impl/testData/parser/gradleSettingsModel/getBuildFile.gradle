@@ -1,5 +1,0 @@
-include "app", ":lib"
-project(':lib').buildFileName = 'test.gradle'
-include 'olib'
-project(":olib").projectDir = new File(rootDir, "otherlibs/xyz")
-project(":olib").buildFileName = 'other.gradle'

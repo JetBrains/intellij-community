@@ -1,4 +1,0 @@
-ext {
-  def prop2 = 'ref'
-  def prop1 = 'value'
-}

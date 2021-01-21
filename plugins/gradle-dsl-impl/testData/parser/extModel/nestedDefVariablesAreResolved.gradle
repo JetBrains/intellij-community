@@ -1,5 +1,0 @@
-def world = 'world'
-def foo = 'bar'
-ext {
-  second = "Welcome to $foo $world!"
-}

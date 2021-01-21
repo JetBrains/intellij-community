@@ -1,4 +1,0 @@
-ext {
-  prop = 'boo'
-  prop1 = ext.prop
-}

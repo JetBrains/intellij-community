@@ -1,7 +1,0 @@
-android {
-  sourceSets {
-    set {
-      setRoot 'source'
-    }
-  }
-}

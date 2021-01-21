@@ -1,5 +1,0 @@
-ext {
-  newProp = 123
-  prop1 = newProp
-  prop2 = newProp
-}

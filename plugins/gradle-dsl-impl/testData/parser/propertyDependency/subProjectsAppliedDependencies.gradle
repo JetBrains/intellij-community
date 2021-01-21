@@ -1,3 +1,0 @@
-subprojects { project ->
-  apply from: "versions.gradle"
-}

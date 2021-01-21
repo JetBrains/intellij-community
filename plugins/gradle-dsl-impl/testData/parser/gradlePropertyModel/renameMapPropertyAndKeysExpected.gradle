@@ -1,4 +1,0 @@
-ext {
-  def newMap1 = [key1: 'a', newKey1: 'b', key3: 'c']
-  newMap2 = [newKey2: 4]
-}

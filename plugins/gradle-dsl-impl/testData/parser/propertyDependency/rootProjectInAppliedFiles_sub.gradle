@@ -1,5 +1,0 @@
-ext.hello = greetings
-
-dependencies {
-  compile dep
-}

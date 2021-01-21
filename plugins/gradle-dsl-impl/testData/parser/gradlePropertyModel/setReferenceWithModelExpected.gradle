@@ -1,4 +1,0 @@
-ext {
-  prop1 = '“Come and see!” I looked'
-  prop2 = prop1
-}

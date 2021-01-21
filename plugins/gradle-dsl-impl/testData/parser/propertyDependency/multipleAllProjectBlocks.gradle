@@ -1,6 +1,0 @@
-allprojects { project ->
-  apply from: "versions.gradle"
-}
-subprojects { project ->
-  apply from: "versions2.gradle"
-}

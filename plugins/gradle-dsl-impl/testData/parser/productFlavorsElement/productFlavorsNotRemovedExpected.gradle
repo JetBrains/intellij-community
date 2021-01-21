@@ -1,6 +1,0 @@
-android {
-  productFlavors {
-    x {
-    }
-  }
-}

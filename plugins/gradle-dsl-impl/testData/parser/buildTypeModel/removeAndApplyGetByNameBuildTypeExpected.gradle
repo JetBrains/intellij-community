@@ -1,7 +1,0 @@
-android {
-  buildTypes {
-    release {
-      jniDebuggable = android.buildTypes.debug.debuggable
-    }
-  }
-}

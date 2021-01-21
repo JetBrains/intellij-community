@@ -1,7 +1,0 @@
-android {
-  productFlavors {
-    flavorA {
-      applicationId 'appid'
-    }
-  }
-}
