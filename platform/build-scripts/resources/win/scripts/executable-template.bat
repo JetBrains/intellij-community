@@ -108,9 +108,4 @@ IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%@@produc
 :: ---------------------------------------------------------------------
 :: Run the IDE.
 :: ---------------------------------------------------------------------
-SET OLD_PATH=%PATH%
-SET PATH=%IDE_BIN_DIR%;%PATH%
-
 "%JAVA_EXE%" %ALL_JVM_ARGS% -cp "%CLASS_PATH%" com.intellij.idea.Main %*
-
-SET PATH=%OLD_PATH%
