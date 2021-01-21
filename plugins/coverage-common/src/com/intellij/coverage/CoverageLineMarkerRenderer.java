@@ -158,10 +158,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
   private void showHint(final Editor editor, final Point mousePosition, final int lineNumber) {
     final JPanel panel = new JPanel(new BorderLayout());
-    Disposable unregisterActionsDisposable = new Disposable() {
-      @Override
-      public void dispose() { }
-    };
+    Disposable unregisterActionsDisposable = Disposer.newDisposable();
     panel.add(createActionsToolbar(editor, lineNumber, unregisterActionsDisposable), BorderLayout.NORTH);
 
     final LineData lineData = getLineData(lineNumber);
