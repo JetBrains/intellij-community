@@ -379,28 +379,6 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     }
   }
 
-  @ApiStatus.Internal
-  public final class SimplePushAction extends PushActionBase {
-    private SimplePushAction() {
-      super(DvcsBundle.getString("action.complex.push"));
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull VcsPushUi dialog) {
-      return dialog.canPush();
-    }
-
-    @Override
-    protected @Nls @Nullable String getDescription(@NotNull VcsPushUi dialog, boolean enabled) {
-      return null;
-    }
-
-    @Override
-    protected void actionPerformed(@NotNull Project project, @NotNull VcsPushUi dialog) {
-      push(false);
-    }
-  }
-
   private static class ActionWrapper extends AbstractAction {
 
     @NotNull private final Project myProject;

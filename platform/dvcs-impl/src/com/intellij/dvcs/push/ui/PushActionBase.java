@@ -23,7 +23,7 @@ public abstract class PushActionBase extends DumbAwareAction {
   }
 
   /**
-   * A marker interface indicating an action which should be treated as default in the push dialog, instead of {@link VcsPushDialog.SimplePushAction}.
+   * A marker interface indicating an action which should be treated as default in the push dialog, instead of {@link SimplePushAction}.
    * Can be implemented by plugins to override the default behavior.
    */
   @ApiStatus.Internal
