@@ -22,7 +22,7 @@ class ConfigureEventsSchemeFileAction(private var myRecorderId: String = Statist
                     null) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val configurationModel = EventsSchemeConfigurationModel()
+    val configurationModel = EventsSchemeConfigurationModel().reset(myRecorderId)
     val dialog = dialog(
       title = "Configure Custom Events Scheme",
       panel = configurationModel.panel,

@@ -78,6 +78,11 @@ class EventsSchemeConfigurationModel {
     updatePathField()
   }
 
+  fun reset(recorderId: String): EventsSchemeConfigurationModel {
+    recorderComboBox.selectedItem = recorderId
+    return this
+  }
+
   fun validate(): ValidationInfo? {
     val currentPathSettings = currentSettings ?: return null
     val currentValidationInfo = validatePath(currentPathSettings)
