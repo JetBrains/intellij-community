@@ -36,22 +36,23 @@ object PluginSignatureChecker {
     indicator.checkCanceled()
     indicator.text2 = IdeBundle.message("plugin.signature.checker.progress", pluginName)
     indicator.isIndeterminate = true
+    val errorMessage = verifyPluginAndGetErrorMessage(pluginFile, jbCert)
+    if (errorMessage != null) {
+      return processSignatureWarning(pluginName, errorMessage)
+    }
+    return true
+  }
 
-    val errorMessage = when (val verificationResult = ZipVerifier.verify(pluginFile)) {
+  private fun verifyPluginAndGetErrorMessage(file: File, certificate: Certificate): String? {
+    return when (val verificationResult = ZipVerifier.verify(file)) {
       is InvalidSignatureResult -> verificationResult.errorMessage
       is MissingSignatureResult -> IdeBundle.message("plugin.signature.not.signed")
       is SuccessfulVerificationResult ->
-        if (!verificationResult.isSignedBy(jbCert)) {
+        if (!verificationResult.isSignedBy(certificate)) {
           IdeBundle.message("plugin.signature.not.signed.by.jetbrains")
         }
         else null
     }
-
-    if (errorMessage != null) {
-      return processSignatureWarning(pluginName, errorMessage)
-    }
-
-    return true
   }
 
   private fun processSignatureWarning(pluginName: String, errorMessage: String): Boolean {
