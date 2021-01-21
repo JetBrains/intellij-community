@@ -648,8 +648,6 @@
         <action id="JumpToNextChange" class="com.intellij.ide.actions.JumpToNextEditAction"/>
         <separator/>
 
-        <action id="KeymapSynonyms" class="com.intellij.ide.actions.KeymapSynonymsAction"/>
-
         <group id="NavigateInFileGroup" popup="true">
           <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
           <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>

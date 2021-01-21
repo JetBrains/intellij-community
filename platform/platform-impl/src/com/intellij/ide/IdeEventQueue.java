@@ -26,7 +26,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
-import com.intellij.openapi.keymap.impl.NationalKeyStrokeUtils;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.*;
@@ -888,11 +887,6 @@ public final class IdeEventQueue extends EventQueue {
     ) {
       if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
         ((KeyEvent)e).consume();
-      } else if (Registry.is("keymap.use.shortcut.synonyms")) {
-        KeyEvent synonym = NationalKeyStrokeUtils.matchForSynonym((KeyEvent)e);
-        if (synonym != null && myKeyEventDispatcher.dispatchKeyEvent(synonym)) {
-          ((KeyEvent)e).consume();
-        }
       }
     }
     defaultDispatchEvent(e);
