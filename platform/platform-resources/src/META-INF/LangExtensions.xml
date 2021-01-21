@@ -698,7 +698,7 @@
     <filePropertyPusher implementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePusher"/>
 
     <!-- execution -->
-    <experimentalFeature id="run.targets" percentOfUsers="100">
+    <experimentalFeature id="run.targets" percentOfUsers="0">
       <description>Makes available running on remote runtime environments (Java on Docker or SSH server)</description>
     </experimentalFeature>
     <experimentalFeature id="edit.run.configurations.while.dumb" percentOfUsers="100">
