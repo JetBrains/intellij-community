@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 data class UnindexedFileStatus(
   val shouldIndex: Boolean,
-  val applicableIndexes: List<ID<*, *>>,
   val indexesProvidedByInfrastructureExtension: Set<ID<*, *>>,
   val timeProcessingUpToDateFiles: Long,
   val timeUpdatingContentLessIndexes: Long,
