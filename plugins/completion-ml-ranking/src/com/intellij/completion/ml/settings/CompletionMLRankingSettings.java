@@ -107,6 +107,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
   private static void disableExperiment() {
     ExperimentStatus.Companion.getInstance().disable();
+    LOG.info("Leave A/B ML completion experiment group");
   }
 
   private static boolean isEnabledByDefault(@NotNull String rankerId) {
@@ -144,7 +145,10 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
         if (ranker != null) {
           ExperimentInfo experimentInfo = experimentStatus.forLanguage(language);
           if (!experimentStatus.isDisabled() && experimentInfo.getInExperiment()) {
-            language2state.put(ranker.getId(), experimentInfo.getShouldRank());
+            boolean useMLRanking = experimentInfo.getShouldRank();
+            language2state.put(ranker.getId(), useMLRanking);
+            if (useMLRanking)
+              LOG.info("ML Completion enabled, experiment group=" + experimentInfo.getVersion() + " for: " + language.getDisplayName());
           } else {
             language2state.put(ranker.getId(), ranker.isEnabledByDefault());
           }
