@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.SearchScope
-import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.util.Query
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.usages.Usage as UVUsage
@@ -60,7 +59,7 @@ fun <O> buildUsageViewQuery(project: Project,
                             allOptions: AllSearchOptions<O>): Query<out UVUsage> {
   return buildQuery(project, target, handler, allOptions).transforming {
     if (it is PsiUsage) {
-      listOf(UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
+      listOf(Psi2UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
     }
     else {
       emptyList()

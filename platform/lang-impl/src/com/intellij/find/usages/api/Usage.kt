@@ -2,8 +2,15 @@
 package com.intellij.find.usages.api
 
 import com.intellij.model.Pointer
+import com.intellij.usages.impl.rules.UsageType
 
 interface Usage {
 
   fun createPointer(): Pointer<out Usage>
+
+  // TODO decouple type from usage with extension Usage -> UsageType
+  // TODO consider introducing separate UsageType to avoid dependency on intellij.platform.usageView
+  @JvmDefault
+  val usageType: UsageType?
+    get() = null
 }
