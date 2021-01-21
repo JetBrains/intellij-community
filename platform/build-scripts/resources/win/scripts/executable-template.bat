@@ -98,14 +98,19 @@ IF "%VM_OPTIONS_FILE%" == "" (
   SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
 )
 
-SET COMMON_JVM_ARGS="-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" -Didea.vendor.name=@@product_vendor@@ -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
-SET IDE_JVM_ARGS=@@ide_jvm_args@@
-SET ALL_JVM_ARGS=%ACC% %COMMON_JVM_ARGS% %IDE_JVM_ARGS%
-
 @@class_path@@
 IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%@@product_uc@@_CLASS_PATH%
 
 :: ---------------------------------------------------------------------
 :: Run the IDE.
 :: ---------------------------------------------------------------------
-"%JAVA_EXE%" %ALL_JVM_ARGS% -cp "%CLASS_PATH%" com.intellij.idea.Main %*
+"%JAVA_EXE%" ^
+  -cp "%CLASS_PATH%" ^
+  %ACC% ^
+  "-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" ^
+  "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" ^
+  -Didea.vendor.name=@@product_vendor@@ -Didea.paths.selector=@@system_selector@@ ^
+  @@ide_jvm_args@@ ^
+  %IDE_PROPERTIES_PROPERTY% ^
+  com.intellij.idea.Main ^
+  %*
