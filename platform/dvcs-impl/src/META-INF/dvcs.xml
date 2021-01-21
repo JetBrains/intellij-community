@@ -28,6 +28,7 @@
     </action>
 
     <group id="Vcs.Push.Actions">
+      <action id="Vcs.Push.Simple" class="com.intellij.dvcs.push.ui.SimplePushAction"/>
       <action id="Vcs.Push.Force" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
     </group>
 

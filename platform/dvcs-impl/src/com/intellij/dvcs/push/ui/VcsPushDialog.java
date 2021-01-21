@@ -88,13 +88,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   private @NotNull List<ActionWrapper> collectPushActions() {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.Push.Actions");
-    List<PushActionBase> additionalActions = ContainerUtil.findAll(group.getChildren(null), PushActionBase.class);
+    List<PushActionBase> pushActions = ContainerUtil.findAll(group.getChildren(null), PushActionBase.class);
 
-    PushActionBase simplePushAction = new SimplePushAction();
-    PushActionBase.DefaultPushAction defaultPushAction = findDefaultPushAction(additionalActions);
-    List<PushActionBase> pushActions = new ArrayList<>();
-    pushActions.add(simplePushAction);
-    pushActions.addAll(additionalActions);
+    PushActionBase.DefaultPushAction defaultPushAction = findDefaultPushAction(pushActions);
     if (defaultPushAction != null) {
       pushActions.remove(defaultPushAction);
       defaultPushAction.customize(pushActions);
