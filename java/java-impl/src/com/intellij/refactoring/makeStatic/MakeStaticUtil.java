@@ -51,7 +51,7 @@ public final class MakeStaticUtil {
         }
       }
     }
-    else if (element instanceof PsiThisExpression) {
+    else if (element instanceof PsiThisExpression && !(element.getParent() instanceof PsiReceiverParameter)) {
       PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression) element).getQualifier();
       PsiElement refElement = qualifier != null ?
           qualifier.resolve() : PsiTreeUtil.getParentOfType(element, PsiClass.class);
