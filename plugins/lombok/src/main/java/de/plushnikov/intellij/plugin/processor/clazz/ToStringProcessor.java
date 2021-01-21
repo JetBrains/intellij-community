@@ -17,6 +17,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -44,6 +45,12 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
   private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
     return ApplicationManager.getApplication().getService(EqualsAndHashCodeToStringHandler.class);
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint == null || nameHint.equals(TO_STRING_METHOD_NAME);
   }
 
   @Override
