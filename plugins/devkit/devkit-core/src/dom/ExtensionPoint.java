@@ -3,9 +3,13 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,4 +128,20 @@ public interface ExtensionPoint extends DomElement {
    * @return Fields.
    */
   List<PsiField> collectMissingWithTags();
+
+  @Nullable
+  static ExtensionPoint resolveFromDeclaration(PsiElement declaration) {
+    DomElement domElement = null;
+    if (declaration instanceof PomTargetPsiElement) {
+      final PomTarget pomTarget = ((PomTargetPsiElement)declaration).getTarget();
+      if (pomTarget instanceof DomTarget) {
+        domElement = ((DomTarget)pomTarget).getDomElement();
+      }
+    } // via XmlTag for "qualifiedName"
+    else if (declaration instanceof XmlTag) {
+      domElement = DomUtil.getDomElement(declaration);
+    }
+
+    return ObjectUtils.tryCast(domElement, ExtensionPoint.class);
+  }
 }
