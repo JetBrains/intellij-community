@@ -34,7 +34,7 @@ abstract class KotlinUsageTypeProvider : UsageTypeProviderEx {
         return getCommonUsageType(refExpr) ?: getUsageTypeEnumByReference(refExpr)
     }
 
-    override fun getUsageType(element: PsiElement?): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
+    override fun getUsageType(element: PsiElement): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
 
     override fun getUsageType(element: PsiElement?, targets: Array<out UsageTarget>): UsageType? {
         val usageType = getUsageTypeEnum(element) ?: return null
