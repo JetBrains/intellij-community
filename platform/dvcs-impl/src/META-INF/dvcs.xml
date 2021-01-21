@@ -28,7 +28,7 @@
     </action>
 
     <group id="Vcs.Push.Actions">
-      <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
+      <action id="Vcs.Push.Force" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
     </group>
 
     <group id="Dvcs.Log.ContextMenu">
