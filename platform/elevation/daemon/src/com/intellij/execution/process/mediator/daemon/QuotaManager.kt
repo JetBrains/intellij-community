@@ -98,7 +98,7 @@ private fun <T> SendChannel<T>.tryOffer(quota: T): Boolean {
 }
 
 private fun CoroutineScope.createTimeoutActor(context: CoroutineContext): SendChannel<QuotaStopwatch> {
-  return actor(context, capacity = Channel.CONFLATED) {
+  return actor(context, capacity = Channel.UNLIMITED) {
     var stopwatch: QuotaStopwatch = channel.receive()
 
     while (stopwatch !is QuotaStopwatch.Exceeded) {
