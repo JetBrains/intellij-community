@@ -144,6 +144,13 @@ public final class GitVcs extends AbstractVcs {
     return DISPLAY_NAME.get();
   }
 
+  @Nls
+  @NotNull
+  @Override
+  public String getShortNameWithMnemonic() {
+    return GitBundle.message("git4idea.vcs.name.with.mnemonic");
+  }
+
   @Override
   @Nullable
   public UpdateEnvironment getUpdateEnvironment() {

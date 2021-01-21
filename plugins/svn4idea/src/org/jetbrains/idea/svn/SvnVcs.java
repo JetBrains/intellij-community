@@ -34,6 +34,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -353,6 +354,13 @@ public final class SvnVcs extends AbstractVcs {
   @Override
   public String getShortName() {
     return VCS_SHORT_DISPLAY_NAME;
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getShortNameWithMnemonic() {
+    return SvnBundle.message("svn.short.name.with.mnemonic");
   }
 
   @NotNull

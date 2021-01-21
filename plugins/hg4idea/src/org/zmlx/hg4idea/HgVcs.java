@@ -148,6 +148,13 @@ public class HgVcs extends AbstractVcs {
     return SHORT_DISPLAY_NAME.get();
   }
 
+  @Nls
+  @NotNull
+  @Override
+  public String getShortNameWithMnemonic() {
+    return HgBundle.message("hg4idea.vcs.short.name.with.mnemonic");
+  }
+
   @Override
   public Configurable getConfigurable() {
     return null;
