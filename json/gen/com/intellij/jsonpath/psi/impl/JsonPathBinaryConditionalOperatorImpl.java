@@ -8,17 +8,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.jsonpath.psi.JsonPathTypes.*;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.jsonpath.psi.*;
 
-public abstract class JsonPathLiteralImpl extends JsonPathExpressionImpl implements JsonPathLiteral {
+public class JsonPathBinaryConditionalOperatorImpl extends ASTWrapperPsiElement implements JsonPathBinaryConditionalOperator {
 
-  public JsonPathLiteralImpl(@NotNull ASTNode node) {
+  public JsonPathBinaryConditionalOperatorImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  @Override
   public void accept(@NotNull JsonPathVisitor visitor) {
-    visitor.visitLiteral(this);
+    visitor.visitBinaryConditionalOperator(this);
   }
 
   @Override

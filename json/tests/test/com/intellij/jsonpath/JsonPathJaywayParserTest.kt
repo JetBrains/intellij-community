@@ -103,11 +103,23 @@ class JsonPathJaywayParserTest : JsonPathParsingTestCase("jayway") {
     doCodeTest("$[?('demo' in @.array)]")
   }
 
+  fun testEmptyOperatorWithConstant() {
+    doCodeTest("$[?(@.array empty true)]")
+  }
+
+  fun testEmptyOperatorWithExpression() {
+    doCodeTest("$[?(@.array empty @.flag)]")
+  }
+
   fun testArrayLiterals() {
-    // todo $.store.bicycle[?(@.gears == [23, 50])]
+    doCodeTest("\$.store.bicycle[?(@.gears == [23, 50])]")
   }
 
   fun testObjectLiterals() {
-    // todo $.store.bicycle[?(@.extra == {"x":0})]
+    doCodeTest("\$.store.bicycle[?(@.extra == {\"x\":0})]")
+  }
+
+  fun testComplexObjectLiterals() {
+    doCodeTest("\$.store.bicycle[?(@.extra == { 'x': [{}, {'key' : 'value'}] })]")
   }
 }

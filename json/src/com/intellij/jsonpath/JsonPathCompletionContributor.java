@@ -8,9 +8,12 @@ import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
+import com.intellij.jsonpath.psi.JsonPathArrayValue;
+import com.intellij.jsonpath.psi.JsonPathObjectValue;
 import com.intellij.jsonpath.psi.JsonPathStringLiteral;
 import com.intellij.jsonpath.psi.JsonPathTypes;
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +29,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public final class JsonPathCompletionContributor extends CompletionContributor {
 
-  // 2. todo completion for null, true and false inside object literals
-
   public JsonPathCompletionContributor() {
     extend(CompletionType.BASIC,
            psiElement().withParent(JsonPathStringLiteral.class)
@@ -35,17 +36,33 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
            new JsonKeysCompletionProvider(false));
 
     extend(CompletionType.BASIC,
-           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)), new JsonKeysCompletionProvider(true));
+           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+           new JsonKeysCompletionProvider(true));
+
+    extend(CompletionType.BASIC,
+           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+           new FunctionNamesCompletionProvider());
+
+    extend(CompletionType.BASIC,
+           psiElement().afterLeafSkipping(StandardPatterns.alwaysFalse(), psiElement().whitespace())
+            .andNot(StandardPatterns.or(
+              psiElement().inside(JsonPathObjectValue.class),
+              psiElement().inside(JsonPathArrayValue.class)
+            )),
+           new OperatorCompletionProvider());
+
+    KeywordsCompletionProvider keywordsCompletionProvider = new KeywordsCompletionProvider();
+
+    extend(CompletionType.BASIC,
+           psiElement().withParent(JsonPathObjectValue.class)
+             .afterLeaf(psiElement().withElementType(JsonPathTypes.COLON)),
+           keywordsCompletionProvider);
 
     extend(CompletionType.BASIC,
            psiElement()
              .afterLeaf(psiElement().withElementType(JSONPATH_EQUALITY_OPERATOR_SET))
              .andNot(psiElement().withParent(JsonPathStringLiteral.class)),
-           KeywordsCompletionProvider.INSTANCE);
-
-    extend(CompletionType.BASIC,
-           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
-           new FunctionNamesCompletionProvider());
+           keywordsCompletionProvider);
   }
 
   private static class FunctionNamesCompletionProvider extends CompletionProvider<CompletionParameters> {
@@ -66,7 +83,6 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
   }
 
   private static class KeywordsCompletionProvider extends CompletionProvider<CompletionParameters> {
-    private static final KeywordsCompletionProvider INSTANCE = new KeywordsCompletionProvider();
     private static final String[] KEYWORDS = new String[]{"null", "true", "false"};
 
     @Override
@@ -74,6 +90,19 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       for (String keyword : KEYWORDS) {
+        result.addElement(LookupElementBuilder.create(keyword).bold());
+      }
+    }
+  }
+
+  private static class OperatorCompletionProvider extends CompletionProvider<CompletionParameters> {
+    private static final String[] OPERATORS = new String[]{"in", "nin", "subsetof", "anyof", "noneof", "size", "empty"};
+
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  @NotNull ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+      for (String keyword : OPERATORS) {
         result.addElement(LookupElementBuilder.create(keyword).bold());
       }
     }

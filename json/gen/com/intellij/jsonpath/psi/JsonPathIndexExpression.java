@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface JsonPathIndexExpression extends PsiElement {
 
-  @NotNull
+  @Nullable
   JsonPathExpression getExpression();
 
 }

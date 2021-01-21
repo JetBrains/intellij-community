@@ -9,6 +9,8 @@ import com.intellij.jsonpath.psi.impl.*;
 public interface JsonPathTypes {
 
   IElementType AND_EXPRESSION = new JsonPathElementType("AND_EXPRESSION");
+  IElementType ARRAY_VALUE = new JsonPathElementType("ARRAY_VALUE");
+  IElementType BINARY_CONDITIONAL_OPERATOR = new JsonPathElementType("BINARY_CONDITIONAL_OPERATOR");
   IElementType BOOLEAN_LITERAL = new JsonPathElementType("BOOLEAN_LITERAL");
   IElementType CONDITIONAL_EXPRESSION = new JsonPathElementType("CONDITIONAL_EXPRESSION");
   IElementType DIVIDE_EXPRESSION = new JsonPathElementType("DIVIDE_EXPRESSION");
@@ -21,11 +23,13 @@ public interface JsonPathTypes {
   IElementType ID_SEGMENT = new JsonPathElementType("ID_SEGMENT");
   IElementType INDEXES_LIST = new JsonPathElementType("INDEXES_LIST");
   IElementType INDEX_EXPRESSION = new JsonPathElementType("INDEX_EXPRESSION");
-  IElementType LITERAL = new JsonPathElementType("LITERAL");
+  IElementType LITERAL_VALUE = new JsonPathElementType("LITERAL_VALUE");
   IElementType MINUS_EXPRESSION = new JsonPathElementType("MINUS_EXPRESSION");
   IElementType MULTIPLY_EXPRESSION = new JsonPathElementType("MULTIPLY_EXPRESSION");
   IElementType NULL_LITERAL = new JsonPathElementType("NULL_LITERAL");
   IElementType NUMBER_LITERAL = new JsonPathElementType("NUMBER_LITERAL");
+  IElementType OBJECT_PROPERTY = new JsonPathElementType("OBJECT_PROPERTY");
+  IElementType OBJECT_VALUE = new JsonPathElementType("OBJECT_VALUE");
   IElementType OR_EXPRESSION = new JsonPathElementType("OR_EXPRESSION");
   IElementType PARENTHESIZED_EXPRESSION = new JsonPathElementType("PARENTHESIZED_EXPRESSION");
   IElementType PATH_EXPRESSION = new JsonPathElementType("PATH_EXPRESSION");
@@ -40,50 +44,65 @@ public interface JsonPathTypes {
   IElementType STRING_LITERAL = new JsonPathElementType("STRING_LITERAL");
   IElementType UNARY_MINUS_EXPRESSION = new JsonPathElementType("UNARY_MINUS_EXPRESSION");
   IElementType UNARY_NOT_EXPRESSION = new JsonPathElementType("UNARY_NOT_EXPRESSION");
+  IElementType VALUE = new JsonPathElementType("VALUE");
   IElementType WILDCARD_SEGMENT = new JsonPathElementType("WILDCARD_SEGMENT");
 
   IElementType AND_OP = new JsonPathTokenType("AND_OP");
-  IElementType COLON = new JsonPathTokenType("COLON");
-  IElementType COMMA = new JsonPathTokenType("COMMA");
+  IElementType ANYOF_OP = new JsonPathTokenType("ANYOF_OP");
+  IElementType COLON = new JsonPathTokenType(":");
+  IElementType COMMA = new JsonPathTokenType(",");
   IElementType DIVIDE_OP = new JsonPathTokenType("DIVIDE_OP");
-  IElementType DOT = new JsonPathTokenType("DOT");
+  IElementType DOT = new JsonPathTokenType(".");
   IElementType DOUBLE_NUMBER = new JsonPathTokenType("DOUBLE_NUMBER");
   IElementType DOUBLE_QUOTED_STRING = new JsonPathTokenType("DOUBLE_QUOTED_STRING");
+  IElementType EMPTY_OP = new JsonPathTokenType("EMPTY_OP");
   IElementType EQ_OP = new JsonPathTokenType("EQ_OP");
-  IElementType EVAL_CONTEXT = new JsonPathTokenType("EVAL_CONTEXT");
-  IElementType FALSE = new JsonPathTokenType("FALSE");
-  IElementType FILTER_OPERATOR = new JsonPathTokenType("FILTER_OPERATOR");
+  IElementType EVAL_CONTEXT = new JsonPathTokenType("@");
+  IElementType FALSE = new JsonPathTokenType("false");
+  IElementType FILTER_OPERATOR = new JsonPathTokenType("?");
   IElementType GE_OP = new JsonPathTokenType("GE_OP");
   IElementType GT_OP = new JsonPathTokenType("GT_OP");
   IElementType IDENTIFIER = new JsonPathTokenType("IDENTIFIER");
   IElementType INTEGER_NUMBER = new JsonPathTokenType("INTEGER_NUMBER");
   IElementType IN_OP = new JsonPathTokenType("IN_OP");
-  IElementType LBRACKET = new JsonPathTokenType("LBRACKET");
+  IElementType LBRACE = new JsonPathTokenType("{");
+  IElementType LBRACKET = new JsonPathTokenType("[");
   IElementType LE_OP = new JsonPathTokenType("LE_OP");
-  IElementType LPARENTH = new JsonPathTokenType("LPARENTH");
+  IElementType LPARENTH = new JsonPathTokenType("(");
   IElementType LT_OP = new JsonPathTokenType("LT_OP");
   IElementType MINUS_OP = new JsonPathTokenType("MINUS_OP");
   IElementType MULTIPLY_OP = new JsonPathTokenType("MULTIPLY_OP");
   IElementType NE_OP = new JsonPathTokenType("NE_OP");
+  IElementType NIN_OP = new JsonPathTokenType("NIN_OP");
+  IElementType NONEOF_OP = new JsonPathTokenType("NONEOF_OP");
   IElementType NOT_OP = new JsonPathTokenType("NOT_OP");
-  IElementType NULL = new JsonPathTokenType("NULL");
+  IElementType NULL = new JsonPathTokenType("null");
   IElementType OR_OP = new JsonPathTokenType("OR_OP");
   IElementType PLUS_OP = new JsonPathTokenType("PLUS_OP");
-  IElementType RBRACKET = new JsonPathTokenType("RBRACKET");
-  IElementType RECURSIVE_DESCENT = new JsonPathTokenType("RECURSIVE_DESCENT");
+  IElementType RBRACE = new JsonPathTokenType("}");
+  IElementType RBRACKET = new JsonPathTokenType("]");
+  IElementType RECURSIVE_DESCENT = new JsonPathTokenType("..");
   IElementType REGEX_STRING = new JsonPathTokenType("REGEX_STRING");
   IElementType RE_OP = new JsonPathTokenType("RE_OP");
-  IElementType ROOT_CONTEXT = new JsonPathTokenType("ROOT_CONTEXT");
-  IElementType RPARENTH = new JsonPathTokenType("RPARENTH");
+  IElementType ROOT_CONTEXT = new JsonPathTokenType("$");
+  IElementType RPARENTH = new JsonPathTokenType(")");
   IElementType SINGLE_QUOTED_STRING = new JsonPathTokenType("SINGLE_QUOTED_STRING");
-  IElementType TRUE = new JsonPathTokenType("TRUE");
-  IElementType WILDCARD = new JsonPathTokenType("WILDCARD");
+  IElementType SIZE_OP = new JsonPathTokenType("SIZE_OP");
+  IElementType SUBSETOF_OP = new JsonPathTokenType("SUBSETOF_OP");
+  IElementType TRUE = new JsonPathTokenType("true");
+  IElementType WILDCARD = new JsonPathTokenType("*");
 
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
       if (type == AND_EXPRESSION) {
         return new JsonPathAndExpressionImpl(node);
+      }
+      else if (type == ARRAY_VALUE) {
+        return new JsonPathArrayValueImpl(node);
+      }
+      else if (type == BINARY_CONDITIONAL_OPERATOR) {
+        return new JsonPathBinaryConditionalOperatorImpl(node);
       }
       else if (type == BOOLEAN_LITERAL) {
         return new JsonPathBooleanLiteralImpl(node);
@@ -129,6 +148,12 @@ public interface JsonPathTypes {
       }
       else if (type == NUMBER_LITERAL) {
         return new JsonPathNumberLiteralImpl(node);
+      }
+      else if (type == OBJECT_PROPERTY) {
+        return new JsonPathObjectPropertyImpl(node);
+      }
+      else if (type == OBJECT_VALUE) {
+        return new JsonPathObjectValueImpl(node);
       }
       else if (type == OR_EXPRESSION) {
         return new JsonPathOrExpressionImpl(node);

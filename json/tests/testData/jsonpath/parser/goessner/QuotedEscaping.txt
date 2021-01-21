@@ -1,9 +1,9 @@
 JsonPathFile
   JsonPathRootSegmentImpl(ROOT_SEGMENT)
-    PsiElement(ROOT_CONTEXT)('$')
+    PsiElement($)('$')
   JsonPathQuotedSegmentImpl(QUOTED_SEGMENT)
-    PsiElement(LBRACKET)('[')
+    PsiElement([)('[')
     JsonPathQuotedPathsListImpl(QUOTED_PATHS_LIST)
       JsonPathStringLiteralImpl(STRING_LITERAL)
         PsiElement(SINGLE_QUOTED_STRING)(''store \' name'')
-    PsiElement(RBRACKET)(']')
+    PsiElement(])(']')

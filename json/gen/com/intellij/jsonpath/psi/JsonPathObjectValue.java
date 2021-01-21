@@ -5,6 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface JsonPathLiteral extends JsonPathExpression {
+public interface JsonPathObjectValue extends JsonPathValue {
+
+  @NotNull
+  List<JsonPathObjectProperty> getObjectPropertyList();
 
 }

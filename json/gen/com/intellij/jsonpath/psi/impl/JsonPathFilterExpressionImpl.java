@@ -28,9 +28,9 @@ public class JsonPathFilterExpressionImpl extends ASTWrapperPsiElement implement
   }
 
   @Override
-  @NotNull
+  @Nullable
   public JsonPathExpression getExpression() {
-    return findNotNullChildByClass(JsonPathExpression.class);
+    return findChildByClass(JsonPathExpression.class);
   }
 
 }
