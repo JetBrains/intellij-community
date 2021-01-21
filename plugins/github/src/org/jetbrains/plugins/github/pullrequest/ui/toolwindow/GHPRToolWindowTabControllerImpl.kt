@@ -80,10 +80,11 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     private val accounts = authManager.getAccounts()
 
     fun update() {
+      val wasReset = resetIfMissing()
       guessAndSetRepoAndAccount()?.let { (repo, account) ->
         try {
           val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
-          showPullRequestsComponent(repo, account, requestExecutor)
+          showPullRequestsComponent(repo, account, requestExecutor, wasReset)
         }
         catch (e: Exception) {
           //show error near selectors?
@@ -92,8 +93,6 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
     private fun guessAndSetRepoAndAccount(): Pair<GHGitRepositoryMapping, GithubAccount>? {
-      resetIfMissing()
-
       val saved = projectSettings.selectedRepoAndAccount
       if (saved != null) {
         currentRepository = saved.first
@@ -116,17 +115,21 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       return if (repo != null && account != null) repo to account else null
     }
 
-    private fun resetIfMissing() {
+    private fun resetIfMissing(): Boolean {
+      var wasReset = false
       val repo = currentRepository
       if (repo != null && !repos.contains(repo)) {
         currentRepository = null
         currentAccount = null
+        wasReset = true
       }
 
       val account = currentAccount
       if (account != null && !accounts.contains(account)) {
         currentAccount = null
+        wasReset = true
       }
+      return wasReset
     }
   }
 
@@ -141,7 +144,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       currentAccount = account
       val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, mainPanel) ?: return@create
       projectSettings.selectedRepoAndAccount = repo to account
-      showPullRequestsComponent(repo, account, requestExecutor)
+      showPullRequestsComponent(repo, account, requestExecutor, false)
     }
     with(mainPanel) {
       removeAll()
@@ -154,8 +157,9 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
   private fun showPullRequestsComponent(repositoryMapping: GHGitRepositoryMapping,
                                         account: GithubAccount,
-                                        requestExecutor: GithubApiRequestExecutor) {
-    if (showingSelectors == false) return
+                                        requestExecutor: GithubApiRequestExecutor,
+                                        force: Boolean) {
+    if (showingSelectors == false && !force) return
     tab.displayName = GithubBundle.message("toolwindow.stripe.Pull_Requests")
 
     val repository = repositoryMapping.repository
