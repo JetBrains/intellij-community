@@ -40,7 +40,7 @@ internal class TimeQuotaManager(
 
   private val job = Job(coroutineScope.coroutineContext[Job]).apply {
     invokeOnCompletion {
-      stopwatchRef.set(QuotaStopwatch.Exceeded)
+      stopwatchRef.set(QuotaStopwatch.Expired)
     }
   }
   private val timeoutJob = Job(job).also {
@@ -54,8 +54,8 @@ internal class TimeQuotaManager(
   override fun asJob(): Job = job
 
   override fun check(): Boolean {
-    val quota = updateStopwatch { it.refresh() }
-    return quota !is QuotaStopwatch.Exceeded
+    val stopwatch = updateStopwatch { it.refresh() }
+    return stopwatch !is QuotaStopwatch.Expired
   }
 
   fun adjustQuota(newOptions: QuotaOptions) {
@@ -64,13 +64,13 @@ internal class TimeQuotaManager(
 
   private fun updateStopwatch(function: (t: QuotaStopwatch) -> QuotaStopwatch): QuotaStopwatch {
     return stopwatchRef.updateAndGet(function).also { stopwatch ->
-      if (stopwatch == QuotaStopwatch.Exceeded) {
+      if (stopwatch == QuotaStopwatch.Expired) {
         timeoutJob.cancel("expired")
       }
       if (stopwatch is QuotaStopwatch.Active && !stopwatch.isUnlimited) {
         timeoutScope.launch(start = CoroutineStart.UNDISPATCHED) {
           delay(stopwatch.remaining())
-          if (stopwatchRef.compareAndSet(stopwatch, QuotaStopwatch.Exceeded)) {
+          if (stopwatchRef.compareAndSet(stopwatch, QuotaStopwatch.Expired)) {
             timeoutJob.cancel("expired")
           }
         }
@@ -113,21 +113,21 @@ private sealed class QuotaStopwatch {
     fun elapsed(): Long = if (isUnlimited) 0 else System.currentTimeMillis() - startTimeMillis
     fun remaining(): Long = if (isUnlimited) Long.MAX_VALUE else options.timeLimitMs - elapsed()
 
-    private fun isExceeded(): Boolean = remaining() <= 0
+    private fun isExpired(): Boolean = remaining() <= 0
 
     override fun adjust(newOptions: QuotaOptions): QuotaStopwatch = when {
-      isExceeded() -> Exceeded
+      isExpired() -> Expired
       else -> copy(options = options.adjust(newOptions))
     }
 
     override fun refresh(): QuotaStopwatch = when {
-      isExceeded() -> Exceeded
+      isExpired() -> Expired
       !options.isRefreshable -> this
       else -> copy(startTimeMillis = System.currentTimeMillis())
     }
   }
 
-  object Exceeded : QuotaStopwatch() {
+  object Expired : QuotaStopwatch() {
     override fun adjust(newOptions: QuotaOptions): QuotaStopwatch = this
     override fun refresh(): QuotaStopwatch = this
   }
