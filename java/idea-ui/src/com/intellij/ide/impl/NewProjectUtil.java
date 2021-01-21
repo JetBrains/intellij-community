@@ -202,6 +202,7 @@ public final class NewProjectUtil {
       LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
       if (extension.isDefault() || maxLevel.compareTo(ext.getLanguageLevel()) < 0) {
         ext.setLanguageLevel(maxLevel);
+        ext.setDefault(true);
       }
     }
   }

@@ -141,7 +141,6 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
           else {
             LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
             projectExtension.setLanguageLevel(languageLevel);
-            projectExtension.setDefault(false);
           }
         }
       });
@@ -212,7 +211,6 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
       LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
       if (!isLanguageLevelAccepted(projectExtension.getLanguageLevel())) {
         projectExtension.setLanguageLevel(highestAcceptedLevel);
-        projectExtension.setDefault(false);
       }
     });
   }
