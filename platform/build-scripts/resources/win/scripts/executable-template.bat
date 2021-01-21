@@ -14,52 +14,55 @@ FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET IDE_HOME=%%~fi
 :: Locate a JDK installation directory which will be used to run the IDE.
 :: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jbr[-x86], JDK_HOME, JAVA_HOME.
 :: ---------------------------------------------------------------------
-SET JDK=
+SET JRE=
 
-IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
-IF EXIST "%JDK%" GOTO check
-
-SET BITS=64
-SET USER_JDK64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
-SET BITS=
-SET USER_JDK_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
-IF EXIST "%USER_JDK64_FILE%" (
-  SET /P JDK=<"%USER_JDK64_FILE%"
-) ELSE (
-  IF EXIST "%USER_JDK_FILE%" SET /P JDK=<"%USER_JDK_FILE%"
-)
-IF NOT "%JDK%" == "" (
-  IF NOT EXIST "%JDK%" SET JDK="%IDE_HOME%\%JDK%"
-  IF EXIST "%JDK%" GOTO check
+IF NOT "%@@product_uc@@_JDK%" == "" (
+  IF EXIST "%@@product_uc@@_JDK%" SET JRE=%@@product_uc@@_JDK%
 )
 
-IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
-  IF EXIST "%IDE_HOME%\jbr" SET JDK=%IDE_HOME%\jbr
-  IF EXIST "%JDK%" GOTO check
+IF "%JRE%" == "" (
+  SET BITS=64
+  SET USER_JRE64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
+  SET BITS=
+  SET USER_JRE_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
+  SET _JRE_CANDIDATE=
+  IF EXIST "%USER_JRE64_FILE%" (
+    SET /P _JRE_CANDIDATE=<"%USER_JRE64_FILE%"
+  ) ELSE (
+    IF EXIST "%USER_JRE_FILE%" SET /P _JRE_CANDIDATE=<"%USER_JRE_FILE%"
+  )
+  IF NOT "%_JRE_CANDIDATE%" == "" (
+    IF NOT EXIST "%_JRE_CANDIDATE%" SET _JRE_CANDIDATE="%IDE_HOME%\%_JRE_CANDIDATE%"
+    IF EXIST "%_JRE_CANDIDATE%" SET JRE=%_JRE_CANDIDATE%
+  )
 )
-IF EXIST "%IDE_HOME%\jbr-x86" SET JDK=%IDE_HOME%\jbr-x86
-IF EXIST "%JDK%" GOTO check
 
-IF EXIST "%JDK_HOME%" SET JDK=%JDK_HOME%
-IF EXIST "%JDK%" GOTO check
+IF "%JRE%" == "" (
+  IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
+    IF EXIST "%IDE_HOME%\jbr" SET JRE=%IDE_HOME%\jbr
+  )
+  IF "%JRE%" == "" (
+    IF EXIST "%IDE_HOME%\jbr-x86" SET JRE=%IDE_HOME%\jbr-x86
+  )
+)
 
-IF EXIST "%JAVA_HOME%" SET JDK=%JAVA_HOME%
+IF "%JRE%" == "" (
+  IF EXIST "%JDK_HOME%" SET JRE=%JDK_HOME%
+)
 
-:check
-SET JAVA_EXE=%JDK%\bin\java.exe
+IF "%JRE%" == "" (
+  IF EXIST "%JAVA_HOME%" SET JRE=%JAVA_HOME%
+)
+
+SET JAVA_EXE=%JRE%\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" (
   ECHO ERROR: cannot start @@product_full@@.
   ECHO No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
   EXIT /B
 )
 
-SET JRE=%JDK%
-IF EXIST "%JRE%\jre" SET JRE=%JDK%\jre
-IF EXIST "%JRE%\lib\amd64" (
-  SET BITS=64
-) ELSE (
-  IF EXIST "%JRE%\bin\windowsaccessbridge-64.dll" SET BITS=64
-)
+SET BITS=
+IF EXIST "%JRE%\bin\windowsaccessbridge-64.dll" SET BITS=64
 
 :: ---------------------------------------------------------------------
 :: Collect JVM options and properties.
