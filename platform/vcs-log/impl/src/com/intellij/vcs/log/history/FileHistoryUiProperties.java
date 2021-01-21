@@ -56,8 +56,11 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       // visibility is not set, so we will get it from current/default order
       // otherwise column will be visible but not exist in order
       VcsLogColumn<?> column = visibilityProperty.getColumn();
-      if (get(COLUMN_ID_ORDER).contains(column.getId()) || column instanceof VcsLogCustomColumn) {
+      if (get(COLUMN_ID_ORDER).contains(column.getId())) {
         return (T)Boolean.TRUE;
+      }
+      if (column instanceof VcsLogCustomColumn) {
+        return (T)Boolean.valueOf(((VcsLogCustomColumn<?>)column).isEnabledByDefault());
       }
       return (T)Boolean.FALSE;
     }
