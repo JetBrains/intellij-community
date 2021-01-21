@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -38,6 +38,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.vcs.changes.actions.RollbackFilesAction.isPreferCheckboxesOverSelection;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
 import static com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName;
@@ -51,7 +52,8 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
 
     Project project = e.getProject();
     if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return;
-    if (CommitModeManager.getInstance(project).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode &&
+    if (isPreferCheckboxesOverSelection() &&
+        CommitModeManager.getInstance(project).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode &&
         CHANGES_VIEW_POPUP.equals(e.getPlace())) {
       return;
     }
@@ -144,6 +146,8 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
   }
 
   private static @NotNull Collection<Change> getIncludedChanges(@NotNull AnActionEvent e) {
+    if (!isPreferCheckboxesOverSelection()) return emptyList();
+
     ChangesListView changesView = e.getData(ChangesListView.DATA_KEY);
     if (changesView == null) return emptyList();
 
