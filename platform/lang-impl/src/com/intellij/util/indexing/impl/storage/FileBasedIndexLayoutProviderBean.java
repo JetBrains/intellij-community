@@ -3,6 +3,7 @@ package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -57,7 +58,15 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
     return AbstractBundle.message(resourceBundle, presentableNameKey);
   }
 
-  private PluginDescriptor myPluginDescriptor;
+  private FileBasedIndexLayoutProvider myLayoutProvider;
+  @NotNull synchronized FileBasedIndexLayoutProvider getLayoutProvider() {
+    if (myLayoutProvider == null) {
+      myLayoutProvider = ApplicationManager.getApplication().instantiateClass(providerClass, myPluginDescriptor);
+    }
+    return myLayoutProvider;
+  }
+
+  private volatile PluginDescriptor myPluginDescriptor;
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;

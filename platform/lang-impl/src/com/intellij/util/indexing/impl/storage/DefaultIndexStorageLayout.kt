@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage
 
-import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
-import com.intellij.util.indexing.impl.storage.mvstore.MVStoreForwardIndexStorageLayoutProvider
 import com.intellij.util.indexing.memory.InMemoryForwardIndex
 import com.intellij.util.indexing.memory.InMemoryIndexStorage
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings
@@ -14,11 +12,16 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 object DefaultIndexStorageLayout {
+  val forcedLayout: String? = System.getProperty("idea.index.storage.forced.layout")
 
   @JvmStatic
   @Throws(IOException::class)
   fun <Key, Value> getLayout(indexExtension: FileBasedIndexExtension<Key, Value>,
                              contentHashEnumeratorReopen: Boolean): VfsAwareIndexStorageLayout<Key, Value> {
+    val layoutEP = getForcedLayoutEP() ?: FileBasedIndexLayoutSettings.getUsedLayout()
+    if (layoutEP != null) {
+      return layoutEP.layoutProvider.getLayout(indexExtension)
+    }
     if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
       return InMemoryStorageLayout(indexExtension)
     }
@@ -29,6 +32,12 @@ object DefaultIndexStorageLayout {
       SnapshotMappingsStorageLayout(indexExtension, contentHashEnumeratorReopen)
     }
     else DefaultStorageLayout(indexExtension)
+  }
+
+  private fun getForcedLayoutEP(): FileBasedIndexLayoutProviderBean? {
+    val layout = forcedLayout ?: return null
+    return FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensions.find { it.id == layout }
+           ?: throw IllegalStateException("Can't find index storage layout for id = $layout")
   }
 
   @ApiStatus.Internal
