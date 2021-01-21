@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages.impl
 
 import com.intellij.find.usages.api.SearchTarget
@@ -34,7 +34,6 @@ internal fun symbolSearchTargets(project: Project, targetSymbols: Collection<Sym
 }
 
 private val SYMBOL_SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.symbolSearchTarget")
-private val SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.searchTarget")
 
 @ApiStatus.Internal
 fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
