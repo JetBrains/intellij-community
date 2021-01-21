@@ -272,6 +272,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                 val progress = ProgressWrapper.unwrap(ProgressIndicatorProvider.getGlobalProgressIndicator())
                 progress?.pushState()
                 progress?.text = KotlinIdeaAnalysisBundleIndependent.message("searching.for.implicit.usages")
+                progress?.isIndeterminate = false
 
                 try {
                     val files = runReadAction { FileTypeIndex.getFiles(KotlinFileType.INSTANCE, scope) }
