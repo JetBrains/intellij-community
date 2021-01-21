@@ -816,6 +816,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   public XmlAttributeDescriptor[] getRootAttributeDescriptors(final XmlTag context) {
+    if (myTag == null) return XmlAttributeDescriptor.EMPTY;
     return CachedValuesManager.getProjectPsiDependentCache(myTag, XmlNSDescriptorImpl::computeAttributeDescriptors)
       .toArray(XmlAttributeDescriptor.EMPTY);
   }
