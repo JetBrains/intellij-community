@@ -19,10 +19,12 @@ import com.intellij.usages.ConfigurableUsageTarget
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewImpl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal class SearchTarget2UsageTarget<O>(
+@ApiStatus.Internal
+class SearchTarget2UsageTarget<O>(
   private val project: Project,
   target: SearchTarget,
   private val allOptions: AllSearchOptions<O>

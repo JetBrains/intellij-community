@@ -64,4 +64,18 @@ public interface PsiSymbolReferenceHints {
       }
     };
   }
+
+  static @NotNull PsiSymbolReferenceHints targetAndOffsetHint(@NotNull Symbol target, int offsetInElement) {
+    return new PsiSymbolReferenceHints() {
+      @Override
+      public @NotNull Symbol getTarget() {
+        return target;
+      }
+
+      @Override
+      public int getOffsetInElement() {
+        return offsetInElement;
+      }
+    };
+  }
 }
