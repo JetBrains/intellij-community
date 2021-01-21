@@ -42,7 +42,9 @@ public class GroovyConditionalInspection extends BaseInspection {
     @Override
     public void visitConditionalExpression(@NotNull GrConditionalExpression grConditionalExpression) {
       super.visitConditionalExpression(grConditionalExpression);
+      if (true) {}
       registerError(grConditionalExpression);
+      return;
     }
   }
 }
