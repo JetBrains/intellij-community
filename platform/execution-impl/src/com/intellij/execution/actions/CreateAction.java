@@ -6,13 +6,9 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class CreateAction extends BaseRunConfigurationAction {
   public CreateAction() {
@@ -46,18 +42,8 @@ public class CreateAction extends BaseRunConfigurationAction {
   private static abstract class BaseCreatePolicy {
     public void update(final Presentation presentation, final ConfigurationContext context, @NotNull final String actionText) {
       updateText(presentation, actionText);
-      updateIcon(presentation, context);
     }
-
-    protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
-      final List<ConfigurationFromContext> fromContext = context.getConfigurationsFromContext();
-      if (fromContext == null || fromContext.size() == 1) {
-        presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-        //hide fuzzy icon when multiple run configurations are possible
-        presentation.setIcon(AllIcons.General.Settings);
-      }
-    }
-
+    
     protected abstract void updateText(final Presentation presentation, final String actionText);
 
     protected abstract void perform(RunnerAndConfigurationSettings configurationSettings, ConfigurationContext context);
