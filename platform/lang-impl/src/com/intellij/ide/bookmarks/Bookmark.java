@@ -202,7 +202,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   public Icon getIcon() {
-    return BookmarkType.get(myMnemonic).getIcon();
+    return getType().getIcon();
   }
 
   public @NotNull @NlsSafe String getDescription() {
@@ -211,6 +211,10 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
 
   public void setDescription(@NotNull @NlsSafe String description) {
     myDescription = description;
+  }
+
+  public BookmarkType getType() {
+    return BookmarkType.get(getMnemonic());
   }
 
   public char getMnemonic() {
@@ -386,7 +390,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     @Override
     @NotNull
     public Icon getIcon() {
-      return BookmarkType.get(myBookmark.myMnemonic).getGutterIcon();
+      return myBookmark.getType().getGutterIcon();
     }
 
     @Override

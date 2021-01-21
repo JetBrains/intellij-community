@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions
 
-import com.intellij.ide.bookmarks.BookmarkBundle
+import com.intellij.ide.bookmarks.BookmarkBundle.message
 import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.ide.bookmarks.BookmarkType
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -19,7 +17,6 @@ import java.awt.*
 import java.awt.RenderingHints.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
-import java.lang.ref.WeakReference
 import javax.swing.*
 
 private val ASSIGNED_FOREGROUND = namedColor("AssignedMnemonic.foreground", 0x000000, 0xBBBBBB)
@@ -37,12 +34,11 @@ private val SHARED_LAYOUT by lazy {
   }
 }
 
-internal abstract class MnemonicChooser(
+internal class MnemonicChooser(
   private val manager: BookmarkManager,
-  private val current: BookmarkType
+  private val current: BookmarkType?,
+  private val onChosen: (BookmarkType) -> Unit
 ) : BorderLayoutPanel(), KeyListener {
-
-  var reference: WeakReference<JBPopup>? = null
 
   init {
     isFocusCycleRoot = true
@@ -55,32 +51,16 @@ internal abstract class MnemonicChooser(
         addToTop(JSeparator())
         addToBottom(JPanel(HorizontalLayout(5)).apply {
           border = JBUI.Borders.empty(5, 0)
-          add(HorizontalLayout.LEFT, createLegend(ASSIGNED_BACKGROUND, BookmarkBundle.message("mnemonic.chooser.legend.assigned.bookmark")))
-          if (current != BookmarkType.DEFAULT) {
-            add(HorizontalLayout.LEFT, createLegend(CURRENT_BACKGROUND, BookmarkBundle.message("mnemonic.chooser.legend.current.bookmark")))
+          add(HorizontalLayout.LEFT, createLegend(ASSIGNED_BACKGROUND, message("mnemonic.chooser.legend.assigned.bookmark")))
+          if (current != null && current != BookmarkType.DEFAULT) {
+            add(HorizontalLayout.LEFT, createLegend(CURRENT_BACKGROUND, message("mnemonic.chooser.legend.current.bookmark")))
           }
         })
       })
     }
   }
 
-  private fun buttons() = UIUtil.uiTraverser(this).traverse().filter(JButton::class.java)
-
-  fun createPopup(cancelKey: Boolean) = JBPopupFactory.getInstance().createComponentPopupBuilder(this, buttons().first())
-    .setTitle(BookmarkBundle.message("popup.title.bookmark.mnemonic"))
-    .setCancelKeyEnabled(cancelKey)
-    .setFocusable(true)
-    .setRequestFocus(true)
-    .setMovable(false)
-    .setResizable(false)
-    .createPopup()
-    .also { reference = WeakReference(it) }
-
-  protected open fun onChosen(type: BookmarkType) = onCancelled()
-  protected open fun onCancelled() {
-    reference?.get()?.cancel()
-    reference = null
-  }
+  fun buttons() = UIUtil.uiTraverser(this).traverse().filter(JButton::class.java)
 
   private fun createButtons(predicate: (BookmarkType) -> Boolean) = JPanel(SHARED_LAYOUT).apply {
     border = JBUI.Borders.empty(5)
@@ -154,7 +134,6 @@ internal abstract class MnemonicChooser(
   override fun keyPressed(event: KeyEvent) {
     if (event.modifiersEx == 0) {
       when (event.keyCode) {
-        KeyEvent.VK_ESCAPE -> onCancelled()
         KeyEvent.VK_UP, KeyEvent.VK_KP_UP -> next(event.component, 0, -1)?.requestFocus()
         KeyEvent.VK_DOWN, KeyEvent.VK_KP_DOWN -> next(event.component, 0, 1)?.requestFocus()
         KeyEvent.VK_LEFT, KeyEvent.VK_KP_LEFT -> next(event.component, -1, 0)?.requestFocus()
