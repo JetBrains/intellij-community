@@ -156,7 +156,7 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
   private void upgradePalette() {
     // load new components from the predefined Palette2.xml
     try {
-      Element rootElement = JDOMUtil.load(getClass().getClassLoader().getResourceAsStream("/Palette2.xml"));
+      Element rootElement = JDOMUtil.load(getClass().getClassLoader().getResourceAsStream("Palette2.xml"));
       for (Element groupElement : Objects.requireNonNull(rootElement).getChildren(ELEMENT_GROUP)) {
         for (GroupItem group : myGroups) {
           if (group.getName().equals(groupElement.getAttributeValue(ATTRIBUTE_NAME))) {
