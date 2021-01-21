@@ -43,20 +43,9 @@ object Main {
     incomingConnectionHandler = TargetIncomingConnectionHandler()
     val address = serverConnector.start(incomingConnectionHandler) { LOG.error("connection error") } as InetEndpoint
     println("Gradle target server hostName: ${address.candidates.first().hostName} port: ${address.port}")
-    val startTime = System.currentTimeMillis()
-    while (!incomingConnectionHandler.isConnected() && (System.currentTimeMillis() - startTime) < 5000) {
-      LOG.debug("waiting for incoming connection....")
-      val lock = Object()
-      synchronized(lock) {
-        try {
-          lock.wait(100)
-        }
-        catch (ignore: InterruptedException) {
-        }
-      }
-    }
+    waitForIncomingConnection()
+    waitForBuildParameters()
 
-    check(incomingConnectionHandler.isConnected()) { "Incoming connection timeout" }
     val targetBuildParameters = incomingConnectionHandler.targetBuildParameters()
     LOG.debug("targetBuildParameters: $targetBuildParameters")
 
@@ -116,6 +105,34 @@ object Main {
         }
       }
     }
+  }
+
+  private fun waitForIncomingConnection() {
+    waitFor({ incomingConnectionHandler.isConnected() },
+            "Waiting for incoming connection....",
+            "Incoming connection timeout")
+  }
+
+  private fun waitForBuildParameters() {
+    waitFor({ incomingConnectionHandler.isBuildParametersReceived() },
+            "Waiting for target build parameters....",
+            "Target build parameters were not received")
+  }
+
+  private fun waitFor(handler: () -> Boolean, waitingMessage: String, timeOutMessage: String) {
+    val startTime = System.currentTimeMillis()
+    while (!handler.invoke() && (System.currentTimeMillis() - startTime) < 5000) {
+      LOG.debug(waitingMessage)
+      val lock = Object()
+      synchronized(lock) {
+        try {
+          lock.wait(100)
+        }
+        catch (ignore: InterruptedException) {
+        }
+      }
+    }
+    check(handler.invoke()) { timeOutMessage }
   }
 
   private fun initLogging(args: Array<String>) {

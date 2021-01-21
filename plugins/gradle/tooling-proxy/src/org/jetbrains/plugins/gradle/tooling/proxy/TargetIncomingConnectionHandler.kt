@@ -9,17 +9,18 @@ import org.slf4j.LoggerFactory
 
 class TargetIncomingConnectionHandler : IncomingConnectionHandler {
   private lateinit var connection: RemoteConnection<Message>
-  private lateinit var myTargetBuildParameters: TargetBuildParameters
+  private lateinit var buildParameters: TargetBuildParameters
 
-  fun isConnected() : Boolean = ::connection.isInitialized
+  fun isConnected() = ::connection.isInitialized
+  fun isBuildParametersReceived() = ::buildParameters.isInitialized
 
-  fun targetBuildParameters() = myTargetBuildParameters
+  fun targetBuildParameters() = buildParameters
 
   override fun handle(connection: RemoteConnection<Message>) {
     LOG.debug("connection got $connection")
     this.connection = connection
     val message = connection.receive() as BuildEvent
-    this.myTargetBuildParameters = message.payload as TargetBuildParameters
+    this.buildParameters = message.payload as TargetBuildParameters
   }
 
   fun dispatch(message: Message) = connection.run {
