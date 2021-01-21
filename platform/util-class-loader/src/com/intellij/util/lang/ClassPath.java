@@ -300,11 +300,10 @@ public final class ClassPath {
     if (useCache && allUrlsWereProcessed) {
       // getLoadersByName compute package name by name, so, add ending slash
       Loader[] loaders = cache.getLoadersByName(dir + '/');
-      if (loaders.length == 0) {
-        return;
-      }
-      for (Loader loader : loaders) {
-        loader.processResources(dir, fileNameFilter, consumer);
+      if (loaders != null) {
+        for (Loader loader : loaders) {
+          loader.processResources(dir, fileNameFilter, consumer);
+        }
       }
     }
     else {

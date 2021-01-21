@@ -7,6 +7,7 @@ import com.intellij.util.lang.fastutil.StrippedIntOpenHashSet;
 import com.intellij.util.lang.fastutil.StrippedLongOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -146,12 +147,12 @@ public final class ClasspathCache {
     resourcePackageCache = newResourcePackageCache;
   }
 
-  Loader[] getLoadersByName(@NotNull String resourcePath) {
+  Loader @Nullable [] getLoadersByName(@NotNull String resourcePath) {
     IntObjectHashMap<Loader[]> map = resourcePath.endsWith(ClassPath.CLASS_EXTENSION) ? classPackageCache : resourcePackageCache;
     return map.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
   }
 
-  Loader[] getClassLoadersByName(@NotNull String resourcePath) {
+  Loader @Nullable [] getClassLoadersByName(@NotNull String resourcePath) {
     return classPackageCache.get(getPackageNameHash(resourcePath, resourcePath.lastIndexOf('/')));
   }
 
