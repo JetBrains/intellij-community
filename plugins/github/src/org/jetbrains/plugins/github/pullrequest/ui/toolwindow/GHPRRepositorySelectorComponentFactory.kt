@@ -156,6 +156,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
         })
 
       repositoriesModel.addSelectionChangeListener(::updateAccounts)
+      repositoriesModel.addSelectionChangeListener(::updateActions)
       accountsModel.addSelectionChangeListener(::updateActions)
 
       updateRepositories()
