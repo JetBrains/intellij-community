@@ -15,14 +15,14 @@ public final class StreamUtil {
   private StreamUtil() { }
 
   /**
-   * Copy stream. Use NetUtils.copyStreamContent(ProgressIndicator, ...) if you want use ProgressIndicator.
+   * Copy stream. Use {@link com.intellij.util.net.NetUtils#copyStreamContent(com.intellij.openapi.progress.ProgressIndicator, InputStream, OutputStream, int)} if you want use ProgressIndicator.
    *
    * @param inputStream source stream
    * @param outputStream destination stream
    * @return bytes copied
    */
   public static int copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
-    byte[] buffer = new byte[8 * 1024];
+    byte[] buffer = FileUtilRt.getThreadLocalBuffer();
     int read;
     int total = 0;
     while ((read = inputStream.read(buffer)) > 0) {
@@ -53,7 +53,7 @@ public final class StreamUtil {
     return convertSeparators(chars.toCharArray());
   }
 
-  private static char[] convertSeparators(char [] buffer) {
+  private static char @NotNull [] convertSeparators(char @NotNull [] buffer) {
     int dst = 0;
     char prev = ' ';
     for (char c : buffer) {
@@ -78,7 +78,7 @@ public final class StreamUtil {
   }
 
   @NotNull
-  private static CharArrayWriter readChars(Reader reader) throws IOException {
+  private static CharArrayWriter readChars(@NotNull Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
     char[] buffer = new char[2048];
     int read;
