@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.configurationStore.JdomSerializer;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
@@ -31,7 +32,6 @@ import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 
 import static com.intellij.configurationStore.DefaultStateSerializerKt.deserializeState;
-import static com.intellij.openapi.util.ExtensionsKt.use;
 
 public class MavenSettingsTest extends MavenTestCase {
   public void testCloningGeneralSettingsWithoutListeners() {
@@ -157,11 +157,14 @@ public class MavenSettingsTest extends MavenTestCase {
   }
 
   private static <T> void replaceService(ComponentManager componentManager, Class<T> serviceInterface, T instance, Runnable action) {
-    use(Disposer.newDisposable(), parentDisposable -> {
+    Disposable parentDisposable = Disposer.newDisposable();
+    try {
       ServiceContainerUtil.replaceService(componentManager, serviceInterface, instance, parentDisposable);
       action.run();
-      return null;
-    });
+    }
+    finally {
+      Disposer.dispose(parentDisposable);
+    }
   }
 
   private static String storeWorkspaceComponent(MavenWorkspaceSettingsComponent workspaceSettingsComponent) {
