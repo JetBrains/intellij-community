@@ -26,10 +26,9 @@
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
     </action>
-    <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
 
     <group id="Vcs.Push.Actions">
-      <reference id="Vcs.Force.Push" />
+      <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
     </group>
 
     <group id="Dvcs.Log.ContextMenu">
