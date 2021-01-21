@@ -298,6 +298,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     toolWindow.fireActivated(source);
   }
 
+  @NotNull
+  public String getToolWindowId() {
+    return toolWindow.getId();
+  }
+
   @Override
   public void addNotify() {
     super.addNotify();
