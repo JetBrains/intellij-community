@@ -47,23 +47,6 @@ internal class RootsChangeWatcher(val project: Project) {
       var result: ProjectRootManagerImpl.RootsChangeType? = null
       override fun before(events: MutableList<out VFileEvent>) {
         result = null
-        fun calculateRootsChangeType(currentRootsChangeType: ProjectRootManagerImpl.RootsChangeType) {
-          if (result != null && result == ProjectRootManagerImpl.RootsChangeType.GENERIC) return
-          if (result == null) {
-            result = currentRootsChangeType
-          }
-          else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.GENERIC) {
-            result = ProjectRootManagerImpl.RootsChangeType.GENERIC
-            return
-          }
-          else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
-            result == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED
-          }
-          else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED &&
-                   result != ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
-            result = ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED
-          }
-        }
 
         fun isUnderJarDirectory(storage: WorkspaceEntityStorage, virtualFileUrl: VirtualFileUrl): Boolean {
           val indexedJarDirectories = (storage.getVirtualFileUrlIndex() as VirtualFileIndex).getIndexedJarDirectories()
@@ -74,8 +57,15 @@ internal class RootsChangeWatcher(val project: Project) {
           return parentVirtualFileUrl != null && parentVirtualFileUrl in indexedJarDirectories
         }
 
+        val rootChangeForbidden = isRootChangeForbidden()
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
         events.forEach { event ->
+          if (rootChangeForbidden) {
+            val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
+            if (oldUrl != newUrl) virtualFileUrlWatcher.onVfsChange(oldUrl, newUrl)
+            return@forEach
+          }
+
           when (event) {
             is VFileDeleteEvent -> {
               val originVirtualFileUrl = virtualFileManager.fromUrl(event.file.url)
@@ -85,8 +75,7 @@ internal class RootsChangeWatcher(val project: Project) {
               else {
                 originVirtualFileUrl
               }
-              if (shouldFireRootsChanged(entityStorage, virtualFileUrl))
-                calculateRootsChangeType(ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED)
+              calculateRootsChangeType(entityStorage, virtualFileUrl, ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED)
             }
             is VFileCreateEvent -> {
               val parentUrl = event.parent.url
@@ -103,8 +92,7 @@ internal class RootsChangeWatcher(val project: Project) {
                 VfsUtilCore.pathToUrl(event.path)
               }
               val virtualFileUrl = virtualFileManager.fromUrl(url)
-              if (shouldFireRootsChanged(entityStorage, virtualFileUrl))
-                calculateRootsChangeType(ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
+              calculateRootsChangeType(entityStorage, virtualFileUrl, ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
             }
             is VFileCopyEvent -> {
               val originVirtualFileUrl = virtualFileManager.fromUrl(event.newParent.url)
@@ -114,15 +102,13 @@ internal class RootsChangeWatcher(val project: Project) {
               else {
                 virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(event.path))
               }
-              if (shouldFireRootsChanged(entityStorage, virtualFileUrl)) calculateRootsChangeType(ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
+              calculateRootsChangeType(entityStorage, virtualFileUrl, ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
             }
             is VFilePropertyChangeEvent, is VFileMoveEvent -> {
               val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
               if (oldUrl != newUrl) {
-                if (shouldFireRootsChanged(entityStorage, virtualFileManager.fromUrl(oldUrl)) ||
-                    shouldFireRootsChanged(entityStorage, virtualFileManager.fromUrl(newUrl))) {
-                  calculateRootsChangeType(ProjectRootManagerImpl.RootsChangeType.GENERIC)
-                }
+                calculateRootsChangeType(entityStorage, virtualFileManager.fromUrl(oldUrl), ProjectRootManagerImpl.RootsChangeType.GENERIC)
+                calculateRootsChangeType(entityStorage, virtualFileManager.fromUrl(newUrl), ProjectRootManagerImpl.RootsChangeType.GENERIC)
                 virtualFileUrlWatcher.onVfsChange(oldUrl, newUrl)
               }
             }
@@ -140,19 +126,40 @@ internal class RootsChangeWatcher(val project: Project) {
         fireRootsChangeEvent()
       }
 
-      private fun shouldFireRootsChanged(storage: WorkspaceEntityStorage, virtualFileUrl: VirtualFileUrl): Boolean {
+      fun calculateRootsChangeType(storage: WorkspaceEntityStorage, virtualFileUrl: VirtualFileUrl,
+                                   currentRootsChangeType: ProjectRootManagerImpl.RootsChangeType) {
         val affectedEntities = mutableListOf<EntityWithVirtualFileUrl>()
         calculateAffectedEntities(storage, virtualFileUrl, affectedEntities)
         virtualFileUrl.subTreeFileUrls.map { fileUrl -> calculateAffectedEntities(storage, fileUrl, affectedEntities) }
-        return affectedEntities.any { shouldFireRootsChanged(it.entity, project) }
+        if (affectedEntities.none { shouldFireRootsChanged(it.entity, project) }) return
+        if (result != null && result == ProjectRootManagerImpl.RootsChangeType.GENERIC) return
+        if (result == null) {
+          result = currentRootsChangeType
+        }
+        else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.GENERIC) {
+          result = ProjectRootManagerImpl.RootsChangeType.GENERIC
+          return
+        }
+        else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
+          result == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED
+        }
+        else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED &&
+                 result != ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
+          result = ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED
+        }
+      }
+
+      private fun isRootChangeForbidden(): Boolean {
+        ApplicationManager.getApplication().assertWriteAccessAllowed()
+        if (project.isDisposed) return true
+        val projectRootManager = ProjectRootManager.getInstance(project)
+        if (projectRootManager !is ProjectRootManagerBridge) return true
+        return projectRootManager.isFiringEvent()
       }
 
       private fun fireRootsChangeEvent(beforeRootsChanged: Boolean = false) {
-        ApplicationManager.getApplication().assertWriteAccessAllowed()
-        if (project.isDisposed) return
-        val projectRootManager = ProjectRootManager.getInstance(project)
-        if (projectRootManager !is ProjectRootManagerBridge) return
-        if (result != null && !projectRootManager.isFiringEvent()) {
+        if (result != null && !isRootChangeForbidden()) {
+          val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge
           if (beforeRootsChanged)
             projectRootManager.rootsChanged.beforeRootsChanged()
           else

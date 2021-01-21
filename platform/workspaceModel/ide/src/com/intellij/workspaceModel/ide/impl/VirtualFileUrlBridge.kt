@@ -8,7 +8,6 @@ import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 
 class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrlImpl(id, manager), VirtualFilePointer {
-  private val fileManager = VirtualFileManager.getInstance()
   @Volatile
   private var file: VirtualFile? = null
   @Volatile
@@ -34,6 +33,7 @@ class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl): Virtual
   }
 
   private fun findVirtualFile(): VirtualFile? {
+    val fileManager = VirtualFileManager.getInstance()
     val timestamp = timestampOfCachedFiles
     val cachedResults = file
     return if (timestamp == fileManager.modificationCount) cachedResults else {
