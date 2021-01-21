@@ -68,12 +68,17 @@ internal class ProjectRootsChangeListener(private val project: Project) {
         result = ProjectRootManagerImpl.RootsChangeType.GENERIC
         break
       }
-      else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
-        result = ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED
+      else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED &&
+               result == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
+        continue
       }
       else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED &&
-               result != ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
-        result = ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED
+               result == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED) {
+        continue
+      }
+      else {
+        result = ProjectRootManagerImpl.RootsChangeType.GENERIC
+        break
       }
     }
     return result ?: ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED
