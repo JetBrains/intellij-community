@@ -149,6 +149,10 @@ public class MacWinTabsHandler {
 
       for (int i = 0; i < frames.length; i++) {
         ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
+        if (Disposer.isDisposed(helper)) {
+          visibleAndHeights[i] = 0;
+          continue;
+        }
         if (newFrame == helper.getFrame()) {
           newIndex = i;
         }
@@ -214,6 +218,9 @@ public class MacWinTabsHandler {
       frame = (JFrame)frameObject;
     }
     else if (frameObject instanceof ProjectFrameHelper) {
+      if (Disposer.isDisposed((Disposable)frameObject)) {
+        return;
+      }
       frame = ((ProjectFrameHelper)frameObject).getFrame();
     }
     if (frame == null) {
