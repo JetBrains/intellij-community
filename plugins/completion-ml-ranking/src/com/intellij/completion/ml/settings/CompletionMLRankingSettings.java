@@ -106,8 +106,11 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   }
 
   private static void disableExperiment() {
-    ExperimentStatus.Companion.getInstance().disable();
-    LOG.info("Leave A/B ML completion experiment group");
+    ExperimentStatus status = ExperimentStatus.Companion.getInstance();
+    if (!status.isDisabled()) {
+      LOG.info("Leave A/B ML completion experiment group");
+    }
+    status.disable();
   }
 
   private static boolean isEnabledByDefault(@NotNull String rankerId) {
