@@ -4,14 +4,13 @@ package com.intellij.util.lang;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
-public interface ResourceFile extends Closeable {
+public interface ResourceFile {
   @Nullable Attributes loadManifestAttributes() throws IOException;
 
   @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() throws IOException;

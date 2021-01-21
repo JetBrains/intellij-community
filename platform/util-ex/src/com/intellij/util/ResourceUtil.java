@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.io.InputStreamEx;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +37,6 @@ public final class ResourceUtil {
 
   public static InputStream getResourceAsStream(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     String fixedPath = StringUtil.trimStart(Strings.trimEnd(basePath, "/"), "/");
-
     if (fixedPath.isEmpty()) {
       return loader.getResourceAsStream(fileName);
     }
@@ -136,14 +132,7 @@ public final class ResourceUtil {
 
   public static @NotNull String loadText(@NotNull InputStream in) throws IOException {
     try {
-      if (in instanceof InputStreamEx) {
-        return new String(((InputStreamEx)in).readAllBytes(), StandardCharsets.UTF_8);
-      }
-      else {
-        BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
-        FileUtilRt.copy(in, buffer);
-        return new String(buffer.getInternalBuffer(), 0, buffer.size(), StandardCharsets.UTF_8);
-      }
+      return new String(in.readAllBytes(), StandardCharsets.UTF_8);
     }
     finally {
       in.close();

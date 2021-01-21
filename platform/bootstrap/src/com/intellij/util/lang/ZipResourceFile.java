@@ -152,11 +152,6 @@ public final class ZipResourceFile implements ResourceFile {
     return new ZipFileResource(jarLoader.url, entry, zipFile);
   }
 
-  @Override
-  public void close() throws IOException {
-    zipFile.close();
-  }
-
   private static final class ZipFileResource implements Resource {
     private final URL baseUrl;
     private URL url;

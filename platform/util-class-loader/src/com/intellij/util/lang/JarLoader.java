@@ -151,13 +151,6 @@ public class JarLoader extends Loader {
     }
   }
 
-  protected final void releaseZipFile(@NotNull ResourceFile zipFile) throws IOException {
-    // Closing of zip file when configuration.canLockJars=true happens in ZipFile.finalize
-    if (!configuration.lockJars) {
-      zipFile.close();
-    }
-  }
-
   @Override
   public final String toString() {
     return "JarLoader [" + path + "]";

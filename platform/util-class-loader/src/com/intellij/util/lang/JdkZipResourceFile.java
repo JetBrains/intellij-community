@@ -101,7 +101,6 @@ public final class JdkZipResourceFile implements ResourceFile {
     return isSecureLoader ? new JarFile(file) : new ZipFile(file);
   }
 
-  @Override
   public void close() throws IOException {
     SoftReference<ZipFile> ref = zipFileSoftReference;
     ZipFile zipFile = ref == null ? null : ref.get();
@@ -173,7 +172,7 @@ public final class JdkZipResourceFile implements ResourceFile {
         return new SecureJarResource(jarLoader.url, (JarEntry)entry, (SecureJarLoader)jarLoader);
       }
       else {
-        return new ZipFileResource(jarLoader.url, entry, jarLoader);
+        return new ZipFileResource(jarLoader.url, entry, this);
       }
     }
     finally {
@@ -267,12 +266,12 @@ public final class JdkZipResourceFile implements ResourceFile {
     protected final URL baseUrl;
     private URL url;
     protected final ZipEntry entry;
-    protected final JarLoader jarLoader;
+    protected final JdkZipResourceFile file;
 
-    private ZipFileResource(@NotNull URL baseUrl, @NotNull ZipEntry entry, @NotNull JarLoader jarLoader) {
+    private ZipFileResource(@NotNull URL baseUrl, @NotNull ZipEntry entry, @NotNull JdkZipResourceFile file) {
       this.baseUrl = baseUrl;
       this.entry = entry;
-      this.jarLoader = jarLoader;
+      this.file = file;
     }
 
     @Override
@@ -302,29 +301,31 @@ public final class JdkZipResourceFile implements ResourceFile {
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      JdkZipResourceFile file = (JdkZipResourceFile)jarLoader.zipFile;
       try (InputStream stream = file.getZipFile().getInputStream(entry)) {
         return loadBytes(stream, (int)entry.getSize());
       }
       finally {
-        jarLoader.releaseZipFile(file);
+        if (!file.lockJars) {
+          file.close();
+        }
       }
     }
   }
 
   private static final class SecureJarResource extends JdkZipResourceFile.ZipFileResource {
     SecureJarResource(@NotNull URL baseUrl, @NotNull JarEntry entry, @NotNull SecureJarLoader jarLoader) {
-      super(baseUrl, entry, jarLoader);
+      super(baseUrl, entry, (JdkZipResourceFile)jarLoader.zipFile);
     }
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      JdkZipResourceFile resourceFile = (JdkZipResourceFile)jarLoader.zipFile;
-      try (InputStream stream = resourceFile.getZipFile().getInputStream(entry)) {
+      try (InputStream stream = file.getZipFile().getInputStream(entry)) {
         return loadBytes(stream, (int)entry.getSize());
       }
       finally {
-        jarLoader.releaseZipFile(resourceFile);
+        if (!file.lockJars) {
+          file.close();
+        }
       }
     }
   }
