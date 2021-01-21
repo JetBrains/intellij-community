@@ -74,7 +74,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "-Xms", "-Xmx", "-XX:SoftRefLRUPolicyMSPerMB", "-XX:ReservedCodeCacheSize"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 7)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 8)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))
