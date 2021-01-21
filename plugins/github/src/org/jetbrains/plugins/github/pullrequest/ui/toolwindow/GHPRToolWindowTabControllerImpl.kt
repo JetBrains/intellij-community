@@ -87,7 +87,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
           showPullRequestsComponent(repo, account, requestExecutor, wasReset)
         }
         catch (e: Exception) {
-          //show error near selectors?
+          null
         }
       } ?: showSelectors()
     }
