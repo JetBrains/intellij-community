@@ -9,6 +9,7 @@ data class JsonProjectIndexingHistory(
   val numberOfFileProviders: Int,
   val totalNumberOfFiles: Int,
   val totalNumberOfUpToDateFiles: Int,
+  val totalNumberOfFilesIndexedByInfrastructureExtensions: Int,
   val times: JsonProjectIndexingHistoryTimes,
   val totalNumberOfTooLargeForIndexingFiles: Int,
   val totalStatsPerFileType: List<JsonStatsPerFileType>,

@@ -55,6 +55,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr { td("Number of file providers"); td(projectIndexingHistory.numberOfFileProviders.toString()) }
           tr { td("Number of files"); td(projectIndexingHistory.totalNumberOfFiles.toString()) }
           tr { td("Number of up-to-date files"); td(projectIndexingHistory.totalNumberOfUpToDateFiles.toString()) }
+          tr { td("Number of files indexed by infrastructure extensions"); td(projectIndexingHistory.totalNumberOfFilesIndexedByInfrastructureExtensions.toString()) }
 
           val times = projectIndexingHistory.times
           tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }

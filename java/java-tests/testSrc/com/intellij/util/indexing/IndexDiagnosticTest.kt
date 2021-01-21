@@ -74,6 +74,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         123,
         456,
         789,
+        345,
         JsonProjectIndexingHistoryTimes(
           JsonDuration(123),
           JsonDuration(456),
