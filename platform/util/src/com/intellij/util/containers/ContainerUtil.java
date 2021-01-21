@@ -38,6 +38,16 @@ public class ContainerUtil {
     return new HashMap<>();
   }
 
+  /**
+   * @deprecated Use {@link HashMap#HashMap(Map)}
+   */
+  @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated
+  public static @NotNull <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
+    return new HashMap<>(map);
+  }
+
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, Pair<? extends K,? extends V> @NotNull ... entries) {
