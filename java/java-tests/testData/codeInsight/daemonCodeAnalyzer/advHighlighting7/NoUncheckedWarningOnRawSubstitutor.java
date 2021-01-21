@@ -24,3 +24,11 @@ class Bar2 {
     return null;
   }
 }
+
+class Bar3<<warning descr="Type parameter 'K' is never used">K</warning>> {
+  class Foo<<warning descr="Type parameter 'T' is never used">T</warning>> {}
+  void m(Foo <warning descr="Parameter 'rawFoo' is never used">rawFoo</warning>) {}
+  void n(Bar3 b, Foo rawFoo) {
+    b.m(rawFoo);
+  }
+}

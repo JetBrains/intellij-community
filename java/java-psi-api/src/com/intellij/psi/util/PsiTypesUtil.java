@@ -540,7 +540,7 @@ public final class PsiTypesUtil {
           if (type instanceof PsiClassType) {
             PsiClass aClass = ((PsiClassType)type).resolveGenerics().getElement();
             if (aClass instanceof PsiTypeParameter || 
-                aClass != null && PsiUtil.typeParametersIterator(aClass).hasNext()) {
+                aClass != null && PsiUtil.typeParametersIterator(aClass).hasNext() && !((PsiClassType)type).isRaw()) {
               return true;
             }
           }
