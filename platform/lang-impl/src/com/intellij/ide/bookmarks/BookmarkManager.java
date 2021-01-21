@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
@@ -140,7 +139,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  public void editDescription(@NotNull Bookmark bookmark, @NotNull JComponent popup) {
+  public void editDescription(@NotNull Bookmark bookmark, @NotNull Component popup) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     String description = Messages.showInputDialog(popup, BookmarkBundle.message("action.bookmark.edit.description.dialog.message"),
                        BookmarkBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
@@ -444,6 +443,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
 
     bookmark.setMnemonic(c);
     getPublisher().bookmarkChanged(bookmark);
+    bookmark.updateHighlighter();
   }
 
   public void setDescription(@NotNull Bookmark bookmark, @NotNull @NlsSafe String description) {
