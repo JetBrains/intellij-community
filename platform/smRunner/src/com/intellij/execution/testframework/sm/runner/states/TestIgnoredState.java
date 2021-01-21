@@ -76,9 +76,9 @@ public class TestIgnoredState extends AbstractState {
       printer.print(myText, ConsoleViewContentType.SYSTEM_OUTPUT);
     }
     if (!StringUtil.isEmptyOrSpaces(myStacktrace)) {
-      printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+      printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.SYSTEM_OUTPUT);
       printer.mark();
-      printer.print(myStacktrace, ConsoleViewContentType.ERROR_OUTPUT);
+      printer.print(myStacktrace, ConsoleViewContentType.SYSTEM_OUTPUT);
     }
   }
 
