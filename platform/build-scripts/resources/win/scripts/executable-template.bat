@@ -66,31 +66,37 @@ IF EXIST "%JRE%\lib\amd64" (
 :: ---------------------------------------------------------------------
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
-:: explicit
-SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
+SET VM_OPTIONS_FILE=
+IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" (
+  :: explicit
+  IF EXIST "%@@product_uc@@_VM_OPTIONS%" SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
+)
+IF "%VM_OPTIONS_FILE%" == "" (
   :: Toolbox
-  SET VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
+  IF EXIST "%IDE_HOME%.vmoptions" SET VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
 )
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
+IF "%VM_OPTIONS_FILE%" == "" (
   :: user-overridden
-  SET VM_OPTIONS_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions
+  SET _VM_OPTIONS_CANDIDATE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions
+  IF EXIST "%_VM_OPTIONS_CANDIDATE%" SET VM_OPTIONS_FILE=%_VM_OPTIONS_CANDIDATE%
 )
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
+IF "%VM_OPTIONS_FILE%" == "" (
   :: default, standard installation
-  SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+  SET _VM_OPTIONS_CANDIDATE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+  IF EXIST "%_VM_OPTIONS_CANDIDATE%" SET VM_OPTIONS_FILE=%_VM_OPTIONS_CANDIDATE%
 )
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
+IF "%VM_OPTIONS_FILE%" == "" (
   :: default, universal package
-  SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
+  SET _VM_OPTIONS_CANDIDATE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
+  IF EXIST "%_VM_OPTIONS_CANDIDATE%" SET VM_OPTIONS_FILE=%_VM_OPTIONS_CANDIDATE%
 )
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
+IF "%VM_OPTIONS_FILE%" == "" (
   ECHO ERROR: cannot find VM options file.
+) ELSE (
+  SET ACC=
+  FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+  SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
 )
-
-SET ACC=
-FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
-IF EXIST "%VM_OPTIONS_FILE%" SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
 
 SET COMMON_JVM_ARGS="-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" -Didea.vendor.name=@@product_vendor@@ -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
 SET IDE_JVM_ARGS=@@ide_jvm_args@@
