@@ -31,13 +31,7 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
  * @author peter
  */
 class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
-
   static final ELEMENTS_LIMIT = 30
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown()
-  }
 
   void "test goto class order by matching degree"() {
     def startMatch = myFixture.addClass("class UiUtil {}")
@@ -614,7 +608,7 @@ class Intf {
   }
 
   static AnActionEvent createEvent(Project project, PsiElement context = null) {
-    assert project != null;
+    assert project != null
     def dataContext = SimpleDataContext.getProjectContext(project)
     PsiFile file = ObjectUtils.tryCast(context, PsiFile.class)
     if (file != null) {
