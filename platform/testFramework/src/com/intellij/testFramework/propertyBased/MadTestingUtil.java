@@ -362,17 +362,17 @@ public final class MadTestingUtil {
 
   @NotNull
   public static String getPositionDescription(int offset, Document document) {
-    int line = document.getLineNumber(offset) + 1;
+    int line = document.getLineNumber(offset);
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
-    int column = offset - start + 1;
+    int column = offset - start;
     String prefix = document.getText(new TextRange(start, offset)).trim();
     if (prefix.length() > 30) {
       prefix = "..." + prefix.substring(prefix.length() - 30);
     }
     String suffix = StringUtil.shortenTextWithEllipsis(document.getText(new TextRange(offset, end)), 30, 0);
     String text = prefix + "|" + suffix;
-    return offset + "(" + line + ":" + column + ") [" + text + "]";
+    return offset + "(" + (line + 1) + ":" + (column + 1) + ") [" + text + "]";
   }
 
   @NotNull
