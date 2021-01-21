@@ -72,6 +72,11 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         return false;
       }
     }
+    
+    if (myRef instanceof PsiJavaCodeReferenceElement && 
+        ((PsiJavaCodeReferenceElement)myRef).advancedResolve(false).isValidResult()) {
+      return false;
+    }
 
     if (file instanceof PsiJavaCodeReferenceCodeFragment && !((PsiJavaCodeReferenceCodeFragment)file).isClassesAccepted()) {
       return false;
