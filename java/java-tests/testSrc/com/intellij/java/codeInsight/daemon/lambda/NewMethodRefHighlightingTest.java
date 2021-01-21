@@ -199,6 +199,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testErrorMessageOnTopCallWhenFunctionalInterfaceIsNotInferred() { doTest(); }
   public void testReferencesToPolymorphicMethod() { doTest(); }
   public void testTypeArgumentsOnFirstSearchAccessibleMethod() { doTest(); }
+  public void testIDEA250434() { doTest(); }
 
   private void doTest() {
     doTest(false);
