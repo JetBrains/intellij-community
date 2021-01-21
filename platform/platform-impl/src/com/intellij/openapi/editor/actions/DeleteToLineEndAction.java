@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-
-public class DeleteToLineEndAction extends EditorAction {
+public class DeleteToLineEndAction extends TextComponentEditorAction {
   public DeleteToLineEndAction() {
     super(new CutLineActionHandler(false));
   }
