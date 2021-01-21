@@ -498,6 +498,16 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       }
     }
 
+    @Override
+    public <T> List<T> run(Collection<? extends BuildAction<? extends T>> collection) {
+      return myDelegate.run(collection);
+    }
+
+    @Override
+    public boolean getCanQueryProjectModelInParallel(Class<?> aClass) {
+      return myDelegate.getCanQueryProjectModelInParallel(aClass);
+    }
+
     private boolean isMainBuild(Model model) {
       return model == null || model == myMainGradleBuild;
     }
