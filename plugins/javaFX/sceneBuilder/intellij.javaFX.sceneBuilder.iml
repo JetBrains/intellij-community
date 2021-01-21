@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.javaFX" />
     <orderEntry type="library" name="NanoXML" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="SceneBuilderKit11" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps:scenebuilderkit:11.0.5" />

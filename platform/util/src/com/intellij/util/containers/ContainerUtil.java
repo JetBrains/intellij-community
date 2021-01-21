@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
-import java.util.function.IntFunction;
 
 @ApiStatus.NonExtendable
 // cannot be final because of https://plugins.jetbrains.com/plugin/7831-illuminated-cloud
@@ -93,22 +92,15 @@ public class ContainerUtil {
     return new THashMap<>();
   }
 
-  /**
-   * @deprecated Use {@link THashMap#THashMap(TObjectHashingStrategy)}
-   */
   @Deprecated
-  @Contract(pure = true)
-  public static @NotNull <K, V> THashMap<K, V> newTroveMap(@NotNull TObjectHashingStrategy<K> strategy) {
-    return new THashMap<>(strategy);
-  }
-
-  @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static @NotNull <T> TObjectHashingStrategy<T> canonicalStrategy() {
     //noinspection unchecked
     return TObjectHashingStrategy.CANONICAL;
   }
 
-  @Contract(pure = true)
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static @NotNull <T> TObjectHashingStrategy<T> identityStrategy() {
     //noinspection unchecked
     return TObjectHashingStrategy.IDENTITY;
@@ -516,26 +508,6 @@ public class ContainerUtil {
   @Contract(pure = true)
   public static <T> T getOrElse(@NotNull List<? extends T> elements, int i, T defaultValue) {
     return elements.size() > i ? elements.get(i) : defaultValue;
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <U> Iterator<U> mapIterator(@NotNull TIntIterator iterator, @NotNull IntFunction<? extends U> mapper) {
-    return new Iterator<U>() {
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public U next() {
-        return mapper.apply(iterator.next());
-      }
-
-      @Override
-      public void remove() {
-        iterator.remove();
-      }
-    };
   }
 
   public static final class ImmutableMapBuilder<K, V> {
@@ -1682,15 +1654,14 @@ public class ContainerUtil {
 
       @Override
       public T next() {
-        T result;
         if (hasNext) {
-          result = next;
+          T result = next;
           findNext();
+          return result;
         }
         else {
           throw new NoSuchElementException();
         }
-        return result;
       }
 
       @Override

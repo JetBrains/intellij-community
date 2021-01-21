@@ -1,6 +1,6 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolModelGenerator
 
-import gnu.trove.THashMap
 import java.util.*
 
 /**
@@ -8,7 +8,7 @@ import java.util.*
  * A type may be used and resolved (generated or hard-coded).
  */
 internal class TypeMap {
-  private val map = THashMap<Pair<String, String>, TypeData>()
+  private val map = HashMap<Pair<String, String>, TypeData>()
 
   var domainGeneratorMap: Map<String, DomainGenerator>? = null
 
@@ -17,7 +17,7 @@ internal class TypeMap {
   fun resolve(domainName: String, typeName: String, direction: TypeData.Direction): BoxableType? {
     val domainGenerator = domainGeneratorMap!!.get(domainName)
     if (domainGenerator == null) {
-      val qName = "$domainName.$typeName";
+      val qName = "$domainName.$typeName"
       if (qName == "IO.StreamHandle" ||
           qName == "Security.SecurityState" ||
           qName == "Security.CertificateId" ||

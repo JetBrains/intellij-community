@@ -43,7 +43,6 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -356,7 +355,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     GitBranchesCollection branches = repository.getBranches();
     Collection<GitLocalBranch> localBranches = branches.getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = branches.getRemoteBranches();
-    Set<VcsRef> refs = new THashSet<>(localBranches.size() + remoteBranches.size());
+    Set<VcsRef> refs = new HashSet<>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
       Hash hash = branches.getHash(localBranch);
       assert hash != null;

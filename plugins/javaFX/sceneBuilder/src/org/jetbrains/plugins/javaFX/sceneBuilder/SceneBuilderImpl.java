@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.openapi.application.ReadAction;
@@ -37,8 +37,6 @@ import com.oracle.javafx.scenebuilder.kit.editor.selection.ObjectSelectionGroup;
 import com.oracle.javafx.scenebuilder.kit.fxom.*;
 import com.oracle.javafx.scenebuilder.kit.library.LibraryItem;
 import com.oracle.javafx.scenebuilder.kit.metadata.util.PropertyName;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,7 +158,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       final JavaSdkVersion ideJdkVersion = JavaSdkVersion.fromJavaVersion(JavaVersion.current());
       final LanguageLevel ideLanguageLevel = ideJdkVersion != null ? ideJdkVersion.getMaxLanguageLevel() : null;
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
-      final Set<PsiClass> result = new THashSet<>();
+      final Set<PsiClass> result = new HashSet<>();
       query.forEach(psiClass -> {
         if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
             !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
@@ -237,7 +235,9 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     final Collection<JavaFXPlatformHelper.CustomComponent> customComponents = DumbService.getInstance(myProject)
       .runReadActionInSmartMode(this::collectCustomComponents);
-    if (!new THashSet<>(myCustomComponents).equals(new THashSet<>(customComponents))) return false;
+    if (!new HashSet<>(myCustomComponents).equals(new HashSet<>(customComponents))) {
+      return false;
+    }
 
     JavaFXPlatformHelper.javafxInvokeLater(() -> {
       if (myEditorController != null) {
@@ -407,11 +407,11 @@ public class SceneBuilderImpl implements SceneBuilder {
 
   @NotNull
   private static Map<String, BuiltinComponent> loadBuiltinComponents(Predicate<String> psiClassExists) {
-    final Map<String, BuiltinComponent> components = new THashMap<>();
+    final Map<String, BuiltinComponent> components = new HashMap<>();
     for (LibraryItem item : JavaFXPlatformHelper.getBuiltinLibraryItems()) {
       final Ref<String> refQualifiedName = new Ref<>();
       final List<String> imports = new ArrayList<>();
-      final Map<String, String> attributes = new THashMap<>();
+      final Map<String, String> attributes = new HashMap<>();
       final Ref<Boolean> rootTagProcessed = new Ref<>(false);
       NanoXmlUtil.parse(new StringReader(item.getFxmlText()), new NanoXmlBuilder() {
         @Override

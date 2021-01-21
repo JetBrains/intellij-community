@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,13 +8,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -133,7 +133,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   }
 
   // can't use RecursionManager unfortunately because quite a few crazy tests would start screaming about prevented recursive access
-  private static final ThreadLocal<Set<String>> CALLED_RECURSIVELY = ThreadLocal.withInitial(()->new THashSet<>());
+  private static final ThreadLocal<Set<String>> CALLED_RECURSIVELY = ThreadLocal.withInitial(() -> new HashSet<>());
+
   /**
    * Returns the default text attributes associated with the key.
    *

@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings("unchecked")
 public class ResolveState {
   private static final ResolveState ourInitialState = new ResolveState();
 
@@ -141,8 +141,8 @@ public class ResolveState {
     }
   }
 
-  private static class ManyElementResolveState extends ResolveState {
-    private final Map<Object, Object> myValues = new THashMap<>();
+  private static final class ManyElementResolveState extends ResolveState {
+    private final Map<Object, Object> myValues = new HashMap<>();
 
     ManyElementResolveState(@NotNull ResolveState state1, @NotNull ResolveState state2) {
       putAllNoCopy(state1);

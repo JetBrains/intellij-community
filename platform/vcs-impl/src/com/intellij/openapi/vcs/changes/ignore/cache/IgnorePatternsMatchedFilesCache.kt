@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore.cache
 
 import com.google.common.cache.CacheBuilder
@@ -108,7 +108,7 @@ class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable
       override fun doRun() = cache.put(key, doSearch(pattern))
     })
 
-  private fun doSearch(pattern: Pattern): THashSet<VirtualFile> {
+  private fun doSearch(pattern: Pattern): Set<VirtualFile> {
     val files = THashSet<VirtualFile>(1000)
     val parts = RegexUtil.getParts(pattern)
     if (parts.isEmpty()) return files
