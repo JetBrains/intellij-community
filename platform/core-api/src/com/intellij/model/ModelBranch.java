@@ -94,7 +94,8 @@ public interface ModelBranch extends UserDataHolder {
     if (element instanceof BranchableSyntheticPsiElement) {
       return ((BranchableSyntheticPsiElement)element).getModelBranch();
     }
-    PsiFile psiFile = element.getContainingFile();
+    // avoid isValid check in ClsFileImpl.getContainingFile() 
+    PsiFile psiFile = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
     return psiFile == null ? null : getFileBranch(psiFile.getViewProvider().getVirtualFile());
   }
 
