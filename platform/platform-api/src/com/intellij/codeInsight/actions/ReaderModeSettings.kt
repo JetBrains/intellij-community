@@ -8,6 +8,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
@@ -38,6 +40,12 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
           it.applyModeChanged(project, editor, instance(project).enabled && matchMode, fileIsOpenAlready)
         }
       }
+    }
+
+    @JvmStatic
+    fun matchModeForStats(project: Project, file: VirtualFile): Boolean {
+      val editor = (FileEditorManager.getInstance(project).getSelectedEditor(file) as? TextEditor)?.editor
+      return instance(project).enabled && matchMode(project, file, editor)
     }
 
     fun matchMode(project: Project?, file: VirtualFile?, editor: Editor? = null): Boolean {

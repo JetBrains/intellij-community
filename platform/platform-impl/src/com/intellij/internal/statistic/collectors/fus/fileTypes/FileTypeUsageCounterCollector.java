@@ -21,10 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -82,13 +79,13 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
     OPEN.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
                                        IS_WRITABLE.with(file.isWritable())),
-                                       IS_IN_READER_MODE.with(ReaderModeSettings.Companion.matchMode(project, file, null))));
+                                       IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file))));
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
     CLOSE.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
                                         IS_WRITABLE.with(file.isWritable())),
-                                        IS_IN_READER_MODE.with(ReaderModeSettings.Companion.matchMode(project, file, null))));
+                                        IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file))));
   }
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
