@@ -285,7 +285,6 @@ final class DistributionJARsBuilder {
       SVGPreBuilder.createPrebuildSvgIconsTask(),
       createBuildSearchableOptionsTask(getModulesForPluginsToPublish()),
       createBuildBrokenPluginListTask(),
-      createBuildThirdPartyLibrariesListTask(projectStructureMapping)
     ), buildContext)
 
     buildLib()
@@ -305,6 +304,7 @@ final class DistributionJARsBuilder {
     if (!isUpdateFromSources) {
       buildNonBundledPluginsBlockMaps()
     }
+    buildThirdPartyLibrariesList(projectStructureMapping)
   }
 
   static void reorderJars(@NotNull BuildContext buildContext) {
@@ -453,10 +453,8 @@ final class DistributionJARsBuilder {
     }
   }
 
-  @NotNull
-  private static BuildTaskRunnable<Void> createBuildThirdPartyLibrariesListTask(@NotNull ProjectStructureMapping projectStructureMapping) {
-    return BuildTaskRunnable.task(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
-                                    "Generate table of licenses for used third-party libraries") { buildContext ->
+  private void buildThirdPartyLibrariesList(@NotNull ProjectStructureMapping projectStructureMapping) {
+    buildContext.executeStep("Generate table of licenses for used third-party libraries", BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP) {
       LibraryLicensesListGenerator generator = LibraryLicensesListGenerator.create(buildContext.messages,
                                                                                    buildContext.project,
                                                                                    buildContext.productProperties.allLibraryLicenses,
