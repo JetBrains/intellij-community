@@ -100,6 +100,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildContext.ant.copy(todir: "$targetDirectory/bin") {
       fileset(dir: "$buildContext.paths.communityHome/build/conf/ideaCE/common/bin")
     }
+    def root = "$buildContext.paths.communityHome/../.."
+    buildContext.ant.copy(todir: "$targetDirectory/bin/lldb/helpers") {
+      fileset(dir: "$root/tools/vendor/intellij/cidr/cidr-debugger/bin/lldb/helpers/")
+    }
+    buildContext.ant.copy(todir: "$targetDirectory/bin/helpers") {
+      fileset(dir: "$root/tools/vendor/intellij/cidr/cidr-debugger/bin/helpers")
+    }
   }
 
   @Override
