@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -55,12 +55,9 @@ public class GitRefDialog extends DialogWrapper {
                       @NotNull @NlsContexts.DialogTitle String title,
                       @NotNull @NlsContexts.Label String message) {
     super(project);
-
     setTitle(title);
-    setButtonsAlignment(SwingConstants.CENTER);
 
     TextCompletionProvider completionProvider = getCompletionProvider(project, repositories, getDisposable());
-
     myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true, false);
 
     myCenterPanel = grid()
