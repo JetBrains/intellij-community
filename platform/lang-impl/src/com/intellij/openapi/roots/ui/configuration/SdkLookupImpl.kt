@@ -274,21 +274,10 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
       return
     }
 
-    val versionPredicate = versionFilter?.let {
-      object : Predicate<String> {
-        override fun test(t: String) = versionFilter.invoke(t)
-        override fun toString() = versionFilter.toString()
-      }
-    }
-
-    val homePredicate = sdkHomeFilter?.let {
-      object : Predicate<String> {
-        override fun test(t: String) = sdkHomeFilter.invoke(t)
-        override fun toString() = sdkHomeFilter.toString()
-      }
-    }
-
     val unknownSdk = object: UnknownSdk {
+      val versionPredicate = versionFilter?.let(::toVersionPredicate)
+      val homePredicate = sdkHomeFilter?.let(::toHomePredicate)
+
       override fun getSdkName() = this@SdkLookupContextEx.sdkName
       override fun getSdkType() : SdkType = this@SdkLookupContextEx.sdkType
       override fun getSdkVersionStringPredicate() = versionPredicate
@@ -358,6 +347,20 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
 
         onSdkResolved(null)
       }
+    }
+  }
+
+  private fun toHomePredicate(sdkHomeFilter: (String) -> Boolean): Predicate<String> {
+    return object : Predicate<String> {
+      override fun test(t: String) = sdkHomeFilter.invoke(t)
+      override fun toString() = sdkHomeFilter.toString()
+    }
+  }
+
+  private fun toVersionPredicate(versionFilter: (String) -> Boolean): Predicate<String> {
+    return object : Predicate<String> {
+      override fun test(t: String) = versionFilter.invoke(t)
+      override fun toString() = versionFilter.toString()
     }
   }
 
