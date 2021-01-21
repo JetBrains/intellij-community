@@ -4,14 +4,8 @@
 package com.intellij.execution.process.mediator.daemon
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.selects.select
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.CoroutineContext
 
 
 interface QuotaManager : Closeable {
@@ -42,24 +36,20 @@ internal class TimeQuotaManager(
   coroutineScope: CoroutineScope,
   quotaOptions: QuotaOptions = QuotaOptions.UNLIMITED,
 ) : QuotaManager {
-  private val stopwatchRef: AtomicReference<QuotaStopwatch>
+  private val stopwatchRef: AtomicReference<QuotaStopwatch> = AtomicReference(QuotaStopwatch.New(quotaOptions))
 
-  private val job = Job(coroutineScope.coroutineContext[Job])
-  private val timeoutActor = coroutineScope.createTimeoutActor(job)
-
-  init {
-    val stopwatch = QuotaStopwatch.New(quotaOptions)
-    stopwatchRef = AtomicReference(stopwatch)
-
-    job.invokeOnCompletion {
+  private val job = Job(coroutineScope.coroutineContext[Job]).apply {
+    invokeOnCompletion {
       stopwatchRef.set(QuotaStopwatch.Exceeded)
     }
+  }
+  private val timeoutJob = Job(job).also {
     if (job.complete()) {
-      // doesn't in fact complete until the child actor completes
+      // doesn't in fact complete until the timeoutJob completes
       job.ensureActive()
     }
-    timeoutActor.offer(stopwatch)
   }
+  private val timeoutScope = coroutineScope + timeoutJob
 
   override fun asJob(): Job = job
 
@@ -73,46 +63,23 @@ internal class TimeQuotaManager(
   }
 
   private fun updateStopwatch(function: (t: QuotaStopwatch) -> QuotaStopwatch): QuotaStopwatch {
-    return stopwatchRef.updateAndGet(function).takeIf { stopwatch ->
-      timeoutActor.tryOffer(stopwatch)
-    } ?: QuotaStopwatch.Exceeded.also {
-      stopwatchRef.set(it)
+    return stopwatchRef.updateAndGet(function).also { stopwatch ->
+      if (stopwatch == QuotaStopwatch.Exceeded) {
+        timeoutJob.cancel("expired")
+      }
+      if (stopwatch is QuotaStopwatch.Active && !stopwatch.isUnlimited) {
+        timeoutScope.launch(start = CoroutineStart.UNDISPATCHED) {
+          delay(stopwatch.remaining())
+          if (stopwatchRef.compareAndSet(stopwatch, QuotaStopwatch.Exceeded)) {
+            timeoutJob.cancel("expired")
+          }
+        }
+      }
     }
   }
 
   override fun close() {
     job.cancel("Closed")
-  }
-}
-
-private fun <T> SendChannel<T>.tryOffer(quota: T): Boolean {
-  return try {
-    offer(quota)
-  }
-  catch (e: CancellationException) {
-    false
-  }
-  catch (e: ClosedSendChannelException) {
-    false
-  }
-}
-
-private fun CoroutineScope.createTimeoutActor(context: CoroutineContext): SendChannel<QuotaStopwatch> {
-  return actor(context, capacity = Channel.UNLIMITED) {
-    var stopwatch: QuotaStopwatch = channel.receive()
-
-    while (stopwatch !is QuotaStopwatch.Exceeded) {
-      stopwatch = select {
-        channel.onReceive { it }
-
-        (stopwatch as? QuotaStopwatch.Active)?.let { activeStopwatch ->
-          if (!activeStopwatch.isUnlimited) {
-            onTimeout(activeStopwatch.remaining()) { QuotaStopwatch.Exceeded }
-          }
-        }
-      }
-    }
-    channel.close()  // otherwise the channel becomes cancelled once the actor returns
   }
 }
 
