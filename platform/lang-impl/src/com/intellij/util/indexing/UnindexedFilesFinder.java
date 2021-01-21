@@ -56,7 +56,7 @@ final class UnindexedFilesFinder {
         return null;
       }
 
-      Set<ID<?, ?>> indexesProvidedByInfrastructureExtension = new HashSet<>();
+      AtomicBoolean indexesWereProvidedByInfrastructureExtension = new AtomicBoolean();
       AtomicLong timeProcessingUpToDateFiles = new AtomicLong();
       AtomicLong timeUpdatingContentLessIndexes = new AtomicLong();
       AtomicLong timeIndexingWithoutContent = new AtomicLong();
@@ -86,7 +86,7 @@ final class UnindexedFilesFinder {
         if (!wasInvalidated) {
           IndexingStamp.flushCache(inputId);
           return new UnindexedFileStatus(false,
-                                         indexesProvidedByInfrastructureExtension,
+                                         false,
                                          timeProcessingUpToDateFiles.get(),
                                          timeUpdatingContentLessIndexes.get(),
                                          timeIndexingWithoutContent.get());
@@ -143,7 +143,7 @@ final class UnindexedFilesFinder {
                       timeIndexingWithoutContent.addAndGet(System.nanoTime() - nowTime);
                     }
                     if (wasIndexedByInfrastructure) {
-                      indexesProvidedByInfrastructureExtension.add(indexId);
+                      indexesWereProvidedByInfrastructureExtension.set(true);
                     }
                     else {
                       shouldIndex.set(true);
@@ -188,7 +188,7 @@ final class UnindexedFilesFinder {
         }
       });
       return new UnindexedFileStatus(shouldIndex.get(),
-                                     indexesProvidedByInfrastructureExtension,
+                                     indexesWereProvidedByInfrastructureExtension.get(),
                                      timeProcessingUpToDateFiles.get(),
                                      timeUpdatingContentLessIndexes.get(),
                                      timeIndexingWithoutContent.get());
