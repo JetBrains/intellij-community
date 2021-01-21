@@ -60,15 +60,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     InspectionSuppressor extension = LanguageInspectionSuppressors.INSTANCE.forLanguage(file.getLanguage());
     if (!(extension instanceof RedundantSuppressionDetector)) return;
-    InspectionProfileImpl profile;
-    if (globalContext instanceof GlobalInspectionContextBase) {
-      profile = ((GlobalInspectionContextBase)globalContext).getCurrentProfile();
-    }
-    else {
-      String currentProfileName = ((InspectionManagerBase)manager).getCurrentProfile();
-      InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(manager.getProject());
-      profile = ObjectUtils.notNull(profileManager.getProfile(currentProfileName, false), profileManager.getCurrentProfile());
-    }
+    InspectionProfileImpl profile = getProfile(manager, globalContext);
     final CommonProblemDescriptor[] descriptors = checkElement(file, (RedundantSuppressionDetector)extension, manager, profile);
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor instanceof ProblemDescriptor) {
@@ -87,6 +79,18 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
       }
       problemsHolder.registerProblem(file, descriptor.getDescriptionTemplate());
     }
+  }
+
+  private static InspectionProfileImpl getProfile(InspectionManager manager, GlobalInspectionContext globalContext) {
+    if (globalContext instanceof GlobalInspectionContextBase) {
+      InspectionProfileImpl profile = ((GlobalInspectionContextBase)globalContext).getCurrentProfile();
+      if (profile.getSingleTool() == null) {
+        return profile;
+      }
+    }
+    String currentProfileName = ((InspectionManagerBase)manager).getCurrentProfile();
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(manager.getProject());
+    return ObjectUtils.notNull(profileManager.getProfile(currentProfileName, false), profileManager.getCurrentProfile());
   }
 
   public ProblemDescriptor @NotNull [] checkElement(final @NotNull PsiFile psiElement,
