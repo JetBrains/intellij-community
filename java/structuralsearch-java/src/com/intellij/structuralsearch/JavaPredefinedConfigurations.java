@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -88,14 +88,20 @@ final class JavaPredefinedConfigurations {
                                 "@Deprecated\n'_ReturnType '_Method('_ParameterType '_Parameter*);",
                                 getClassType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.fields.of.the.class"), "fields of a class",
-                                "class '_Class { \n  '_FieldType 'Field+ = '_Init?;\n}",
+                                "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
+                                "  '_FieldType 'Field+ = '_Init?;\n" +
+                                "}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy"),
                                 "all methods of a class (within hierarchy)",
-                                "class '_ { \n  '_ReturnType 'Method+:* ('_ParameterType '_Parameter*);\n}",
+                                "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
+                                "  '_ReturnType 'Method+:* ('_ParameterType '_Parameter*);\n" +
+                                "}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.all.fields.of.the.class"), "all fields of a class",
-                                "class '_Class { \n  '_FieldType 'Field+:* = '_Init?;\n}",
+                                "class '_Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {\n" +
+                                "  '_FieldType 'Field+:* = '_Init?;\n" +
+                                "}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.instance.fields.of.the.class"), "instance fields of a class",
                                 "class '_Class { \n  @Modifier(\"Instance\") '_FieldType 'Field+ = '_Init?;\n}",
@@ -107,7 +113,7 @@ final class JavaPredefinedConfigurations {
                                 "'Class('_ParameterType '_Parameter*) {\n  '_Statement*;\n}",
                                 getClassType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.classes"), "classes",
-                                "class 'Class:[script( \"!__context__.interface && !__context__.enum\" )] {}",
+                                "class 'Class:[script( \"!__context__.interface && !__context__.enum && !__context__.record\" )] {}",
                                 getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.classes.interfaces.enums"), "classes, interfaces \\& enums",
                                 "class 'ClassInterfaceEnum {}",
