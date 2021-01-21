@@ -20,13 +20,13 @@ class CleanupEventsTestSchemeActionTest : BasePlatformTestCase() {
     val recorderId = "FUS"
 
     SensitiveDataValidator.getInstance(recorderId)
-    ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!.addTestGroup(GroupValidationTestRule("groupId", false))
+    ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)!!.addTestGroup(GroupValidationTestRule("groupId", false))
     val dataContext = SimpleDataContext.getProjectContext(myFixture.project)
     val e = AnActionEvent(null, dataContext, "test", Presentation(), ActionManager.getInstance(), 0)
     CleanupEventsTestSchemeAction(recorderId).actionPerformed(e)
 
     TestCase.assertNull(
-      ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!.getGroupRules(groupId)
+      ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)!!.getGroupRules(groupId)
     )
   }
 }

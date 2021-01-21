@@ -17,7 +17,7 @@ internal class CompositeValidationRulesStorageTest : ValidationRulesBaseStorageT
 
   fun testGetGroupRulesFromTest() {
     val storage = SensitiveDataValidator.getInstance(recorderId).validationRulesStorage
-    ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!
+    ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)!!
       .addTestGroup(GroupValidationTestRule(
         groupId,
         true,

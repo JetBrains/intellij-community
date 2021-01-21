@@ -149,15 +149,16 @@ public final class ValidationTestRulesPersistedStorage extends BaseValidationRul
 
   public static void cleanupAll(List<String> recorders) {
     for (String recorderId : recorders) {
-      ValidationTestRulesPersistedStorage testStorage = getTestStorage(recorderId);
+      ValidationTestRulesPersistedStorage testStorage = getTestStorage(recorderId, false);
       if (testStorage != null) {
         testStorage.cleanup();
       }
     }
   }
 
-  public static @Nullable ValidationTestRulesPersistedStorage getTestStorage(String recorderId) {
-    SensitiveDataValidator validator = SensitiveDataValidator.getIfInitialized(recorderId);
+  public static @Nullable ValidationTestRulesPersistedStorage getTestStorage(@NotNull String recorderId, boolean initIfNeeded) {
+    SensitiveDataValidator validator =
+      initIfNeeded ? SensitiveDataValidator.getInstance(recorderId) : SensitiveDataValidator.getIfInitialized(recorderId);
     ValidationRulesStorage storage = validator != null ? validator.getValidationRulesStorage() : null;
     return storage instanceof ValidationTestRulesStorageHolder ? ((ValidationTestRulesStorageHolder)storage).getTestGroupStorage() : null;
   }
