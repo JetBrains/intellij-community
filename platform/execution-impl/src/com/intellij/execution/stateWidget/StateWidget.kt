@@ -20,7 +20,6 @@ internal class StateWidget(val executor: Executor, val process: StateWidgetProce
       if (getInstance(project).getExecutionsCount() == 0) {
         e.presentation.isEnabledAndVisible = true
         super.update(e)
-        e.presentation.isEnabledAndVisible = e.presentation.isEnabled && e.presentation.isVisible
         e.presentation.text = myExecutor.actionName
         return
       }

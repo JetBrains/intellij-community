@@ -138,9 +138,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
           StateWidgetAdditionActionsHolder holder = new StateWidgetAdditionActionsHolder(executorGroup, process);
 
-          registerActionInGroup(actionManager, holder.getAdditionActionId(process), holder.getAdditionAction(), process.getMoreActionSubGroupName(),
+          registerActionInGroup(actionManager, StateWidgetAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(), process.getMoreActionSubGroupName(),
                                 myStateWidgetIdToAction);
-          registerActionInGroup(actionManager, holder.getAdditionActionChooserGroupId(process), holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
+          registerActionInGroup(actionManager, StateWidgetAdditionActionsHolder.getAdditionActionChooserGroupId(process), holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
                                 myStateWidgetIdToAction);
         }
         else {
