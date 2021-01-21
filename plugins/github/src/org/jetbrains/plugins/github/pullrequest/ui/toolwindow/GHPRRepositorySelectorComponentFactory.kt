@@ -124,7 +124,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
 
       add(JLabel(GithubBundle.message("pull.request.login.to.view")).apply {
         font = JBFont.h3()
-      }, CC().growX().push())
+      }, CC().growX().push().minWidth("0"))
 
       add(repoCombo, CC().growX().push().newline())
       add(accountCombo, CC())
@@ -132,7 +132,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       add(actionsPanel, CC().newline())
       add(JLabel(GithubBundle.message("pull.request.login.note")).apply {
         foreground = UIUtil.getContextHelpForeground()
-      }, CC().newline())
+      }, CC().newline().minWidth("0"))
     }
   }
 
