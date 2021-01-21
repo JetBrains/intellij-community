@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -244,7 +244,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
         arg(value: appInfoForLauncher.toString())
-        arg(value: "$communityHome/native/WinLauncher/WinLauncher/resource.h")
+        arg(value: "$communityHome/native/WinLauncher/resource.h")
         arg(value: launcherPropertiesPath.toString())
         arg(value: outputPath.toString())
         classpath {
