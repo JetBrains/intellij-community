@@ -1,0 +1,59 @@
+#include "resource.h"
+
+#define FILE_NAME    "@FILE_NAME@.exe"
+#define COPYRIGHT    "Copyright 2000-@YEAR@ JetBrains s.r.o."
+
+#pragma code_page(65001)
+
+IDB_SPLASH              BITMAP                  "splash.bmp"
+
+IDI_WINLAUNCHER         ICON                    "WinLauncher.ico"
+
+1 VERSIONINFO
+  FILEVERSION 1,0,0,1
+  PRODUCTVERSION 1,0,0,1
+  FILEFLAGSMASK 0x3fL
+  FILEFLAGS 0x0L
+  FILEOS 0x40004L
+  FILETYPE 0x1L
+  FILESUBTYPE 0x0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "0000fde9"
+    BEGIN
+      VALUE "CompanyName", "JetBrains s.r.o."
+      VALUE "FileDescription", "IntelliJ Platform Windows Launcher"
+      VALUE "FileVersion", "1.0.0.1"
+      VALUE "InternalName", FILE_NAME
+      VALUE "LegalCopyright", COPYRIGHT
+      VALUE "OriginalFilename", FILE_NAME
+      VALUE "ProductName", "IntelliJ Platform"
+      VALUE "ProductVersion", "1.0.0.AB-123.4567"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0, 0xfde9
+  END
+END
+
+STRINGTABLE
+BEGIN
+  IDS_MAIN_CLASS                    "com/intellij/idea/Main"
+  IDS_COMMAND_LINE_PROCESSOR_CLASS  "com/intellij/ide/WindowsCommandLineProcessor"
+
+  // placeholders to ensure table size
+  IDS_JDK_ONLY                      "-"
+  IDS_JDK_ENV_VAR                   "-"
+  IDS_APP_TITLE                     "-"
+  IDS_VM_OPTIONS_PATH               "-"
+  IDS_VM_OPTION_ERRORFILE           "-"
+  IDS_VM_OPTION_HEAPDUMPPATH        "-"
+  IDC_WINLAUNCHER                   "-"
+  IDS_PROPS_ENV_VAR                 "-"
+  IDS_VM_OPTIONS_ENV_VAR            "-"
+  IDS_ERROR_LAUNCHING_APP           "-"
+  IDS_VM_OPTIONS                    "-"
+  IDS_CLASSPATH_LIBS                "-"
+END

@@ -1,21 +1,27 @@
-/*
-* Copyright 2000-2019 JetBrains s.r.o.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <malloc.h>
+#include <memory.h>
+
 #define _UNICODE
-#include "stdafx.h"
-#include "WinLauncher.h"
+#include <tchar.h>
+
+#define UNICODE
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <ShellAPI.h>
+#include <Shlobj.h>
+#include <Knownfolders.h>
+
+#include <jni.h>
+
+#include "resource.h"
+
 
 typedef JNIIMPORT jint(JNICALL *JNI_createJavaVM)(JavaVM **pvm, JNIEnv **env, void *args);
 
@@ -498,7 +504,7 @@ void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
   }
 }
 
-/* 
+/*
 This hook is passed to JNI in the LoadVMOptions method to catch exit code of java program
 */
 void (JNICALL jniExitHook)(jint code) {
@@ -749,7 +755,7 @@ std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
         continue;
       }
     }
-    
+
     result.push_back(argv[i]);
   }
   return result;
@@ -849,7 +855,7 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
       std::wstring response_id = command.substr(second_pos + 1);
 
       int exitCode = CallCommandLineProcessor(curDir, args);
-      
+
       std::string message = std::to_string(static_cast<long long>(exitCode));
       std::string resultFileName = std::string("IntelliJLauncherResultMapping.") + std::string(response_id.begin(), response_id.end());
       HANDLE hResultFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, resultFileName.c_str());
@@ -861,14 +867,14 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
           memcpy(resultView, message.c_str(), (message.size() + 1) * sizeof(wchar_t));
           UnmapViewOfFile(resultView);
         }
-        
+
         std::string eventName = std::string("IntelliJLauncherEvent.") + std::string(response_id.begin(), response_id.end());
         HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, eventName.c_str());
         SetEvent(hResponseEvent);
         CloseHandle(hResponseEvent);
         CloseHandle(hResultFileMapping);
       }
-      
+
     }
 
     UnmapViewOfFile(view);
@@ -881,7 +887,7 @@ void SendCommandLineToFirstInstance(int response_id)
   wchar_t curDir[_MAX_PATH];
   GetCurrentDirectoryW(_MAX_PATH - 1, curDir);
   std::string resultFileName = std::to_string(static_cast<long long>(response_id));
-  
+
   std::wstring command(curDir);
   command += _T("\n");
   command += GetCommandLineW();
@@ -923,31 +929,31 @@ int CheckSingleInstance()
     srand(239);
     int response_id;
     std::string resultFileName;
-    
+
     // Let's find a vacant result port. It's advised to use different result connections:
     // that's because requests can be blocking (for quite a time) and several ones might exist at once.
     while (true)
     {
       response_id = rand();
       resultFileName = std::string("IntelliJLauncherResultMapping.") + std::to_string(static_cast<long long>(response_id));
-      
+
       if (!OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, resultFileName.c_str()))
         break;
     }
-    
+
     // Creating mapping for exitCode transmission
     HANDLE hResultFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, resultFileName.c_str());
-     
+
     SendCommandLineToFirstInstance(response_id);
     CloseHandle(hFileMapping);
     CloseHandle(hEvent);
-    
+
     // Lock wait for the response
     std::string responseEventName = std::string("IntelliJLauncherEvent.") + std::to_string(static_cast<long long>(response_id));
     HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, responseEventName.c_str());
     WaitForSingleObject(hResponseEvent, INFINITE);
     CloseHandle(hResponseEvent);
-    
+
     // Read the exitCode
     wchar_t *view = static_cast<wchar_t *>(MapViewOfFile(hResultFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
     int exitCode;
@@ -960,7 +966,7 @@ int CheckSingleInstance()
     {
       exitCode = 1;
     }
-    
+
     CloseHandle(hResultFileMapping);
     return exitCode;
   }
