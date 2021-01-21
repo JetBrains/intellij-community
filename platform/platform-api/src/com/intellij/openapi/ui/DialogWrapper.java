@@ -1496,14 +1496,10 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Sets horizontal alignment of dialog's buttons.
-   *
-   * @param alignment alignment of the buttons. Acceptable values are
-   *                  {@code SwingConstants.CENTER} and {@code SwingConstants.RIGHT}.
-   *                  The {@code SwingConstants.RIGHT} is the default value.
-   * @throws IllegalArgumentException if {@code alignment} isn't acceptable
+   * @deprecated Dialog action buttons should be right-aligned.
    */
-  protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
+  @Deprecated
+protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     if (SwingConstants.CENTER != alignment && SwingConstants.RIGHT != alignment) {
       throw new IllegalArgumentException("unknown alignment: " + alignment);
     }
