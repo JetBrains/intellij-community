@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -47,6 +48,10 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @NonNls private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
   @NonNls private static final String HELP_ID = "Vcs.Push.Dialog";
   private static final Logger LOG = Logger.getInstance(VcsPushDialog.class);
+  private static final ExtensionPointName<PushDialogCustomizer> PUSH_DIALOG_CUSTOMIZER_EP =
+    ExtensionPointName.create("com.intellij.pushDialogCustomizer");
+  private static final ExtensionPointName<PushDialogActionsProvider> PUSH_DIALOG_ACTIONS_PROVIDER_EP =
+    ExtensionPointName.create("com.intellij.pushDialogActionsProvider");
 
   private static final int CENTER_PANEL_HEIGHT = 450;
   private static final int CENTER_PANEL_WIDTH = 800;
@@ -90,27 +95,36 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.Push.Actions");
     List<PushActionBase> pushActions = ContainerUtil.findAll(group.getChildren(null), PushActionBase.class);
 
-    PushActionBase.DefaultPushAction defaultPushAction = findDefaultPushAction(pushActions);
-    if (defaultPushAction != null) {
-      pushActions.remove(defaultPushAction);
-      defaultPushAction.customize(pushActions);
+    customizeDialog(ContainerUtil.findInstance(pushActions, SimplePushAction.class));
+
+    List<PushDialogActionsProvider> actionProviders = PUSH_DIALOG_ACTIONS_PROVIDER_EP.getExtensionList();
+    for (PushDialogActionsProvider actionProvider : ContainerUtil.reverse(actionProviders)) {
+      pushActions.addAll(0, actionProvider.getCustomActionsAboveDefault(myProject));
+    }
+    int firstEnabledActionPosition = ContainerUtil.indexOf(pushActions, it -> it.isEnabled(this));
+    if (firstEnabledActionPosition >= 0) {
+      PushActionBase firstEnabledAction = pushActions.remove(firstEnabledActionPosition);
+      pushActions.add(0, firstEnabledAction);
     }
 
     return ContainerUtil.map(pushActions, action -> new ActionWrapper(myProject, this, action));
   }
 
-  private @Nullable PushActionBase.DefaultPushAction findDefaultPushAction(@NotNull List<PushActionBase> additionalActions) {
-    List<PushActionBase> defaultPushActions = ContainerUtil.findAll(additionalActions,
-                                                                    action -> action instanceof PushActionBase.DefaultPushAction &&
-                                                                              action.isEnabled(this));
-    if (defaultPushActions.isEmpty()) {
-      return null;
+  private static void customizeDialog(@NotNull PushActionBase simplePushAction) {
+    List<PushDialogCustomizer> customizers = PUSH_DIALOG_CUSTOMIZER_EP.getExtensionList();
+    if (!customizers.isEmpty()) {
+      if (customizers.size() == 1) {
+        PushDialogCustomizer customizer = customizers.get(0);
+        customizeDialog(customizer, simplePushAction);
+      }
+      else {
+        LOG.warn("There can be only one push actions customizer, found: " + customizers);
+      }
     }
-    if (defaultPushActions.size() == 1) {
-      return (PushActionBase.DefaultPushAction) defaultPushActions.get(0);
-    }
-    LOG.warn("There can be only one default push action, found: " + defaultPushActions);
-    return null;
+  }
+
+  private static void customizeDialog(@NotNull PushDialogCustomizer customizer, @NotNull PushActionBase simplePushAction) {
+    simplePushAction.getTemplatePresentation().setText(customizer.getNameForSimplePushAction());
   }
 
   @Nullable
@@ -161,7 +175,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @NotNull
   private JPanel createSouthOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %spx 0 0, flowx, gapx %spx", JBUI.scale(20), JBUI.scale(16)))); //NON-NLS
+    JPanel optionsPanel =
+      new JPanel(new MigLayout(String.format("ins 0 %spx 0 0, flowx, gapx %spx", JBUI.scale(20), JBUI.scale(16)))); //NON-NLS
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.SOUTH) {
         optionsPanel.add(panel);

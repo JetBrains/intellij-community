@@ -16,7 +16,12 @@
     <extensionPoint name="clonePathProvider"
                     interface="com.intellij.dvcs.repo.ClonePathProvider"
                     dynamic="true"/>
-
+    <extensionPoint name="pushDialogActionsProvider"
+                    interface="com.intellij.dvcs.push.PushDialogActionsProvider"
+                    dynamic="true"/>
+    <extensionPoint name="pushDialogCustomizer"
+                    interface="com.intellij.dvcs.push.PushDialogCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
   <actions>
     <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>

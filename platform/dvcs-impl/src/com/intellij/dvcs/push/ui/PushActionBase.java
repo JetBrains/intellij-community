@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -16,21 +16,11 @@ import java.util.List;
 /**
  * Any OK-action in the push dialog must inherit from this base class.
  */
+@ApiStatus.Internal
 public abstract class PushActionBase extends DumbAwareAction {
 
   public PushActionBase(@NotNull @NlsActions.ActionText String actionName) {
     super(actionName);
-  }
-
-  /**
-   * A marker interface indicating an action which should be treated as default in the push dialog, instead of {@link SimplePushAction}.
-   * Can be implemented by plugins to override the default behavior.
-   */
-  @ApiStatus.Internal
-  public interface DefaultPushAction {
-    default void customize(@NotNull List<PushActionBase> pushActions) {
-      pushActions.add(0, (PushActionBase) this);
-    }
   }
 
   protected PushActionBase() {
