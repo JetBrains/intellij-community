@@ -42,7 +42,7 @@ internal class StatisticBase : CounterUsagesCollector() {
   companion object {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 6)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 7)
 
     // FIELDS
     private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
