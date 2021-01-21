@@ -33,6 +33,9 @@ final class LibraryLicensesListGenerator {
                                              List<LibraryLicense> licensesList,
                                              Set<String> usedModulesNames) {
     Map<LibraryLicense, String> licences = generateLicenses(messages, project, licensesList, usedModulesNames)
+    if (licences.isEmpty()) {
+      messages.error("Empty licenses table for ${licensesList.size()} licenses and ${usedModulesNames.size()} used modules names")
+    }
     return new LibraryLicensesListGenerator(messages, licences)
   }
 
