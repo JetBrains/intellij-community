@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.ui.jcef.JBCefTestHelper.loadAndWait;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
  * Tests https://youtrack.jetbrains.com/issue/IDEA-232594
@@ -49,7 +49,7 @@ public class IDEA232594Test {
       return null;
     });
 
-    loadAndWait(browser, () -> SwingUtilities.invokeLater(() -> {
+    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
@@ -57,7 +57,7 @@ public class IDEA232594Test {
       frame.setVisible(true);
     }));
 
-    loadAndWait(browser, () -> SwingUtilities.invokeLater(() -> {
+    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
       browser.getCefBrowser().executeJavaScript(jsQuery.inject("'hello'"), "about:blank", 0);
     }));
 

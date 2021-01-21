@@ -22,6 +22,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
+
 /**
  * Tests that {@link JBCefBrowser#loadHTML(String, String)} can load html that references JS via "file://"
  * and the JS is uploaded from disk and executed.
@@ -90,7 +92,7 @@ public class JBCefLoadHtmlTest {
 
     writeJS(jsQuery.inject("'hello'"));
 
-    JBCefTestHelper.loadAndWait(LATCH, () -> {
+    invokeAndWaitForLatch(LATCH, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
