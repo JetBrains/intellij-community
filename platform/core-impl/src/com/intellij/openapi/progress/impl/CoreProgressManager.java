@@ -66,9 +66,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    *  which are not inherited from {@link StandardProgressIndicator}.
    *  for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
    *  to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
+   *  Poor-man Multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators.
+   *  ProgressIndicator -> count of this indicator occurrences in this multiset.
    */
-  // multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators
-  private static final Map<ProgressIndicator, Collection<ProgressIndicator>> nonStandardIndicators = new ConcurrentHashMap<>();
+  private static final Map<ProgressIndicator, AtomicInteger> nonStandardIndicators = new ConcurrentHashMap<>();
 
   /** true if running in non-cancelable section started with
    * {@link #executeNonCancelableSection(Runnable)} in this thread
@@ -82,14 +83,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
 
     myCheckCancelledFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-      for (Collection<ProgressIndicator> indicators : nonStandardIndicators.values()) {
-        for (ProgressIndicator indicator : indicators) {
-          try {
-            indicator.checkCanceled();
-          }
-          catch (ProcessCanceledException e) {
-            indicatorCanceled(indicator);
-          }
+      for (ProgressIndicator indicator : nonStandardIndicators.keySet()) {
+        try {
+          indicator.checkCanceled();
+        }
+        catch (ProcessCanceledException e) {
+          indicatorCanceled(indicator);
         }
       }
     }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
@@ -111,7 +110,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @NotNull
-  List<ProgressIndicator> getCurrentIndicators() {
+  static List<ProgressIndicator> getCurrentIndicators() {
     synchronized (threadsUnderIndicator) {
       return new ArrayList<>(threadsUnderIndicator.keySet());
     }
@@ -645,7 +644,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
         boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
         if (!isStandard) {
-          nonStandardIndicators.computeIfAbsent(thisIndicator, __ -> ContainerUtil.createLockFreeCopyOnWriteList()).add(thisIndicator);
+          nonStandardIndicators.compute(thisIndicator, (__, count) -> {
+            if (count == null) {
+              return new AtomicInteger(1);
+            }
+            count.incrementAndGet();
+            return count;
+          });
           startBackgroundNonStandardIndicatorsPing();
         }
 
@@ -671,24 +676,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           }
           boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
           if (!isStandard) {
-            Collection<ProgressIndicator> list = nonStandardIndicators.get(thisIndicator);
-            if (list != null) {
-              if (list.size() == 1) {
-                nonStandardIndicators.remove(thisIndicator);
-                if (nonStandardIndicators.isEmpty()) {
-                  stopBackgroundNonStandardIndicatorsPing();
-                }
+            AtomicInteger newCount = nonStandardIndicators.compute(thisIndicator, (__, count) -> {
+              if (count.decrementAndGet() == 0) {
+                return null;
               }
-              else {
-                // remove by identity
-                Iterator<ProgressIndicator> iterator = list.iterator();
-                while (iterator.hasNext()) {
-                  if (iterator.next() == thisIndicator) {
-                    iterator.remove();
-                    break;
-                  }
-                }
-              }
+              return count;
+            });
+            if (newCount == null) {
+              stopBackgroundNonStandardIndicatorsPing();
             }
           }
           // by this time oldIndicator may have been canceled
