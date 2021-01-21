@@ -3,6 +3,7 @@ package com.intellij.space.vcs.review.details
 
 import circlet.client.api.englishFullName
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -19,6 +20,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.FontUtil
@@ -29,6 +31,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import runtime.reactive.view
 import java.awt.FlowLayout
 import java.beans.PropertyChangeListener
 import javax.swing.*
@@ -121,7 +124,7 @@ internal object SpaceReviewInfoPanelFactory {
       add(projectDetails)
 
       if (detailsVm is MergeRequestDetailsVm) {
-        add(createDirectionPanel(detailsVm))
+        add(createBranchesPanel(this, detailsVm))
       }
 
       add(titleComponent)
@@ -141,6 +144,32 @@ internal object SpaceReviewInfoPanelFactory {
       background = UIUtil.getListBackground()
       addToCenter(contentPanel)
     }
+  }
+
+  private fun createBranchesPanel(parent: JPanel, detailsVm: MergeRequestDetailsVm): BorderLayoutPanel {
+    val actionManager = ActionManager.getInstance()
+
+    val checkoutAction = actionManager.getAction("com.intellij.space.vcs.review.details.SpaceReviewCheckoutBranchAction")
+    val checkoutActionLink = ActionLink(SpaceBundle.message("review.actions.link.label.checkout"), checkoutAction)
+
+    val updateAction = actionManager.getAction("com.intellij.space.vcs.review.details.SpaceReviewUpdateBranchAction")
+    val updateActionLink = ActionLink(SpaceBundle.message("review.actions.link.label.update"), updateAction)
+
+    val branchActionPanel = NonOpaquePanel().apply {
+      border = JBUI.Borders.emptyLeft(4)
+    }
+
+    val branchesPanel = BorderLayoutPanel()
+      .addToCenter(createDirectionPanel(detailsVm))
+      .addToRight(branchActionPanel)
+      .andTransparent()
+
+    detailsVm.mergeRequestBranchInfo.view(detailsVm.lifetime) { _, mergeRequestBranchInfo ->
+      val action = if (mergeRequestBranchInfo.isCurrentBranch) updateActionLink else checkoutActionLink
+      branchActionPanel.setContent(action)
+      parent.repaint()
+    }
+    return branchesPanel
   }
 
   private fun createActionButton(detailsVm: SpaceReviewDetailsVm<*>, controlVM: ParticipantStateControlVM): JComponent? {

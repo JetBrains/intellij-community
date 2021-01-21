@@ -131,8 +131,13 @@
       <separator/>
       <action id="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"
               class="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"/>
-
     </group>
+
+    <action id="com.intellij.space.vcs.review.details.SpaceReviewCheckoutBranchAction"
+            class="com.intellij.space.vcs.review.details.SpaceReviewCheckoutBranchAction"/>
+
+    <action id="com.intellij.space.vcs.review.details.SpaceReviewUpdateBranchAction"
+            class="com.intellij.space.vcs.review.details.SpaceReviewUpdateBranchAction"/>
 
     <group id="space.review.changes.toolbar">
       <reference id="Diff.ShowDiff"/>
@@ -143,6 +148,7 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="EditSource"/>
     </group>
+
   </actions>
 
   <resource-bundle>messages.SpaceBundle</resource-bundle>

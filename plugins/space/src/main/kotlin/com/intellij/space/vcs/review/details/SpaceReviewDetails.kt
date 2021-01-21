@@ -44,9 +44,10 @@ internal class SpaceReviewDetails(parentDisposable: Disposable,
       uiDisposable?.let { Disposer.dispose(it) }
       if (reviewListItem == null) return@forEach
       val detailsLifetime = sequentialLifetimes.next()
-      val detailsVm = createReviewDetailsVm(detailsLifetime, project, workspace, spaceProjectInfo, repoInfo, reviewListItem)
-
       uiDisposable = Disposer.newDisposable()
+
+      val detailsVm = createReviewDetailsVm(uiDisposable!!, detailsLifetime, project, workspace, spaceProjectInfo, repoInfo, reviewListItem)
+
       Disposer.register(parentDisposable, uiDisposable as Disposable)
 
       val detailsTabInfo = TabInfo(SpaceReviewInfoTabPanel(parentDisposable, detailsVm)).apply {
