@@ -385,7 +385,7 @@ public final class PluginManagerCore {
       return (boolean)MethodHandles.publicLookup().findVirtual(aClass, "hasLoadedClass", HAS_LOADED_CLASS_METHOD_TYPE)
         .invoke(loader, className);
     }
-    catch (NoSuchMethodError ignore) {
+    catch (NoSuchMethodError | IllegalAccessError ignore) {
     }
     catch (Throwable e) {
       getLogger().error(e);
