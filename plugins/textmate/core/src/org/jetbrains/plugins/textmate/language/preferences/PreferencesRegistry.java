@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
@@ -18,10 +19,10 @@ import java.util.Set;
  */
 public final class PreferencesRegistry {
   @NotNull private final Set<Preferences> myPreferences = new HashSet<>();
-  @NotNull private final IntOpenHashSet myLeftHighlightingBraces = new IntOpenHashSet();
-  @NotNull private final IntOpenHashSet myRightHighlightingBraces = new IntOpenHashSet();
-  @NotNull private final IntOpenHashSet myLeftSmartTypingBraces = new IntOpenHashSet();
-  @NotNull private final IntOpenHashSet myRightSmartTypingBraces = new IntOpenHashSet();
+  @NotNull private final IntSet myLeftHighlightingBraces = new IntOpenHashSet();
+  @NotNull private final IntSet myRightHighlightingBraces = new IntOpenHashSet();
+  @NotNull private final IntSet myLeftSmartTypingBraces = new IntOpenHashSet();
+  @NotNull private final IntSet myRightSmartTypingBraces = new IntOpenHashSet();
 
   public PreferencesRegistry() {
     fillHighlightingBraces(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS);

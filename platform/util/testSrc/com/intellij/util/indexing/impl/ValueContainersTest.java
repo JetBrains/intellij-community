@@ -10,6 +10,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -145,7 +146,7 @@ public class ValueContainersTest extends TestCase {
 
     for(int i = 0; i < values.length; ++i) {
       IntArrayList list = new IntArrayList(inputIds.length);
-      IntOpenHashSet set = new IntOpenHashSet(inputIds.length);
+      IntSet set = new IntOpenHashSet(inputIds.length);
       T value = values[i];
 
       for (int inputId : inputIds[i]) {

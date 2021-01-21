@@ -6,6 +6,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -19,7 +20,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
   // all non-VirtualFileWithId files and first several files are stored here
   private final Set<VirtualFile> weirdFiles = new HashSet<>();
   // when file set become large, they stored as id-set here
-  private IntOpenHashSet idSet;
+  private IntSet idSet;
   // when file set become very big (e.g. whole project files AnalysisScope) the bit-mask of their ids are stored here
   private BitSet fileIds;
   private boolean frozen;
@@ -39,7 +40,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
       if (ids != null) {
         return ids.get(id);
       }
-      IntOpenHashSet idSet = this.idSet;
+      IntSet idSet = this.idSet;
       if (idSet != null) {
         return idSet.contains(id);
       }
@@ -56,7 +57,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
       BitSet ids = fileIds;
-      IntOpenHashSet idSet = this.idSet;
+      IntSet idSet = this.idSet;
       if (ids != null) {
         added = !ids.get(id);
         ids.set(id);
@@ -121,7 +122,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
         if (file != null && !processor.process(file)) return false;
       }
     }
-    IntOpenHashSet idSet = this.idSet;
+    IntSet idSet = this.idSet;
     if (idSet != null) {
       IntIterator iterator = idSet.iterator();
       while (iterator.hasNext()) {
@@ -142,7 +143,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
   @Override
   public int size() {
     BitSet ids = fileIds;
-    IntOpenHashSet idSet = this.idSet;
+    IntSet idSet = this.idSet;
     return (ids == null ? 0 : ids.cardinality()) + (idSet == null ? 0 : idSet.size()) + weirdFiles.size();
   }
 
@@ -150,7 +151,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
   @Override
   public Iterator<VirtualFile> iterator() {
     BitSet ids = fileIds;
-    IntOpenHashSet idSet = this.idSet;
+    IntSet idSet = this.idSet;
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     Iterator<VirtualFile> idsIterator;
     if (ids == null) {

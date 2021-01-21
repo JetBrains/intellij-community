@@ -5,6 +5,7 @@ import com.intellij.util.io.DirectByteBufferPool
 import com.intellij.util.zip.ImmutableZipEntry
 import com.intellij.util.zip.ImmutableZipFile
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.intellij.build.io.*
 import java.lang.System.Logger
 import java.nio.ByteBuffer
@@ -155,7 +156,7 @@ internal fun doReorderJars(sourceToNames: Map<Path, List<String>>,
   return index
 }
 
-data class PackageIndexEntry(val path: Path, val classPackageIndex: IntOpenHashSet, val resourcePackageIndex: IntOpenHashSet)
+data class PackageIndexEntry(val path: Path, val classPackageIndex: IntSet, val resourcePackageIndex: IntSet)
 
 fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): PackageIndexEntry {
   val orderedNameToIndex = HashMap<String, Int>(orderedNames.size)

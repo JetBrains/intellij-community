@@ -13,6 +13,7 @@ import com.intellij.util.containers.IntStack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1508,7 +1509,7 @@ public final class ControlFlowUtil {
                                                   @NotNull List<? extends PsiElement> references) {
     class MyVisitor extends InstructionClientVisitor<Integer> {
       // set of exit points reached from this offset
-      private final IntOpenHashSet[] exitPoints = new IntOpenHashSet[flow.getSize()];
+      private final IntSet[] exitPoints = new IntOpenHashSet[flow.getSize()];
 
       @Override
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
@@ -1532,7 +1533,7 @@ public final class ControlFlowUtil {
         int maxExitPoints = 0;
         nextOffset:
         for (int i = sourceOffset; i < exitPoints.length; i++) {
-          IntOpenHashSet exitPointSet = exitPoints[i];
+          IntSet exitPointSet = exitPoints[i];
           final int size = exitPointSet == null ? 0 : exitPointSet.size();
           if (size > maxExitPoints) {
             // this offset should be reachable from all other references
