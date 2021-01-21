@@ -55,10 +55,10 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
 }
 
 @ApiStatus.Internal
-fun <O> buildQuery(project: Project,
-                   target: SearchTarget,
-                   handler: UsageHandler<O>,
-                   allOptions: AllSearchOptions<O>): Query<out Usage> {
+fun <O> buildUsageViewQuery(project: Project,
+                            target: SearchTarget,
+                            handler: UsageHandler<O>,
+                            allOptions: AllSearchOptions<O>): Query<out Usage> {
   val queries = ArrayList<Query<out Usage>>()
   val (options, textSearch, customOptions) = allOptions
   if (options.isUsages) {

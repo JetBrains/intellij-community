@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Internal
 
 package com.intellij.find.actions
@@ -8,10 +8,9 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
-import com.intellij.find.usages.impl.buildQuery
+import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Factory
 import com.intellij.psi.impl.search.runSearch
@@ -62,7 +61,7 @@ private fun <O> findUsages(showDialog: Boolean,
 }
 
 internal fun <O> findUsages(project: Project, target: SearchTarget, handler: UsageHandler<O>, allOptions: AllSearchOptions<O>) {
-  val query = buildQuery(project, target, handler, allOptions)
+  val query = buildUsageViewQuery(project, target, handler, allOptions)
   val factory = Factory {
     UsageSearcher {
       runSearch(project, query, it)
