@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages.impl
 
-import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.api.UsageHandler
-import com.intellij.find.usages.api.UsageSearchParameters
+import com.intellij.find.usages.api.*
 import com.intellij.find.usages.symbol.SearchableSymbol
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.model.Pointer
@@ -14,9 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.SearchScope
-import com.intellij.usages.Usage
+import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.util.Query
 import org.jetbrains.annotations.ApiStatus
+import com.intellij.usages.Usage as UVUsage
 
 @ApiStatus.Internal
 fun searchTargets(file: PsiFile, offset: Int): List<SearchTarget> {
@@ -58,7 +57,21 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
 fun <O> buildUsageViewQuery(project: Project,
                             target: SearchTarget,
                             handler: UsageHandler<O>,
-                            allOptions: AllSearchOptions<O>): Query<out Usage> {
+                            allOptions: AllSearchOptions<O>): Query<out UVUsage> {
+  return buildQuery(project, target, handler, allOptions).transforming {
+    if (it is PsiUsage) {
+      listOf(UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
+    }
+    else {
+      emptyList()
+    }
+  }
+}
+
+private fun <O> buildQuery(project: Project,
+                           target: SearchTarget,
+                           handler: UsageHandler<O>,
+                           allOptions: AllSearchOptions<O>): Query<out Usage> {
   val queries = ArrayList<Query<out Usage>>()
   val (options, textSearch, customOptions) = allOptions
   if (options.isUsages) {

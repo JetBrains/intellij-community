@@ -1,43 +1,43 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
+import com.intellij.find.usages.impl.TextUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiFileRange
 import com.intellij.refactoring.rename.api.FileOperation
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.FileUpdater
 import com.intellij.refactoring.rename.api.PsiRenameUsage
-import com.intellij.refactoring.rename.api.RenameUsage
 import com.intellij.util.text.StringOperation
 
 internal typealias TextReplacement = (newName: String) -> String?
 
 internal class TextRenameUsage(
-  override val file: PsiFile,
-  override val range: TextRange,
+  private val textUsage: TextUsage,
   private val textReplacement: TextReplacement
 ) : PsiRenameUsage, ModifiableRenameUsage {
 
   override val declaration: Boolean get() = false
 
-  override fun createPointer(): Pointer<out TextRenameUsage> = TextUsagePointer(file, range, textReplacement)
+  override val file: PsiFile get() = textUsage.file
 
-  private class TextUsagePointer(file: PsiFile, range: TextRange, private val textReplacement: TextReplacement) : Pointer<TextRenameUsage> {
+  override val range: TextRange get() = textUsage.range
 
-    private val rangePointer: SmartPsiFileRange = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, range)
+  override fun createPointer(): Pointer<out TextRenameUsage> = TextUsagePointer(textUsage, textReplacement)
+
+  private class TextUsagePointer(textUsage: TextUsage, private val textReplacement: TextReplacement) : Pointer<TextRenameUsage> {
+
+    private val myTextUsagePointer: Pointer<out TextUsage> = textUsage.createPointer()
 
     override fun dereference(): TextRenameUsage? {
-      val file: PsiFile = rangePointer.element ?: return null
-      val range: TextRange = rangePointer.range?.let(TextRange::create) ?: return null
-      return TextRenameUsage(file, range, textReplacement)
+      return myTextUsagePointer.dereference()?.let {
+        TextRenameUsage(it, textReplacement)
+      }
     }
   }
 
-  override val fileUpdater: FileUpdater? get() = TextUsageUpdater
+  override val fileUpdater: FileUpdater get() = TextUsageUpdater
 
   private object TextUsageUpdater : FileUpdater {
 
@@ -48,22 +48,6 @@ internal class TextRenameUsage(
         usage.file,
         StringOperation.replace(usage.range, newText)
       ))
-    }
-  }
-
-  companion object {
-
-    fun createTextUsage(element: PsiElement, rangeInElement: TextRange, textReplacement: TextReplacement): RenameUsage {
-      if (element is PsiFile) {
-        return createTextUsage(element, rangeInElement, textReplacement)
-      }
-      else {
-        return createTextUsage(element.containingFile, rangeInElement.shiftRight(element.textRange.startOffset), textReplacement)
-      }
-    }
-
-    fun createTextUsage(file: PsiFile, rangeInFile: TextRange, textReplacement: TextReplacement): RenameUsage {
-      return TextRenameUsage(file, rangeInFile, textReplacement)
     }
   }
 }
