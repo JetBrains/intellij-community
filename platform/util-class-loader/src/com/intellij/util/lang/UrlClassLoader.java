@@ -194,7 +194,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   @Override
   protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
-    Class<?> clazz = classPath.findClass(name);
+    Class<?> clazz;
+    try {
+      clazz = classPath.findClass(name);
+    }
+    catch (IOException e) {
+      throw new ClassNotFoundException(name, e);
+    }
     if (clazz == null) {
       throw new ClassNotFoundException(name);
     }
@@ -334,7 +340,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return classLoadingLocks == null ? this : classLoadingLocks.getOrCreateLock(className);
   }
 
-  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
+  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null) {

@@ -218,11 +218,23 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     }
 
     long startTime = StartUpMeasurer.measuringPluginStartupCosts ? StartUpMeasurer.getCurrentTime() : -1;
-    Class<?> c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+    Class<?> c;
+    try {
+      c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+    }
+    catch (IOException e) {
+      throw new ClassNotFoundException(name, e);
+    }
+
     if (c == null) {
       for (ClassLoader classloader : getAllParents()) {
         if (classloader instanceof UrlClassLoader) {
-          c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, false);
+          try {
+            c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, false);
+          }
+          catch (IOException e) {
+            throw new ClassNotFoundException(name, e);
+          }
           if (c != null) {
             break;
           }
@@ -300,7 +312,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   @Override
-  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) {
+  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
     if (packagePrefix != null && isDefinitelyAlienClass(name, packagePrefix)) {
       return null;
     }

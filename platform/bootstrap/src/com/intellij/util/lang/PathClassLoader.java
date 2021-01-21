@@ -53,7 +53,13 @@ public final class PathClassLoader extends UrlClassLoader {
       return appClassLoader.loadClass(name);
     }
 
-    Class<?> clazz = classPath.findClass(name);
+    Class<?> clazz;
+    try {
+      clazz = classPath.findClass(name);
+    }
+    catch (IOException e) {
+      throw new ClassNotFoundException(name, e);
+    }
     if (clazz == null) {
       throw new ClassNotFoundException(name);
     }
