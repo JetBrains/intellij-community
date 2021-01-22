@@ -4,12 +4,10 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.codeInsight.CodeSmellInfo
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -43,6 +41,7 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.labels.LinkLabel
@@ -107,7 +106,12 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
     object : BooleanCommitOption(commitPanel, message("before.checkin.standard.options.check.smells"), true,
                                  settings::CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
       override fun getComponent(): JComponent {
-        setProfileText(if (settings.CODE_SMELLS_PROFILE != null) InspectionProjectProfileManager.getInstance(project).getProfile(settings.CODE_SMELLS_PROFILE) else null)
+        var profile: InspectionProfileImpl? = null
+        if (settings.CODE_SMELLS_PROFILE != null) {
+          val manager = if (settings.CODE_SMELLS_PROFILE_LOCAL) InspectionProfileManager.getInstance() else InspectionProjectProfileManager.getInstance(project)
+          profile = manager.getProfile(settings.CODE_SMELLS_PROFILE)
+        }
+        setProfileText(profile)
 
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
           JBPopupMenu.showBelow(sourceLink, ActionPlaces.CODE_INSPECTION, createProfileChooser())
@@ -125,15 +129,23 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
 
       private fun createProfileChooser(): DefaultActionGroup {
         val group = DefaultActionGroup()
-        for (profile in InspectionProjectProfileManager.getInstance(project).profiles) {
+        group.add(Separator.create(IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.project"))))
+        fillActions(group, InspectionProjectProfileManager.getInstance(project))
+        group.add(Separator.create(IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.ide"))))
+        fillActions(group, InspectionProfileManager.getInstance())
+        return group
+      }
+
+      private fun fillActions(group: DefaultActionGroup, manager: InspectionProfileManager) {
+        for (profile in manager.profiles) {
           group.add(object : AnAction(profile.displayName) {
             override fun actionPerformed(e: AnActionEvent) {
               settings.CODE_SMELLS_PROFILE = profile.name
+              settings.CODE_SMELLS_PROFILE_LOCAL = manager !is InspectionProjectProfileManager
               setProfileText(profile)
             }
           })
         }
-        return group
       }
     }
 
