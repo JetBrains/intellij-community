@@ -3,9 +3,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.PARAGRAPH_STYLE
-import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.MouseEvent
 import javax.swing.JTextPane
@@ -19,7 +19,7 @@ import javax.swing.text.StyleConstants
  * This panel has limited height by its preferred size and doesn't grow more. The maximum width
  * could be limited as well by setting maximumWidth.
  */
-class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fontColor: JBColor, private val isBold: Boolean = false, private val maximumWidth: Int? = null) : JTextPane() {
+class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fontColor: Color, isBold: Boolean = false) : JTextPane() {
   val style = SimpleAttributeSet()
 
   init {
@@ -60,12 +60,7 @@ class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fon
   }
 
   override fun getMaximumSize(): Dimension {
-    if (maximumWidth == null) {
-      return this.preferredSize
-    }
-    else {
-      return Dimension(width, this.preferredSize.height)
-    }
+    return this.preferredSize
   }
 
   override fun setUI(ui: TextUI?) {

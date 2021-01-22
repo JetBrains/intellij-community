@@ -13,15 +13,12 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBUI
 import icons.FeaturesTrainerIcons.Img.PluginIcon
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.interfaces.Module
 import training.statistic.StatisticBase
-import java.awt.Component
-import java.awt.Component.LEFT_ALIGNMENT
-import java.awt.Dimension
+import training.util.rigid
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
@@ -95,11 +92,6 @@ class IFTInteractiveCourseData : InteractiveCourseData {
         openLearningFromWelcomeScreen(module)
       }, null)
     return linkLabel
-  }
-
-  private fun rigid(_width: Int, _height: Int): Component {
-    return Box.createRigidArea(
-      Dimension(JBUI.scale(_width), JBUI.scale(_height))).apply { (this as JComponent).alignmentX = LEFT_ALIGNMENT }
   }
 
   private fun openLearningFromWelcomeScreen(module: Module?) {
