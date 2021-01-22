@@ -19,10 +19,16 @@ class MPSBuilder {
     def build() {
         def buildContext = BuildContext.createContext("$home/community", home, new MPSProperties(home))
         buildContext.getOptions().targetOS = ""
+
+        // Avoid 'Resource not found: /idea/IdeaApplicationInfo.xml' exception from DistributionJARsBuilder#reorderJars
+        buildContext.getOptions().buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
+
+        // Generate statistics metadata
         ProprietaryBuildTools buildTools = ProprietaryBuildTools.DUMMY
         buildTools.featureUsageStatisticsProperties = new FeatureUsageStatisticsProperties(
                 "FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
         buildContext.proprietaryBuildTools = buildTools
+
         def buildTasks = BuildTasks.create(buildContext)
         buildTasks.buildDistributions()
 
