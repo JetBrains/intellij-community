@@ -93,10 +93,11 @@ IF "%VM_OPTIONS_FILE%" == "" (
   SET _VM_OPTIONS_CANDIDATE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
   IF EXIST "%_VM_OPTIONS_CANDIDATE%" SET VM_OPTIONS_FILE=%_VM_OPTIONS_CANDIDATE%
 )
+
+SET ACC=
 IF "%VM_OPTIONS_FILE%" == "" (
   ECHO ERROR: cannot find VM options file.
 ) ELSE (
-  SET ACC=
   FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
   SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
 )
