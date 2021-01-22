@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
@@ -22,6 +22,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -297,7 +298,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
         if (isValid && isExtraValid) {
           popup.closeOk(e);
-          T createdElement = (T) createElement(newElementName, elementCreator);
+          T createdElement = (T)SlowOperations.allowSlowOperations(() -> createElement(newElementName, elementCreator));
           if (createdElement != null) {
             elementConsumer.consume(createdElement);
           }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -1476,7 +1476,9 @@ public final class Switcher extends AnAction implements DumbAware {
     @NlsSafe String getNameForRendering() {
       if (myNameForRendering == null) {
         // Recently changed files would also be taken into account (not only open 'visible' files)
-        myNameForRendering = EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second);
+        myNameForRendering = SlowOperations.allowSlowOperations(
+          () -> EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second)
+        );
       }
       return myNameForRendering;
     }

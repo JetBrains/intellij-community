@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -406,7 +407,8 @@ public class ExceptionWorker {
       PsiElement element = file.findElementAt(startOffset);
       List<PsiElement> candidates = new ArrayList<>();
       while (element != null && element.getTextRange().getStartOffset() < endOffset) {
-        PsiElement matched = myElementMatcher.matchElement(element);
+        PsiElement finalElement = element;
+        PsiElement matched = SlowOperations.allowSlowOperations(() -> myElementMatcher.matchElement(finalElement));
         if (matched != null) {
           candidates.add(matched);
           if (candidates.size() > 1) return;
@@ -417,7 +419,7 @@ public class ExceptionWorker {
         PsiElement foundElement = candidates.get(0);
         TextRange range = foundElement.getTextRange();
         targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
-        displayAnalysisAction(file.getProject(), foundElement, targetEditor, originalEditor);
+        SlowOperations.allowSlowOperations(() -> displayAnalysisAction(file.getProject(), foundElement, targetEditor, originalEditor));
       }
     }
 

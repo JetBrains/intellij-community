@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.actions.VcsFacade;
@@ -61,6 +61,7 @@ import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -627,10 +628,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   @Override
   public final void run() {
-    Runnable runnable = this::doRun;
-    if (shouldDisableAccessChecks()) {
-      runnable = () -> NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
-    }
+    Runnable baseRunnable = () -> SlowOperations.allowSlowOperations(this::doRun);
+    Runnable runnable = shouldDisableAccessChecks() ?
+                        () -> NonProjectFileWritingAccessProvider.disableChecksDuring(baseRunnable) :
+                        baseRunnable;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsWriteThread();
       runnable.run();

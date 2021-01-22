@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
@@ -22,6 +22,7 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
@@ -179,7 +180,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     };
     for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
       if (StringUtil.isEmpty(each.getDisplayName())) continue;
-      List<SearchScope> scopes = each.getSearchScopes(project, dataContext);
+      List<SearchScope> scopes = SlowOperations.allowSlowOperations(() -> each.getSearchScopes(project, dataContext));
       if (scopes.isEmpty()) continue;
       if (!processor.process(new ScopeSeparator(each.getDisplayName()))) return false;
       for (SearchScope scope : ContainerUtil.sorted(scopes, comparator)) {

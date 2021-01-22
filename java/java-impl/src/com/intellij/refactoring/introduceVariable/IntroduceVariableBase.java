@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -60,6 +60,7 @@ import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.NotInSuperCallOccurrenceFilter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -692,7 +693,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       
       @Override
       public void pass(final JavaReplaceChoice choice) {
-        if (choice == null || !tryIntroduceInplace(project, editor, choice, occurrenceManager, originalType)) {
+        if (choice == null || !SlowOperations.allowSlowOperations(() -> tryIntroduceInplace(project, editor, choice, occurrenceManager, originalType))) {
           CommandProcessor.getInstance().executeCommand(project, () -> introduce(choice), getRefactoringName(), null);
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DarculaColors;
@@ -22,6 +21,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.FontUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +65,10 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       return;
     }
 
+    SlowOperations.allowSlowOperations(() -> doCustomizeCellRenderer(tree, value, expanded, row));
+  }
+
+  private void doCustomizeCellRenderer(@NotNull JTree tree, Object value, boolean expanded, int row) {
     boolean showAsReadOnly = false;
     if (value instanceof Node && value != tree.getModel().getRoot()) {
       Node node = (Node)value;

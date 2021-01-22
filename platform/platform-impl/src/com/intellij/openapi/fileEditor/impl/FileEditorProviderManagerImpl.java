@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +42,12 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     List<FileEditorProvider> sharedProviders = new ArrayList<>();
     boolean hideDefaultEditor = false;
     for (final FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
-      if (ReadAction.compute(() -> {
+      if (SlowOperations.allowSlowOperations(() -> ReadAction.compute(() -> {
         if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
           return false;
         }
         return provider.accept(project, file);
-      })) {
+      }))) {
         sharedProviders.add(provider);
         hideDefaultEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
         if (provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.Activity;
@@ -37,16 +37,16 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DirtyUI;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
-import com.intellij.util.Alarm;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -483,7 +483,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
       catch (InvalidPathException ignored) {
       }
-      fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
+      fileTitle = SlowOperations.allowSlowOperations(() -> FrameTitleBuilder.getInstance().getFileTitle(project, file));
     }
     frame.setFileTitle(fileTitle, ioFile);
   }

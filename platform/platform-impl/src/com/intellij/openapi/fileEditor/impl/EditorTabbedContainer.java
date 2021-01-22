@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.DataManager;
@@ -41,6 +41,7 @@ import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -267,7 +268,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     tab = new TabInfo(component)
-      .setText(EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow))
+      .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow)))
       .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
       .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -118,7 +119,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private void updateBreakpointInFile(final VirtualFile file) {
     ApplicationManager.getApplication().invokeLater(() -> {
       for (XBreakpointBase breakpoint : getAllBreakpoints()) {
-        XSourcePosition position = breakpoint.getSourcePosition();
+        XSourcePosition position = SlowOperations.allowSlowOperations(() -> breakpoint.getSourcePosition());
         if (position != null && Comparing.equal(position.getFile(), file)) {
           fireBreakpointChanged(breakpoint);
         }

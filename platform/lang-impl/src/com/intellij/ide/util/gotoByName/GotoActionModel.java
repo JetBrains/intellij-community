@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -46,6 +46,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -386,8 +387,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
     DataContext context = myProject == null ? DataContext.EMPTY_CONTEXT : SimpleDataContext.getProjectContext(myProject);
-    AnAction[] actions = group
-      .getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, context));
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, context);
+    AnAction[] actions = SlowOperations.allowSlowOperations(() -> group.getChildren(event));
 
     boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasMeaningfulChildren) {

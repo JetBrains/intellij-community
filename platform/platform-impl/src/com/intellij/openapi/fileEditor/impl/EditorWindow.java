@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -33,6 +33,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
@@ -764,7 +765,9 @@ public final class EditorWindow {
   void updateFileName(@NotNull VirtualFile file) {
     int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
-      setTitleAt(index, EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file, this));
+      setTitleAt(index, SlowOperations.allowSlowOperations(
+        () -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file, this)
+      ));
       setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
                               ? getManager().getFileTooltipText(file)
                               : null);

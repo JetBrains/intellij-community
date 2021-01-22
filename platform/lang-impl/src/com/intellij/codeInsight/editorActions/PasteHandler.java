@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Producer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,7 +209,9 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     final Ref<Boolean> indented = new Ref<>(Boolean.FALSE);
     for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
       //noinspection unchecked
-      e.getKey().processTransferableData(project, editor, bounds, caretOffset, indented, e.getValue());
+      SlowOperations.allowSlowOperations(
+        () -> e.getKey().processTransferableData(project, editor, bounds, caretOffset, indented, e.getValue())
+      );
     }
 
     boolean pastedTextContainsWhiteSpacesOnly =

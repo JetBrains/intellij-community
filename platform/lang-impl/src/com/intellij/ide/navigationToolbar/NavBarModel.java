@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -18,10 +18,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,6 +87,10 @@ public class NavBarModel {
 
     if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
 
+    SlowOperations.allowSlowOperations(() -> doUpdateModel(dataContext));
+  }
+
+  private void doUpdateModel(DataContext dataContext) {
     NavBarModelExtension ownerExtension = null;
     PsiElement psiElement = null;
     for (NavBarModelExtension extension : NavBarModelExtension.EP_NAME.getExtensionList()) {

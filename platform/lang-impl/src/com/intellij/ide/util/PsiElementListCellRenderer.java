@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -31,6 +31,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
@@ -214,7 +215,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     Component rightCellRendererComponent = null;
     JPanel spacer = null;
     if (rightRenderer != null) {
-      rightCellRendererComponent = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      rightCellRendererComponent = SlowOperations.allowSlowOperations(
+        () -> rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      );
       add(rightCellRendererComponent, BorderLayout.EAST);
       spacer = new JPanel();
       spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
@@ -224,7 +227,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
 
     ListCellRenderer<Object> leftRenderer = new LeftRenderer(null, value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
-    final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    final Component leftCellRendererComponent = SlowOperations.allowSlowOperations(
+      () -> leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+    );
     add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : leftCellRendererComponent.getBackground();
     setBackground(bg);

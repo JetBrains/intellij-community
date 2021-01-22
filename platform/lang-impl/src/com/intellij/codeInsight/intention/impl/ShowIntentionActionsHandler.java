@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -46,6 +46,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -264,7 +265,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
 
     PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
-    return chooseBetweenHostAndInjected(hostFile, hostEditor, injectedFile,
-                                        (psiFile, editor) -> availableFor(psiFile, editor, action));
+    return chooseBetweenHostAndInjected(
+      hostFile, hostEditor, injectedFile,
+      (psiFile, editor) -> SlowOperations.allowSlowOperations(() -> availableFor(psiFile, editor, action))
+    );
   }
 }

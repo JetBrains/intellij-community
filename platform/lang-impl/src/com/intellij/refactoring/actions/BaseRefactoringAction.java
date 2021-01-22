@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -27,6 +27,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     }
     IdeEventQueue.getInstance().setEventCount(eventCount);
 
-    performRefactoringAction(project, dataContext, handler);
+    SlowOperations.allowSlowOperations(() -> performRefactoringAction(project, dataContext, handler));
   }
 
   @ApiStatus.Internal

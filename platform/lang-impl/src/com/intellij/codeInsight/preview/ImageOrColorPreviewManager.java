@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.preview;
 
 import com.intellij.openapi.Disposable;
@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +162,7 @@ final class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionL
     if (elements == null && event.getMouseEvent().isShiftDown()) {
       alarm.addRequest(new PreviewRequest(editor, event.getOffset(), false), 100);
     }
-    else if (elements != null && !getPsiElementsAt(editor, event.getOffset()).equals(elements)) {
+    else if (elements != null && !SlowOperations.allowSlowOperations(() -> getPsiElementsAt(editor, event.getOffset()).equals(elements))) {
       myElements = null;
       for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensionList()) {
         try {
@@ -189,6 +190,10 @@ final class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionL
 
     @Override
     public void run() {
+      SlowOperations.allowSlowOperations(() -> doRun());
+    }
+
+    private void doRun() {
       Collection<PsiElement> elements = getPsiElementsAt(editor, offset);
       if (elements.equals(myElements)) return;
       for (PsiElement element : elements) {

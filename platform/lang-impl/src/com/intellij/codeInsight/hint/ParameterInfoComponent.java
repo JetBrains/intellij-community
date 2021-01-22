@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -24,8 +24,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -319,6 +319,10 @@ public class ParameterInfoComponent extends JPanel {
   }
 
   ParameterInfoControllerBase.Model update(boolean singleParameterInfo) {
+    return SlowOperations.allowSlowOperations(() -> doUpdate(singleParameterInfo));
+  }
+
+  private ParameterInfoControllerBase.Model doUpdate(boolean singleParameterInfo) {
     MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     int highlightedComponentIdx = -1;
