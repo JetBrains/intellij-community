@@ -77,18 +77,18 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
   private fun createContent(project: Project,
                             spaceProjectInfo: SpaceProjectInfo,
                             projectRepos: Set<SpaceRepoInfo>): Content {
-    val lifeTime = LifetimeSource()
+    val contentLifetime = LifetimeSource()
     val factory = ContentFactory.SERVICE.getInstance()
 
     return factory.createContent(null, spaceProjectInfo.project.name, false).apply { // NON-NLS
       val disposable = Disposable {
-        lifeTime.terminate()
+        contentLifetime.terminate()
       }
       isCloseable = false
       setDisposer(disposable)
       icon = SpaceIcons.Main
 
-      component = ReviewLoginComponent(disposable, lifetime, project, spaceProjectInfo, projectRepos).view
+      component = ReviewLoginComponent(disposable, contentLifetime, project, spaceProjectInfo, projectRepos).view
       description = spaceProjectInfo.key.key // NON-NLS
     }
   }
