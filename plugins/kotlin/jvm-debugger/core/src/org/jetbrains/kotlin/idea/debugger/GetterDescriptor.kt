@@ -10,12 +10,12 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.debugger.ui.tree.DescriptorWithParentObject
-import com.intellij.debugger.ui.tree.render.OnDemandPresentationProvider
 import com.intellij.debugger.ui.tree.render.OnDemandRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiExpression
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
+import com.sun.jdi.ClassNotLoadedException
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Type
@@ -35,7 +35,7 @@ class GetterDescriptor(
         OnDemandRenderer.ON_DEMAND_CALCULATED.set(this, false)
         setOnDemandPresentationProvider { node ->
             node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(KotlinDebuggerCoreBundle.message("message.variables.property.get")))
-            node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", type.name(), " "), false)
+            node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", type?.name(), " "), false)
         }
     }
 
@@ -53,7 +53,12 @@ class GetterDescriptor(
 
     override fun getName() = name
 
-    override fun getType(): Type = getter.returnType()
+    override fun getType(): Type? =
+        try {
+            getter.returnType()
+        } catch (ex: ClassNotLoadedException) {
+            null
+        }
 
     override fun calcValue(evaluationContext: EvaluationContextImpl?) =
         evaluationContext?.debugProcess?.invokeMethod(evaluationContext, parentObject, getter, emptyList())
