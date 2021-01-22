@@ -16,9 +16,12 @@ internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(messagePointer
     val selected = context?.bookmark != null
     event.presentation.apply {
       isEnabledAndVisible = context != null
-      if (ActionPlaces.TOUCHBAR_GENERAL == event.place) {
-        Toggleable.setSelected(this, selected)
-        icon = Checked
+      icon = when (event.place) {
+        ActionPlaces.TOUCHBAR_GENERAL -> {
+          Toggleable.setSelected(this, selected)
+          Checked
+        }
+        else -> null
       }
       setText(when {
                 !ActionPlaces.isPopupPlace(event.place) -> messagePointer("bookmark.toggle.action.text")
