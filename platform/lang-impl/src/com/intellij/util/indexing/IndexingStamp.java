@@ -3,14 +3,16 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
@@ -31,17 +33,16 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * @author Eugene Zhuravlev
- *
- * A file has three indexed states (per particular index): indexed (with particular index_stamp), outdated and (trivial) unindexed
- * if index version is advanced or we rebuild it then index_stamp is advanced, we rebuild everything
- * if we get remove file event -> we should remove all indexed state from indices data for it (if state is nontrivial)
- * and set its indexed state to outdated
- * if we get other event we set indexed state to outdated
- *
- * It is assumed that index stamps are monotonically increasing.
+ * A file has three indexed states (per particular index): indexed (with particular index_stamp which monotonically increases), outdated and (trivial) unindexed.
+ * <ul>
+ *   <li>If index version is advanced or we rebuild it then index_stamp is advanced, we rebuild everything.</li>
+ *   <li>If we get remove file event -> we should remove all indexed state from indices data for it (if state is nontrivial)
+ *  * and set its indexed state to outdated.</li>
+ *   <li>If we get other event we set indexed state to outdated.</li>
+ * </ul>
  */
 public final class IndexingStamp {
+  private static final boolean IS_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
   private static final long HAS_NO_INDEXED_DATA_STAMP = 0L;
 
@@ -359,6 +360,10 @@ public final class IndexingStamp {
               }
               data[dominatingStampIndex] = Math.max(data[dominatingStampIndex], b);
 
+              if (IS_UNIT_TEST && b == HAS_NO_INDEXED_DATA_STAMP) {
+                FileBasedIndexImpl.LOG.info("Wrong indexing timestamp state: " + myIndexStamps);
+              }
+
               return true;
             }
           }
@@ -411,7 +416,7 @@ public final class IndexingStamp {
       if (tmst == INDEX_DATA_OUTDATED_STAMP && !myIndexStamps.contains(id)) {
         return;
       }
-      long previous = myIndexStamps.put(id, tmst);
+      long previous = tmst == HAS_NO_INDEXED_DATA_STAMP ? myIndexStamps.remove(id) : myIndexStamps.put(id, tmst);
       if (previous != tmst) myIsDirty = true;
     }
 
@@ -420,7 +425,7 @@ public final class IndexingStamp {
     }
   }
 
-  private static final IntObjectMap<IndexingStamp.Timestamps> ourTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
+  private static final ConcurrentIntObjectMap<Timestamps> ourTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(100);
 
   static void dropTimestampMemoryCaches() {
@@ -433,8 +438,7 @@ public final class IndexingStamp {
     readLock.lock();
     try {
       Timestamps stamp = createOrGetTimeStamp(fileId);
-      if (stamp != null) return stamp.get(indexName);
-      return 0;
+      return stamp.get(indexName);
     } finally {
       readLock.unlock();
     }
@@ -462,7 +466,7 @@ public final class IndexingStamp {
         FSRecords.handleError(e);
         throw new RuntimeException(e);
       }
-      if (isValid) ourTimestampsCache.put(id, timestamps);
+      ourTimestampsCache.cacheOrGet(id, timestamps);
     }
     return timestamps;
   }
@@ -473,7 +477,7 @@ public final class IndexingStamp {
     writeLock.lock();
     try {
       Timestamps stamp = createOrGetTimeStamp(fileId);
-      if (stamp != null) stamp.set(indexName, indexCreationStamp);
+      stamp.set(indexName, indexCreationStamp);
     } finally {
       writeLock.unlock();
     }
@@ -485,7 +489,7 @@ public final class IndexingStamp {
       readLock.lock();
       try {
         Timestamps stamp = createOrGetTimeStamp(fileId);
-        if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
+        if (stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
           final SmartList<ID<?, ?>> retained = new SmartList<>();
           stamp.myIndexStamps.forEach(object -> {
             retained.add(object);
