@@ -326,10 +326,11 @@ public class XDebuggerTreeInlayPopup<D> {
     final Point location = popupWindow.getLocation();
     int width = Math.max(size.width, myToolbar.getPreferredSize().width) + 150;
     int maxWidth = 600;
+    int rowHeight = tree.isFixedRowHeight() ? tree.getRowHeight() : tree.getFontMetrics(tree.getFont()).getHeight();
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
                                                  Math.min(width, maxWidth),
-                                                 Math.min(tree.getRowCount(), 12) * tree.getRowHeight() + 75);
+                                                 Math.min(tree.getRowCount(), 12) * rowHeight + 75);
 
     ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
     popupWindow.setBounds(targetBounds);
