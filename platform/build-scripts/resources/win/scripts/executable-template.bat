@@ -77,18 +77,17 @@ IF "%VM_OPTIONS_FILE%" == "" (
 )
 IF "%VM_OPTIONS_FILE%" == "" (
   :: user-overridden
-  SET _VM_OPTIONS_CANDIDATE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions
-  IF EXIST "%_VM_OPTIONS_CANDIDATE%" SET VM_OPTIONS_FILE=%_VM_OPTIONS_CANDIDATE%
+  IF EXIST "%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions" (
+    SET VM_OPTIONS_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions
+  )
 )
 IF "%VM_OPTIONS_FILE%" == "" (
   :: default, standard installation
-  SET _VM_OPTIONS_CANDIDATE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
-  IF EXIST "%_VM_OPTIONS_CANDIDATE%" SET VM_OPTIONS_FILE=%_VM_OPTIONS_CANDIDATE%
+  IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
 )
 IF "%VM_OPTIONS_FILE%" == "" (
   :: default, universal package
-  SET _VM_OPTIONS_CANDIDATE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
-  IF EXIST "%_VM_OPTIONS_CANDIDATE%" SET VM_OPTIONS_FILE=%_VM_OPTIONS_CANDIDATE%
+  IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
 )
 
 SET ACC=
