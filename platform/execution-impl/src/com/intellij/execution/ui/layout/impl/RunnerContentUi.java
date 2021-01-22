@@ -1563,6 +1563,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     @Override
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
+      if (!Registry.is("debugger.new.tool.window.layout")) return;
       InternalDecorator decorator = ComponentUtil.getParentOfType(InternalDecorator.class, myComponent);
       if (decorator != null && myTabs.getTabCount() > 0) {
         UIUtil.drawHeader(g, 0, getWidth(), decorator.getHeaderHeight(), decorator.isActive(), true, false, false);
