@@ -18,7 +18,7 @@ final class IntObjectHashMap<T> {
 
   IntObjectHashMap(IntFunction<T[]> arrayFactory) {
     this.arrayFactory = arrayFactory;
-    keys = new int[4];
+    keys = new int[16];
     values = arrayFactory.apply(keys.length);
   }
 

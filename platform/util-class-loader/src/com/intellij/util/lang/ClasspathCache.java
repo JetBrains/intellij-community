@@ -57,13 +57,8 @@ public final class ClasspathCache {
 
     @Override
     public void registerPackageIndex(IntObjectHashMap<Loader[]> classMap, IntObjectHashMap<Loader[]> resourceMap, Loader loader) {
-      for (int classPackageHash : classPackageHashes) {
-        addResourceEntry(classPackageHash, classMap, loader);
-      }
-
-      for (int resourcePackageHash : resourcePackageHashes) {
-        addResourceEntry(resourcePackageHash, resourceMap, loader);
-      }
+      addResourceEntries(classPackageHashes, classMap, loader);
+      addResourceEntries(resourcePackageHashes, resourceMap, loader);
 
       loader.setNameFilter(nameFilter);
     }
@@ -160,7 +155,27 @@ public final class ClasspathCache {
     return endIndex <= 0 ? 0 : Murmur3_32Hash.MURMUR3_32.hashString(resourcePath, 0, endIndex);
   }
 
-  public static void addResourceEntry(int hash, @NotNull IntObjectHashMap<Loader[]> map, @NotNull Loader loader) {
+  public static void addResourceEntries(int[] hashes, @NotNull IntObjectHashMap<Loader[]> map, @NotNull Loader loader) {
+    Loader[] singleArray = null;
+    for (int hash : hashes) {
+      int index = map.index(hash);
+      Loader[] loaders = map.getByIndex(index, hash);
+      if (loaders == null) {
+        if (singleArray == null) {
+          singleArray = new Loader[]{loader};
+        }
+        map.addByIndex(index, hash, singleArray);
+      }
+      else {
+        Loader[] newList = new Loader[loaders.length + 1];
+        System.arraycopy(loaders, 0, newList, 0, loaders.length);
+        newList[loaders.length] = loader;
+        map.replaceByIndex(index, hash, newList);
+      }
+    }
+  }
+
+  private static void addResourceEntry(int hash, @NotNull IntObjectHashMap<Loader[]> map, @NotNull Loader loader) {
     int index = map.index(hash);
     Loader[] loaders = map.getByIndex(index, hash);
     if (loaders == null) {

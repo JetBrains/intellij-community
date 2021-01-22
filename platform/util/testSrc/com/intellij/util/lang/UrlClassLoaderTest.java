@@ -32,9 +32,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 
-/**
- * @author Dmitry Avdeev
- */
 public class UrlClassLoaderTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
@@ -94,10 +91,8 @@ public class UrlClassLoaderTest {
     ExecutorService executor = Executors.newWorkStealingPool(threadCount);
     try {
       Random random = new Random();
-      UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
       for (int attempt = 0; attempt < attemptCount; attempt++) {
-        // fails also without cache pool (but with cache enabled), but takes much longer
-        UrlClassLoader loader = UrlClassLoader.build().files(files).parent(null).useCache(pool, __ -> true).get();
+        PathClassLoader loader = new PathClassLoader(UrlClassLoader.build().files(files).parent(null));
         List<String> namesToLoad = new ArrayList<>();
         for (int j = 0; j < resourceCount; j++) {
           namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));

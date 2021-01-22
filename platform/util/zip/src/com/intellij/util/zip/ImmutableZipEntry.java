@@ -7,9 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
@@ -99,29 +99,19 @@ public final class ImmutableZipEntry {
 
     switch (getMethod()) {
       case ZipEntry.STORED: {
-        ByteBuffer inputBuffer = null;
-        try {
-          inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.fileChannel, file.fileSize);
-          byte[] result = new byte[uncompressedSize];
-          inputBuffer.get(result);
-          return result;
-        }
-        finally {
-          if (inputBuffer != null) {
-            DirectByteBufferPool.DEFAULT_POOL.release(inputBuffer);
-          }
-        }
+        ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
+        byte[] result = new byte[uncompressedSize];
+        inputBuffer.get(result);
+        return result;
       }
       case ZipEntry.DEFLATED: {
-        ByteBuffer inputBuffer = null;
+        ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
+        Inflater inflater = new Inflater(true);
+        inflater.setInput(inputBuffer);
+        int count = uncompressedSize;
+        byte[] result = new byte[count];
+        int offset = 0;
         try {
-          inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.fileChannel, file.fileSize);
-
-          Inflater inflater = new Inflater(true);
-          inflater.setInput(inputBuffer);
-          int count = uncompressedSize;
-          byte[] result = new byte[count];
-          int offset = 0;
           while (count > 0) {
             int n = inflater.inflate(result, offset, count);
             if (n == 0) {
@@ -137,11 +127,6 @@ public final class ImmutableZipEntry {
           String s = e.getMessage();
           throw new ZipException(s == null ? "Invalid ZLIB data format" : s);
         }
-        finally {
-          if (inputBuffer != null) {
-            DirectByteBufferPool.DEFAULT_POOL.release(inputBuffer);
-          }
-        }
       }
 
       default:
@@ -149,8 +134,13 @@ public final class ImmutableZipEntry {
     }
   }
 
+  @ApiStatus.Internal
+  public InputStream getInputStream(@NotNull ImmutableZipFile file) throws IOException {
+    return new DirectByteBufferBackedInputStream(getByteBuffer(file), getMethod() == ZipEntry.DEFLATED);
+  }
+
   /**
-   * Returned buffer should be released using {@link DirectByteBufferPool#release(ByteBuffer)}
+   * Release returned buffer using {@link #releaseBuffer} after use.
    */
   @ApiStatus.Internal
   public ByteBuffer getByteBuffer(@NotNull ImmutableZipFile file) throws IOException {
@@ -164,17 +154,14 @@ public final class ImmutableZipEntry {
 
     switch (getMethod()) {
       case ZipEntry.STORED: {
-        return computeDataOffsetIfNeededAndReadInputBuffer(file.fileChannel, file.fileSize);
+        return computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
       }
       case ZipEntry.DEFLATED: {
-        ByteBuffer inputBuffer = null;
+        ByteBuffer inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.mappedBuffer);
+        Inflater inflater = new Inflater(true);
+        inflater.setInput(inputBuffer);
         try {
-          inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(file.fileChannel, file.fileSize);
-
-          Inflater inflater = new Inflater(true);
-          inflater.setInput(inputBuffer);
-          ByteBuffer result;
-          result = DirectByteBufferPool.DEFAULT_POOL.allocate(uncompressedSize);
+          ByteBuffer result = DirectByteBufferPool.DEFAULT_POOL.allocate(uncompressedSize);
           while (result.hasRemaining()) {
             if (inflater.inflate(result) == 0) {
               throw new IllegalStateException("Inflater wants input, but input was already set");
@@ -187,11 +174,6 @@ public final class ImmutableZipEntry {
           String s = e.getMessage();
           throw new ZipException(s == null ? "Invalid ZLIB data format" : s);
         }
-        finally {
-          if (inputBuffer != null) {
-            DirectByteBufferPool.DEFAULT_POOL.release(inputBuffer);
-          }
-        }
       }
 
       default:
@@ -199,52 +181,107 @@ public final class ImmutableZipEntry {
     }
   }
 
-  private @NotNull ByteBuffer computeDataOffsetIfNeededAndReadInputBuffer(FileChannel channel, int fileSize) throws IOException {
-    ByteBuffer inputBuffer;
-    if (dataOffset == -1) {
-      int additionalBytesToRead = 2 /* extra field length */ + nameLengthInBytes +
-                                  64 /* assume that extra data will be not more than 64 bytes */;
-      inputBuffer = DirectByteBufferPool.DEFAULT_POOL.allocate(compressedSize + additionalBytesToRead);
-      inputBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-      int start = headerOffset + 28;
-      doReadInputBuffer(inputBuffer, channel, start, Math.min(start + additionalBytesToRead + compressedSize, fileSize));
-
-      // read actual extra field length
-      int extraFieldLength = inputBuffer.getShort(0) & 0xffff;
-      if (extraFieldLength > 64) {
-        // we can re-read, but for now let's check is it needed or not to implement
-        throw new UnsupportedOperationException(
-          "extraFieldLength expected to be less than 32 bytes but " + extraFieldLength + " (name=" + name + ")");
-      }
-
-      inputBuffer.position(2 + nameLengthInBytes + extraFieldLength);
-      inputBuffer.limit(inputBuffer.position() + compressedSize);
-      dataOffset = headerOffset + 30 + nameLengthInBytes + extraFieldLength;
-      assert inputBuffer.remaining() == compressedSize;
+  public void releaseBuffer(ByteBuffer buffer) {
+    if (method == ZipEntry.DEFLATED) {
+      DirectByteBufferPool.DEFAULT_POOL.release(buffer);
     }
-    else {
-      inputBuffer = DirectByteBufferPool.DEFAULT_POOL.allocate(compressedSize);
-      doReadInputBuffer(inputBuffer, channel, dataOffset, dataOffset + compressedSize);
-      inputBuffer.rewind();
-    }
-    return inputBuffer;
   }
 
-  private static void doReadInputBuffer(ByteBuffer inputBuffer, FileChannel channel, int start, int end) throws IOException {
-    int offset = start;
-    while (offset < end) {
-      int n = channel.read(inputBuffer, offset);
-      if (n <= 0) {
-        break;
+  private @NotNull ByteBuffer computeDataOffsetIfNeededAndReadInputBuffer(ByteBuffer mappedBuffer) {
+    if (dataOffset == -1) {
+      int start = headerOffset + 28;
+      // read actual extra field length
+      int extraFieldLength = mappedBuffer.getShort(start) & 0xffff;
+      if (extraFieldLength > 128) {
+        // assert just to be sure that we don't read a lot of data in case of some error in zip file or our impl
+        throw new UnsupportedOperationException(
+          "extraFieldLength expected to be less than 128 bytes but " + extraFieldLength + " (name=" + name + ")");
       }
 
-      offset += n;
+      dataOffset = start + 2 + nameLengthInBytes + extraFieldLength;
     }
+
+    ByteBuffer inputBuffer = mappedBuffer.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
+    inputBuffer.position(dataOffset);
+    inputBuffer.limit(dataOffset + compressedSize);
+    return inputBuffer;
   }
 
   @Override
   public String toString() {
     return name;
+  }
+}
+
+final class DirectByteBufferBackedInputStream extends InputStream {
+  private ByteBuffer buffer;
+  private final boolean isPooled;
+
+  DirectByteBufferBackedInputStream(ByteBuffer buffer, boolean isPooled) {
+    this.buffer = buffer;
+    this.isPooled = isPooled;
+  }
+
+  @Override
+  public int read() {
+    return buffer.hasRemaining() ? buffer.get() & 0xff : -1;
+  }
+
+  @Override
+  public int read(byte[] bytes, int offset, int length) {
+    if (!buffer.hasRemaining()) {
+      return -1;
+    }
+
+    int actualLength = Math.min(length, buffer.remaining());
+    buffer.get(bytes, offset, actualLength);
+    return actualLength;
+  }
+
+  @Override
+  public byte[] readNBytes(int length) {
+    byte[] result = new byte[Math.min(length, buffer.remaining())];
+    buffer.get(result);
+    return result;
+  }
+
+  @Override
+  public int readNBytes(byte[] bytes, int offset, int length) {
+    int actualLength = Math.min(length, buffer.remaining());
+    buffer.get(bytes, offset, actualLength);
+    return actualLength;
+  }
+
+  @Override
+  public int available() {
+    return buffer.remaining();
+  }
+
+  @Override
+  public byte @NotNull [] readAllBytes() {
+    byte[] result = new byte[buffer.remaining()];
+    buffer.get(result);
+    return result;
+  }
+
+  @Override
+  public long skip(long length) {
+    int actualLength = Math.min((int)length, buffer.remaining());
+    buffer.position(buffer.position() + actualLength);
+    return actualLength;
+  }
+
+  @Override
+  public void close() {
+    ByteBuffer buffer = this.buffer;
+    if (buffer == null) {
+      // already closed
+      return;
+    }
+
+    this.buffer = null;
+    if (isPooled) {
+      DirectByteBufferPool.DEFAULT_POOL.release(buffer);
+    }
   }
 }

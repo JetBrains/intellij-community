@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.io.DirectByteBufferPool
 import com.intellij.util.zip.ImmutableZipEntry
 import com.intellij.util.zip.ImmutableZipFile
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.intellij.build.io.*
 import java.lang.System.Logger
@@ -255,7 +253,7 @@ internal fun writeEntries(entries: List<ImmutableZipEntry>, zipCreator: ZipFileW
       zipCreator.writeUncompressedEntry(name, data)
     }
     finally {
-      DirectByteBufferPool.DEFAULT_POOL.release(data)
+      entry.releaseBuffer(data)
     }
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.zip;
 
-import com.intellij.util.io.DirectByteBufferPool;
 import com.intellij.util.io.Murmur3_32Hash;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,14 +28,14 @@ public final class ImmutableZipFile implements Closeable {
   // only file entries - directories are ignored
   private final ImmutableZipEntry[] entries;
 
-  final FileChannel fileChannel;
+  ByteBuffer mappedBuffer;
   final int fileSize;
 
   private ImmutableZipFile(ImmutableZipEntry[] nameMap,
                            ImmutableZipEntry[] entries,
-                           FileChannel fileChannel,
+                           ByteBuffer mappedBuffer,
                            int fileSize) {
-    this.fileChannel = fileChannel;
+    this.mappedBuffer = mappedBuffer;
     this.fileSize = fileSize;
 
     this.nameMap = nameMap;
@@ -50,18 +49,25 @@ public final class ImmutableZipFile implements Closeable {
   public static @NotNull ImmutableZipFile load(@NotNull Path file, @Nullable Consumer<ByteBuffer> commentConsumer) throws IOException {
     // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
     // ability to read data without setting channel position, as setting channel position will require synchronization
-    FileChannel fileChannel = FileChannel.open(file, EnumSet.of(StandardOpenOption.READ));
-    try {
-      return populateFromCentralDirectory(fileChannel, commentConsumer);
-    }
-    catch (Throwable e) {
+    int fileSize;
+    ByteBuffer mappedBuffer;
+    try (FileChannel fileChannel = FileChannel.open(file, EnumSet.of(StandardOpenOption.READ))) {
+      fileSize = (int)fileChannel.size();
       try {
-        fileChannel.close();
+        mappedBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
       }
-      catch (IOException ignore) {
+      catch (UnsupportedOperationException e) {
+        // in memory fs
+        ByteBuffer buffer = ByteBuffer.allocate(fileSize);
+        while (buffer.hasRemaining()) {
+          fileChannel.read(buffer);
+        }
+        buffer.rewind();
+        mappedBuffer = buffer;
       }
-      throw e;
+      mappedBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
+    return populateFromCentralDirectory(mappedBuffer, fileSize, commentConsumer);
   }
 
   public ImmutableZipEntry[] getEntries() {
@@ -72,19 +78,14 @@ public final class ImmutableZipFile implements Closeable {
     return nameMap;
   }
 
-  @Override
-  public String toString() {
-    return fileChannel.toString();
-  }
-
   /**
    * Closes the archive.
    *
    * @throws IOException if an error occurs closing the archive.
    */
   @Override
-  public void close() throws IOException {
-    fileChannel.close();
+  public void close() {
+    mappedBuffer = null;
   }
 
   /**
@@ -102,74 +103,52 @@ public final class ImmutableZipFile implements Closeable {
     return index >= 0 ? nameMap[index] : null;
   }
 
-  private static ImmutableZipFile populateFromCentralDirectory(@NotNull FileChannel fileChannel,
+  private static ImmutableZipFile populateFromCentralDirectory(@NotNull ByteBuffer buffer,
+                                                               int fileSize,
                                                                @Nullable Consumer<ByteBuffer> commentConsumer) throws IOException {
     // https://en.wikipedia.org/wiki/ZIP_(file_format)
-    int entryCount;
-    int centralDirSize = -1;
-    int centralDirPosition;
-    int fileSize = (int)fileChannel.size();
-    ByteBuffer buffer = DirectByteBufferPool.DEFAULT_POOL.allocate(MIN_EOCD_SIZE * 2).order(ByteOrder.LITTLE_ENDIAN);
-    try {
-      readEndSignature(buffer, fileSize, fileChannel);
-      int offset = buffer.position();
-      entryCount = buffer.getShort(offset + 10) & 0xffff;
-      centralDirSize = buffer.getInt(offset + 12);
-      centralDirPosition = buffer.getInt(offset + 16);
+    int offset =  readEndSignature(buffer, fileSize);
+    int entryCount = buffer.getShort(offset + 10) & 0xffff;
+    int centralDirSize = buffer.getInt(offset + 12);
+    int centralDirPosition = buffer.getInt(offset + 16);
 
-      if (commentConsumer != null) {
-        buffer.position(offset + 20);
-        int commentLength = buffer.getShort() & 0xffff;
-        if (commentLength > 0) {
-          commentConsumer.accept(buffer);
-          buffer.order(ByteOrder.LITTLE_ENDIAN);
-        }
-      }
-    }
-    finally {
-      if (buffer.capacity() < centralDirSize) {
-        DirectByteBufferPool.DEFAULT_POOL.release(buffer);
-        buffer = null;
+    if (commentConsumer != null) {
+      buffer.position(offset + 20);
+      int commentLength = buffer.getShort() & 0xffff;
+      if (commentLength > 0) {
+        commentConsumer.accept(buffer);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
       }
     }
 
-    try {
-      if (buffer == null) {
-        buffer = DirectByteBufferPool.DEFAULT_POOL.allocate(centralDirSize).order(ByteOrder.LITTLE_ENDIAN);
-      }
-      else {
-        buffer.rewind();
-        buffer.limit(centralDirSize);
-      }
-
-      ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
-      // ensure table is even length
-      if (entryCount == 65535) {
-        // it means that more than 65k entries - estimate number of entries
-        entryCount = centralDirPosition / 47 /* min 46 for entry and 1 for filename */;
-      }
-
-      int entrySetLength = entryCount * 2 /* expand factor */;
-      ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
-      readFully(buffer, fileChannel, centralDirPosition);
-      int fileEntryCount = readCentralDirectory(buffer, centralDirSize, entrySet, entries);
-      if (entries.length != fileEntryCount) {
-        ImmutableZipEntry[] resizedEntries = new ImmutableZipEntry[fileEntryCount];
-        System.arraycopy(entries, 0, resizedEntries, 0, fileEntryCount);
-        entries = resizedEntries;
-      }
-      return new ImmutableZipFile(entrySet, entries, fileChannel, fileSize);
+    ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
+    // ensure table is even length
+    if (entryCount == 65535) {
+      // it means that more than 65k entries - estimate number of entries
+      entryCount = centralDirPosition / 47 /* min 46 for entry and 1 for filename */;
     }
-    finally {
-      if (buffer != null) {
-        DirectByteBufferPool.DEFAULT_POOL.release(buffer);
-      }
+
+    int entrySetLength = entryCount * 2 /* expand factor */;
+    ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
+
+    int fileEntryCount = readCentralDirectory(buffer, centralDirPosition, centralDirSize, entrySet, entries);
+    if (entries.length != fileEntryCount) {
+      ImmutableZipEntry[] resizedEntries = new ImmutableZipEntry[fileEntryCount];
+      System.arraycopy(entries, 0, resizedEntries, 0, fileEntryCount);
+      entries = resizedEntries;
     }
+
+    buffer.clear();
+    return new ImmutableZipFile(entrySet, entries, buffer, fileSize);
   }
 
-  private static int readCentralDirectory(ByteBuffer buffer, int centralDirSize, ImmutableZipEntry[] entrySet, ImmutableZipEntry[] entries)
+  private static int readCentralDirectory(ByteBuffer buffer,
+                                          int centralDirPosition,
+                                          int centralDirSize,
+                                          ImmutableZipEntry[] entrySet,
+                                          ImmutableZipEntry[] entries)
     throws EOFException {
-    int offset = 0;
+    int offset = centralDirPosition;
     int entryIndex = 0;
 
     // assume that file name is not greater than ~2KB
@@ -179,7 +158,8 @@ public final class ImmutableZipFile implements Closeable {
 
     ImmutableZipEntry prevEntry = null;
     int prevEntryExpectedDataOffset = -1;
-    while (offset < centralDirSize) {
+    int endOffset = centralDirPosition + centralDirSize;
+    while (offset < endOffset) {
       if (buffer.getInt(offset) != 33639248) {
         throw new EOFException("Expected central directory size " + centralDirSize +
                                " but only at " + offset + " no valid central directory file header signature");
@@ -235,27 +215,10 @@ public final class ImmutableZipFile implements Closeable {
     return entryIndex;
   }
 
-  static void readFully(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
-    int expectedLength = buffer.remaining();
-    int read = 0;
-    while (read < expectedLength) {
-      int n = channel.read(buffer, position + read);
-      if (n <= 0) {
-        break;
-      }
-      read += n;
-    }
-    if (read < expectedLength) {
-      throw new EOFException();
-    }
-  }
-
-  private static void readEndSignature(ByteBuffer buffer, int fileSize, FileChannel channel) throws IOException {
-    readFully(buffer, channel, fileSize - buffer.remaining());
-    for (int offset = buffer.limit() - MIN_EOCD_SIZE; offset >= 0; offset--) {
+  private static int readEndSignature(@NotNull ByteBuffer buffer, int fileSize) throws IOException {
+    for (int offset = fileSize - MIN_EOCD_SIZE; offset >= 0; offset--) {
       if (buffer.getInt(offset) == 101010256) {
-        buffer.position(offset);
-        return;
+        return offset;
       }
     }
 

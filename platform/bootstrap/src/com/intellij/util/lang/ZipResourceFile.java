@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.util.io.DirectByteBufferPool;
 import com.intellij.util.io.Murmur3_32Hash;
 import com.intellij.util.zip.ImmutableZipEntry;
 import com.intellij.util.zip.ImmutableZipFile;
@@ -31,15 +30,12 @@ public final class ZipResourceFile implements ResourceFile {
   private static final int MANIFEST_HASH_CODE = Murmur3_32Hash.MURMUR3_32.hashString(JarFile.MANIFEST_NAME, 0, JarFile.MANIFEST_NAME.length());
 
   private final ImmutableZipFile zipFile;
-  private int entryCountToPreload = -1;
 
   public ZipResourceFile(@NotNull Path file) {
     try {
       zipFile = ImmutableZipFile.load(file, buffer -> {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-        if (buffer.getInt() == 1759251304) {
-          entryCountToPreload = buffer.getShort() & 0xffff;
-        }
+        buffer.getInt();
       });
     }
     catch (IOException e) {
@@ -55,7 +51,7 @@ public final class ZipResourceFile implements ResourceFile {
     for (ImmutableZipEntry entry : zipFile.getEntries()) {
       String name = entry.getName();
       if (name.length() >= minNameLength && name.startsWith(dir) && name.charAt(dir.length()) == '/' && nameFilter.test(name)) {
-        try (DirectByteBufferBackedInputStream stream = new DirectByteBufferBackedInputStream(entry.getByteBuffer(zipFile))) {
+        try (InputStream stream = entry.getInputStream(zipFile)) {
           consumer.accept(name, stream);
         }
       }
@@ -80,26 +76,16 @@ public final class ZipResourceFile implements ResourceFile {
     }
 
     ByteBuffer buffer = packageIndex.getByteBuffer(zipFile);
-    try {
-      buffer.order(ByteOrder.LITTLE_ENDIAN);
-      int[] classPackages = new int[buffer.getInt()];
-      int[] resourcePackages = new int[buffer.getInt()];
-      IntBuffer intBuffer = buffer.asIntBuffer();
-      intBuffer.get(classPackages);
-      intBuffer.get(resourcePackages);
-      return (classMap, resourceMap, loader) -> {
-        for (int classPackageHash : classPackages) {
-          ClasspathCache.addResourceEntry(classPackageHash, classMap, loader);
-        }
-
-        for (int resourcePackageHash : resourcePackages) {
-          ClasspathCache.addResourceEntry(resourcePackageHash, resourceMap, loader);
-        }
-      };
-    }
-    finally {
-      DirectByteBufferPool.DEFAULT_POOL.release(buffer);
-    }
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    int[] classPackages = new int[buffer.getInt()];
+    int[] resourcePackages = new int[buffer.getInt()];
+    IntBuffer intBuffer = buffer.asIntBuffer();
+    intBuffer.get(classPackages);
+    intBuffer.get(resourcePackages);
+    return (classMap, resourceMap, loader) -> {
+      ClasspathCache.addResourceEntries(classPackages, classMap, loader);
+      ClasspathCache.addResourceEntries(resourcePackages, resourceMap, loader);
+    };
   }
 
   @NotNull
@@ -135,7 +121,7 @@ public final class ZipResourceFile implements ResourceFile {
         return classConsumer.consumeClassData(className, buffer, jarLoader, null);
       }
       finally {
-        DirectByteBufferPool.DEFAULT_POOL.release(buffer);
+        entry.releaseBuffer(buffer);
       }
     }
     else {
@@ -186,7 +172,7 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public @NotNull InputStream getInputStream() throws IOException {
-      return new DirectByteBufferBackedInputStream(entry.getByteBuffer(file));
+      return entry.getInputStream(file);
     }
 
     @Override
@@ -241,7 +227,7 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     public InputStream getInputStream() throws IOException {
-      return new DirectByteBufferBackedInputStream(entry.getByteBuffer(file));
+      return entry.getInputStream(file);
     }
 
     @Override
