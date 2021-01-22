@@ -16,12 +16,10 @@ import java.awt.event.KeyEvent;
 
 /**
  * Moves focus to editor on Escape key pressed, similarly to {@link com.intellij.openapi.wm.impl.InternalDecorator#processKeyBinding}.
- * Respects ESC+F/ESC+B and other combinations with ESC.
  */
 public class TerminalEscapeKeyListener {
   private final JBTerminalPanel myTerminalPanel;
   private final AnAction myTerminalSwitchFocusToEditorAction;
-  private boolean myShortcutPressed = false;
 
   public TerminalEscapeKeyListener(@NotNull JBTerminalPanel terminalPanel) {
     myTerminalPanel = terminalPanel;
@@ -29,14 +27,8 @@ public class TerminalEscapeKeyListener {
   }
 
   public void handleKeyEvent(@NotNull KeyEvent e) {
-    if (e.getID() == KeyEvent.KEY_PRESSED) {
-      myShortcutPressed = isMatched(e);
-    }
-    else if (e.getID() == KeyEvent.KEY_RELEASED) {
-      if (myShortcutPressed && isMatched(e)) {
-        switchFocusToEditorIfSuitable();
-      }
-      myShortcutPressed = false;
+    if (e.getID() == KeyEvent.KEY_PRESSED && isMatched(e) && switchFocusToEditorIfSuitable()) {
+      e.consume();
     }
   }
 
@@ -54,14 +46,16 @@ public class TerminalEscapeKeyListener {
     return KeymapUtil.getKeyStroke(myTerminalSwitchFocusToEditorAction.getShortcutSet());
   }
 
-  private void switchFocusToEditorIfSuitable() {
+  private boolean switchFocusToEditorIfSuitable() {
     if (shouldSwitchFocusToEditor()) {
       Project project = myTerminalPanel.getContextProject();
       if (project != null && !project.isDisposed()) {
         // Repeat logic from com.intellij.openapi.wm.impl.InternalDecorator#processKeyBinding
         ToolWindowManager.getInstance(project).activateEditorComponent();
+        return true;
       }
     }
+    return false;
   }
 
   private boolean shouldSwitchFocusToEditor() {
