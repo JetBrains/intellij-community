@@ -45,7 +45,9 @@ class DebuggerConnection(
         var agentAttached = false
         if (params is JavaParameters && modifyArgs) {
             // gradle related logic in KotlinGradleCoroutineDebugProjectResolver
-            val kotlinxCoroutinesCore = params.classPath?.pathList?.firstOrNull { it.contains("kotlinx-coroutines-core") }
+            val kotlinxCoroutinesCore = params.classPath?.pathList?.firstOrNull {
+                it.contains("kotlinx-coroutines-core") && !it.contains("metadata")
+            }
             if (kotlinxCoroutinesCore != null) {
                 when (determineCoreVersionMode(kotlinxCoroutinesCore)) {
                     CoroutineDebuggerMode.VERSION_1_3_8_AND_UP -> {
