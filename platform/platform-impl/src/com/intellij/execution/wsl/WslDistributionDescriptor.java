@@ -157,8 +157,7 @@ final class WslDistributionDescriptor {
   }
 
   private @Nullable List<String> readWSLOutput(WSLCommandLineOptions options, List<String> command) {
-    WSLDistribution distribution = WSLUtil.getDistributionById(getId());
-    if (distribution == null) return null;
+    WSLDistribution distribution = WslDistributionManager.getInstance().getOrCreateDistributionByMsId(getId());
 
     ProcessOutput output;
     try {
