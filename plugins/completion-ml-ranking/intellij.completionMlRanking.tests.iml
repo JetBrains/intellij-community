@@ -11,18 +11,7 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="TEST" />
-    <orderEntry type="module-library">
-      <library name="ngram-slp" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:ngram-slp:0.0.2" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/ngram-slp/0.0.2/ngram-slp-0.0.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/ngram-slp/0.0.2/ngram-slp-0.0.2-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="ngram-slp" level="project" />
   </component>
 </module>
