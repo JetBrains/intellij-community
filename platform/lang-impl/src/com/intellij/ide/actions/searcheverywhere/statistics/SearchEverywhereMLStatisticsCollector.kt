@@ -11,10 +11,10 @@ import com.intellij.internal.statistic.local.ActionSummary
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.registry.Registry
+import kotlin.math.round
 
 
 internal class SearchEverywhereMLStatisticsCollector {
@@ -47,14 +47,30 @@ internal class SearchEverywhereMLStatisticsCollector {
     logData.addData(TYPED_SYMBOL_KEYS, symbolsTyped)
     logData.addData(TYPED_BACKSPACES_DATA_KEY, backspacesTyped)
     logData.addData(TOTAL_SYMBOLS_AMOUNT_DATA_KEY, symbolsInQuery)
+
+    val globalSummary = ServiceManager.getService(ActionsGlobalSummaryManager::class.java)
+    val globalTotalStats = globalSummary.totalSummary
+    val localSummary = ServiceManager.getService(ActionsLocalSummary::class.java)
+    val localActionsStats = localSummary.getActionsStats()
+    val localTotalStats = localSummary.getTotalStats()
+    logData.addData(LOCAL_MAX_USAGE_COUNT_KEY, localTotalStats.maxUsageCount)
+    logData.addData(LOCAL_MIN_USAGE_COUNT_KEY, localTotalStats.minUsageCount)
+    logData.addData(GLOBAL_MAX_USAGE_COUNT_KEY, globalTotalStats.maxUsageCount)
+    logData.addData(GLOBAL_MIN_USAGE_COUNT_KEY, globalTotalStats.minUsageCount)
+
     val data = logData.build()
-    val localSummary = ServiceManager.getService(ActionsLocalSummary::class.java).getActionsStats()
-    (data as? MutableMap)?.put(COLLECTED_RESULTS_DATA_KEY,
-                               elements.take(REPORTED_ITEMS_LIMIT).map { getListItemsNames(it, localSummary).toMap() })
+    (data as? MutableMap)?.put(
+      COLLECTED_RESULTS_DATA_KEY,
+      elements.take(REPORTED_ITEMS_LIMIT).map {
+        getListItemsNames(it, globalSummary, localActionsStats).toMap()
+      }
+    )
     log(DIALOG_CLOSED, data)
   }
 
-  private fun getListItemsNames(item: SearchEverywhereFoundElementInfo, localSummary: Map<String, ActionSummary>): ItemInfo {
+  private fun getListItemsNames(item: SearchEverywhereFoundElementInfo,
+                                globalSummaryManager: ActionsGlobalSummaryManager,
+                                localSummary: Map<String, ActionSummary>): ItemInfo {
     val element = item.getElement()
     val contributorId = item.getContributor().searchProviderId
     if (element !is MatchedValue) { // not an action/option
@@ -63,11 +79,12 @@ internal class SearchEverywhereMLStatisticsCollector {
     if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
       return ItemInfo("", contributorId, java.util.Map.of(IS_ACTION_DATA_KEY, false))
     }
-    return fillActionItemInfo(item, element.value, localSummary, contributorId)
+    return fillActionItemInfo(item, element.value, globalSummaryManager, localSummary, contributorId)
   }
 
   private fun fillActionItemInfo(item: SearchEverywhereFoundElementInfo,
                                  element: GotoActionModel.ActionWrapper,
+                                 globalSummaryManager: ActionsGlobalSummaryManager,
                                  localSummary: Map<String, ActionSummary>,
                                  contributorId: String): ItemInfo {
     val action = element.action
@@ -96,13 +113,14 @@ internal class SearchEverywhereMLStatisticsCollector {
 
     localSummary[actionId]?.let {
       data[TIME_SINCE_LAST_USAGE_DATA_KEY] = System.currentTimeMillis() - it.lastUsedTimestamp
+      data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
     }
 
-    val globalSummary = ServiceManager.getService(ActionsGlobalSummaryManager::class.java).getActionStatistics(actionId)
+    val globalSummary = globalSummaryManager.getActionStatistics(actionId)
     globalSummary?.let {
-      data[GLOBAL_USAGE_COUNT_DATA_KEY] = it.usagesCount
-      data[USERS_RATIO_DATA_KEY] = it.usersRatio
-      data[USAGES_PER_USER_RATIO_DATA_KEY] = it.usagesPerUserRatio
+      data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
+      data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)
+      data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
     }
     return ItemInfo(actionId, contributorId, data)
   }
@@ -129,6 +147,10 @@ internal class SearchEverywhereMLStatisticsCollector {
     // context features
     private const val TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount"
     private const val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = "totalItems"
+    private const val LOCAL_MAX_USAGE_COUNT_KEY = "maxUsage"
+    private const val LOCAL_MIN_USAGE_COUNT_KEY = "minUsage"
+    private const val GLOBAL_MAX_USAGE_COUNT_KEY = "globalMaxUsage"
+    private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
 
     // action features
     private const val IS_ACTION_DATA_KEY = "isAction"
@@ -143,8 +165,14 @@ internal class SearchEverywhereMLStatisticsCollector {
     private const val WEIGHT_KEY = "weight"
 
     private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
-    private const val GLOBAL_USAGE_COUNT_DATA_KEY = "localUsageCount"
+    private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
+    private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
     private const val USERS_RATIO_DATA_KEY = "usersRatio"
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
+
+    fun roundDouble(value: Double): Double {
+      if (!value.isFinite()) return -1.0
+      return round(value * 100000) / 100000
+    }
   }
 }
