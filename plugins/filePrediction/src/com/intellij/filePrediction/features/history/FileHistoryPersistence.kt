@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.PathUtil
 import com.intellij.util.io.exists
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -54,6 +55,7 @@ object FileHistoryPersistence {
     val path: Path? = getPathToStorage(project, NGRAM_FILE_NAME_SUFFIX)
     try {
       if (path != null) {
+        Files.createDirectories(path.parent)
         NGramModelSerializer.saveNGrams(path, runner)
       }
     }
