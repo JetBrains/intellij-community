@@ -30,7 +30,10 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testInstanceOf0() { doParserTest("a instanceof String"); }
   public void testInstanceOf1() { doParserTest("a instanceof"); }
-  public void testInstanceOf2() { doParserTest("x instanceof Foo v"); }
+
+  public void testInstanceOfPattern0() { doParserTest("x instanceof Foo v"); }
+  public void testInstanceOfPattern1() { doParserTest("x instanceof final Foo v"); }
+  public void testInstanceOfPattern2() { doParserTest("x instanceof @Ann() final Foo v"); }
 
   public void testNot0() { doParserTest("!!a"); }
   public void testNot1() { doParserTest("!"); }
