@@ -215,8 +215,7 @@ public final class IndexingStamp {
     readLock.lock();
     try {
       Timestamps stamp = createOrGetTimeStamp(fileId);
-      if (stamp != null) return stamp.get(indexName);
-      return 0;
+      return stamp.get(indexName);
     } finally {
       readLock.unlock();
     }
@@ -230,6 +229,7 @@ public final class IndexingStamp {
     }
   }
 
+  @NotNull
   private static Timestamps createOrGetTimeStamp(int id) {
     assert id > 0;
     Timestamps timestamps = ourTimestampsCache.get(id);
@@ -252,7 +252,7 @@ public final class IndexingStamp {
     writeLock.lock();
     try {
       Timestamps stamp = createOrGetTimeStamp(fileId);
-      if (stamp != null) stamp.set(indexName, indexCreationStamp);
+      stamp.set(indexName, indexCreationStamp);
     } finally {
       writeLock.unlock();
     }
@@ -263,7 +263,7 @@ public final class IndexingStamp {
     readLock.lock();
     try {
       Timestamps stamp = createOrGetTimeStamp(fileId);
-      if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
+      if (stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
         final SmartList<ID<?, ?>> retained = new SmartList<>();
         stamp.myIndexStamps.forEach(object -> {
           retained.add(object);
