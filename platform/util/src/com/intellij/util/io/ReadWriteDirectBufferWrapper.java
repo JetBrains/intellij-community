@@ -74,7 +74,7 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
                 throw ex;
               }
               if (!parentWasCreated) {
-                FileUtil.createDirectory(parentFile.toFile());
+                Files.createDirectories(parentFile);
                 parentWasCreated = true;
               }
               else {
