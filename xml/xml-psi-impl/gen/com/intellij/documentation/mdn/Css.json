@@ -21,7 +21,107 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p>The <strong><code>@counter-style</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a> lets you define counter styles that are not part of the predefined set of styles. A <code>@counter-style</code> rule defines how to convert a counter value into a string representation.</p>\n<pre class=\"brush: css no-line-numbers notranslate\"><code>@counter-style thumbs {\n  system: cyclic;\n  symbols: \"\\1F44D\";\n  suffix: \" \";\n}\nul {\n  list-style: thumbs;\n}</code></pre>\n<p>The initial version of CSS defined a set of useful counter styles. However, although more styles were added to this set of predefined styles over the years, this system proved too restrictive to fulfill the needs of worldwide typography. The <code>@counter-style</code> at-rule addresses this shortcoming in an open-ended manner, by allowing authors to define their own counter styles when the pre-defined styles aren't fitting their needs.</p>"
+      "doc": "<p>The <strong><code>@counter-style</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a> lets you define counter styles that are not part of the predefined set of styles. A <code>@counter-style</code> rule defines how to convert a counter value into a string representation.</p>\n<pre class=\"brush: css no-line-numbers notranslate\"><code>@counter-style thumbs {\n  system: cyclic;\n  symbols: \"\\1F44D\";\n  suffix: \" \";\n}\nul {\n  list-style: thumbs;\n}</code></pre>\n<p>The initial version of CSS defined a set of useful counter styles. However, although more styles were added to this set of predefined styles over the years, this system proved too restrictive to fulfill the needs of worldwide typography. The <code>@counter-style</code> at-rule addresses this shortcoming in an open-ended manner, by allowing authors to define their own counter styles when the pre-defined styles aren't fitting their needs.</p>",
+      "properties": {
+        "additive-symbols": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/additive-symbols",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>additive-symbols</code></strong> descriptor lets you specify symbols when the value of a counter <a href=\"$MDN_URL$/Web/CSS/@counter-style/system\" ><code>system</code></a> descriptor is <code>additive</code>. The <code>additive-symbols</code> descriptor defines <em>additive tuples</em>, each of which is a pair containing a symbol and a non-negative integer weight. The additive system is used to construct <a href=\"http://en.wikipedia.org/wiki/Sign-value_notation\">sign-value numbering</a> systems such as Roman numerals.</p>"
+        },
+        "fallback": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/fallback",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p><span class=\"seoSummary\">The <strong><code>fallback</code></strong> descriptor can be used to specify a counter style to fall back to if the current counter style cannot create a marker representation for a particular counter value.</span></p>"
+        },
+        "negative": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/negative",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p><span class=\"seoSummary\">When defining custom counter styles, the <strong><code>negative</code></strong> descriptor lets you alter the representations of negative counter values, by providing a way to specify symbols to be appended or prepended to the counter representation when the value is negative.</span></p>",
+          "values": {
+            "first &lt;symbol&gt;": "This symbol will be prepended to the representation when the counter is negative.",
+            "second &lt;symbol&gt;": "If present, this symbol will be appended to the representation when the counter is negative."
+          }
+        },
+        "pad": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/pad",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p><span class=\"seoSummary\">The <strong><code>pad</code></strong> descriptor can be used with custom counter style definitions when you need the marker representations to have a minimum length.</span></p>",
+          "values": {
+            "&lt;integer&gt; &amp;&amp; &lt;symbol&gt;": "The\n<code>&lt;integer&gt;</code>\nspecifies a minimum length that all counter representations must reach. The value must be non-negative. If the minimum length is not reached, the representation will be padded with the specified\n<code>&lt;symbol&gt;</code>\n."
+          }
+        },
+        "prefix": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/prefix",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <code><strong>prefix</strong></code> descriptor of the <a href=\"$MDN_URL$/Web/CSS/@counter-style\"><code>@counter-style</code></a> rule specifies content that will be prepended to the marker representation. If not specified, the default value will be <code>\"\"</code> (an empty string).</p>",
+          "values": {
+            "&lt;symbol&gt;": "Specifies a\n<code>&lt;symbol&gt;</code>\nthat is prepended to the marker representation. It may be a\n<a href=\"$MDN_URL$/Web/CSS/string\"><code>&lt;string&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/CSS/image\"><code>&lt;image&gt;</code></a>\n, or\n<a href=\"$MDN_URL$/Web/CSS/custom-ident\"><code>&lt;custom-ident&gt;</code></a>\n."
+          }
+        },
+        "range": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/range",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p><span class=\"seoSummary\">When defining custom counter styles, the <strong><code>range</code></strong> descriptor lets the author specify a range of counter values over which the style is applied. If a counter value is outside the specified range, then the fallback style will be used to construct the representation of that marker.</span></p>",
+          "values": {
+            "auto": "The range depends on the counter system:\n<ul>\n<li>For cyclic, numeric, and fixed systems, the range is negative infinity to positive infinity.</li>\n<li>For alphabetic and symbolic systems, the range is 1 to positive infinity.</li>\n<li>For additive systems, the range is 0 to positive infinity.</li>\n<li>For extends systems, the range is whatever auto would produce for the extended system; if extending a complex predefined style (§7 Complex Predefined Counter Styles), the range is the style’s defined range.</li>\n</ul>",
+            "[ [ | infinite ]{2} ]#": "Defines a comma-separated list of ranges. For each individual range, the first value is the lower bound and the second value is the upper bound. A range is inclusive, that means it always contains both, the lower and upper bound numbers. If infinite is used as the first value in a range, it represents negative infinity; if it is used as the second value, it represents positive infinity. The range of the counter style is the union of all the ranges defined in the list.\n<br>\nIf the lower bound of any range is higher than the upper bound, the entire descriptor is invalid and will be ignored."
+          }
+        },
+        "speak-as": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/speak-as",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>speak-as</code></strong> descriptor specifies how a counter symbol constructed with a given <a href=\"$MDN_URL$/Web/CSS/@counter-style\"><code>@counter-style</code></a> will be represented in the spoken form. For example, an author can specify a counter symbol to be either spoken as its numerical value or just represented with an audio cue.</p>",
+          "values": {
+            "auto": "If the value of\n<code>speak-as</code>\nis specified as\n<code>auto</code>\n, then the effective value of\n<code>speak-as</code>\nwill be determined based on the value of the\n<a href=\"$MDN_URL$/Web/CSS/@counter-style/system\" ><code>system</code></a>\ndescriptor:\n<ul>\n<li>If the value of <code>system</code> is <code>alphabetic</code>, the effective value of <code>speak-as</code> will be <code>spell-out</code>.</li>\n<li>If <code>system</code> is <code>cyclic</code>, the effective value of <code>speak-as</code> will be <code>bullets</code>.</li>\n<li>If <code>system</code> is <code>extends</code>, the value of <code>speak-as</code> will be the same as if <code>speak-as: auto</code> is specified on the extended style.</li>\n<li>For all other cases, specifying <code>auto</code> has the same effect as specifying <code>speak-as: numbers</code>.</li>\n</ul>",
+            "bullets": "A phrase or an audio cue defined by the\n<a href=\"$MDN_URL$/Glossary/user_agent\">user agent</a>\nfor representing an unordered list item will be read out.",
+            "numbers": "The numerical value of the counter will be read out in the document language.",
+            "words": "The user agent will generate a counter value as normal and read it out as a word in the document language.",
+            "spell-out": "The user agent will generate a counter representation as normal and would read it out letter by letter. If the user agent doesn't know how to read out a partiular counter symbol, the user agent might read it out as if the value of\n<code>speak-as</code>\nwas\n<code>numbers</code>\n.",
+            "&lt;counter-style-name&gt;": "The name of another counter style, specified as a\n<a href=\"$MDN_URL$/Web/CSS/custom-ident\"><code>&lt;custom-ident&gt;</code></a>\n. If included, the counter will be spoken out in the form specified in that counter style, kind of like specifying the\n<a href=\"$MDN_URL$/Web/CSS/@counter-style/fallback\" ><code>fallback</code></a>\ndescriptor. If the specified style does not exist,\n<code>speak-as</code>\ndefaults to\n<code>auto</code>\n."
+          }
+        },
+        "suffix": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/suffix",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <code><strong>suffix</strong></code> descriptor of the<a href=\"$MDN_URL$/Web/CSS/@counter-style\"><code>@counter-style</code></a> rule specifies content that will be appended to the marker representation.</p>",
+          "values": {
+            "&lt;symbol&gt;": "Specifies a\n<code>&lt;symbol&gt;</code>\nthat is appended to the marker representation. It may be a\n<a href=\"$MDN_URL$/Web/CSS/string\"><code>&lt;string&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/CSS/image\"><code>&lt;image&gt;</code></a>\n, or\n<a href=\"$MDN_URL$/Web/CSS/custom-ident\"><code>&lt;custom-ident&gt;</code></a>\n."
+          }
+        },
+        "symbols": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/symbols",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>symbols</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> descriptor is used to specify the symbols that the specified counter system will use to construct counter representations.</p>",
+          "values": {
+            "&lt;symbol&gt;": "Represents a symbol used within the counter system. This must be one of the following data types:\n<ul>\n<li><a href=\"$MDN_URL$/Web/CSS/string\"><code>&lt;string&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/CSS/image\"><code>&lt;image&gt;</code></a> (Note: This value is \"at risk\" and may be removed from the specification. It is not yet implemented.)</li>\n<li><a href=\"$MDN_URL$/Web/CSS/custom-ident\"><code>&lt;custom-ident&gt;</code></a></li>\n</ul>"
+          }
+        },
+        "system": {
+          "url": "$MDN_URL$/web/CSS/@counter-style/system",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>system</code></strong> descriptor specifies the algorithm to be used for converting the integer value of a counter to a string representation. It is used in a <a href=\"$MDN_URL$/Web/CSS/@counter-style\"><code>@counter-style</code></a> to define the behavior of the defined style.</p>\n<p>If the algorithm specified in the <code>system</code> descriptor is unable to construct the representation for a particular counter value, then that value's representation will be constructed using the fallback system provided.</p>"
+        }
+      }
     },
     "document": {
       "url": "$MDN_URL$/web/CSS/@document",
@@ -35,7 +135,122 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p><span class=\"seoSummary\">The <strong><code>@font-face</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\" data-flaw=\"link2\">at-rule</a> specifies a custom font with which to display text; the font can be loaded from either a remote server or a locally-installed font on the user's own computer.</span></p>"
+      "doc": "<p><span class=\"seoSummary\">The <strong><code>@font-face</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\" data-flaw=\"link2\">at-rule</a> specifies a custom font with which to display text; the font can be loaded from either a remote server or a locally-installed font on the user's own computer.</span></p>",
+      "properties": {
+        "font-display": {
+          "url": "$MDN_URL$/web/CSS/@font-face/font-display",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>font-display</code></strong> descriptor determines how a font face is displayed based on whether and when it is downloaded and ready to use.</p>",
+          "values": {
+            "auto": "The font display strategy is defined by the user agent.",
+            "block": "Gives the font face a short block period and an infinite swap period.",
+            "swap": "Gives the font face an extremely small block period and an infinite swap period.",
+            "fallback": "Gives the font face an extremely small block period and a short swap period.",
+            "optional": "Gives the font face an extremely small block period and no swap period."
+          }
+        },
+        "font-family": {
+          "url": "$MDN_URL$/web/CSS/@font-face/font-family",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>font-family</code></strong> CSS descriptor allows authors to specify the font family for the font specified in an <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rule.</p>",
+          "values": {
+            "&lt;family-name&gt;": "Specifies the name of the font family."
+          }
+        },
+        "font-stretch": {
+          "url": "$MDN_URL$/web/CSS/@font-face/font-stretch",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>font-stretch</code></strong> CSS descriptor allows authors to specify a normal, condensed, or expanded face for the fonts specified in the <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rule.</p>\n<p>For a particular font family, authors can download various font faces which correspond to the different styles of the same font family, and then use the <code>font-stretch </code>descriptor to explicitly specify the font face's stretch. The values for the CSS descriptor is same as that of its corresponding font property.</p>",
+          "values": {
+            "normal": "Specifies a normal font face.",
+            "semi-condensed, condensed, extra-condensed, ultra-condensed": "Specifies a more condensed font face than normal, with ultra-condensed as the most condensed.",
+            "semi-expanded, expanded, extra-expanded, ultra-expanded": "Specifies a more expanded font face than normal, with ultra-expanded as the most expanded.",
+            "&lt;percentage&gt;": "A\n<a href=\"$MDN_URL$/Web/CSS/percentage\"><code>&lt;percentage&gt;</code></a>\nvalue between 50% and 200% (inclusive). Negative values are not allowed for this property."
+          }
+        },
+        "font-style": {
+          "url": "$MDN_URL$/web/CSS/@font-face/font-style",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>font-style</code></strong> CSS descriptor allows authors to specify font styles for the fonts specified in the <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rule.</p>\n<p>For a particular font family, authors can download various font faces which correspond to the different styles of the same font family, and then use the <code>font-style</code> descriptor to explicitly specify the font face's style. The values for the CSS descriptor is same as that of its corresponding font property.</p>",
+          "values": {
+            "normal": "Selects the normal version of the font-family.",
+            "italic": "Specifies that font-face is an italicized version of the normal font.",
+            "oblique": "Specifies that the font-face is an artificially sloped version of the normal font.",
+            "oblique with angle": "Selects a font classified as\n<code>oblique</code>\n, and additionally specifies an angle for the slant of the text.",
+            "oblique with angle range": "Selects a font classified as\n<code>oblique</code>\n, and additionally specifies a range of allowable angle for the slant of the text. Note that a range is only supported when the\n<code>font-style</code>\nis\n<code>oblique</code>\n; for\n<code>font-style: normal</code>\nor\n<code>italic</code>\n, no second value is allowed."
+          }
+        },
+        "font-variant": {
+          "url": "$MDN_URL$/web/CSS/@font-face/font-variant",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>font-variant</code></strong> CSS <a href=\"$MDN_URL$/Web/CSS/Shorthand_properties\">shorthand property</a> allows you to set all the font variants for the fonts specified in the <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rule.</p>",
+          "values": {
+            "normal": "Specifies a normal font face; each of the longhand properties has an initial value of normal. Longhand properties of\n<code>font-variant</code>\nare:\n<a href=\"$MDN_URL$/Web/CSS/font-variant-caps\"><code>font-variant-caps</code></a>\n,\n<a href=\"$MDN_URL$/Web/CSS/font-variant-numeric\"><code>font-variant-numeric</code></a>\n,\n<a href=\"$MDN_URL$/Web/CSS/font-variant-alternates\"><code>font-variant-alternates</code></a>\n,\n<a href=\"$MDN_URL$/Web/CSS/font-variant-ligatures\"><code>font-variant-ligatures</code></a>\n, and\n<a href=\"$MDN_URL$/Web/CSS/font-variant-east-asian\"><code>font-variant-east-asian</code></a>\n.",
+            "none": "Sets the value of the\n<a href=\"$MDN_URL$/Web/CSS/font-variant-ligatures\"><code>font-variant-ligatures</code></a>\nto\n<code>none</code>\nand the values of the other longhand property as\n<code>normal</code>\n, their initial value.",
+            "&lt;common-lig-values&gt;, &lt;discretionary-lig-values&gt;, &lt;historical-lig-values&gt;, &lt;contextual-alt-values&gt;": "Specifies the keywords related to the\n<a href=\"$MDN_URL$/Web/CSS/font-variant-ligatures\"><code>font-variant-ligatures</code></a>\nlonghand property. The possible values are:\n<code>common-ligatures</code>\n,\n<code>no-common-ligatures</code>\n,\n<code>discretionary-ligatures</code>\n,\n<code>no-discretionary-ligatures</code>\n,\n<code>historical-ligatures</code>\n,\n<code>no-historical-ligatures</code>\n,\n<code>contextual</code>\n, and\n<code>no-contextual</code>\n.",
+            "stylistic(), historical-forms, styleset(), character-variant(), swash(), ornaments(), annotation()": "Specifies the keywords and functions related to the\n<a href=\"$MDN_URL$/Web/CSS/font-variant-alternates\"><code>font-variant-alternates</code></a>\nlonghand property.",
+            "small-caps, all-small-caps, petite-caps, all-petite-caps, unicase, titling-caps": "Specifies the keywords and functions related to the\n<a href=\"$MDN_URL$/Web/CSS/font-variant-caps\"><code>font-variant-caps</code></a>\nlonghand property.",
+            "&lt;numeric-figure-values&gt;, &lt;numeric-spacing-values&gt;, &lt;numeric-fraction-values&gt;, ordinal, slashed-zero": "Specifies the keywords related to the\n<a href=\"$MDN_URL$/Web/CSS/font-variant-numeric\"><code>font-variant-numeric</code></a>\nlonghand property. The possible values are: \n<code>lining-nums</code>\n,\n<code>oldstyle-nums</code>\n,\n<code>proportional-nums</code>\n,\n<code>tabular-nums</code>\n,\n<code>diagonal-fractions</code>\n,\n<code>stacked-fractions</code>\n,\n<code>ordinal</code>\n, and\n<code>slashed-zero</code>\n.",
+            "&lt;east-asian-variant-values&gt;, &lt;east-asian-width-values&gt;, ruby": "Specifies the keywords related to the\n<a href=\"$MDN_URL$/Web/CSS/font-variant-east-asian\"><code>font-variant-east-asian</code></a>\nlonghand property. The possible values are:\n<code>jis78</code>\n,\n<code>jis83</code>\n,\n<code>jis90</code>\n,\n<code>jis04</code>\n,\n<code>simplified</code>\n,\n<code>traditional</code>\n,\n<code>full-width</code>\n,\n<code>proportional-width</code>\n,\n<code>ruby</code>\n."
+          }
+        },
+        "font-variation-settings": {
+          "url": "$MDN_URL$/web/CSS/@font-face/font-variation-settings",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>font-variation-settings</code></strong> CSS descriptor allows authors to specify low-level OpenType or TrueType font variations in the <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rule.</p>",
+          "values": {
+            "normal": "Text is laid out using default settings.",
+            "&lt;string&gt; &lt;number&gt;": "When rendering text, the list of OpenType axis names is passed to the text layout engine to enable or disable font features. Each setting is always a\n<a href=\"$MDN_URL$/Web/CSS/string\"><code>&lt;string&gt;</code></a>\nof 4 ASCII characters, followed by a\n<a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>\nindicating the axis value. If the\n<code>&lt;string&gt;</code>\nhas more or fewer characters or contains characters outside the U+20 - U+7E codepoint range, the whole property is invalid. The\n<code>&lt;number&gt;</code>\ncan be fractional or negative."
+          }
+        },
+        "font-weight": {
+          "url": "$MDN_URL$/web/CSS/@font-face/font-weight",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>font-weight</code></strong> CSS descriptor allows authors to specify font weights for the fonts specified in the <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rule. The <a href=\"$MDN_URL$/Web/CSS/font-weight\"><code>font-weight</code></a> property can separately be used to set how thick or thin characters in text should be displayed.</p>\n<p>For a particular font family, authors can download various font faces which correspond to the different styles of the same font family, and then use the <code>font-weight </code>descriptor to explicitly specify the font face's weights. The values for the CSS descriptor is same as that of its corresponding font property.</p>\n<p>There are generally limited weights available for a particular font family. When a specified weight doesn't exist, a nearby weight is used. Fonts lacking bold are often synthesized by the user agent. To prevent this, use <a href=\"$MDN_URL$/Web/CSS/font-synthesis\"><code>font-synthesis</code></a> property.</p>",
+          "values": {
+            "normal": "Normal font weight. Same as\n<code>400</code>\n.",
+            "bold": "Bold font weight. Same as\n<code>700</code>\n.",
+            "&lt;number&gt;": "A\n<a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a>\nvalue between 1 and 1000, inclusive. Higher numbers represent weights that are bolder than (or as bold as) lower numbers. Certain commonly used values correspond to common weight names, as described in the\n<a href=\"#Common_weight_name_mapping\">Common weight name mapping</a>\nsection below."
+          }
+        },
+        "src": {
+          "url": "$MDN_URL$/web/CSS/@font-face/src",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>src</code></strong> CSS descriptor of the <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rule specifies the resource containing font data. It is required for the <code>@font-face</code> rule to be valid.</p>",
+          "values": {
+            "&lt;url&gt; [ format( &lt;string&gt;# ) ]?": "Specifies an external reference consisting of a\n<a href=\"$MDN_URL$/Web/CSS/url()\" ><code>&lt;url&gt;()</code></a>\n, followed by an optional hint using the\n<code id=\"format()\">format()</code>\nfunction to describe the format of the font resource referenced by that URL. The format hint contains a comma-separated list of format strings that denote well-known font formats. If a user agent doesn't support the specified formats, it skips downloading the font resource. If no format hints are supplied, the font resource is always downloaded.",
+            "&lt;font-face-name&gt;": "Specifies the name of a locally-installed font face using the\n<code id=\"local()\">local()</code>\nfunction, which uniquely identifies a single font face within a larger family. The name can optionally be enclosed in quotes."
+          }
+        },
+        "unicode-range": {
+          "url": "$MDN_URL$/web/CSS/@font-face/unicode-range",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>unicode-range</code></strong> CSS descriptor sets the specific range of characters to be used from a font defined by <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> and made available for use on the current page. If the page doesn't use any character in this range, the font is not downloaded; if it uses at least one, the whole font is downloaded.</p>",
+          "values": {
+            "single codepoint": "A single Unicode character code point, for example\n<code>U+26</code>\n.",
+            "codepoint range": "A range of Unicode code points. So for example,\n<code>U+0025-00FF</code>\nmeans\n<em>include all characters in the range <code>U+0025</code> to <code>U+00FF</code></em>\n.",
+            "wildcard range": "A range of Unicode code points containing wildcard characters, that is using the\n<code>'?'</code>\ncharacter, so for example\n<code>U+4??</code>\nmeans\n<em>include all characters in the range <code>U+400</code> to <code>U+4FF</code></em>\n."
+          }
+        }
+      }
     },
     "font-feature-values": {
       "url": "$MDN_URL$/web/CSS/@font-feature-values",
@@ -63,7 +278,296 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p><span class=\"seoSummary\">The <strong><code>@media</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a> can be used to apply part of a style sheet based on the result of one or more <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries\">media queries</a>.</span> With it, you specify a media query and a block of CSS to apply to the document if and only if the media query matches the device on which the content is being used.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> In JavaScript, the rules created using <code>@media</code> can be accessed with the <a href=\"$MDN_URL$/Web/API/CSSMediaRule\"><code>CSSMediaRule</code></a> CSS object model interface.</p>\n</div>"
+      "doc": "<p><span class=\"seoSummary\">The <strong><code>@media</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a> can be used to apply part of a style sheet based on the result of one or more <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries\">media queries</a>.</span> With it, you specify a media query and a block of CSS to apply to the document if and only if the media query matches the device on which the content is being used.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> In JavaScript, the rules created using <code>@media</code> can be accessed with the <a href=\"$MDN_URL$/Web/API/CSSMediaRule\"><code>CSSMediaRule</code></a> CSS object model interface.</p>\n</div>",
+      "properties": {
+        "-moz-device-pixel-ratio": {
+          "url": "$MDN_URL$/web/CSS/@media/-moz-device-pixel-ratio",
+          "status": [
+            "Deprecated"
+          ],
+          "doc": "<div> <div class=\"notecard warning\">\n<h4 id=\"Non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div> <div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#Browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>-moz-device-pixel-ratio</code></strong> Gecko-only <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to apply styles based on the number of device pixels per CSS pixel.</p>\n<div class=\"warning notecard\">\n<p><strong>Do not use this feature. </strong>Use the <code><a href=\"$MDN_URL$/Web/CSS/@media/resolution\">resolution</a></code> feature with the <code>dppx</code> unit instead.</p>\n</div>\n<div class=\"note notecard\"><strong>Note</strong>: This media feature is also implemented by Webkit and by <a href=\"https://msdn.microsoft.com/en-us/library/ie/dn760733(v=vs.85).aspx\">IE 11 for Windows Phone 8.1</a> as <code>-webkit-device-pixel-ratio</code>. The min and max prefixes as implemented by Gecko are named <code>min--moz-device-pixel-ratio</code> and <code>max--moz-device-pixel-ratio</code>; but the same prefixes as implemented by Webkit are named <code>-webkit-min-device-pixel-ratio</code> and <code>-webkit-max-device-pixel-ratio</code>.</div>"
+        },
+        "-ms-high-contrast": {
+          "url": "$MDN_URL$/web/CSS/@media/-ms-high-contrast",
+          "doc": "<div><div class=\"notecard warning\">\n<h4 id=\"Non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong>-ms-high-contrast</strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is a <a href=\"$MDN_URL$/Web/CSS/Microsoft_Extensions\" data-flaw=\"link1\">Microsoft extension</a> that describes whether the application is being displayed in high contrast mode, and with what color variation.</p>\n<p>High Contrast Mode is a specialized display mode that prioritizes making content as legible as possible by dynamically replacing foreground and background colors with a user-specified theme. For web content, theme colors are mapped to content types.</p>\n<p>This media feature applies to bitmap media types. It does not accept <em>min/max</em> prefixes.</p>",
+          "values": {
+            "none": "...\n<br>\n<strong>No longer supported as of Microsoft Edge 18.</strong>",
+            "active": "Indicates that the subsequent styling rules will be applied when the system is placed in high contrast mode with any color variation.<br>",
+            "black-on-white": "Indicates that the subsequent styling rules will be applied when the system is placed in high contrast mode with a black-on-white color variation.<br>",
+            "white-on-black": "Indicates that the subsequent styling rules will be applied when the system is placed in high contrast mode with a white-on-black color variation.<br>"
+          }
+        },
+        "-webkit-animation": {
+          "url": "$MDN_URL$/web/CSS/@media/-webkit-animation",
+          "status": [
+            "Deprecated"
+          ],
+          "doc": "<div> <div class=\"notecard warning\">\n<h4 id=\"Non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>-webkit-animation</code></strong> Boolean <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is a <a href=\"$MDN_URL$/Web/CSS/WebKit_Extensions\" data-flaw=\"link2\">Chrome extension</a> whose value is <code>true</code> if vendor-prefixed CSS <a href=\"$MDN_URL$/Web/CSS/animation\"><code>animation</code></a>s are supported.</p>\n<p>Apple has <a href=\"https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariCSSRef/Articles/OtherStandardCSS3Features.html#//apple_ref/doc/uid/TP40007601-SW3\">a description in Safari CSS Reference</a>.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> This media feature is only supported by WebKit. If possible, use an <a href=\"$MDN_URL$/Web/CSS/@supports\"><code>@supports</code></a> feature query instead.</p>\n</div>",
+          "values": {
+            "true": "The browser supports\n<code>-webkit</code>\nprefixed CSS\n<a href=\"$MDN_URL$/Web/CSS/animation\"><code>animation</code></a>\ns.",
+            "false": "The browser doesn't support these prefixed CSS animations."
+          }
+        },
+        "-webkit-device-pixel-ratio": {
+          "url": "$MDN_URL$/web/CSS/@media/-webkit-device-pixel-ratio",
+          "status": [],
+          "doc": "<div> <div class=\"notecard warning\">\n<h4 id=\"Non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>-webkit-device-pixel-ratio</code></strong> is a non-standard Boolean <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> which is an alternative to the standard <a href=\"$MDN_URL$/Web/CSS/@media/resolution\"><code>resolution</code></a> media feature.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> This media feature is a WebKit feature. If possible, use the <a href=\"$MDN_URL$/Web/CSS/@media/resolution\"><code>resolution</code></a> media feature query instead.</p>\n</div>",
+          "values": {
+            "&lt;number&gt;": "The number of device pixels used to represent each CSS\n<a href=\"$MDN_URL$/Web/CSS/length#Absolute_length_units\"><code>px</code></a>\n. Although the value is a\n<code>&lt;number&gt;</code>\n, and thus doesn't syntactically allow units, its implicit unit is\n<a href=\"$MDN_URL$/Web/CSS/resolution#dppx\"><code>dppx</code></a>\n."
+          }
+        },
+        "-webkit-transform-2d": {
+          "url": "$MDN_URL$/web/CSS/@media/-webkit-transform-2d",
+          "status": [],
+          "doc": "<div><div class=\"notecard warning\">\n<h4 id=\"Non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>-webkit-transform-2d</code></strong> Boolean <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is a <a href=\"$MDN_URL$/Web/CSS/WebKit_Extensions\" data-flaw=\"link2\">Chrome extension</a> whose value is <code>true</code> if vendor-prefixed CSS 2D <a href=\"$MDN_URL$/Web/CSS/transform\"><code>transform</code></a>s are supported.</p>\n<p>Apple has <a href=\"https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariCSSRef/Articles/OtherStandardCSS3Features.html#//apple_ref/doc/uid/TP40007601-SW3\">a description in Safari CSS Reference</a>.</p>",
+          "values": {
+            "true": "The browser supports the 2D CSS transforms with the\n<code>-webkit</code>\nprefix.",
+            "false": "The 2D CSS transforms prefixed with\n<code>-webkit</code>\nare not supported by the browser."
+          }
+        },
+        "-webkit-transform-3d": {
+          "url": "$MDN_URL$/web/CSS/@media/-webkit-transform-3d",
+          "status": [],
+          "doc": "<div><div class=\"notecard warning\">\n<h4 id=\"Non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>-webkit-transform-3d</code></strong> Boolean <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is a <a href=\"$MDN_URL$/Web/CSS/WebKit_Extensions\" data-flaw=\"link2\">Chrome extension</a> whose value is <code>true</code> if vendor-prefixed CSS 3D <a href=\"$MDN_URL$/Web/CSS/transform\"><code>transform</code></a>s are supported.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> This media feature is only supported by WebKit and Blink. If possible, use an <a href=\"$MDN_URL$/Web/CSS/@supports\"><code>@supports</code></a> feature query instead.</p>\n</div>",
+          "values": {
+            "true": "The browser supports the 3D CSS transforms with the\n<code>-webkit</code>\nprefix.",
+            "false": "The 3D CSS transforms prefixed with\n<code>-webkit</code>\nare not supported by the browser."
+          }
+        },
+        "-webkit-transition": {
+          "url": "$MDN_URL$/web/CSS/@media/-webkit-transition",
+          "status": [
+            "Deprecated"
+          ],
+          "doc": "<div> <div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#Browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div> <div class=\"notecard warning\">\n<h4 id=\"Non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>-webkit-transition</code></strong> Boolean <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is a <a href=\"$MDN_URL$/Web/CSS/WebKit_Extensions\" data-flaw=\"link2\">Chrome extension</a> whose value is <code>true</code> if the browsing context supports <a href=\"$MDN_URL$/Web/CSS/CSS_Transitions\">CSS transitions</a>. It was never supported in browsers not based on WebKit or Blink.</p>\n<p>Apple has <a href=\"https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariCSSRef/Articles/OtherStandardCSS3Features.html#//apple_ref/doc/uid/TP40007601-SW3\">a description in Safari CSS Reference</a>; this is now called simply <code>transition</code> there.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> You should not use this media feature; it was never specified, has never been widely implemented, and has been removed from all browsers. Use an <a href=\"$MDN_URL$/Web/CSS/@supports\"><code>@supports</code></a> feature query instead.</p>\n</div>"
+        },
+        "any-hover": {
+          "url": "$MDN_URL$/web/CSS/@media/any-hover",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>any-hover</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test whether <em>any</em> available input mechanism can hover over elements.</p>"
+        },
+        "any-pointer": {
+          "url": "$MDN_URL$/web/CSS/@media/any-pointer",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>any-pointer</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> tests whether the user has <em>any</em> pointing device (such as a mouse), and if so, how accurate it is.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> If you want to test the accuracy of the <em>primary</em> pointing device, use <code><a href=\"$MDN_URL$/Web/CSS/@media/pointer\">pointer</a></code> instead.</p>\n</div>"
+        },
+        "aspect-ratio": {
+          "url": "$MDN_URL$/web/CSS/@media/aspect-ratio",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>aspect-ratio</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the aspect ratio of the <a href=\"$MDN_URL$/Glossary/viewport\">viewport</a>.</p>"
+        },
+        "aural": {
+          "url": "$MDN_URL$/web/CSS/@media/aural",
+          "doc": "<div> <div class=\"notecard obsolete\">\n<h4 id=\"Obsolete\">Obsolete</h4>\n<p>This feature is obsolete. Although it may still work in some browsers, its use is discouraged since it could be removed at any time. Try to avoid using it.</p>\n</div></div>\n<p>The <code>aural</code> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/@media#Media_types\"  data-flaw=\"link1\">media type</a> is used for devices that have speech output capabilities.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> This media type has been deprecated in favor of <code><a href=\"$MDN_URL$/Web/CSS/@media#speech\">speech</a></code>.</p>\n</div>"
+        },
+        "color": {
+          "url": "$MDN_URL$/web/CSS/@media/color",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>color</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the number of bits per color component (red, green, blue) of the output device.</p>"
+        },
+        "color-gamut": {
+          "url": "$MDN_URL$/web/CSS/@media/color-gamut",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>color-gamut</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the approximate range of colors that are supported by the <a href=\"$MDN_URL$/Glossary/user_agent\">user agent</a> and the output device.</p>"
+        },
+        "color-index": {
+          "url": "$MDN_URL$/web/CSS/@media/color-index",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>color-index</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the number of entries in the output device's color lookup table.</p>"
+        },
+        "device-aspect-ratio": {
+          "url": "$MDN_URL$/web/CSS/@media/device-aspect-ratio",
+          "status": [
+            "Deprecated"
+          ],
+          "doc": "<div> <div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#Browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>device-aspect-ratio</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the width-to-height aspect ratio of an output device.</p>"
+        },
+        "device-height": {
+          "url": "$MDN_URL$/web/CSS/@media/device-height",
+          "status": [
+            "Deprecated"
+          ],
+          "doc": "<div> <div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#Browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>device-height</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the height of an output device's rendering surface.</p>"
+        },
+        "device-width": {
+          "url": "$MDN_URL$/web/CSS/@media/device-width",
+          "status": [
+            "Deprecated"
+          ],
+          "doc": "<div> <div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#Browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>device-width</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the width of an output device's rendering surface.</p>"
+        },
+        "display-mode": {
+          "url": "$MDN_URL$/web/CSS/@media/display-mode",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>display-mode</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the display mode of an application. You can use it to provide a consistent user experience between launching a site from a URL and launching it from a desktop icon.</p>\n<p>This feature corresponds to the Web app manifest's <a href=\"$MDN_URL$/Web/Manifest#display\"><code>display</code></a> member. Both apply to the top-level browsing context and any child browsing contexts. The feature query applies regardless of whether a web app manifest is present.</p>"
+        },
+        "forced-colors": {
+          "url": "$MDN_URL$/web/CSS/@media/forced-colors",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "doc": "<p><span class=\"seoSummary\">The <strong><code>forced-colors</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is used to detect if the <a href=\"$MDN_URL$/Glossary/user_agent\">user agent</a> has enabled a forced colors mode where it enforces a user-chosen limited color palette on the page.</span></p>\n<div class=\"notecard note\">\n<p><strong>Note:</strong> This feature is not supported by any user agent and its specifics are subject to change.</p>\n</div>",
+          "values": {
+            "none": "Forced colors mode is not active; the page’s colors are not being forced into a limited palette.",
+            "active": "Indicates that forced colors mode is active. The browser provides the color palette to authors through the\n<a href=\"$MDN_URL$/Web/CSS/color_value#System_Colors\">CSS system color</a>\nkeywords and, if appropriate, it triggers the appropriate value of\n<code><a href=\"$MDN_URL$/Web/CSS/@media/prefers-color-scheme\">prefers-color-scheme</a></code>\nso that authors can adapt the page."
+          }
+        },
+        "grid": {
+          "url": "$MDN_URL$/web/CSS/@media/grid",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>grid</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test whether the output device uses a grid-based screen.</p>\n<p>Most modern computers and smartphones have bitmap-based screens. Examples of grid-based devices include text-only terminals and basic phones with only one fixed font.</p>"
+        },
+        "height": {
+          "url": "$MDN_URL$/web/CSS/@media/height",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>height</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to apply styles based on the height of the <a href=\"$MDN_URL$/Glossary/viewport\">viewport</a> (or the page box, for <a href=\"$MDN_URL$/Web/CSS/Paged_Media\" data-flaw=\"link2\">paged media</a>).</p>"
+        },
+        "hover": {
+          "url": "$MDN_URL$/web/CSS/@media/hover",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>hover</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test whether the user's <em>primary</em> input mechanism can hover over elements.</p>"
+        },
+        "inverted-colors": {
+          "url": "$MDN_URL$/web/CSS/@media/inverted-colors",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>inverted-colors</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test whether the <a href=\"$MDN_URL$/Glossary/user_agent\">user agent</a> or underlying OS is inverting colors.</p>"
+        },
+        "monochrome": {
+          "url": "$MDN_URL$/web/CSS/@media/monochrome",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>monochrome</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the number of bits per pixel in the monochrome frame buffer of the output device.</p>"
+        },
+        "orientation": {
+          "url": "$MDN_URL$/web/CSS/@media/orientation",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>orientation</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the orientation of the <a href=\"$MDN_URL$/Glossary/viewport\">viewport</a> (or the page box, for <a href=\"$MDN_URL$/Web/CSS/Paged_Media\" data-flaw=\"link2\">paged media</a>).</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> This feature does not correspond to <em>device</em> orientation. Opening the soft keyboard on many devices in portrait orientation will cause the viewport to become wider than it is tall, thereby causing the browser to use landscape styles instead of portrait.</p>\n</div>"
+        },
+        "overflow-block": {
+          "url": "$MDN_URL$/web/CSS/@media/overflow-block",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>overflow-block</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test how the output device handles content that overflows the initial <a href=\"$MDN_URL$/Web/CSS/Containing_block\" data-flaw=\"link2\">containing block</a> along the block axis.</p>"
+        },
+        "overflow-inline": {
+          "url": "$MDN_URL$/web/CSS/@media/overflow-inline",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>overflow-inline</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test how the output device handles content that overflows the initial <a href=\"$MDN_URL$/Web/CSS/Containing_block\">containing block</a> along the inline axis.</p>"
+        },
+        "pointer": {
+          "url": "$MDN_URL$/web/CSS/@media/pointer",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>pointer</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> tests whether the user has a pointing device (such as a mouse), and if so, how accurate the <em>primary</em> pointing device is.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> If you want to test the accuracy of <em>any</em> pointing device, use <code><a href=\"$MDN_URL$/Web/CSS/@media/any-pointer\">any-pointer</a></code> instead.</p>\n</div>"
+        },
+        "prefers-color-scheme": {
+          "url": "$MDN_URL$/web/CSS/@media/prefers-color-scheme",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<div class=\"notecard note\">\n<p>If you have set <code>privacy.resistFingerprinting</code> to <strong>true</strong>, <a href=\"$MDN_URL$/Web/CSS/@media/prefers-color-scheme\"><code>prefers-color-scheme</code></a> preference is overridden to <code>light</code>.<br>\nAlternately, users can create the numeric preference <code>ui.systemUsesDarkTheme</code> to override the default behavior and return <code>light</code> (value: 0), <code>dark</code> (value: 1), or <code>no-preference</code> (value: 2). (Any other value causes Firefox to return <code>light</code>.)</p>\n</div>\n<p>The <strong><code>prefers-color-scheme</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is used to detect if the user has requested the system use a light or dark color theme.</p>"
+        },
+        "prefers-contrast": {
+          "url": "$MDN_URL$/web/CSS/@media/prefers-contrast",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "doc": "<div><div class=\"notecard experimental\">\n<h4 id=\"Experimental\">Experimental</h4>\n<p><strong>This is an <a href=\"$MDN_URL$/MDN/Contribute/Guidelines/Conventions_definitions#Experimental\">experimental technology</a></strong><br>Check the <a href=\"#Browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</p>\n</div></div>\n<p>The <strong><code>prefers-contrast</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is used to detect if the user has requested that the web content is presented with a higher (or lower) contrast.</p>"
+        },
+        "prefers-reduced-data": {
+          "url": "$MDN_URL$/web/CSS/@media/prefers-reduced-data",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "doc": "<div><div class=\"notecard experimental\">\n<h4 id=\"Experimental\">Experimental</h4>\n<p><strong>This is an <a href=\"$MDN_URL$/MDN/Contribute/Guidelines/Conventions_definitions#Experimental\">experimental technology</a></strong><br>Check the <a href=\"#Browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</p>\n</div><div class=\"notecard draft\">\n<h4 id=\"Draft\">Draft</h4>\n<p>This page is not complete.</p>\n</div></div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong> This feature is not supported by any user agent and its specifics are subject to change.</p>\n</div>\n<p>The <strong><code>prefers-reduced-data</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is used to detect if the user has requested the web content that consumes less internet traffic.</p>"
+        },
+        "prefers-reduced-motion": {
+          "url": "$MDN_URL$/web/CSS/@media/prefers-reduced-motion",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>prefers-reduced-motion</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is used to detect if the user has requested that the system minimize the amount of non-essential motion it uses.</p>\n<div class=\"notecard warning\">\n<p><strong>Important:</strong> An embedded example at the bottom of this page has a scaling movement that may be problematic for some readers. Readers with vestibular motion disorders may wish to enable the reduce motion feature on their device before viewing the animation.</p>\n</div>"
+        },
+        "prefers-reduced-transparency": {
+          "url": "$MDN_URL$/web/CSS/@media/prefers-reduced-transparency",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "doc": "<div class=\"notecard experimental\">\n<h4 id=\"Experimental\">Experimental</h4>\n<p><strong>This is an <a href=\"$MDN_URL$/MDN/Contribute/Guidelines/Conventions_definitions#Experimental\">experimental technology</a></strong><br>Check the <a href=\"#Browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</p>\n</div><div class=\"notecard draft\">\n<h4 id=\"Draft\">Draft</h4>\n<p>This page is not complete.</p>\n</div>\n<p>The <strong><code>prefers-reduced-transparency</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> is used to detect if the user has requested that the system minimize the amount of transparency used across elements.</p>"
+        },
+        "resolution": {
+          "url": "$MDN_URL$/web/CSS/@media/resolution",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>resolution</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the pixel density of the output device.</p>"
+        },
+        "scan": {
+          "url": "$MDN_URL$/web/CSS/@media/scan",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>scan</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the scanning process (if any) utilized by the output device. The word <em>scanning</em> used in this context does not refer to an image scanner, such as one used to digitize a photograph. Rather, it means the process by which an image is painted onto a television screen (or other device).</p>"
+        },
+        "scripting": {
+          "url": "$MDN_URL$/web/CSS/@media/scripting",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>scripting</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test whether scripting (such as JavaScript) is available.</p>"
+        },
+        "shape": {
+          "url": "$MDN_URL$/web/CSS/@media/shape",
+          "doc": "<p>The <code>shape</code> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the shape of the device to distinguish recrangular and round displays.</p>"
+        },
+        "update-frequency": {
+          "url": "$MDN_URL$/web/CSS/@media/update-frequency",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>update</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test how frequently (if at all) the output device is able to modify the appearance of content.</p>"
+        },
+        "width": {
+          "url": "$MDN_URL$/web/CSS/@media/width",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<p>The <strong><code>width</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Media_Queries/Using_media_queries#Media_features\">media feature</a> can be used to test the width of the <a href=\"$MDN_URL$/Glossary/viewport\">viewport</a> (or the page box, for <a href=\"$MDN_URL$/Web/CSS/Paged_Media\" data-flaw=\"link2\">paged media</a>).</p>"
+        }
+      }
     },
     "namespace": {
       "url": "$MDN_URL$/web/CSS/@namespace",
@@ -77,7 +581,46 @@
       "status": [
         "StandardTrack"
       ],
-      "doc": "<p>The <strong><code>@page</code></strong> CSS at-rule is used to modify some CSS properties when printing a document.</p>"
+      "doc": "<p>The <strong><code>@page</code></strong> CSS at-rule is used to modify some CSS properties when printing a document.</p>",
+      "properties": {
+        "bleed": {
+          "url": "$MDN_URL$/web/CSS/@page/bleed",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<div><div class=\"notecard experimental\">\n<h4 id=\"Experimental\">Experimental</h4>\n<p><strong>This is an <a href=\"$MDN_URL$/MDN/Contribute/Guidelines/Conventions_definitions#Experimental\">experimental technology</a></strong><br>Check the <a href=\"#Browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</p>\n</div></div>\n<p>The <strong><code>bleed</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a> descriptor, used with the <a href=\"$MDN_URL$/Web/CSS/@page\"><code>@page</code></a> at-rule, specifies the extent of the page bleed area outside the page box. This property only has effect if crop marks are enabled using the <a href=\"$MDN_URL$/Web/CSS/@page/marks\"><code>marks</code></a> property.</p>",
+          "values": {
+            "auto": "Computes to\n<code>6pt</code>\nif the value of\n<a href=\"$MDN_URL$/Web/CSS/@page/marks\"><code>marks</code></a>\nis\n<code>crop</code>\n. Otherwise it computes to zero.",
+            "&lt;length&gt;": "Specifies by how far outward, in each direction, the bleed area extends past the page box. Values may be negative, but there may be implementation-specific limits."
+          }
+        },
+        "marks": {
+          "url": "$MDN_URL$/web/CSS/@page/marks",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<div><div class=\"notecard experimental\">\n<h4 id=\"Experimental\">Experimental</h4>\n<p><strong>This is an <a href=\"$MDN_URL$/MDN/Contribute/Guidelines/Conventions_definitions#Experimental\">experimental technology</a></strong><br>Check the <a href=\"#Browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</p>\n</div></div>\n<p>The <strong><code>marks</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a> descriptor, used with the <a href=\"$MDN_URL$/Web/CSS/@page\"><code>@page</code></a> at-rule, adds crop and/or cross marks to the presentation of the document. <em>Crop marks</em> indicate where the page should be cut. <em>Cross marks</em> are used to align sheets.</p>\n<p>Crop marks and cross marks are printed outside the page box. To have room to show crop and cross marks, the final pages will have to be somewhat bigger than the page box.</p>",
+          "values": {
+            "crop": "Crop marks will be displayed.",
+            "cross": "Cross marks will be displayed.",
+            "none": "No marks will be displayed."
+          }
+        },
+        "size": {
+          "url": "$MDN_URL$/web/CSS/@page/size",
+          "status": [
+            "StandardTrack"
+          ],
+          "doc": "<div><div class=\"notecard experimental\">\n<h4 id=\"Experimental\">Experimental</h4>\n<p><strong>This is an <a href=\"$MDN_URL$/MDN/Contribute/Guidelines/Conventions_definitions#Experimental\">experimental technology</a></strong><br>Check the <a href=\"#Browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</p>\n</div></div>\n<p>The <strong><code>size</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a> descriptor, used with the <a href=\"$MDN_URL$/Web/CSS/@page\"><code>@page</code></a> at-rule, defines the size and orientation of the box which is used to represent a page. Most of the time, this size corresponds to the target size of the printed page if applicable.</p>\n<p>Size may either be defined with a \"scalable\" keyword (in this case the page will fill the available dimensions) or with absolute dimensions.</p>",
+          "values": {
+            "auto": "The user agent decides the size of the page. In most cases, the dimensions and orientation of the target sheet are used.",
+            "landscape": "The content of the page is displayed in landscape mode (i.e. the longest side of the box is horizontal).",
+            "portrait": "The content of the page is displayed in portrait mode (i.e. the longest side of the box is vertical). This is the default orientation.",
+            "&lt;length&gt;": "Any length value (see\n<a href=\"$MDN_URL$/Web/CSS/length\"><code>&lt;length&gt;</code></a>\n). The first value corresponds to the width of the page box and the second one corresponds to its height. If only one value is provided, it is used for both width and height.",
+            "&lt;page-size&gt;": "<dl>\n<dt>A5</dt>\n<dd>This matches the standard, ISO dimensions: 148mm x 210mm.</dd>\n<dt>A4</dt>\n<dd>This matches the standard, ISO dimensions: 210mm x 297mm. (most frequently used dimensions for personal printing.)</dd>\n<dt>A3</dt>\n<dd>This matches the standard, ISO dimensions: 297mm x 420mm.</dd>\n<dt>B5</dt>\n<dd>This matches the standard, ISO dimensions: 176mm x 250mm.</dd>\n<dt>B4</dt>\n<dd>This matches the standard, ISO dimensions: 250mm x 353mm.</dd>\n<dt>JIS-B5</dt>\n<dd>This correspond to the JIS standard dimensions: 182mm x 257mm.</dd>\n<dt>JIS-B4</dt>\n<dd>This correspond to the JIS standard dimensions: 257mm x 364mm.</dd>\n<dt>letter</dt>\n<dd>This keyword is a equivalent to the dimensions of letter paper in North America i.e. 8.5in x 11in.</dd>\n<dt>legal</dt>\n<dd>This keyword is a equivalent to the dimensions of legal papers in North America i.e. 8.5in x 14in.</dd>\n<dt>ledger</dt>\n<dd>This keyword is a equivalent to the dimensions of ledger pages in North America i.e. 11in x 17in.</dd>\n</dl>"
+          }
+        }
+      }
     },
     "property": {
       "url": "$MDN_URL$/web/CSS/@property",
