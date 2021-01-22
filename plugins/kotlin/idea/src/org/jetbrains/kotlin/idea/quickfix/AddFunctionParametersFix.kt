@@ -230,7 +230,7 @@ class AddFunctionParametersFix(
 
         override fun extractFixData(element: KtCallElement, diagnostic: Diagnostic): Pair<FunctionDescriptor, Int>? {
             val (valueArgument, valueArgumentList) = diagnostic.valueArgument() ?: return null
-            val arguments = valueArgumentList.arguments
+            val arguments = valueArgumentList.arguments + element.lambdaArguments
             val argumentIndex = arguments.indexOfFirst { it == valueArgument }
             val context = element.analyze()
             val functionDescriptor = element.getResolvedCall(context)?.resultingDescriptor as? FunctionDescriptor ?: return null
