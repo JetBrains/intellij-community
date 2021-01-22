@@ -73,7 +73,7 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     setup.setupCommandLine(wslParams)
     setup.setupJavaExePath(wslParams)
 
-    val builder = wslParams.toCommandLine(myEnvFactory.createRequest(), wslConfig, emptyList())
+    val builder = wslParams.toCommandLine(myEnvFactory.createRequest(), wslConfig)
     builder.setWorkingDirectory(workingDirectory)
 
     val wslEnvironment = myEnvFactory.prepareRemoteEnvironment(request,

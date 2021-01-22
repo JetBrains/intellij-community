@@ -28,6 +28,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.THashMap
+import io.netty.bootstrap.com.intellij.execution.configurations.ParameterTargetValuePart
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -45,6 +46,7 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
@@ -231,8 +233,21 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       }
     }
     if (!dynamicParameters) {
-      for (parameter in javaParameters.programParametersList.list) {
-        commandLine.addParameter(parameter!!)
+      for (parameter in javaParameters.programParametersList.targetedList) {
+        val values = mutableListOf<TargetValue<String>>()
+        for (part in parameter.parts) {
+          when (part) {
+            is ParameterTargetValuePart.Const ->
+              TargetValue.fixed(part.localValue)
+            is ParameterTargetValuePart.Path ->
+              requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
+            is ParameterTargetValuePart.PromiseValue ->
+              TargetValue.create(part.localValue, part.targetValue)
+            else ->
+              throw IllegalStateException("Unexpected parameter list part " + part.javaClass)
+          }.let { values.add(it) }
+        }
+        commandLine.addParameter(TargetValue.composite(values) { it.joinToString(separator = "") })
       }
     }
   }
@@ -585,13 +600,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   }
 
   private fun joinPath(segments: Array<String>) = segments.joinTo(StringBuilder(), platform.fileSeparator.toString()).toString()
-
-  fun registerFilesToUpload(additionalFilesToUpload: Collection<File>) {
-    for (file in additionalFilesToUpload) {
-      val targetValue = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, file.absolutePath, null)
-      commandLine.addAdditionalFileToUpload(file, targetValue)
-    }
-  }
 
   companion object {
     private const val JAVAAGENT = "-javaagent"

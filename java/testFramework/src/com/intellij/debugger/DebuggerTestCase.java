@@ -59,7 +59,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -202,7 +201,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
                                                                      @Nullable TargetEnvironmentConfiguration configuration)
         throws ExecutionException {
-        return getJavaParameters().toCommandLine(request, configuration, Collections.emptyList());
+        return getJavaParameters().toCommandLine(request, configuration);
       }
     };
 
@@ -270,7 +269,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
                                                                      @Nullable TargetEnvironmentConfiguration configuration)
         throws ExecutionException {
-        return getJavaParameters().toCommandLine(request, configuration, Collections.emptyList());
+        return getJavaParameters().toCommandLine(request, configuration);
       }
     };
 
