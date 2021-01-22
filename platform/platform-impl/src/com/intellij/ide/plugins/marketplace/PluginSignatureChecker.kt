@@ -22,7 +22,7 @@ object PluginSignatureChecker {
   private val jetbrainsCertificate: Certificate? by lazy {
     val cert = PluginSignatureChecker.javaClass.classLoader.getResourceAsStream("ca.crt")
     if (cert == null) {
-      LOG.warn(IdeBundle.message("plugin.signature.not.found"))
+      LOG.warn(IdeBundle.message("jetbrains.certificate.not.found"))
       null
     }
     else {
@@ -32,7 +32,7 @@ object PluginSignatureChecker {
 
   @JvmStatic
   fun checkPluginsSignature(pluginName: String, pluginFile: File): Boolean {
-    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("plugin.signature.not.found"))
+    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("jetbrains.certificate.not.found"))
     val errorMessage = verifyPluginAndGetErrorMessage(pluginFile, jbCert)
     if (errorMessage != null) {
       return processSignatureWarning(pluginName, errorMessage)
