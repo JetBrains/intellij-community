@@ -20,30 +20,27 @@ IF NOT "%@@product_uc@@_JDK%" == "" (
   IF EXIST "%@@product_uc@@_JDK%" SET JRE=%@@product_uc@@_JDK%
 )
 
+SET BITS=64
+SET _USER_JRE64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
+SET BITS=
+SET _USER_JRE_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
 IF "%JRE%" == "" (
-  SET BITS=64
-  SET USER_JRE64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
-  SET BITS=
-  SET USER_JRE_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
   SET _JRE_CANDIDATE=
-  IF EXIST "%USER_JRE64_FILE%" (
-    SET /P _JRE_CANDIDATE=<"%USER_JRE64_FILE%"
+  IF EXIST "%_USER_JRE64_FILE%" (
+    SET /P _JRE_CANDIDATE=<"%_USER_JRE64_FILE%"
   ) ELSE (
-    IF EXIST "%USER_JRE_FILE%" SET /P _JRE_CANDIDATE=<"%USER_JRE_FILE%"
+    IF EXIST "%_USER_JRE_FILE%" SET /P _JRE_CANDIDATE=<"%_USER_JRE_FILE%"
   )
-  IF NOT "%_JRE_CANDIDATE%" == "" (
-    IF NOT EXIST "%_JRE_CANDIDATE%" SET _JRE_CANDIDATE="%IDE_HOME%\%_JRE_CANDIDATE%"
-    IF EXIST "%_JRE_CANDIDATE%" SET JRE=%_JRE_CANDIDATE%
-  )
+)
+IF "%JRE%" == "" (
+  IF NOT "%_JRE_CANDIDATE%" == "" IF EXIST "%_JRE_CANDIDATE%" SET JRE=%_JRE_CANDIDATE%
 )
 
 IF "%JRE%" == "" (
-  IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
-    IF EXIST "%IDE_HOME%\jbr" SET JRE=%IDE_HOME%\jbr
-  )
-  IF "%JRE%" == "" (
-    IF EXIST "%IDE_HOME%\jbr-x86" SET JRE=%IDE_HOME%\jbr-x86
-  )
+  IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" IF EXIST "%IDE_HOME%\jbr" SET JRE=%IDE_HOME%\jbr
+)
+IF "%JRE%" == "" (
+  IF EXIST "%IDE_HOME%\jbr-x86" SET JRE=%IDE_HOME%\jbr-x86
 )
 
 IF "%JRE%" == "" (
@@ -57,7 +54,7 @@ IF "%JRE%" == "" (
 SET JAVA_EXE=%JRE%\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" (
   ECHO ERROR: cannot start @@product_full@@.
-  ECHO No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
+  ECHO No JRE found. Please make sure @@product_uc@@_JDK, JDK_HOME, or JAVA_HOME point to a valid JRE installation.
   EXIT /B
 )
 
