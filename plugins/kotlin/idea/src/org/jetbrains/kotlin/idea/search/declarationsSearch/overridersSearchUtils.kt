@@ -5,11 +5,16 @@
 
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -27,6 +32,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
@@ -106,4 +112,38 @@ fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
         }
         else -> emptyList()
     }
+}
+
+fun findOverridingMethodsInKotlin(
+    parentClass: PsiClass,
+    baseElement: PsiNamedElement,
+    parameters: OverridingMethodsSearch.SearchParameters,
+    consumer: Processor<in PsiMethod>,
+): Boolean = ClassInheritorsSearch.search(parentClass, parameters.scope, true).forEach(Processor { inheritor: PsiClass ->
+    val found = runReadAction { findOverridingMethod(inheritor, baseElement) }
+
+    found == null || (consumer.process(found) && parameters.isCheckDeep)
+})
+
+private fun findOverridingMethod(inheritor: PsiClass, baseElement: PsiNamedElement): PsiMethod? {
+    // Leave Java classes search to JavaOverridingMethodsSearcher
+    if (inheritor !is KtLightClass) return null
+
+    val name = baseElement.name
+    val methodsByName = inheritor.findMethodsByName(name, false)
+
+    for (lightMethodCandidate in methodsByName) {
+        val candidateDescriptor = (lightMethodCandidate as? KtLightMethod)?.kotlinOrigin?.unsafeResolveToDescriptor() ?: continue
+        if (candidateDescriptor !is CallableMemberDescriptor) continue
+
+        val overriddenDescriptors = candidateDescriptor.getDirectlyOverriddenDeclarations()
+        for (candidateSuper in overriddenDescriptors) {
+            val candidateDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(candidateSuper)
+            if (candidateDeclaration == baseElement) {
+                return lightMethodCandidate
+            }
+        }
+    }
+
+    return null
 }

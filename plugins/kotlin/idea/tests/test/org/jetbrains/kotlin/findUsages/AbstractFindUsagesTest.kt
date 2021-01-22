@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.TestFixtureExtension
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
@@ -337,7 +338,9 @@ internal fun findUsages(
                 ProgressManager.getInstance().run(
                     object : Task.Modal(project, "", false) {
                         override fun run(indicator: ProgressIndicator) {
-                            handler.processElementUsages(psiElement, processor, options)
+                            runReadAction {
+                                handler.processElementUsages(psiElement, processor, options)
+                            }
                         }
                     },
                 )

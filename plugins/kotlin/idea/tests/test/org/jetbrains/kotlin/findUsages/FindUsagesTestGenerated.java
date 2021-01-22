@@ -1610,6 +1610,21 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessor.0.java");
             }
 
+            @TestMetadata("OverridenArrayType.0.java")
+            public void testOverridenArrayType() throws Exception {
+                runTest("testData/findUsages/java/findJavaMethodUsages/OverridenArrayType.0.java");
+            }
+
+            @TestMetadata("OverridenBoxedType.0.java")
+            public void testOverridenBoxedType() throws Exception {
+                runTest("testData/findUsages/java/findJavaMethodUsages/OverridenBoxedType.0.java");
+            }
+
+            @TestMetadata("OverridenFlexibleCollection.0.java")
+            public void testOverridenFlexibleCollection() throws Exception {
+                runTest("testData/findUsages/java/findJavaMethodUsages/OverridenFlexibleCollection.0.java");
+            }
+
             @TestMetadata("OverridenRawGenericSignatureBase.0.java")
             public void testOverridenRawGenericSignatureBase() throws Exception {
                 runTest("testData/findUsages/java/findJavaMethodUsages/OverridenRawGenericSignatureBase.0.java");
@@ -1618,6 +1633,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("OverridenRawGenericSignatureBase2.0.java")
             public void testOverridenRawGenericSignatureBase2() throws Exception {
                 runTest("testData/findUsages/java/findJavaMethodUsages/OverridenRawGenericSignatureBase2.0.java");
+            }
+
+            @TestMetadata("OverridenRawType.0.java")
+            public void testOverridenRawType() throws Exception {
+                runTest("testData/findUsages/java/findJavaMethodUsages/OverridenRawType.0.java");
             }
 
             @TestMetadata("SyntheticProperties.0.java")
