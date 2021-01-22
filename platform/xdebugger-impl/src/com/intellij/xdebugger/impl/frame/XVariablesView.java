@@ -65,7 +65,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     }
 
     XStackFrame stackFrame = session.getCurrentStackFrame();
-    DebuggerUIUtil.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       getTree().markNodesObsolete();
       if (stackFrame != null) {
         cancelClear();
@@ -74,7 +74,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       else {
         requestClear();
       }
-    });
+    }, session.getProject().getDisposed());
   }
 
   @Override
