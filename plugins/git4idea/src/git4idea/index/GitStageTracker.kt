@@ -253,7 +253,7 @@ interface GitStageTrackerListener : EventListener {
   fun update()
 }
 
-private fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
+internal fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
   return when {
     file is GitIndexVirtualFile -> file.root
     file.isInLocalFileSystem -> ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file)

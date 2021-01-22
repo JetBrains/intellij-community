@@ -274,6 +274,12 @@
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
     <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
     <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction"/>
+    <action id="Git.Stage.Show.Staged" class="git4idea.index.actions.GitShowStagedVersionAction">
+      <add-to-group group-id="Git.ContextMenu" relative-to-action="ChangesView.RevertFiles" anchor="after"/>
+    </action>
+    <action id="Git.Stage.Show.Local" class="git4idea.index.actions.GitShowLocalVersionAction">
+      <add-to-group group-id="EditorPopupMenu"/>
+    </action>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
