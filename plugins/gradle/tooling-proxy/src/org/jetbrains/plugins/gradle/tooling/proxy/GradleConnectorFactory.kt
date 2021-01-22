@@ -20,6 +20,7 @@ import org.gradle.tooling.internal.consumer.loader.ToolingImplementationLoader
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.tooling.internal.consumer.parameters.FailsafeBuildProgressListenerAdapter
 import org.gradle.tooling.internal.protocol.InternalBuildProgressListener
+import java.io.Serializable
 import java.lang.reflect.Field
 
 fun createConnector(buildEventConsumer: BuildEventConsumer): GradleConnector {
@@ -98,9 +99,13 @@ private class MyToolingImplementationLoader(private val buildEventConsumer: Buil
                       parameters: ConnectionParameters,
                       token: BuildCancellationToken): ConsumerConnection {
     val consumerConnection = delegate.create(distribution, factory, object : InternalBuildProgressListener {
-      override fun onEvent(o: Any) {
-        buildEventConsumer.dispatch(o)
-        listener.onEvent(o)
+      override fun onEvent(event: Any) {
+        if (event is Serializable) {
+          // client-side tooling events can be created using non-serializable implementations of org.gradle.tooling.events.ProgressEvent
+          // e.g. events about downloading of gradle wrapper
+          buildEventConsumer.dispatch(event)
+        }
+        listener.onEvent(event)
       }
 
       override fun getSubscribedOperations(): List<String> {
