@@ -118,6 +118,11 @@ class HardCodedPurity {
       if (method.methodName.equals("next") && method.methodDesc.startsWith("()") && method.internalClassName.equals("java/util/Iterator")) {
         return true;
       }
+      if (method.methodName.equals("initCause") && method.methodDesc.equals("(Ljava/lang/Throwable;)Ljava/lang/Throwable;") &&
+          method.internalClassName.startsWith("java/")) {
+        // Throwable.initCause is overridable. For Java classes, we assume that its contract is fixed 
+        return true;
+      }
       return super.isThisChangingMethod(method);
     }
 
