@@ -282,7 +282,7 @@ public final class ClassPath {
 
   public @NotNull Enumeration<URL> getResources(@NotNull String name) {
     if (name.endsWith("/")) {
-      name = name.substring(0, name.length() - 1)
+      name = name.substring(0, name.length() - 1);
     }
     if (useCache && allUrlsWereProcessed) {
       Loader[] loaders = cache.getLoadersByName(name);
