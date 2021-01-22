@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -44,7 +44,7 @@ import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,16 +61,16 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
-  private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
-    new TIntArrayList(new int[]{0}),
-    new TIntArrayList(new int[]{1}),
-    new TIntArrayList(new int[]{1, 2}),
-    new TIntArrayList(new int[]{3}),
-    new TIntArrayList(new int[]{4}),
-    new TIntArrayList(new int[]{5}),
-    new TIntArrayList(new int[]{1, 2}),
-    new TIntArrayList(new int[]{6}),
-    new TIntArrayList(new int[]{1, 2})
+  private static final List<IntArrayList> ourEnabledFields = Arrays.asList(
+    new IntArrayList(new int[]{0}),
+    new IntArrayList(new int[]{1}),
+    new IntArrayList(new int[]{1, 2}),
+    new IntArrayList(new int[]{3}),
+    new IntArrayList(new int[]{4}),
+    new IntArrayList(new int[]{5}),
+    new IntArrayList(new int[]{1, 2}),
+    new IntArrayList(new int[]{6}),
+    new IntArrayList(new int[]{1, 2})
     );
   private static final String[] FORK_MODE_ALL =
     {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
@@ -528,7 +528,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
   public void onTypeChanged(final int newType) {
     myTypeChooser.setSelectedItem(newType);
-    final TIntArrayList enabledFields = ourEnabledFields.size() > newType ? ourEnabledFields.get(newType) : null;
+    final IntArrayList enabledFields = ourEnabledFields.size() > newType ? ourEnabledFields.get(newType) : null;
     for (int i = 0; i < myTestLocations.length; i++)
       getTestLocation(i).setEnabled(enabledFields != null && enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {

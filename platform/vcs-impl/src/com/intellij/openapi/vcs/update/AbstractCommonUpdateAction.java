@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -39,7 +39,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -180,7 +179,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       }
     }
 
-    final Map<AbstractVcs, Collection<FilePath>> result = new THashMap<>();
+    final Map<AbstractVcs, Collection<FilePath>> result = new HashMap<>();
     for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
       AbstractVcs vcs = entry.getKey();
       result.put(vcs, vcs.filterUniqueRoots(new ArrayList<>(entry.getValue()), FilePath::getVirtualFile));

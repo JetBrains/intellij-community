@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
@@ -8,7 +8,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -189,8 +190,8 @@ public final class ByLine {
         int start1 = Math.max(last1, builder.getIndex1());
         int start2 = Math.max(last2, builder.getIndex2());
 
-        TIntArrayList subLines1 = new TIntArrayList();
-        TIntArrayList subLines2 = new TIntArrayList();
+        IntArrayList subLines1 = new IntArrayList();
+        IntArrayList subLines2 = new IntArrayList();
         for (int i = start1; i < line1; i++) {
           if (StringUtil.equalsIgnoreWhitespaces(sample, lines1.get(i).getContent())) {
             subLines1.add(i);
@@ -210,7 +211,7 @@ public final class ByLine {
         sample = null;
       }
 
-      private void alignExactMatching(TIntArrayList subLines1, TIntArrayList subLines2) {
+      private void alignExactMatching(IntList subLines1, IntList subLines2) {
         int n = Math.max(subLines1.size(), subLines2.size());
         boolean skipAligning = n > 10 || // we use brute-force algorithm (C_n_k). This will limit search space by ~250 cases.
                                subLines1.size() == subLines2.size(); // nothing to do
@@ -218,8 +219,8 @@ public final class ByLine {
         if (skipAligning) {
           int count = Math.min(subLines1.size(), subLines2.size());
           for (int i = 0; i < count; i++) {
-            int index1 = subLines1.get(i);
-            int index2 = subLines2.get(i);
+            int index1 = subLines1.getInt(i);
+            int index2 = subLines2.getInt(i);
             if (lines1.get(index1).equals(lines2.get(index2))) {
               builder.markEqual(index1, index2);
             }
@@ -230,8 +231,8 @@ public final class ByLine {
         if (subLines1.size() < subLines2.size()) {
           int[] matching = getBestMatchingAlignment(subLines1, subLines2, lines1, lines2);
           for (int i = 0; i < subLines1.size(); i++) {
-            int index1 = subLines1.get(i);
-            int index2 = subLines2.get(matching[i]);
+            int index1 = subLines1.getInt(i);
+            int index2 = subLines2.getInt(matching[i]);
             if (lines1.get(index1).equals(lines2.get(index2))) {
               builder.markEqual(index1, index2);
             }
@@ -240,8 +241,8 @@ public final class ByLine {
         else {
           int[] matching = getBestMatchingAlignment(subLines2, subLines1, lines2, lines1);
           for (int i = 0; i < subLines2.size(); i++) {
-            int index1 = subLines1.get(matching[i]);
-            int index2 = subLines2.get(i);
+            int index1 = subLines1.getInt(matching[i]);
+            int index2 = subLines2.getInt(i);
             if (lines1.get(index1).equals(lines2.get(index2))) {
               builder.markEqual(index1, index2);
             }
@@ -253,8 +254,8 @@ public final class ByLine {
     return fair(builder.finish());
   }
 
-  private static int @NotNull [] getBestMatchingAlignment(@NotNull final TIntArrayList subLines1,
-                                                          @NotNull final TIntArrayList subLines2,
+  private static int @NotNull [] getBestMatchingAlignment(@NotNull final IntList subLines1,
+                                                          @NotNull final IntList subLines2,
                                                           @NotNull final List<? extends Line> lines1,
                                                           @NotNull final List<? extends Line> lines2) {
     assert subLines1.size() < subLines2.size();
@@ -289,8 +290,8 @@ public final class ByLine {
       private void processCombination() {
         int weight = 0;
         for (int i = 0; i < size; i++) {
-          int index1 = subLines1.get(i);
-          int index2 = subLines2.get(comb[i]);
+          int index1 = subLines1.getInt(i);
+          int index2 = subLines2.getInt(comb[i]);
           if (lines1.get(index1).equals(lines2.get(index2))) weight++;
         }
 
@@ -324,17 +325,17 @@ public final class ByLine {
     int threshold = ComparisonUtil.getUnimportantLineCharCount();
     if (threshold == 0) return diff(lines1, lines2, indicator);
 
-    Pair<List<Line>, TIntArrayList> bigLines1 = getBigLines(lines1, threshold);
-    Pair<List<Line>, TIntArrayList> bigLines2 = getBigLines(lines2, threshold);
+    Pair<List<Line>, IntList> bigLines1 = getBigLines(lines1, threshold);
+    Pair<List<Line>, IntList> bigLines2 = getBigLines(lines2, threshold);
 
     FairDiffIterable changes = diff(bigLines1.first, bigLines2.first, indicator);
     return new ChangeCorrector.SmartLineChangeCorrector(bigLines1.second, bigLines2.second, lines1, lines2, changes, indicator).build();
   }
 
   @NotNull
-  private static Pair<List<Line>, TIntArrayList> getBigLines(@NotNull List<? extends Line> lines, int threshold) {
+  private static Pair<List<Line>, IntList> getBigLines(@NotNull List<? extends Line> lines, int threshold) {
     List<Line> bigLines = new ArrayList<>(lines.size());
-    TIntArrayList indexes = new TIntArrayList(lines.size());
+    IntList indexes = new IntArrayList(lines.size());
 
     for (int i = 0; i < lines.size(); i++) {
       Line line = lines.get(i);

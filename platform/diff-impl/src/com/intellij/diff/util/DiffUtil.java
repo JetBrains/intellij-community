@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.application.options.CodeStyle;
@@ -96,7 +96,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SingleComponentCenteringLayout;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import gnu.trove.Equality;
 import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
@@ -111,10 +110,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.IntUnaryOperator;
-
-import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
-import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public final class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
@@ -526,7 +523,7 @@ public final class DiffUtil {
     List<@Nls String> titles = request.getContentTitles();
 
     List<JComponent> components = new ArrayList<>(titles.size());
-    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
       JComponent title = createTitle(titles.get(i),
                                      diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
@@ -549,7 +546,7 @@ public final class DiffUtil {
 
     List<JComponent> result = new ArrayList<>(contents.size());
 
-    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
       JComponent title = createTitle(titles.get(i),
                                      contents.get(i),
@@ -1303,8 +1300,8 @@ public final class DiffUtil {
 
   @NotNull
   public static MergeConflictType getMergeType(@NotNull Condition<? super ThreeSide> emptiness,
-                                               @NotNull Equality<? super ThreeSide> equality,
-                                               @Nullable Equality<? super ThreeSide> trueEquality,
+                                               @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality,
+                                               @Nullable BiPredicate<? super ThreeSide, ? super ThreeSide> trueEquality,
                                                @NotNull BooleanGetter conflictResolver) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
@@ -1319,7 +1316,7 @@ public final class DiffUtil {
         return new MergeConflictType(TextDiffType.INSERTED, true, false);
       }
       else { // =-=
-        boolean equalModifications = equality.equals(ThreeSide.LEFT, ThreeSide.RIGHT);
+        boolean equalModifications = equality.test(ThreeSide.LEFT, ThreeSide.RIGHT);
         if (equalModifications) {
           return new MergeConflictType(TextDiffType.INSERTED, true, true);
         }
@@ -1333,13 +1330,13 @@ public final class DiffUtil {
         return new MergeConflictType(TextDiffType.DELETED, true, true);
       }
       else { // -==, ==-, ===
-        boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
-        boolean unchangedRight = equality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+        boolean unchangedLeft = equality.test(ThreeSide.BASE, ThreeSide.LEFT);
+        boolean unchangedRight = equality.test(ThreeSide.BASE, ThreeSide.RIGHT);
 
         if (unchangedLeft && unchangedRight) {
           assert trueEquality != null;
-          boolean trueUnchangedLeft = trueEquality.equals(ThreeSide.BASE, ThreeSide.LEFT);
-          boolean trueUnchangedRight = trueEquality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+          boolean trueUnchangedLeft = trueEquality.test(ThreeSide.BASE, ThreeSide.LEFT);
+          boolean trueUnchangedRight = trueEquality.test(ThreeSide.BASE, ThreeSide.RIGHT);
           assert !trueUnchangedLeft || !trueUnchangedRight;
           return new MergeConflictType(TextDiffType.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight);
         }
@@ -1347,7 +1344,7 @@ public final class DiffUtil {
         if (unchangedLeft) return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
         if (unchangedRight) return new MergeConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
 
-        boolean equalModifications = equality.equals(ThreeSide.LEFT, ThreeSide.RIGHT);
+        boolean equalModifications = equality.test(ThreeSide.LEFT, ThreeSide.RIGHT);
         if (equalModifications) {
           return new MergeConflictType(TextDiffType.MODIFIED, true, true);
         }
@@ -1465,7 +1462,7 @@ public final class DiffUtil {
 
   @NotNull
   private static MergeConflictType getLeftToRightDiffType(@NotNull Condition<? super ThreeSide> emptiness,
-                                                          @NotNull Equality<? super ThreeSide> equality) {
+                                                          @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
     boolean isRightEmpty = emptiness.value(ThreeSide.RIGHT);
@@ -1487,8 +1484,8 @@ public final class DiffUtil {
         return new MergeConflictType(TextDiffType.MODIFIED, true, true);
       }
       else { // -==, ==-, ===
-        boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
-        boolean unchangedRight = equality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+        boolean unchangedLeft = equality.test(ThreeSide.BASE, ThreeSide.LEFT);
+        boolean unchangedRight = equality.test(ThreeSide.BASE, ThreeSide.RIGHT);
         assert !unchangedLeft || !unchangedRight;
 
         if (unchangedLeft) {
@@ -1728,8 +1725,8 @@ public final class DiffUtil {
 
   @NotNull
   private static List<DiffNotificationProvider> getNotificationProviders(@NotNull UserDataHolder holder) {
-    List<DiffNotificationProvider> providers = notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
-    List<JComponent> components = notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
+    List<DiffNotificationProvider> providers = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
+    List<JComponent> components = ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATIONS));
     return ContainerUtil.concat(providers, ContainerUtil.map(components, component -> (viewer) -> component));
   }
 

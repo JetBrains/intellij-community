@@ -17,8 +17,6 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import gnu.trove.Equality;
-import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 public abstract class PythonCommonTestCase extends TestCase {
@@ -171,8 +170,8 @@ public abstract class PythonCommonTestCase extends TestCase {
 
     final StringBuilder builder = new StringBuilder();
     for (final Object o : collection) {
-      if (o instanceof THashSet) {
-        builder.append(new TreeSet<>((THashSet<?>)o));
+      if (o instanceof Set) {
+        builder.append(new TreeSet<>((Set<?>)o));
       }
       else {
         builder.append(o);
@@ -184,12 +183,13 @@ public abstract class PythonCommonTestCase extends TestCase {
 
   private static <T> boolean equals(@NotNull Iterable<? extends T> a1,
                                     @NotNull Iterable<? extends T> a2,
-                                    @NotNull Equality<? super T> comparator) {
+                                    @NotNull BiPredicate<? super T, ? super T> comparator) {
     Iterator<? extends T> it1 = a1.iterator();
     Iterator<? extends T> it2 = a2.iterator();
     while (it1.hasNext() || it2.hasNext()) {
-      if (!it1.hasNext() || !it2.hasNext()) return false;
-      if (!comparator.equals(it1.next(), it2.next())) return false;
+      if (!it1.hasNext() || !it2.hasNext() || !comparator.test(it1.next(), it2.next())) {
+        return false;
+      }
     }
     return true;
   }
@@ -243,14 +243,13 @@ public abstract class PythonCommonTestCase extends TestCase {
   public static <T> void assertOrderedEquals(@NotNull String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Iterable<? extends T> expected) {
-    //noinspection unchecked
-    assertOrderedEquals(errorMsg, actual, expected, Equality.CANONICAL);
+    assertOrderedEquals(errorMsg, actual, expected, (t, t2) -> Objects.equals(t, t2));
   }
 
   public static <T> void assertOrderedEquals(@NotNull String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Iterable<? extends T> expected,
-                                             @NotNull Equality<? super T> comparator) {
+                                             @NotNull BiPredicate<? super T, ? super T> comparator) {
     if (!equals(actual, expected, comparator)) {
       String expectedString = toString(expected);
       String actualString = toString(actual);

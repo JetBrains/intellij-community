@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -16,7 +16,7 @@ public final class LineOffsetsUtil {
 
   @NotNull
   public static LineOffsets create(@NotNull CharSequence text) {
-    TIntArrayList ends = new TIntArrayList();
+    IntArrayList ends = new IntArrayList();
 
     int index = 0;
     while (true) {
@@ -31,7 +31,7 @@ public final class LineOffsetsUtil {
       }
     }
 
-    return new LineOffsetsImpl(ends.toNativeArray(), text.length());
+    return new LineOffsetsImpl(ends.toIntArray(), text.length());
   }
 
   private static final class LineOffsetsImpl implements LineOffsets {

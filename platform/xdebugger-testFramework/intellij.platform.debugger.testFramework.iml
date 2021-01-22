@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" />
     <orderEntry type="library" name="StreamEx" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

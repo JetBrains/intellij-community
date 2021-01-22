@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.revisions.Revision;
@@ -27,7 +26,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +43,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class RevisionsList {
+public final class RevisionsList {
   public static final int RECENT_PERIOD = 12;
   private final JBTable table;
 
@@ -112,7 +110,7 @@ public class RevisionsList {
 
     Date today = new Date();
 
-    Map<RevisionItem, Period> periods = new THashMap<>();
+    Map<RevisionItem, Period> periods = new HashMap<>();
     for (int i = 0; i < newRevs.size(); i++) {
       RevisionItem each = newRevs.get(i);
       boolean recent = today.getTime() - each.revision.getTimestamp() < 1000 * 60 * 60 * RECENT_PERIOD;

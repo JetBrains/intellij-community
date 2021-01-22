@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -14,7 +14,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +75,7 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
   protected ExitCode performBuild(CompileContext context, ModuleChunk chunk, InstrumentationClassFinder finder, OutputConsumer outputConsumer) {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
     if (!outputConsumer.getCompiledClasses().isEmpty()) {
-      final Map<ModuleBuildTarget, Collection<ClassItem>> remoteClasses = new THashMap<>();
+      final Map<ModuleBuildTarget, Collection<ClassItem>> remoteClasses = new HashMap<>();
       for (ModuleBuildTarget target : chunk.getTargets()) {
         for (CompiledClass compiledClass : outputConsumer.getTargetCompiledClasses(target)) {
           try {

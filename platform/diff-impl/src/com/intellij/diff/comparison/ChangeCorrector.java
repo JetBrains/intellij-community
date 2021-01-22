@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.ByLine.Line;
@@ -7,7 +7,7 @@ import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.IntPair;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -128,14 +128,14 @@ abstract class ChangeCorrector {
     }
   }
 
-  public static class SmartLineChangeCorrector extends ChangeCorrector {
-    @NotNull private final TIntArrayList myIndexes1;
-    @NotNull private final TIntArrayList myIndexes2;
+  public static final class SmartLineChangeCorrector extends ChangeCorrector {
+    @NotNull private final IntList myIndexes1;
+    @NotNull private final IntList myIndexes2;
     @NotNull private final List<? extends Line> myLines1;
     @NotNull private final List<? extends Line> myLines2;
 
-    public SmartLineChangeCorrector(@NotNull TIntArrayList indexes1,
-                                    @NotNull TIntArrayList indexes2,
+    public SmartLineChangeCorrector(@NotNull IntList indexes1,
+                                    @NotNull IntList indexes2,
                                     @NotNull List<? extends Line> lines1,
                                     @NotNull List<? extends Line> lines2,
                                     @NotNull FairDiffIterable changes,
@@ -166,13 +166,13 @@ abstract class ChangeCorrector {
 
     @Override
     protected IntPair getOriginalRange1(int index) {
-      int offset = myIndexes1.get(index);
+      int offset = myIndexes1.getInt(index);
       return new IntPair(offset, offset + 1);
     }
 
     @Override
     protected IntPair getOriginalRange2(int index) {
-      int offset = myIndexes2.get(index);
+      int offset = myIndexes2.getInt(index);
       return new IntPair(offset, offset + 1);
     }
   }

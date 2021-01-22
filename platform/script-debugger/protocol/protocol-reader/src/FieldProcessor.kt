@@ -1,7 +1,7 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
 import com.intellij.openapi.util.text.StringUtil
-import gnu.trove.THashSet
 import org.jetbrains.jsonProtocol.JsonField
 import org.jetbrains.jsonProtocol.JsonSubtypeCasting
 import org.jetbrains.jsonProtocol.Optional
@@ -35,12 +35,12 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
   init {
     val methods = typeClass.methods
     // todo sort by source location
-    Arrays.sort(methods, { o1, o2 -> o1.name.compareTo(o2.name) })
+    Arrays.sort(methods) { o1, o2 -> o1.name.compareTo(o2.name) }
 
-    val skippedNames = THashSet<String>()
+    val skippedNames = HashSet<String>()
     for (method in methods) {
-      val annotation = method.getAnnotation<JsonField>(JsonField::class.java)
-      if (annotation != null && !annotation.primitiveValue.isEmpty()) {
+      val annotation = method.getAnnotation(JsonField::class.java)
+      if (annotation != null && annotation.primitiveValue.isNotEmpty()) {
         skippedNames.add(annotation.primitiveValue)
         skippedNames.add("${annotation.primitiveValue}Type")
       }
@@ -91,7 +91,7 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
   }
 
   private fun createMethodHandler(member: KCallable<*>, method: Method, skipRead: Boolean): MethodHandler? {
-    var protocolName = member.annotation<ProtocolName>()?.name ?: member.name
+    val protocolName = member.annotation<ProtocolName>()?.name ?: member.name
     val genericReturnType = member.returnType.javaType
     val isNotNull: Boolean
     val isPrimitive = if (genericReturnType is Class<*>) genericReturnType.isPrimitive else genericReturnType !is ParameterizedType
@@ -176,7 +176,7 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
       fieldTypeInfo = {scope, out -> fieldTypeParser.appendInternalValueTypeName(scope, out)}
     }
     else {
-      fieldTypeInfo = {scope, out -> fieldTypeParser.appendFinishedValueTypeName(out)}
+      fieldTypeInfo = { _, out -> fieldTypeParser.appendFinishedValueTypeName(out)}
     }
     val binding = VolatileFieldBinding(position, fieldTypeInfo)
     volatileFields.add(binding)

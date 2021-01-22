@@ -1,16 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectByteHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -20,6 +17,7 @@ import java.util.zip.ZipFile;
 final class DefaultFileOperations implements FileOperations {
   private static final File[] NULL_FILE_ARRAY = new File[0];
   private static final Archive NULL_ARCHIVE = new Archive() {
+    @NotNull
     @Override
     public Iterable<JavaFileObject> list(String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) {
       return Collections.emptyList();
@@ -28,14 +26,10 @@ final class DefaultFileOperations implements FileOperations {
     public void close(){
     }
   };
-  private static final byte UNKNOWN = 0;
-  private static final byte NO = 1;
-  private static final byte YES = 2;
 
-
-  private final Map<File, File[]> myDirectoryCache = new THashMap<File, File[]>();
-  private final Map<File, FileOperations.Archive> myArchiveCache = new THashMap<File, FileOperations.Archive>();
-  private final TObjectByteHashMap<File> myIsFile = new TObjectByteHashMap<File>();
+  private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
+  private final Map<File, FileOperations.Archive> myArchiveCache = new HashMap<File, FileOperations.Archive>();
+  private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
 
   @Override
   @NotNull
@@ -79,12 +73,12 @@ final class DefaultFileOperations implements FileOperations {
 
   @Override
   public boolean isFile(File file) {
-    byte cachedIsFile = myIsFile.get(file);
-    if (cachedIsFile == UNKNOWN) {
-      cachedIsFile = file.isFile() ? YES : NO;
+    Boolean cachedIsFile = myIsFile.get(file);
+    if (cachedIsFile == null) {
+      cachedIsFile = file.isFile();
       myIsFile.put(file, cachedIsFile);
     }
-    return cachedIsFile == YES;
+    return cachedIsFile == Boolean.TRUE;
   }
 
   @Override
@@ -168,7 +162,7 @@ final class DefaultFileOperations implements FileOperations {
 
   private static class ZipArchive implements FileOperations.Archive {
     private final ZipFile myZip;
-    private final Map<String, Collection<ZipEntry>> myPaths = new THashMap<String, Collection<ZipEntry>>();
+    private final Map<String, Collection<ZipEntry>> myPaths = new HashMap<String, Collection<ZipEntry>>();
     private final Function<ZipEntry, JavaFileObject> myToFileObjectConverter;
     private static final FileObjectKindFilter<ZipEntry> ourEntryFilter = new FileObjectKindFilter<ZipEntry>(new Function<ZipEntry, String>() {
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.DiffIterable;
@@ -6,7 +6,7 @@ import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -206,7 +206,7 @@ public final class ByChar {
   //
 
   private static int @NotNull [] getAllCodePoints(@NotNull CharSequence text) {
-    TIntArrayList list = new TIntArrayList(text.length());
+    IntArrayList list = new IntArrayList(text.length());
 
     int len = text.length();
     int offset = 0;
@@ -220,13 +220,13 @@ public final class ByChar {
       offset += charCount;
     }
 
-    return list.toNativeArray();
+    return list.toIntArray();
   }
 
   @NotNull
   private static CodePointsOffsets getNonSpaceCodePoints(@NotNull CharSequence text) {
-    TIntArrayList codePoints = new TIntArrayList(text.length());
-    TIntArrayList offsets = new TIntArrayList(text.length());
+    IntArrayList codePoints = new IntArrayList(text.length());
+    IntArrayList offsets = new IntArrayList(text.length());
 
     int len = text.length();
     int offset = 0;
@@ -243,13 +243,13 @@ public final class ByChar {
       offset += charCount;
     }
 
-    return new CodePointsOffsets(codePoints.toNativeArray(), offsets.toNativeArray());
+    return new CodePointsOffsets(codePoints.toIntArray(), offsets.toIntArray());
   }
 
   @NotNull
   private static CodePointsOffsets getPunctuationChars(@NotNull CharSequence text) {
-    TIntArrayList codePoints = new TIntArrayList(text.length());
-    TIntArrayList offsets = new TIntArrayList(text.length());
+    IntArrayList codePoints = new IntArrayList(text.length());
+    IntArrayList offsets = new IntArrayList(text.length());
 
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -259,7 +259,7 @@ public final class ByChar {
       }
     }
 
-    return new CodePointsOffsets(codePoints.toNativeArray(), offsets.toNativeArray());
+    return new CodePointsOffsets(codePoints.toIntArray(), offsets.toIntArray());
   }
 
   private static int countChars(int[] codePoints, int start, int end) {

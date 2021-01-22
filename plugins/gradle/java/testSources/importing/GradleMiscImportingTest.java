@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -343,7 +342,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @NotNull
   private Map<String, ExternalProject> getExternalProjectsMap() {
     ExternalProject rootExternalProject = ExternalProjectDataCache.getInstance(myProject).getRootExternalProject(getProjectPath());
-    final Map<String, ExternalProject> externalProjectMap = new THashMap<>();
+    final Map<String, ExternalProject> externalProjectMap = new HashMap<>();
     if (rootExternalProject == null) return externalProjectMap;
     ArrayDeque<ExternalProject> queue = new ArrayDeque<>();
     queue.add(rootExternalProject);

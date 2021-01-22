@@ -1,23 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.config;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class ExternalizablePropertyContainer extends AbstractProperty.AbstractPropertyContainer {
   private static final Logger LOG = Logger.getInstance(ExternalizablePropertyContainer.class);
-  private final Map<AbstractProperty, Object> myValues = new THashMap<>();
-  private final Map<AbstractProperty, Externalizer> myExternalizers = new THashMap<>();
+  private final Map<AbstractProperty, Object> myValues = new HashMap<>();
+  private final Map<AbstractProperty, Externalizer> myExternalizers = new HashMap<>();
 
   public <T> void registerProperty(AbstractProperty<T> property, Externalizer<T> externalizer) {
     String name = property.getName();
@@ -39,7 +39,7 @@ public final class ExternalizablePropertyContainer extends AbstractProperty.Abst
   }
 
   public void readExternal(@NotNull Element element) {
-    Map<String, AbstractProperty> propertyByName = new THashMap<>();
+    Map<String, AbstractProperty> propertyByName = new HashMap<>();
     for (AbstractProperty abstractProperty : myExternalizers.keySet()) {
       propertyByName.put(abstractProperty.getName(), abstractProperty);
     }

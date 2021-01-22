@@ -83,6 +83,13 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + '/' + packageName.replace('.', '/')
         outFile = Path.of(dir, "$className.java")
       }
+      "intellij.css" -> {
+        packageName = "com.intellij.lang.css"
+        className = "CssIcons"
+
+        val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + '/' + packageName.replace('.', '/')
+        outFile = Path.of(dir, "$className.java")
+      }
       "intellij.android.artwork" -> {
         packageName = "icons"
 
