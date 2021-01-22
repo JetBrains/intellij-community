@@ -79,7 +79,7 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
       desc.append("\n\r").append(ExternalSystemBundle.message("external.project.structure.project.location"))
         .append(": ").append(projectData.getLinkedExternalProjectPath());
       String description = projectData.getDescription();
-      if (StringUtil.isEmptyOrSpaces(description)) {
+      if (!StringUtil.isEmptyOrSpaces(description)) {
         desc.append("\n\r").append(description);
       }
     }
