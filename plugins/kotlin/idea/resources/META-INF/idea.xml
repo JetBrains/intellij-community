@@ -75,9 +75,9 @@
                               forClass="org.jetbrains.kotlin.psi.KtTypeAlias"/>
 
     <enterHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinEnterHandler"
-                          id="KotlinEnterHandler" order="before EnterBetweenBracesHandler"/>
+                          id="KotlinEnterHandler" order="before EnterBetweenBracesHandler, before xmlEnter"/>
     <enterHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinMultilineStringEnterHandler"
-                          id="KotlinMultilineStringEnterHandler" order="before EnterBetweenBracesHandler"/>
+                          id="KotlinMultilineStringEnterHandler" order="before EnterBetweenBracesHandler, before xmlEnter"/>
     <enterHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinEnterAfterUnmatchedBraceHandler"
                           id="KotlinEnterAfterUnmatchedBraceHandler" order="before afterUnmatchedBrace"/>
     <enterBetweenBracesDelegate language="kotlin"

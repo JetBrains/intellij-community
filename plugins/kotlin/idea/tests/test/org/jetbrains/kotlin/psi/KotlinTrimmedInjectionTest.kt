@@ -272,6 +272,32 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
     }
 
 
+    fun testNewLineBetweenBodies() {
+        myFixture.configureByText(
+            "Foo.kt", mkFoo(
+                """
+                        <html>
+                            <body><caret></body>
+                        </html>
+                    """,
+                "HTML"
+            )
+        )
+
+        myFixture.type("\n")
+        myFixture.checkResult(mkFoo(
+            """
+                        <html>
+                            <body>
+                            
+                            </body>
+                        </html>
+                    """, "HTML"
+        )
+       )
+
+    }
+
     fun testOneLineTrimIndent() {
         myFixture.configureByText(
             "Foo.kt", mkFoo(""" <caret>""", "HTML")

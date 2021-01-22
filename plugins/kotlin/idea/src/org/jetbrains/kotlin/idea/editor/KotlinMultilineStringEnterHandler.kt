@@ -93,7 +93,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegateAdapter() {
 
         val ch1 = text[offset - 1]
         val ch2 = text[offset]
-        isInBrace = (ch1 == '(' && ch2 == ')') || (ch1 == '{' && ch2 == '}')
+        isInBrace = (ch1 == '(' && ch2 == ')') || (ch1 == '{' && ch2 == '}'|| (ch1 == '>' && ch2 == '<'))
         if (!isInBrace || !CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
             return Result.Continue
         }
