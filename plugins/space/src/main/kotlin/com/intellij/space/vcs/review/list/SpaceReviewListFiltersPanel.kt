@@ -13,13 +13,27 @@ import javax.swing.KeyStroke
 
 internal class SpaceReviewListFiltersPanel(private val listVm: SpaceReviewsListVm) {
 
-  private val searchTextField = object : SearchTextField() {
+  private val searchTextField = object : SearchTextField("space.review.list.search.text") {
+
     override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
       if (e?.keyCode == KeyEvent.VK_ENTER && pressed) {
-        listVm.textToSearch.value = text.trim()
+        onTextChanged()
         return true
       }
       return super.processKeyBinding(ks, e, condition, pressed)
+    }
+
+    override fun onFocusLost() {
+      super.onFocusLost()
+      onTextChanged()
+    }
+
+    override fun onFieldCleared() {
+      onTextChanged()
+    }
+
+    private fun onTextChanged() {
+      listVm.textToSearch.value = text.trim()
     }
   }
 
