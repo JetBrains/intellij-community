@@ -64,6 +64,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
@@ -73,8 +74,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
@@ -85,15 +84,13 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   private static final ExtensionPointName<JUnitPatcher> JUNIT_PATCHER_EP = new ExtensionPointName<>("com.intellij.junitPatcher");
   private static final String JIGSAW_OPTIONS = "Jigsaw Options";
-  private static final String SOCKET_PARAMETER_PLACEHOLDER = "-socketXXXXX";
-  private static final String WORK_DIR_PARAMETER_PLACEHOLDER = "@w@XXXXX";
-  private static final String TEMP_FILE_PARAMETER_PLACEHOLDER = "-tempFileXXXX";
 
   public static ParamsGroup getJigsawOptions(JavaParameters parameters) {
     return parameters.getVMParametersList().getParamsGroup(JIGSAW_OPTIONS);
   }
 
   protected ServerSocket myServerSocket;
+  protected AsyncPromise<String> myPortPromise;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
 
@@ -142,7 +139,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
-    targetedCommandLine.setParametersPatcher(createParametersPatcher(targetedCommandLineBuilder, remoteEnvironment));
+
+    boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
+    int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
+    myPortPromise.setResult(String.valueOf(port));
+
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
 
     SearchForTestsTask searchForTestsTask = createSearchingForTestsTask(remoteEnvironment);
@@ -152,7 +153,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
 
     OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(process,
-                                                                               targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                                               targetedCommandLine
+                                                                                 .getCommandPresentation(remoteEnvironment),
                                                                                targetedCommandLine.getCharset(),
                                                                                targetedCommandLineBuilder.getFilesToDeleteOnTermination());
 
@@ -161,48 +163,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
     return processHandler;
-  }
-
-  private Function<String, List<String>> createParametersPatcher(@NotNull TargetedCommandLineBuilder targetedCommandLineBuilder,
-                                                                 @NotNull TargetEnvironment remoteEnvironment) {
-    boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
-    int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
-    String workingDirsFilePath = myWorkingDirsFile.getAbsolutePath();
-    if (!local) {
-      try {
-        workingDirsFilePath = targetedCommandLineBuilder.getAdditionalUploadedFileValue(myWorkingDirsFile).getTargetValue().blockingGet(0);
-      }
-      catch (TimeoutException | java.util.concurrent.ExecutionException e) {
-        LOG.error("Failed to resolve target value for myWorkingDirsFile");
-      }
-    }
-
-    String tempFilePath = myTempFile.getAbsolutePath();
-    if (!local) {
-      try {
-        tempFilePath = targetedCommandLineBuilder.getAdditionalUploadedFileValue(myTempFile).getTargetValue().blockingGet(0);
-        LOG.assertTrue(tempFilePath != null);
-      }
-      catch (TimeoutException | java.util.concurrent.ExecutionException e) {
-        LOG.error("Failed to resolve target value for myTempFile");
-      }
-    }
-    String finalTempFilePath = tempFilePath;
-    String finalWorkingDirsFilePath = workingDirsFilePath;
-    return s -> {
-      switch (s) {
-        case SOCKET_PARAMETER_PLACEHOLDER:
-          return Collections.singletonList("-socket" + port);
-        case TEMP_FILE_PARAMETER_PLACEHOLDER:
-          ParametersList list = new ParametersList();
-          passTempFile(list, finalTempFilePath);
-          return list.getParameters();
-        case WORK_DIR_PARAMETER_PLACEHOLDER:
-          return Collections.singletonList("@w@" + finalWorkingDirsFilePath);
-        default:
-          return Collections.singletonList(s);
-      }
-    };
   }
 
   /**
@@ -265,12 +225,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
     }
     return commandLineBuilder;
-  }
-
-  @NotNull
-  @Override
-  protected Collection<File> getAdditionalFilesToUpload() {
-    return Arrays.asList(myTempFile, myWorkingDirsFile);
   }
 
   @NotNull
@@ -629,7 +583,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void createServerSocket(JavaParameters javaParameters) {
     try {
       myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
-      javaParameters.getProgramParametersList().add(SOCKET_PARAMETER_PLACEHOLDER);
+      myPortPromise = new AsyncPromise<>();
+      javaParameters.getProgramParametersList().add(new CompositeParameterTargetedValue("-socket").addTargetPart(String.valueOf(myServerSocket.getLocalPort()), myPortPromise));
       TargetEnvironmentRequest request = getTargetEnvironmentRequest();
       if (request != null) {
         myPortBindingForSocket = new TargetEnvironment.LocalPortBinding(myServerSocket.getLocalPort(), null);
@@ -684,10 +639,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
       myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
-      javaParameters.getProgramParametersList().add(WORK_DIR_PARAMETER_PLACEHOLDER);
+      javaParameters.getProgramParametersList()
+        .add(new CompositeParameterTargetedValue().addLocalPart("@w@").addPathPart(myWorkingDirsFile));
 
       myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp", true);
-      javaParameters.getProgramParametersList().add(TEMP_FILE_PARAMETER_PLACEHOLDER);
+      passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
     }
     catch (Exception e) {
       LOG.error(e);

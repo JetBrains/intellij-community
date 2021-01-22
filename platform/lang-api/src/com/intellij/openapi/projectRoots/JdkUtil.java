@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.Attributes;
@@ -129,21 +127,19 @@ public final class JdkUtil {
   @ApiStatus.Internal
   public static @NotNull TargetedCommandLineBuilder setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
                                                                         @NotNull TargetEnvironmentRequest request,
-                                                                        @Nullable TargetEnvironmentConfiguration targetConfiguration,
-                                                                        @NotNull Collection<File> additionalFilesToUpload)
+                                                                        @Nullable TargetEnvironmentConfiguration targetConfiguration)
     throws CantRunException {
 
     JdkCommandLineSetup setup = new JdkCommandLineSetup(request, targetConfiguration);
     setup.setupJavaExePath(javaParameters);
     setup.setupCommandLine(javaParameters);
-    setup.registerFilesToUpload(additionalFilesToUpload);
     return setup.getCommandLine();
   }
 
   public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     LocalTargetEnvironmentFactory environmentFactory = new LocalTargetEnvironmentFactory();
     TargetEnvironmentRequest request = environmentFactory.createRequest();
-    TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request, null, Collections.emptyList());
+    TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request, null);
     LocalTargetEnvironment environment = environmentFactory.prepareRemoteEnvironment(request, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
     Objects.requireNonNull(builder.getUserData(COMMAND_LINE_SETUP_KEY))
       .provideEnvironment(environment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);

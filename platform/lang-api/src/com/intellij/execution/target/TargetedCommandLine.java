@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +15,6 @@ import org.jetbrains.concurrency.Promises;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 import static com.intellij.lang.LangBundle.message;
 
@@ -35,7 +33,6 @@ public final class TargetedCommandLine {
   @NotNull private final Charset myCharset;
   @NotNull private final List<TargetValue<String>> myParameters;
   @NotNull private final Map<String, TargetValue<String>> myEnvironment;
-  @Nullable private Function<String, List<String>> myParametersPatcher;
 
   public TargetedCommandLine(@NotNull TargetValue<String> exePath,
                              @NotNull TargetValue<String> workingDirectory,
@@ -61,13 +58,7 @@ public final class TargetedCommandLine {
     }
     List<String> parameters = new ArrayList<>();
     for (TargetValue<String> parameter : myParameters) {
-      String parameterValue = resolvePromise(parameter.getTargetValue(), "parameter");
-      if (myParametersPatcher != null) {
-        parameters.addAll(myParametersPatcher.apply(parameterValue));
-      }
-      else {
-        parameters.add(parameterValue);
-      }
+      parameters.add(resolvePromise(parameter.getTargetValue(), "parameter"));
     }
     return StringUtil.join(CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters,
                                                          target.getTargetPlatform().getPlatform()), " ");
@@ -83,19 +74,17 @@ public final class TargetedCommandLine {
   }
 
   public @NotNull Promise<@NotNull List<@NotNull String>> collectCommands() {
-    List<Promise<List<String>>> promises = new ArrayList<>(myParameters.size() + 1);
+    List<Promise<String>> promises = new ArrayList<>(myParameters.size() + 1);
     promises.add(myExePath.getTargetValue().then(command -> {
       if (command == null) {
         throw new IllegalStateException("Resolved value for exe path is null");
       }
-      return Collections.singletonList(command);
+      return command;
     }));
     for (TargetValue<String> parameter : myParameters) {
-      promises.add(parameter.getTargetValue().then(s -> {
-        return (myParametersPatcher == null) ? Collections.singletonList(s) : myParametersPatcher.apply(s);
-      }));
+      promises.add(parameter.getTargetValue());
     }
-    return Promises.collectResults(promises).then(listOfLists -> ContainerUtil.flatten(listOfLists));
+    return Promises.collectResults(promises);
   }
 
   @Nullable
@@ -120,10 +109,6 @@ public final class TargetedCommandLine {
   @NotNull
   public Charset getCharset() {
     return myCharset;
-  }
-
-  public void setParametersPatcher(@Nullable Function<String, List<String>> parametersPatcher) {
-    myParametersPatcher = parametersPatcher;
   }
 
   @Nullable

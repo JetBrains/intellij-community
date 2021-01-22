@@ -24,9 +24,6 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Objects;
 
 public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine, TargetEnvironmentAwareRunProfileState, RemoteConnectionCreator {
@@ -200,11 +197,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
     }
-    return javaParameters.toCommandLine(request, configuration, getAdditionalFilesToUpload());
-  }
-
-  protected @NotNull Collection<File> getAdditionalFilesToUpload(){
-    return  Collections.emptyList();
+    return javaParameters.toCommandLine(request, configuration);
   }
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {

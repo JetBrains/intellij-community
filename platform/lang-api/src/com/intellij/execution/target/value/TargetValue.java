@@ -30,6 +30,10 @@ public interface TargetValue<T> {
     return new CompositeTargetValue<>(values, joiner);
   }
 
+  static <V> TargetValue<V> create(@NotNull V localValue, @NotNull Promise<V> targetValue){
+    return new PromiseBasedTargetValue<>(localValue, targetValue);
+  }
+
   @SuppressWarnings("rawtypes")
   TargetValue EMPTY_VALUE = new TargetValue() {
     @Override

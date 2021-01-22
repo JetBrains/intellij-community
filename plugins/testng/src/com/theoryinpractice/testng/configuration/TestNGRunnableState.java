@@ -18,6 +18,7 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaTestFrameworkRunnableState;
+import com.intellij.execution.configurations.CompositeParameterTargetedValue;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -172,7 +173,8 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   @Override
   protected void passTempFile(ParametersList parametersList, String tempFilePath) {
-    parametersList.add("-temp", tempFilePath);
+    parametersList.add(new CompositeParameterTargetedValue("-temp"));
+    parametersList.add(new CompositeParameterTargetedValue().addPathPart(tempFilePath));
   }
 
   @Override
