@@ -27,16 +27,16 @@ class FilePredictionNGramSerializationTest : CodeInsightFixtureTestCase<ModuleFi
                              maxVocabularySize: Int = 112,
                              maxSequenceLength: Int = 12345) {
     val model = JMModel(counter = ArrayTrieCounter(), order = nGramLength, lambda = lambda)
-    val vocabulary = FilePredictionNGramVocabulary(maxVocabularySize, FilePredictionRecentFileSequence(maxSequenceLength, nGramLength, 4))
-    val runner = FilePredictionNGramModelRunner(nGramLength, lambda, model, vocabulary)
+    val vocabulary = VocabularyWithLimit(maxVocabularySize, nGramLength, maxSequenceLength, 4)
+    val runner = NGramIncrementalModelRunner(nGramLength, lambda, model, vocabulary)
     for (file in openedFiles) {
-      runner.learnNextFile(file)
+      runner.learnNextToken(file)
     }
 
     val storage = FileUtil.createTempFile("testFileHistory", "-ngram").toPath()
-    FilePredictionNGramSerializer.saveNGrams(storage, runner)
+    NGramModelSerializer.saveNGrams(storage, runner)
 
-    val deserializedRunner = FilePredictionNGramSerializer.loadNGrams(storage, nGramLength)
+    val deserializedRunner = NGramModelSerializer.loadNGrams(storage, nGramLength)
     for (file in openedFiles) {
       val before = runner.createScorer().score(file)
       val after = deserializedRunner.createScorer().score(file)
@@ -45,8 +45,8 @@ class FilePredictionNGramSerializationTest : CodeInsightFixtureTestCase<ModuleFi
 
     // files learned after deserialization behave the same as before
     for (file in openedFiles) {
-      runner.learnNextFile(file)
-      deserializedRunner.learnNextFile(file)
+      runner.learnNextToken(file)
+      deserializedRunner.learnNextToken(file)
     }
 
     for (file in openedFiles) {

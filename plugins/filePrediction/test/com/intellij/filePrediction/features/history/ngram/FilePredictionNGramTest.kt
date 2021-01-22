@@ -15,8 +15,8 @@ class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
                               assertion: (FileHistoryManager) -> Unit) {
     val state = FilePredictionHistoryState()
     val model = JMModel(counter = ArrayTrieCounter(), order = nGramLength, lambda = 1.0)
-    val vocabulary = FilePredictionNGramVocabulary(vocabularyLimit, FilePredictionRecentFileSequence(maxSequenceLength, nGramLength, 2))
-    val runner = FilePredictionNGramModelRunner(nGramLength, 1.0, model, vocabulary)
+    val vocabulary = VocabularyWithLimit(vocabularyLimit, nGramLength, maxSequenceLength, 2)
+    val runner = NGramIncrementalModelRunner(nGramLength, 1.0, model, vocabulary)
     val manager = FileHistoryManager(runner, state, vocabularyLimit)
     try {
       for (file in openedFiles) {

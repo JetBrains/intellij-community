@@ -2,7 +2,7 @@
 package com.intellij.filePrediction.features.history
 
 import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramFeatures
-import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramModelRunner
+import com.intellij.filePrediction.features.history.ngram.NGramIncrementalModelRunner
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
 
@@ -12,7 +12,7 @@ data class NextFileProbability(
   val mle: Double, val minMle: Double, val maxMle: Double, val mleToMin: Double, val mleToMax: Double
 )
 
-class FileHistoryManager(private val model: FilePredictionNGramModelRunner,
+class FileHistoryManager(private val model: NGramIncrementalModelRunner,
                          private var state: FilePredictionHistoryState,
                          private val recentFilesLimit: Int) {
   val helper: FileSequenceModelHelper = FileSequenceModelHelper()
@@ -29,7 +29,7 @@ class FileHistoryManager(private val model: FilePredictionNGramModelRunner,
 
   @Synchronized
   fun onFileOpened(fileUrl: String) {
-    model.learnNextFile(fileUrl)
+    model.learnNextToken(fileUrl)
 
     val entry = findOrAddEntry(fileUrl, recentFilesLimit)
     val code = entry.code

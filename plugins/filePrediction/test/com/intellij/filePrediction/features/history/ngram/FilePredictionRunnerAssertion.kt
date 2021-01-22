@@ -35,9 +35,9 @@ internal class FilePredictionRunnerAssertion {
     return this
   }
 
-  fun assert(runner: FilePredictionNGramModelRunner) {
-    TestCase.assertTrue(runner.vocabulary is FilePredictionNGramVocabulary)
-    val vocabulary = runner.vocabulary as FilePredictionNGramVocabulary
+  fun assert(runner: NGramIncrementalModelRunner) {
+    TestCase.assertTrue(runner.vocabulary is VocabularyWithLimit)
+    val vocabulary = runner.vocabulary as VocabularyWithLimit
 
     if (withVocabulary) {
       // unknown token is always added to wordIndices, therefore, actual size will be always size + 1
@@ -45,15 +45,17 @@ internal class FilePredictionRunnerAssertion {
     }
 
     if (withFileSequence) {
-      val actualFileSequence = vocabulary.fileSequence.subListFromStart(vocabulary.fileSequence.size())
+      val actualFileSequence = vocabulary.recentSequence.subListFromStart(vocabulary.recentSequence.size())
       TestCase.assertEquals("File sequence is different from expected", fileSequence, actualFileSequence)
     }
 
     if (withRecentFiles) {
       val recent = vocabulary.recent
-      TestCase.assertEquals("Next file sequence index is different from expected", nextFileSequenceIdx, recent.nextFileSequenceIdx.get())
-      TestCase.assertEquals("Recent files are different from expected", recentFiles, recent.recent)
-      TestCase.assertEquals("Recent files indices are different from expected", recentFilesIdx, recent.recentIdx)
+      TestCase.assertEquals("Next file sequence index is different from expected", nextFileSequenceIdx, recent.getNextTokenIndex())
+
+      val tokens = recent.getRecentTokens()
+      TestCase.assertEquals("Recent files are different from expected", recentFiles, tokens.map { it.first })
+      TestCase.assertEquals("Recent files indices are different from expected", recentFilesIdx, tokens.map { it.second })
     }
   }
 }

@@ -11,16 +11,24 @@ import java.io.ObjectOutput
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
-class FilePredictionNGramVocabulary(var maxSize: Int,
-                                    val fileSequence: FilePredictionRecentFileSequence) : Vocabulary(), Externalizable {
+class VocabularyWithLimit(var maxVocabularySize: Int,
+                          nGramOrder: Int, maxSequenceSize: Int,
+                          sequenceInitialSize: Int = SEQUENCE_INITIAL_SIZE) : Vocabulary(), Externalizable {
 
   companion object {
-    internal val LOG: Logger = Logger.getInstance(FilePredictionNGramVocabulary::class.java)
+    internal val LOG: Logger = Logger.getInstance(VocabularyWithLimit::class.java)
+
+    private const val SEQUENCE_INITIAL_SIZE: Int = 100
   }
 
   private val counter: AtomicInteger = AtomicInteger(1)
-  internal val recent: FilePredictionNGramRecentFiles = FilePredictionNGramRecentFiles()
 
+  val recent: NGramRecentTokens = NGramRecentTokens()
+  val recentSequence: NGramRecentTokensSequence = NGramRecentTokensSequence(maxSequenceSize, nGramOrder, sequenceInitialSize)
+
+  /**
+   * If token is unknown, it will be treated as "<unknownCharacter>"
+   */
   fun toExistingIndices(token: List<String>): List<Int> {
     return token.mapNotNull { toExistingIndex(it) }
   }
@@ -29,11 +37,16 @@ class FilePredictionNGramVocabulary(var maxSize: Int,
     return wordIndices[token] ?: wordIndices[unknownCharacter]
   }
 
+  /**
+   * If token is unknown, vocabulary will learn it.
+   *
+   * If after learning new token vocabulary size exceeds maxSize threshold, the oldest token will be forgotten.
+   */
   fun toIndicesWithLimit(token: List<String>, model: NGramModel): List<Int> {
     val indices = token.map { toIndexWithLimit(it, model) }
 
-    fileSequence.addWithLimit(model, indices.last())
-    updateRecentFiles(token)
+    recentSequence.addWithLimit(model, indices.last())
+    updateRecentTokens(token)
     return indices
   }
 
@@ -43,9 +56,9 @@ class FilePredictionNGramVocabulary(var maxSize: Int,
       index = counter.getAndIncrement()
       wordIndices[token] = index
 
-      if (recent.size() >= maxSize) {
+      if (recent.size() >= maxVocabularySize) {
         val (toRemove, latestAppearance) = trimRecentTokensSize()
-        fileSequence.forgetUntil(model, if (recent.size() > 0) recent.lastIndex() - latestAppearance else 0)
+        recentSequence.forgetUntil(model, if (recent.size() > 0) recent.lastIndex() - latestAppearance else 0)
         for (tokenToRemove in toRemove) {
           wordIndices.remove(tokenToRemove)
         }
@@ -57,7 +70,7 @@ class FilePredictionNGramVocabulary(var maxSize: Int,
   private fun trimRecentTokensSize(): Pair<ArrayList<String>, Int> {
     val toRemove: ArrayList<String> = arrayListOf()
     var latestAppearance = 0
-    while (recent.size() >= maxSize) {
+    while (recent.size() >= maxVocabularySize) {
       val (token, idx) = recent.removeAt(0)
       latestAppearance = max(latestAppearance, idx)
       toRemove.add(token)
@@ -65,7 +78,7 @@ class FilePredictionNGramVocabulary(var maxSize: Int,
     return toRemove to latestAppearance
   }
 
-  private fun updateRecentFiles(tokens: List<String>) {
+  private fun updateRecentTokens(tokens: List<String>) {
     if (LOG.isDebugEnabled) {
       assertUpdateIsIncremental(tokens)
     }
@@ -86,18 +99,18 @@ class FilePredictionNGramVocabulary(var maxSize: Int,
   private fun assertUpdateIsIncremental(tokens: List<String>) {
     for (i in 0..tokens.size - 2) {
       val oldIndex = recent.lastIndexOf(tokens[i])
-      if (oldIndex < recent.size() - tokens.size + i + 1 || oldIndex > recent.size() - 1) {
-        LOG.error("Cannot find previous token in recent files: ${tokens[i]} in $tokens")
+      assert(oldIndex >= recent.size() - tokens.size + i + 1 && oldIndex <= recent.size() - 1) {
+        "Cannot find previous token in recent: ${tokens[i]} in $tokens"
       }
     }
   }
 
   @Throws(IOException::class)
   override fun writeExternal(out: ObjectOutput) {
-    out.writeInt(maxSize)
+    out.writeInt(maxVocabularySize)
     out.writeInt(counter.get())
     recent.writeExternal(out)
-    fileSequence.writeExternal(out)
+    recentSequence.writeExternal(out)
 
     out.writeInt(wordIndices.size)
     for ((token, code) in wordIndices) {
@@ -108,10 +121,10 @@ class FilePredictionNGramVocabulary(var maxSize: Int,
 
   @Throws(IOException::class)
   override fun readExternal(ins: ObjectInput) {
-    maxSize = ins.readInt()
+    maxVocabularySize = ins.readInt()
     counter.set(ins.readInt())
     recent.readExternal(ins)
-    fileSequence.readExternal(ins)
+    recentSequence.readExternal(ins)
 
     val wordsSize = ins.readInt()
     for (i in 0 until wordsSize) {
@@ -122,17 +135,34 @@ class FilePredictionNGramVocabulary(var maxSize: Int,
   }
 }
 
-internal class FilePredictionNGramRecentFiles : Externalizable {
-  internal val nextFileSequenceIdx: AtomicInteger = AtomicInteger(1)
-  internal val recent: ArrayList<String> = arrayListOf()
-  internal val recentIdx: ArrayList<Int> = arrayListOf()
+/**
+ * Stores recent tokens (recent) with an id of it last appearance (recentIdx).
+ *
+ * Last token appearance is used to find a minimum sequence which have to be forgotten together with the token.
+ */
+class NGramRecentTokens : Externalizable {
+  private val nextTokenIdx: AtomicInteger = AtomicInteger(1)
+
+  private val recent: ArrayList<String> = arrayListOf()
+  private val recentIdx: ArrayList<Int> = arrayListOf()
+
+  fun getNextTokenIndex(): Int = nextTokenIdx.get()
+
+  fun getRecentTokens(): List<Pair<String, Int>> {
+    assertStateConsistent()
+    val recentTokens = arrayListOf<Pair<String, Int>>()
+    for ((i, recent) in recent.withIndex()) {
+      recentTokens.add(recent to recentIdx[i])
+    }
+    return recentTokens
+  }
 
   @Synchronized
   fun add(token: String) {
     assertStateConsistent()
 
     recent.add(token)
-    recentIdx.add(nextFileSequenceIdx.getAndIncrement())
+    recentIdx.add(nextTokenIdx.getAndIncrement())
   }
 
   @Synchronized
@@ -143,32 +173,34 @@ internal class FilePredictionNGramRecentFiles : Externalizable {
     return token to id
   }
 
+  @Synchronized
   fun lastIndexOf(token: String): Int {
     assertStateConsistent()
     return recent.lastIndexOf(token)
   }
 
+  @Synchronized
   fun lastIndex(): Int {
     assertStateConsistent()
     return recentIdx.last()
   }
 
+  @Synchronized
   fun size(): Int {
     assertStateConsistent()
     return recent.size
   }
 
   private fun assertStateConsistent() {
-    if (FilePredictionNGramVocabulary.LOG.isDebugEnabled && recent.size != recentIdx.size) {
-      FilePredictionNGramVocabulary.LOG.error(
-        "Number of recent files should be equal to number of recent ids: ${recent.size} vs. ${recentIdx.size} ($recent vs. $recentIdx)"
-      )
+    assert(recent.size == recentIdx.size) {
+      "Number of recent tokens should be equal to number of recent ids: ${recent.size} vs. ${recentIdx.size} ($recent vs. $recentIdx)"
     }
   }
 
+  @Synchronized
   @Throws(IOException::class)
   override fun writeExternal(out: ObjectOutput) {
-    out.writeInt(nextFileSequenceIdx.get())
+    out.writeInt(nextTokenIdx.get())
     out.writeInt(recent.size)
     for (i in 0 until recent.size) {
       out.writeObject(recent[i])
@@ -176,9 +208,10 @@ internal class FilePredictionNGramRecentFiles : Externalizable {
     }
   }
 
+  @Synchronized
   @Throws(IOException::class)
   override fun readExternal(ins: ObjectInput) {
-    nextFileSequenceIdx.set(ins.readInt())
+    nextTokenIdx.set(ins.readInt())
 
     val recentSize = ins.readInt()
     for (i in 0 until recentSize) {

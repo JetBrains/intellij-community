@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features.history
 
-import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramModelRunner
-import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramSerializer
+import com.intellij.filePrediction.features.history.ngram.NGramIncrementalModelRunner
+import com.intellij.filePrediction.features.history.ngram.NGramModelSerializer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -50,25 +50,29 @@ object FileHistoryPersistence {
     return state
   }
 
-  fun saveNGrams(project: Project, runner: FilePredictionNGramModelRunner) {
+  fun saveNGrams(project: Project, runner: NGramIncrementalModelRunner) {
     val path: Path? = getPathToStorage(project, NGRAM_FILE_NAME_SUFFIX)
     try {
       if (path != null) {
-        FilePredictionNGramSerializer.saveNGrams(path, runner)
+        NGramModelSerializer.saveNGrams(path, runner)
       }
     }
     catch (e: IOException) {
-      LOG.warn("Cannot serialize opened files history", e)
+      LOG.warn("Cannot serialize file sequence ngrams", e)
     }
   }
 
-  fun loadNGrams(project: Project, nGramLength: Int): FilePredictionNGramModelRunner {
-    if (project.isDisposed) {
-      return FilePredictionNGramSerializer.loadNGrams(null, nGramLength)
+  fun loadNGrams(project: Project, nGramLength: Int): NGramIncrementalModelRunner {
+    try {
+      if (!project.isDisposed) {
+        val path: Path? = getPathToStorage(project, NGRAM_FILE_NAME_SUFFIX)
+        return NGramModelSerializer.loadNGrams(path, nGramLength)
+      }
     }
-
-    val path: Path? = getPathToStorage(project, NGRAM_FILE_NAME_SUFFIX)
-    return FilePredictionNGramSerializer.loadNGrams(path, nGramLength)
+    catch (e: IOException) {
+      LOG.warn("Cannot deserialize file sequence ngrams", e)
+    }
+    return NGramModelSerializer.loadNGrams(null, nGramLength)
   }
 
   private fun getPathToStorage(project: Project, suffix: String): Path? {
