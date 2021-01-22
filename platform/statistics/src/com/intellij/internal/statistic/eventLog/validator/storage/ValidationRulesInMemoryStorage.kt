@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroup
 /**
  * Thread unsafe
  */
-object ValidationRulesInMemoryStorage : ValidationRulesStorage {
+object ValidationRulesInMemoryStorage : IntellijValidationRulesStorage {
   val eventsValidators = HashMap<String, EventGroupRules>()
 
   override fun getGroupRules(groupId: String): EventGroupRules? = eventsValidators[groupId]

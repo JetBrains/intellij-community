@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
@@ -41,7 +41,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     group.validateEventId(eventId)
     return try {
       CompletableFuture.runAsync(Runnable {
-        val validator = SensitiveDataValidator.getInstance(recorderId)
+        val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
         if (!validator.isGroupAllowed(group)) return@Runnable
         val event = validator.validate(group.id, group.version.toString(), build, sessionId, bucket, eventTime, recorderVersion, eventId,
                                        data, isState)

@@ -4,7 +4,7 @@ package com.intellij.internal.statistics.metadata.validator
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
@@ -68,7 +68,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   }
 }
 
-internal class TestSensitiveDataValidator(storage: ValidationRulesPersistedStorage) : SensitiveDataValidator(storage) {
+internal class TestSensitiveDataValidator(storage: ValidationRulesPersistedStorage) : IntellijSensitiveDataValidator(storage) {
   fun getEventRules(group: EventLogGroup): Array<FUSRule> {
     val rules = validationRulesStorage.getGroupRules(group.id)
 

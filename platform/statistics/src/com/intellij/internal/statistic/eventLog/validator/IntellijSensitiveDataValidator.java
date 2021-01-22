@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
-import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorage;
+import com.intellij.internal.statistic.eventLog.validator.storage.IntellijValidationRulesStorage;
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorageProvider;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,8 +24,7 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  * <p>
  *   The data from all collectors is validated before it's recorded locally.
  *   It's necessary to make sure that the data is correct and it doesn't contain personal or proprietary information.<br/>
- *   Validation is performed right before logging in {@link SensitiveDataValidator#guaranteeCorrectEventId(String, EventContext)}
- *   and {@link SensitiveDataValidator#guaranteeCorrectEventData(String, EventContext)}.<br/>
+ *   Validation is performed right before logging in {@link IntellijSensitiveDataValidator#validate}.<br/>
  * </p>
  *
  * <p>
@@ -97,38 +96,38 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  * </pre></li>
  * </ul>
  */
-public class SensitiveDataValidator extends SimpleSensitiveDataValidator<ValidationRulesStorage> {
-  private static final ConcurrentMap<String, SensitiveDataValidator> ourInstances = new ConcurrentHashMap<>();
+public class IntellijSensitiveDataValidator extends SensitiveDataValidator<IntellijValidationRulesStorage> {
+  private static final ConcurrentMap<String, IntellijSensitiveDataValidator> ourInstances = new ConcurrentHashMap<>();
 
   static {
     CustomValidationRule.EP_NAME.addChangeListener(ourInstances::clear, null);
     CustomWhiteListRule.EP_NAME.addChangeListener(ourInstances::clear, null);
   }
 
-  public static @NotNull SensitiveDataValidator getInstance(@NotNull String recorderId) {
+  public static @NotNull IntellijSensitiveDataValidator getInstance(@NotNull String recorderId) {
     return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
-        ValidationRulesStorage storage = ValidationRulesStorageProvider.newStorage(recorderId);
+        IntellijValidationRulesStorage storage = ValidationRulesStorageProvider.newStorage(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
                ? new BlindSensitiveDataValidator(storage)
-               : new SensitiveDataValidator(storage);
+               : new IntellijSensitiveDataValidator(storage);
       }
     );
   }
 
-  public static @Nullable SensitiveDataValidator getIfInitialized(@NotNull String recorderId) {
+  public static @Nullable IntellijSensitiveDataValidator getIfInitialized(@NotNull String recorderId) {
     return ourInstances.get(recorderId);
   }
 
-  protected SensitiveDataValidator(@NotNull ValidationRulesStorage storage) {
+  protected IntellijSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage) {
     super(storage);
   }
 
   public boolean isGroupAllowed(@NotNull EventLogGroup group) {
     if (TestModeValidationRule.isTestModeEnabled()) return true;
 
-    ValidationRulesStorage storage = getValidationRulesStorage();
+    IntellijValidationRulesStorage storage = getValidationRulesStorage();
     if (storage.isUnreachable()) return true;
     return storage.getGroupRules(group.getId()) != null;
   }
@@ -171,8 +170,8 @@ public class SensitiveDataValidator extends SimpleSensitiveDataValidator<Validat
     getValidationRulesStorage().reload();
   }
 
-  private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
-    protected BlindSensitiveDataValidator(@NotNull ValidationRulesStorage storage) {
+  private static class BlindSensitiveDataValidator extends IntellijSensitiveDataValidator {
+    protected BlindSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage) {
       super(storage);
     }
 

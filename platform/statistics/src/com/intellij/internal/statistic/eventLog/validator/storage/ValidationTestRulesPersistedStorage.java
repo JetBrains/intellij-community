@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public final class ValidationTestRulesPersistedStorage implements ValidationRulesStorage {
+public final class ValidationTestRulesPersistedStorage implements IntellijValidationRulesStorage {
   private final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final Object myLock = new Object();
   private final @NotNull EventLogTestMetadataPersistence myTestMetadataPersistence;
@@ -164,9 +164,9 @@ public final class ValidationTestRulesPersistedStorage implements ValidationRule
   }
 
   public static @Nullable ValidationTestRulesPersistedStorage getTestStorage(@NotNull String recorderId, boolean initIfNeeded) {
-    SensitiveDataValidator validator =
-      initIfNeeded ? SensitiveDataValidator.getInstance(recorderId) : SensitiveDataValidator.getIfInitialized(recorderId);
-    ValidationRulesStorage storage = validator != null ? validator.getValidationRulesStorage() : null;
+    IntellijSensitiveDataValidator validator =
+      initIfNeeded ? IntellijSensitiveDataValidator.getInstance(recorderId) : IntellijSensitiveDataValidator.getIfInitialized(recorderId);
+    IntellijValidationRulesStorage storage = validator != null ? validator.getValidationRulesStorage() : null;
     return storage instanceof ValidationTestRulesStorageHolder ? ((ValidationTestRulesStorageHolder)storage).getTestGroupStorage() : null;
   }
 

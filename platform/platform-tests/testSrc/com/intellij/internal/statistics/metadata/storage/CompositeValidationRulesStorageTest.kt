@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.storage
 
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesInMemoryStorage
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
@@ -16,7 +16,7 @@ internal class CompositeValidationRulesStorageTest : ValidationRulesBaseStorageT
   }
 
   fun testGetGroupRulesFromTest() {
-    val storage = SensitiveDataValidator.getInstance(recorderId).validationRulesStorage
+    val storage = IntellijSensitiveDataValidator.getInstance(recorderId).validationRulesStorage
     ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)!!
       .addTestGroup(GroupValidationTestRule(
         groupId,
@@ -36,7 +36,7 @@ internal class CompositeValidationRulesStorageTest : ValidationRulesBaseStorageT
   }
 
   fun testGetGroupRules() {
-    val mergedStorage = SensitiveDataValidator.getInstance(recorderId).validationRulesStorage
+    val mergedStorage = IntellijSensitiveDataValidator.getInstance(recorderId).validationRulesStorage
     ValidationRulesInMemoryStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
 
     val groupRules = mergedStorage.getGroupRules(groupId)

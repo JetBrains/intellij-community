@@ -10,9 +10,8 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroup
 /**
  * Validates log event according to remote groups validation rules.
  * Used to ensure that no personal or proprietary data is recorded.
- *
  */
-open class SimpleSensitiveDataValidator<S: BaseValidationRuleStorage<*>>(public val validationRulesStorage: S) {
+open class SensitiveDataValidator<S: ValidationRuleStorage<*>>(val validationRulesStorage: S) {
   /**
    * @return null if the build or version failed validation,
    * otherwise returns validated event in which incorrect values are replaced with {@link ValidationResultType#getDescription()}.

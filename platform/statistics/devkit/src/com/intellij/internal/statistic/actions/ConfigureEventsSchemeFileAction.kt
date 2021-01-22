@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.actions
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventsSchemePathSettings
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
@@ -53,7 +53,7 @@ class ConfigureEventsSchemeFileAction(private var myRecorderId: String = Statist
           settingsPersistence.setPathSettings(recorder, EventsSchemePathSettings(oldSettings.customPath, false))
         }
       }
-      val validator = SensitiveDataValidator.getInstance(recorder)
+      val validator = IntellijSensitiveDataValidator.getInstance(recorder)
       validator.update()
       validator.reload()
     }

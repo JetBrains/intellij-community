@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.actions
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -20,7 +20,7 @@ class UpdateEventsSchemeAction(val recorder: String)
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, StatisticsBundle.message("stats.updating.events.scheme"), false) {
       override fun run(indicator: ProgressIndicator) {
-        val validator = SensitiveDataValidator.getInstance(recorder)
+        val validator = IntellijSensitiveDataValidator.getInstance(recorder)
         validator.update()
         validator.reload()
       }

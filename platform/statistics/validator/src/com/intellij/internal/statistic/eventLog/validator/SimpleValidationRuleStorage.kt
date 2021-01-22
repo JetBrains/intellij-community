@@ -16,7 +16,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHol
 class SimpleValidationRuleStorage<T : Comparable<T>?>(initialMetadataContent: String,
                                                       private val buildParser: EventLogBuildParser<T>,
                                                       private val excludedFields: List<String> = emptyList(),
-                                                      utilRulesProducer: UtilRuleProducer = ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER) : BaseValidationRuleStorage<T> {
+                                                      utilRulesProducer: UtilRuleProducer = ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER) : ValidationRuleStorage<T> {
   private val validationRuleFactory = ValidationSimpleRuleFactory(utilRulesProducer)
   private val eventsValidators: MutableMap<String?, EventGroupRules> = HashMap() // guarded by lock
   private lateinit var filterRules: EventGroupsFilterRules<T> // guarded by lock

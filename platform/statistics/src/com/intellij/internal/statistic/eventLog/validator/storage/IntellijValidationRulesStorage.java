@@ -2,13 +2,13 @@
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
-import com.intellij.internal.statistic.eventLog.validator.BaseValidationRuleStorage;
+import com.intellij.internal.statistic.eventLog.validator.ValidationRuleStorage;
 import com.intellij.internal.statistic.eventLog.validator.GroupValidators;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ValidationRulesStorage extends BaseValidationRuleStorage<EventLogBuild> {
+public interface IntellijValidationRulesStorage extends ValidationRuleStorage<EventLogBuild> {
   @Nullable EventGroupRules getGroupRules(@NotNull String groupId);
 
   /**
