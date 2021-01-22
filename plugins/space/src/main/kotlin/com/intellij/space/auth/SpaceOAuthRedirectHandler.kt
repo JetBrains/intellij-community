@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.auth
 
 import com.intellij.openapi.application.ApplicationManager
@@ -10,7 +10,7 @@ import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.jetty.Jetty
+import io.ktor.server.netty.Netty
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Runnable
@@ -41,7 +41,7 @@ internal suspend fun startRedirectHandling(lifetime: Lifetime, server: String, p
 
 private fun startAuthServerAsync(lifetime: Lifetime, serverUrl: String, port: Int): Deferred<String> {
   val redirectUrl = CompletableDeferred<String>()
-  val server = embeddedServer(Jetty, port = port, host = "localhost") {
+  val server = embeddedServer(Netty, port = port, host = "localhost") {
     routing {
       get("/auth") {
         call.respondText(

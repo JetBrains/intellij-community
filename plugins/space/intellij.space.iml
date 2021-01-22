@@ -53,28 +53,24 @@
             <dependency maven-id="io.ktor:ktor-http-jvm" />
             <dependency maven-id="io.ktor:ktor-http-cio-jvm" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.apache.httpcomponents:httpclient" />
+            <dependency maven-id="org.apache.httpcomponents:httpcore" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="commons-codec:commons-codec" />
           </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-apache/1.4.3/ktor-client-apache-1.4.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/1.4.3/ktor-client-core-jvm-1.4.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpasyncclient/4.1.4/httpasyncclient-4.1.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.10/commons-codec-1.10.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore-nio/4.4.13/httpcore-nio-4.4.13.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore/4.4.13/httpcore-4.4.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-apache/1.4.3/ktor-client-apache-1.4.3-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/1.4.3/ktor-client-core-jvm-1.4.3-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpasyncclient/4.1.4/httpasyncclient-4.1.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpclient/4.5.6/httpclient-4.5.6-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.10/commons-codec-1.10-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore-nio/4.4.13/httpcore-nio-4.4.13-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/httpcomponents/httpcore/4.4.13/httpcore-4.4.13-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -168,23 +164,31 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="io.ktor:ktor-server-jetty:1.4.3" type="repository">
-        <properties maven-id="io.ktor:ktor-server-jetty:1.4.3">
+      <library name="io.ktor:ktor-server-netty:1.4.3" type="repository">
+        <properties maven-id="io.ktor:ktor-server-netty:1.4.3">
           <exclude>
             <dependency maven-id="org.slf4j:slf4j-api" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
             <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="io.netty:netty-buffer" />
+            <dependency maven-id="io.netty:netty-codec-http" />
+            <dependency maven-id="io.netty:netty-codec-http2" />
+            <dependency maven-id="io.netty:netty-codec" />
+            <dependency maven-id="io.netty:netty-common" />
+            <dependency maven-id="io.netty:netty-handler" />
+            <dependency maven-id="io.netty:netty-resolver" />
+            <dependency maven-id="io.netty:netty-transport" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-jetty/1.4.3/ktor-server-jetty-1.4.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-netty/1.4.3/ktor-server-netty-1.4.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-host-common/1.4.3/ktor-server-host-common-1.4.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core/1.4.3/ktor-server-core-1.4.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/1.4.3/ktor-utils-jvm-1.4.3.jar!/" />
@@ -193,23 +197,27 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.3.1/config-1.3.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/1.4.3/ktor-http-cio-jvm-1.4.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/1.4.3/ktor-network-jvm-1.4.3.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-servlet/1.4.3/ktor-server-servlet-1.4.3.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-server/9.4.31.v20200723/jetty-server-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-http/9.4.31.v20200723/jetty-http-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-io/9.4.31.v20200723/jetty-io-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-servlets/9.4.31.v20200723/jetty-servlets-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-continuation/9.4.31.v20200723/jetty-continuation-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-util/9.4.31.v20200723/jetty-util-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-alpn-server/9.4.31.v20200723/jetty-alpn-server-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-alpn-openjdk8-server/9.4.31.v20200723/jetty-alpn-openjdk8-server-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-alpn-java-server/9.4.31.v20200723/jetty-alpn-java-server-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/http2/http2-server/9.4.31.v20200723/http2-server-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/http2/http2-common/9.4.31.v20200723/http2-common-9.4.31.v20200723.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/http2/http2-hpack/9.4.31.v20200723/http2-hpack-9.4.31.v20200723.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/alpn/alpn-api/1.1.3.v20160715/alpn-api-1.1.3.v20160715.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.1.54.Final/netty-transport-native-kqueue-4.1.54.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.1.54.Final/netty-transport-native-unix-common-4.1.54.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.1.54.Final/netty-transport-native-epoll-4.1.54.Final.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-netty/1.4.3/ktor-server-netty-1.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-host-common/1.4.3/ktor-server-host-common-1.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core/1.4.3/ktor-server-core-1.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/1.4.3/ktor-utils-jvm-1.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/1.4.3/ktor-io-jvm-1.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/1.4.3/ktor-http-jvm-1.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.3.1/config-1.3.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/1.4.3/ktor-http-cio-jvm-1.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/1.4.3/ktor-network-jvm-1.4.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/alpn/alpn-api/1.1.3.v20160715/alpn-api-1.1.3.v20160715-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.1.54.Final/netty-transport-native-kqueue-4.1.54.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.1.54.Final/netty-transport-native-unix-common-4.1.54.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.1.54.Final/netty-transport-native-epoll-4.1.54.Final-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
