@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import kotlin.text.Regex.Companion.escapeReplacement
 
-fun getJsMdnDocumentation(qualifiedName: String, namespace: MdnApiNamespace): MdnSymbolDocumentation? {
+fun getJsMdnDocumentation(namespace: MdnApiNamespace, qualifiedName: String): MdnSymbolDocumentation? {
   assert(namespace == MdnApiNamespace.WebApi || namespace == MdnApiNamespace.GlobalObjects)
   val mdnQualifiedName = qualifiedName.let {
     when {
@@ -95,6 +95,23 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
   }
     ?.takeIf { symbolName != null }
     ?.let { (source, doc) -> MdnSymbolDocumentationAdapter(symbolName!!.toLowerCase(Locale.US), source, doc) }
+}
+
+fun getHtmlMdnTagDocumentation(namespace: MdnApiNamespace, tagName: String): MdnSymbolDocumentation? {
+  assert(namespace == MdnApiNamespace.Html || namespace == MdnApiNamespace.MathML || namespace == MdnApiNamespace.Svg)
+
+  return getTagDocumentation(namespace, tagName)?.let { (source, doc) ->
+    MdnSymbolDocumentationAdapter(tagName, source, doc)
+  }
+}
+
+fun getHtmlMdnAttributeDocumentation(namespace: MdnApiNamespace,
+                                     tagName: String?,
+                                     attributeName: String): MdnSymbolDocumentation? {
+  assert(namespace == MdnApiNamespace.Html || namespace == MdnApiNamespace.MathML || namespace == MdnApiNamespace.Svg)
+  return getAttributeDocumentation(namespace, tagName, attributeName)?.let { (source, doc) ->
+    MdnSymbolDocumentationAdapter(attributeName, source, doc)
+  }
 }
 
 private fun getTagDocumentation(namespace: MdnApiNamespace, tagName: String): Pair<MdnHtmlDocumentation, MdnHtmlElementDocumentation>? {
