@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.castSafelyTo
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
@@ -119,14 +118,10 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
 
     return JPanel(null).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(20, 16)
+      border = JBUI.Borders.empty(30, 16)
       layout = MigLayout(LC().fill().gridGap("${UI.scale(10)}px", "${UI.scale(16)}px").insets("0").hideMode(3).noGrid())
 
-      add(JLabel(GithubBundle.message("pull.request.login.to.view")).apply {
-        font = JBFont.h3()
-      }, CC().growX().push().minWidth("0"))
-
-      add(repoCombo, CC().growX().push().newline())
+      add(repoCombo, CC().growX().push())
       add(accountCombo, CC())
 
       add(actionsPanel, CC().newline())

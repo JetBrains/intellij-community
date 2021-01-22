@@ -75,14 +75,9 @@ class GHAccountSelectorComponentFactory {
 
     init {
       accountsModel.addListDataListener(object : ListDataListener {
-        override fun contentsChanged(e: ListDataEvent) {
-          if (e.index0 == -1 && e.index1 == -1) {
-            updateLabel()
-          }
-        }
-
-        override fun intervalAdded(e: ListDataEvent?) {}
-        override fun intervalRemoved(e: ListDataEvent?) {}
+        override fun contentsChanged(e: ListDataEvent) = updateLabel()
+        override fun intervalAdded(e: ListDataEvent?) = updateLabel()
+        override fun intervalRemoved(e: ListDataEvent?) = updateLabel()
       })
       label.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent?) = showPopup()
