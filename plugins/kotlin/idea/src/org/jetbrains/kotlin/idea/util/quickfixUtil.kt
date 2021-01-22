@@ -47,8 +47,14 @@ fun createIntentionFactory(
 }
 
 fun KtPrimaryConstructor.addConstructorKeyword(): PsiElement? {
-    val keyword = KtPsiFactory(this).createConstructorKeyword()
-    return addAfter(keyword, modifierList ?: return null)
+    val modifierList = this.modifierList ?:  return null
+    val psiFactory = KtPsiFactory(this)
+    val constructor = if (valueParameterList == null) {
+        psiFactory.createPrimaryConstructor("constructor()")
+    } else {
+        psiFactory.createConstructorKeyword()
+    }
+    return addAfter(constructor, modifierList)
 }
 
 fun getDataFlowAwareTypes(

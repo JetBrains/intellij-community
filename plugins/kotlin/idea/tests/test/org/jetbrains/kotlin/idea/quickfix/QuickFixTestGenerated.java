@@ -8372,6 +8372,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public void testBasic() throws Exception {
                 runTest("testData/quickfix/migration/missingConstructorKeyword/basic.kt");
             }
+
+            @TestMetadata("noParentheses.kt")
+            public void testNoParentheses() throws Exception {
+                runTest("testData/quickfix/migration/missingConstructorKeyword/noParentheses.kt");
+            }
+
+            @TestMetadata("noParenthesesWithAnnotation.kt")
+            public void testNoParenthesesWithAnnotation() throws Exception {
+                runTest("testData/quickfix/migration/missingConstructorKeyword/noParenthesesWithAnnotation.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
