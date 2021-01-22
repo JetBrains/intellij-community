@@ -6,8 +6,9 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.PlatformUtils
+import java.util.concurrent.TimeUnit
 
-class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider("MLSE", 1) {
+class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider("MLSE", 1, TimeUnit.MINUTES.toMillis(15), "100KB") {
   override fun isRecordEnabled(): Boolean {
     return !ApplicationManager.getApplication().isUnitTestMode &&
            StatisticsUploadAssistant.isCollectAllowed() &&
