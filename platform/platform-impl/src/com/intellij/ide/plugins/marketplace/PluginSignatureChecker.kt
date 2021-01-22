@@ -31,11 +31,8 @@ object PluginSignatureChecker {
   }
 
   @JvmStatic
-  fun checkPluginsSignature(pluginName: String, pluginFile: File, indicator: ProgressIndicator): Boolean {
+  fun checkPluginsSignature(pluginName: String, pluginFile: File): Boolean {
     val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("plugin.signature.not.found"))
-    indicator.checkCanceled()
-    indicator.text2 = IdeBundle.message("plugin.signature.checker.progress", pluginName)
-    indicator.isIndeterminate = true
     val errorMessage = verifyPluginAndGetErrorMessage(pluginFile, jbCert)
     if (errorMessage != null) {
       return processSignatureWarning(pluginName, errorMessage)

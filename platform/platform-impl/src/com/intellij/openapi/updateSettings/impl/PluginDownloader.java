@@ -174,7 +174,7 @@ public final class PluginDownloader {
     String errorMessage = null;
     try {
       myFile = downloadPlugin(indicator);
-      if (!PluginSignatureChecker.checkPluginsSignature(getPluginName(), myFile, indicator)) {
+      if (!PluginSignatureChecker.checkPluginsSignature(getPluginName(), myFile)) {
         myShownErrors = true;
         return null;
       }
