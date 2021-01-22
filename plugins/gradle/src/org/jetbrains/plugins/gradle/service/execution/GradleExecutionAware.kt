@@ -54,7 +54,7 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
                                            project: Project): TargetEnvironmentConfiguration? {
     val gradleRunConfiguration = runConfiguration as? GradleRunConfiguration ?: return null
     val targetName = gradleRunConfiguration.options.remoteTarget ?: return localEnvironment()
-    return TargetEnvironmentsManager.getInstance(project).targets.findByName(targetName)
+    return TargetEnvironmentsManager.getInstance(project).targets.findByName(targetName) ?: return localEnvironment()
   }
 
   override fun getEnvironmentConfiguration(externalProjectPath: String,
