@@ -417,7 +417,7 @@
                  description="If set to a value > 0, load base contents for shelving in batches: by reading the given number of files at once. If set to -1, contents are loaded as usual, one by one."/>
     <registryKey key="git.allow.wsl1.executables" defaultValue="false"
                  description="If set to false, IDE will ignore configured WSL1 executables. See IDEA-242469"/>
-    <registryKey key="git.enable.stash.toolwindow" defaultValue="true"
+    <registryKey key="git.enable.stash.toolwindow" defaultValue="false"
                  description="Show toolwindow tab with stashes"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
                  description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speedup worktree cleanup."/>
