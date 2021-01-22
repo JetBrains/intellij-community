@@ -140,6 +140,7 @@
     <annotator language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathFunctionCallAnnotator"/>
     <colorSettingsPage implementation="com.intellij.jsonpath.JsonPathColorSettingsPage"/>
     <completion.contributor language="JSONPath" order="last" implementationClass="com.intellij.jsonpath.JsonPathCompletionContributor"/>
+    <spellchecker.support language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathSpellcheckerStrategy"/>
 
     <localInspection language="JSONPath" shortName="JsonPathUnknownFunction"
                      implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownFunctionInspection"

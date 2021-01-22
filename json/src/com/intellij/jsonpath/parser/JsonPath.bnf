@@ -12,6 +12,7 @@
   elementTypeHolderClass="com.intellij.jsonpath.psi.JsonPathTypes"
   elementTypeClass="com.intellij.jsonpath.psi.JsonPathElementType"
   tokenTypeClass="com.intellij.jsonpath.psi.JsonPathTokenType"
+  psiImplUtilClass = "com.intellij.jsonpath.psi.JsonPathPsiUtils"
   tokens = [
     LBRACE='{'
     RBRACE='}'
@@ -127,7 +128,11 @@ numberLiteral ::= DOUBLE_NUMBER | INTEGER_NUMBER {
   extends=literalValue
 }
 stringLiteral ::= SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING {
+  methods=[
+    getTextFragments
+  ]
   extends=literalValue
+  mixin="com.intellij.jsonpath.psi.JsonPathStringLiteralMixin"
 }
 arrayValue ::= LBRACKET arrayElement_* RBRACKET {
   extends=value
