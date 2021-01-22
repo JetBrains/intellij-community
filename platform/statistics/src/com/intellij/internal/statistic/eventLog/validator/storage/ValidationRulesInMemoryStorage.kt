@@ -3,26 +3,6 @@ package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 
-interface ValidationRulesStorage {
-  fun getGroupRules(groupId: String): EventGroupRules?
-
-  fun isUnreachable(): Boolean
-
-  /**
-   * Loads and updates events scheme from the server if necessary
-   */
-  fun update()
-
-  /**
-   * Re-loads events scheme from local caches
-   */
-  fun reload()
-}
-
-interface ValidationTestRulesStorageHolder {
-  fun getTestGroupStorage() : ValidationTestRulesPersistedStorage
-}
-
 /**
  * Thread unsafe
  */

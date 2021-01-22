@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
@@ -44,14 +43,11 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       CompletableFuture.runAsync(Runnable {
         val validator = SensitiveDataValidator.getInstance(recorderId)
         if (!validator.isGroupAllowed(group)) return@Runnable
-        val context = EventContext.create(eventId, data)
-        val validatedEventId = validator.guaranteeCorrectEventId(group.id, context)
-        val validatedEventData = validator.guaranteeCorrectEventData(group.id, context)
-
-        val creationTime = System.currentTimeMillis()
-        val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion,
-                                validatedEventId, isState, validatedEventData)
-        log(event, creationTime)
+        val event = validator.validate(group.id, group.version.toString(), build, sessionId, bucket, eventTime, recorderVersion, eventId,
+                                       data, isState)
+        if (event != null) {
+          log(event, System.currentTimeMillis())
+        }
       }, logExecutor)
     }
     catch (e: RejectedExecutionException) {

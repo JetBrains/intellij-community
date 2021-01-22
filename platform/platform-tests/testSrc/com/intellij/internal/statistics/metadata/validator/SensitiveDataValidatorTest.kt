@@ -8,8 +8,6 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory.parseSimpleExpression
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
@@ -17,7 +15,6 @@ import junit.framework.TestCase
 import org.junit.Assert
 import org.junit.Test
 import java.util.*
-import java.util.regex.Pattern
 import kotlin.collections.HashMap
 
 @Suppress("SameParameterValue")
@@ -573,28 +570,28 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     }
   }
 
-  private fun assertEventAccepted(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, eventId: String) {
+  private fun assertEventAccepted(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, eventId: String) {
     val context = EventContext.create(eventId, Collections.emptyMap())
     val actual = validator.validateEvent(context, eventLogGroup.id)
     TestCase.assertEquals("Validation failed for $eventId", ValidationResultType.ACCEPTED, actual)
   }
 
-  private fun assertUndefinedRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+  private fun assertUndefinedRule(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
     TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
                                                                                        eventLogGroup.id))
   }
 
-  private fun assertIncorrectRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+  private fun assertIncorrectRule(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
     TestCase.assertEquals(ValidationResultType.INCORRECT_RULE, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
                                                                                        eventLogGroup.id))
   }
 
-  private fun assertThirdPartyRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+  private fun assertThirdPartyRule(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
     TestCase.assertEquals(ValidationResultType.THIRD_PARTY, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
                                                                                     eventLogGroup.id))
   }
 
-  private fun assertEventRejected(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+  private fun assertEventRejected(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
     TestCase.assertEquals(ValidationResultType.REJECTED, validator.validateEvent(EventContext.create(s, Collections.emptyMap()), eventLogGroup.id))
   }
 

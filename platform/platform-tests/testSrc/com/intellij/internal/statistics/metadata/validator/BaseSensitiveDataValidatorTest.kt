@@ -3,13 +3,15 @@ package com.intellij.internal.statistics.metadata.validator
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -68,16 +70,25 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
 
 internal class TestSensitiveDataValidator(storage: ValidationRulesPersistedStorage) : SensitiveDataValidator(storage) {
   fun getEventRules(group: EventLogGroup): Array<FUSRule> {
-    val rules = myRulesStorage.getGroupRules(group.id)
+    val rules = validationRulesStorage.getGroupRules(group.id)
 
     return if (rules == null) FUSRule.EMPTY_ARRAY else rules.eventIdRules
   }
 
   fun getEventDataRules(group: EventLogGroup): Map<String, Array<FUSRule>> {
-    val rules = myRulesStorage.getGroupRules(group.id)
+    val rules = validationRulesStorage.getGroupRules(group.id)
 
     return if (rules == null) emptyMap() else rules.eventDataRules
   }
+
+  fun validateEvent(context: EventContext, groupId: String): ValidationResultType {
+    return validateEvent(context, validationRulesStorage.getGroupRules(groupId))
+  }
+
+  fun guaranteeCorrectEventData(groupId: String, context: EventContext): Map<String, Any> {
+    return guaranteeCorrectEventData(context, validationRulesStorage.getGroupRules(groupId))
+  }
+
 }
 
 class TestEventLogMetadataPersistence(private val myContent: String) : EventLogMetadataPersistence("TEST") {

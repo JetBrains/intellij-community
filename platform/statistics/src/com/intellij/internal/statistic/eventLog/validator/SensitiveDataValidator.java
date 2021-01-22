@@ -10,16 +10,14 @@ import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRule
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorageProvider;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.UNDEFINED_RULE;
-import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.UNREACHABLE_METADATA;
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
 /**
@@ -99,9 +97,8 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  * </pre></li>
  * </ul>
  */
-public class SensitiveDataValidator {
+public class SensitiveDataValidator extends SimpleSensitiveDataValidator<ValidationRulesStorage> {
   private static final ConcurrentMap<String, SensitiveDataValidator> ourInstances = new ConcurrentHashMap<>();
-  protected final @NotNull ValidationRulesStorage myRulesStorage;
 
   static {
     CustomValidationRule.EP_NAME.addChangeListener(ourInstances::clear, null);
@@ -125,26 +122,19 @@ public class SensitiveDataValidator {
   }
 
   protected SensitiveDataValidator(@NotNull ValidationRulesStorage storage) {
-    myRulesStorage = storage;
-  }
-
-  public ValidationRulesStorage getValidationRulesStorage() {
-    return myRulesStorage;
+    super(storage);
   }
 
   public boolean isGroupAllowed(@NotNull EventLogGroup group) {
     if (TestModeValidationRule.isTestModeEnabled()) return true;
-    if (myRulesStorage.isUnreachable()) return true;
-    return myRulesStorage.getGroupRules(group.getId()) != null;
+
+    ValidationRulesStorage storage = getValidationRulesStorage();
+    if (storage.isUnreachable()) return true;
+    return storage.getGroupRules(group.getId()) != null;
   }
 
-  public String guaranteeCorrectEventId(@NotNull String groupId, @NotNull EventContext context) {
-    if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
-    return SimpleSensitiveDataValidator.guaranteeCorrectEventId(context, myRulesStorage.getGroupRules(groupId));
-  }
-
-  public Map<String, Object> guaranteeCorrectEventData(@NotNull String groupId, @NotNull EventContext context) {
-    EventGroupRules groupRules = myRulesStorage.getGroupRules(groupId);
+  @Override
+  public @NotNull Map<String, Object> guaranteeCorrectEventData(@NotNull EventContext context, EventGroupRules groupRules) {
     if (isTestModeEnabled(groupRules)) {
       return context.eventData;
     }
@@ -170,28 +160,15 @@ public class SensitiveDataValidator {
 
   private static boolean isTestModeEnabled(@Nullable EventGroupRules rule) {
     return TestModeValidationRule.isTestModeEnabled() && rule != null &&
-           Arrays.stream(rule.getEventIdRules()).anyMatch(r -> r instanceof TestModeValidationRule);
-  }
-
-  public ValidationResultType validateEvent(@NotNull EventContext context, String groupId) {
-    return SimpleSensitiveDataValidator.validateEvent(context, myRulesStorage.getGroupRules(groupId));
-  }
-
-  private Object validateEventData(@NotNull EventContext context,
-                                   @Nullable EventGroupRules groupRules,
-                                   @NotNull String key,
-                                   @NotNull Object entryValue) {
-    if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
-    if (groupRules == null) return UNDEFINED_RULE.getDescription();
-    return groupRules.validateEventData(key, entryValue, context);
+           ContainerUtil.exists(rule.getEventIdRules(), r -> r instanceof TestModeValidationRule);
   }
 
   public void update() {
-    myRulesStorage.update();
+    getValidationRulesStorage().update();
   }
 
   public void reload() {
-    myRulesStorage.reload();
+    getValidationRulesStorage().reload();
   }
 
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
@@ -200,12 +177,12 @@ public class SensitiveDataValidator {
     }
 
     @Override
-    public String guaranteeCorrectEventId(@NotNull String groupId, @NotNull EventContext context) {
+    public @NotNull String guaranteeCorrectEventId(@NotNull EventContext context, @Nullable EventGroupRules groupRules) {
       return context.eventId;
     }
 
     @Override
-    public Map<String, Object> guaranteeCorrectEventData(@NotNull String groupId, @NotNull EventContext context) {
+    public @NotNull Map<String, Object> guaranteeCorrectEventData(@NotNull EventContext context, EventGroupRules groupRules) {
       return context.eventData;
     }
 
