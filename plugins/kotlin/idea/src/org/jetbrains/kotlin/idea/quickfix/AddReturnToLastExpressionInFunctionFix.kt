@@ -23,22 +23,26 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
 class AddReturnToLastExpressionInFunctionFix(element: KtDeclarationWithBody) : KotlinQuickFixAction<KtDeclarationWithBody>(element) {
+    private val available: Boolean
+
+    init {
+        val namedFunction = element as? KtNamedFunction
+        val block = namedFunction?.bodyBlockExpression
+        val last = block?.statements?.lastOrNull()
+
+        available = last?.analyze(BodyResolveMode.PARTIAL)?.let { context ->
+            last.getType(context)?.takeIf { !it.isError }
+        }?.let { lastType ->
+            val expectedType = namedFunction.resolveToDescriptorIfAny()?.returnType?.takeIf { !it.isError } ?: return@let false
+            lastType.isSubtypeOf(expectedType)
+        } ?: false
+    }
+
     override fun getText() = KotlinBundle.message("fix.add.return.last.expression")
     override fun getFamilyName() = text
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        val element = element as? KtNamedFunction ?: return false
-        val block = element.bodyBlockExpression ?: return false
-        val last = block.statements.lastOrNull() ?: return false
-
-        val context = last.analyze(BodyResolveMode.PARTIAL)
-        val lastType = last.getType(context) ?: return false
-        if (lastType.isError) return false
-        val expectedType = element.resolveToDescriptorIfAny()?.returnType ?: return false
-        if (expectedType.isError || !lastType.isSubtypeOf(expectedType)) return false
-
-        return true
-    }
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
+        (element is KtNamedFunction) && available
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element as? KtNamedFunction ?: return

@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -58,16 +59,26 @@ abstract class DeprecatedSymbolUsageFixBase(
     val replaceWith: ReplaceWith
 ) : KotlinQuickFixAction<KtReferenceExpression>(element) {
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        val element = element ?: return false
-        val strategy = buildUsageReplacementStrategy(element, replaceWith, recheckAnnotation = true, reformat = false)
-        return strategy?.createReplacer(element) != null
+    protected val available: Boolean
+
+    init {
+        assert(!ApplicationManager.getApplication().isDispatchThread) {
+            "${javaClass.name} should not be created on EDT"
+        }
+        available = buildUsageReplacementStrategy(
+            element,
+            replaceWith,
+            recheckAnnotation = true,
+            reformat = false
+        )?.let { it.createReplacer(element) != null } == true
     }
 
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element != null && available
+
     final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
+        val expression = element ?: return
         val strategy = buildUsageReplacementStrategy(
-            element, replaceWith, recheckAnnotation = false, reformat = true, editor = editor
+            expression, replaceWith, recheckAnnotation = false, reformat = true, editor = editor
         ) ?: return
         invoke(strategy, project, editor)
     }

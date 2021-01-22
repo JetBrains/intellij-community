@@ -20,23 +20,28 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
 class AddReturnToUnusedLastExpressionInFunctionFix(element: KtElement) : KotlinQuickFixAction<KtElement>(element) {
+
+    private val available: Boolean
+
+    init {
+        val expression = element as? KtExpression
+        available = expression?.analyze(BodyResolveMode.PARTIAL)?.let { context ->
+            if (expression.isLastStatementInFunctionBody()) {
+                expression.getType(context)?.takeIf { !it.isError }
+            } else null
+        }?.let { expressionType ->
+            val function = expression.parent?.parent as? KtNamedFunction
+            val functionReturnType = function?.resolveToDescriptorIfAny()?.returnType?.takeIf { !it.isError } ?: return@let false
+            expressionType.isSubtypeOf(functionReturnType)
+        } ?: false
+
+    }
+
     override fun getText() = KotlinBundle.message("fix.add.return.before.expression")
     override fun getFamilyName() = text
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        val expr = element as? KtExpression ?: return false
-        val context = expr.analyze(BodyResolveMode.PARTIAL)
-        if (!expr.isLastStatementInFunctionBody()) return false
-
-        val exprType = expr.getType(context) ?: return false
-        if (exprType.isError) return false
-
-        val function = expr.parent.parent as? KtNamedFunction ?: return false
-        val functionReturnType = function.resolveToDescriptorIfAny()?.returnType ?: return false
-        if (functionReturnType.isError || !exprType.isSubtypeOf(functionReturnType)) return false
-
-        return true
-    }
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
+        element != null && available
 
     private fun KtExpression.isLastStatementInFunctionBody(): Boolean {
         val body = this.parent as? KtBlockExpression ?: return false
