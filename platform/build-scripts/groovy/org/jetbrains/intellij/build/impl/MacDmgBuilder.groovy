@@ -157,7 +157,7 @@ final class MacDmgBuilder {
   @CompileStatic(TypeCheckingMode.SKIP)
   private void bundleJBRLocally(File targetFile, String jreArchivePath) {
     buildContext.messages.progress("Bundling JBR")
-    File tempDir = new File(buildContext.paths.temp, "mac.dist.bundled.jre")
+    File tempDir = new File(new File(buildContext.paths.temp, targetFile.getName()), "mac.dist.bundled.jre")
     tempDir.mkdirs()
     ant.copy(todir: tempDir) {
       ant.fileset(file: targetFile.path)
