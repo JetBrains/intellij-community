@@ -16,17 +16,17 @@ internal class SpaceReviewListFiltersPanel(private val listVm: SpaceReviewsListV
   private val searchTextField = object : SearchTextField() {
     override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
       if (e?.keyCode == KeyEvent.VK_ENTER && pressed) {
-        listVm.spaceReviewsFilterSettings.value = listVm.spaceReviewsFilterSettings.value.copy(text = text)
+        listVm.textToSearch.value = text.trim()
         return true
       }
       return super.processKeyBinding(ks, e, condition, pressed)
     }
   }
 
-  private val quickFiltersComboBox = ComboBox<ReviewListQuickFilter>(EnumComboBoxModel(ReviewListQuickFilter::class.java)).apply {
+  private val quickFiltersComboBox = ComboBox(EnumComboBoxModel(ReviewListQuickFilter::class.java)).apply {
     addActionListener {
       val stateFilter = this.selectedItem as ReviewListQuickFilter
-      listVm.spaceReviewsFilterSettings.value = listVm.quickFiltersMap.value[stateFilter] ?: error(
+      listVm.spaceReviewsQuickFilter.value = listVm.quickFiltersMap.value[stateFilter] ?: error(
         "Unable to resolve quick filter settings for ${stateFilter}")
     }
 

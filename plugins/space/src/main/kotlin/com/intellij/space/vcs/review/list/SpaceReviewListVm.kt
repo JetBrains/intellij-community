@@ -22,8 +22,9 @@ internal interface SpaceReviewsListVm : Lifetimed {
 
   val quickFiltersMap: Property<Map<ReviewListQuickFilter, ReviewListFilters>>
 
-  val spaceReviewsFilterSettings: MutableProperty<ReviewListFilters>
+  val spaceReviewsQuickFilter: MutableProperty<ReviewListFilters>
 
+  val textToSearch: MutableProperty<String>
 
   val isLoading: Property<Boolean>
 
