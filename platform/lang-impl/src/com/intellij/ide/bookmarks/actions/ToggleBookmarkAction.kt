@@ -16,7 +16,6 @@ internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(messagePointer
     val selected = context?.bookmark != null
     event.presentation.apply {
       isEnabledAndVisible = context != null
-      println("before: $text   $icon")
       if (ActionPlaces.TOUCHBAR_GENERAL == event.place) {
         Toggleable.setSelected(this, selected)
         icon = Checked
@@ -26,7 +25,6 @@ internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(messagePointer
                 selected -> messagePointer("bookmark.delete.action.text")
                 else -> messagePointer("bookmark.add.action.text")
               })
-      println(" after: $text   $icon")
     }
   }
 
