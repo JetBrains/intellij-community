@@ -24,7 +24,7 @@ import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 
-object SpaceReviewListFactory {
+internal object SpaceReviewListFactory {
   fun create(parentDisposable: Disposable, listVm: SpaceReviewsListVm): JComponent {
     val listModel: CollectionListModel<CodeReviewListItem> = CollectionListModel()
 
