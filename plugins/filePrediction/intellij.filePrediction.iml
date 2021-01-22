@@ -35,6 +35,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="library" name="ngram-slp" level="project" />
   </component>
 </module>

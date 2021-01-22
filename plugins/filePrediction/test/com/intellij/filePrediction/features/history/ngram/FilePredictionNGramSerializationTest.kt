@@ -3,6 +3,9 @@ package com.intellij.filePrediction.features.history.ngram
 
 import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
 import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
+import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
+import com.intellij.internal.ml.ngram.NGramModelSerializer
+import com.intellij.internal.ml.ngram.VocabularyWithLimit
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase

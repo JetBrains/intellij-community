@@ -93,7 +93,8 @@ final class CommunityRepositoryModules {
     "intellij.platform.diagnostic",
     "intellij.platform.core.ui",
     "intellij.platform.credentialStore",
-    "intellij.platform.rd.community"
+    "intellij.platform.rd.community",
+    "intellij.platform.ml"
   ]
 
   /**

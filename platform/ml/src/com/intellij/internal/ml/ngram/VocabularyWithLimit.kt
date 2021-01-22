@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.filePrediction.features.history.ngram
+package com.intellij.internal.ml.ngram
 
 import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
 import com.intellij.completion.ngram.slp.translating.Vocabulary
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.annotations.TestOnly
 import java.io.Externalizable
 import java.io.IOException
 import java.io.ObjectInput
@@ -146,8 +147,10 @@ class NGramRecentTokens : Externalizable {
   private val recent: ArrayList<String> = arrayListOf()
   private val recentIdx: ArrayList<Int> = arrayListOf()
 
+  @TestOnly
   fun getNextTokenIndex(): Int = nextTokenIdx.get()
 
+  @TestOnly
   fun getRecentTokens(): List<Pair<String, Int>> {
     assertStateConsistent()
     val recentTokens = arrayListOf<Pair<String, Int>>()

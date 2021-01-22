@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.filePrediction.features.history.ngram
+package com.intellij.internal.ml.ngram
 
 import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
 import com.intellij.completion.ngram.slp.sequencing.NGramSequencer
@@ -54,9 +54,9 @@ class NGramRecentTokensSequence(val maxSequenceLength: Int,
 
   private fun elementAt(index: Int) = sequence[(start + index) % sequence.size]
 
-  internal fun size() = length
+  fun size() = length
 
-  internal fun subListFromStart(newLength: Int): List<Int> {
+  fun subListFromStart(newLength: Int): List<Int> {
     val size = sequence.size
     val end = start + newLength
     if (end <= size) {

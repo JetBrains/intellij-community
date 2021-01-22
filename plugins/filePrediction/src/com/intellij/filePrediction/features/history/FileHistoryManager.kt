@@ -2,7 +2,7 @@
 package com.intellij.filePrediction.features.history
 
 import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramFeatures
-import com.intellij.filePrediction.features.history.ngram.NGramIncrementalModelRunner
+import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
 

@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features.history
 
-import com.intellij.filePrediction.features.history.ngram.NGramIncrementalModelRunner
-import com.intellij.filePrediction.features.history.ngram.NGramModelSerializer
+import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
+import com.intellij.internal.ml.ngram.NGramModelSerializer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project

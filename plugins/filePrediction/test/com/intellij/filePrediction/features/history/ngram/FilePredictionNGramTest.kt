@@ -7,6 +7,8 @@ import com.intellij.filePrediction.features.history.FileHistoryManager
 import com.intellij.filePrediction.features.history.FilePredictionHistoryBaseTest
 import com.intellij.filePrediction.features.history.FilePredictionHistoryState
 import com.intellij.filePrediction.features.history.NextFileProbability
+import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
+import com.intellij.internal.ml.ngram.VocabularyWithLimit
 
 class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
 
