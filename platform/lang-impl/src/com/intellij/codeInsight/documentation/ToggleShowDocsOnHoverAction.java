@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -21,6 +22,9 @@ public class ToggleShowDocsOnHoverAction extends ToggleAction implements HintMan
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
+    if (!PropertiesComponent.getInstance().getBoolean(IS_SUPPORTED, true)) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
     if (myDocumentationManager == null || myOnToolbar && myDocumentationManager.myToolWindow != null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
@@ -36,4 +40,6 @@ public class ToggleShowDocsOnHoverAction extends ToggleAction implements HintMan
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     EditorSettingsExternalizable.getInstance().setShowQuickDocOnMouseOverElement(state);
   }
+
+  public static final String IS_SUPPORTED = "documentation.show.docs.on.hover.is.supported";
 }
