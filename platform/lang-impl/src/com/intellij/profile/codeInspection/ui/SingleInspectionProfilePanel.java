@@ -42,6 +42,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeRenderer;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
@@ -94,6 +95,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   @NotNull
   private final InspectionProfileModifiableModel myProfile;
   private DescriptionEditorPane myDescription;
+  private JBLabel myOptionsLabel;
   private JPanel myOptionsPanel;
   private JPanel myInspectionProfilePanel;
   private FilterComponent myProfileFilter;
@@ -231,7 +233,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return forceInclude;
   }
 
-  private static void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
+  private static void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state, final JBLabel optionsLabel) {
     configPanelAnchor.removeAll();
     final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
     if (additionalConfigPanel != null) {
@@ -243,6 +245,10 @@ public class SingleInspectionProfilePanel extends JPanel {
         configPanelAnchor.add(ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE));
       }
     }
+
+    optionsLabel.setText(state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
+                         ? AnalysisBundle.message("inspections.settings.options.title.all.scopes")
+                         : AnalysisBundle.message("inspections.settings.options.title", state.getScopeName()));
   }
 
   private static InspectionConfigTreeNode getGroupNode(InspectionConfigTreeNode root, String[] groupPath) {
@@ -763,6 +769,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       final double severityPanelWeightY;
       ScopesAndSeveritiesTable scopesAndScopesAndSeveritiesTable;
+      myOptionsLabel = new JBLabel(AnalysisBundle.message("inspections.settings.options.title.all.scopes"));
       if (scopesNames.isEmpty()) {
 
         final LevelChooserAction severityLevelChooser =
@@ -836,7 +843,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             label.setVisible(false);
           }
 
-          setConfigPanel(configPanelAnchor, toolState);
+          setConfigPanel(configPanelAnchor, toolState, myOptionsLabel);
         }
         scopesAndScopesAndSeveritiesTable = null;
       }
@@ -850,7 +857,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           new ScopesAndSeveritiesTable(new ScopesAndSeveritiesTable.TableSettings(nodes, myProfile, project) {
             @Override
             protected void onScopeChosen(@NotNull final ScopeToolState state) {
-              setConfigPanel(configPanelAnchor, state);
+              setConfigPanel(configPanelAnchor, state, myOptionsLabel);
               configPanelAnchor.revalidate();
               configPanelAnchor.repaint();
             }
@@ -1258,7 +1265,7 @@ public class SingleInspectionProfilePanel extends JPanel {
                                GridBagConstraints.WEST, GridBagConstraints.NONE,
                                JBUI.insets(0, 2, 0, 0),
                                0, 0);
-      add(new JBLabel(AnalysisBundle.message("inspections.settings.options.title")), optionsLabelConstraints);
+      add(myOptionsLabel, optionsLabelConstraints);
       GridBagConstraints separatorConstraints =
         new GridBagConstraints(1, 0, 1, 1, 1, 1,
                                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
