@@ -290,6 +290,9 @@ public class JavaChildWrapArranger {
     }
 
     if (nodeType == JavaElementType.CLASS) {
+      if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
+        return CommonCodeStyleSettings.DO_NOT_WRAP;
+      }
       // There is a possible case that current document state is invalid from language syntax point of view, e.g. the user starts
       // typing field definition and re-formatting is triggered by 'auto insert javadoc' processing. Example:
       //     class Test {

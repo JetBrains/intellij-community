@@ -4063,4 +4063,18 @@ public enum LevelCode {
       }
     """.trimIndent())
   }
+
+  fun testIdea250114() {
+    doTextTest("""
+      @Deprecated // Comment
+      class Test {
+      }
+      """.trimIndent(),
+
+      """
+      @Deprecated // Comment
+      class Test {
+      }
+      """.trimIndent())
+  }
 }
