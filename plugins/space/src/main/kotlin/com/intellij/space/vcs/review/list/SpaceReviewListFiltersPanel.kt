@@ -7,6 +7,7 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
@@ -51,7 +52,7 @@ internal class SpaceReviewListFiltersPanel(private val listVm: SpaceReviewsListV
 
   init {
     val quickFiltersPanel = NonOpaquePanel(BorderLayout()).apply {
-      add(JBLabel(SpaceBundle.message("label.quick.filters")), BorderLayout.WEST)
+      add(JBLabel(SpaceBundle.message("label.quick.filters")).withBorder(JBUI.Borders.emptyLeft(4)), BorderLayout.WEST)
       add(quickFiltersComboBox, BorderLayout.CENTER)
     }
 
