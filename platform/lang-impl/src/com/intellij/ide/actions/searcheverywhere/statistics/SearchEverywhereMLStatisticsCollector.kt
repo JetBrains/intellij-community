@@ -23,7 +23,7 @@ internal class SearchEverywhereMLStatisticsCollector {
 
   init {
     val percentage = Registry.get("statistics.mlse.report.percentage").asInteger() / 100.0
-    myIsReporting = Math.random() >= percentage // only report a part of cases
+    myIsReporting = percentage >= 1 || Math.random() < percentage // only report a part of cases
   }
 
   fun reportSelectedElements(indexes: IntArray) {
@@ -58,8 +58,7 @@ internal class SearchEverywhereMLStatisticsCollector {
     val element = item.getElement()
     val contributorId = item.getContributor().searchProviderId
     if (element !is MatchedValue) { // not an action/option
-      val aClass: Class<*> = element.javaClass
-      return ItemInfo(aClass.canonicalName ?: aClass.name, contributorId, java.util.Map.of())
+      return ItemInfo(element.javaClass.name, contributorId, java.util.Map.of())
     }
     if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
       return ItemInfo("", contributorId, java.util.Map.of(IS_ACTION_DATA_KEY, false))
