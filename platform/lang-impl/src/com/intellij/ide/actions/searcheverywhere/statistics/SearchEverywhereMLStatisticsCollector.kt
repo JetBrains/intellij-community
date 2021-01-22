@@ -63,18 +63,37 @@ internal class SearchEverywhereMLStatisticsCollector {
     if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
       return ItemInfo("", contributorId, java.util.Map.of(IS_ACTION_DATA_KEY, false))
     }
-    return fillActionItemInfo(item, localSummary, contributorId, element.value.action)
+    return fillActionItemInfo(item, element.value, localSummary, contributorId)
   }
 
   private fun fillActionItemInfo(item: SearchEverywhereFoundElementInfo,
+                                 element: GotoActionModel.ActionWrapper,
                                  localSummary: Map<String, ActionSummary>,
-                                 contributorId: String,
-                                 action: AnAction): ItemInfo {
+                                 contributorId: String): ItemInfo {
+    val action = element.action
     val actionId = ActionManager.getInstance().getId(action)
 
-    val data = mutableMapOf(IS_ACTION_DATA_KEY to true,
-                            PRIORITY_DATA_KEY to item.getPriority(),
-                            IS_TOGGLE_ACTION_DATA_KEY to (action is ToggleAction))
+    val data = mutableMapOf(
+      IS_ACTION_DATA_KEY to true,
+      PRIORITY_DATA_KEY to item.getPriority(),
+      IS_TOGGLE_ACTION_DATA_KEY to (action is ToggleAction),
+      MATCH_MODE_KEY to element.mode,
+      IS_GROUP_KEY to element.isGroupAction
+    )
+
+    element.actionText?.let {
+      data[TEXT_LENGTH_KEY] = it.length
+    }
+
+    element.groupName?.let {
+      data[GROUP_LENGTH_KEY] = it.length
+    }
+
+    val presentation = element.presentation
+    data[HAS_ICON_KEY] = presentation.icon != null
+    data[IS_ENABLED_KEY] = presentation.isEnabled
+    data[WEIGHT_KEY] = presentation.weight
+
     localSummary[actionId]?.let {
       data[TIME_SINCE_LAST_USAGE_DATA_KEY] = System.currentTimeMillis() - it.lastUsedTimestamp
     }
@@ -97,6 +116,8 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
+    private const val REPORTED_ITEMS_LIMIT = 50
+
     private const val DIALOG_CLOSED = "dialogClosed"
     private const val SESSION_FINISHED = "sessionFinished"
     private const val TYPED_SYMBOL_KEYS = "typedSymbolKeys"
@@ -104,15 +125,26 @@ internal class SearchEverywhereMLStatisticsCollector {
     private const val SESSION_ID_LOG_DATA_KEY = "sessionId"
     private const val COLLECTED_RESULTS_DATA_KEY = "collectedItems"
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
+
+    // context features
     private const val TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount"
-    private const val IS_ACTION_DATA_KEY = "isAction"
-    private const val PRIORITY_DATA_KEY = "priority"
     private const val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = "totalItems"
-    private const val GLOBAL_USAGE_COUNT_DATA_KEY = "localUsageCount"
+
+    // action features
+    private const val IS_ACTION_DATA_KEY = "isAction"
+    private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
+    private const val PRIORITY_DATA_KEY = "priority"
+    private const val MATCH_MODE_KEY = "matchMode"
+    private const val TEXT_LENGTH_KEY = "textLength"
+    private const val IS_GROUP_KEY = "isGroup"
+    private const val GROUP_LENGTH_KEY = "groupLength"
+    private const val HAS_ICON_KEY = "withIcon"
+    private const val IS_ENABLED_KEY = "isEnabled"
+    private const val WEIGHT_KEY = "weight"
+
     private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
+    private const val GLOBAL_USAGE_COUNT_DATA_KEY = "localUsageCount"
     private const val USERS_RATIO_DATA_KEY = "usersRatio"
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
-    private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
-    private const val REPORTED_ITEMS_LIMIT = 50
   }
 }
