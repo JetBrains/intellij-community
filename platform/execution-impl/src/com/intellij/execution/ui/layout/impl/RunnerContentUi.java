@@ -391,6 +391,16 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         public void mouseReleased(MouseEvent e) {
           myPressPoint = null;
         }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          e.getComponent().setCursor(Cursor.getDefaultCursor());
+        }
       };
       wrapper.addMouseListener(adapter);
       myTabs.getComponent().addMouseListener(adapter);
