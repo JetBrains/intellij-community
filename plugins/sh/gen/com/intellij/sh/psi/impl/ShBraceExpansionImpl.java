@@ -20,6 +20,7 @@ public class ShBraceExpansionImpl extends ShCompositeElementImpl implements ShBr
     visitor.visitBraceExpansion(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

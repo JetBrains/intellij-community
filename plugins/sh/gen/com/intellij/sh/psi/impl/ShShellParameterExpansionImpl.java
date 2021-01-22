@@ -20,6 +20,7 @@ public class ShShellParameterExpansionImpl extends ShCompositeElementImpl implem
     visitor.visitShellParameterExpansion(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

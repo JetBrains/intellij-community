@@ -16,10 +16,12 @@ public class ShBitwiseShiftExpressionImpl extends ShBinaryExpressionImpl impleme
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitBitwiseShiftExpression(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

@@ -13,6 +13,6 @@ public interface ShLiteral extends ShSimpleCommandElement, UrlReferenceHost, Psi
   @Nullable
   PsiElement getWord();
 
-  PsiReference[] getReferences();
+  PsiReference @NotNull [] getReferences();
 
 }

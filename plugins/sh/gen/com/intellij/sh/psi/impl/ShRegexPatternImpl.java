@@ -20,6 +20,7 @@ public class ShRegexPatternImpl extends ShCompositeElementImpl implements ShRege
     visitor.visitRegexPattern(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

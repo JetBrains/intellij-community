@@ -16,10 +16,12 @@ public class ShLogicalAndConditionImpl extends ShConditionImpl implements ShLogi
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitLogicalAndCondition(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

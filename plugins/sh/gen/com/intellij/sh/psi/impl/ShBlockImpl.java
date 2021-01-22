@@ -25,6 +25,7 @@ public class ShBlockImpl extends ShLazyBlockImpl implements ShBlock {
     visitor.visitBlock(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

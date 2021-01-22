@@ -16,10 +16,12 @@ public class ShEvalCommandImpl extends ShCommandImpl implements ShEvalCommand {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitEvalCommand(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);
