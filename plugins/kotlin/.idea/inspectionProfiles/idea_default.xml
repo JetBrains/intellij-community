@@ -804,6 +804,22 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" regexp=".*Performance.*" negateName="true" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Anonymous Disposable passed to method" description="Do not pass Disposer.newDisposable() or similar to method expecting Disposable, because it can cause memory leak via Disposer tree.&#10;Instead, pass Disposable which you can guarantee to be disposed at the time needed." problemDescriptor="Anonymous Disposable passed to method: possible memory leak" text="new $f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="s2" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="a" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="newDisposable" regexp="newDisposable" target="true" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Anonymous Disposable passed to method" text="$f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="s2" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="a" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="newDisposable" regexp="newDisposable" target="true" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="new Thread()" recursive="true" caseInsensitive="true" type="JAVA" />
       <searchConfiguration name="Anonymous threads are discouraged; please supply name" text="Thread()" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
