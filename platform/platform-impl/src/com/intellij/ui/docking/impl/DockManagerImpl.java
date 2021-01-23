@@ -28,6 +28,8 @@ import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -219,12 +221,12 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myContent = content;
       myStartDragContainer = getContainerFor(me.getComponent());
 
-      Image previewImage = content.getPreviewImage();
+      BufferedImage buffer = ImageUtil.toBufferedImage(content.getPreviewImage());
 
       double requiredSize = 220;
 
-      double width = previewImage.getWidth(null);
-      double height = previewImage.getHeight(null);
+      double width = buffer.getWidth(null);
+      double height = buffer.getHeight(null);
 
       double ratio;
       if (width > height) {
@@ -234,15 +236,26 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         ratio = requiredSize / height;
       }
 
-      BufferedImage buffer = UIUtil.createImage(myWindow, (int)width, (int)height, BufferedImage.TYPE_INT_ARGB);
-      buffer.createGraphics().drawImage(previewImage, 0, 0, (int)width, (int)height, null);
-
       myDefaultDragImage = buffer.getScaledInstance((int)(width * ratio), (int)(height * ratio), Image.SCALE_SMOOTH);
       myDragImage = myDefaultDragImage;
 
-      myWindow.getContentPane().setLayout(new BorderLayout());
-      myImageContainer = new JLabel(IconUtil.createImageIcon(myDragImage));
-      myWindow.getContentPane().add(myImageContainer, BorderLayout.CENTER);
+      myImageContainer = new JLabel(new Icon() {
+        @Override
+        public int getIconWidth() {
+          return myDefaultDragImage.getWidth(myWindow);
+        }
+
+        @Override
+        public int getIconHeight() {
+          return myDefaultDragImage.getHeight(myWindow);
+        }
+
+        @Override
+        public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
+          StartupUiUtil.drawImage(g, myDefaultDragImage, x, y, myWindow);
+        }
+      });
+      myWindow.setContentPane(myImageContainer);
 
       setLocationFrom(me);
 
