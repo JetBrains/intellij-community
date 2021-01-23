@@ -22,7 +22,7 @@ public final class StreamUtil {
    * @return bytes copied
    */
   public static int copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
-    byte[] buffer = FileUtilRt.getThreadLocalBuffer();
+    byte[] buffer = new byte[8 * 1024];
     int read;
     int total = 0;
     while ((read = inputStream.read(buffer)) > 0) {
