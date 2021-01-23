@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs
 
 import circlet.client.api.*
@@ -18,7 +18,11 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import libraries.coroutines.extra.LifetimeSource
 import runtime.async.backoff
-import runtime.reactive.*
+import runtime.reactive.MutableProperty
+import runtime.reactive.Property
+import runtime.reactive.awaitFirst
+import runtime.reactive.filter
+import runtime.reactive.property.mapInit
 
 @Service
 class SpaceProjectContext(project: Project) : Disposable {

@@ -20,7 +20,7 @@ import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.util.ui.codereview.BaseHtmlEditorPane
 import com.intellij.util.ui.codereview.InlineIconButton
 import icons.SpaceIcons
-import runtime.reactive.map
+import runtime.reactive.property.map
 
 internal open class HtmlEditorPane : BaseHtmlEditorPane(SpaceIcons::class.java)
 

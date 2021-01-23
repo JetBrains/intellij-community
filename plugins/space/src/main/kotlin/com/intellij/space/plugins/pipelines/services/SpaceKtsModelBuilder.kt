@@ -36,6 +36,8 @@ import org.slf4j.event.SubstituteLoggingEvent
 import org.slf4j.helpers.SubstituteLogger
 import runtime.Ui
 import runtime.reactive.*
+import runtime.reactive.property.flatMap
+import runtime.reactive.property.map
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.name

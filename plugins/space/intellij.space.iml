@@ -221,5 +221,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="commons-compress" level="project" />
   </component>
 </module>

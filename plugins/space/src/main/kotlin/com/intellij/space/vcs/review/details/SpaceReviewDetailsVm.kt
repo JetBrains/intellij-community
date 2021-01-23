@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.ProjectKey
@@ -22,7 +22,8 @@ import com.intellij.space.vcs.review.details.process.SpaceReviewStateUpdaterImpl
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.*
-import runtime.reactive.property.seqCombineLatest
+import runtime.reactive.property.map
+import runtime.reactive.property.mapInit
 
 internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
@@ -66,8 +67,7 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
   private val participantsRef: Property<Ref<CodeReviewParticipants>?> = lastLoadedValueOrNull(participantsProperty)
   private val pendingCounterRef: Property<Ref<CodeReviewPendingMessageCounter>?> = lastLoadedValueOrNull(pendingCounterAsync(client))
 
-  val participantsVm: Property<SpaceReviewParticipantsVm?> = seqCombineLatest(participantsRef,
-                                                                              pendingCounterRef) { participantsRef, pendingCounterRef ->
+  val participantsVm: Property<SpaceReviewParticipantsVm?> = map(participantsRef, pendingCounterRef) { participantsRef, pendingCounterRef ->
     if (participantsRef != null && pendingCounterRef != null) {
       SpaceReviewParticipantsVmImpl(lifetime, projectKey, reviewRef, participantsRef, pendingCounterRef, review.value.identifier, workspace)
     }

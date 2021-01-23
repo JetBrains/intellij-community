@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.clone
 
 import circlet.client.api.*
@@ -11,12 +11,12 @@ import circlet.platform.api.Ref
 import circlet.platform.client.resolve
 import circlet.platform.client.resolveRefsOrFetch
 import circlet.platform.client.xTransformedPagedListOnFlux
-import com.intellij.space.settings.SpaceSettings
+import circlet.workspaces.Workspace
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.CloneType.HTTP
+import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.vcs.SpaceHttpPasswordState
 import com.intellij.space.vcs.SpaceKeysState
-import circlet.workspaces.Workspace
 import com.intellij.util.ui.cloneDialog.SearchableListItem
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
@@ -26,8 +26,8 @@ import runtime.UiDispatch
 import runtime.dispatchInterval
 import runtime.reactive.MutableProperty
 import runtime.reactive.Property
-import runtime.reactive.mapInit
 import runtime.reactive.mutableProperty
+import runtime.reactive.property.mapInit
 import runtime.utils.mapToSet
 
 internal class SpaceCloneComponentViewModel(

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review
 
 import circlet.workspaces.Workspace
@@ -17,7 +17,7 @@ import com.intellij.ui.content.ContentManager
 import icons.SpaceIcons
 import libraries.coroutines.extra.LifetimeSource
 import runtime.reactive.Property
-import runtime.reactive.mapInit
+import runtime.reactive.property.mapInit
 
 @Service
 internal class SpaceCodeReviewTabManager(private val project: Project) {

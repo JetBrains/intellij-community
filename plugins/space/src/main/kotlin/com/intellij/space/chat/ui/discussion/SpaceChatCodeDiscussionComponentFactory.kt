@@ -32,7 +32,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import runtime.reactive.Property
-import runtime.reactive.map
+import runtime.reactive.property.map
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JPanel

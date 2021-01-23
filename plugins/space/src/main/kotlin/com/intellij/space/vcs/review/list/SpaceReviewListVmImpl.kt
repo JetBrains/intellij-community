@@ -15,6 +15,8 @@ import circlet.platform.client.xPagedListOnFlux
 import com.intellij.space.vcs.SpaceProjectInfo
 import libraries.coroutines.extra.Lifetime
 import runtime.reactive.*
+import runtime.reactive.property.map
+import runtime.reactive.property.mapInit
 
 
 internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
