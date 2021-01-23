@@ -15,10 +15,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.ui.content.Content
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.xdebugger.XDebugProcess
@@ -26,7 +24,6 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.XCoroutineView
@@ -42,51 +39,18 @@ class DebuggerConnection(
     private val log by logger
 
     init {
-        var agentAttached = false
         if (params is JavaParameters && modifyArgs) {
             // gradle related logic in KotlinGradleCoroutineDebugProjectResolver
-            val kotlinxCoroutinesCore = params.classPath?.pathList?.firstOrNull {
-                it.contains("kotlinx-coroutines-core") && !it.contains("metadata")
-            }
-            if (kotlinxCoroutinesCore != null) {
-                when (determineCoreVersionMode(kotlinxCoroutinesCore)) {
-                    CoroutineDebuggerMode.VERSION_1_3_8_AND_UP -> {
-                        initializeCoroutineAgent(params, kotlinxCoroutinesCore)
-                        agentAttached = true
-                    }
-                    else -> log.debug("CoroutineDebugger disabled.")
-                }
-            }
+            coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(params)
+        } else {
+            coroutineAgentAttached = false
         }
-        coroutineAgentAttached = agentAttached
+
+        if (!coroutineAgentAttached) {
+            log.debug("CoroutineDebugger disabled.")
+        }
+
         connect()
-    }
-
-    private fun determineCoreVersionMode(kotlinxCoroutinesCore: String): CoroutineDebuggerMode {
-        val regex = Regex(""".+\Wkotlinx-coroutines-core(-jvm)?-(\d[\w.\-]+)?\.jar""")
-        val matchResult = regex.matchEntire(kotlinxCoroutinesCore) ?: return CoroutineDebuggerMode.DISABLED
-        val versionToCompareTo = DefaultArtifactVersion("1.3.7-255")
-
-        val artifactVersion = DefaultArtifactVersion(matchResult.groupValues[2])
-        return if (artifactVersion > versionToCompareTo)
-            CoroutineDebuggerMode.VERSION_1_3_8_AND_UP
-        else
-            CoroutineDebuggerMode.DISABLED
-    }
-
-    private fun initializeCoroutineAgent(params: JavaParameters, it: String?) {
-        params.vmParametersList?.add("-javaagent:$it")
-        // Fix for NoClassDefFoundError: kotlin/collections/AbstractMutableMap via CommandLineWrapper.
-        // If classpathFile used in run configuration - kotlin-stdlib should be included in the -classpath
-        if (params.isClasspathFile) {
-            params.classPath.rootDirs.filter { it.isKotlinStdlib() }.forEach {
-                val path = when (val fs = it.fileSystem) {
-                    is ArchiveFileSystem -> fs.getLocalByEntry(it)?.path
-                    else -> it.path
-                }
-                it.putUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH, path)
-            }
-        }
     }
 
     private fun connect() {
@@ -138,10 +102,3 @@ class DebuggerConnection(
 
 fun VirtualFile.isKotlinStdlib() =
         this.path.contains("kotlin-stdlib")
-
-enum class CoroutineDebuggerMode {
-    DISABLED,
-    VERSION_UP_TO_1_3_5,
-    VERSION_1_3_6_AND_UP,
-    VERSION_1_3_8_AND_UP,
-}
