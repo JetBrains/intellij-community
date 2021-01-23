@@ -761,11 +761,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    if (isActionTabSelected()) {
-      myMLStatisticsCollector.reportSelectedElements(
-        indexes, closePopup, mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
-        mySearchField.getText().length(), myListModel.getFoundElements());
-    }
+    recordSelectedItem(indexes, closePopup);
 
     if (closePopup) {
       closePopup();
@@ -775,8 +771,17 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  private boolean isActionTabSelected() {
-    return ActionSearchEverywhereContributor.class.getSimpleName().equals(myHeader.getSelectedTab().getID());
+  private void recordSelectedItem(int[] indexes, boolean closePopup) {
+    boolean isActionTabSelected = ActionSearchEverywhereContributor.class.getSimpleName().equals(myHeader.getSelectedTab().getID());
+    if (isActionTabSelected) {
+      int keysTyped = mySearchTypingListener.mySymbolKeysTyped;
+      int backspacesTyped = mySearchTypingListener.myBackspacesTyped;
+      int textLength = mySearchField.getText().length();
+      List<SearchEverywhereFoundElementInfo> elements = myListModel.getFoundElements();
+      NonUrgentExecutor.getInstance().execute(() -> {
+        myMLStatisticsCollector.reportSelectedElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elements);
+      });
+    }
   }
 
   private void showMoreElements(SearchEverywhereContributor contributor) {
