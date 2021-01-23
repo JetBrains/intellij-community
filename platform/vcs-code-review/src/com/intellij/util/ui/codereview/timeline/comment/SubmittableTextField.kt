@@ -211,10 +211,10 @@ class SubmittableTextField(
         }
       })
 
-      submitButton.actionListener = ActionListener { model.submit() }
+      submitButton.actionListener = ActionListener { submit() }
 
       object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent) = model.submit()
+        override fun actionPerformed(e: AnActionEvent) = submit()
       }.registerCustomShortcutSet(SUBMIT_SHORTCUT_SET, textField)
 
       cancelButton.isVisible = onCancel != null
@@ -232,9 +232,17 @@ class SubmittableTextField(
       update()
     }
 
+    private fun isSubmitAllowed(): Boolean = !model.isBusy && textField.text.isNotBlank()
+
+    private fun submit() {
+      if (isSubmitAllowed()) {
+        model.submit()
+      }
+    }
+
     private fun update() {
       busyLabel.isVisible = model.isBusy
-      submitButton.isEnabled = !model.isBusy && textField.text.isNotBlank()
+      submitButton.isEnabled = isSubmitAllowed()
     }
   }
 }
