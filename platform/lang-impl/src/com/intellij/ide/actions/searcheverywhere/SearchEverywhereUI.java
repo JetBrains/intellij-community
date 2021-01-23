@@ -761,7 +761,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    myMLStatisticsCollector.reportSelectedElements(indexes);
+    if (isActionTabSelected()) {
+      myMLStatisticsCollector.reportSelectedElements(indexes);
+    }
 
     if (closePopup) {
       closePopup();
@@ -769,6 +771,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     else {
       ApplicationManager.getApplication().invokeLater(() -> myResultsList.repaint());
     }
+  }
+
+  private boolean isActionTabSelected() {
+    return ActionSearchEverywhereContributor.class.getSimpleName().equals(myHeader.getSelectedTab().getID());
   }
 
   private void showMoreElements(SearchEverywhereContributor contributor) {
@@ -1117,10 +1123,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     @Override
     public void dispose() {
-      myMLStatisticsCollector.reportSessionEnded(
-        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
-        mySearchField.getText().length(), myListModel.getFoundElements()
-      );
+      if (isActionTabSelected()) {
+        myMLStatisticsCollector.reportSessionEnded(
+          mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
+          mySearchField.getText().length(), myListModel.getFoundElements()
+        );
+      }
     }
 
     private void updateEmptyText(String pattern) {
