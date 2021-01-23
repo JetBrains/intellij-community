@@ -32,7 +32,7 @@ internal class SearchEverywhereMLStatisticsCollector {
     }
     val logData = FeatureUsageData()
     logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
-    logData.addData(SELECTED_INDEXES_DATA_KEY, indexes.contentToString())
+    logData.addData(SELECTED_INDEXES_DATA_KEY, indexes.map { it.toString() })
     log(SESSION_FINISHED, logData.build())
   }
 
