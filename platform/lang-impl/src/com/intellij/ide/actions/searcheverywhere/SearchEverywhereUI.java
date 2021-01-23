@@ -56,6 +56,7 @@ import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.MatcherHolder;
@@ -160,7 +161,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     myMLStatisticsCollector = new SearchEverywhereMLStatisticsCollector();
 
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
-    Disposer.register(this, mySearchListener);
   }
 
   @Override
@@ -762,7 +762,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     if (isActionTabSelected()) {
-      myMLStatisticsCollector.reportSelectedElements(indexes);
+      myMLStatisticsCollector.reportSelectedElements(
+        indexes, closePopup, mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
+        mySearchField.getText().length(), myListModel.getFoundElements());
     }
 
     if (closePopup) {
@@ -1063,7 +1065,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private final SearchListener mySearchListener = new SearchListener();
 
-  private class SearchListener implements SESearcher.Listener, Disposable {
+  private class SearchListener implements SESearcher.Listener {
     private Consumer<List<Object>> testCallback;
 
     @Override
@@ -1119,16 +1121,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       mySelectionTracker.resetSelectionIfNeeded();
 
       if (testCallback != null) testCallback.consume(myListModel.getItems());
-    }
-
-    @Override
-    public void dispose() {
-      if (isActionTabSelected()) {
-        myMLStatisticsCollector.reportSessionEnded(
-          mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
-          mySearchField.getText().length(), myListModel.getFoundElements()
-        );
-      }
     }
 
     private void updateEmptyText(String pattern) {

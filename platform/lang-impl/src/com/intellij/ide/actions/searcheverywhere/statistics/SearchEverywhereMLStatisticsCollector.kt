@@ -26,22 +26,18 @@ internal class SearchEverywhereMLStatisticsCollector {
     myIsReporting = percentage >= 1 || Math.random() < percentage // only report a part of cases
   }
 
-  fun reportSelectedElements(indexes: IntArray) {
+  fun reportSelectedElements(indexes: IntArray,
+                             closePopup: Boolean,
+                             symbolsTyped: Int, backspacesTyped: Int,
+                             symbolsInQuery: Int,
+                             elements: List<SearchEverywhereFoundElementInfo>) {
     if (!myIsReporting) {
       return
     }
     val logData = FeatureUsageData()
     logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
     logData.addData(SELECTED_INDEXES_DATA_KEY, indexes.map { it.toString() })
-    log(SESSION_FINISHED, logData.build())
-  }
-
-  fun reportSessionEnded(symbolsTyped: Int, backspacesTyped: Int, symbolsInQuery: Int,
-                         elements: List<SearchEverywhereFoundElementInfo>) {
-    if (!myIsReporting) {
-      return
-    }
-    val logData = FeatureUsageData()
+    logData.addData(CLOSE_POPUP_KEY, closePopup)
     logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
     logData.addData(TOTAL_NUMBER_OF_ITEMS_DATA_KEY, elements.size)
     logData.addData(TYPED_SYMBOL_KEYS, symbolsTyped)
@@ -65,7 +61,8 @@ internal class SearchEverywhereMLStatisticsCollector {
         getListItemsNames(it, globalSummary, localActionsStats).toMap()
       }
     )
-    log(DIALOG_CLOSED, data)
+
+    log(SESSION_FINISHED, data)
   }
 
   private fun getListItemsNames(item: SearchEverywhereFoundElementInfo,
@@ -136,7 +133,6 @@ internal class SearchEverywhereMLStatisticsCollector {
   companion object {
     private const val REPORTED_ITEMS_LIMIT = 50
 
-    private const val DIALOG_CLOSED = "dialogClosed"
     private const val SESSION_FINISHED = "sessionFinished"
     private const val TYPED_SYMBOL_KEYS = "typedSymbolKeys"
     private const val TYPED_BACKSPACES_DATA_KEY = "typedBackspaces"
@@ -145,6 +141,7 @@ internal class SearchEverywhereMLStatisticsCollector {
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
 
     // context features
+    private const val CLOSE_POPUP_KEY = "closePopup"
     private const val TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount"
     private const val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = "totalItems"
     private const val LOCAL_MAX_USAGE_COUNT_KEY = "maxUsage"
