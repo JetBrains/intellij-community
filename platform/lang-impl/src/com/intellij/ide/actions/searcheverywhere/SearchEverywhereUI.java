@@ -1059,7 +1059,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private class SearchListener implements SESearcher.Listener, Disposable {
     private Consumer<List<Object>> testCallback;
-    private final List<SearchEverywhereFoundElementInfo> myCollectedElements = new ArrayList<>();
 
     @Override
     public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
@@ -1067,7 +1066,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
       mySelectionTracker.lock();
       myListModel.addElements(list);
-      myCollectedElements.addAll(list);
       mySelectionTracker.unlock();
 
       mySelectionTracker.restoreSelection();
@@ -1089,7 +1087,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     @Override
     public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
       list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
-      myCollectedElements.removeAll(list);
     }
 
     @Override
@@ -1120,8 +1117,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     @Override
     public void dispose() {
-      myMLStatisticsCollector.reportSessionEnded(mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
-                         mySearchField.getText().length(), myCollectedElements);
+      myMLStatisticsCollector.reportSessionEnded(
+        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
+        mySearchField.getText().length(), myListModel.getFoundElements()
+      );
     }
 
     private void updateEmptyText(String pattern) {

@@ -72,7 +72,7 @@ internal class SearchEverywhereMLStatisticsCollector {
                                 globalSummaryManager: ActionsGlobalSummaryManager,
                                 localSummary: Map<String, ActionSummary>): ItemInfo {
     val element = item.getElement()
-    val contributorId = item.getContributor().searchProviderId
+    val contributorId = item.getContributor()?.searchProviderId ?: "undefined"
     if (element !is MatchedValue) { // not an action/option
       return ItemInfo(element.javaClass.name, contributorId, java.util.Map.of())
     }

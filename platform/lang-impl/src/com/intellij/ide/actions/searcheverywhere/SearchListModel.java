@@ -96,6 +96,13 @@ abstract class SearchListModel extends AbstractListModel<Object> {
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
   }
 
+  @NotNull
+  public List<SearchEverywhereFoundElementInfo> getFoundElements() {
+    return listElements.stream()
+      .filter(info -> info.element != MORE_ELEMENT)
+      .collect(Collectors.toList());
+  }
+
   public Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> getFoundElementsMap() {
     return listElements.stream()
       .filter(info -> info.element != MORE_ELEMENT)
