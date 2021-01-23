@@ -65,7 +65,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
 
   public abstract PsiT createPsi(@NotNull StubT stub);
 
-  public abstract @NotNull StubT createStub(@NotNull PsiT psi, StubElement<?> parentStub);
+  public abstract @NotNull StubT createStub(@NotNull PsiT psi, StubElement<? extends PsiElement> parentStub);
 
   public boolean shouldCreateStub(ASTNode node) {
     return true;
