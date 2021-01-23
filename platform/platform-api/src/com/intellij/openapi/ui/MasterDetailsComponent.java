@@ -740,7 +740,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   public static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
-    public final void customizeCellRenderer(@NotNull JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,
