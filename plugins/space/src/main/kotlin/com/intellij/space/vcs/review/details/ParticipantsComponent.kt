@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.englishFullName
@@ -90,6 +90,16 @@ internal open class ParticipantsComponent(
     participantsVm.forEach(detailsVm.lifetime) { users ->
       panel.removeAll()
 
+      if (users?.size == 0) {
+        val additionalControls = additionalControls()
+        if (additionalControls.isNotEmpty()) {
+          val control = Wrapper(additionalControls[0]).apply {
+            border = JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP / 2)
+          }
+          panel.add(control)
+        }
+      }
+
       users?.forEachIndexed { index, codeReviewParticipant ->
         val memberProfile = codeReviewParticipant.user.resolve()
         val fullName = memberProfile.englishFullName() // NON-NLS
@@ -98,12 +108,12 @@ internal open class ParticipantsComponent(
           toolTipText = fullName
         }
         avatarProvider.getIcon(memberProfile)
-        val patricipantPanel = Wrapper(reviewerLabel)
+        val participantPanel = Wrapper(reviewerLabel)
         val additionalControls = additionalControls()
-        if (index == users.size - 1 && additionalControls.isNotEmpty()) {
-          patricipantPanel.add(additionalControls[0], BorderLayout.LINE_END)
+        if (index == users.lastIndex && additionalControls.isNotEmpty()) {
+          participantPanel.add(additionalControls[0], BorderLayout.LINE_END)
         }
-        panel.add(patricipantPanel)
+        panel.add(participantPanel)
       }
 
       panel.validate()
