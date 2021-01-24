@@ -1139,12 +1139,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void checkResult(@NotNull String text) {
-    checkResult(text, false);
+  public void checkResult(@NotNull String expectedText) {
+    checkResult(expectedText, false);
   }
 
   @Override
-  public void checkResult(@NotNull String text, boolean stripTrailingSpaces) {
+  public void checkResult(@NotNull String expectedText, boolean stripTrailingSpaces) {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     if (policy != null) {
       policy.beforeCheckResult(getFile());
@@ -1152,12 +1152,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
-      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
+      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(expectedText), getHostFile().getText());
     });
   }
 
   @Override
-  public void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces) {
+  public void checkResult(@NotNull String filePath, @NotNull String expectedText, boolean stripTrailingSpaces) {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     if (policy != null) {
       policy.beforeCheckResult(getFile());
@@ -1165,7 +1165,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       PsiFile psiFile = getFileToCheck(filePath);
-      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), psiFile.getText());
+      checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(expectedText), psiFile.getText());
     });
   }
 
