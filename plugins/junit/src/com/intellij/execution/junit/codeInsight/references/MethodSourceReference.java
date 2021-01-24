@@ -78,20 +78,21 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLanguageInjection
     }
     PsiMethod[] clazzMethods = psiClazz.findMethodsByName(methodName, true);
     if (clazzMethods.length == 0 && (psiClazz.isInterface() || PsiUtil.isAbstractClass(psiClazz))) {
-      final PsiMethod[] neededMethod = new PsiMethod[1];
       final String finalMethodName = methodName;
-      ClassInheritorsSearch.search(psiClazz, psiClazz.getResolveScope(), false)
-        .anyMatch(aClazz -> {
-                    PsiMethod[] methods = aClazz.findMethodsByName(finalMethodName, false);
-                    PsiMethod method = filteredMethod(methods, aClazz);
-                    if (method != null) {
-                      neededMethod[0] = method;
-                      return true;
-                    }
-                    return false;
-                  }
-        );
-      return neededMethod[0];
+      PsiElementResolveResult neededMethod = ClassInheritorsSearch.search(psiClazz, psiClazz.getResolveScope(), false)
+        .mapping(aClazz -> {
+          final PsiMethod[] methods = aClazz.findMethodsByName(finalMethodName, false);
+          return filteredMethod(methods, aClazz);
+        })
+        .filtering(method -> {
+          return method != null;
+        })
+        .mapping(method -> {
+          return new PsiElementResolveResult(method);
+        })
+        .findFirst();
+      if (neededMethod == null) return null;
+      return neededMethod.getElement();
     }
     return filteredMethod(clazzMethods, psiClazz);
   }
