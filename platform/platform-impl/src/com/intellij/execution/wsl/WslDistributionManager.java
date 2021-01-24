@@ -137,7 +137,7 @@ public abstract class WslDistributionManager implements Disposable {
     private final long myExternalChangesCount;
 
     private CachedDistributions(@NotNull List<WSLDistribution> installedDistributions) {
-      myInstalledDistributions = installedDistributions;
+      myInstalledDistributions = List.copyOf(installedDistributions);
       myExternalChangesCount = getCurrentExternalChangesCount();
     }
 
