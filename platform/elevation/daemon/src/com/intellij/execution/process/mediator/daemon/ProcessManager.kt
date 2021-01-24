@@ -16,13 +16,13 @@ typealias Pid = Long
 
 internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
   private val handleMap = ConcurrentHashMap<Pid, Handle>()
-  private val job = Job(coroutineScope.coroutineContext[Job])
+  private val parentJob = coroutineScope.coroutineContext[Job]
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Pid {
-    // The ref job acts like a reference in ref-counting collectors preventing this.job from completion
+    // The ref job acts like a reference in ref-counting collectors preventing parentJob from completion
     // (a parent job does not complete until all its children complete).
-    val refJob = Job(job)
+    val refJob = Job(parentJob)
     refJob.ensureActive()
     try {
       val processBuilder = ProcessBuilder().apply {
@@ -157,7 +157,6 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
   }
 
   override fun close() {
-    job.cancel("closed")
     while (true) {
       val pid = handleMap.keys.firstOrNull() ?: break
       handleMap.remove(pid)?.release()
