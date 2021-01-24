@@ -3331,7 +3331,7 @@ public final class HighlightUtil {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
-      registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(info), file, feature);
+      registerIncreaseLanguageLevelFixes(file, feature, new QuickFixActionRegistrarImpl(info));
       return info;
     }
 
@@ -3345,16 +3345,16 @@ public final class HighlightUtil {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
-      registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(info), file, feature);
+      registerIncreaseLanguageLevelFixes(file, feature, new QuickFixActionRegistrarImpl(info));
       return info;
     }
 
     return null;
   }
 
-  public static void registerIncreaseLanguageLevelFixes(@NotNull QuickFixActionRegistrar registrar,
-                                                        @NotNull PsiElement element,
-                                                        @NotNull HighlightingFeature feature) {
+  public static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
+                                                        @NotNull HighlightingFeature feature,
+                                                        @NotNull QuickFixActionRegistrar registrar) {
     if (feature.isAvailable(element)) return;
     registrar.register(getFixFactory().createIncreaseLanguageLevelFix(getApplicableLevel(element.getContainingFile(), feature)));
     registrar.register(getFixFactory().createShowModulePropertiesFix(element));
