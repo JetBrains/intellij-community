@@ -2029,7 +2029,9 @@ public final class HighlightUtil {
 
     String description = JavaErrorBundle.message("expression.expected");
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-    UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, new QuickFixActionRegistrarImpl(info));
+    if (info != null) {
+      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, new QuickFixActionRegistrarImpl(info));
+    }
     return info;
   }
 
@@ -2342,7 +2344,7 @@ public final class HighlightUtil {
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
         PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
-        if (referenceElement != null) {
+        if (referenceElement != null && info != null) {
           UnresolvedReferenceQuickFixProvider.registerReferenceFixes(referenceElement, new QuickFixActionRegistrarImpl(info));
         }
         return info;
@@ -3095,7 +3097,9 @@ public final class HighlightUtil {
       }
 
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
-      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+      if (info != null) {
+        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+      }
       return info;
     }
 
@@ -3118,7 +3122,9 @@ public final class HighlightUtil {
             QuickFixAction.registerQuickFixAction(info, getFixFactory().createRenameWrongRefFix((PsiReferenceExpression)ref));
           }
         }
-        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+        if (info != null) {
+          UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
+        }
         return info;
       }
 
@@ -3331,7 +3337,9 @@ public final class HighlightUtil {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
-      registerIncreaseLanguageLevelFixes(file, feature, new QuickFixActionRegistrarImpl(info));
+      if (info != null) {
+        registerIncreaseLanguageLevelFixes(file, feature, new QuickFixActionRegistrarImpl(info));
+      }
       return info;
     }
 
@@ -3345,7 +3353,9 @@ public final class HighlightUtil {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
-      registerIncreaseLanguageLevelFixes(file, feature, new QuickFixActionRegistrarImpl(info));
+      if (info != null) {
+        registerIncreaseLanguageLevelFixes(file, feature, new QuickFixActionRegistrarImpl(info));
+      }
       return info;
     }
 

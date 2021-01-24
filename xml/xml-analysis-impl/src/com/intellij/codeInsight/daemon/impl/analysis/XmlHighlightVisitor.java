@@ -486,7 +486,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           }
         }
       }
-      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
+      if (info != null) {
+        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
+      }
     }
   }
 
