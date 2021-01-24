@@ -236,7 +236,7 @@
       <separator/>
     </group>
 
-    <group id="Log.KeymapGroup">
+    <group id="Log.KeymapGroup" searchable="false">
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="Vcs.Log.CompareRevisions"/>
       <separator/>

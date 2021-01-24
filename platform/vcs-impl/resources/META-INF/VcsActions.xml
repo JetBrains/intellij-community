@@ -404,7 +404,7 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
     </group>
 
-    <group id="Shelve.KeymapGroup">
+    <group id="Shelve.KeymapGroup" searchable="false">
       <reference ref="ChangesView.Shelve"/>
       <reference ref="ChangesView.ShelveSilently"/>
       <reference ref="ChangesView.SaveToShelve"/>
@@ -425,7 +425,7 @@
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>
     </group>
 
-    <group id="FileHistory.KeymapGroup">
+    <group id="FileHistory.KeymapGroup" searchable="false">
       <reference id="Vcs.GetVersion"/>
       <reference id="FileHistory.AnnotateRevision"/>
 
