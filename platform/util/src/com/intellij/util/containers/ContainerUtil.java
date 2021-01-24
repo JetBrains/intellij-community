@@ -19,8 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 @ApiStatus.NonExtendable
-// cannot be final because of https://plugins.jetbrains.com/plugin/7831-illuminated-cloud
-public class ContainerUtil {
+public final class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
   @SafeVarargs
