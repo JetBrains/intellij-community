@@ -71,10 +71,10 @@ internal class SearchEverywhereMLStatisticsCollector {
     val element = item.getElement()
     val contributorId = item.getContributor()?.searchProviderId ?: "undefined"
     if (element !is MatchedValue) { // not an action/option
-      return ItemInfo(element.javaClass.name, contributorId, java.util.Map.of())
+      return ItemInfo(element.javaClass.name, contributorId, hashMapOf())
     }
     if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
-      return ItemInfo("", contributorId, java.util.Map.of(IS_ACTION_DATA_KEY, false))
+      return ItemInfo(null, contributorId, hashMapOf(IS_ACTION_DATA_KEY to false))
     }
     return fillActionItemInfo(item, element.value, globalSummaryManager, localSummary, contributorId)
   }
@@ -85,7 +85,7 @@ internal class SearchEverywhereMLStatisticsCollector {
                                  localSummary: Map<String, ActionSummary>,
                                  contributorId: String): ItemInfo {
     val action = element.action
-    val actionId = ActionManager.getInstance().getId(action)
+    val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
 
     val data = mutableMapOf(
       IS_ACTION_DATA_KEY to true,
@@ -122,11 +122,16 @@ internal class SearchEverywhereMLStatisticsCollector {
     return ItemInfo(actionId, contributorId, data)
   }
 
-  data class ItemInfo(val id: String, val contributorId: String, val additionalData: Map<String, Any>) {
+  data class ItemInfo(val id: String?, val contributorId: String, val additionalData: Map<String, Any>) {
     fun toMap(): Map<String, Any> {
-      return mapOf("id" to id,
-                   "contributorId" to contributorId,
-                   "additionalData" to additionalData)
+      val result = hashMapOf(
+        "contributorId" to contributorId,
+        "additionalData" to additionalData
+      )
+      id?.let {
+        result += "id" to it
+      }
+      return result
     }
   }
 
