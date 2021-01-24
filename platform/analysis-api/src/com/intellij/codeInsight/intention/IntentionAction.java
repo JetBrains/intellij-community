@@ -55,6 +55,8 @@ public interface IntentionAction extends FileModifier {
    * Checks whether this intention is available at a caret offset in the file.
    * If this method returns true, a light bulb for this intention is shown.
    *
+   * It is supposed to be fast enough to be run on EDT thread as well.
+   *
    * @param project the project in which the availability is checked.
    * @param editor  the editor in which the intention will be invoked.
    * @param file    the file open in the editor.
