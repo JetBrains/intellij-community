@@ -7,7 +7,7 @@ import com.intellij.execution.process.mediator.grpc.ExceptionStatusDescriptionAu
 import com.intellij.execution.process.mediator.rpc.*
 import io.grpc.ServerInterceptors
 import io.grpc.ServerServiceDefinition
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.flow.*
 import java.io.File
 
@@ -74,15 +74,13 @@ internal class ProcessManagerServerService(
   override fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> {
     @Suppress("EXPERIMENTAL_API_USAGE")
     return channelFlow<Unit> {
-      coroutineScope {
-        @Suppress("EXPERIMENTAL_API_USAGE")
-        val receiveChannel = requests.produceIn(this)
-
-        val handle = receiveChannel.receive().also { request ->
+      @Suppress("EXPERIMENTAL_API_USAGE")
+      requests.produceIn(this).consume {
+        val handle = receive().also { request ->
           require(request.hasHandle()) { "the first request must specify the handle" }
         }.handle
 
-        val chunkFlow = receiveChannel.consumeAsFlow().mapNotNull { request ->
+        val chunkFlow = receiveAsFlow().mapNotNull { request ->
           require(request.hasChunk()) { "got handle in the middle of the stream" }
           request.chunk.buffer
         }
@@ -104,4 +102,3 @@ internal class ProcessManagerServerService(
     }
   }
 }
-
