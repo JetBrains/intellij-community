@@ -1,14 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.zip.ImmutableZipFile
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.configuration.ConfigurationProvider
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import kotlin.random.Random
 
@@ -16,13 +18,15 @@ import kotlin.random.Random
 class ZipTest {
   @JvmField
   @Rule
-  val fsRule = InMemoryFsRule()
+  val tempDir = TemporaryDirectory()
 
   @Test
   fun `interrupt thread`() {
     val (list, archiveFile) = createLargeArchive(128)
     val zipFile = ImmutableZipFile.load(archiveFile)
     val executor = Executors.newWorkStealingPool(4)
+    // force init of AssertJ to avoid ClosedByInterruptException on reading FileLoader index
+    ConfigurationProvider.CONFIGURATION_PROVIDER
     for (i in 0..100) {
       executor.execute {
         val ioThread = runInThread {
@@ -40,20 +44,22 @@ class ZipTest {
         ioThread.join()
       }
     }
+    executor.shutdown()
+    executor.awaitTermination(4, TimeUnit.MINUTES)
   }
 
   @Test
   fun `do not compress jars and images`() {
     val random = Random(42)
 
-    val dir = fsRule.fs.getPath("/dir")
+    val dir = tempDir.newPath("/dir")
     Files.createDirectories(dir)
     val fileDescriptors = listOf(Entry("lib.jar", true), Entry("lib.zip", true), Entry("image.png", true), Entry("scalable-image.svg", true), Entry("readme.txt", true))
     for (entry in fileDescriptors) {
       Files.write(dir.resolve(entry.path), random.nextBytes(1024))
     }
 
-    val archiveFile = fsRule.fs.getPath("/archive.zip")
+    val archiveFile = tempDir.newPath("/archive.zip")
     zip(archiveFile, mapOf(dir to ""))
 
     val zipFile = ImmutableZipFile.load(archiveFile)
@@ -76,7 +82,7 @@ class ZipTest {
   private fun createLargeArchive(size: Int): Pair<MutableList<String>, Path> {
     val random = Random(42)
 
-    val dir = fsRule.fs.getPath("/dir")
+    val dir = tempDir.newPath("/dir")
     Files.createDirectories(dir)
     val list = mutableListOf<String>()
     for (i in 0..size) {
@@ -85,7 +91,7 @@ class ZipTest {
       Files.write(dir.resolve(name), random.nextBytes(random.nextInt(128)))
     }
 
-    val archiveFile = fsRule.fs.getPath("/archive.zip")
+    val archiveFile = tempDir.newPath("/archive.zip")
     zip(archiveFile, mapOf(dir to ""))
     return Pair(list, archiveFile)
   }
@@ -94,7 +100,7 @@ class ZipTest {
   fun `custom prefix`() {
     val random = Random(42)
 
-    val dir = fsRule.fs.getPath("/dir")
+    val dir = tempDir.newPath("/dir")
     Files.createDirectories(dir)
     val list = mutableListOf<String>()
     for (i in 0..10) {
@@ -103,7 +109,7 @@ class ZipTest {
       Files.write(dir.resolve(name), random.nextBytes(random.nextInt(128)))
     }
 
-    val archiveFile = fsRule.fs.getPath("/archive.zip")
+    val archiveFile = tempDir.newPath("/archive.zip")
     zip(archiveFile, mapOf(dir to "test"))
 
     val zipFile = ImmutableZipFile.load(archiveFile)
@@ -114,12 +120,12 @@ class ZipTest {
 
   @Test
   fun `small file`() {
-    val dir = fsRule.fs.getPath("/dir")
+    val dir = tempDir.newPath("/dir")
     val file = dir.resolve("samples/nested_dir/__init__.py")
     Files.createDirectories(file.parent)
     Files.writeString(file, "\n")
 
-    val archiveFile = fsRule.fs.getPath("/archive.zip")
+    val archiveFile = tempDir.newPath("/archive.zip")
     zip(archiveFile, mapOf(dir to ""))
 
     val zipFile = ImmutableZipFile.load(archiveFile)
