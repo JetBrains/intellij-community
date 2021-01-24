@@ -18,18 +18,18 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
   public static <T extends PsiReference> void registerReferenceFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar) {
     final boolean dumb = DumbService.getInstance(ref.getElement().getProject()).isDumb();
     Class<? extends PsiReference> referenceClass = ref.getClass();
-    for (UnresolvedReferenceQuickFixProvider each : EXTENSION_NAME.getExtensionList()) {
+    for (UnresolvedReferenceQuickFixProvider<?> each : EXTENSION_NAME.getExtensionList()) {
       if (dumb && !DumbService.isDumbAware(each)) {
         continue;
       }
       if (ReflectionUtil.isAssignable(each.getReferenceClass(), referenceClass)) {
         //noinspection unchecked
-        each.registerFixes(ref, registrar);
+        ((UnresolvedReferenceQuickFixProvider<T>)each).registerFixes(ref, registrar);
       }
     }
   }
 
-  private static final ExtensionPointName<UnresolvedReferenceQuickFixProvider> EXTENSION_NAME = ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
+  private static final ExtensionPointName<UnresolvedReferenceQuickFixProvider<?>> EXTENSION_NAME = ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
 
   public abstract void registerFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar);
 
