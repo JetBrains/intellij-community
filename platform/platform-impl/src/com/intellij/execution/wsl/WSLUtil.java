@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -196,5 +197,12 @@ public final class WSLUtil {
       LOG.warn(e);
       return ThreeState.UNSURE;
     }
+  }
+
+  public static @Nullable @NlsSafe String getMsId(@Nullable @NlsSafe String msOrInternalId) {
+    if (msOrInternalId == null) return null;
+    WslDistributionDescriptor descriptor = ContainerUtil.find(WSLDistributionService.getInstance().getDescriptors(),
+                                                              d -> d.getId().equals(msOrInternalId));
+    return descriptor != null ? descriptor.getMsId() : msOrInternalId;
   }
 }
