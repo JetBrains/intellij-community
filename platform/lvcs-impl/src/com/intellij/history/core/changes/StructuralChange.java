@@ -17,8 +17,8 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.utils.LocalHistoryLog;
@@ -40,13 +40,13 @@ public abstract class StructuralChange extends Change {
 
   protected StructuralChange(DataInput in) throws IOException {
     super(in);
-    myPath = StreamUtil.readString(in);
+    myPath = DataStreamUtil.readString(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    StreamUtil.writeString(out, myPath);
+    DataStreamUtil.writeString(out, myPath);
   }
 
   protected void removeEntry(Entry e) {

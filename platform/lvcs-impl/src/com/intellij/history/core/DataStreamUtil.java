@@ -15,7 +15,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public final class StreamUtil {
+public final class DataStreamUtil {
   public static Entry readEntry(DataInput in) throws IOException {
     int type = DataInputOutputUtil.readINT(in);
     switch (type) {

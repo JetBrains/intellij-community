@@ -105,7 +105,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
 
           if (gotItTooltip.canShow()) {
             connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-              override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
+              override fun daemonFinished(fileEditors: Collection<FileEditor>) {
                 fileEditors.find { fe -> if (fe is PsiAwareTextEditorImpl) editor == fe.editor else false }?.let { _ ->
                   gotItTooltip.setOnBalloonCreated { balloon ->
                     balloon.addListener(object: JBPopupListener {

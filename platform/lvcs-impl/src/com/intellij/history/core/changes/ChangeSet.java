@@ -17,7 +17,7 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
-import com.intellij.history.core.StreamUtil;
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.SmartList;
@@ -50,13 +50,13 @@ public class ChangeSet {
 
   public ChangeSet(DataInput in) throws IOException {
     myId = DataInputOutputUtil.readLONG(in);
-    myName = StreamUtil.readStringOrNull(in); //NON-NLS
+    myName = DataStreamUtil.readStringOrNull(in); //NON-NLS
     myTimestamp = DataInputOutputUtil.readTIME(in);
 
     int count = DataInputOutputUtil.readINT(in);
     List<Change> changes = new ArrayList<>(count);
     while (count-- > 0) {
-      changes.add(StreamUtil.readChange(in));
+      changes.add(DataStreamUtil.readChange(in));
     }
     myChanges = Collections.unmodifiableList(changes);
     isLocked = true;
@@ -65,12 +65,12 @@ public class ChangeSet {
   public void write(DataOutput out) throws IOException {
     LocalHistoryLog.LOG.assertTrue(isLocked, "Changeset should be locked");
     DataInputOutputUtil.writeLONG(out, myId);
-    StreamUtil.writeStringOrNull(out, myName);
+    DataStreamUtil.writeStringOrNull(out, myName);
     DataInputOutputUtil.writeTIME(out, myTimestamp);
 
     DataInputOutputUtil.writeINT(out, myChanges.size());
     for (Change c : myChanges) {
-      StreamUtil.writeChange(out, c);
+      DataStreamUtil.writeChange(out, c);
     }
   }
 

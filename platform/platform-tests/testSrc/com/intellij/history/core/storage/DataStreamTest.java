@@ -18,7 +18,7 @@ package com.intellij.history.core.storage;
 
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.StoredContent;
-import com.intellij.history.core.StreamUtil;
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
@@ -30,7 +30,7 @@ import org.junit.Test;
 import java.io.*;
 import java.util.List;
 
-public class StreamTest extends LocalHistoryTestCase {
+public class DataStreamTest extends LocalHistoryTestCase {
   private DataInputStream is;
   private DataOutputStream os;
 
@@ -43,24 +43,24 @@ public class StreamTest extends LocalHistoryTestCase {
 
   @Test
   public void testString() throws Exception {
-    StreamUtil.writeString(os, "hello");
-    assertEquals("hello", StreamUtil.readString(is));
+    DataStreamUtil.writeString(os, "hello");
+    assertEquals("hello", DataStreamUtil.readString(is));
   }
 
   @Test
   public void testStringOrNull() throws Exception {
-    StreamUtil.writeStringOrNull(os, "hello");
-    StreamUtil.writeStringOrNull(os, null);
-    assertEquals("hello", StreamUtil.readStringOrNull(is));
-    assertNull(StreamUtil.readStringOrNull(is));
+    DataStreamUtil.writeStringOrNull(os, "hello");
+    DataStreamUtil.writeStringOrNull(os, null);
+    assertEquals("hello", DataStreamUtil.readStringOrNull(is));
+    assertNull(DataStreamUtil.readStringOrNull(is));
   }
 
   @Test
   public void testFileEntry() throws Exception {
     Entry e = new FileEntry("file", new StoredContent(333), 123L, true);
 
-    StreamUtil.writeEntry(os, e);
-    Entry result = StreamUtil.readEntry(is);
+    DataStreamUtil.writeEntry(os, e);
+    Entry result = DataStreamUtil.readEntry(is);
 
     assertEquals(FileEntry.class, result.getClass());
 
@@ -76,17 +76,17 @@ public class StreamTest extends LocalHistoryTestCase {
     Entry e = new FileEntry("", new StoredContent(333), -1, false);
 
     parent.addChild(e);
-    StreamUtil.writeEntry(os, e);
+    DataStreamUtil.writeEntry(os, e);
 
-    assertNull(StreamUtil.readEntry(is).getParent());
+    assertNull(DataStreamUtil.readEntry(is).getParent());
   }
 
   @Test
   public void testEmptyDirectoryEntry() throws IOException {
     Entry e = new DirectoryEntry("name");
 
-    StreamUtil.writeEntry(os, e);
-    Entry result = StreamUtil.readEntry(is);
+    DataStreamUtil.writeEntry(os, e);
+    Entry result = DataStreamUtil.readEntry(is);
 
     assertEquals(DirectoryEntry.class, result.getClass());
 
@@ -101,8 +101,8 @@ public class StreamTest extends LocalHistoryTestCase {
     subDir.addChild(new FileEntry("a", new StoredContent(333), -1, false));
     subDir.addChild(new FileEntry("b", new StoredContent(333), -1, false));
 
-    StreamUtil.writeEntry(os, dir);
-    Entry result = StreamUtil.readEntry(is);
+    DataStreamUtil.writeEntry(os, dir);
+    Entry result = DataStreamUtil.readEntry(is);
 
     List<Entry> children = result.getChildren();
     assertEquals(1, children.size());
@@ -125,8 +125,8 @@ public class StreamTest extends LocalHistoryTestCase {
   public void testCreateFileChange() throws IOException {
     Change c = new CreateFileChange(nextId(), "file");
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(CreateFileChange.class, read.getClass());
     CreateFileChange result = (CreateFileChange)read;
@@ -138,8 +138,8 @@ public class StreamTest extends LocalHistoryTestCase {
   public void testCreateDirectoryChange() throws IOException {
     Change c = new CreateDirectoryChange(nextId(), "dir");
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(CreateDirectoryChange.class, read.getClass());
     CreateDirectoryChange result = (CreateDirectoryChange)read;
@@ -151,8 +151,8 @@ public class StreamTest extends LocalHistoryTestCase {
   public void testContentChange() throws IOException {
     Change c = new ContentChange(nextId(), "file", new StoredContent(333), 2L);
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(ContentChange.class, read.getClass());
     ContentChange result = (ContentChange)read;
@@ -170,8 +170,8 @@ public class StreamTest extends LocalHistoryTestCase {
 
     Change c = new DeleteChange(nextId(), "entry", dir);
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(DeleteChange.class, read.getClass());
     DeleteChange result = (DeleteChange)read;
@@ -192,8 +192,8 @@ public class StreamTest extends LocalHistoryTestCase {
   public void testRenameChange() throws IOException {
     Change c = new RenameChange(nextId(), "new name", "old name");
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(RenameChange.class, read.getClass());
     RenameChange result = ((RenameChange)read);
@@ -208,8 +208,8 @@ public class StreamTest extends LocalHistoryTestCase {
 
     Change c = new ROStatusChange(nextId(), "f", true);
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(ROStatusChange.class, read.getClass());
     ROStatusChange result = ((ROStatusChange)read);
@@ -222,8 +222,8 @@ public class StreamTest extends LocalHistoryTestCase {
   public void testMoveChange() throws IOException {
     Change c = new MoveChange(nextId(), "dir2/file", "dir1");
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(MoveChange.class, read.getClass());
     MoveChange result = ((MoveChange)read);
@@ -236,8 +236,8 @@ public class StreamTest extends LocalHistoryTestCase {
   public void testPutLabelChange() throws IOException {
     Change c = new PutLabelChange(nextId(), "name", "projectId");
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(PutLabelChange.class, read.getClass());
     assertEquals("name", ((PutLabelChange)read).getName());
@@ -248,8 +248,8 @@ public class StreamTest extends LocalHistoryTestCase {
   public void testPutSystemLabelChange() throws IOException {
     Change c = new PutSystemLabelChange(nextId(), "name", "projectId", 123);
 
-    StreamUtil.writeChange(os, c);
-    Change read = StreamUtil.readChange(is);
+    DataStreamUtil.writeChange(os, c);
+    Change read = DataStreamUtil.readChange(is);
 
     assertEquals(PutSystemLabelChange.class, read.getClass());
     assertEquals("name", ((PutSystemLabelChange)read).getName());

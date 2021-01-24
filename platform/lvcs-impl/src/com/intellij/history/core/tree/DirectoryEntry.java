@@ -2,8 +2,8 @@
 
 package com.intellij.history.core.tree;
 
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -36,7 +36,7 @@ public class DirectoryEntry extends Entry {
     int count = DataInputOutputUtil.readINT(in);
     myChildren = new ArrayList<>(count);
     while (count-- > 0) {
-      unsafeAddChild(StreamUtil.readEntry(in));
+      unsafeAddChild(DataStreamUtil.readEntry(in));
     }
   }
 
@@ -45,7 +45,7 @@ public class DirectoryEntry extends Entry {
     super.write(out);
     DataInputOutputUtil.writeINT(out, myChildren.size());
     for (Entry child : myChildren) {
-      StreamUtil.writeEntry(out, child);
+      DataStreamUtil.writeEntry(out, child);
     }
   }
 

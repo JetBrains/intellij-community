@@ -17,8 +17,8 @@
 package com.intellij.history.core.tree;
 
 import com.intellij.history.core.Content;
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,13 +72,13 @@ public abstract class Entry {
   }
 
   public Entry(DataInput in) throws IOException {
-    String name = StreamUtil.readString(in);
+    String name = DataStreamUtil.readString(in);
     myNameId = toNameId(name);
     myNameHash = calcNameHash(name);
   }
 
   public void write(DataOutput out) throws IOException {
-    StreamUtil.writeString(out, getName());
+    DataStreamUtil.writeString(out, getName());
   }
 
   @NlsSafe
