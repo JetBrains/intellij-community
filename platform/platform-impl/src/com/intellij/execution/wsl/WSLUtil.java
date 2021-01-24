@@ -199,8 +199,7 @@ public final class WSLUtil {
     }
   }
 
-  public static @Nullable @NlsSafe String getMsId(@Nullable @NlsSafe String msOrInternalId) {
-    if (msOrInternalId == null) return null;
+  public static @NotNull @NlsSafe String getMsId(@NotNull @NlsSafe String msOrInternalId) {
     WslDistributionDescriptor descriptor = ContainerUtil.find(WSLDistributionService.getInstance().getDescriptors(),
                                                               d -> d.getId().equals(msOrInternalId));
     return descriptor != null ? descriptor.getMsId() : msOrInternalId;
