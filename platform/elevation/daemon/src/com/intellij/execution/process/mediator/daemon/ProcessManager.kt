@@ -20,8 +20,10 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Pid {
-    val completion = CompletableDeferred<Int>(job)
-    completion.ensureActive()
+    // The ref job acts like a reference in ref-counting collectors preventing this.job from completion
+    // (a parent job does not complete until all its children complete).
+    val refJob = Job(job)
+    refJob.ensureActive()
     try {
       val processBuilder = ProcessBuilder().apply {
         command(command)
@@ -40,11 +42,11 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
         processBuilder.start()
       }
 
-      val handle = Handle(process, completion)
+      val handle = Handle(process, refJob)
       return registerHandle(handle)
     }
     catch (e: Throwable) {
-      completion.cancel("Failed to create process", e)
+      refJob.cancel("Failed to create process", e)
       throw e
     }
   }
@@ -164,14 +166,16 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
 
   private data class Handle(
     val process: Process,
-    val completion: CompletableDeferred<Int>,
+    private val refJob: CompletableJob,
   ) {
+    val completion = CompletableDeferred<Int>(refJob)
     val pid get() = process.pid()
 
     init {
       process.onExit().whenComplete { p, _ ->
         completion.complete(p.exitValue())
       }
+      refJob.complete()  // doesn't really complete until its child completes
     }
 
     fun cancelJobOnCompletion(job: Job) {
@@ -183,7 +187,7 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
     }
 
     fun release() {
-      completion.cancel("process released")
+      refJob.cancel("process released")
       process.destroy()  // TODO should we really destroy it?
     }
   }
