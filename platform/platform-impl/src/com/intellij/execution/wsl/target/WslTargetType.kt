@@ -4,7 +4,6 @@ package com.intellij.execution.wsl.target
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentFactory
 import com.intellij.execution.target.TargetEnvironmentType
-import com.intellij.execution.wsl.WSLUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -24,7 +23,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
   override fun createSerializer(config: WslTargetEnvironmentConfiguration) = config
 
   override fun createDefaultConfig(): WslTargetEnvironmentConfiguration {
-    return WslTargetEnvironmentConfiguration(WSLUtil.getAvailableDistributions().firstOrNull())
+    return WslTargetEnvironmentConfiguration()
   }
 
   override fun createEnvironmentFactory(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentFactory {
