@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style
 
 import com.intellij.openapi.editor.Editor
@@ -34,7 +34,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), false, DefaultInferenceContext, lazy { unreachable() })
+    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), DefaultInferenceContext)
     val virtualMethod = runInferenceProcess(method, options)
     substituteMethodSignature(virtualMethod, method)
   }
