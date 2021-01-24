@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
@@ -18,6 +19,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import javax.swing.JComponent
 
@@ -73,7 +75,9 @@ class JavaAutoImportOptions(val project: Project) : DslConfigurableBase(), AutoI
               ApplicationBundle.message("help.optimize.imports.on.the.fly"),
               ApplicationBundle.message("help.link.optimize.imports.on.the.fly")
             ) { openJavaImportSettings(dataContextOwner) }()
-            comment(IdeUICustomization.getInstance().projectMessage("configurable.current.project.tooltip"))
+            val label = JBLabel(AllIcons.General.ProjectConfigurable)
+            label.toolTipText = IdeUICustomization.getInstance().projectMessage("configurable.current.project.tooltip")
+            component(label)
           }
         }
         row {
