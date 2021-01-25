@@ -62,7 +62,7 @@ class VcsEditorTabFilesManager :
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
     if (editorManager.isFileOpen(file)) {
       editorManager.updateFilePresentation(file)
-      focusEditor(project, file)
+      editorManager.selectAndFocusEditor(file, focusEditor)
       return emptyArray()
     }
 
@@ -74,12 +74,12 @@ class VcsEditorTabFilesManager :
     }
   }
 
-  private fun focusEditor(project: Project, file: VirtualFile) {
-    val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-    val window = editorManager.windows.find { it.isFileOpen(file) } ?: return
+  private fun FileEditorManagerImpl.selectAndFocusEditor(file: VirtualFile, focusEditor: Boolean) {
+    val window = windows.find { it.isFileOpen(file) } ?: return
     val composite = window.findFileComposite(file) ?: return
-    window.setSelectedEditor(composite, true)
-    window.requestFocus(true)
+
+    window.setSelectedEditor(composite, focusEditor)
+    if (focusEditor) window.requestFocus(true)
   }
 
   override fun dispose() {}
