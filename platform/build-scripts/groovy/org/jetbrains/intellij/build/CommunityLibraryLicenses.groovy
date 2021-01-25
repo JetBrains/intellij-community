@@ -718,6 +718,8 @@ class CommunityLibraryLicenses {
                        url: "https://x-stream.github.io/", licenseUrl: "https://x-stream.github.io/license.html"),
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "Marketplace zip signer", libraryName: "org.jetbrains.marketplace:zip-signer", license: "Apache 2.0",
+                       url: "https://bintray.com/jetbrains/intellij-plugin-service/zip-signer"),
     new LibraryLicense(name: "Zstd-JNI", libraryName: "com.github.luben:zstd", license: "BSD",
                        url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE"),
 
