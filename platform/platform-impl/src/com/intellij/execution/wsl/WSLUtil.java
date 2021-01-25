@@ -55,8 +55,12 @@ public final class WSLUtil {
   };
 
   /**
-   * @return true if there are distributions available for usage
+   * @deprecated use {@link WslDistributionManager#getInstalledDistributions} instead.
+   * Alternatively, check {@link WSLUtil#isSystemCompatible} and show standard WSL UI, e.g.
+   * {@link com.intellij.execution.wsl.ui.WslDistributionComboBox}. If no WSL distributions installed,
+   * it will show "No installed distributions" message.
    */
+  @Deprecated
   public static boolean hasAvailableDistributions() {
     return !getAvailableDistributions().isEmpty();
   }
