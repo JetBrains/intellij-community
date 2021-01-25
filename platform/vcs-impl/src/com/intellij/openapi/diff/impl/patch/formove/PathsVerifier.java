@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.CommonBundle;
@@ -8,9 +8,11 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchFactory;
+import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -184,11 +186,17 @@ public final class PathsVerifier {
     }
     FileType fileType = file.getFileType();
     if (fileType == FileTypes.UNKNOWN) {
-      fileType = FileTypeChooser.associateFileType(file.getName());
-      if (fileType == null) {
-        PatchApplier
-          .showError(myProject, VcsBundle.message("patch.apply.file.type.undefined.error", file.getPresentableName()));
-        return false;
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ApplicationManager.getApplication().runWriteAction(
+          () -> FileTypeManagerEx.getInstanceEx().associate(FileTypes.PLAIN_TEXT, new ExactFileNameMatcher(file.getName()))
+        );
+      } else {
+        fileType = FileTypeChooser.associateFileType(file.getName());
+        if (fileType == null) {
+          PatchApplier
+            .showError(myProject, VcsBundle.message("patch.apply.file.type.undefined.error", file.getPresentableName()));
+          return false;
+        }
       }
     }
     if (fileType.isBinary()) {
