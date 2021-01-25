@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
@@ -149,7 +150,8 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
 
   @NotNull
   public static PersistentSearchEverywhereContributorFilter<FileTypeRef> createFileTypeFilter(@NotNull Project project) {
-    List<FileTypeRef> items = FileTypeRef.forAllFileTypes();
+    List<FileTypeRef> items = new ArrayList<>(FileTypeRef.forAllFileTypes());
+    items.add(0, GotoFileModel.DIRECTORY_FILE_TYPE_REF);
     return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileTypeRef::getName,
                                                              FileTypeRef::getIcon);
   }
