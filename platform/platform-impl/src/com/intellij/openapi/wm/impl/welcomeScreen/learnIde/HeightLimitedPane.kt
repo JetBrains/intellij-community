@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.PARAGRAPH_STYLE
+import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import java.awt.Color
@@ -19,8 +20,12 @@ import javax.swing.text.StyleConstants
  * This panel has limited height by its preferred size and doesn't grow more. The maximum width
  * could be limited as well by setting maximumWidth.
  */
-class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fontColor: Color, isBold: Boolean = false) : JTextPane() {
+class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fontColor: Color, isBold: Boolean = false, private val maximumWidth: Int? = null) : JTextPane() {
   val style = SimpleAttributeSet()
+
+  // Made for binary compatibility
+  constructor(text: String, relativeFontSize: Int, fontColor: JBColor, isBold: Boolean, maximumWidth: Int):
+    this(text, relativeFontSize, fontColor as Color, isBold, maximumWidth)
 
   init {
     border = JBUI.Borders.empty()
@@ -60,7 +65,12 @@ class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fon
   }
 
   override fun getMaximumSize(): Dimension {
-    return this.preferredSize
+    if (maximumWidth == null) {
+      return this.preferredSize
+    }
+    else {
+      return Dimension(width, this.preferredSize.height)
+    }
   }
 
   override fun setUI(ui: TextUI?) {
