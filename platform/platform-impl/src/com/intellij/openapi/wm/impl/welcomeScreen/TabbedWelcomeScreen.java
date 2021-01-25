@@ -34,7 +34,9 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     DefaultListModel<WelcomeScreenTab> mainListModel = new DefaultListModel<>();
     for (WelcomeTabFactory tabFactory : WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList()) {
-      mainListModel.addElement(tabFactory.createWelcomeTab(this));
+      if (tabFactory.isApplicable()) {
+        mainListModel.addElement(tabFactory.createWelcomeTab(this));
+      }
     }
 
     tabList = createListWithTabs(mainListModel);

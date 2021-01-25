@@ -17,4 +17,11 @@ public interface WelcomeTabFactory {
    * Executed in EDT.
    */
   @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable);
+
+  /**
+   * @return true if the factory if applicable for the IDE, false otherwise
+   */
+  default boolean isApplicable() {
+    return true;
+  }
 }
