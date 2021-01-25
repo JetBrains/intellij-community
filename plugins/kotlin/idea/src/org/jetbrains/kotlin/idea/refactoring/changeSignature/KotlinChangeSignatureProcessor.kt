@@ -30,6 +30,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
@@ -81,7 +82,10 @@ class KotlinChangeSignatureProcessor(
             val javaProcessor = JavaChangeSignatureUsageProcessor()
             javaChangeInfos.mapTo(allUsages) { javaChangeInfo ->
                 val javaUsagesForKtChange = javaProcessor.findUsages(javaChangeInfo)
-                val uniqueJavaUsagesForKtChange = javaUsagesForKtChange.filterNot<UsageInfo> { javaUsages.contains(it) }
+                val uniqueJavaUsagesForKtChange = javaUsagesForKtChange.filter<UsageInfo> {
+                    it.element?.language != KotlinLanguage.INSTANCE && !javaUsages.contains(it)
+                }
+
                 javaUsages.addAll(javaUsagesForKtChange)
                 KotlinWrapperForJavaUsageInfos(javaChangeInfo, uniqueJavaUsagesForKtChange.toTypedArray(), changeInfo.method)
             }
