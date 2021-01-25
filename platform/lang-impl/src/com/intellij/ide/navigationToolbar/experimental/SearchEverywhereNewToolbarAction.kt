@@ -17,7 +17,6 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.BigPopup.searchFieldBackground
 import com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_TEXT_COLOR
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
@@ -27,7 +26,7 @@ import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener {
-
+  private val margin = JBUI.scale(4)
   private var hotKeyWasUsed = Registry.`is`("ide.suppress.double.click.handler")
   private var subscribedForDoubleShift = false
 
@@ -96,7 +95,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       }
 
       override fun iconTextSpace(): Int {
-        return super.iconTextSpace() + JBUI.scale(6)
+        return super.iconTextSpace() + margin
       }
 
       override fun paintComponent(g: Graphics) {
@@ -112,7 +111,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
                                                       SwingConstants.CENTER, horizontalTextAlignment(),
                                                       SwingConstants.CENTER, horizontalTextPosition(),
                                                       viewRect, iconRect, textRect, iconTextSpace())
-        iconRect.x += JBUI.scale(4)
+        iconRect.x = margin
         val look = buttonLook
         look.paintBackground(g, this)
         look.paintIcon(g, this, icon, iconRect.x, iconRect.y)
