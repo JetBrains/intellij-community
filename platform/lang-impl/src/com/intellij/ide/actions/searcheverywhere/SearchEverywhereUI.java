@@ -759,7 +759,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    myMLStatisticsCollector.recordSelectedItem(indexes, closePopup, myListModel.getFoundElements(),
+    myMLStatisticsCollector.recordSelectedItem(indexes, closePopup, () -> myListModel.getFoundElements(),
                                                mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
                                                mySearchField.getText().length(), myHeader.getSelectedTab().getID());
 

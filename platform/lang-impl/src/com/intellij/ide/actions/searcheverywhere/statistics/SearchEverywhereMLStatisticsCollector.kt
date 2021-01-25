@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.statistics
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -13,6 +14,7 @@ import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -31,7 +33,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     myIsReporting = percentage >= 1 || Math.random() < percentage // only report a part of cases
   }
 
-  private fun isActionTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId
+  private fun isActionOrAllTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId ||
+                                                         SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == tabId
 
   private fun reportElements(indexes: IntArray,
                              closePopup: Boolean,
@@ -40,7 +43,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              symbolsInQuery: Int,
                              elements: List<SearchEverywhereFoundElementInfo>,
                              tabId: String) {
-    if (myIsReporting && isActionTab(tabId)) {
+    if (myIsReporting && isActionOrAllTab(tabId)) {
       NonUrgentExecutor.getInstance().execute {
         reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, elements)
       }
@@ -77,13 +80,9 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     myProject?.let {
       // report tool windows' ids
       val twm = ToolWindowManager.getInstance(it)
-      logData.addData(OPEN_TOOL_WINDOWS_KEY, twm.toolWindowIds.asList())
-
-      // report types of open files in editor
-      val fem = FileEditorManager.getInstance(it)
-      logData.addData(OPEN_FILE_TYPES_KEY, fem.openFiles.map { file ->
-        file.fileType.name
-      })
+      ApplicationManager.getApplication().invokeAndWait {
+        twm.lastActiveToolWindowId?.let { id -> logData.addData(LAST_ACTIVE_TOOL_WINDOW_KEY, id) }
+      }
     }
 
     val data = logData.build()
@@ -93,18 +92,24 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         getListItemsNames(it, globalSummary, localActionsStats).toMap()
       }
     )
+    myProject?.let {
+      // report types of open files in editor: fileType -> amount
+      val fem = FileEditorManager.getInstance(it)
+      val map = fem.openFiles.groupBy { file -> file.fileType.name }.mapValues { entry -> entry.value.size }
+      (data as? MutableMap)?.put(OPEN_FILE_TYPES_KEY, map)
+    }
 
     log(SESSION_FINISHED, data)
   }
 
   fun recordSelectedItem(indexes: IntArray,
                          closePopup: Boolean,
-                         elements: List<SearchEverywhereFoundElementInfo>,
+                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                          keysTyped: Int,
                          backspacesTyped: Int,
                          textLength: Int,
                          tabId: String) {
-    reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elements, tabId)
+    reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elementsProvider.invoke(), tabId)
   }
 
   fun recordPopupClosed(elements: List<SearchEverywhereFoundElementInfo>,
@@ -217,7 +222,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val HAS_ICON_KEY = "withIcon"
     private const val IS_ENABLED_KEY = "isEnabled"
     private const val WEIGHT_KEY = "weight"
-    private const val OPEN_TOOL_WINDOWS_KEY = "openToolWindows"
+    private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
     private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
 
     private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
