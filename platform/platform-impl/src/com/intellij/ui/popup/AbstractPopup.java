@@ -543,7 +543,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       Dimension contentPreferredSize = myContent.getPreferredSize();
       Dimension titlePreferredSize = getTitle().getPreferredSize();
       size = new JBDimension(Math.max(contentPreferredSize.width, titlePreferredSize.width),
-                             contentPreferredSize.height + titlePreferredSize.height);
+                             contentPreferredSize.height + titlePreferredSize.height, true);
     }
     return size;
   }
