@@ -1,9 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
+import com.intellij.model.Pointer;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Normally, text occurrences are processed from the bottom to the top (file),
@@ -33,4 +36,27 @@ public interface LeafOccurrenceMapper<T> {
    * @return read-only collection of result elements of the query
    */
   @NotNull Collection<? extends T> mapOccurrence(@NotNull LeafOccurrence occurrence);
+
+  interface Parameterized<P, T> {
+
+    @NotNull Collection<? extends T> mapOccurrence(P parameter, @NotNull LeafOccurrence occurrence);
+  }
+
+  /**
+   * @param <P> type of pointer value
+   * @param <T> type of mapper result
+   * @return mapper, which dereferences the {@code pointer}, and,
+   * if successful, passes the value to the {@code parameterizedMapper} along with the occurrence
+   */
+  @Contract(pure = true)
+  static <P, T> @NotNull LeafOccurrenceMapper<T> withPointer(
+    @NotNull Pointer<? extends P> pointer,
+    @NotNull Parameterized<@NotNull ? super P, ? extends T> parameterizedMapper
+  ) {
+    return occurrence -> {
+      P value = pointer.dereference();
+      return value == null ? Collections.emptyList()
+                           : parameterizedMapper.mapOccurrence(value, occurrence);
+    };
+  }
 }
