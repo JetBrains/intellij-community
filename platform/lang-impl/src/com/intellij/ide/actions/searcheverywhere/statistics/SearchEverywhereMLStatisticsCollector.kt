@@ -41,11 +41,11 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              keysTyped: Int,
                              backspacesTyped: Int,
                              symbolsInQuery: Int,
-                             elements: List<SearchEverywhereFoundElementInfo>,
+                             elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                              tabId: String) {
     if (myIsReporting && isActionOrAllTab(tabId)) {
       NonUrgentExecutor.getInstance().execute {
-        reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, elements)
+        reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, elementsProvider.invoke(), tabId)
       }
     }
   }
@@ -54,7 +54,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              closePopup: Boolean,
                              symbolsTyped: Int, backspacesTyped: Int,
                              symbolsInQuery: Int,
-                             elements: List<SearchEverywhereFoundElementInfo>) {
+                             elements: List<SearchEverywhereFoundElementInfo>,
+                             tabId: String) {
     val logData = FeatureUsageData()
     logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
     if (indexes.isNotEmpty()) {
@@ -66,6 +67,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     logData.addData(TYPED_SYMBOL_KEYS, symbolsTyped)
     logData.addData(TYPED_BACKSPACES_DATA_KEY, backspacesTyped)
     logData.addData(TOTAL_SYMBOLS_AMOUNT_DATA_KEY, symbolsInQuery)
+    logData.addData(SE_TAB_ID_KEY, tabId)
 
     val globalSummary = ServiceManager.getService(ActionsGlobalSummaryManager::class.java)
     val globalTotalStats = globalSummary.totalSummary
@@ -109,15 +111,15 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                          backspacesTyped: Int,
                          textLength: Int,
                          tabId: String) {
-    reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elementsProvider.invoke(), tabId)
+    reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elementsProvider, tabId)
   }
 
-  fun recordPopupClosed(elements: List<SearchEverywhereFoundElementInfo>,
+  fun recordPopupClosed(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                         keysTyped: Int,
                         backspacesTyped: Int,
                         textLength: Int,
                         tabId: String) {
-    reportElements(EMPTY, true, keysTyped, backspacesTyped, textLength, elements, tabId)
+    reportElements(EMPTY, true, keysTyped, backspacesTyped, textLength, elementsProvider, tabId)
   }
 
   private fun getListItemsNames(item: SearchEverywhereFoundElementInfo,
@@ -224,6 +226,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val WEIGHT_KEY = "weight"
     private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
     private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
+    private const val SE_TAB_ID_KEY = "seTabId"
 
     private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
     private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
