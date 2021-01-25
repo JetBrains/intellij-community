@@ -107,6 +107,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
     if (!IndexInfrastructure.hasIndices()) return;
+    LOG.info("Started");
 
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
@@ -135,7 +136,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       projectIndexingHistory.getTimes().setPushPropertiesDuration(Duration.between(pushPropertiesStart, Instant.now()));
     }
 
-    if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Pushing properties");
+    if (trackResponsiveness) {
+      LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Pushing properties"));
+    }
 
     myIndex.clearIndicesIfNecessary();
 
@@ -152,7 +155,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       projectIndexingHistory.getTimes().setScanFilesDuration(Duration.between(scanFilesStart, Instant.now()));
     }
 
-    if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Indexable file iteration");
+    if (trackResponsiveness) {
+      LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Indexable file iteration"));
+    }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
@@ -160,9 +165,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
 
     int totalFiles = providerToFiles.values().stream().mapToInt(it -> it.size()).sum();
-    if (trackResponsiveness) {
-      LOG.info("Unindexed files update started: " + totalFiles + " files to index");
-    }
+    LOG.info("Number of files to index: " + totalFiles);
 
     if (totalFiles == 0 || SystemProperties.getBooleanProperty("idea.indexes.pretendNoFiles", false)) {
       return;
@@ -177,7 +180,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(poweredIndicator, totalFiles);
 
     int numberOfIndexingThreads = getNumberOfIndexingThreads();
-    LOG.info("Using " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads) +
+    LOG.info("Use " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads) +
              ", " + getNumberOfScanningThreads() + " scanning " + StringUtil.pluralize("thread", numberOfIndexingThreads));
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
 
@@ -220,7 +223,9 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(startIndexing, Instant.now()));
     }
 
-    if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Unindexed files update");
+    if (trackResponsiveness) {
+      LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Unindexed files update"));
+    }
     myIndex.dumpIndexStatistics();
   }
 

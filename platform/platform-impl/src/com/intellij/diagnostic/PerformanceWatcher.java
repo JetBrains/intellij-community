@@ -431,9 +431,14 @@ public final class PerformanceWatcher implements Disposable {
     }
 
     public void logResponsivenessSinceCreation(@NonNls @NotNull String activityName) {
-      LOG.info(activityName + " took " + (System.currentTimeMillis() - myStartMillis) + "ms" +
-               "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
-               "; EDT responsiveness: " + mySwingApdex.summarizePerformanceSince(myStartSwingSnapshot));
+      LOG.info(getLogResponsivenessSinceCreationMessage(activityName));
+    }
+
+    @NotNull
+    public String getLogResponsivenessSinceCreationMessage(@NonNls @NotNull String activityName) {
+      return activityName + " took " + (System.currentTimeMillis() - myStartMillis) + "ms" +
+             "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
+             "; EDT responsiveness: " + mySwingApdex.summarizePerformanceSince(myStartSwingSnapshot);
     }
   }
 
