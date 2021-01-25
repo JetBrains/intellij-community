@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -24,4 +25,11 @@ public interface WelcomeScreenCustomization {
    * @return component that is always shown on the {@link WelcomeScreen} with tab view (left bottom panel)
    */
   @Nullable Component createQuickAccessComponent(@NotNull Disposable parentDisposable);
+
+  /**
+   * @return toolbar shown below the main panel (selected tab) of the {@link WelcomeScreen}
+   */
+  default @Nullable JComponent createMainPanelToolbar(@NotNull Disposable parentDisposable) {
+    return null;
+  }
 }

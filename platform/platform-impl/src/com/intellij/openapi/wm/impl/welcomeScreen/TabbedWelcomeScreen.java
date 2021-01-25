@@ -30,7 +30,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   TabbedWelcomeScreen() {
     setBackground(WelcomeScreenUIManager.getMainTabListBackground());
 
-    CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> centralPanel = createCardPanel();
+    CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> mainPanel = createCardPanel();
 
     DefaultListModel<WelcomeScreenTab> mainListModel = new DefaultListModel<>();
     for (WelcomeTabFactory tabFactory : WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList()) {
@@ -39,7 +39,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     tabList = createListWithTabs(mainListModel);
     tabList.addListSelectionListener(e -> {
-      centralPanel.select(tabList.getSelectedValue(), true);
+      mainPanel.select(tabList.getSelectedValue(), true);
       WelcomeScreenEventCollector.logTabSelected(tabList.getSelectedValue());
     });
     tabList.getAccessibleContext().setAccessibleName(UIBundle.message("welcome.screen.welcome.screen.categories.accessible.name"));
@@ -56,6 +56,14 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
     leftPanel.add(quickAccessPanel, BorderLayout.SOUTH);
     leftPanel.setPreferredSize(new Dimension(JBUI.scale(196), leftPanel.getPreferredSize().height));
+
+    JComponent centralPanel = mainPanel;
+    JComponent mainPanelToolbar = createMainPanelToolbar(this);
+    if (mainPanelToolbar != null) {
+      centralPanel = new JPanel(new BorderLayout());
+      centralPanel.add(mainPanel, BorderLayout.CENTER);
+      centralPanel.add(mainPanelToolbar, BorderLayout.SOUTH);
+    }
 
     add(leftPanel, BorderLayout.WEST);
     add(centralPanel, BorderLayout.CENTER);
@@ -100,6 +108,14 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       .filter(Objects::nonNull)
       .forEach(quickAccessPanel::add);
     return quickAccessPanel;
+  }
+
+  @Nullable
+  private static JComponent createMainPanelToolbar(@NotNull Disposable parentDisposable) {
+    return WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.getExtensionsIfPointIsRegistered().stream()
+      .map(c -> c.createMainPanelToolbar(parentDisposable))
+      .filter(Objects::nonNull)
+      .findFirst().orElse(null);
   }
 
   private static @NotNull CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> createCardPanel() {
