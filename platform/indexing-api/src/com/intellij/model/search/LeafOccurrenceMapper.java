@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.LocalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -32,13 +30,7 @@ public interface LeafOccurrenceMapper<T> {
    * This method is called once per offset in {@code scope},
    * so implementations are able to control whether to go up the tree or not.
    *
-   * @param scope         the top-most element with the occurrence;
-   *                      in case the search is conducted in {@link LocalSearchScope},
-   *                      this would be one of {@link LocalSearchScope#getScope scope elements},
-   *                      in other cases the {@code scope} is a containing file of {@code start}
-   * @param start         the bottom-most element containing whole occurrence, usually a leaf element
-   * @param offsetInStart start offset of the occurrence in {@code start}
    * @return read-only collection of result elements of the query
    */
-  @NotNull Collection<? extends T> mapOccurrence(@NotNull PsiElement scope, @NotNull PsiElement start, int offsetInStart);
+  @NotNull Collection<? extends T> mapOccurrence(@NotNull LeafOccurrence occurrence);
 }

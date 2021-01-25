@@ -24,7 +24,7 @@ internal fun buildTextQuery(project: Project, searchString: String, searchScope:
     .searchWord(project, searchString)
     .inContexts(SearchContext.IN_PLAIN_TEXT)
     .inScope(searchScope)
-    .buildQuery { _, start, offsetInStart ->
+    .buildQuery { (_, start, offsetInStart) ->
       if (hasReferences(start, offsetInStart)) {
         emptyList()
       }
