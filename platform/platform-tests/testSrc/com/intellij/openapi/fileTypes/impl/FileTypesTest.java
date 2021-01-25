@@ -80,6 +80,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
     FileTypeManagerImpl.reDetectAsync(true);
     ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.THROW);
+    // StdFileTypes.JSPX is assigned to PLAIN_TEXT in community
+    //noinspection deprecation
     Assume.assumeTrue("Test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage which is created on each HelmYamlFileType registration which happens a lot in this class",
                       StdFileTypes.JSPX == StdFileTypes.PLAIN_TEXT);
   }

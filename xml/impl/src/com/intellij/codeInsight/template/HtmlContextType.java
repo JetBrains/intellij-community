@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.PsiFile;
@@ -34,6 +34,6 @@ public class HtmlContextType extends FileTypeBasedContextType {
   @Nullable
   @Override
   public SyntaxHighlighter createHighlighter() {
-    return SyntaxHighlighterFactory.getSyntaxHighlighter(StdFileTypes.XML, null, null);
+    return SyntaxHighlighterFactory.getSyntaxHighlighter(XmlFileType.INSTANCE, null, null);
   }
 }

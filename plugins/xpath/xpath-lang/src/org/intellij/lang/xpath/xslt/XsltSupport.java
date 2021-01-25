@@ -15,10 +15,10 @@
  */
 package org.intellij.lang.xpath.xslt;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -228,7 +228,7 @@ public final class XsltSupport {
   }
 
   public static boolean isXsltFile(@NotNull PsiFile psiFile) {
-    if (psiFile.getFileType() != StdFileTypes.XML) return false;
+    if (psiFile.getFileType() != XmlFileType.INSTANCE) return false;
 
     if (!(psiFile instanceof XmlFile)) return false;
 

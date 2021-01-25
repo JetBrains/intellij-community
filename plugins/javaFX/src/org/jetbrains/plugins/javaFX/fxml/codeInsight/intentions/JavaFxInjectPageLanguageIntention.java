@@ -3,10 +3,10 @@ package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -88,7 +88,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   public void registerPageLanguage(final Project project, final XmlFile containingFile, final String languageName) {
     WriteCommandAction.writeCommandAction(project).withName(getFamilyName()).run(() -> {
       final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-      final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", StdFileTypes.XML,
+      final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", XmlFileType.INSTANCE,
                                                                     "<?language " + languageName + "?>");
       final XmlDocument document = dummyFile.getDocument();
       if (document != null) {

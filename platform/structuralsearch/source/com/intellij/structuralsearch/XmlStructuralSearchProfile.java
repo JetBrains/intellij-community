@@ -126,9 +126,9 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     final PsiFile file = context instanceof PsiFile ? (PsiFile)context : context.getContainingFile();
     final Language contextLanguage = context instanceof PsiFile ? null : context.getLanguage();
     if (file.getLanguage() == HTMLLanguage.INSTANCE || (file.getFileType() == StdFileTypes.JSP && contextLanguage == HTMLLanguage.INSTANCE)) {
-      return StdFileTypes.HTML;
+      return HtmlFileType.INSTANCE;
     }
-    return StdFileTypes.XML;
+    return XmlFileType.INSTANCE;
   }
 
   @Override

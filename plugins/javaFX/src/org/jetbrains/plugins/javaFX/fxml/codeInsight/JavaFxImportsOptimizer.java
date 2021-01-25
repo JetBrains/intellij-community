@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -73,7 +73,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     }
     final PsiFileFactory factory = PsiFileFactory.getInstance(file.getProject());
 
-    final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", StdFileTypes.XML, StringUtil.join(imports, "\n"));
+    final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", XmlFileType.INSTANCE, StringUtil.join(imports, "\n"));
     final XmlDocument document = dummyFile.getDocument();
     final XmlProlog newImportList = document != null ? document.getProlog() : null;
     if (newImportList == null) return EmptyRunnable.getInstance();

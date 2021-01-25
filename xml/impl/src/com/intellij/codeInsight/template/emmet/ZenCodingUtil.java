@@ -4,10 +4,11 @@ package com.intellij.codeInsight.template.emmet;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,7 @@ public final class ZenCodingUtil {
 
   public static boolean isHtml(CustomTemplateCallback callback) {
     FileType type = callback.getFileType();
-    if (type == StdFileTypes.HTML || type == StdFileTypes.XHTML) {
+    if (type == HtmlFileType.INSTANCE || type == XHtmlFileType.INSTANCE) {
       return true;
     }
     return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(HTMLLanguage.INSTANCE);
