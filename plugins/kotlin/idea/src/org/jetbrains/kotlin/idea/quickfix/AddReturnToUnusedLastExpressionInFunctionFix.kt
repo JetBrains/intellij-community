@@ -55,9 +55,9 @@ class AddReturnToUnusedLastExpressionInFunctionFix(element: KtElement) : KotlinQ
     }
 
     companion object Factory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val casted = Errors.UNUSED_EXPRESSION.cast(diagnostic)
-            return AddReturnToUnusedLastExpressionInFunctionFix(casted.psiElement)
+            return AddReturnToUnusedLastExpressionInFunctionFix(casted.psiElement).takeIf(AddReturnToUnusedLastExpressionInFunctionFix::available)
         }
     }
 }

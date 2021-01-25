@@ -51,9 +51,9 @@ class AddReturnToLastExpressionInFunctionFix(element: KtDeclarationWithBody) : K
     }
 
     companion object Factory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val casted = Errors.NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.cast(diagnostic)
-            return AddReturnToLastExpressionInFunctionFix(casted.psiElement)
+            return AddReturnToLastExpressionInFunctionFix(casted.psiElement).takeIf(AddReturnToLastExpressionInFunctionFix::available)
         }
     }
 }

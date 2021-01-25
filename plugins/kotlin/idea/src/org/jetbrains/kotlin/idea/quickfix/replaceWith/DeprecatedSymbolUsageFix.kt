@@ -53,7 +53,7 @@ class DeprecatedSymbolUsageFix(
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val (referenceExpression, replacement) = extractDataFromDiagnostic(diagnostic, false) ?: return null
-            return DeprecatedSymbolUsageFix(referenceExpression, replacement)
+            return DeprecatedSymbolUsageFix(referenceExpression, replacement).takeIf(DeprecatedSymbolUsageFix::available)
         }
 
         fun importDirectivesToBeRemoved(file: KtFile): List<KtImportDirective> {

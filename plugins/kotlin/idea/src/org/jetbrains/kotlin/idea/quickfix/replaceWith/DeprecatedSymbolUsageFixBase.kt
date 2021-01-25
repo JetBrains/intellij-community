@@ -59,7 +59,7 @@ abstract class DeprecatedSymbolUsageFixBase(
     val replaceWith: ReplaceWith
 ) : KotlinQuickFixAction<KtReferenceExpression>(element) {
 
-    protected val available: Boolean
+    internal val available: Boolean
 
     init {
         assert(!ApplicationManager.getApplication().isDispatchThread) {

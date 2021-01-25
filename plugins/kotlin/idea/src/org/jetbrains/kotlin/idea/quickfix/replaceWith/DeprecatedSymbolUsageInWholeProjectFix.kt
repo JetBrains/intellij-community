@@ -31,10 +31,8 @@ class DeprecatedSymbolUsageInWholeProjectFix(
 
     override fun startInWriteAction() = false
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        if (!super.isAvailable(project, editor, file)) return false
-        return targetPsiElement() != null
-    }
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
+        super.isAvailable(project, editor, file) && targetPsiElement() != null
 
     override fun invoke(replacementStrategy: UsageReplacementStrategy, project: Project, editor: Editor?) {
         val psiElement = targetPsiElement()!!
@@ -74,7 +72,7 @@ class DeprecatedSymbolUsageInWholeProjectFix(
                 referenceExpression,
                 replacement,
                 KotlinBundle.message("replace.usages.of.0.in.whole.project", descriptorName)
-            )
+            ).takeIf(DeprecatedSymbolUsageInWholeProjectFix::available)
         }
     }
 }
