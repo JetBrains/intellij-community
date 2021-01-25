@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.util.CanonicalTypes
@@ -123,6 +124,10 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }, "Change Signature").run()
 
         compareEditorsWithExpectedData()
+    }
+
+    private fun doTestAndIgnoreConflicts(configure: KotlinChangeInfo.() -> Unit = {}) = withIgnoredConflicts<Throwable> {
+        doTest(configure)
     }
 
     private fun runAndCheckConflicts(testAction: () -> Unit) {
@@ -392,42 +397,48 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testAddParameterToAnnotation() {
         doTest {
             val defaultValueForCall = KtPsiFactory(project).createExpression("3")
-            addParameter(KotlinParameterInfo(
-                originalBaseFunctionDescriptor,
-                -1,
-                "p3",
-                KotlinTypeInfo(false, BUILT_INS.intType),
-                null,
-                defaultValueForCall
-            ))
+            addParameter(
+                KotlinParameterInfo(
+                    originalBaseFunctionDescriptor,
+                    -1,
+                    "p3",
+                    KotlinTypeInfo(false, BUILT_INS.intType),
+                    null,
+                    defaultValueForCall
+                )
+            )
         }
     }
 
     fun testInvokeOperatorInClass() {
         doTest {
             val defaultValueForCall = KtPsiFactory(project).createExpression("42")
-            addParameter(KotlinParameterInfo(
-                originalBaseFunctionDescriptor,
-                -1,
-                "i",
-                KotlinTypeInfo(false, BUILT_INS.intType),
-                null,
-                defaultValueForCall
-            ))
+            addParameter(
+                KotlinParameterInfo(
+                    originalBaseFunctionDescriptor,
+                    -1,
+                    "i",
+                    KotlinTypeInfo(false, BUILT_INS.intType),
+                    null,
+                    defaultValueForCall
+                )
+            )
         }
     }
 
     fun testInvokeOperatorInObject() {
         doTest {
             val defaultValueForCall = KtPsiFactory(project).createExpression("42")
-            addParameter(KotlinParameterInfo(
-                originalBaseFunctionDescriptor,
-                -1,
-                "i",
-                KotlinTypeInfo(false, BUILT_INS.intType),
-                null,
-                defaultValueForCall
-            ))
+            addParameter(
+                KotlinParameterInfo(
+                    originalBaseFunctionDescriptor,
+                    -1,
+                    "i",
+                    KotlinTypeInfo(false, BUILT_INS.intType),
+                    null,
+                    defaultValueForCall
+                )
+            )
         }
     }
 
@@ -683,7 +694,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testConstructorJavaUsages() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val defaultValueForCall = KtPsiFactory(project).createExpression("\"abc\"")
             addParameter(
                 KotlinParameterInfo(
@@ -699,7 +710,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testFunctionJavaUsagesAndOverridesAddParam() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val psiFactory = KtPsiFactory(project)
             val defaultValueForCall1 = psiFactory.createExpression("\"abc\"")
             val defaultValueForCall2 = psiFactory.createExpression("\"def\"")
@@ -866,7 +877,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testAddNewReceiver() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val defaultValueForCall = KtPsiFactory(project).createExpression("X(0)")
             receiverParameterInfo = KotlinParameterInfo(
                 originalBaseFunctionDescriptor,
@@ -875,13 +886,12 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
                 KotlinTypeInfo(false, BUILT_INS.anyType),
                 null,
                 defaultValueForCall
-            )
-                .apply { currentTypeInfo = KotlinTypeInfo(false, null, "X") }
+            ).apply { currentTypeInfo = KotlinTypeInfo(false, null, "X") }
         }
     }
 
     fun testAddNewReceiverForMember() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val defaultValueForCall = KtPsiFactory(project).createExpression("X(0)")
             receiverParameterInfo = KotlinParameterInfo(
                 originalBaseFunctionDescriptor,
@@ -890,8 +900,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
                 KotlinTypeInfo(false, BUILT_INS.anyType),
                 null,
                 defaultValueForCall
-            )
-                .apply { currentTypeInfo = KotlinTypeInfo(false, null, "X") }
+            ).apply { currentTypeInfo = KotlinTypeInfo(false, null, "X") }
         }
     }
 
@@ -905,8 +914,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
                 KotlinTypeInfo(false, BUILT_INS.anyType),
                 null,
                 defaultValueForCall
-            )
-                .apply { currentTypeInfo = KotlinTypeInfo(false, null, "X") }
+            ).apply { currentTypeInfo = KotlinTypeInfo(false, null, "X") }
         }
     }
 
@@ -1032,7 +1040,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testSecondaryConstructor() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val defaultValueForCall = KtPsiFactory(project).createExpression("\"foo\"")
             addParameter(
                 KotlinParameterInfo(
@@ -1277,8 +1285,22 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    fun testAddPropertyReceiverConflict2() {
+        doTestConflict {
+            val defaultValueForCall = KtPsiFactory(project).createExpression("\"\"")
+            receiverParameterInfo = KotlinParameterInfo(
+                originalBaseFunctionDescriptor,
+                -1,
+                "receiver",
+                KotlinTypeInfo(false, BUILT_INS.stringType),
+                null,
+                defaultValueForCall
+            )
+        }
+    }
+
     fun testAddPropertyReceiver() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val defaultValueForCall = KtPsiFactory(project).createExpression("\"\"")
             receiverParameterInfo = KotlinParameterInfo(
                 originalBaseFunctionDescriptor,
@@ -1300,7 +1322,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testAddTopLevelPropertyReceiver() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val defaultValueForCall = KtPsiFactory(project).createExpression("A()")
             receiverParameterInfo = KotlinParameterInfo(
                 originalBaseFunctionDescriptor,
@@ -1329,7 +1351,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testParameterPropagation() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val psiFactory = KtPsiFactory(project)
 
             val defaultValueForCall1 = psiFactory.createExpression("1")
@@ -1461,7 +1483,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testPrimaryConstructorParameterPropagation() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val defaultValueForCall = KtPsiFactory(project).createExpression("1")
             addParameter(
                 KotlinParameterInfo(
@@ -1479,7 +1501,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testSecondaryConstructorParameterPropagation() {
-        doTest {
+        doTestAndIgnoreConflicts {
             val defaultValueForCall = KtPsiFactory(project).createExpression("1")
             addParameter(
                 KotlinParameterInfo(
@@ -1528,14 +1550,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testJvmOverloadedSwapParams1() {
-        doTest { swapParameters(1, 2) }
+        doTestAndIgnoreConflicts { swapParameters(1, 2) }
     }
 
     fun testJvmOverloadedSwapParams2() {
-        doTest { swapParameters(0, 2) }
+        doTestAndIgnoreConflicts { swapParameters(0, 2) }
     }
 
-    private fun doTestJvmOverloadedAddDefault(index: Int) = doTest {
+    private fun doTestJvmOverloadedAddDefault(index: Int) = doTestAndIgnoreConflicts {
         val defaultValue = KtPsiFactory(project).createExpression("2")
         addParameter(
             KotlinParameterInfo(
@@ -1549,7 +1571,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    private fun doTestJvmOverloadedAddNonDefault(index: Int) = doTest {
+    private fun doTestJvmOverloadedAddNonDefault(index: Int) = doTestAndIgnoreConflicts {
         val defaultValue = KtPsiFactory(project).createExpression("2")
         addParameter(
             KotlinParameterInfo(
@@ -1588,31 +1610,31 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testJvmOverloadedRemoveDefault1() {
-        doTest { removeParameter(0) }
+        doTestAndIgnoreConflicts { removeParameter(0) }
     }
 
     fun testJvmOverloadedRemoveDefault2() {
-        doTest { removeParameter(1) }
+        doTestAndIgnoreConflicts { removeParameter(1) }
     }
 
     fun testJvmOverloadedRemoveDefault3() {
-        doTest { removeParameter(getNewParametersCount() - 1) }
+        doTestAndIgnoreConflicts { removeParameter(getNewParametersCount() - 1) }
     }
 
     fun testJvmOverloadedRemoveNonDefault1() {
-        doTest { removeParameter(0) }
+        doTestAndIgnoreConflicts { removeParameter(0) }
     }
 
     fun testJvmOverloadedRemoveNonDefault2() {
-        doTest { removeParameter(1) }
+        doTestAndIgnoreConflicts { removeParameter(1) }
     }
 
     fun testJvmOverloadedRemoveNonDefault3() {
-        doTest { removeParameter(getNewParametersCount() - 1) }
+        doTestAndIgnoreConflicts { removeParameter(getNewParametersCount() - 1) }
     }
 
     fun testJvmOverloadedConstructorSwapParams() {
-        doTest { swapParameters(1, 2) }
+        doTestAndIgnoreConflicts { swapParameters(1, 2) }
     }
 
     fun testDefaultAfterLambda() {

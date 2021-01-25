@@ -661,20 +661,30 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         wrapper: KotlinWrapperForJavaUsageInfos,
         result: MultiMap<PsiElement, String>,
     ) {
-        if (!changeInfo.checkUsedParameters) return
-
         val javaChangeInfo = wrapper.javaChangeInfo
         val javaUsageInfos = wrapper.javaUsageInfos
         val parametersToRemove = javaChangeInfo.toRemoveParm()
+        val noDefaultValues = javaChangeInfo.newParameters.all { it.defaultValue.isNullOrBlank() }
 
-        for (javaUsage in javaUsageInfos) {
-            if (javaUsage !is OverriderUsageInfo) continue
+        for (javaUsage in javaUsageInfos) when (javaUsage) {
+            is OverriderUsageInfo -> {
+                if (!changeInfo.checkUsedParameters) continue
 
-            val javaMethod = javaUsage.overridingMethod
-            val baseMethod = javaUsage.baseMethod
-            if (baseMethod != javaChangeInfo.method) continue
+                val javaMethod = javaUsage.overridingMethod
+                val baseMethod = javaUsage.baseMethod
+                if (baseMethod != javaChangeInfo.method) continue
 
-            JavaChangeSignatureUsageProcessor.ConflictSearcher.checkParametersToDelete(javaMethod, parametersToRemove, result)
+                JavaChangeSignatureUsageProcessor.ConflictSearcher.checkParametersToDelete(javaMethod, parametersToRemove, result)
+            }
+
+            is MethodCallUsageInfo -> {
+                if (noDefaultValues) continue
+
+                result.putValue(
+                    javaUsage.element,
+                    KotlinBundle.message("change.signature.conflict.text.kotlin.default.value.in.non.kotlin.files")
+                )
+            }
         }
     }
 
