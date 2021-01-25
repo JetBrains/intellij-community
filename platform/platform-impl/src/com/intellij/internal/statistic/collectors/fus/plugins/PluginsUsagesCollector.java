@@ -5,25 +5,24 @@ import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("plugins", 3);
-  public static final EventId1<PluginInfo> DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo);
-  public static final EventId1<PluginInfo> ENABLED_NOT_BUNDLED_PLUGIN =
-    GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo);
+  private static final EventId1<PluginInfo> DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin",
+                                                                                  EventFields.PluginInfo);
+  private static final EventId1<PluginInfo> ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin",
+                                                                                             EventFields.PluginInfo);
 
   @Override
   public EventLogGroup getGroup() {
@@ -34,17 +33,28 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   public Set<MetricEvent> getMetrics() {
     Set<MetricEvent> result = new HashSet<>();
-    for (PluginId id : DisabledPluginsState.disabledPlugins()) {
-      PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(id);
-      result.add(DISABLED_PLUGIN.metric(info));
-    }
-
-    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getLoadedPlugins()) {
-      if (descriptor.isEnabled() && !descriptor.isBundled()) {
-        PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(descriptor);
-        result.add(ENABLED_NOT_BUNDLED_PLUGIN.metric(info));
-      }
-    }
+    result.addAll(getDisabledPlugins());
+    result.addAll(getEnabledNonBundledPlugins());
     return result;
+  }
+
+  private static @NotNull Set<MetricEvent> getDisabledPlugins() {
+    return DisabledPluginsState
+      .disabledPlugins()
+      .stream()
+      .map(PluginInfoDetectorKt::getPluginInfoById)
+      .map(DISABLED_PLUGIN::metric)
+      .collect(Collectors.toUnmodifiableSet());
+  }
+
+  private static @NotNull Set<MetricEvent> getEnabledNonBundledPlugins() {
+    return PluginManagerCore
+      .getLoadedPlugins()
+      .stream()
+      .filter(IdeaPluginDescriptor::isEnabled)
+      .filter(descriptor -> !descriptor.isBundled())
+      .map(PluginInfoDetectorKt::getPluginInfoByDescriptor)
+      .map(ENABLED_NOT_BUNDLED_PLUGIN::metric)
+      .collect(Collectors.toUnmodifiableSet());
   }
 }
