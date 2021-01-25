@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.elementType
 import com.intellij.structuralsearch.StructuralReplaceHandler
 import com.intellij.structuralsearch.StructuralSearchUtil
@@ -17,7 +18,9 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.addTypeParameter
+import org.jetbrains.kotlin.idea.core.setDefaultValue
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -32,14 +35,31 @@ class KotlinReplaceHandler(private val project: Project) : StructuralReplaceHand
         val searchTemplate = StructuralSearchUtil.getPresentableElement(
             PatternCompiler.compilePattern(project, options.matchOptions, true, true).let { it.targetNode ?: it.nodes.current() }
         )
-        val replaceTemplate = MatcherImplUtil.createTreeFromText(
+        val replaceTemplates = MatcherImplUtil.createTreeFromText(
             info.replacement.fixPattern(), PatternTreeContext.Block, options.matchOptions.fileType, project
-        ).first()
-        val match = StructuralSearchUtil.getPresentableElement(info.matchResult.match)
-        replaceTemplate.structuralReplace(searchTemplate, match)
-        StructuralSearchUtil.getPresentableElement(info.getMatch(0)).replace(replaceTemplate)
-        (1 until info.matchesCount).mapNotNull(info::getMatch).forEach {
-            StructuralSearchUtil.getPresentableElement(it).deleteElementAndCleanParent()
+        )
+        for (i in 0 until info.matchesCount) {
+            val match = StructuralSearchUtil.getPresentableElement(info.getMatch(i)) ?: break
+            val replacement = replaceTemplates.getOrNull(i) ?: break
+            replacement.structuralReplace(searchTemplate, StructuralSearchUtil.getPresentableElement(info.matchResult.match))
+            match.replace(replacement)
+        }
+        var lastElement = info.getMatch(info.matchesCount - 1) ?: return
+        (info.matchesCount until replaceTemplates.size).forEach { i ->
+            val replacement = replaceTemplates[i]
+            if (replacement is PsiErrorElement) return@forEach
+            lastElement.parent.addAfter(replacement, lastElement)
+            lastElement.nextSibling?.let { next ->
+                CodeStyleManager.getInstance(project).reformat(next)
+                lastElement = next
+            }
+        }
+        (replaceTemplates.size until info.matchesCount).mapNotNull(info::getMatch).forEach {
+            val parent = it.parent
+            StructuralSearchUtil.getPresentableElement(it).delete()
+            if (parent is KtBlockExpression) { // fix formatting for right braces when deleting
+                parent.rBrace?.let { rbrace -> CodeStyleManager.getInstance(project).reformat(rbrace) }
+            }
         }
     }
 
