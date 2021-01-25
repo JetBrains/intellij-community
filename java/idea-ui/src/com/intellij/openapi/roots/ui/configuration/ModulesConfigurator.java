@@ -41,6 +41,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -282,7 +283,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               final Sdk modelSdk = model.getSdk();
               if (modelSdk != null) {
                 final Sdk original = modifiedToOriginalMap.get(modelSdk);
-                if (original != null) {
+                // in workspace model reference to Sdk instance isn't stored, only its name, so there is no need to invoke 'setSdk' method
+                // to avoid problems with multiple diffs (workaround for IDEA-260248)
+                if (original != null && (!WorkspaceModel.isEnabled() || !original.getName().equals(modelSdk.getName())
+                                         || !original.getSdkType().getName().equals(modelSdk.getSdkType().getName()))) {
                   model.setSdk(original);
                 }
               }
