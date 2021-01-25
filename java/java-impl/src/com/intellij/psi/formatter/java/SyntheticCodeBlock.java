@@ -95,6 +95,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
 
   @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
+    if (child1 instanceof IndentBlock) return Spacing.getReadOnlySpacing();
     return JavaSpacePropertyProcessor.getSpacing(child2, mySettings, myJavaSettings);
   }
 
@@ -126,10 +127,9 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   @Override
+  @Nullable
   public ASTNode getFirstTreeNode() {
-    ASTNode result = AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
-    assert result != null;
-    return result;
+    return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
   }
 
   public void setChildAttributes(final ChildAttributes childAttributes) {

@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
@@ -32,6 +34,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -954,6 +958,31 @@ public class CommonCodeStyleSettings {
   //-------------------------Enums----------------------------------------------------------
   @WrapConstant
   public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
+
+  // region Chained Builder Method Calls
+  //----------------------------------------------------------------------------------------
+
+  public @NonNls @CommaSeparatedValues String BUILDER_METHODS = "";
+  public boolean KEEP_BUILDER_METHODS_INDENTS = false;
+
+  private final @NotNull Set<String> myBuilderMethodsNameCache = new HashSet<>();
+  private @NotNull String myCachedBuilderMethods = "";
+
+  public boolean isBuilderMethod(@NotNull String methodName) {
+    if (!StringUtil.equals(BUILDER_METHODS, myCachedBuilderMethods)) {
+      myCachedBuilderMethods = BUILDER_METHODS;
+      myBuilderMethodsNameCache.clear();
+      Arrays.stream(BUILDER_METHODS.split(","))
+        .filter(chunk -> !StringUtil.isEmptyOrSpaces(chunk))
+        .forEach(chunk -> {
+          myBuilderMethodsNameCache.add(chunk.trim());
+        });
+    }
+    return myBuilderMethodsNameCache.contains(methodName);
+  }
+
+
+  // endregion
 
   //-------------------------Force rearrange settings---------------------------------------
   public static final int REARRANGE_ACCORDIND_TO_DIALOG = 0;

@@ -935,4 +935,39 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testBuilderMethods() {
+    getSettings().BUILDER_METHODS = "flowPanel,widget,wrap,builder,end";
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+
+    doTextTest(
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\").flowPanel(\"sidebar-offset\").widget(myReviewHints).flowPanel(\"island\").flowPanel(\"pane-toolbar pane-toolbar_island clearfix\").flowPanel(\"pane-toolbar__left pane-toolbar__left_header\").widget(reviewStateLabel(reviewDescriptorSignal)).widget(reviewIdLabel(reviewDescriptorSignal)).builder(reviewTitle(projectDescriptor, reviewDescriptorSignal)).end().end().flowPanel(\"revision-files-standalone\").widget(myChangesListView).end().end().widget(myReviewFeedView).end();\n" +
+      "    }\n" +
+      "}",
+
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\")\n" +
+      "                .flowPanel(\"sidebar-offset\")\n" +
+      "                .widget(myReviewHints)\n" +
+      "                .flowPanel(\"island\")\n" +
+      "                .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\")\n" +
+      "                .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\")\n" +
+      "                .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
+      "                .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
+      "                .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
+      "                .end()\n" +
+      "                .end()\n" +
+      "                .flowPanel(\"revision-files-standalone\")\n" +
+      "                .widget(myChangesListView)\n" +
+      "                .end()\n" +
+      "                .end()\n" +
+      "                .widget(myReviewFeedView)\n" +
+      "                .end();\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
