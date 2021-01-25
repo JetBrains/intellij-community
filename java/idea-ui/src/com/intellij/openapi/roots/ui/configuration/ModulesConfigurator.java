@@ -55,6 +55,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,7 +213,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void apply() throws ConfigurationException {
-    // validate content and source roots 
+    // validate content and source roots
     final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<>();
     final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<>();
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
@@ -278,7 +279,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (ModuleEditor moduleEditor : myModuleEditors.values()) {
       moduleEditor.canApply();
     }
-    
+
     final Map<Sdk, Sdk> modifiedToOriginalMap = new THashMap<>();
     final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
     for (Map.Entry<Sdk, Sdk> entry : projectJdksModel.getProjectSdks().entrySet()) {
@@ -297,7 +298,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               final Sdk modelSdk = model.getSdk();
               if (modelSdk != null) {
                 final Sdk original = modifiedToOriginalMap.get(modelSdk);
-                if (original != null) {
+                // in workspace model reference to Sdk instance isn't stored, only its name, so there is no need to invoke 'setSdk' method
+                // to avoid problems with multiple diffs (workaround for IDEA-260248)
+                if (original != null && (!WorkspaceModel.isEnabled() || !original.getName().equals(modelSdk.getName())
+                                         || !original.getSdkType().getName().equals(modelSdk.getSdkType().getName()))) {
                   model.setSdk(original);
                 }
               }
