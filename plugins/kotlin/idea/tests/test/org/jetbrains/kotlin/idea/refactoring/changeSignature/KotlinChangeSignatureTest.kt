@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -589,6 +589,34 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         doTest {
             addParameter(KotlinParameterInfo(originalBaseFunctionDescriptor, -1, "s", KotlinTypeInfo(false, BUILT_INS.stringType)))
         }
+    }
+
+    fun testChangeJavaMethod() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
+    }
+
+    fun testChangeJavaMethodWithPrimitiveType() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }
+    }
+
+    fun testChangeJavaMethodWithBoxedType() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }
+    }
+
+    fun testChangeJavaMethodWithFlexibleMutableType() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }
+    }
+
+    fun testChangeJavaMethodWithNestedFlexibleType() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
+    }
+
+    fun testChangeJavaMethodWithFlexibleMutableType1() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }
+    }
+
+    fun testChangeJavaMethodWithRawType() {
+        doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
     }
 
     fun testSimpleFlexibleType() {

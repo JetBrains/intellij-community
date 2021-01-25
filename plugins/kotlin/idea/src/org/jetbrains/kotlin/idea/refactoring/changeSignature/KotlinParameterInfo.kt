@@ -28,10 +28,11 @@ import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
-import org.jetbrains.kotlin.types.FlexibleType
+import org.jetbrains.kotlin.types.AbstractTypeChecker
+import org.jetbrains.kotlin.types.AbstractTypeCheckerContext
+import org.jetbrains.kotlin.types.TypeConstructor
+import org.jetbrains.kotlin.types.checker.ClassicTypeCheckerContext
 import org.jetbrains.kotlin.types.isError
-import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinParameterInfo(
     val callableDescriptor: CallableDescriptor,
@@ -86,12 +87,11 @@ class KotlinParameterInfo(
         if (parameter.isVararg) return defaultRendering
         val parameterType = parameter.type
         if (parameterType.isError) return defaultRendering
-        val typeToRender = parameterType.safeAs<FlexibleType>()?.let { flexibleType ->
-            val originalType = inheritedCallable.originalCallableDescriptor.valueParameters.getOrNull(originalIndex)?.type
-            if (originalType?.isSubtypeOf(flexibleType.upperBound) == true && flexibleType.lowerBound.isSubtypeOf(originalType))
-                originalType
-            else
-                null
+
+        val originalType = inheritedCallable.originalCallableDescriptor.valueParameters.getOrNull(originalIndex)?.type
+        val typeToRender = originalType?.takeIf {
+            val checker = OverridingTypeCheckerContext.createChecker(inheritedCallable.originalCallableDescriptor, currentBaseFunction)
+            AbstractTypeChecker.equalTypes(checker as AbstractTypeCheckerContext, originalType.unwrap(), parameterType.unwrap())
         } ?: parameterType
 
         return typeToRender.renderTypeWithSubstitution(typeSubstitutor, defaultRendering, true)
@@ -259,3 +259,20 @@ private fun defaultValOrVar(callableDescriptor: CallableDescriptor): KotlinValVa
         KotlinValVar.Val
     else
         KotlinValVar.None
+
+private class OverridingTypeCheckerContext(private val matchingTypeConstructors: Map<TypeConstructor, TypeConstructor>) :
+    ClassicTypeCheckerContext(errorTypeEqualsToAnything = true) {
+    override fun areEqualTypeConstructors(a: TypeConstructor, b: TypeConstructor): Boolean = super.areEqualTypeConstructors(a, b) || run {
+        val img1 = matchingTypeConstructors[a]
+        val img2 = matchingTypeConstructors[b]
+        img1 != null && img1 == b || img2 != null && img2 == a
+    }
+
+    companion object {
+        fun createChecker(superDescriptor: CallableDescriptor, subDescriptor: CallableDescriptor): OverridingTypeCheckerContext {
+            return OverridingTypeCheckerContext(subDescriptor.typeParameters.zip(superDescriptor.typeParameters).associate {
+                it.first.typeConstructor to it.second.typeConstructor
+            })
+        }
+    }
+}
