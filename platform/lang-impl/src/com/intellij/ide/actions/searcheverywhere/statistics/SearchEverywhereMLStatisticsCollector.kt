@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
@@ -59,8 +60,15 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     logData.addData(GLOBAL_MIN_USAGE_COUNT_KEY, globalTotalStats.minUsageCount)
 
     myProject?.let {
+      // report tool windows' ids
       val twm = ToolWindowManager.getInstance(it)
       logData.addData(OPEN_TOOL_WINDOWS_KEY, twm.toolWindowIds.asList())
+
+      // report types of open files in editor
+      val fem = FileEditorManager.getInstance(it)
+      logData.addData(OPEN_FILE_TYPES_KEY, fem.openFiles.map { file ->
+        file.fileType.name
+      })
     }
 
     val data = logData.build()
@@ -190,6 +198,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val IS_ENABLED_KEY = "isEnabled"
     private const val WEIGHT_KEY = "weight"
     private const val OPEN_TOOL_WINDOWS_KEY = "openToolWindows"
+    private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
 
     private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
     private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
