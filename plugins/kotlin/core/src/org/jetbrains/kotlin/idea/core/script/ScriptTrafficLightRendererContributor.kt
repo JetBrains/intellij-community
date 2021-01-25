@@ -16,15 +16,13 @@ import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.psi.KtFile
 
 class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
-    override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? {
+    override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? =
         if ((file as? KtFile)?.isScript() == true) {
-            return ScriptTrafficLightRenderer(file.project, editor.document, file)
-        }
-        return null
-    }
+            ScriptTrafficLightRenderer(file.project, editor.document, file)
+        } else null
 
     class ScriptTrafficLightRenderer(project: Project, document: Document, private val file: KtFile) :
-        TrafficLightRenderer(project, document, file) {
+        TrafficLightRenderer(project, document) {
         override fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 
@@ -33,7 +31,7 @@ class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
                 // services not yet initialized (it should be initialized under the LoadScriptDefinitionsStartupActivity)
                 status.reasonWhySuspended = KotlinIdeaCoreBundle.message("text.loading.kotlin.script.configuration")
                 status.errorAnalyzingFinished = false
-            } else if (!ScriptDefinitionsManager.getInstance(file.project).isReady()) {
+            } else if (!ScriptDefinitionsManager.getInstance(project).isReady()) {
                 status.reasonWhySuspended = KotlinIdeaCoreBundle.message("text.loading.kotlin.script.definitions")
                 status.errorAnalyzingFinished = false
             } else if (configurations.isConfigurationLoadingInProgress(file)) {
