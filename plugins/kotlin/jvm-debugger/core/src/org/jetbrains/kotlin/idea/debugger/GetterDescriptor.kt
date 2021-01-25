@@ -15,7 +15,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiExpression
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
-import com.sun.jdi.ClassNotLoadedException
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Type
@@ -53,12 +52,7 @@ class GetterDescriptor(
 
     override fun getName() = name
 
-    override fun getType(): Type? =
-        try {
-            getter.returnType()
-        } catch (ex: ClassNotLoadedException) {
-            null
-        }
+    override fun getType(): Type? = getter.safeReturnType()
 
     override fun calcValue(evaluationContext: EvaluationContextImpl?) =
         evaluationContext?.debugProcess?.invokeMethod(evaluationContext, parentObject, getter, emptyList())

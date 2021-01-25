@@ -49,6 +49,10 @@ fun ReferenceType.safeFields(): List<Field> {
     }
 }
 
+fun Method.safeReturnType(): Type? {
+    return wrapClassNotLoadedException { returnType() }
+}
+
 fun Method.safeLocationsOfLine(line: Int): List<Location> {
     return wrapAbsentInformationException { locationsOfLine(line) } ?: emptyList()
 }
