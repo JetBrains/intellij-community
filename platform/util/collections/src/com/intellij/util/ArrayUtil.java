@@ -862,6 +862,12 @@ public final class ArrayUtil {
     return original.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : original.clone();
   }
 
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static byte @Nullable [] copyOf(byte @Nullable [] original) {
+    if (original == null) return null;
+    return original.length == 0 ? ArrayUtilRt.EMPTY_BYTE_ARRAY : original.clone();
+  }
+
   @Contract(pure = true)
   public static <T> T @NotNull [] stripTrailingNulls(T @NotNull [] array) {
     return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;

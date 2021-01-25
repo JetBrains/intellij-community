@@ -11,7 +11,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.channels.FileChannel;
 
-final class FileChannelUtil {
+public final class FileChannelUtil {
   private static final Logger LOG = Logger.getInstance(FileChannelUtil.class);
 
   private static final Class<?> sunNioChFileChannelImpl = setupFileChannelImpl();
@@ -52,7 +52,7 @@ final class FileChannelUtil {
   }
 
   @NotNull
-  static FileChannel unInterruptible(@NotNull FileChannel channel) {
+  public static FileChannel unInterruptible(@NotNull FileChannel channel) {
     try {
       if (setUnInterruptible != null && sunNioChFileChannelImpl != null && sunNioChFileChannelImpl.isInstance(channel)) {
         setUnInterruptible.invoke(channel);
