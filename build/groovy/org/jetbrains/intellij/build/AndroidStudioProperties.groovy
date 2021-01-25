@@ -55,6 +55,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       // and the structure of CIDR plugins.
       "intellij.c.clangd",
       "intellij.c.plugin",
+      "intellij.cidr.debugger.plugin",
       "intellij.cidr.base.plugin"
     ]
     productLayout.mainModules = ["intellij.idea.community.main"]
@@ -63,8 +64,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin([]),
-      // Android Studio: declare dependencies for non-trivial CIDR plugins. This list is constructed referencing
-      // /tools/vendor/intellij/cidr/clion-build/groovy/org/jetbrains/intellij/build/clion/CLionProperties.groovy
+      plugin("intellij.cidr.debugger.plugin") {
+        withModule("intellij.cidr.debugger", mainJarName)
+        withModule("intellij.cidr.debugger.backend", mainJarName)
+        withModule("intellij.cidr.debugger.commandInterpreterLang", mainJarName)
+      },
       plugin("intellij.cidr.base.plugin") {
         withModule("intellij.cidr.base", mainJarName)
         withModule("intellij.cidr.projectModel", mainJarName)
