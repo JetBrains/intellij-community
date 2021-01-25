@@ -27,7 +27,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -346,16 +345,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
         ContentRevision revision = myChange.getBeforeRevision();
         if (revision == null) return null;
 
-        if (revision instanceof ByteBackedContentRevision) {
-          byte[] bytes = ((ByteBackedContentRevision)revision).getContentAsBytes();
-          if (bytes == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
-          return bytes;
-        }
-        else {
-          String content = revision.getContent();
-          if (content == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
-          return content.getBytes(getFilePath().getCharset());
-        }
+        return ChangesUtil.loadContentRevision(revision);
       }
     }
   }
