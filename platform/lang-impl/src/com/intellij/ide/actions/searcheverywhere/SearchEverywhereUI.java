@@ -761,26 +761,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    recordSelectedItem(indexes, closePopup);
+    myMLStatisticsCollector.recordSelectedItem(indexes, closePopup, myListModel.getFoundElements(),
+                                               mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
+                                               mySearchField.getText().length(), myHeader.getSelectedTab().getID());
 
     if (closePopup) {
       closePopup();
     }
     else {
       ApplicationManager.getApplication().invokeLater(() -> myResultsList.repaint());
-    }
-  }
-
-  private void recordSelectedItem(int[] indexes, boolean closePopup) {
-    boolean isActionTabSelected = ActionSearchEverywhereContributor.class.getSimpleName().equals(myHeader.getSelectedTab().getID());
-    if (isActionTabSelected) {
-      int keysTyped = mySearchTypingListener.mySymbolKeysTyped;
-      int backspacesTyped = mySearchTypingListener.myBackspacesTyped;
-      int textLength = mySearchField.getText().length();
-      List<SearchEverywhereFoundElementInfo> elements = myListModel.getFoundElements();
-      NonUrgentExecutor.getInstance().execute(() -> {
-        myMLStatisticsCollector.reportSelectedElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elements);
-      });
     }
   }
 

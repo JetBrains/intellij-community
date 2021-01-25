@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.statistics
 
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
@@ -14,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.NonUrgentExecutor
 import kotlin.math.round
 
 
@@ -65,13 +67,28 @@ internal class SearchEverywhereMLStatisticsCollector {
     log(SESSION_FINISHED, data)
   }
 
+  fun recordSelectedItem(indexes: IntArray,
+                         closePopup: Boolean,
+                         elements: List<SearchEverywhereFoundElementInfo>,
+                         keysTyped: Int,
+                         backspacesTyped: Int,
+                         textLength: Int,
+                         tabId: String) {
+    val isActionTabSelected = ActionSearchEverywhereContributor::class.java.simpleName == tabId
+    if (isActionTabSelected) {
+      NonUrgentExecutor.getInstance().execute {
+        reportSelectedElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elements)
+      }
+    }
+  }
+
   private fun getListItemsNames(item: SearchEverywhereFoundElementInfo,
                                 globalSummaryManager: ActionsGlobalSummaryManager,
                                 localSummary: Map<String, ActionSummary>): ItemInfo {
     val element = item.getElement()
     val contributorId = item.getContributor()?.searchProviderId ?: "undefined"
     if (element !is MatchedValue) { // not an action/option
-      return ItemInfo(element.javaClass.name, contributorId, hashMapOf())
+      return ItemInfo(element.javaClass.name, contributorId, emptyMap())
     }
     if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
       return ItemInfo(null, contributorId, hashMapOf(IS_ACTION_DATA_KEY to false))
