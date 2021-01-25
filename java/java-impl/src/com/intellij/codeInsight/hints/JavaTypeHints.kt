@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.psi.*
+import com.intellij.util.SlowOperations
 
 /**
  * Creates InlayPresentation for given PsiType.
@@ -57,7 +58,9 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
   }
 
   private fun parametersHint(classType: PsiClassType, level: Int): InlayPresentation {
-    return join(classType.parameters.map { hint(it, level + 1) }, ", ")
+    return SlowOperations.allowSlowOperations<InlayPresentation, Throwable> {
+      join(classType.parameters.map { hint(it, level + 1) }, ", ")
+    }
   }
 
   private fun classHint(aClass: PsiClass, level: Int): InlayPresentation? {
