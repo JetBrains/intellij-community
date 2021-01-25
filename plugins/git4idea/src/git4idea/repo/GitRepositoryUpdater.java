@@ -104,6 +104,9 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
     if (tagChanged || packedRefsChanged) {
       BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(myRepository);
     }
+    if (configChanged) {
+      BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GitConfigListener.TOPIC).notifyConfigChanged(myRepository);
+    }
   }
 
   private void visitSubDirsInVfs() {
