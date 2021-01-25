@@ -47,7 +47,7 @@ interface FeatureSuggester {
         return if (summary == null) {
             true
         } else {
-            val lastTimeUsed = summary.last
+            val lastTimeUsed = summary.lastUsedTimestamp
             val delta = System.currentTimeMillis() - lastTimeUsed
             delta > minNotificationIntervalMillis
         }
