@@ -281,7 +281,7 @@ public final class GitBranchUtil {
         common.addAll(values);
       }
       else {
-        Set<T> c = hashingStrategy == null ? new HashSet<>() : new ObjectOpenCustomHashSet<>(values, hashingStrategy);
+        Set<T> c = hashingStrategy == null ? new HashSet<>(values) : new ObjectOpenCustomHashSet<>(values, hashingStrategy);
         common.retainAll(c);
       }
     });
