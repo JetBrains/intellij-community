@@ -56,6 +56,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
+import git4idea.repo.GitCommitTemplateTracker;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -116,6 +117,9 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     Set<GitRepository> repositories = map2SetNotNull(Arrays.asList(filesToCheckin), manager::getRepositoryForFileQuick);
+    String commitTemplate = GitCommitTemplateTracker.getInstance(myProject).getTemplateContent();
+    if (commitTemplate != null) return commitTemplate;
+
     for (GitRepository repository : repositories) {
       File mergeMsg = repository.getRepositoryFiles().getMergeMessageFile();
       File squashMsg = repository.getRepositoryFiles().getSquashMessageFile();
