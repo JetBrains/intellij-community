@@ -14,12 +14,14 @@ import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.concurrency.NonUrgentExecutor
 import kotlin.math.round
 
 
-internal class SearchEverywhereMLStatisticsCollector {
+internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
   private val mySessionId = ServiceManager.getService(SearchEverywhereSessionService::class.java).incAndGet()
   private val myIsReporting: Boolean
 
@@ -55,6 +57,11 @@ internal class SearchEverywhereMLStatisticsCollector {
     logData.addData(LOCAL_MIN_USAGE_COUNT_KEY, localTotalStats.minUsageCount)
     logData.addData(GLOBAL_MAX_USAGE_COUNT_KEY, globalTotalStats.maxUsageCount)
     logData.addData(GLOBAL_MIN_USAGE_COUNT_KEY, globalTotalStats.minUsageCount)
+
+    myProject?.let {
+      val twm = ToolWindowManager.getInstance(it)
+      logData.addData(OPEN_TOOL_WINDOWS_KEY, twm.toolWindowIds.asList())
+    }
 
     val data = logData.build()
     (data as? MutableMap)?.put(
@@ -182,6 +189,7 @@ internal class SearchEverywhereMLStatisticsCollector {
     private const val HAS_ICON_KEY = "withIcon"
     private const val IS_ENABLED_KEY = "isEnabled"
     private const val WEIGHT_KEY = "weight"
+    private const val OPEN_TOOL_WINDOWS_KEY = "openToolWindows"
 
     private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
     private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
