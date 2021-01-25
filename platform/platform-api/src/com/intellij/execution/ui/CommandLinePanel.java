@@ -26,8 +26,13 @@ public class CommandLinePanel extends JPanel {
     manager.registerFragments(fragments);
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    setMinimumSize(new JBDimension(700, 30));
     buildRows();
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    Dimension size = super.getMinimumSize();
+    return new Dimension(Math.min(700, size.width), size.height);
   }
 
   private void buildRows() {
