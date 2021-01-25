@@ -367,16 +367,17 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       super.visitVariable(variable);
       if (variable instanceof PsiParameter) {
         final PsiParameter parameter = (PsiParameter)variable;
+        if (parameter instanceof PsiPatternVariable) return;
         final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiCatchSection) {
           // do not weaken catch block parameters
           return;
         }
-        else if (declarationScope instanceof PsiLambdaExpression && parameter.getTypeElement() == null) {
+        if (declarationScope instanceof PsiLambdaExpression && parameter.getTypeElement() == null) {
           //no need to check inferred lambda params
           return;
         }
-        else if (declarationScope instanceof PsiMethod) {
+        if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)declarationScope;
           final PsiClass containingClass = method.getContainingClass();
           if (containingClass == null ||
