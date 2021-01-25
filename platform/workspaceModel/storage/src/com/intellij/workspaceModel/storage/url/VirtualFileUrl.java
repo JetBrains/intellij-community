@@ -8,4 +8,5 @@ public interface VirtualFileUrl {
   String getFileName();
   String getPresentableUrl();
   List<VirtualFileUrl> getSubTreeFileUrls();
+  VirtualFileUrl append(String relativePath);
 }

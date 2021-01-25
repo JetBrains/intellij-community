@@ -62,13 +62,19 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return builder.toString()
   }
 
+  @Synchronized
+  internal fun append(parentVfu: VirtualFileUrl, relativePath: String): VirtualFileUrl {
+    parentVfu as VirtualFileUrlImpl
+    return add(relativePath, id2NodeMapping.get(parentVfu.id))
+  }
+
   protected open fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
     return VirtualFileUrlImpl(id, manager)
   }
 
-  internal fun add(path: String): VirtualFileUrl {
+  internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
-    var latestNode: FilePathNode? = findRootNode(segments.first())
+    var latestNode: FilePathNode? = parentNode ?: findRootNode(segments.first())
     val latestElement = segments.size - 1
     for (index in segments.indices) {
       val nameId = fileNameStore.generateIdForName(segments[index])
@@ -220,7 +226,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return false
   }
 
-  private inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
+  internal inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
     private var children: MutableList<FilePathNode>? = null
 
     fun findChild(nameId: Int): FilePathNode? {

@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -62,7 +61,7 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
 }
 
 internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
-  val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache", virtualFileManager)
+  val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
   return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
                                               TestErrorReporter, virtualFileManager)
 }

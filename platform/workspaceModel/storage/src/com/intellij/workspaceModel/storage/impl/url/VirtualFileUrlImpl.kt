@@ -40,6 +40,8 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
 
   override fun getSubTreeFileUrls() = manager.getSubtreeVirtualUrlsById(id)
 
+  override fun append(relativePath: String): VirtualFileUrl = manager.append(this, relativePath.removePrefix("/"))
+
   override fun toString(): String = this.url
 
   override fun equals(other: Any?): Boolean {

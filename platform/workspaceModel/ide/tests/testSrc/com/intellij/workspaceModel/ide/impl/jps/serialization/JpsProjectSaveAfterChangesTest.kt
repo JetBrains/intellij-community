@@ -6,7 +6,6 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -36,7 +35,7 @@ class JpsProjectSaveAfterChangesTest {
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       val sourceRoot = utilModule.sourceRoots.first()
       builder.modifyEntity(ModifiableSourceRootEntity::class.java, sourceRoot) {
-        url = configLocation.baseDirectoryUrl.append("util/src2", virtualFileManager)
+        url = configLocation.baseDirectoryUrl.append("util/src2")
       }
       builder.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, utilModule.customImlData!!) {
         rootManagerTagCustomData = """<component LANGUAGE_LEVEL="JDK_1_7">
@@ -77,7 +76,7 @@ class JpsProjectSaveAfterChangesTest {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, configLocation ->
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
                              LibraryRootTypeId.COMPILED)
-      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(configLocation, virtualFileManager)
+      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(configLocation)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
     }
   }
@@ -91,9 +90,9 @@ class JpsProjectSaveAfterChangesTest {
       builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
         type = "JAVA_MODULE"
       }
-      val contentRootEntity = builder.addContentRootEntity(configLocation.baseDirectoryUrl.append("new", virtualFileManager), emptyList(),
+      val contentRootEntity = builder.addContentRootEntity(configLocation.baseDirectoryUrl.append("new"), emptyList(),
                                                            emptyList(), module)
-      val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append("new", virtualFileManager),
+      val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append("new"),
                                                          false, "java-source", source)
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "")
       builder.addJavaModuleSettingsEntity(true, true, null, null, module, source)

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.append
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
@@ -209,7 +208,7 @@ internal fun getStorageRoot(imlFileUrl: VirtualFileUrl, customDir: String?, virt
   if (OSAgnosticPathUtil.isAbsolute(customDir)) {
     return virtualFileManager.fromPath(customDir)
   }
-  return moduleRoot.append(customDir, virtualFileManager)
+  return moduleRoot.append(customDir)
 }
 
 internal fun convertToEclipsePath(fileUrl: VirtualFileUrl,
