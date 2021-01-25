@@ -19,15 +19,15 @@
       "description": "The border color of the bookmark icon with mnemonic."
     },
     {
-      "key": "AssignedMnemonic.foreground",
+      "key": "AvailableMnemonic.foreground",
       "description": "The button text color for the not assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.background",
+      "key": "AvailableMnemonic.background",
       "description": "The button background for the not assigned bookmark mnemonic."
     },
     {
-      "key": "AssignedMnemonic.borderColor",
+      "key": "AvailableMnemonic.borderColor",
       "description": "The button border color for the not assigned bookmark mnemonic."
     },
     {
