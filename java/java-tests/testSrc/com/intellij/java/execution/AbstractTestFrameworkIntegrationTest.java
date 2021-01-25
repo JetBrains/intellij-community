@@ -17,6 +17,8 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -57,11 +59,12 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
 
     JavaParameters parameters = state.getJavaParameters();
     parameters.setUseDynamicClasspath(project);
+    state.resolveServerSocketPort(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
     //parameters.getVMParametersList().addParametersString("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5007");
     GeneralCommandLine commandLine = parameters.toCommandLine();
 
     OSProcessHandler process = new OSProcessHandler(commandLine);
-    SearchForTestsTask searchForTestsTask = state.createSearchingForTestsTask();
+    SearchForTestsTask searchForTestsTask = state.createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
     if (searchForTestsTask != null) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         searchForTestsTask.run(new EmptyProgressIndicator());

@@ -23,6 +23,8 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -138,6 +140,12 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
         writeClassesPerModule(myClasses);
       }
     };
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public @Nullable SearchForTestsTask createSearchingForTestsTask() {
+    return createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
   }
 
   protected void writeClassesPerModule(Map<PsiClass, Map<PsiMethod, List<String>>> classes) {
