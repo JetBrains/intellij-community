@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
+import java.lang.IllegalStateException
 import kotlin.system.exitProcess
 
 object EventsSchemeBuilder {
@@ -60,6 +61,7 @@ object EventsSchemeBuilder {
     val result = mutableListOf<GroupDescriptor>()
     for (collector in collectors) {
       val collectorClass = if (collector.javaClass.enclosingClass != null) collector.javaClass.enclosingClass else collector.javaClass
+      validateGroupId(collector)
       val group = collector.group ?: continue
       val eventsDescriptors = group.events.groupBy { it.eventId }
         .map { (name, events) -> EventDescriptor(name, buildFields(events)) }
@@ -68,6 +70,16 @@ object EventsSchemeBuilder {
       result.add(groupDescriptor)
     }
     return result
+  }
+
+  private fun validateGroupId(collector: FeatureUsagesCollector) {
+    try {
+      // get group id to check that either group or group id is overridden
+      collector.groupId
+    }
+    catch (e: IllegalStateException) {
+      throw IllegalStateException(e.message + " in " + collector.javaClass.name)
+    }
   }
 
   private fun buildFields(events: List<BaseEventId>): HashSet<FieldDescriptor> {
