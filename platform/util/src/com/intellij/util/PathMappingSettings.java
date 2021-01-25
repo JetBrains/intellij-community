@@ -138,7 +138,15 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     path = norm(path);
     String remotePrefix = norm(remoteRoot);
     if (canReplaceRemote(path, remotePrefix)) {
-      path = norm(localRoot) + path.substring(remotePrefix.length());
+      String left = norm(localRoot);
+      String right = path.substring(remotePrefix.length());
+      // Left and right part must be separated
+      if (left.endsWith("/") || left.endsWith("\\") || right.startsWith("/") || right.startsWith("\\")) {
+        path = left + right;
+      }
+      else {
+        path = left + "/" + right;
+      }
     }
     return path;
   }
