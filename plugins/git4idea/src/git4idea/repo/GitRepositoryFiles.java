@@ -182,7 +182,7 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
-  File getConfigFile() {
+  public File getConfigFile() {
     return file(myConfigFilePath);
   }
 

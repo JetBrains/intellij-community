@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.util.io.URLUtil
@@ -15,14 +16,15 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
+import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
-import java.util.*
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "git.configuration"
-  override fun getVersion(): Int = 3
+  override fun getVersion(): Int = 4
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val set = HashSet<MetricEvent>()
@@ -59,7 +61,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       metric.data.addData("remote_branches", branches.remoteBranches.size)
       metric.data.addData("remotes", repository.remotes.size)
 
-      val remoteTypes = HashMultiset.create<String>(repository.remotes.mapNotNull { getRemoteServerType(it) })
+      val remoteTypes = HashMultiset.create(repository.remotes.mapNotNull { getRemoteServerType(it) })
       for (remoteType in remoteTypes) {
         metric.data.addData("remote_$remoteType", remoteTypes.count(remoteType))
       }
@@ -67,9 +69,23 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       set.add(metric)
     }
 
+    addCommitTemplateMetrics(project, repositories, set)
+
     addGitLogMetrics(project, set)
 
     return set
+  }
+
+  private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: java.util.HashSet<MetricEvent>) {
+    if (repositories.isEmpty()) return
+
+    val templatesCount = project.service<GitCommitTemplateTracker>().templatesCount()
+    if (templatesCount == 0) return
+
+    val metric = newMetric("commit_template")
+    metric.data.addData("count", templatesCount)
+    metric.data.addData("multiple_root", repositories.size > 1)
+    set.add(metric)
   }
 
   private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {

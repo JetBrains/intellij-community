@@ -31,6 +31,7 @@ public final class GitConfigUtil {
   public static final @NlsSafe String CREDENTIAL_HELPER = "credential.helper";
   public static final @NlsSafe String LOG_OUTPUT_ENCODING = "i18n.logoutputencoding";
   public static final @NlsSafe String COMMIT_ENCODING = "i18n.commitencoding";
+  public static final @NlsSafe String COMMIT_TEMPLATE = "commit.template";
 
   private GitConfigUtil() {
   }
