@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.notebook.editor.BackedVirtualFile.getOriginFileIfBacked;
+
 public final class PsiSearchScopeUtil {
 
   @Nullable
@@ -36,7 +38,7 @@ public final class PsiSearchScopeUtil {
       return true;
     }
     while (file != null) {
-      if (globalScope.contains(file.getOriginalFile().getViewProvider().getVirtualFile())) {
+      if (globalScope.contains(getOriginFileIfBacked(file.getOriginalFile().getViewProvider().getVirtualFile()))) {
         return true;
       }
       PsiElement context = file.getContext();
