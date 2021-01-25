@@ -8,7 +8,6 @@ import com.intellij.completion.ml.sorting.RankingSupport;
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy;
 import com.intellij.internal.ml.completion.RankingModelProvider;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,11 +116,6 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     return ExperimentModelProvider.enabledByDefault().contains(rankerId);
   }
 
-  private static boolean isShowDiffEnabledByDefault() {
-    String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
-    return productCode == "PY" || productCode == "PC";
-  }
-
   private void triggerSettingsChanged(boolean enabled) {
     for (String ranker : getEnabledRankers()) {
       MLCompletionSettingsCollector.rankingSettingsChanged(ranker, enabled, isEnabledByDefault(ranker), false);
@@ -137,7 +131,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
   public static final class State {
     public boolean rankingEnabled;
-    public boolean showDiff = isShowDiffEnabledByDefault();
+    public boolean showDiff;
     public boolean decorateRelevant;
     public final Map<String, Boolean> language2state = new HashMap<>();
 
