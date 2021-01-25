@@ -52,7 +52,7 @@ public final class PluginDownloader {
   private final String myDescription;
   private final @NotNull List<IdeaPluginDependency> myDependencies;
 
-  private final String myPluginUrl;
+  private final @NotNull String myPluginUrl;
   private final BuildNumber myBuildNumber;
 
   private String myPluginVersion;
@@ -175,7 +175,8 @@ public final class PluginDownloader {
     try {
       myFile = downloadPlugin(indicator);
       if (Registry.is("marketplace.certificate.signature.check")) {
-        if (myPluginUrl == null) { // Don't check signature for plugins from custom repositories
+        // Don't check signature for plugins from non-jetbrains custom repositories
+        if (myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)) {
           if (!PluginSignatureChecker.isSignedByJetBrains(getPluginName(), myFile)) {
             myShownErrors = true;
             return null;
