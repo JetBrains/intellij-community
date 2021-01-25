@@ -83,23 +83,6 @@ class PythonOnboardingTour(module: Module) :
         }
       }
     }
-    task {
-      triggerByUiComponentAndHighlight { progress: NonOpaquePanel ->
-        progress.javaClass.name.contains("InlineProgressPanel")
-      }
-    }
-
-    task {
-      text("Welcome to <ide/>, an integrated environment for Python development. This lesson will introduce you to the key " +
-           "components of its user interface and guide you through the basic workflow.")
-      text("Whatever you do in <ide/>, you do it in the context of a <strong>project</strong>. This course will create a learning project so that " +
-           "you can try the basic features in action. As you start, <ide/> does some indexing to collect information about Python SDK and the project itself.")
-      text("To proceed, press ${strong(UIBundle.message("got.it"))} in the notification popup in the lower-right corner.")
-      gotItStep(Balloon.Position.above, Dimension(500, 200),
-                "When you open a project for the first time PyCharm needs some time to index Python SDK and the project itself: " +
-                "IDE is scanning the project and libraries to ensure the prompt performance of code completion, finding usages, navigation, and so on. " +
-                "Note that many IDE operations and capabilities are restricted or unavailable during the indexing process.")
-    }
 
     projectTasks()
 
@@ -216,7 +199,7 @@ class PythonOnboardingTour(module: Module) :
 
     task {
       text("Let's run this sample. Right click at the free space somewhere in the editor to invoke the context menu.")
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
+      triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
         ui.text?.contains(runItem) ?: false
       }
     }
