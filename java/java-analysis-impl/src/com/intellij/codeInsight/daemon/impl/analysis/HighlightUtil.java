@@ -1641,6 +1641,20 @@ public final class HighlightUtil {
     return null;
   }
 
+  public static HighlightInfo checkInstanceOfPatternSupertype(PsiInstanceOfExpression expression) {
+    PsiTypeTestPattern pattern = ObjectUtils.tryCast(expression.getPattern(), PsiTypeTestPattern.class);
+    if (pattern == null || pattern.getPatternVariable() == null) return null;
+    PsiTypeElement typeElement = pattern.getCheckType();
+    PsiType checkType = typeElement.getType();
+    PsiType expressionType = expression.getOperand().getType();
+    if (expressionType != null && checkType.isAssignableFrom(expressionType)) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(typeElement)
+        .descriptionAndTooltip(JavaErrorBundle.message("instanceof.pattern.subtype",
+                                                       checkType.getPresentableText(), expressionType.getPresentableText())).create();
+    }
+    return null;
+  }
 
 
   private enum SelectorKind { INT, ENUM, STRING }
