@@ -79,7 +79,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private fun findCallers(method: PsiMethod): LinkedHashSet<PsiMethod> {
         val root = KotlinMethodNode(method, HashSet(), project) { }
-        return (0 until root.childCount).flatMapTo(LinkedHashSet<PsiMethod>()) {
+        return (0 until root.childCount).flatMapTo(LinkedHashSet()) {
             (root.getChildAt(it) as KotlinMethodNode).member.toLightMethods()
         }
     }
@@ -90,7 +90,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         indexLoop@ while (true) {
             for (extension in EXTENSIONS) {
                 val extraFileName = getTestName(false) + "Before" + (if (i > 0) ".$i" else "") + extension
-                val extraFile = File(testDataPath + extraFileName)
+                val extraFile = File(testDataDirectory, extraFileName)
                 if (extraFile.exists()) {
                     fileList.add(extraFileName)
                     i++
@@ -136,7 +136,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
                 e is RuntimeException && e.message!!.startsWith("Refactoring cannot be performed") -> e.message
                 else -> throw e
             }
-            val conflictsFile = File(testDataPath + getTestName(false) + "Messages.txt")
+            val conflictsFile = File(testDataDirectory, getTestName(false) + "Messages.txt")
             UsefulTestCase.assertSameLinesWithFile(conflictsFile.absolutePath, message!!)
         }
     }
@@ -156,7 +156,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
                 e.message!!.startsWith("Refactoring cannot be performed") -> e.message
                 else -> throw e
             }
-            val conflictsFile = File(testDataPath + getTestName(false) + "Messages.txt")
+            val conflictsFile = File(testDataDirectory, getTestName(false) + "Messages.txt")
             UsefulTestCase.assertSameLinesWithFile(conflictsFile.absolutePath, message!!)
         }
     }
@@ -224,7 +224,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
             try {
                 myFixture.checkResultByFile(file, afterFilePath, true)
             } catch (e: ComparisonFailure) {
-                KotlinTestUtils.assertEqualsToFile(File(testDataPath + afterFilePath), psiFile.text)
+                KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, afterFilePath), psiFile.text)
             }
 
             if (checkErrorsAfter && psiFile is KtFile) {
