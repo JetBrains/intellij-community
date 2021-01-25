@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
@@ -107,7 +108,8 @@ class ModuleRootComponentBridge(
    * of this {@link ModifiableRootModel} are available in its storage and references in its {@link OrderEntry} can be resolved properly.
    */
   override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
-    (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
+    (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
+                                                               ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge,
     moduleBridge.entityStorage.current, accessor)
 

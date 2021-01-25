@@ -10,17 +10,30 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
+public class UIRootConfigurationAccessor extends RootConfigurationAccessor implements RootConfigurationAccessorForWorkspaceModel {
   private final Project myProject;
+  private final WorkspaceEntityStorageBuilder myActualDiffBuilder;
 
-  public UIRootConfigurationAccessor(final Project project) {
+  public UIRootConfigurationAccessor(@NotNull Project project) {
+    this(project, null);
+  }
+
+  public UIRootConfigurationAccessor(@NotNull Project project, @Nullable WorkspaceEntityStorageBuilder actualDiffBuilder) {
     myProject = project;
+    myActualDiffBuilder = actualDiffBuilder;
+  }
+
+  @Override
+  public WorkspaceEntityStorageBuilder getActualDiffBuilder() {
+    return myActualDiffBuilder;
   }
 
   @Override
