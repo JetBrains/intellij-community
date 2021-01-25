@@ -46,8 +46,6 @@ class GetterDescriptor(
         return this
     }
 
-    override fun getType(): Type = getter.returnType()
-
     override fun getObject() = parentObject
 
     override fun getDescriptorEvaluation(context: DebuggerContext): PsiExpression = throw EvaluateException("Getter evaluation is not supported")

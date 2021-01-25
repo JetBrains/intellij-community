@@ -124,11 +124,12 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         val type = descriptor.getter.declaringType()
         computeSourcePositionForDeclaration(name, type, project, context, nearest)?.let { return it }
 
-        val interfaces = (type as? ClassType)?.interfaces() ?: return null
-        for (inerfaze in interfaces) {
-            computeSourcePositionForDeclaration(name, inerfaze, project, context, nearest)?.let { return it }
+        if (type is ClassType) {
+            val interfaces = type.safeAllInterfaces().distinct()
+            for (intf in interfaces) {
+                computeSourcePositionForDeclaration(name, intf, project, context, nearest)?.let { return it }
+            }
         }
-
         return null
     }
 

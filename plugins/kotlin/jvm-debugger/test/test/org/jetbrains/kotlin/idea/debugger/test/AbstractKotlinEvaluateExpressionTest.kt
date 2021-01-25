@@ -11,12 +11,10 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
-import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
@@ -136,21 +134,10 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             return
         }
 
-        val frameProxy = debuggerContext.frameProxy ?: error("Frame proxy is absent")
-        val debugProcess = debuggerContext.debugProcess ?: error("Debug process is absent")
-        val nodeManager = debugProcess.xdebugProcess!!.nodeManager
-        val descriptor = nodeManager.getStackFrameDescriptor(null, frameProxy)
-        val stackFrame = debugProcess.positionManager.createStackFrame(descriptor) ?: error("Can't create stack frame for $descriptor")
-
-        ApplicationManager.getApplication().executeOnPooledThread {
-            val result = FramePrinter(suspendContext).print(stackFrame)
+        processStackFrameOnPooledThread {
+            val result = FramePrinter(suspendContext).print(this)
             print(result, ProcessOutputTypes.SYSTEM)
-
-            assert(descriptor.debugProcess.isAttached)
-            descriptor.debugProcess.managerThread.invokeCommand(object : DebuggerCommand {
-                override fun action() = completion()
-                override fun commandCancelled() = error(message = "Test was cancelled")
-            })
+            suspendContext.invokeInManagerThread(completion)
         }
     }
 

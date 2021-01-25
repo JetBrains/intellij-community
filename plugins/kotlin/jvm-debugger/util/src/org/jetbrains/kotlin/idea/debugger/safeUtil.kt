@@ -37,6 +37,10 @@ fun ReferenceType.safeAllLineLocations(): List<Location> {
     return DebuggerUtilsEx.allLineLocations(this) ?: emptyList()
 }
 
+fun ClassType.safeAllInterfaces(): List<InterfaceType> {
+    return wrapClassNotPreparedException { allInterfaces() } ?: emptyList()
+}
+
 fun ReferenceType.safeSourceName(): String? {
     return wrapAbsentInformationException { sourceName() }
 }
@@ -152,6 +156,14 @@ private inline fun <T> wrapClassNotLoadedException(block: () -> T): T? {
     return try {
         block()
     } catch (e: ClassNotLoadedException) {
+        null
+    }
+}
+
+private inline fun <T> wrapClassNotPreparedException(block: () -> T): T? {
+    return try {
+        block()
+    } catch (e: ClassNotPreparedException) {
         null
     }
 }

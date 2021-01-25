@@ -1,0 +1,9 @@
+LineBreakpoint created at sourcePositionForField.kt:16
+Run Java
+Connected to the target VM
+sourcePositionForField.kt:16
+Source position of instance.myInt is 8
+Source position of instance.aInt is 4
+Disconnected from the target VM
+
+Process finished with exit code 0

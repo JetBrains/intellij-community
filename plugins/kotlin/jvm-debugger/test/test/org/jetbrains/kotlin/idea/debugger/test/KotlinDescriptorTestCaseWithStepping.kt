@@ -6,15 +6,21 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.BasicStepMethodFilter
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.impl.PositionUtil
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.request.StepRequest
-import org.jetbrains.kotlin.idea.debugger.stepping.*
+import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.*
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
@@ -170,5 +176,25 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             // Try to execute the action inside a command if we aren't already inside it.
             debuggerSession.process.managerThread.invoke(command)
         }
+    }
+
+    protected fun processStackFrameOnPooledThread(callback: XStackFrame.() -> Unit) {
+        val frameProxy = debuggerContext.frameProxy ?: error("Frame proxy is absent")
+        val debugProcess = debuggerContext.debugProcess ?: error("Debug process is absent")
+        val nodeManager = debugProcess.xdebugProcess!!.nodeManager
+        val descriptor = nodeManager.getStackFrameDescriptor(null, frameProxy)
+        val stackFrame = debugProcess.positionManager.createStackFrame(descriptor) ?: error("Can't create stack frame for $descriptor")
+
+        ApplicationManager.getApplication().executeOnPooledThread {
+            stackFrame.callback()
+        }
+    }
+
+    protected fun SuspendContextImpl.invokeInManagerThread(callback: () -> Unit) {
+        assert(debugProcess.isAttached)
+        debugProcess.managerThread.invokeCommand(object : DebuggerCommand {
+            override fun action() = callback()
+            override fun commandCancelled() = error(message = "Test was cancelled")
+        })
     }
 }

@@ -26,10 +26,6 @@ import java.lang.Appendable
 import java.util.concurrent.TimeUnit
 
 class FramePrinter(private val suspendContext: SuspendContextImpl) {
-    private companion object {
-        private val OPAQUE_TYPE_DESCRIPTORS = listOf(String::class.java).map { Type.getType(it).descriptor }
-    }
-
     fun print(frame: XStackFrame): String {
         return buildString { append(frame, 0) }
     }
@@ -46,14 +42,11 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
         info.type?.let { append(": $it") }
         info.value?.let { append(" = $it") }
         info.sourcePosition?.let { append(" (" + it.render() + ")") }
-        val mightHaveChildren = info.mightHaveChildren
 
         appendLine()
 
-        if (mightHaveChildren) {
-            for (child in collectChildren(container)) {
-                append(child, indent + 1)
-            }
+        for (child in container) {
+            append(child, indent + 1)
         }
     }
 
@@ -62,14 +55,8 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
         val kind: String?,
         val type: String?,
         val value: String?,
-        val sourcePosition: SourcePosition?,
-        val mightHaveChildren: Boolean
+        val sourcePosition: SourcePosition?
     )
-
-    private fun isOpaqueValue(descriptor: ValueDescriptorImpl): Boolean {
-        val type = descriptor.type ?: return false
-        return type.signature() in OPAQUE_TYPE_DESCRIPTORS
-    }
 
     private fun computeInfo(container: XValueContainer): ValueInfo {
         val name = if (container is XNamedValue) container.name.takeIf { it.isNotEmpty() } else null
@@ -85,18 +72,14 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
                 val type = (descriptor as? ValueDescriptorImpl)?.declaredType ?: node.myType?.takeIf { it.isNotEmpty() }
                 val value = (computeValue(descriptor) ?: node.myValue).takeIf { it.isNotEmpty() }
                 val sourcePosition = computeSourcePosition(descriptor)
-                val mightHaveChildren = node.myHasChildren
-                    && (descriptor == null || descriptor.isExpandable)
-                    && !(descriptor is ValueDescriptorImpl && isOpaqueValue(descriptor))
-
-                return ValueInfo(name, kind, type, value, sourcePosition, mightHaveChildren)
+                return ValueInfo(name, kind, type, value, sourcePosition)
             }
             is XStackFrame -> {
                 val sourcePosition = DebuggerUtilsEx.toSourcePosition(container.sourcePosition, suspendContext.debugProcess.project)
-                return ValueInfo(name, kind = null, type = null, value = null, sourcePosition, mightHaveChildren = true)
+                return ValueInfo(name, kind = null, type = null, value = null, sourcePosition)
             }
             else -> {
-                return ValueInfo(name, kind = null, type = null, value = null, sourcePosition = null, mightHaveChildren = true)
+                return ValueInfo(name, kind = null, type = null, value = null, sourcePosition = null)
             }
         }
     }
@@ -168,20 +151,6 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
             is ArrayElementDescriptor -> "element"
             is ContinuationVariableValueDescriptorImpl -> "continuation"
             else -> null
-        }
-    }
-
-    private fun collectChildren(container: XValueContainer): List<XValue> {
-        val isExpandable = when (container) {
-            is XStackFrame -> true
-            is NodeDescriptorProvider -> container.descriptor.isExpandable
-            else -> false
-        }
-
-        if (isExpandable) {
-            return XDebuggerTestUtil.collectChildren(container)
-        } else {
-            return emptyList()
         }
     }
 
