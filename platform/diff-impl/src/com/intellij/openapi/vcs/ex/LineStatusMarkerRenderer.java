@@ -163,6 +163,12 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   private void destroyHighlighters() {
+    if (!myHighlighter.isValid() ||
+        myHighlighter.getStartOffset() != 0 ||
+        myHighlighter.getEndOffset() != myTracker.getDocument().getTextLength()) {
+      LOG.warn(String.format("Highlighter is damaged for %s, isValid: %s", myTracker, myHighlighter.isValid()));
+    }
+
     disposeHighlighter(myHighlighter);
 
     for (RangeHighlighter highlighter : myTooltipHighlighters) {
