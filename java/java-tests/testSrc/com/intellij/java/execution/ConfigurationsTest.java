@@ -16,6 +16,8 @@ import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -562,7 +564,8 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     if (state instanceof TestPackage) {
       @SuppressWarnings("UnusedDeclaration")
       final JavaParameters parameters = ((TestPackage)state).getJavaParameters();
-      final SearchForTestsTask task = ((TestPackage)state).createSearchingForTestsTask();
+      LocalTargetEnvironment environment = new LocalTargetEnvironment(new LocalTargetEnvironmentRequest());
+      final SearchForTestsTask task = ((TestPackage)state).createSearchingForTestsTask(environment);
       assertNotNull(task);
       Project project = configuration.getProject();
       try {

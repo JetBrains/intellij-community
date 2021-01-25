@@ -9,6 +9,8 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentUtil;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestRunnerBundle;
@@ -60,6 +62,12 @@ public class TestPackage extends TestObject {
   public SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getScope().getSourceScope(getConfiguration());
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public @Nullable SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
+    return createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
   }
 
   @Override
