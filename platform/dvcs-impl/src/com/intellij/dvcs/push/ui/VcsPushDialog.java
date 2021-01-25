@@ -110,7 +110,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return ContainerUtil.map(pushActions, action -> new ActionWrapper(myProject, this, action));
   }
 
-  private static void customizeDialog(@NotNull PushActionBase simplePushAction) {
+  private void customizeDialog(@NotNull PushActionBase simplePushAction) {
     List<PushDialogCustomizer> customizers = PUSH_DIALOG_CUSTOMIZER_EP.getExtensionList();
     if (!customizers.isEmpty()) {
       if (customizers.size() == 1) {
@@ -123,8 +123,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     }
   }
 
-  private static void customizeDialog(@NotNull PushDialogCustomizer customizer, @NotNull PushActionBase simplePushAction) {
-    simplePushAction.getTemplatePresentation().setText(customizer.getNameForSimplePushAction());
+  private void customizeDialog(@NotNull PushDialogCustomizer customizer, @NotNull PushActionBase simplePushAction) {
+    simplePushAction.getTemplatePresentation().setText(customizer.getNameForSimplePushAction(this));
   }
 
   @Nullable
