@@ -148,8 +148,8 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
               LOG.info("ML Completion enabled, experiment group=" + experimentInfo.getVersion() + " for: " + language.getDisplayName());
           } else {
             language2state.put(ranker.getId(), ranker.isEnabledByDefault());
+            decorateRelevant |= ranker.getDecoratingPolicy() != DecoratingItemsPolicy.Companion.getDISABLED();
           }
-          decorateRelevant |= ranker.getDecoratingPolicy() != DecoratingItemsPolicy.Companion.getDISABLED();
         }
       }
       rankingEnabled = language2state.containsValue(true);
