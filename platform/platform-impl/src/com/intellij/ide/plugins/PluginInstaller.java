@@ -248,7 +248,7 @@ public final class PluginInstaller {
         return false;
       }
       
-      if (!PluginSignatureChecker.checkPluginsSignature(pluginDescriptor.name, file.toFile())){
+      if (!PluginSignatureChecker.isSignedByJetBrains(pluginDescriptor.name, file.toFile())){
         return false;
       }
 

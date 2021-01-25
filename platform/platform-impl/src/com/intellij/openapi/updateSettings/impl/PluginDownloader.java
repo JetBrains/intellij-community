@@ -175,7 +175,7 @@ public final class PluginDownloader {
     try {
       myFile = downloadPlugin(indicator);
       if (myPluginUrl == null) { // Don't check signature for plugins from custom repositories
-        if (!PluginSignatureChecker.checkPluginsSignature(getPluginName(), myFile)) {
+        if (!PluginSignatureChecker.isSignedByJetBrains(getPluginName(), myFile)) {
           myShownErrors = true;
           return null;
         }

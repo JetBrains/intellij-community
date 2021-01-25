@@ -31,7 +31,7 @@ object PluginSignatureChecker {
   }
 
   @JvmStatic
-  fun checkPluginsSignature(pluginName: String, pluginFile: File): Boolean {
+  fun isSignedByJetBrains(pluginName: String, pluginFile: File): Boolean {
     val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("jetbrains.certificate.not.found"))
     val errorMessage = verifyPluginAndGetErrorMessage(pluginFile, jbCert)
     if (errorMessage != null) {
