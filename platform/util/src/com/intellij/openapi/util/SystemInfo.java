@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -241,11 +240,6 @@ public final class SystemInfo {
     final String vendor = JAVA_VENDOR;
     final String url = System.getProperty("java.vendor.url");
     return ("Google Inc.".equals(vendor) || ("Google LLC".equals(vendor))) && "http://developer.android.com/sdk/index.html".equals(url);
-  }
-
-  // Android Studio: added by Change Ia9fc708c / commit b9214e0
-  public static boolean bundles32BitJDK() {
-    return new File(PathManager.getHomePath(), "jre/jre/lib/i386").exists();
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} */

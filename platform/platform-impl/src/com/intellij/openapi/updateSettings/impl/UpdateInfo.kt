@@ -83,12 +83,7 @@ class BuildInfo internal constructor(node: Element) {
 
 class PatchInfo internal constructor(node: Element) {
   companion object {
-    // Android Studio: Windows builds with bundled 32-bit JDK have a different osSuffix, so patching will not "update" to a 64-bit JDK.
-    val OS_SUFFIX = if (SystemInfo.isWindows && SystemInfo.bundles32BitJDK()) "win32"
-    else if (SystemInfo.isWindows) "win"
-    else if (SystemInfo.isMac) "mac"
-    else if (SystemInfo.isUnix) "unix"
-    else "unknown"
+    val OS_SUFFIX = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
   }
 
   val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))!!
