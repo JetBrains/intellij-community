@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
 import com.intellij.psi.PsiElement;
@@ -40,6 +40,5 @@ public interface LeafOccurrenceMapper<T> {
    * @param offsetInStart start offset of the occurrence in {@code start}
    * @return read-only collection of result elements of the query
    */
-  @NotNull
-  Collection<T> mapOccurrence(@NotNull PsiElement scope, @NotNull PsiElement start, int offsetInStart);
+  @NotNull Collection<? extends T> mapOccurrence(@NotNull PsiElement scope, @NotNull PsiElement start, int offsetInStart);
 }
