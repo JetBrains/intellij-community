@@ -71,7 +71,7 @@
     <registryKey key="completion.ml.reorder.without.duplicates" defaultValue="false"
                  description="Reorder only items with different names"/>
 
-    <registryKey key="completion.ml.show.arrows.notification" defaultValue="true"
+    <registryKey key="completion.ml.show.star.notification" defaultValue="true"
                  description="Show notification with question about ML completion arrows"/>
 
     <registryKey key="completion.ml.enable.session.factors" defaultValue="true"

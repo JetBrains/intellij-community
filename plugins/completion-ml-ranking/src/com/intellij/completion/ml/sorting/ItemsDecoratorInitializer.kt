@@ -7,16 +7,13 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.MLCompletionBundle
-import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.settings.MLCompletionSettingsCollector
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.completion.ml.tracker.LookupTracker
-import com.intellij.completion.ml.util.language
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
-import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -34,15 +31,15 @@ import javax.swing.Icon
 
 class ItemsDecoratorInitializer : LookupTracker() {
   companion object {
-    private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.ml.show.arrows.notification"
-    private const val ARROWS_NOTIFICATION_SHOWN_KEY = "completion.ml.arrows.notification.shown"
-    private const val ARROWS_NOTIFICATION_AFTER_SESSIONS = 50
-    private val sessionsWithArrowsCounter = AtomicInteger()
+    private const val SHOW_STAR_NOTIFICATION_REGISTRY = "completion.ml.show.star.notification"
+    private const val STAR_NOTIFICATION_SHOWN_KEY = "completion.ml.star.notification.shown"
+    private const val STAR_NOTIFICATION_AFTER_SESSIONS = 50
+    private val sessionsWithStarCounter = AtomicInteger()
 
-    private val POSITION_DIFF_KEY = Key.create<AtomicInteger>("PositionDiffArrowInitializer.POSITION_DIFF_KEY")
-    private val POSITION_CHANGED_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.POSITION_CHANGED_KEY")
-    private val HAS_RELEVANT_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.HAS_RELEVANT_KEY")
-    private val IS_RELEVANT_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.IS_RELEVANT_KEY")
+    private val POSITION_DIFF_KEY = Key.create<AtomicInteger>("ItemsDecoratorInitializer.POSITION_DIFF_KEY")
+    private val POSITION_CHANGED_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.POSITION_CHANGED_KEY")
+    private val HAS_RELEVANT_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.HAS_RELEVANT_KEY")
+    private val IS_RELEVANT_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.IS_RELEVANT_KEY")
 
     private val EMPTY_ICON = prepareIcon(IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.RelevantProposal))
     private val RELEVANT_ICON = prepareIcon(CompletionMlRankingIcons.RelevantProposal)
@@ -53,10 +50,6 @@ class ItemsDecoratorInitializer : LookupTracker() {
       val changed = lookup.getUserData(POSITION_CHANGED_KEY)
       if (changed == null) {
         lookup.putUserData(POSITION_CHANGED_KEY, value)
-        val language = lookup.language()
-        if (value && language != null) {
-          showArrowsNotificationIfNeeded(language)
-        }
       }
     }
 
@@ -70,21 +63,18 @@ class ItemsDecoratorInitializer : LookupTracker() {
     fun markAsRelevant(lookup: LookupImpl, element: LookupElement) {
       lookup.putUserData(HAS_RELEVANT_KEY, true)
       element.putUserData(IS_RELEVANT_KEY, true)
+      showStarNotificationIfNeeded()
     }
 
-    private fun shouldShowArrowsNotification(): Boolean = Registry.`is`(SHOW_ARROWS_NOTIFICATION_REGISTRY, true)
+    private fun shouldShowStarNotification(): Boolean = Registry.`is`(SHOW_STAR_NOTIFICATION_REGISTRY, true)
 
-    private fun showArrowsNotificationIfNeeded(language: Language) {
-      val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
-      if (experimentInfo.inExperiment) return
-
+    private fun showStarNotificationIfNeeded() {
       val properties = PropertiesComponent.getInstance()
-      val mlRankingSettings = CompletionMLRankingSettings.getInstance()
-      if (mlRankingSettings.isShowDiffEnabled && shouldShowArrowsNotification() && !properties.getBoolean(ARROWS_NOTIFICATION_SHOWN_KEY)) {
-        val sessionsCount = sessionsWithArrowsCounter.incrementAndGet()
-        if (sessionsCount == ARROWS_NOTIFICATION_AFTER_SESSIONS) {
-          properties.setValue(ARROWS_NOTIFICATION_SHOWN_KEY, true)
-          ArrowsOpinionNotification().notify(null)
+      if (shouldShowStarNotification() && !properties.getBoolean(STAR_NOTIFICATION_SHOWN_KEY)) {
+        val sessionsCount = sessionsWithStarCounter.incrementAndGet()
+        if (sessionsCount == STAR_NOTIFICATION_AFTER_SESSIONS) {
+          properties.setValue(STAR_NOTIFICATION_SHOWN_KEY, true)
+          StarOpinionNotification().notify(null)
         }
       }
     }
@@ -141,7 +131,7 @@ class ItemsDecoratorInitializer : LookupTracker() {
     override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = LeftDecoratedIcon(leftIcon, icon)
   }
 
-  private class ArrowsOpinionNotification : Notification(
+  private class StarOpinionNotification : Notification(
     MLCompletionBundle.message("ml.completion.notification.groupId"),
     MLCompletionBundle.message("ml.completion.notification.title"),
     MLCompletionBundle.message("ml.completion.notification.decorating.opinion.content"),
@@ -157,9 +147,9 @@ class ItemsDecoratorInitializer : LookupTracker() {
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.dislike")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
-          CompletionMLRankingSettings.getInstance().isShowDiffEnabled = false
+          CompletionMLRankingSettings.getInstance().isDecorateRelevantEnabled = false
           notification.expire()
-          ArrowsDisabledNotification().notify(null)
+          StarDisabledNotification().notify(null)
         }
       })
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.neutral")) {
@@ -171,7 +161,7 @@ class ItemsDecoratorInitializer : LookupTracker() {
     }
   }
 
-  private class ArrowsDisabledNotification : Notification(
+  private class StarDisabledNotification : Notification(
     MLCompletionBundle.message("ml.completion.notification.groupId"),
     MLCompletionBundle.message("ml.completion.notification.title"),
     MLCompletionBundle.message("ml.completion.notification.decorating.disabled.content", ShowSettingsUtil.getSettingsMenuName()),
