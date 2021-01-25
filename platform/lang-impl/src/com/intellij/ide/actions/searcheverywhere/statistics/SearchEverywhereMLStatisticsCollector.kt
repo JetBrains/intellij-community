@@ -31,17 +31,32 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     myIsReporting = percentage >= 1 || Math.random() < percentage // only report a part of cases
   }
 
-  fun reportSelectedElements(indexes: IntArray,
+  private fun isActionTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId
+
+  private fun reportElements(indexes: IntArray,
+                             closePopup: Boolean,
+                             keysTyped: Int,
+                             backspacesTyped: Int,
+                             symbolsInQuery: Int,
+                             elements: List<SearchEverywhereFoundElementInfo>,
+                             tabId: String) {
+    if (myIsReporting && isActionTab(tabId)) {
+      NonUrgentExecutor.getInstance().execute {
+        reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, elements)
+      }
+    }
+  }
+
+  private fun reportElements(indexes: IntArray,
                              closePopup: Boolean,
                              symbolsTyped: Int, backspacesTyped: Int,
                              symbolsInQuery: Int,
                              elements: List<SearchEverywhereFoundElementInfo>) {
-    if (!myIsReporting) {
-      return
-    }
     val logData = FeatureUsageData()
     logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
-    logData.addData(SELECTED_INDEXES_DATA_KEY, indexes.map { it.toString() })
+    if (indexes.isNotEmpty()) {
+      logData.addData(SELECTED_INDEXES_DATA_KEY, indexes.map { it.toString() })
+    }
     logData.addData(CLOSE_POPUP_KEY, closePopup)
     logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
     logData.addData(TOTAL_NUMBER_OF_ITEMS_DATA_KEY, elements.size)
@@ -89,12 +104,15 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                          backspacesTyped: Int,
                          textLength: Int,
                          tabId: String) {
-    val isActionTabSelected = ActionSearchEverywhereContributor::class.java.simpleName == tabId
-    if (isActionTabSelected) {
-      NonUrgentExecutor.getInstance().execute {
-        reportSelectedElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elements)
-      }
-    }
+    reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elements, tabId)
+  }
+
+  fun recordPopupClosed(elements: List<SearchEverywhereFoundElementInfo>,
+                        keysTyped: Int,
+                        backspacesTyped: Int,
+                        textLength: Int,
+                        tabId: String) {
+    reportElements(EMPTY, true, keysTyped, backspacesTyped, textLength, elements, tabId)
   }
 
   private fun getListItemsNames(item: SearchEverywhereFoundElementInfo,
@@ -168,6 +186,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
   }
 
   companion object {
+    private val EMPTY: IntArray = IntArray(0)
+
     private const val REPORTED_ITEMS_LIMIT = 50
 
     private const val SESSION_FINISHED = "sessionFinished"

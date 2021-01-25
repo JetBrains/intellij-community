@@ -531,7 +531,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     registerSelectItemAction();
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-    DumbAwareAction.create(__ -> closePopup())
+    DumbAwareAction.create(__ -> closePopup(false))
       .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -581,7 +581,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       public void focusLost(FocusEvent e) {
         Component oppositeComponent = e.getOppositeComponent();
         if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(SearchEverywhereUI.this, oppositeComponent)) {
-          closePopup();
+          closePopup(false);
         }
       }
     });
@@ -764,7 +764,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
                                                mySearchField.getText().length(), myHeader.getSelectedTab().getID());
 
     if (closePopup) {
-      closePopup();
+      closePopup(true);
     }
     else {
       ApplicationManager.getApplication().invokeLater(() -> myResultsList.repaint());
@@ -808,7 +808,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  private void closePopup() {
+  private void closePopup(boolean withSelection) {
+    if (!withSelection && isShowing()) {
+      myMLStatisticsCollector.recordPopupClosed(
+        myListModel.getFoundElements(),
+        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
+        mySearchField.getText().length(), myHeader.getSelectedTab().getID());
+    }
     ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
     stopSearching();
     searchFinishedHandler.run();
@@ -954,7 +960,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       else {
         showInFindWindow(targets, usages, presentation);
       }
-      closePopup();
+      closePopup(false);
     }
 
     private void fillUsages(Collection<Object> foundElements, Collection<? super Usage> usages, Collection<? super PsiElement> targets) {
