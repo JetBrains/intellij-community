@@ -47,7 +47,7 @@ internal class SpaceReviewChangesVmImpl(
 
   override val selectedCommits: Property<List<SpaceReviewCommitListItem>> =
     mapInit(selectedCommitIndices, allCommits, emptyList()) { indices, commits ->
-      if (indices.isEmpty()) return@mapInit commits
+      if (indices.isEmpty() || commits.isEmpty()) return@mapInit commits
 
       indices.map { commits[it] }
     }
