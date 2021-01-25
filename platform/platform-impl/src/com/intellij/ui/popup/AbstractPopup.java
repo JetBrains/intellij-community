@@ -534,13 +534,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return location;
   }
 
-  private Dimension getSizeForPositioning() {
+  public Dimension getSizeForPositioning() {
     Dimension size = getSize();
     if (size == null) {
       size = getStoredSize();
     }
     if (size == null) {
-      size = myContent.getPreferredSize();
+      Dimension contentPreferredSize = myContent.getPreferredSize();
+      Dimension titlePreferredSize = getTitle().getPreferredSize();
+      size = new JBDimension(Math.max(contentPreferredSize.width, titlePreferredSize.width),
+                             contentPreferredSize.height + titlePreferredSize.height);
     }
     return size;
   }
@@ -659,7 +662,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return rectangle.getLocation();
   }
 
-  private @NotNull Dimension getPreferredContentSize() {
+  public @NotNull Dimension getPreferredContentSize() {
     if (myForcedSize != null) {
       return myForcedSize;
     }
