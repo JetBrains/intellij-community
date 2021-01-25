@@ -43,14 +43,25 @@ internal class MnemonicChooser(
   init {
     isFocusCycleRoot = true
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
-    addToLeft(createButtons { it.mnemonic.isDigit() })
-    addToRight(createButtons { it.mnemonic.isLetter() })
+    border = JBUI.Borders.empty(2, 6)
+    addToLeft(JPanel(SHARED_LAYOUT).apply {
+      border = JBUI.Borders.empty(5)
+      BookmarkType.values()
+        .filter { it.mnemonic.isDigit() }
+        .forEach { add(createButton(it)) }
+    })
+    addToRight(JPanel(SHARED_LAYOUT).apply {
+      border = JBUI.Borders.empty(5)
+      BookmarkType.values()
+        .filter { it.mnemonic.isLetter() }
+        .forEach { add(createButton(it)) }
+    })
     if (manager.hasBookmarksWithMnemonics()) {
       addToBottom(BorderLayoutPanel().apply {
-        border = JBUI.Borders.empty(0, 10)
+        border = JBUI.Borders.empty(5, 6, 1, 6)
         addToTop(JSeparator())
-        addToBottom(JPanel(HorizontalLayout(5)).apply {
-          border = JBUI.Borders.empty(5, 0)
+        addToBottom(JPanel(HorizontalLayout(12)).apply {
+          border = JBUI.Borders.empty(5, 1)
           add(HorizontalLayout.LEFT, createLegend(ASSIGNED_BACKGROUND, message("mnemonic.chooser.legend.assigned.bookmark")))
           if (current != null && current != BookmarkType.DEFAULT) {
             add(HorizontalLayout.LEFT, createLegend(CURRENT_BACKGROUND, message("mnemonic.chooser.legend.current.bookmark")))
@@ -61,11 +72,6 @@ internal class MnemonicChooser(
   }
 
   fun buttons() = UIUtil.uiTraverser(this).traverse().filter(JButton::class.java)
-
-  private fun createButtons(predicate: (BookmarkType) -> Boolean) = JPanel(SHARED_LAYOUT).apply {
-    border = JBUI.Borders.empty(5)
-    BookmarkType.values().filter(predicate).forEach { add(createButton(it)) }
-  }
 
   private fun createButton(type: BookmarkType) = JButton(type.mnemonic.toString()).apply {
     setMnemonic(type.mnemonic)
