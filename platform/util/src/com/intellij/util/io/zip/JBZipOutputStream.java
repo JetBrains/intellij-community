@@ -291,9 +291,11 @@ class JBZipOutputStream {
   private void updateLocalFileHeader(JBZipEntry ze, long crc, long compressedSize, ExtraFieldData extra) throws IOException {
     ze.setCrc(crc);
     ze.setCompressedSize(compressedSize);
-    ze.addExtra(new Zip64ExtraField(new ZipUInt64(ze.getSize()),
-                                    new ZipUInt64(ze.getCompressedSize()),
-                                    new ZipUInt64(ze.getHeaderOffset())));
+    if (myFile.isZip64()) {
+      ze.addExtra(new Zip64ExtraField(new ZipUInt64(ze.getSize()),
+                                      new ZipUInt64(ze.getCompressedSize()),
+                                      new ZipUInt64(ze.getHeaderOffset())));
+    }
     flushBuffer();
     long offset = ze.getHeaderOffset() + LFH_OFFSET_FOR_CRC;
     raf.seek(offset);
