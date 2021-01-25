@@ -61,7 +61,10 @@ abstract class TargetEnvironmentWizardStepKt(@NlsContexts.DialogTitle title: Str
 
   protected fun createTopPanel(): JComponent {
     return JPanel(HorizontalLayout(ICON_GAP)).also {
-      it.border = JBUI.Borders.emptyBottom(VGAP)
+      val insets = TargetEnvironmentWizard.defaultDialogInsets()
+      it.border = JBUI.Borders.merge(JBUI.Borders.emptyBottom(VGAP),
+                                     JBUI.Borders.empty(insets.top, insets.left, 0, insets.right),
+                                     true)
       it.add(stepDescriptionLabel)
       spinningLabel.isVisible = false
       it.add(spinningLabel)

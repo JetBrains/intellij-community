@@ -6,6 +6,12 @@ import com.intellij.ide.wizard.AbstractWizardEx
 import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import java.awt.BorderLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.border.Border
 
 class TargetEnvironmentWizard(project: Project,
                               @NlsContexts.DialogTitle title: String,
@@ -14,6 +20,14 @@ class TargetEnvironmentWizard(project: Project,
   : AbstractWizardEx(title, project, steps) {
 
   override fun getHelpId(): String = "reference.remote.target.wizard.${subject.typeId}"
+
+  override fun createContentPaneBorder(): Border = JBUI.Borders.empty()
+
+  override fun createSouthPanel(): JComponent =
+    JPanel(BorderLayout()).also {
+      it.add(super.createSouthPanel(), BorderLayout.CENTER)
+      it.border = JBUI.Borders.empty(0, 12, 8, 12)
+    }
 
   companion object {
     @JvmStatic
@@ -31,5 +45,10 @@ class TargetEnvironmentWizard(project: Project,
       return TargetEnvironmentWizard(
         project, ExecutionBundle.message("run.on.targets.wizard.title.new.target"), config, steps)
     }
+
+    /**
+     * To compensate empty TargetEnvironmentWizard.createContentPaneBorder()
+     */
+    fun defaultDialogInsets() = UIUtil.getRegularPanelInsets()
   }
 }
