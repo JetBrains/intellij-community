@@ -190,6 +190,7 @@ public final class PathsVerifier {
         ApplicationManager.getApplication().runWriteAction(
           () -> FileTypeManagerEx.getInstanceEx().associate(FileTypes.PLAIN_TEXT, new ExactFileNameMatcher(file.getName()))
         );
+        return true;
       } else {
         fileType = FileTypeChooser.associateFileType(file.getName());
         if (fileType == null) {
