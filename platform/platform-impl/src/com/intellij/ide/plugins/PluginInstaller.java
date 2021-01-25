@@ -247,9 +247,10 @@ public final class PluginInstaller {
         MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName().toString()), CommonBundle.getErrorTitle());
         return false;
       }
-      
-      if (!PluginSignatureChecker.isSignedByJetBrains(pluginDescriptor.name, file.toFile())){
-        return false;
+      if (Registry.is("marketplace.certificate.signature.check")) {
+        if (!PluginSignatureChecker.isSignedByJetBrains(pluginDescriptor.name, file.toFile())){
+          return false;
+        }
       }
 
       InstalledPluginsState ourState = InstalledPluginsState.getInstance();

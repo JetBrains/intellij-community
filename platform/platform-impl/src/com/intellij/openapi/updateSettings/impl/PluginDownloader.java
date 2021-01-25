@@ -174,10 +174,12 @@ public final class PluginDownloader {
     String errorMessage = null;
     try {
       myFile = downloadPlugin(indicator);
-      if (myPluginUrl == null) { // Don't check signature for plugins from custom repositories
-        if (!PluginSignatureChecker.isSignedByJetBrains(getPluginName(), myFile)) {
-          myShownErrors = true;
-          return null;
+      if (Registry.is("marketplace.certificate.signature.check")) {
+        if (myPluginUrl == null) { // Don't check signature for plugins from custom repositories
+          if (!PluginSignatureChecker.isSignedByJetBrains(getPluginName(), myFile)) {
+            myShownErrors = true;
+            return null;
+          }
         }
       }
     }
