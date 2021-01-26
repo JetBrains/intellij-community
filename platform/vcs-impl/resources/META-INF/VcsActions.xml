@@ -151,8 +151,8 @@
               icon="AllIcons.Vcs.ShelveSilent">
         <keyboard-shortcut first-keystroke="shift control H" keymap="$default"/>
       </action>
-      <action id="ChangesView.SaveToShelve" class="com.intellij.openapi.vcs.changes.actions.SaveToShelveAction"/>
     </group>
+    <action id="ChangesView.SaveToShelve" class="com.intellij.openapi.vcs.changes.actions.SaveToShelveAction"/>
 
     <group id="ChangesViewPopupMenu">
       <reference ref="CheckinFiles"/>
