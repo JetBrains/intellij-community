@@ -30,6 +30,7 @@ class GitStageCommitWorkflowHandler(
     setupDumbModeTracking()
     setupCommitHandlersTracking()
     vcsesChanged()
+    initCommitMessage()
   }
 
   override fun isCommitEmpty(): Boolean = !state.hasStagedRoots()
@@ -43,9 +44,13 @@ class GitStageCommitWorkflowHandler(
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitMessage(), success)
   override fun refreshChanges(callback: () -> Unit) = callback()
 
+  private fun initCommitMessage() = setCommitMessage(commitMessagePolicy.getCommitMessage())
+
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
     override fun onSuccess(commitMessage: String) {
       commitAuthor = null
+      initCommitMessage()
+
       super.onSuccess(commitMessage)
     }
   }
