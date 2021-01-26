@@ -30,7 +30,7 @@ class ModuleRootComponentBridge(
 
   override val moduleBridge = currentModule as ModuleBridge
 
-  private val orderRootsCache = OrderRootsCache(currentModule)
+  private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
   private val modelValue = DisposableCachedValue(
     { moduleBridge.entityStorage },

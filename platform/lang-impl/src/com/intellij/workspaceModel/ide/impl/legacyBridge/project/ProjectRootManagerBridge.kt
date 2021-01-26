@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
+import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -23,6 +24,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.jps.serialization.levelToLibraryTableId
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 @Suppress("ComponentNotRegistered")
@@ -75,6 +77,10 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   override fun dispose() {
     super.dispose()
     unsubscribeListeners()
+  }
+
+  override fun getOrderRootsCache(project: Project): OrderRootsCache {
+    return OrderRootsCacheBridge(project, project)
   }
 
   fun isFiringEvent(): Boolean = isFiringEvent

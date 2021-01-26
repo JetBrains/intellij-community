@@ -185,7 +185,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   public ProjectRootManagerImpl(@NotNull Project project) {
     myProject = project;
-    myRootsCache = new OrderRootsCache(project);
+    myRootsCache = getOrderRootsCache(project);
     myJdkTableMultiListener = new JdkTableMultiListener(project);
   }
 
@@ -464,6 +464,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @ApiStatus.Internal
   protected void fireRootsChangedEvent(boolean fileTypes,
                                        @Nullable ProjectRootManagerImpl.RootsChangeType cause) { }
+
+  @ApiStatus.Internal
+  protected OrderRootsCache getOrderRootsCache(@NotNull Project project) {
+    return new OrderRootsCache(project);
+  }
 
   @NotNull
   public Project getProject() {
