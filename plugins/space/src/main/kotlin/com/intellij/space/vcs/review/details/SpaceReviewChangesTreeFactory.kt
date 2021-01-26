@@ -19,8 +19,10 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import libraries.klogging.logger
 import org.jetbrains.annotations.Nullable
 import runtime.reactive.LoadingValue
@@ -63,7 +65,7 @@ internal object SpaceReviewChangesTreeFactory {
                 val spaceRepoInfo = changesWithDiscussion.spaceRepoInfo
                 val repoNode = SpaceRepositoryNode(repo, spaceRepoInfo != null)
                 val changes = changesWithDiscussion.changesInReview
-                addChanges(builder, repoNode, changes, spaceRepoInfo)
+                addChanges(builder, repoNode, changes, spaceRepoInfo, changesVm.allCommits.value)
               }
 
               addTreeSelectionListener(listener)
@@ -120,11 +122,16 @@ internal object SpaceReviewChangesTreeFactory {
   private fun addChanges(builder: TreeModelBuilder,
                          repositoryNode: ChangesBrowserNode<*>,
                          changesInReview: List<ChangeInReview>,
-                         spaceRepoInfo: SpaceRepoInfo?) {
+                         spaceRepoInfo: SpaceRepoInfo?,
+                         commits: List<SpaceReviewCommitListItem>) {
     builder.insertSubtreeRoot(repositoryNode)
 
+    val hashes = commits.filterNot { it.commitWithGraph.unreachable }
+      .map { it.commitWithGraph.commit.id }
+      .toSet()
+
     changesInReview.forEach { changeInReview: ChangeInReview ->
-      val spaceChange = SpaceReviewChange(changeInReview, spaceRepoInfo)
+      val spaceChange = SpaceReviewChange(changeInReview, spaceRepoInfo, !hashes.contains(changeInReview.change.revision))
       builder.insertChangeNode(
         spaceChange.filePath,
         repositoryNode,
@@ -147,11 +154,21 @@ internal class SpaceRepositoryNode(@NlsSafe val repositoryName: String,
   }
 }
 
-internal class SpaceReviewChangeNode(spaceReviewChange: SpaceReviewChange)
+internal class SpaceReviewChangeNode(private val spaceReviewChange: SpaceReviewChange)
   : AbstractChangesBrowserFilePathNode<SpaceReviewChange>(spaceReviewChange,
                                                           spaceReviewChange.fileStatus) {
 
   override fun filePath(userObject: SpaceReviewChange): FilePath = userObject.filePath
+
+  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+    super.render(renderer, selected, expanded, hasFocus)
+
+    if (spaceReviewChange.unreachable) {
+      @NlsSafe val hash = spaceReviewChange.gitCommitChange.revision.take(VcsLogUtil.SHORT_HASH_LENGTH)
+      renderer.append(FontUtil.spaceAndThinSpace())
+      renderer.append("[$hash]")
+    }
+  }
 }
 
 internal fun createChangesBrowserToolbar(target: JComponent): TreeActionsToolbarPanel {

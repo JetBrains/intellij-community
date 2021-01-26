@@ -87,12 +87,18 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
       val commitsInRepository = revInReview.commits.size
 
       revInReview.commits
-        .filterNot(GitCommitWithGraph::unreachable)
-        .mapIndexed { index, gitCommitWithGraph -> SpaceReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo) }
+        .filterNot { this@SpaceReviewDetailsVm is MergeRequestDetailsVm && it.unreachable }
+        .mapIndexed { index, gitCommitWithGraph ->
+          SpaceReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo)
+        }
     }
   }
 
   val selectedTab: MutableProperty<SelectedTab> = mutableProperty(SelectedTab.INFO)
+
+  private val allReachableCommits: Property<List<SpaceReviewCommitListItem>> = map(commits) { commits ->
+    commits.filterNot { it.commitWithGraph.unreachable }
+  }
 
   val commitChangesVm: SpaceReviewChangesVm = SpaceReviewChangesVmImpl(
     lifetime, client, projectKey, review.value.identifier,
@@ -101,7 +107,7 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
 
   val allChangesVm: SpaceReviewChangesVmImpl = SpaceReviewChangesVmImpl(
     lifetime, client, projectKey, review.value.identifier,
-    reviewId, commits, participantsVm, infoByRepos
+    reviewId, allReachableCommits, participantsVm, infoByRepos
   )
 
   val selectedChangesVm: Property<SpaceReviewChangesVm> = map(selectedTab) { tab ->
