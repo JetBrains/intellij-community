@@ -58,7 +58,7 @@ object FileHistoryPersistence {
         NGramModelSerializer.saveNGrams(path, runner)
       }
     }
-    catch (e: IOException) {
+    catch (e: Exception) {
       LOG.warn("Cannot serialize file sequence ngrams", e)
     }
   }
@@ -70,7 +70,7 @@ object FileHistoryPersistence {
         return NGramModelSerializer.loadNGrams(path, nGramLength)
       }
     }
-    catch (e: IOException) {
+    catch (e: Exception) {
       LOG.warn("Cannot deserialize file sequence ngrams", e)
     }
     return NGramModelSerializer.loadNGrams(null, nGramLength)
