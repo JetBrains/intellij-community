@@ -1941,26 +1941,28 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       else {
         operand.accept(this);
-        PsiType type = expression.getType();
-        PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
-        generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
         if (PsiUtil.isIncrementDecrementOperation(expression)) {
           if (!processIncrementDecrement(expression, operand)) {
             pushUnknown();
             addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
           }
         }
-        else if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
-          addInstruction(new NotInstruction(expression));
-        }
-        else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
-          addInstruction(new PushValueInstruction(DfTypes.defaultValue(type)));
-          addInstruction(new SwapInstruction());
-          addInstruction(new BinopInstruction(expression.getOperationTokenType(), expression, type));
-        }
         else {
-          addInstruction(new PopInstruction());
-          pushUnknown();
+          PsiType type = expression.getType();
+          PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
+          generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
+          if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
+            addInstruction(new NotInstruction(expression));
+          }
+          else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
+            addInstruction(new PushValueInstruction(DfTypes.defaultValue(type)));
+            addInstruction(new SwapInstruction());
+            addInstruction(new BinopInstruction(expression.getOperationTokenType(), expression, type));
+          }
+          else {
+            addInstruction(new PopInstruction());
+            pushUnknown();
+          }
         }
       }
     }
