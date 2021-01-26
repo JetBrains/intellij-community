@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages.api;
 
-import com.intellij.find.usages.impl.EmptyUsageHandler;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +12,6 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
  *            Nullability is omitted intentionally because implementations are responsible for it,
  *            e.g. if {@link #getCustomOptions} returns {@code null},
  *            then the same {@code null} is passed into {@link #buildSearchQuery} and {@link #getSearchString}.
- * @see NonConfigurableUsageHandler
  */
 public interface UsageHandler<O> {
 
@@ -49,11 +47,31 @@ public interface UsageHandler<O> {
    */
   @NotNull Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options, O customOptions);
 
+  interface NonConfigurable {
+
+    /**
+     * @see UsageHandler#getSearchString
+     */
+    @Nls(capitalization = Title) @NotNull String getSearchString(@NotNull UsageOptions options);
+
+    /**
+     * @see UsageHandler#buildSearchQuery
+     */
+    @NotNull Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options);
+  }
+
   /**
-   * Returns a usage handler without custom options and without custom search query,
+   * @return a usage handler adapted from a handler without custom options
+   */
+  static @NotNull UsageHandler<?> createUsageHandler(@NotNull UsageHandler.NonConfigurable usageHandler) {
+    return new NonConfigurableUsageHandler(usageHandler);
+  }
+
+  /**
+   * @return a usage handler without custom options and without custom search query,
    * meaning the search is run only with {@link UsageSearchParameters}.
    */
   static @NotNull UsageHandler<?> createEmptyUsageHandler(@NotNull String targetName) {
-    return new EmptyUsageHandler(targetName);
+    return createUsageHandler(new EmptyUsageHandler(targetName));
   }
 }

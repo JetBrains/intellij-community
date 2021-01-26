@@ -8,10 +8,13 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-/**
- * Base class for usage handlers without custom options.
- */
-public abstract class NonConfigurableUsageHandler implements UsageHandler<@Nullable Void> {
+final class NonConfigurableUsageHandler implements UsageHandler<@Nullable Void> {
+
+  private final @NotNull UsageHandler.NonConfigurable myHandler;
+
+  NonConfigurableUsageHandler(@NotNull UsageHandler.NonConfigurable handler) {
+    myHandler = handler;
+  }
 
   @Override
   public final @Nullable Void getCustomOptions(@NotNull UsageAction action) {
@@ -25,15 +28,11 @@ public abstract class NonConfigurableUsageHandler implements UsageHandler<@Nulla
 
   @Override
   public final @Nls(capitalization = Title) @NotNull String getSearchString(@NotNull UsageOptions options, @Nullable Void customOptions) {
-    return getSearchString(options);
+    return myHandler.getSearchString(options);
   }
 
   @Override
   public final @NotNull Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options, @Nullable Void customOptions) {
-    return buildSearchQuery(options);
+    return myHandler.buildSearchQuery(options);
   }
-
-  protected abstract @Nls(capitalization = Title) @NotNull String getSearchString(@NotNull UsageOptions options);
-
-  protected abstract @NotNull Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options);
 }
