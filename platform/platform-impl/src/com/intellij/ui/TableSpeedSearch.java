@@ -18,7 +18,7 @@ import java.util.ListIterator;
 
 import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
 
-public class TableSpeedSearch extends SpeedSearchBase<JTable> {
+public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
   private static final PairFunction<Object, Cell, String> TO_STRING = (o, cell) -> o == null || o instanceof Boolean ? "" : o.toString();
   private final PairFunction<Object, ? super Cell, String> myToStringConvertor;
 
@@ -116,6 +116,19 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
       }
     }
     return rows;
+  }
+
+  @Override
+  protected boolean isMatchingRow(int modelRow, String pattern) {
+    int columns = myComponent.getColumnCount();
+    for (int col = 0; col < columns; col ++) {
+      Object value = myComponent.getModel().getValueAt(modelRow, col);
+      String str = myToStringConvertor.fun(value, new Cell(modelRow, col));
+      if (str != null && compare(str, pattern)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class MySelectAllAction extends DumbAwareAction {

@@ -13,10 +13,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -51,6 +48,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
   private static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
   private static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
+
+  private static final Key<String> SEARCH_TEXT_KEY = Key.create("SpeedSearch.searchText");
 
   private SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
@@ -99,6 +98,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       public void focusLost(FocusEvent e) {
         manageSearchPopup(null);
       }
+
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (!isStickySearch()) return;
+        String text = UIUtil.getClientProperty(myComponent, SEARCH_TEXT_KEY);
+        if (StringUtil.isEmpty(text)) return;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myComponent.hasFocus()) {
+            showPopup(text);
+          }
+        });
+      }
     });
     myComponent.addKeyListener(new KeyAdapter() {
       @Override
@@ -132,6 +143,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     installSupplyTo(component);
   }
 
+  protected boolean isStickySearch() {
+    return false;
+  }
+
   @Nullable
   public JTextField getSearchField() {
     if (mySearchPopup != null) {
@@ -150,7 +165,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Override
   public boolean isPopupActive() {
-    return mySearchPopup != null && mySearchPopup.isVisible();
+    return mySearchPopup != null && mySearchPopup.isVisible() ||
+           isStickySearch() && StringUtil.isNotEmpty(UIUtil.getClientProperty(myComponent, SEARCH_TEXT_KEY));
   }
 
 
@@ -353,6 +369,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   public void hidePopup() {
+    JTextField field = getSearchField();
+    if (field != null) field.setText("");
     manageSearchPopup(null);
   }
 
@@ -553,16 +571,19 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
       if (
         i == KeyEvent.VK_ENTER ||
-        i == KeyEvent.VK_ESCAPE ||
         i == KeyEvent.VK_PAGE_UP ||
         i == KeyEvent.VK_PAGE_DOWN ||
         i == KeyEvent.VK_LEFT ||
         i == KeyEvent.VK_RIGHT
         ) {
-        manageSearchPopup(null);
-        if (i == KeyEvent.VK_ESCAPE) {
-          e.consume();
+        if (!isStickySearch()) {
+          manageSearchPopup(null);
         }
+        return;
+      }
+      if (i == KeyEvent.VK_ESCAPE) {
+        hidePopup();
+        e.consume();
         return;
       }
 
@@ -612,6 +633,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (myListenerDisposable != null) {
         Disposer.dispose(myListenerDisposable);
         myListenerDisposable = null;
+      }
+      if (isStickySearch()) {
+        UIUtil.putClientProperty(myComponent, SEARCH_TEXT_KEY, StringUtil.nullize(getEnteredPrefix()));
       }
     }
     else if (searchPopup != null) {
