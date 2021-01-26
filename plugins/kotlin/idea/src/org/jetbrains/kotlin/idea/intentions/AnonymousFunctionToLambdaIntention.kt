@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contentRange
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
@@ -43,9 +42,11 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
             val functionalType = callElement.resolveToCall()?.getParameterForArgument(argument)?.let {
                 if (it.isVararg) it.original.type.arguments.firstOrNull()?.type else it.original.type
             }
+
             val typeArguments = functionalType?.arguments?.let {
                 if (it.isNotEmpty()) it.dropLast(1) else it
             }.orEmpty()
+
             typeArguments.mapIndexedNotNull { index, typeProjection ->
                 if (typeProjection.type.isTypeParameter()) index else null
             }.toSet()
@@ -67,11 +68,13 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
                     || typeParameterIndexes.isNotEmpty()
                     || parameters.count() > 1
                     || parameters.any { parameter -> ReferencesSearch.search(parameter, LocalSearchScope(body)).any() }
+
             if (needParameters) {
                 parameters.forEachIndexed { index, parameter ->
                     if (index > 0) {
                         appendFixedText(",")
                     }
+
                     appendName(parameter.nameAsSafeName)
                     val typeReference = parameter.typeReference
                     if (typeReference != null && (callElement == null || index in typeParameterIndexes)) {
@@ -95,14 +98,14 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
         val replaced = element.replaced(newExpression) as KtLambdaExpression
         commentSaver.restore(replaced, forceAdjustIndent = true/* by some reason lambda body is sometimes not properly indented */)
 
-        if (returnSaver != null) {
-            val callExpression = replaced.parents.firstIsInstance<KtCallExpression>()
-            val callee = callExpression.getCalleeExpressionIfAny()!! as KtNameReferenceExpression
+        if (returnSaver == null) return
 
-            val returnLabel = callee.getReferencedNameAsName()
-            returnSaver.restore(replaced, returnLabel)
+        val callExpression = replaced.parents.firstIsInstance<KtCallExpression>()
+        val callee = callExpression.getCalleeExpressionIfAny()!! as KtNameReferenceExpression
 
-            callExpression.getLastLambdaExpression()?.moveFunctionLiteralOutsideParenthesesIfPossible()
-        }
+        val returnLabel = callee.getReferencedNameAsName()
+        returnSaver.restore(replaced, returnLabel)
+
+        callExpression.getLastLambdaExpression()?.moveFunctionLiteralOutsideParenthesesIfPossible()
     }
 }
