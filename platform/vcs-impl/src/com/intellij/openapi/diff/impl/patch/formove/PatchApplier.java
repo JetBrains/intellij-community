@@ -177,11 +177,14 @@ public final class PatchApplier {
         try {
           runWithDefaultConfirmations(project, silentAddDelete, () -> {
             CommandProcessor.getInstance().executeCommand(project, () -> {
+              List<FilePath> toBeAdded = new ArrayList<>();
+              List<FilePath> toBeDeleted = new ArrayList<>();
               for (PatchApplier applier : group) {
                 refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-                applier.addSkippedItems(trigger);
+                toBeAdded.addAll(applier.myVerifier.getToBeAdded());
+                toBeDeleted.addAll(applier.myVerifier.getToBeDeleted());
               }
-              trigger.prepare();
+              trigger.prepare(toBeAdded, toBeDeleted);
               if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
                 // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
                 refStatus.set(null);
@@ -268,11 +271,6 @@ public final class PatchApplier {
     }
   }
 
-
-  private void addSkippedItems(final TriggerAdditionOrDeletion trigger) {
-    trigger.addExisting(myVerifier.getToBeAdded());
-    trigger.addDeleted(myVerifier.getToBeDeleted());
-  }
 
   @NotNull
   private ApplyPatchStatus nonWriteActionPreCheck() {

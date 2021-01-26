@@ -8,8 +8,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.formove.TriggerAdditionOrDeletion;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -17,18 +18,18 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class GetVersionAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(GetVersionAction.class);
@@ -110,10 +112,10 @@ public class GetVersionAction extends AnAction implements DumbAware {
     @NotNull private final List<FileRevisionProvider> myProviders;
     @Nullable private final Runnable myOnFinished;
 
-    public MyWriteVersionTask(@NotNull Project project,
-                              @NotNull @NlsContexts.Label String actionTitle,
-                              @NotNull List<FileRevisionProvider> providers,
-                              @Nullable Runnable onFinished) {
+    MyWriteVersionTask(@NotNull Project project,
+                       @NotNull @NlsContexts.Label String actionTitle,
+                       @NotNull List<FileRevisionProvider> providers,
+                       @Nullable Runnable onFinished) {
       super(project, VcsBundle.message("show.diff.progress.title"));
       myActionTitle = actionTitle;
       myProviders = providers;
@@ -124,19 +126,53 @@ public class GetVersionAction extends AnAction implements DumbAware {
     public void run(@NotNull ProgressIndicator indicator) {
       LocalHistoryAction action = LocalHistory.getInstance().startAction(myActionTitle);
       try {
+        TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
+        Object commandGroup = new Object();
+
         for (FileRevisionProvider provider : myProviders) {
           FilePath filePath = provider.getFilePath();
           byte[] revisionContent = provider.getContent();
 
-          WriteCommandAction.writeCommandAction(myProject)
-            .withName(VcsBundle.message("message.title.get.version"))
-            .run(() -> {
-              write(filePath, revisionContent);
-            });
+          Ref<IOException> exRef = new Ref<>();
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            try {
+              CommandProcessor.getInstance().executeCommand(myProject, () -> {
+                VirtualFile virtualFile = filePath.getVirtualFile();
+                if (revisionContent == null && virtualFile == null) return;
 
-          refreshFile(filePath);
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(filePath);
+                if (revisionContent == null) {
+                  trigger.prepare(Collections.emptyList(), Collections.singletonList(filePath));
+                }
+                else if (virtualFile == null) {
+                  trigger.prepare(Collections.singletonList(filePath), Collections.emptyList());
+                }
+
+                ApplicationManager.getApplication().runWriteAction(() -> {
+                  try {
+                    if (revisionContent == null) {
+                      writeDeletion(virtualFile);
+                    }
+                    else if (virtualFile == null) {
+                      writeCreation(filePath, revisionContent);
+                    }
+                    else {
+                      writeModification(virtualFile, revisionContent);
+                    }
+                  }
+                  catch (IOException e) {
+                    exRef.set(e);
+                  }
+                });
+              }, VcsBundle.message("message.title.get.version"), commandGroup);
+            }
+            finally {
+              trigger.cleanup();
+            }
+          });
+          if (!exRef.isNull()) throw exRef.get();
         }
+
+        trigger.processIt();
       }
       catch (IOException e) {
         ApplicationManager.getApplication().invokeLater(
@@ -154,36 +190,23 @@ public class GetVersionAction extends AnAction implements DumbAware {
       }
     }
 
-    private static void write(@NotNull FilePath filePath, byte @Nullable [] revision) throws IOException {
-      VirtualFile virtualFile = filePath.getVirtualFile();
-      if (revision == null) {
-        if (virtualFile != null) {
-          FileUtil.delete(filePath.getIOFile());
-        }
-      }
-      else {
-        if (virtualFile == null) {
-          FileUtil.writeToFile(filePath.getIOFile(), revision);
-        }
-        else {
-          virtualFile.setBinaryContent(revision);
-          // Avoid MemoryDiskConflictResolver. We've got user consent to override file in ReplaceFileConfirmationDialog.
-          FileDocumentManager.getInstance().reloadFiles(virtualFile);
-        }
-      }
+    private static void writeDeletion(@NotNull VirtualFile virtualFile) throws IOException {
+      virtualFile.delete(MyWriteVersionTask.class);
     }
 
-    private static void refreshFile(@NotNull FilePath filePath) {
-      VirtualFile file = filePath.getVirtualFile();
-      if (file != null) {
-        file.refresh(false, false);
-      }
-      else {
-        VirtualFile parent = filePath.getVirtualFileParent();
-        if (parent != null) {
-          parent.refresh(false, true);
-        }
-      }
+    private static void writeCreation(@NotNull FilePath filePath, byte @NotNull [] revisionContent) throws IOException {
+      FilePath parentPath = Objects.requireNonNull(filePath.getParentPath());
+      VirtualFile parent = VfsUtil.createDirectories(parentPath.getPath());
+      if (parent == null) throw new IOException("Can't create directory: " + parentPath);
+
+      VirtualFile virtualFile = parent.createChildData(MyWriteVersionTask.class, filePath.getName());
+      virtualFile.setBinaryContent(revisionContent);
+    }
+
+    private static void writeModification(@NotNull VirtualFile virtualFile, byte @NotNull [] revisionContent) throws IOException {
+      virtualFile.setBinaryContent(revisionContent);
+      // Avoid MemoryDiskConflictResolver. We've got user consent to override file in ReplaceFileConfirmationDialog.
+      FileDocumentManager.getInstance().reloadFiles(virtualFile);
     }
 
     @Override
