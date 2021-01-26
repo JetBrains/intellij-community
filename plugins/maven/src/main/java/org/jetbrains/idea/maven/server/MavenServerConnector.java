@@ -4,10 +4,7 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -89,22 +86,7 @@ public class MavenServerConnector implements @NotNull Disposable {
     if(!myConnectStarted.compareAndSet(false, true)){
       return;
     }
-    Runnable startRunnable = () -> {
-      StartServerTask task = new StartServerTask();
-      if(ApplicationManager.getApplication().isUnitTestMode()) {
-        task.run(null);
-      } else {
-        task.queue();
-      }
-    };
-
-    //noinspection SSBasedInspection
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      startRunnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(startRunnable);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(new StartServerTask());
   }
 
   private MavenServer getServer() {
@@ -313,14 +295,10 @@ public class MavenServerConnector implements @NotNull Disposable {
     }
   }
 
-  private class StartServerTask extends Task.Backgroundable {
-
-    StartServerTask() {
-      super(MavenServerConnector.this.myProject, SyncBundle.message("progress.title.starting.maven.server"), true);
-    }
-
+  private class StartServerTask implements Runnable {
     @Override
-    public void run(@Nullable ProgressIndicator indicator) {
+    public void run() {
+      ProgressIndicator indicator = new EmptyProgressIndicator();
       MavenLog.LOG.info("Connecting maven connector in " + myMultimoduleDirectory);
       try {
         if (myDebugPort != null) {
