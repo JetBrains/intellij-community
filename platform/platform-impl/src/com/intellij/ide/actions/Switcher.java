@@ -132,11 +132,13 @@ public final class Switcher extends AnAction implements DumbAware {
           final KeyEvent keyEvent = (KeyEvent)event;
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
             ApplicationManager.getApplication().invokeLater(CHECKER, ModalityState.current());
+            return true; // because the key event is actually processed
           }
           else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
                    && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
             SWITCHER.myPopup.closeOk(null);
             tw.activate(null, true, true);
+            return true; // because the key event is actually processed
           }
         }
         return false;
