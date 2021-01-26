@@ -106,6 +106,7 @@
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.JvmStartupActivity"/>
 
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.JvmPluginStartupActivity"/>
+        <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilerStartupActivity"/>
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"/>
 

@@ -14,7 +14,6 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.config.CompilerRunnerConstants
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.js.JavaScript
 import java.io.PrintStream
@@ -59,8 +58,6 @@ class KotlinCompilerStartupActivity : StartupActivity {
     }
 
     override fun runActivity(project: Project) {
-        val manager = CompilerManager.getInstance(project)
-        manager.addCompilableFileType(KotlinFileType.INSTANCE)
         project.messageBus.connect().subscribe(CompilerTopics.COMPILATION_STATUS, object : CompilationStatusListener {
             override fun compilationFinished(aborted: Boolean, errors: Int, warnings: Int, compileContext: CompileContext) {
                 for (error in compileContext.getMessages(CompilerMessageCategory.ERROR)) {
