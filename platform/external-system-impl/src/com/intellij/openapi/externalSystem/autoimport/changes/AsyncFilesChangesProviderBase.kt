@@ -17,21 +17,15 @@ abstract class AsyncFilesChangesProviderBase(private val backgroundExecutor: Exe
     eventDispatcher.addListener(listener, parentDisposable)
   }
 
-  private var updatedFiles = HashMap<String, ModificationData>()
+  private val updatedFiles = HashMap<String, ModificationData>()
 
-  override fun init() {
-    updatedFiles = HashMap()
-  }
+  override fun init() {}
 
   override fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType) {
     updatedFiles[path] = ModificationData(modificationStamp, modificationType)
   }
 
   override fun apply() {
-    processUpdatedFiles(updatedFiles)
-  }
-
-  private fun processUpdatedFiles(updatedFiles: Map<String, ModificationData>) {
     submitFilesCollecting { filesToWatch ->
       val index = PathPrefixTreeMap<Boolean>()
       filesToWatch.forEach { index[it] = true }
@@ -43,6 +37,7 @@ abstract class AsyncFilesChangesProviderBase(private val backgroundExecutor: Exe
         }
       }
       eventDispatcher.multicaster.apply()
+      updatedFiles.clear()
     }
   }
 
@@ -53,6 +48,7 @@ abstract class AsyncFilesChangesProviderBase(private val backgroundExecutor: Exe
     }
     ReadAction.nonBlocking<Set<String>> { collectRelevantFiles() }
       .expireWith(this)
+      .coalesceBy(this)
       .finishOnUiThread(ModalityState.defaultModalityState(), action)
       .submit(backgroundExecutor)
   }
