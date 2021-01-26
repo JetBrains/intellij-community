@@ -39,6 +39,13 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   /**
+   * @return not-null if installed distribution list is up-to-date; otherwise, return null and initialize update in background.
+   */
+  public @Nullable List<WSLDistribution> getCachedInstalledDistributions() {
+    return getInstalledDistributionsFuture().getNow(null);
+  }
+
+  /**
    * @return list of installed WSL distributions by parsing output of `wsl.exe -l`. Please call it
    * on a pooled thread and outside of the read action as it runs a process under the hood.
    * @see #getInstalledDistributionsFuture
