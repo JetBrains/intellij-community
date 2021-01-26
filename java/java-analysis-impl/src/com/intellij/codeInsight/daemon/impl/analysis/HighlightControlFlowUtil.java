@@ -239,14 +239,12 @@ public final class HighlightControlFlowUtil {
     if (identifier == null) return null;
     PsiMethod canonicalConstructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
     if (canonicalConstructor == null || canonicalConstructor instanceof LightRecordCanonicalConstructor) return null;
-    boolean isCompact = JavaPsiRecordUtil.isCompactConstructor(canonicalConstructor);
-    if (isCompact) return null;
+    if (JavaPsiRecordUtil.isCompactConstructor(canonicalConstructor)) return null;
     PsiCodeBlock body = canonicalConstructor.getBody();
     if (body == null) return null;
     PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
     if (field == null) return null;
     if (variableDefinitelyAssignedIn(field, body)) return null;
-    if (isCompact && variableDefinitelyNotAssignedIn(field, body)) return null;
     String description = JavaErrorBundle.message("record.component.not.initialized", field.getName());
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description).create();
   }
