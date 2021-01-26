@@ -34,7 +34,7 @@ class GitStageCommitWorkflowHandler(
     vcsesChanged()
     initCommitMessage(false)
 
-    DelayedCommitMessageProvider.init(project, ui, commitMessagePolicy::getCommitMessage)
+    DelayedCommitMessageProvider.init(project, ui) { commitMessagePolicy.getCommitMessage(false) }
   }
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
@@ -48,7 +48,7 @@ class GitStageCommitWorkflowHandler(
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitMessage(), success)
   override fun refreshChanges(callback: () -> Unit) = callback()
 
-  private fun initCommitMessage() = setCommitMessage(commitMessagePolicy.getCommitMessage())
+  private fun initCommitMessage(isAfterCommit: Boolean) = setCommitMessage(commitMessagePolicy.getCommitMessage(isAfterCommit))
 
   override fun checkCommit(executor: CommitExecutor?): Boolean {
     ui.commitProgressUi.isEmptyRoots = ui.includedRoots.isEmpty()
@@ -59,7 +59,7 @@ class GitStageCommitWorkflowHandler(
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
     override fun onSuccess(commitMessage: String) {
       commitAuthor = null
-      initCommitMessage()
+      initCommitMessage(true)
 
       super.onSuccess(commitMessage)
     }
