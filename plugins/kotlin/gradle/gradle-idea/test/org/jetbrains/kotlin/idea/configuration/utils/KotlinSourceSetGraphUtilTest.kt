@@ -127,6 +127,37 @@ class KotlinSourceSetGraphUtilTest {
             createSourceSetDependsOnGraph(sourceSetsByName).nameEdges().sorted()
         )
     }
+
+    @Test
+    fun `depends on graph when commonMain or commonTest are marked as KotlinPlatform ANDROID will still be empty`() {
+        val sourceSetsByName = mapOf(
+            createKotlinSourceSetPair(COMMON_MAIN_SOURCE_SET_NAME, platforms = setOf(KotlinPlatform.ANDROID)),
+            createKotlinSourceSetPair(COMMON_TEST_SOURCE_SET_NAME, platforms = setOf(KotlinPlatform.ANDROID), isTestModule = true),
+        )
+
+        assertEquals(
+            emptyList(),
+            createSourceSetDependsOnGraph(sourceSetsByName).nameEdges().sorted()
+        )
+        assertEquals(
+            listOf("commonMain", "commonTest").sorted(),
+            createSourceSetDependsOnGraph(sourceSetsByName).nodes().map { it.name }.sorted()
+        )
+
+        assertEquals(
+            listOf("commonMain", "commonTest").sorted(),
+            createSourceSetDependsOnGraph(sourceSetsByName)
+                .also { it.putInferredTestToProductionEdges() }
+                .nodes().map { it.name }.sorted()
+        )
+
+        assertEquals(
+            listOf(ordered(COMMON_TEST_SOURCE_SET_NAME, COMMON_MAIN_SOURCE_SET_NAME),).sorted(),
+            createSourceSetDependsOnGraph(sourceSetsByName)
+                .also { it.putInferredTestToProductionEdges() }
+                .nameEdges().sorted()
+        )
+    }
 }
 
 private fun createKotlinSourceSetPair(

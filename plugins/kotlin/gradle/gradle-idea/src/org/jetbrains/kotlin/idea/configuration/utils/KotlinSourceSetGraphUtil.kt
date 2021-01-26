@@ -63,6 +63,11 @@ private fun getFixedDependsOnSourceSets(
 
     return sourceSet.dependsOnSourceSets.map(sourceSetsByName::getValue)
         .plus(implicitDependsOnEdgeForAndroid)
+        /*
+        Gracefully filter out source sets that declare a dependency on themselves.
+        This also fixes KTIJ-1025
+        */
+        .filter { dependencySourceSet -> dependencySourceSet != sourceSet }
         .toSet()
 }
 

@@ -73,7 +73,8 @@ abstract class GradleDaemonAnalyzerTestCase(
     val testLineMarkers: Boolean,
     val checkWarnings: Boolean,
     val checkInfos: Boolean,
-    private val rootDisposable: Disposable
+    private val rootDisposable: Disposable,
+    private val sanitizer: (String) -> String = { it }
 ) : DaemonAnalyzerTestCase() {
     override fun doTestLineMarkers() = testLineMarkers
 
@@ -121,7 +122,7 @@ abstract class GradleDaemonAnalyzerTestCase(
         val actualTextWithTags = TagsTestDataUtil.insertTagsInText(allTags, text) { renderAdditionalAttributeForTag(it) }
 
         val physicalFileWithExpectedTestData = file.testDataFileByUserData
-        KotlinTestUtils.assertEqualsToFile(physicalFileWithExpectedTestData, actualTextWithTags)
+        KotlinTestUtils.assertEqualsToFile(physicalFileWithExpectedTestData, actualTextWithTags, sanitizer)
     }
 
     protected open fun performAdditionalChecksAfterHighlighting(editor: Editor) { }
@@ -131,7 +132,7 @@ abstract class GradleDaemonAnalyzerTestCase(
     override fun getTestRootDisposable() = rootDisposable
 }
 
-internal fun checkFiles(
+fun checkFiles(
     files: List<VirtualFile>,
     project: Project,
     analyzer: GradleDaemonAnalyzerTestCase
