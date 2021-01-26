@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="libraryTable">
-  <library name="org.jetbrains.marketplace:zip-signer" type="repository">
+  <library name="zip-signer" type="repository">
     <properties maven-id="org.jetbrains.marketplace:zip-signer:0.8">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
