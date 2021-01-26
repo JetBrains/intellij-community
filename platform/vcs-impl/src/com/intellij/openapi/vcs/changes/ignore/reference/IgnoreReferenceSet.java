@@ -238,7 +238,6 @@ public class IgnoreReferenceSet extends FileReferenceSet {
 
     /**
      * Resolves reference to the filesystem.
-     *
      * @param text          entry
      * @param context       filesystem context
      * @param result        result references collection

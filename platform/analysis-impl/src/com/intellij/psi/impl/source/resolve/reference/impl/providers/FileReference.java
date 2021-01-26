@@ -146,7 +146,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   protected void innerResolveInContext(@NotNull final String text,
                                        @NotNull PsiFileSystemItem context,
-                                       final Collection<ResolveResult> result,
+                                       final @NotNull Collection<ResolveResult> result,
                                        final boolean caseSensitive) {
     context = ModelBranchUtil.obtainCopyFromTheSameBranch(getElement(), context);
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
