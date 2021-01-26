@@ -8,6 +8,7 @@ import com.intellij.execution.process.mediator.daemon.FdConstants.STDOUT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.await
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -41,9 +42,12 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
         @Suppress("BlockingMethodInNonBlockingContext")
         processBuilder.start()
       }
+      val pid = process.pid()
 
       val handle = Handle(process, refJob)
-      return registerHandle(handle)
+      registerHandle(pid, handle)
+
+      return pid
     }
     catch (e: Throwable) {
       refJob.cancel("Failed to create process", e)
@@ -83,9 +87,7 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
     val handle = getHandle(pid)
     val process = handle.process
 
-    handle.completion.await()
-
-    return process.exitValue()
+    return process.onExit().await().exitValue()
   }
 
   fun readStream(pid: Pid, fd: Int): Flow<ByteString> {
@@ -120,7 +122,11 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
     @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
       outputStream.use { outputStream ->
-        handle.cancelJobOnCompletion(currentCoroutineContext()[Job]!!)
+        with(currentCoroutineContext()) {
+          handle.process.onExit().whenComplete { _, _ ->
+            job.cancel("Process exited")
+          }
+        }
         @Suppress("EXPERIMENTAL_API_USAGE")
         chunkFlow.onCompletion {
           ackChannel?.close(it)
@@ -138,12 +144,10 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
     unregisterHandle(pid).release()
   }
 
-  private fun registerHandle(handle: Handle): Pid {
-    val pid = handle.pid
+  private fun registerHandle(pid: Pid, handle: Handle) {
     handleMap.putIfAbsent(pid, handle).also { previous ->
       check(previous == null) { "Duplicate PID $pid" }
     }
-    return pid
   }
 
   private fun getHandle(pid: Pid): Handle {
@@ -167,24 +171,6 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
     val process: Process,
     private val refJob: CompletableJob,
   ) {
-    val completion = CompletableDeferred<Int>(refJob)
-    val pid get() = process.pid()
-
-    init {
-      process.onExit().whenComplete { p, _ ->
-        completion.complete(p.exitValue())
-      }
-      refJob.complete()  // doesn't really complete until its child completes
-    }
-
-    fun cancelJobOnCompletion(job: Job) {
-      completion.invokeOnCompletion { cause ->
-        job.cancel(cause as? CancellationException ?: CancellationException("Process exited", cause))
-      }.also { disposableHandle ->
-        job.invokeOnCompletion { disposableHandle.dispose() }
-      }
-    }
-
     fun release() {
       refJob.cancel("process released")
       process.destroy()  // TODO should we really destroy it?
