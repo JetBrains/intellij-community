@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.ui.JBColor
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
@@ -21,13 +20,14 @@ import training.learn.lesson.LessonManager
 import training.ui.LearningUiHighlightingManager
 import training.ui.LessonMessagePane
 import training.ui.MessageFactory
-import java.awt.Color
+import training.ui.UISettings
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.*
+import javax.swing.border.EmptyBorder
 
 data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
 
@@ -47,10 +47,13 @@ internal object LessonExecutorUtil {
 
   fun showBalloonMessage(text: String, ui: JComponent, balloonConfig: LearningBalloonConfig, actionsRecorder: ActionsRecorder, project: Project) {
     val messages = MessageFactory.convert(text)
-    val messagesPane = LessonMessagePane()
+    val messagesPane = LessonMessagePane(false)
+    messagesPane.isOpaque = false
     messagesPane.addMessage(messages)
     messagesPane.toolTipText = LearnBundle.message("learn.stop.hint")
     val balloonPanel = JPanel()
+    balloonPanel.border = EmptyBorder(8, 8, 8, 8)
+    balloonPanel.isOpaque = false
     balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
     balloonPanel.preferredSize = balloonConfig.dimension
     balloonPanel.add(messagesPane)
@@ -70,7 +73,8 @@ internal object LessonExecutorUtil {
       .setAnimationCycle(0)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
-      .setBorderColor(JBColor(Color.BLACK, Color.WHITE))
+      .setFillColor(UISettings.instance.backgroundColor)
+      .setBorderColor(UISettings.instance.activeTaskBorder)
       .setHideOnCloseClick(false)
       .setDisposable(actionsRecorder)
       .setCloseButtonEnabled(true)

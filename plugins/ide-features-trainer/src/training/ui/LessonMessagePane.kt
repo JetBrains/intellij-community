@@ -20,7 +20,7 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
-class LessonMessagePane : JTextPane() {
+class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
   private data class LessonMessage(
@@ -120,6 +120,8 @@ class LessonMessagePane : JTextPane() {
     StyleConstants.setSpaceBelow(TASK_PARAGRAPH_STYLE, 0.0f)
     StyleConstants.setLineSpacing(TASK_PARAGRAPH_STYLE, 0.2f)
 
+    StyleConstants.setLineSpacing(BALLOON_STYLE, 0.2f)
+
     StyleConstants.setForeground(REGULAR, UISettings.instance.defaultTextColor)
     StyleConstants.setForeground(BOLD, UISettings.instance.defaultTextColor)
     StyleConstants.setForeground(SHORTCUT, UISettings.instance.shortcutTextColor)
@@ -157,7 +159,8 @@ class LessonMessagePane : JTextPane() {
 
   private fun insertText(text: String, attributeSet: AttributeSet) {
     document.insertString(insertOffset, text, attributeSet)
-    styledDocument.setParagraphAttributes(insertOffset, insertOffset + text.length - 1, TASK_PARAGRAPH_STYLE, true)
+    val style = if (panelMode) TASK_PARAGRAPH_STYLE else BALLOON_STYLE
+    styledDocument.setParagraphAttributes(insertOffset, insertOffset + text.length - 1, style, true)
     insertOffset += text.length
   }
 
@@ -330,7 +333,7 @@ class LessonMessagePane : JTextPane() {
     val lastPassedMessage: LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
       .takeIf { it != -1 && it < activeMessages.size - 1 }
       ?.let { activeMessages[it + 1] }
-    if (lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
+    if (panelMode && lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
       drawRectangleAroundMessage(lastPassedMessage, lastActiveMessage, g2d, UISettings.instance.activeTaskBorder)
     }
   }
@@ -401,6 +404,7 @@ class LessonMessagePane : JTextPane() {
     private val LINK = SimpleAttributeSet()
 
     private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
+    private val BALLOON_STYLE = SimpleAttributeSet()
 
     //arc & indent for shortcut back plate
     private val arc by lazy { JBUI.scale(4) }

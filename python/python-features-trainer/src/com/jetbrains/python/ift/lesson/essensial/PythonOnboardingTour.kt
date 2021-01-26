@@ -25,7 +25,6 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.StripeButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
@@ -264,7 +263,7 @@ class PythonOnboardingTour(module: Module) :
 
       text("One of the main tool windows is Project View toolwindow. Let's click at its <strong>stripe button</strong> to open it " +
            "and look at our simple demo project! Or you can open it by ${action("ActivateProjectToolWindow")} shortcut.",
-           LearningBalloonConfig(Balloon.Position.atRight, Dimension(500, 120)))
+           LearningBalloonConfig(Balloon.Position.atRight, Dimension(300, 120)))
       triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 1 && path.getPathComponent(0).toString().contains("PyCharmLearningProject")
         if (result) {
