@@ -44,9 +44,9 @@ class GitStageCommitWorkflowHandler(
   override fun refreshChanges(callback: () -> Unit) = callback()
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
-    override fun resetState() {
+    override fun onSuccess(commitMessage: String) {
       commitAuthor = null
-      super.resetState()
+      super.onSuccess(commitMessage)
     }
   }
 }

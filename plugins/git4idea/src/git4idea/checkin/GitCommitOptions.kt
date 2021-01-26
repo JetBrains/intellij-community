@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
 import com.intellij.openapi.Disposable
@@ -7,7 +7,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.escapeXmlEntities
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.author
+import com.intellij.openapi.vcs.changes.authorDate
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.awt.RelativePoint
@@ -144,7 +147,10 @@ class GitCommitOptionsUi(
     refresh()
   }
 
-  override fun refresh() = refresh(null)
+  override fun refresh() {
+    refresh(null)
+    commitAuthorChanged()
+  }
 
   override fun saveState() {
     if (commitPanel.isNonModalCommit) updateRenamesCheckboxState()
