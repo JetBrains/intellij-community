@@ -12,7 +12,6 @@ import com.intellij.psi.search.SearchScope
  * Visible in the UI.
  * Lifecycle: single read action.
  *
- * @see com.intellij.refactoring.rename.symbol.SymbolRenameTarget
  * @see com.intellij.find.usages.api.SearchTarget
  */
 interface RenameTarget {
