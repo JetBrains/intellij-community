@@ -71,5 +71,10 @@
       <option name="name" value="KotlinIdeMavenArtifacts" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="JetBrainsPluginRepository" />
+      <option name="name" value="JetBrains Plugin Repository libraries" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-plugin-service" />
+    </remote-repository>
   </component>
 </project>
