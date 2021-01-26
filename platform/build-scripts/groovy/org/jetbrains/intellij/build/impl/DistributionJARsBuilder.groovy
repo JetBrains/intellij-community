@@ -1100,7 +1100,7 @@ final class DistributionJARsBuilder {
       if (copyFiles) {
         Files.createDirectories(libOutputDir)
         if (!removeVersionFromJarName && files.size() > 1) {
-          String mergedFilename = library.name.toLowerCase()
+          String mergedFilename = FileUtil.sanitizeFileName(library.name.toLowerCase(), false)
           if (mergedFilename == "gradle") {
             mergedFilename = "gradle-lib"
           }
