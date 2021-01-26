@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
@@ -20,17 +21,17 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.picocontainer.MutablePicoContainer
-import java.nio.file.Path
 
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
   name: String,
   project: Project,
-  filePath: Path?,
+  virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
-) : ModuleImpl(name, project, filePath?.toString()), ModuleBridge {
+) : ModuleImpl(name, project, virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
 
   init {
     // default project doesn't have modules
@@ -51,6 +52,11 @@ internal class ModuleBridgeImpl(
         }
       })
     }
+  }
+
+  fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
+    myImlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
+    rename(newName, notifyStorage)
   }
 
   override fun rename(newName: String, notifyStorage: Boolean) {

@@ -117,7 +117,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @NotNull
   @Override
   protected ModuleEx createNonPersistentModule(@NotNull String name) {
-    return new ModuleImpl(name, myProject, null);
+    return new ModuleImpl(name, myProject);
   }
 
   @NotNull

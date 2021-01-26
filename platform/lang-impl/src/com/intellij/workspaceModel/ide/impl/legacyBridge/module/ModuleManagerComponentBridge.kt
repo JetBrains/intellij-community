@@ -44,6 +44,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsCha
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
@@ -257,7 +258,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           unloadedModules.remove(change.newEntity.name)
           val module = event.storageBefore.findModuleByEntity(change.oldEntity)
           if (module != null) {
-            module.rename(newId.name, true)
+            module as ModuleBridgeImpl
+            module.rename(newId.name, getModuleVirtualFileUrl(change.newEntity), true)
             oldModuleNames[module] = oldId.name
           }
         }
@@ -339,7 +341,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   private fun loadModules(entities: List<ModuleEntity>) {
     LOG.debug { "Loading modules for ${entities.size} entities" }
     val fileSystem = LocalFileSystem.getInstance()
-    entities.forEach { module -> getModuleFilePath(module)?.let { fileSystem.refreshAndFindFileByNioFile(it) } }
+    entities.forEach { module -> getModuleVirtualFileUrl(module)?.let { fileSystem.refreshAndFindFileByNioFile(it.toPath()) } }
 
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
     try {
@@ -542,7 +544,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
   }
 
-  internal fun getModuleFilePath(moduleEntity: ModuleEntity): Path? {
+  internal fun getModuleVirtualFileUrl(moduleEntity: ModuleEntity): VirtualFileUrl? {
     val entitySource = when (val moduleSource = moduleEntity.entitySource) {
       is JpsFileDependentEntitySource -> moduleSource.originalSource
       is CustomModuleEntitySource -> moduleSource.internalSource
@@ -551,28 +553,28 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     if (entitySource !is JpsFileEntitySource.FileInDirectory) {
       return null
     }
-    return entitySource.directory.toPath().resolve("${moduleEntity.name}.iml")
+    return entitySource.directory.append("${moduleEntity.name}.iml")
   }
 
   fun createModuleInstance(moduleEntity: ModuleEntity,
                            versionedStorage: VersionedEntityStorage,
                            diff: WorkspaceEntityStorageDiffBuilder?,
                            isNew: Boolean): ModuleBridge {
-    val modulePath = getModuleFilePath(moduleEntity)
+    val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
     val module = ModuleBridgeImpl(
       name = moduleEntity.name,
       project = project,
-      filePath = modulePath,
+      virtualFileUrl = moduleFileUrl,
       moduleEntityId = moduleEntity.persistentId(),
       entityStorage = versionedStorage,
       diff = diff
     )
 
     module.init {
-      if (modulePath != null) {
+      if (moduleFileUrl != null) {
         try {
           val moduleStore = module.stateStore as ModuleStore
-          moduleStore.setPath(modulePath, null, isNew)
+          moduleStore.setPath(moduleFileUrl.toPath(), null, isNew)
         }
         catch (t: Throwable) {
           logger<ModuleManagerComponentBridge>().error(t)
