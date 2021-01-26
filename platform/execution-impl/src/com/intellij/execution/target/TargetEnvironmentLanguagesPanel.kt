@@ -11,7 +11,6 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Font
@@ -92,10 +91,10 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
         separator.titleFont = separator.titleFont.deriveFont(Font.BOLD)
         separator(CCFlags.growX, CCFlags.pushX)
         gearButton(DuplicateRuntimeAction(language), RemoveRuntimeAction(language))
-      }
-      row {
-        val languageUI = configurable.createComponent() ?: throw IllegalStateException("for runtime: $language")
-        languageUI(CCFlags.growX)
+        row {
+          val languageUI = configurable.createComponent() ?: throw IllegalStateException("for runtime: $language")
+          languageUI(CCFlags.growX)
+        }
       }
     }
     configurable.reset()
