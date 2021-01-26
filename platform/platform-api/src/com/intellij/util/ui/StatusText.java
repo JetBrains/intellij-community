@@ -39,13 +39,19 @@ public abstract class StatusText {
   private String myText = "";
 
   // Hardcoded layout manages two columns (primary and secondary) with vertically aligned components inside
-  protected static final class Column {
+  protected final class Column {
     List<Fragment> fragments = new ArrayList<>();
     private final Dimension preferredSize = new Dimension();
   }
 
-  protected static final class Fragment {
-    private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
+  protected final class Fragment {
+    private final SimpleColoredComponent myComponent = new SimpleColoredComponent() {
+      @Override
+      protected void revalidateAndRepaint() {
+        super.revalidateAndRepaint();
+        updateBounds();
+      }
+    };
 
     private final Rectangle boundsInColumn = new Rectangle();
     private final List<ActionListener> myClickListeners = ContainerUtil.createLockFreeCopyOnWriteList();
