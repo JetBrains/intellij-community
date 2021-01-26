@@ -72,14 +72,17 @@ object IndexDiagnosticDumper {
   }
 
   fun dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory: ProjectIndexingHistory) {
-    ProjectIndexingHistoryListener.EP_NAME.forEachExtensionSafe { it.onFinishedIndexing(projectIndexingHistory) }
-    if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
-      return
+    try {
+      if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
+        return
+      }
+      if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
+        return
+      }
+      NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
+    } finally {
+      ProjectIndexingHistoryListener.EP_NAME.forEachExtensionSafe { it.onFinishedIndexing(projectIndexingHistory) }
     }
-    if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
-      return
-    }
-    NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
   }
 
   @Synchronized
