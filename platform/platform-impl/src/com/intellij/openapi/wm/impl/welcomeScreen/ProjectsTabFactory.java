@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +31,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -204,6 +206,11 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
         return notificationsPanel;
       }
     };
+  }
+
+  @Override
+  public boolean isApplicable() {
+    return !PlatformUtils.isPyCharmDs();
   }
 
   private static @NotNull DnDNativeTarget createDropFileTarget() {
