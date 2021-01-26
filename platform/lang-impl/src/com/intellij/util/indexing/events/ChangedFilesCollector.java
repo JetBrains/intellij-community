@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
@@ -181,6 +182,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
       if (!extensions.isEmpty()) {
         myManager.removeDataFromIndicesForFile(fileId, file);
+        if (file instanceof VirtualFileSystemEntry) {
+          ((VirtualFileSystemEntry)file).setFileIndexed(false);
+        }
       }
     }
     else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {

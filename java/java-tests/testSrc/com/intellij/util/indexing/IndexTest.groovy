@@ -1523,8 +1523,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
+    assertFalse(((VirtualFileSystemEntry)file).isFileIndexed())
   }
-
 
   private <T> ThrowableComputable<T, RuntimeException> asComputable(CachedValue<T> cachedValue) {
     return new ThrowableComputable<T, RuntimeException>() {
