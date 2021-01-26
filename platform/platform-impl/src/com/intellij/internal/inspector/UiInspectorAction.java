@@ -94,7 +94,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
-  private static final Icon KotlinLogo = IconLoader.getIcon("/com/intellij/internal/inspector/kotlin.svg", UiInspectorAction.class);
   private UiInspector myInspector;
 
   public UiInspectorAction() {
