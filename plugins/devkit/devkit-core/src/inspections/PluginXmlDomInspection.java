@@ -47,7 +47,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
@@ -730,15 +729,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     return false;
   }
 
-  /**
-   * Hardcoded known deprecated EPs with corresponding replacement or empty String if no replacement EP.
-   */
-  private static final Map<String, String> ADDITIONAL_DEPRECATED_EP = ContainerUtil.<String, String>immutableMapBuilder()
-    .put("com.intellij.definitionsSearch", "com.intellij.definitionsScopedSearch")
-    .put("com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData")
-    .put("com.intellij.exportable", "")
-    .build();
-
   private static void annotateExtension(Extension extension,
                                         DomElementAnnotationHolder holder,
                                         ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
@@ -746,20 +736,26 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (extensionPoint == null) return;
     final Module module = extension.getModule();
 
-    final PsiClass extensionPointClass = extensionPoint.getEffectiveClass();
     final String effectiveQualifiedName = extensionPoint.getEffectiveQualifiedName();
-    if (extensionPointClass != null && extensionPointClass.isDeprecated()) {
+
+    final ExtensionPoint.Status status = extensionPoint.getExtensionPointStatus();
+    ExtensionPoint.Status.Kind kind = status.getKind();
+    if (kind == ExtensionPoint.Status.Kind.SCHEDULED_FOR_REMOVAL_API) {
+      final String inVersion = status.getAdditionalData();
+      highlightDeprecatedMarkedForRemoval(
+        extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep.marked.for.removal.in.version",
+                                        effectiveQualifiedName, StringUtil.notNullize(inVersion)),
+        holder, false, false
+      );
+    }
+    else if (kind == ExtensionPoint.Status.Kind.DEPRECATED) {
       highlightDeprecated(
         extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", effectiveQualifiedName),
         holder, false, false);
     }
-    else if (extensionPointClass != null && extensionPointClass.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
-      highlightExperimental(extension, holder);
-    }
-
-    final String knownReplacementEp = ADDITIONAL_DEPRECATED_EP.get(effectiveQualifiedName);
-    if (knownReplacementEp != null && module != null) {
-      if (StringUtil.isEmpty(knownReplacementEp)) {
+    else if (kind == ExtensionPoint.Status.Kind.ADDITIONAL_DEPRECATED && module != null) {
+      final String knownReplacementEp = status.getAdditionalData();
+      if (knownReplacementEp == null) {
         highlightDeprecated(
           extension, DevKitBundle.message("inspections.plugin.xml.deprecated.ep", effectiveQualifiedName),
           holder, false, false);
@@ -770,6 +766,13 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
           DevKitBundle.message("inspections.plugin.xml.deprecated.ep.use.replacement", effectiveQualifiedName, knownReplacementEp),
           holder, false, false);
       }
+    }
+    else if (kind == ExtensionPoint.Status.Kind.EXPERIMENTAL_API) {
+      highlightExperimental(extension, holder);
+    }
+    else if (kind == ExtensionPoint.Status.Kind.INTERNAL_API &&
+             module != null && !PsiUtil.isIdeaProject(module.getProject())) {
+      highlightInternal(extension, holder);
     }
 
     if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName)) {
@@ -1058,12 +1061,29 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static void highlightDeprecated(DomElement element, @InspectionMessage String message, DomElementAnnotationHolder holder,
                                           boolean useRemoveQuickfix, boolean highlightWholeElement) {
+    doHighlightDeprecatedElement(element, message, holder, useRemoveQuickfix, highlightWholeElement, false);
+  }
+
+  private static void highlightDeprecatedMarkedForRemoval(DomElement element, @InspectionMessage String message,
+                                                          DomElementAnnotationHolder holder,
+                                                          boolean useRemoveQuickfix, boolean highlightWholeElement) {
+    doHighlightDeprecatedElement(element, message, holder, useRemoveQuickfix, highlightWholeElement, true);
+  }
+
+  private static void doHighlightDeprecatedElement(DomElement element,
+                                                   @InspectionMessage String message,
+                                                   DomElementAnnotationHolder holder,
+                                                   boolean useRemoveQuickfix,
+                                                   boolean highlightWholeElement,
+                                                   boolean forRemoval) {
     DomElementProblemDescriptor problem;
+    ProblemHighlightType problemHighlightType = forRemoval ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL :
+                                                ProblemHighlightType.LIKE_DEPRECATED;
     if (!useRemoveQuickfix) {
-      problem = holder.createProblem(element, ProblemHighlightType.LIKE_DEPRECATED, message, null);
+      problem = holder.createProblem(element, problemHighlightType, message, null);
     }
     else {
-      problem = holder.createProblem(element, ProblemHighlightType.LIKE_DEPRECATED, message, null, new RemoveDomElementQuickFix(element));
+      problem = holder.createProblem(element, problemHighlightType, message, null, new RemoveDomElementQuickFix(element));
     }
     if (highlightWholeElement) {
       problem.highlightWholeElement();
@@ -1074,6 +1094,14 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     holder.createProblem(element, ProblemHighlightType.WARNING,
                          DevKitBundle.message("inspections.plugin.xml.usage.of.experimental.api",
                                               ApiStatus.Experimental.class.getCanonicalName()),
+                         null)
+      .highlightWholeElement();
+  }
+
+  private static void highlightInternal(DomElement element, DomElementAnnotationHolder holder) {
+    holder.createProblem(element, ProblemHighlightType.WARNING,
+                         DevKitBundle.message("inspections.plugin.xml.usage.of.internal.api",
+                                              ApiStatus.Internal.class.getCanonicalName()),
                          null)
       .highlightWholeElement();
   }
@@ -1172,7 +1200,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     @Nullable
     private final String myTagValue;
 
-    private AddMissingMainTag(@IntentionFamilyName @NotNull String familyName, @NotNull GenericDomValue domValue, @Nullable String tagValue) {
+    private AddMissingMainTag(@IntentionFamilyName @NotNull String familyName,
+                              @NotNull GenericDomValue domValue,
+                              @Nullable String tagValue) {
       myFamilyName = familyName;
       myTagName = domValue.getXmlElementName();
       myTagValue = tagValue;

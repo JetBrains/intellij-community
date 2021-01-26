@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -109,6 +109,7 @@ public interface ExtensionPoint extends DomElement {
 
   /**
    * <em>NOTE</em> Inner class is separated via {@code '$'}
+   *
    * @see #getExtensionPointClass()
    */
   @Nullable
@@ -128,6 +129,74 @@ public interface ExtensionPoint extends DomElement {
    * @return Fields.
    */
   List<PsiField> collectMissingWithTags();
+
+  /**
+   * Returns status of EP for presentation/highlighting.
+   */
+  @NotNull
+  ExtensionPoint.Status getExtensionPointStatus();
+
+  interface Status {
+
+    enum Kind {
+      /**
+       * Nothing to report.
+       */
+      DEFAULT,
+
+      /**
+       * Unresolved EP class (setup problem).
+       */
+      UNRESOLVED_CLASS,
+
+      /**
+       * Deprecated EP class.
+       */
+      DEPRECATED,
+
+      /**
+       * Deprecated EP, replacement EP available via {@link #getAdditionalData()}.
+       */
+      ADDITIONAL_DEPRECATED,
+
+      /**
+       * Internal API, should not be used outside of IntelliJ project.
+       *
+       * @see org.jetbrains.annotations.ApiStatus.Internal
+       */
+      INTERNAL_API,
+
+      /**
+       * Experimental API, might be removed or break in future versions.
+       *
+       * @see org.jetbrains.annotations.ApiStatus.Experimental
+       */
+      EXPERIMENTAL_API,
+
+      /**
+       * Scheduled for removal API.
+       *
+       * @see org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+       */
+      SCHEDULED_FOR_REMOVAL_API
+    }
+
+    /**
+     * @return Most "relevant" kind.
+     */
+    Kind getKind();
+
+    /**
+     * Provides additional data depending on {@link #getKind()}.
+     *
+     * @return <ul>
+     * <li>{@link Kind#ADDITIONAL_DEPRECATED} - replacement EP or {@code null} if none defined</li>
+     * <li>{@link Kind#SCHEDULED_FOR_REMOVAL_API} - {@code inVersion} attribute value</li>
+     * </ul>
+     */
+    @Nullable
+    String getAdditionalData();
+  }
 
   @Nullable
   static ExtensionPoint resolveFromDeclaration(PsiElement declaration) {
