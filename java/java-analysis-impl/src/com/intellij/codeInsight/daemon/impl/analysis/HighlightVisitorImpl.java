@@ -232,6 +232,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myJavaModule = null;
       myFile = null;
       myHolder = null;
+      myPreviewFeatureVisitor = null;
       myDuplicateMethods.clear();
       myOverrideEquivalentMethodsVisitedClasses.clear();
       myExpectedReturnTypes.clear();
