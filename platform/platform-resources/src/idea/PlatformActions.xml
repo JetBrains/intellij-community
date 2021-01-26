@@ -1087,6 +1087,7 @@
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction">
           <abbreviation value="uii"/>
         </action>
+        <action id="ShowUiInspector" internal="true" class="com.intellij.internal.inspector.ShowUiInspectorAction"/>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction"/>
         <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig"/>
         <action id="TextGrayFilterConfig" internal="true" class="com.intellij.internal.TextGrayFilterConfig"/>

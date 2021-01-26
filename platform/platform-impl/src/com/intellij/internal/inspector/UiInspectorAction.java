@@ -55,7 +55,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
-import icons.PlatformImplIcons;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
@@ -1891,6 +1890,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
   @Nullable
   private static AnAction getAction(Component c) {
     return UIUtil.getClientProperty(c, ACTION_KEY);
+  }
+
+  static void showUiInspectorForEvent(@Nullable Project project, Component component) {
+    new UiInspector(project).showInspector(project, component);
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {
