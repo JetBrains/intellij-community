@@ -94,7 +94,7 @@ private fun canReuseTab(project: Project): Boolean {
   }
 }
 
-internal val SearchTarget.displayString: String? get() = presentation.presentableText
+internal val SearchTarget.displayString: String get() = presentation.presentableText
 
 @Nls(capitalization = Nls.Capitalization.Title)
 internal fun <O> UsageHandler<O>.getSearchString(allOptions: AllSearchOptions<O>): String {

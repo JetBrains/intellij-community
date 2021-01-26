@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.find.actions
@@ -46,8 +46,8 @@ internal class SearchTarget2UsageTarget<O>(
     val presentation = target.presentation
     return object : ItemPresentation {
       override fun getIcon(unused: Boolean): Icon? = presentation.icon
-      override fun getPresentableText(): String? = presentation.presentableText
-      override fun getLocationString(): String? = error("must not be called")
+      override fun getPresentableText(): String = presentation.presentableText
+      override fun getLocationString(): String = error("must not be called")
     }
   }
 
@@ -72,7 +72,7 @@ internal class SearchTarget2UsageTarget<O>(
     @Suppress("UNCHECKED_CAST") val usageHandler = target.usageHandler as UsageHandler<O>
     return UsageViewBundle.message(
       "search.title.0.in.1",
-      usageHandler.getSearchString(allOptions.options, allOptions.customOptions),
+      usageHandler.getSearchString(allOptions),
       allOptions.options.searchScope.displayName
     )
   }
