@@ -2297,7 +2297,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @TestMetadata("variable.kt")
         public void testVariable() throws Exception {
-            runTest("idea/testData/intentions/anonymousFunctionToLambda/variable.kt");
+            runTest("testData/intentions/anonymousFunctionToLambda/variable.kt");
         }
     }
 
@@ -10859,24 +10859,24 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/lambdaToAnonymousFunction/variable.kt");
         }
 
-        @TestMetadata("withLabel.kt")
-        public void testWithLabel() throws Exception {
-            runTest("testData/intentions/lambdaToAnonymousFunction/withLabel.kt");
-        }
-
         @TestMetadata("variable2.kt")
         public void testVariable2() throws Exception {
-            runTest("idea/testData/intentions/lambdaToAnonymousFunction/variable2.kt");
+            runTest("testData/intentions/lambdaToAnonymousFunction/variable2.kt");
         }
 
         @TestMetadata("variable3.kt")
         public void testVariable3() throws Exception {
-            runTest("idea/testData/intentions/lambdaToAnonymousFunction/variable3.kt");
+            runTest("testData/intentions/lambdaToAnonymousFunction/variable3.kt");
         }
 
         @TestMetadata("variable4.kt")
         public void testVariable4() throws Exception {
-            runTest("idea/testData/intentions/lambdaToAnonymousFunction/variable4.kt");
+            runTest("testData/intentions/lambdaToAnonymousFunction/variable4.kt");
+        }
+
+        @TestMetadata("withLabel.kt")
+        public void testWithLabel() throws Exception {
+            runTest("testData/intentions/lambdaToAnonymousFunction/withLabel.kt");
         }
 
         @TestMetadata("withPackage.kt")
