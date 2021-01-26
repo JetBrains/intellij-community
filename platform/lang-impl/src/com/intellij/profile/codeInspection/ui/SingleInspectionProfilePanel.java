@@ -233,7 +233,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return forceInclude;
   }
 
-  private static void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state, final JBLabel optionsLabel) {
+  private void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
     configPanelAnchor.removeAll();
     final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
     if (additionalConfigPanel != null) {
@@ -246,9 +246,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
 
-    optionsLabel.setText(state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
-                         ? AnalysisBundle.message("inspections.settings.options.title.all.scopes")
-                         : AnalysisBundle.message("inspections.settings.options.title", state.getScopeName()));
+    if (myOptionsLabel != null)
+      myOptionsLabel.setText(state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
+                           ? AnalysisBundle.message("inspections.settings.options.title.all.scopes")
+                           : AnalysisBundle.message("inspections.settings.options.title", state.getScopeName()));
   }
 
   private static InspectionConfigTreeNode getGroupNode(InspectionConfigTreeNode root, String[] groupPath) {
@@ -843,7 +844,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             label.setVisible(false);
           }
 
-          setConfigPanel(configPanelAnchor, toolState, myOptionsLabel);
+          setConfigPanel(configPanelAnchor, toolState);
         }
         scopesAndScopesAndSeveritiesTable = null;
       }
@@ -857,7 +858,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           new ScopesAndSeveritiesTable(new ScopesAndSeveritiesTable.TableSettings(nodes, myProfile, project) {
             @Override
             protected void onScopeChosen(@NotNull final ScopeToolState state) {
-              setConfigPanel(configPanelAnchor, state, myOptionsLabel);
+              setConfigPanel(configPanelAnchor, state);
               configPanelAnchor.revalidate();
               configPanelAnchor.repaint();
             }
