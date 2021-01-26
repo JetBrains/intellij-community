@@ -49,7 +49,7 @@ class ElevationServiceImpl : ElevationService, Disposable {
       throw ProcessCanceledException()
     }
     return tryRelaunchingDaemonUntilHaveQuotaPermit { client ->
-      MediatedProcess(client, processBuilder).apply {
+      MediatedProcess.create(client, processBuilder).apply {
         ElevationLogger.LOG.info("Created process PID ${pid()}")
       }
     }

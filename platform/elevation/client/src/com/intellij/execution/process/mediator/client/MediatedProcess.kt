@@ -8,68 +8,57 @@ import com.intellij.execution.process.mediator.util.ChannelInputStream
 import com.intellij.execution.process.mediator.util.ChannelOutputStream
 import com.intellij.execution.process.mediator.util.blockingGet
 import com.intellij.execution.process.mediator.util.childSupervisorJob
+import com.intellij.util.io.runClosingOnFailure
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.asCompletableFuture
 import java.io.*
 import java.lang.ref.Cleaner
+import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.coroutineContext
 
 private val CLEANER = Cleaner.create()
 
-open class MediatedProcess private constructor(private val handle: MediatedProcessHandle,
-                                               pipeStdin: Boolean,
-                                               pipeStdout: Boolean,
-                                               pipeStderr: Boolean) : Process(), SelfKiller {
-
-  init {
-    @Suppress("LeakingThis")
-    CLEANER.register(this, handle::releaseAsync)
-  }
+class MediatedProcess private constructor(
+  private val handle: MediatedProcessHandle,
+  private val pid: Long,
+  pipeStdin: Boolean,
+  pipeStdout: Boolean,
+  pipeStderr: Boolean,
+) : Process(), SelfKiller {
 
   companion object {
     @Throws(IOException::class,
             QuotaExceededException::class,
             CancellationException::class)
     fun create(processMediatorClient: ProcessMediatorClient,
-               processBuilder: ProcessBuilder) = MediatedProcess(processMediatorClient,
-                                                                 processBuilder)
+               processBuilder: ProcessBuilder): MediatedProcess {
+
+      val inFile = processBuilder.redirectInput().file()
+      val outFile = processBuilder.redirectOutput().file()
+      val errFile = processBuilder.redirectError().file()
+
+      return MediatedProcessHandle(processMediatorClient) {
+        createProcess(processBuilder.command(),
+                      processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
+                      processBuilder.environment(),
+                      inFile, outFile, errFile)
+      }.runClosingOnFailure handle@{
+        // if anything goes wrong during process creation, this will fail with the corresponding exception
+        val pid = pid.blockingGet()
+
+        MediatedProcess(this@handle, pid,
+                        pipeStdin = (inFile == null),
+                        pipeStdout = (outFile == null),
+                        pipeStderr = (errFile == null)).also {
+          CLEANER.register(it, this@handle::releaseAsync)
+        }
+      }
+    }
   }
-
-  constructor(
-    processMediatorClient: ProcessMediatorClient,
-    processBuilder: ProcessBuilder
-  ) : this(
-    processMediatorClient,
-    processBuilder.command(),
-    processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
-    processBuilder.environment(),
-    processBuilder.redirectInput().file(),
-    processBuilder.redirectOutput().file(),
-    processBuilder.redirectError().file(),
-  )
-
-  private constructor(
-    processMediatorClient: ProcessMediatorClient,
-    command: List<String>,
-    workingDir: File,
-    environVars: Map<String, String>,
-    inFile: File?,
-    outFile: File?,
-    errFile: File?,
-  ) : this(
-    handle = MediatedProcessHandle(processMediatorClient) {
-      createProcess(command, workingDir, environVars, inFile, outFile, errFile)
-    },
-    pipeStdin = (inFile == null),
-    pipeStdout = (outFile == null),
-    pipeStderr = (errFile == null),
-  )
-
-  // if anything goes wrong during process creation, this will fail with the corresponding exception
-  private val pid = handle.pid.blockingGet()
 
   private val stdin: OutputStream = if (pipeStdin) createOutputStream(0) else NullOutputStream
   private val stdout: InputStream = if (pipeStdout) createInputStream(1) else NullInputStream
@@ -130,6 +119,7 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
   }
 
   override fun waitFor(): Int = termination.blockingGet()
+  override fun onExit(): CompletableFuture<Process> = termination.asCompletableFuture().thenApply { this }
 
   override fun exitValue(): Int {
     return try {
@@ -176,7 +166,7 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
 private class MediatedProcessHandle(
   private val client: ProcessMediatorClient,
   createProcess: suspend ProcessMediatorClient.() -> Long,
-) {
+) : AutoCloseable {
 
   private val parentScope: CoroutineScope = client.coroutineScope
 
@@ -231,4 +221,6 @@ private class MediatedProcessHandle(
     // and once all of them finish don't accept new calls
     rpcJob.complete()
   }
+
+  override fun close() = releaseAsync()
 }
