@@ -16,8 +16,11 @@ import javax.swing.JList
 class WslDistributionComboBox(initial: WSLDistribution?,
                               setPreferredSizeToShowLongMessagesFully: Boolean) : ComboBox<WSLDistribution?>() {
   var selected: WSLDistribution?
-    get() = selectedItem as WSLDistribution?
+    get() = model.selected
     set(value) {
+      if (model.getElementIndex(value) < 0) {
+        model.add(value)
+      }
       selectedItem  = value
     }
   val isSelectedValid: Boolean
