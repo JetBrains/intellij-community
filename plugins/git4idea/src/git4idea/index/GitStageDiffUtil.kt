@@ -157,6 +157,21 @@ fun compareStagedWithLocal(project: Project, root: VirtualFile, status: GitFileS
   }
 }
 
+fun compareThreeVersions(project: Project, root: VirtualFile, status: GitFileStatus): DiffRequest {
+  val title = getTitle(status)
+  return StagedDiffRequest(headDiffContent(project, root, status),
+                           stagedDiffContent(project, root, status),
+                           localDiffContent(project, status),
+                           GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
+                           title).apply {
+    putUserData(DiffUserDataKeys.THREESIDE_DIFF_COLORS_MODE,
+                DiffUserDataKeys.ThreeSideDiffColors.LEFT_TO_RIGHT)
+    putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.add.unstaged.range"))
+    putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT, DiffBundle.message("action.presentation.diff.revert.text"))
+    putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.reset.staged.range"))
+  }
+}
+
 private class UnStagedProducer constructor(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {
   @Throws(VcsException::class)
   override fun processImpl(): DiffRequest {
@@ -175,18 +190,7 @@ class ThreeSidesProducer(private val project: Project,
                          statusNode: GitFileStatusNode) : GitFileStatusNodeProducerBase(statusNode) {
   @Throws(VcsException::class, IOException::class)
   override fun processImpl(): DiffRequest {
-    val title = getTitle(statusNode.status)
-    return StagedDiffRequest(headDiffContent(project, statusNode.root, statusNode.status),
-                             stagedDiffContent(project, statusNode.root, statusNode.status),
-                             localDiffContent(project, statusNode.status),
-                             GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
-                             title).apply {
-      putUserData(DiffUserDataKeys.THREESIDE_DIFF_COLORS_MODE,
-                  DiffUserDataKeys.ThreeSideDiffColors.LEFT_TO_RIGHT)
-      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.add.unstaged.range"))
-      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT, DiffBundle.message("action.presentation.diff.revert.text"))
-      putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.reset.staged.range"))
-    }
+    return compareThreeVersions(project, statusNode.root, statusNode.status)
   }
 }
 

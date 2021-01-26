@@ -279,6 +279,7 @@
     <action id="Git.Stage.Compare.Local.Staged" class="git4idea.index.actions.GitStageCompareLocalWithStagedAction"/>
     <action id="Git.Stage.Compare.Staged.Local" class="git4idea.index.actions.GitStageCompareStagedWithLocalAction"/>
     <action id="Git.Stage.Compare.Staged.Head" class="git4idea.index.actions.GitStageCompareStagedWithHeadAction"/>
+    <action id="Git.Stage.Compare.Three.Versions" class="git4idea.index.actions.GitStageCompareThreeVersionsAction"/>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
@@ -312,13 +313,15 @@
     <group id="Git.Stage.Local.File.Menu" popup="false">
       <reference id="Git.Stage.Show.Staged"/>
       <reference id="Git.Stage.Compare.Local.Staged"/>
+      <reference id="Git.Stage.Compare.Three.Versions"/>
 
       <add-to-group group-id="Git.ContextMenu" relative-to-action="ChangesView.RevertFiles" anchor="after"/>
     </group>
-    <group id="Git.Stage.Index.File.Menu" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+    <group id="Git.Stage.Index.File.Menu" popup="true" class="git4idea.index.actions.GitStageIndexFileMenuGroup">
       <reference id="Git.Stage.Show.Local"/>
       <reference id="Git.Stage.Compare.Staged.Head"/>
       <reference id="Git.Stage.Compare.Staged.Local"/>
+      <reference id="Git.Stage.Compare.Three.Versions"/>
 
       <add-to-group group-id="EditorPopupMenu"/>
     </group>
