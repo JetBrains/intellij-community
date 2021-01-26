@@ -51,6 +51,9 @@ fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitCo
 private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
 var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
 
+private val IS_CLEANUP_COMMIT_MESSAGE_KEY = Key.create<Boolean>("Vcs.Commit.IsCleanupCommitMessage")
+var CommitContext.isCleanupCommitMessage: Boolean by commitProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
+
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged()
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -11,8 +12,10 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.vcs.commit.CommitHandlersNotifier
 import com.intellij.vcs.commit.EdtCommitResultHandler
 import com.intellij.vcs.commit.NonModalCommitWorkflow
+import com.intellij.vcs.commit.isCleanupCommitMessage
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.message
+import git4idea.repo.GitCommitTemplateTracker
 
 private val LOG = logger<GitStageCommitWorkflow>()
 
@@ -42,8 +45,9 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
   private fun doCommit() {
     LOG.debug("Do actual commit")
 
-    val fullyStaged = trackerState.rootStates.filter { commitState.roots.contains(it.key) }.mapValues { it.value.getFullyStagedPaths() }
+    commitContext.isCleanupCommitMessage = project.service<GitCommitTemplateTracker>().exists()
 
+    val fullyStaged = trackerState.rootStates.filter { commitState.roots.contains(it.key) }.mapValues { it.value.getFullyStagedPaths() }
     with(GitStageCommitter(project, commitState, fullyStaged, commitContext)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(getCommitEventDispatcher())
