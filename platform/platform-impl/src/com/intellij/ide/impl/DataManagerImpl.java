@@ -172,7 +172,7 @@ public class DataManagerImpl extends DataManager {
     if (Registry.is("actionSystem.dataContextAssertions")) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (ourGetDataLevel.get().get() > 0) {
-        LOG.warn("DataContext shall not be created and queried inside another getData() call.");
+        LOG.error("DataContext shall not be created and queried inside another getData() call.");
       }
     }
     return new MyDataContext(component);
