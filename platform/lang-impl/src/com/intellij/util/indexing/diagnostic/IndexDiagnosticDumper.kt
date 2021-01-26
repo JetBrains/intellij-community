@@ -53,7 +53,7 @@ object IndexDiagnosticDumper {
 
   private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
-  val jacksonMapper: ObjectMapper by lazy {
+  private val jacksonMapper: ObjectMapper by lazy {
     jacksonObjectMapper().registerKotlinModule()
   }
 
@@ -84,6 +84,9 @@ object IndexDiagnosticDumper {
       ProjectIndexingHistoryListener.EP_NAME.forEachExtensionSafe { it.onFinishedIndexing(projectIndexingHistory) }
     }
   }
+
+  fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
+    jacksonMapper.readValue(file.toFile(), JsonIndexDiagnostic::class.java)
 
   @Synchronized
   private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
