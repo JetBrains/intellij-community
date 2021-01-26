@@ -20,6 +20,7 @@
     <applicationService serviceImplementation="com.intellij.space.settings.SpaceSettings"/>
 
     <applicationConfigurable
+      id="settings.space"
       groupId="tools"
       groupWeight="239"
       key="configurable.name"
