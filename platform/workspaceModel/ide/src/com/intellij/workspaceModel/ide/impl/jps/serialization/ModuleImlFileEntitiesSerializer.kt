@@ -14,7 +14,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.exists
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
@@ -79,8 +79,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         if (!res) {
           LOG.error(
             "Facets are loaded with issues",
-            fileUrl.virtualFile?.let { AttachmentFactory.createAttachment(it).also { att -> att.isIncluded = true } },
-            externalSerializer?.fileUrl?.virtualFile?.let { AttachmentFactory.createAttachment(it).also { att -> att.isIncluded = true } },
+            (fileUrl as VirtualFileUrlBridge).file?.let { AttachmentFactory.createAttachment(it).also { att -> att.isIncluded = true } },
+            (externalSerializer?.fileUrl as? VirtualFileUrlBridge)?.file?.let { AttachmentFactory.createAttachment(it).also { att -> att.isIncluded = true } },
           )
         }
       }
