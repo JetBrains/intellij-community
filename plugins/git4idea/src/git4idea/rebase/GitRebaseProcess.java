@@ -396,7 +396,7 @@ public class GitRebaseProcess {
       null,
       "git.rebase.stopped.due.to.conflicts"
     );
-    notification.addAction(createResolveNotification(conflictingRepository));
+    notification.addAction(createResolveNotificationAction(conflictingRepository));
     notification.addAction(CONTINUE_ACTION);
     notification.addAction(ABORT_ACTION);
     if (mySaver.wereChangesSaved()) notification.addAction(VIEW_STASH_ACTION);
@@ -594,7 +594,7 @@ public class GitRebaseProcess {
   }
 
   @NotNull
-  private NotificationAction createResolveNotification(@NotNull GitRepository currentRepository) {
+  private NotificationAction createResolveNotificationAction(@NotNull GitRepository currentRepository) {
     return NotificationAction.create(GitBundle.message("action.NotificationAction.text.resolve"), (e, notification) -> {
       myProgressManager.run(new Task.Backgroundable(myProject, GitBundle.message("rebase.progress.indicator.conflicts.collecting.title")) {
         @Override
