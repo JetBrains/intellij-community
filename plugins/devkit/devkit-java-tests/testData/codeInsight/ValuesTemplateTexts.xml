@@ -6,7 +6,7 @@
   ><error descr="Do not use template text 'YourCompany'">YourCompany</error></vendor>
   <version>1.0</version>
 
-  <name><error descr="Must not contain template text 'plugin'">Something with PlUgIn</error></name>
+  <name><error descr="Must not contain template text 'IntelliJ'"><error descr="Must not contain template text 'JetBrains'"><error descr="Must not contain template text 'plugin'">Something with PlUgIn or intellij or JETBRAINS</error></error></error></name>
 
   <description><error descr="Must not contain template text 'Enter short description for your plugin here.'"><error descr="Must not contain template text 'most HTML tags may be used'">
   Enter short description for your plugin here. Some more text.

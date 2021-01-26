@@ -356,7 +356,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkMaxLength(ideaPlugin.getId(), 255, holder);
 
     checkTemplateText(ideaPlugin.getName(), "Plugin display name here", holder);
-    checkTemplateTextContainsWord(ideaPlugin.getName(), "plugin", holder);
+    checkTemplateTextContainsWord(ideaPlugin.getName(), holder, "plugin", "IntelliJ", "JetBrains");
     checkMaxLength(ideaPlugin.getName(), 255, holder);
 
 
@@ -1124,13 +1124,15 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void checkTemplateTextContainsWord(GenericDomValue<String> domValue,
-                                                    @NonNls String templateWord,
-                                                    DomElementAnnotationHolder holder) {
+                                                    DomElementAnnotationHolder holder,
+                                                    @NonNls String... templateWords) {
     String text = domValue.getStringValue();
     if (text == null) return;
     for (String word : StringUtil.getWordsIn(text)) {
-      if (StringUtil.equalsIgnoreCase(word, templateWord)) {
-        holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.must.not.contain.template.text", templateWord));
+      for (String templateWord : templateWords) {
+        if (StringUtil.equalsIgnoreCase(word, templateWord)) {
+          holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.must.not.contain.template.text", templateWord));
+        }
       }
     }
   }
