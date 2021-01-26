@@ -769,6 +769,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
       if(expression.getQualifierExpression() instanceof PsiSuperExpression) {
         PsiElement resolved = expression.resolve();
         if (resolved == null || resolved instanceof PsiMethod && shouldFixSuper((PsiMethod) resolved)) {

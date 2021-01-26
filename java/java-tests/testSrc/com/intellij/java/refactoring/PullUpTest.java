@@ -202,6 +202,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class, true));
   }
 
+  public void testSuperFieldReferenced() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class, false));
+  }
+
   public void testOuterClassRefs() {
     doTest(false, "Method <b><code>bar()</code></b> uses field <b><code>Outer.x</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
   }
