@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
@@ -154,9 +155,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     } finally {
       projectIndexingHistory.getTimes().setScanFilesDuration(Duration.between(scanFilesStart, Instant.now()));
     }
+    logScanningCompletedStage(projectIndexingHistory);
 
     if (trackResponsiveness) {
-      LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Indexable file iteration"));
+      LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Scanning completed"));
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -165,8 +167,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
 
     int totalFiles = providerToFiles.values().stream().mapToInt(it -> it.size()).sum();
-    LOG.info("Number of files to index: " + totalFiles);
-
     if (totalFiles == 0 || SystemProperties.getBooleanProperty("idea.indexes.pretendNoFiles", false)) {
       return;
     }
@@ -227,6 +227,14 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Unindexed files update"));
     }
     myIndex.dumpIndexStatistics();
+  }
+
+  private static void logScanningCompletedStage(ProjectIndexingHistory projectIndexingHistory) {
+    List<JsonScanningStatistics> statistics = projectIndexingHistory.getScanningStatistics();
+    int numberOfScannedFiles = statistics.stream().mapToInt(s -> s.getNumberOfScannedFiles()).sum();
+    int numberOfFilesForIndexing = statistics.stream().mapToInt(s -> s.getNumberOfFilesForIndexing()).sum();
+    LOG.info("Scanning completed. Number of scanned files: " + numberOfScannedFiles + "; " +
+             "Number of files for indexing: " + numberOfFilesForIndexing);
   }
 
   private void listenToProgressSuspenderForSuspendedTimeDiagnostic(@NotNull ProgressSuspender suspender,
