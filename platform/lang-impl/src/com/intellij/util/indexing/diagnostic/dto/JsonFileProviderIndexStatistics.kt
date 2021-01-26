@@ -12,5 +12,7 @@ data class JsonFileProviderIndexStatistics(
   val totalIndexingTime: JsonDuration,
   val numberOfTooLargeForIndexingFiles: Int,
   // Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
-  val indexedFiles: List<PortableFilePath>?
+  // [indexedFiles] and [filesFullyIndexedByExtensions] DO NOT intersect. Union of them represents all the indexed files.
+  val indexedFiles: List<PortableFilePath>?,
+  val filesFullyIndexedByExtensions: List<PortableFilePath>?
 )

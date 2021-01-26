@@ -36,8 +36,15 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
   )
 }
 
+@Suppress("DuplicatedCode")
 fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
-  val indexedFilePaths = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) indexedFiles else null
+  val (indexedFiles, filesFullyIndexedByExtensions) = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+    indexedFiles.filter { !it.wasFullyIndexedByExtensions }.map { it.portableFilePath } to
+      indexedFiles.filter { it.wasFullyIndexedByExtensions }.map { it.portableFilePath }
+  }
+  else {
+    null to null
+  }
 
   return JsonFileProviderIndexStatistics(
     providerName = fileSetName,
@@ -45,7 +52,8 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
     totalIndexingTime = JsonDuration(totalIndexingTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
-    indexedFiles = indexedFilePaths
+    indexedFiles = indexedFiles,
+    filesFullyIndexedByExtensions = filesFullyIndexedByExtensions
   )
 }
 
@@ -116,8 +124,6 @@ private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProject
     )
   }
 }
-
-private fun TooLargeForIndexingFile.toJson() = JsonTooLargeForIndexingFile(fileName, JsonFileSize(fileSize))
 
 private fun ProjectIndexingHistory.aggregateStatsPerIndexer(): List<JsonProjectIndexingHistory.JsonStatsPerIndexer> {
   val totalIndexingTime = totalStatsPerIndexer.values.map { it.totalIndexingTimeInAllThreads }.sum()

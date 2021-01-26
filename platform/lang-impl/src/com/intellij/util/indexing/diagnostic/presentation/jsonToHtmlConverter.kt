@@ -168,7 +168,9 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(scanningStats.timeIndexingWithoutContent.presentableDuration())
               td {
                 textarea {
-                  rawText(scanningStats.scannedFilesNonIndexedByInfrastructureExtensions.orEmpty().joinToString("\n") { it.presentablePath })
+                  rawText(
+                    scanningStats.scannedFilesNonIndexedByInfrastructureExtensions.orEmpty().joinToString("\n") { it.presentablePath }
+                  )
                 }
               }
               td {
@@ -190,7 +192,8 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             th("Number of indexed files")
             th("Number of files indexed by infrastructure extensions")
             th("Number of too large for indexing files")
-            th("Files")
+            th("Files (not fully indexed by extensions)")
+            th("Files fully indexed by extensions")
           }
         }
         tbody {
@@ -201,10 +204,8 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(providerStats.totalNumberOfFiles.toString())
               td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
               td(providerStats.numberOfTooLargeForIndexingFiles.toString())
-              td {
-                val indexedFiles = providerStats.indexedFiles
-                textarea { rawText(indexedFiles.orEmpty().joinToString("\n") { it.presentablePath }) }
-              }
+              td { textarea { rawText(providerStats.indexedFiles.orEmpty().joinToString("\n") { it.presentablePath }) } }
+              td { textarea { rawText(providerStats.filesFullyIndexedByExtensions.orEmpty().joinToString("\n") { it.presentablePath }) } }
             }
           }
         }

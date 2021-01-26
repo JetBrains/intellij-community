@@ -144,6 +144,9 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             1,
             listOf(
               PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java")
+            ),
+            listOf(
+              PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/b.java")
             )
           )
         )
