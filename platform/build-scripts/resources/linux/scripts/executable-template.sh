@@ -70,9 +70,6 @@ fi
 
 if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
   USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
-  if [ ! -d "$USER_JRE" ]; then
-    USER_JRE="$IDE_HOME/$USER_JRE"
-  fi
   if [ -x "$USER_JRE/bin/java" ]; then
     JDK="$USER_JRE"
   fi
@@ -145,7 +142,7 @@ if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
   if [ -n "$X86_JRE_URL" ] && [ ! -d "$IDE_HOME/jbr-x86" ] && [ "$OS_ARCH" = "i386" -o "$OS_ARCH" = "i686" ]; then
     message "To run __product_full__ on a 32-bit system, please download 32-bit Java runtime from \"$X86_JRE_URL\" and unpack it into \"jbr-x86\" directory."
   else
-    message "No JDK found. Please validate either __product_uc___JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
+    message "No JRE found. Please make sure \$__product_uc___JDK, \$JDK_HOME, or \$JAVA_HOME point to valid JRE installation."
   fi
   exit 1
 fi
@@ -188,13 +185,6 @@ fi
 VM_OPTIONS=""
 if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=$("$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*")
-  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent"; }; then
-    if [ "$OS_TYPE" = "Linux" ]; then
-      VM_OPTIONS=$(echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\(-linux\)\?\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\2.so|")
-    else
-      VM_OPTIONS=$(echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent[^ ]*||")
-    fi
-  fi
 else
   message "Cannot find VM options file"
 fi
