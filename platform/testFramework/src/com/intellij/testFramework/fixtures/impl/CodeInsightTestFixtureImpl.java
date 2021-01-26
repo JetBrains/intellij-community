@@ -27,10 +27,15 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.find.FindManager;
+import com.intellij.find.actions.SearchTarget2UsageTarget;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.usages.api.SearchTarget;
+import com.intellij.find.usages.api.UsageHandler;
+import com.intellij.find.usages.api.UsageOptions;
+import com.intellij.find.usages.impl.AllSearchOptions;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
@@ -96,6 +101,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
@@ -137,9 +143,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.find.usages.api.UsageHandler.UsageAction.FIND_USAGES;
+import static com.intellij.find.usages.impl.ImplKt.buildUsageViewQuery;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.testFramework.RunAll.runAll;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static com.intellij.util.ObjectUtils.coalesce;
 import static org.junit.Assert.*;
 
 /**
@@ -931,6 +940,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getUsageViewTreeTextRepresentation(usageView);
   }
 
+  @Override
+  public @NotNull String getUsageViewTreeTextRepresentation(final @NotNull List<UsageTarget> usageTargets,
+                                                            final @NotNull Collection<? extends Usage> usages) {
+    final UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(getProject())
+      .createUsageView(usageTargets.toArray(UsageTarget.EMPTY_ARRAY), usages.toArray(Usage.EMPTY_ARRAY), new UsageViewPresentation(), null);
+
+    return getUsageViewTreeTextRepresentation(usageView);
+  }
 
   @NotNull
   @Override
@@ -945,6 +962,22 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                               false);
     return getUsageViewTreeTextRepresentation(usageView);
 
+  }
+
+  @Override
+  public @NotNull String getUsageViewTreeTextRepresentation(final @NotNull SearchTarget target) {
+    final Project project = getProject();
+
+    //noinspection unchecked
+    final UsageHandler<Object> handler = (UsageHandler<Object>)target.getUsageHandler();
+    final SearchScope searchScope = coalesce(target.getMaximalSearchScope(), GlobalSearchScope.allScope(project));
+    final AllSearchOptions<Object> allOptions =
+      new AllSearchOptions<>(UsageOptions.createOptions(searchScope), false, handler.getCustomOptions(FIND_USAGES));
+
+    final List<UsageTarget> usageTargets = List.of(new SearchTarget2UsageTarget<>(project, target, allOptions));
+    final Collection<? extends Usage> usages = buildUsageViewQuery(getProject(), target, handler, allOptions).findAll();
+
+    return getUsageViewTreeTextRepresentation(usageTargets, usages);
   }
 
   @NotNull
