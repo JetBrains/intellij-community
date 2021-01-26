@@ -40,15 +40,13 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
 
             val myTotalCount = operationData.size
             for ((counter, file) in operationData.withIndex()) {
-                if (!file.isValid) return
-                val virtualFile = file.virtualFile ?: return
-
-                with(indicator) {
-                    text2 = virtualFile.presentableUrl
-                    fraction = counter.toDouble() / myTotalCount
-                }
+                indicator.fraction = counter.toDouble() / myTotalCount
 
                 dumbService.runReadActionInSmartMode {
+                    if (!file.isValid) return@runReadActionInSmartMode
+                    val virtualFile = file.virtualFile ?: return@runReadActionInSmartMode
+
+                    indicator.text2 = virtualFile.presentableUrl
                     KotlinUnusedImportInspection.analyzeImports(file)?.unusedImports?.mapTo(unusedImports) { it.createSmartPointer() }
                 }
             }
