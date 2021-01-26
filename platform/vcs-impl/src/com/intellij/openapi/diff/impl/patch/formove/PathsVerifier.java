@@ -191,7 +191,8 @@ public final class PathsVerifier {
           () -> FileTypeManagerEx.getInstanceEx().associate(FileTypes.PLAIN_TEXT, new ExactFileNameMatcher(file.getName()))
         );
         return true;
-      } else {
+      }
+      else {
         fileType = FileTypeChooser.associateFileType(file.getName());
         if (fileType == null) {
           PatchApplier
