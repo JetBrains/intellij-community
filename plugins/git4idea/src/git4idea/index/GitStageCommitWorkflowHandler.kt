@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
 import com.intellij.openapi.util.Disposer
@@ -10,6 +10,8 @@ class GitStageCommitWorkflowHandler(
   override val ui: NonModalCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>(),
     CommitAuthorTracker by ui {
+
+  private val commitMessagePolicy = GitStageCommitMessagePolicy(project)
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
@@ -38,7 +40,7 @@ class GitStageCommitWorkflowHandler(
   }
 
   override fun addUnversionedFiles(): Boolean = true
-  override fun saveCommitMessage(success: Boolean) = Unit
+  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitMessage(), success)
   override fun refreshChanges(callback: () -> Unit) = callback()
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {

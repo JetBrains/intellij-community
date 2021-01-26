@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 
-internal abstract class AbstractCommitMessagePolicy(protected val project: Project) {
+abstract class AbstractCommitMessagePolicy(protected val project: Project) {
   protected val vcsConfiguration: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   protected val changeListManager: ChangeListManager get() = ChangeListManager.getInstance(project)
 
