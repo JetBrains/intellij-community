@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.containers.Convertor;
@@ -53,6 +54,9 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
 
   @Override
   protected int getSelectedIndex() {
+    if (myCanExpand) {
+      return allPaths().indexOf(Conditions.equalTo(myComponent.getTree().getSelectionPath()));
+    }
     int[] selectionRows = myComponent.getTree().getSelectionRows();
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }

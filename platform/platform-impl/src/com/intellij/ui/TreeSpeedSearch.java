@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -73,7 +73,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   @Override
   protected int getSelectedIndex() {
     if (myCanExpand) {
-      return ArrayUtilRt.find(getAllElements(), myComponent.getSelectionPath());
+      return allPaths().indexOf(Conditions.equalTo(myComponent.getSelectionPath()));
     }
     int[] selectionRows = myComponent.getSelectionRows();
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
