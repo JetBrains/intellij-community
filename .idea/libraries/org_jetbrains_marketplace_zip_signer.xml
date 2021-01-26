@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="org.jetbrains.marketplace:zip-signer:0.8" type="repository">
+  <library name="org.jetbrains.marketplace:zip-signer" type="repository">
     <properties maven-id="org.jetbrains.marketplace:zip-signer:0.8">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
