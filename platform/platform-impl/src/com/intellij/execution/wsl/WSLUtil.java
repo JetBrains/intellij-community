@@ -36,25 +36,6 @@ public final class WSLUtil {
   public static final Logger LOG = Logger.getInstance("#com.intellij.execution.wsl");
 
   /**
-   * this listener is a hack for https://github.com/Microsoft/BashOnWindows/issues/2592
-   * See RUBY-20358
-   */
-  private static final ProcessListener INPUT_CLOSE_LISTENER = new ProcessAdapter() {
-    @Override
-    public void startNotified(@NotNull ProcessEvent event) {
-      OutputStream input = event.getProcessHandler().getProcessInput();
-      if (input != null) {
-        try {
-          input.flush();
-          input.close();
-        }
-        catch (IOException ignore) {
-        }
-      }
-    }
-  };
-
-  /**
    * @deprecated use {@link WslDistributionManager#getInstalledDistributions} instead.
    * Alternatively, check {@link WSLUtil#isSystemCompatible} and show standard WSL UI, e.g.
    * {@link com.intellij.execution.wsl.ui.WslDistributionComboBox}. If no WSL distributions installed,
@@ -146,21 +127,6 @@ public final class WSLUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * Temporary hack method to fix <a href="https://github.com/Microsoft/BashOnWindows/issues/2592">WSL bug</a>
-   * Must be invoked just before execution, see RUBY-20358
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @NotNull
-  public static <T extends ProcessHandler> T addInputCloseListener(@NotNull T processHandler) {
-    if (Experiments.getInstance().isFeatureEnabled("wsl.close.process.input")) {
-      processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
-      processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
-    }
-    return processHandler;
   }
 
   public static boolean isSystemCompatible() {

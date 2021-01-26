@@ -103,12 +103,6 @@
     <projectService serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent" preload="notHeadless"/>
 
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
-    <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
-      <description>Forces closing of WSL process input stream to prevent process zombification. See
-        https://github.com/Microsoft/WSL/issues/2592
-        Required for Windows 10 version prior 1803
-      </description>
-    </experimentalFeature>
     <experimentalFeature id="wsl.p9.support" percentOfUsers="100">
       <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using 9P protocol (available since Windows 10 update 1903).</description>
     </experimentalFeature>

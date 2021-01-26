@@ -98,7 +98,7 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
 
   private void mkSymlink(String file, String symlink) throws Exception {
     GeneralCommandLine cmd = wsl.patchCommandLine(new GeneralCommandLine("ln", "-s", file, symlink), null, new WSLCommandLineOptions());
-    @SuppressWarnings("deprecation") ProcessOutput output = WSLUtil.addInputCloseListener(new CapturingProcessHandler(cmd)).runProcess(10_000);
+    ProcessOutput output = new CapturingProcessHandler(cmd).runProcess(10_000);
     assertEquals(0, output.getExitCode());
   }
 }

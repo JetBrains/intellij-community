@@ -129,8 +129,7 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
-    //noinspection deprecation
-    return WSLUtil.addInputCloseListener(processHandler).runProcess(timeout);
+    return processHandler.runProcess(timeout);
   }
 
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
