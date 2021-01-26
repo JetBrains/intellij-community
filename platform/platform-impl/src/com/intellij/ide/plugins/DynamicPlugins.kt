@@ -66,12 +66,14 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IconDeferrer
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
+import net.sf.cglib.core.ClassNameReader
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.awt.Window
@@ -527,6 +529,7 @@ object DynamicPlugins {
       ThrowableInterner.clearInternedBacktraces()
       IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
       clearTemporaryLostComponent()
+      clearCglibStopBacktrace()
 
       if (app.isUnitTestMode && pluginDescriptor.pluginClassLoader !is PluginClassLoader) {
         classLoaderUnloaded = true
@@ -876,6 +879,19 @@ object DynamicPlugins {
     }
     catch (e: Throwable) {
       LOG.info("Failed to clear Window.temporaryLostComponent", e)
+    }
+  }
+
+
+  private fun clearCglibStopBacktrace() {
+    val field = ReflectionUtil.getDeclaredField(ClassNameReader::class.java, "EARLY_EXIT")
+    if (field != null) {
+      try {
+        ThrowableInterner.clearBacktrace((field[null] as Throwable))
+      }
+      catch (e: Throwable) {
+        LOG.info(e)
+      }
     }
   }
 
