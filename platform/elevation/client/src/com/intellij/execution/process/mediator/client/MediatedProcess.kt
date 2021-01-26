@@ -42,6 +42,7 @@ class MediatedProcess private constructor(
       val errFile = processBuilder.redirectError().file()
 
       return MediatedProcessHandle(processMediatorClient) {
+        // See a to-do comment in the daemon ProcessManager regarding the handle lifetime and cleanup.
         createProcess(processBuilder.command(),
                       processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
                       processBuilder.environment(),

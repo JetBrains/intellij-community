@@ -22,7 +22,18 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Pid {
     // The ref job acts like a reference in ref-counting collectors preventing parentJob from completion
-    // (a parent job does not complete until all its children complete).
+    // (a parent job does not complete until all its children complete). When everything goes well and starting the process succeeds,
+    // the ownership of the job is transferred to the newly created handle.
+    //
+    // Although great care is taken to ensure the ref job is not left unattended along the way,
+    // there's still a risk that something goes wrong on the middleware level: the resulting PID may get lost before the client
+    // receives it, making it impossible to ever release it, or simply the Release RPC can fail.
+    //
+    // The only reliable way to ensure a handle gets closed eventually no matter what,
+    // is to arrange a (probably streaming) RPC that lasts during the whole lifetime of the handle,
+    // releasing it on an RPC failure, which is detected by gRPC using keepalive messages and a controllable timeout.
+    //
+    // TODO[eldar] this should be fixed on the RPC level in ProcessManagerServerService
     val refJob = Job(parentJob)
     refJob.ensureActive()
     try {
