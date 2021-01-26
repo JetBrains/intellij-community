@@ -144,16 +144,16 @@ private fun compressDir(startDir: Path, archiver: ZipArchiver, logger: System.Lo
 
     tempList.sort()
     for (file in tempList) {
-      val path = file.toString()
+      val fileName = file.fileName.toString()
 
       val isFile: Boolean
-      val lastDot = path.lastIndexOf('.')
+      val lastDot = fileName.lastIndexOf('.')
       if (lastDot == -1) {
-        isFile = path.endsWith("LICENSE")
+        isFile = fileName.endsWith("LICENSE")
       }
       else {
         // foo-1.2.3 is a directory
-        isFile = lastDot < path.length && path[lastDot + 1] >= 'A'
+        isFile = lastDot < fileName.length && fileName[lastDot + 1] >= 'A' && !fileName.endsWith("for_twisted") && fileName != ".github"
       }
 
       if (isFile) {
@@ -162,7 +162,7 @@ private fun compressDir(startDir: Path, archiver: ZipArchiver, logger: System.Lo
         }
         catch (e: IOException) {
           if (e.message == "Is a directory") {
-            logger?.warn("$path expected to be a file, but it is a directory, please rename it")
+            logger?.warn("$file expected to be a file, but it is a directory, please rename it")
             dirCandidates.add(file)
           }
           else {
