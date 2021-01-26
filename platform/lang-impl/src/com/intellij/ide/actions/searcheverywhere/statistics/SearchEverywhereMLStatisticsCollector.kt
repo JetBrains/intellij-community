@@ -85,6 +85,10 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
       ApplicationManager.getApplication().invokeAndWait {
         twm.lastActiveToolWindowId?.let { id -> logData.addData(LAST_ACTIVE_TOOL_WINDOW_KEY, id) }
       }
+
+      // report types of open files in editor: fileType -> amount
+      val fem = FileEditorManager.getInstance(it)
+      logData.addData(OPEN_FILE_TYPES_KEY, fem.openFiles.map { file -> file.fileType.name }.distinct())
     }
 
     val data = logData.build()
@@ -94,12 +98,6 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         getListItemsNames(it, globalSummary, localActionsStats).toMap()
       }
     )
-    myProject?.let {
-      // report types of open files in editor: fileType -> amount
-      val fem = FileEditorManager.getInstance(it)
-      val map = fem.openFiles.groupBy { file -> file.fileType.name }.mapValues { entry -> entry.value.size }
-      (data as? MutableMap)?.put(OPEN_FILE_TYPES_KEY, map)
-    }
 
     log(SESSION_FINISHED, data)
   }
