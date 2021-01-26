@@ -84,7 +84,7 @@ public final class AnnotationTargetUtil {
         // PARAMETER applies only to formal parameters (methods & lambdas) and catch parameters
         // see https://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.6.4.1
         PsiElement scope = element.getParent();
-        if (scope instanceof PsiForeachStatement) {
+        if (scope instanceof PsiForeachStatement || element instanceof PsiPatternVariable) {
           return LOCAL_VARIABLE_TARGETS;
         }
         if (scope instanceof PsiParameterList && scope.getParent() instanceof PsiLambdaExpression &&

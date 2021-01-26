@@ -24,6 +24,9 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   public void testInstanceOfBasics() {
     doTest();
   }
+  public void testInstanceOfAnnotations() {
+    doTest();
+  }
   public void testInstanceOfNameConflicts() {
     doTest();
   }
