@@ -316,13 +316,18 @@ final class VariableExtractor {
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
     if (HighlightingFeature.PATTERNS.isAvailable(anchor)) {
       PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class);
-      if (cast != null && !(cast.getType() instanceof PsiPrimitiveType) &&
-          !(PsiUtil.skipParenthesizedExprUp(firstOccurrence.getParent()) instanceof PsiExpressionStatement)) {
-        PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast);
-        if (candidate != null && allOccurrences.stream()
-          .map(occ -> ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(occ), PsiTypeCastExpression.class))
-          .allMatch(occ -> occ != null && (occ == firstOccurrence || InstanceOfUtils.findPatternCandidate(occ) == candidate))) {
-          return candidate;
+      if (cast != null) {
+        PsiType castType = cast.getType();
+        PsiExpression operand = cast.getOperand();
+        if (castType != null && !(castType instanceof PsiPrimitiveType) && operand != null && operand.getType() != null && 
+            !(castType.isAssignableFrom(operand.getType())) &&
+            !(PsiUtil.skipParenthesizedExprUp(firstOccurrence.getParent()) instanceof PsiExpressionStatement)) {
+          PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast);
+          if (candidate != null && allOccurrences.stream()
+            .map(occ -> ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(occ), PsiTypeCastExpression.class))
+            .allMatch(occ -> occ != null && (occ == firstOccurrence || InstanceOfUtils.findPatternCandidate(occ) == candidate))) {
+            return candidate;
+          }
         }
       }
     }
