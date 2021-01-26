@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -459,7 +459,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   private int getColumnWidth(int index) {
     int letters = getTypesMaxLength() + (index == 0 ? 1 : getNamesMaxLength() + 2);
-    Font font = EditorFontType.PLAIN.getGlobalFont();
+    Font font = EditorFontType.getGlobalPlainFont();
     font = new Font(font.getFontName(), font.getStyle(), 12);
     return  letters * Toolkit.getDefaultToolkit().getFontMetrics(font).stringWidth("W");
   }

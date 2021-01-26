@@ -111,7 +111,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
       myDescLabel = new JLabel();
       myPanel.add(myDescLabel, BorderLayout.EAST);
 
-      Font font = EditorFontType.PLAIN.getGlobalFont();
+      Font font = EditorFontType.getGlobalPlainFont();
       myNameLabel.setFont(font);
       myDescLabel.setFont(font);
     }

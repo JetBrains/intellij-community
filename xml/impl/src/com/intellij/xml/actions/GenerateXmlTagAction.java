@@ -297,7 +297,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       myNSLabel = new JLabel();
       myPanel.add(myNSLabel, BorderLayout.EAST);
 
-      Font font = EditorFontType.PLAIN.getGlobalFont();
+      Font font = EditorFontType.getGlobalPlainFont();
       myNameLabel.setFont(font);
       myNSLabel.setFont(font);
     }

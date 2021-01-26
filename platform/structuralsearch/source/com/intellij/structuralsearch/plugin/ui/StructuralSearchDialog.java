@@ -260,7 +260,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
     final EditorTextField textField = new MyEditorTextField(document, replace);
-    textField.setFont(EditorFontType.PLAIN.getGlobalFont());
+    textField.setFont(EditorFontType.getGlobalPlainFont());
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
     return textField;
