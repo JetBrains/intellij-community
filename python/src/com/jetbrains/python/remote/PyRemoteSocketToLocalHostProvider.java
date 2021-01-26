@@ -4,10 +4,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.remote.RemoteSdkException;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
+
 /**
- * @author Alexander Koshevoy
+ * A new instance should be created for every new process. Should be closed when process terminates.
+ *
+ * See also {@link PyRemoteInterpreterUtil#closeOnProcessTermination(com.intellij.execution.process.ProcessHandler, Closeable)}.
  */
-public interface PyRemoteSocketToLocalHostProvider {
+public interface PyRemoteSocketToLocalHostProvider extends Closeable {
   /**
    * Returns {@code &lt;host, port&gt;} tuple with which socket on the remote host should be created to be connected to {@code localPort}
    * on local host.
