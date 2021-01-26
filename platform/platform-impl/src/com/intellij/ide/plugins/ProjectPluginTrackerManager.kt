@@ -19,9 +19,7 @@ import javax.swing.JComponent
   storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)],
 )
 @ApiStatus.Internal
-class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManager.Companion.ProjectPluginTrackerManagerState>(
-  ProjectPluginTrackerManagerState()
-) {
+class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManagerState>(ProjectPluginTrackerManagerState()) {
 
   companion object {
 
@@ -47,12 +45,6 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
              DynamicPlugins.loadPlugins(descriptors).requireRestartIfNecessary()
     }
 
-    class ProjectPluginTrackerManagerState : BaseState() {
-
-      @get:XCollection
-      var trackers by map<String, ProjectPluginTracker.Companion.ProjectPluginTrackerState>()
-    }
-
     private fun Boolean.requireRestartIfNecessary(): Boolean {
       if (!this) {
         InstalledPluginsState.getInstance().isRestartRequired = true
@@ -64,7 +56,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
   }
 
   private var applicationShuttingDown = false
-  internal val statesByProject get() = state.trackers
+  val statesByProject get() = state.trackers
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
@@ -105,7 +97,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     return ProjectPluginTracker(
       projectName,
-      statesByProject.getOrPut(workspaceId ?: projectName) { ProjectPluginTracker.Companion.ProjectPluginTrackerState() },
+      statesByProject.getOrPut(workspaceId ?: projectName) { ProjectPluginTrackerState() },
     )
   }
 
@@ -212,4 +204,10 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       (DisabledPluginsState.isDisabled(pluginId) || trackers.all { it.isDisabled(pluginId) })
     }
   }
+}
+
+class ProjectPluginTrackerManagerState : BaseState() {
+
+  @get:XCollection
+  var trackers by map<String, ProjectPluginTrackerState>()
 }

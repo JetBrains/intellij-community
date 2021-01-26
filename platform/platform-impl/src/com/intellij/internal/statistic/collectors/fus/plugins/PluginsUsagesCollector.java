@@ -40,9 +40,9 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
     result.addAll(getDisabledPlugins());
     result.addAll(getEnabledNonBundledPlugins());
     result.addAll(getPerProjectPlugins(PER_PROJECT_ENABLED,
-                                       state -> state.getEnabledPlugins$intellij_platform_ide_impl()));
+                                       ProjectPluginTrackerState::getEnabledPlugins));
     result.addAll(getPerProjectPlugins(PER_PROJECT_DISABLED,
-                                       state -> state.getDisabledPlugins$intellij_platform_ide_impl()));
+                                       ProjectPluginTrackerState::getDisabledPlugins));
     return result;
   }
 
@@ -67,10 +67,10 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   }
 
   private static @NotNull Set<MetricEvent> getPerProjectPlugins(@NotNull EventId1<Integer> eventId,
-                                                                @NotNull Function<ProjectPluginTracker.Companion.@NotNull ProjectPluginTrackerState, @NotNull Set<String>> countProducer) {
+                                                                @NotNull Function<@NotNull ProjectPluginTrackerState, @NotNull Set<String>> countProducer) {
     return ProjectPluginTrackerManager
       .getInstance()
-      .getStatesByProject$intellij_platform_ide_impl()
+      .getStatesByProject()
       .values()
       .stream()
       .map(countProducer)
