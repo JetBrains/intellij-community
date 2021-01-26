@@ -53,12 +53,27 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr { th("Name"); th("Time") }
         }
         tbody {
-          tr { td("Number of file providers"); td(projectIndexingHistory.numberOfFileProviders.toString()) }
-          tr { td("Number of files"); td(projectIndexingHistory.totalNumberOfFiles.toString()) }
-          tr { td("Number of up-to-date files"); td(projectIndexingHistory.totalNumberOfUpToDateFiles.toString()) }
+          tr { td("Number of file providers"); td(projectIndexingHistory.scanningStatistics.size.toString()) }
+          tr { td("Number of scanned files"); td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfScannedFiles }.toString()) }
           tr {
-            td("Number of files indexed by infrastructure extensions")
-            td(projectIndexingHistory.totalNumberOfFilesIndexedByInfrastructureExtensions.toString())
+            td("Number of files indexed by infrastructure extensions during the scan (without loading content)")
+            td(projectIndexingHistory.scanningStatistics.map { it.numberOfFilesFullyIndexedByInfrastructureExtensions }.sum().toString())
+          }
+          tr {
+            td("Number of files sent to the indexing stage after scanning (to load file content and index)")
+            td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfFilesForIndexing }.toString())
+          }
+          tr {
+            td("Number of files indexed by infrastructure extensions during the indexing stage (with loading content)")
+            td(projectIndexingHistory.fileProviderStatistics.map { it.totalNumberOfFilesFullyIndexedByExtensions }.sum().toString())
+          }
+          tr {
+            td("Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)")
+            td(projectIndexingHistory.fileProviderStatistics.map { it.totalNumberOfIndexedFiles }.sum().toString())
+          }
+          tr {
+            td("Number of too large for indexing files")
+            td(projectIndexingHistory.fileProviderStatistics.sumBy { it.numberOfTooLargeForIndexingFiles }.toString())
           }
 
           val times = projectIndexingHistory.times
@@ -141,10 +156,9 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr {
             th("Provider name")
             th("Number of scanned files")
-            th("Number of skipped files, which are already iterated for a different entity")
             th("Number of files scheduled for indexing")
-            th("Number of up-to-date files")
-            th("Number of files indexed by infrastructure extensions")
+            th("Number of files fully indexed by infrastructure extensions")
+            th("Number of double-scanned skipped files")
             th("Scanning time")
             th("Time processing up-to-date files")
             th("Time updating content-less indexes")
@@ -157,10 +171,9 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             tr {
               td(scanningStats.providerName)
               td(scanningStats.numberOfScannedFiles.toString())
-              td(scanningStats.numberOfSkippedFiles.toString())
               td(scanningStats.numberOfFilesForIndexing.toString())
-              td(scanningStats.numberOfUpToDateFiles.toString())
               td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
+              td(scanningStats.numberOfSkippedFiles.toString())
               td(scanningStats.scanningTime.presentableDuration())
               td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
               td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
@@ -200,7 +213,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             tr {
               td(providerStats.providerName)
               td(providerStats.totalIndexingTime.presentableDuration())
-              td(providerStats.totalNumberOfFiles.toString())
+              td(providerStats.totalNumberOfIndexedFiles.toString())
               td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
               td(providerStats.numberOfTooLargeForIndexingFiles.toString())
               td {

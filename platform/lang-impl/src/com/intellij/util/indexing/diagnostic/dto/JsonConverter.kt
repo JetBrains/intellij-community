@@ -23,7 +23,6 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     numberOfScannedFiles = numberOfScannedFiles,
     numberOfFilesForIndexing = numberOfFilesForIndexing,
     numberOfSkippedFiles = numberOfSkippedFiles,
-    numberOfUpToDateFiles = numberOfScannedFiles - numberOfFilesForIndexing,
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
     scanningTime = JsonDuration(scanningTime),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
@@ -51,7 +50,7 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
 
   return JsonFileProviderIndexStatistics(
     providerName = fileSetName,
-    totalNumberOfFiles = numberOfIndexedFiles,
+    totalNumberOfIndexedFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
     totalIndexingTime = JsonDuration(totalIndexingTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
@@ -82,13 +81,7 @@ private fun calculatePercentages(part: Long, total: Long): JsonPercentages = Jso
 fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
   JsonProjectIndexingHistory(
     projectName = project.name,
-    numberOfFileProviders = scanningStatistics.size,
-    totalNumberOfFiles = scanningStatistics.map { it.numberOfScannedFiles }.sum(),
-    totalNumberOfUpToDateFiles = scanningStatistics.map { it.numberOfUpToDateFiles }.sum(),
-    totalNumberOfFilesIndexedByInfrastructureExtensions = providerStatistics.map { it.totalNumberOfFilesFullyIndexedByExtensions }.sum() +
-                                                          scanningStatistics.map { it.numberOfFilesFullyIndexedByInfrastructureExtensions }.sum(),
     times = times.toJson(),
-    totalNumberOfTooLargeForIndexingFiles = totalNumberOfTooLargeFiles,
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
     scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },

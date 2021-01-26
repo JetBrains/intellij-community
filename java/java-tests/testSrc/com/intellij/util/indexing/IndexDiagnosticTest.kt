@@ -68,12 +68,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
       JsonIndexDiagnosticAppInfo.create(),
       JsonRuntimeInfo.create(),
       JsonProjectIndexingHistory(
-        "projectName",
-        123,
-        456,
-        789,
-        345,
-        JsonProjectIndexingHistoryTimes(
+        projectName = "projectName",
+        times = JsonProjectIndexingHistoryTimes(
           JsonDuration(123),
           JsonDuration(456),
           JsonDuration(789),
@@ -84,8 +80,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           JsonDuration(333),
           false
         ),
-        33,
-        listOf(
+        totalStatsPerFileType = listOf(
           JsonProjectIndexingHistory.JsonStatsPerFileType(
             "java",
             JsonPercentages(30, 100),
@@ -103,7 +98,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             )
           )
         ),
-        listOf(
+        totalStatsPerIndexer = listOf(
           JsonProjectIndexingHistory.JsonStatsPerIndexer(
             "IdIndex",
             JsonPercentages(5, 10),
@@ -113,12 +108,11 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             JsonProcessingSpeed(111, 222)
           )
         ),
-        listOf(
+        scanningStatistics = listOf(
           JsonScanningStatistics(
             "providerName",
             333,
             11,
-            10,
             55,
             33,
             JsonDuration(123),
@@ -134,7 +128,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             )
           )
         ),
-        listOf(
+        fileProviderStatistics = listOf(
           JsonFileProviderIndexStatistics(
             "providerName",
             444,
