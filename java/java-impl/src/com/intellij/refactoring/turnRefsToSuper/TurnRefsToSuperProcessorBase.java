@@ -269,7 +269,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
           if (classReference.getParent() instanceof PsiReferenceList) {
             final PsiReferenceList referenceList = ((PsiReferenceList)ppparent.getParent());
             final PsiClass parentClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-            if (parentClass != null) {
+            if (parentClass != null && !parentClass.equals(myClass)) {
               if (referenceList.equals(parentClass.getExtendsList()) || referenceList.equals(parentClass.getImplementsList())) {
                 final PsiTypeElement[] typeParameterElements = refParameterList.getTypeParameterElements();
                 for (int i = 0; i < typeParameterElements.length; i++) {
