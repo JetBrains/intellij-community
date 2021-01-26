@@ -39,9 +39,12 @@ import javax.swing.JOptionPane
 internal class StatisticBase : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
+  private data class LessonProgress(val lessonId: String, val taskId: Int)
+
   companion object {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
+    private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
     private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 7)
 
     // FIELDS
@@ -111,9 +114,13 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     fun logRestorePerformed(lesson: Lesson, taskId: Int) {
-      restorePerformedEvent.log(lessonIdField with lesson.id,
-                                taskIdField with taskId.toString(),
-                                versionField with getPluginVersion(lesson))
+      val curLessonProgress = LessonProgress(lesson.id, taskId)
+      if (curLessonProgress != prevRestoreLessonProgress) {
+        prevRestoreLessonProgress = curLessonProgress
+        restorePerformedEvent.log(lessonIdField with lesson.id,
+                                  taskIdField with taskId.toString(),
+                                  versionField with getPluginVersion(lesson))
+      }
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
