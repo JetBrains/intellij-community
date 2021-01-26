@@ -96,6 +96,6 @@
     <orderEntry type="module" module-name="intellij.platform.elevation" scope="RUNTIME" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
-    <orderEntry type="library" name="org.jetbrains.marketplace:zip-signer" level="project" />
+    <orderEntry type="library" name="zip-signer" level="project" />
   </component>
 </module>
