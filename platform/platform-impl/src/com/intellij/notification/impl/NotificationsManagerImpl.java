@@ -100,9 +100,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   public void expireAll() {
-    for (Notification notification : getNotificationsOfType(Notification.class, null)) {
-      notification.expire();
-    }
+    EventLog.expireNotifications();
  }
 
   @Override

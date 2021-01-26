@@ -65,6 +65,25 @@ public final class EventLog {
 
   private final LogModel myModel = new LogModel(null);
 
+  public static void expireNotifications() {
+    for (Notification notification : getApplicationService().myModel.getNotifications()) {
+      notification.expire();
+    }
+
+    for (Project project : ProjectUtil.getOpenProjects()) {
+      if (!project.isDisposed()) {
+        ProjectTracker service = getProjectService(project);
+        for (Notification notification : service.myProjectModel.getNotifications()) {
+          notification.expire();
+        }
+        for (Notification notification : service.myInitial) {
+          notification.expire();
+        }
+        service.myInitial.clear();
+      }
+    }
+  }
+
   public static void expireNotification(@NotNull Notification notification) {
     getApplicationService().myModel.removeNotification(notification);
     for (Project p : ProjectUtil.getOpenProjects()) {
