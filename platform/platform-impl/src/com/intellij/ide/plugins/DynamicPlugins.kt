@@ -1221,6 +1221,11 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
       continue
     }
 
+    // special case Kotlin EPs registered via code in Kotlin compiler
+    if (epName.startsWith("org.jetbrains.kotlin") && (descriptor.pluginId ?: baseDescriptor?.pluginId)?.idString == "org.jetbrains.kotlin") {
+      continue
+    }
+
     return "Plugin ${descriptor.pluginId ?: baseDescriptor?.pluginId} is not unload-safe because of unresolved extension $epName"
   }
   return null
