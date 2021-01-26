@@ -41,4 +41,8 @@ public class PrattRegistry {
   public Collection<Trinity<Integer, PathPattern, TokenParser>> getParsers(@Nullable final IElementType type) {
     return myMap.get(type);
   }
+
+  public void unregisterParser(@NotNull final IElementType type) {
+    myMap.remove(type);
+  }
 }
