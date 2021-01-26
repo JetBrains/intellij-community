@@ -102,12 +102,18 @@ class ReorderJarsTest {
   }
 
   private fun testOldJarResourceImpl(file: Path, data: ByteArray) {
-    val loader = JdkZipResourceFile(file, true, false, false).preload(file)
-    assertThat(loader).isNotNull()
-    val bytes = loader!!.getBytes("org/jetbrains/annotations/Nullable.class")
-    assertThat(bytes).isNotNull()
-    assertThat(bytes).hasSize(548)
-    assertThat(data.contentEquals(bytes)).isTrue()
+    val resourceFile = JdkZipResourceFile(file, true, false, false)
+    try {
+      val loader = resourceFile.preload(file)
+      assertThat(loader).isNotNull()
+      val bytes = loader!!.getBytes("org/jetbrains/annotations/Nullable.class")
+      assertThat(bytes).isNotNull()
+      assertThat(bytes).hasSize(548)
+      assertThat(data.contentEquals(bytes)).isTrue()
+    }
+    finally {
+      resourceFile.close()
+    }
   }
 
   @Test
