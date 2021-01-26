@@ -2299,6 +2299,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testVariable() throws Exception {
             runTest("testData/intentions/anonymousFunctionToLambda/variable.kt");
         }
+
+        @TestMetadata("variable2.kt")
+        public void testVariable2() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/variable2.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

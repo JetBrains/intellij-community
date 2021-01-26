@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -15,19 +15,23 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ReturnSaver(val function: KtNamedFunction) {
-    val RETURN_KEY = Key<Unit>("RETURN_KEY")
-
-    init {
-        save()
+    companion object {
+        private val RETURN_KEY = Key<Unit>("RETURN_KEY")
     }
 
-    private fun save() {
+    val isEmpty: Boolean
+
+    init {
+        var hasReturn = false
         val body = function.bodyExpression!!
         body.forEachDescendantOfType<KtReturnExpression> {
             if (it.getTargetFunction(it.analyze(BodyResolveMode.PARTIAL)) == function) {
+                hasReturn = true
                 it.putCopyableUserData(RETURN_KEY, Unit)
             }
         }
+
+        isEmpty = !hasReturn
     }
 
     private fun clear() {

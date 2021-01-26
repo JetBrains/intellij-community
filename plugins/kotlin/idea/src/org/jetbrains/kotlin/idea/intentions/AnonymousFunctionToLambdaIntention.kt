@@ -55,11 +55,12 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
         }
 
         val commentSaver = CommentSaver(element)
-        val returnSaver = if (callElement != null) ReturnSaver(element) else null
-
+        val returnSaver = ReturnSaver(element)
         val body = element.bodyExpression!!
-
         val newExpression = KtPsiFactory(element).buildExpression {
+            if (callElement == null && !returnSaver.isEmpty) {
+                appendFixedText("lBlock@")
+            }
             appendFixedText("{")
 
             val parameters = element.valueParameters
@@ -95,17 +96,22 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
             appendFixedText("}")
         }
 
-        val replaced = element.replaced(newExpression) as KtLambdaExpression
+        val replaced = element.replaced(newExpression)
         commentSaver.restore(replaced, forceAdjustIndent = true/* by some reason lambda body is sometimes not properly indented */)
 
-        if (returnSaver == null) return
+        if (callElement != null) {
+            val callExpression = replaced.parents.firstIsInstance<KtCallExpression>()
+            val callee = callExpression.getCalleeExpressionIfAny() as? KtNameReferenceExpression ?: return
 
-        val callExpression = replaced.parents.firstIsInstance<KtCallExpression>()
-        val callee = callExpression.getCalleeExpressionIfAny()!! as KtNameReferenceExpression
+            val returnLabel = callee.getReferencedNameAsName()
+            returnSaver.restore(replaced as KtLambdaExpression, returnLabel)
 
-        val returnLabel = callee.getReferencedNameAsName()
-        returnSaver.restore(replaced, returnLabel)
-
-        callExpression.getLastLambdaExpression()?.moveFunctionLiteralOutsideParenthesesIfPossible()
+            callExpression.getLastLambdaExpression()?.moveFunctionLiteralOutsideParenthesesIfPossible()
+        } else {
+            val labeledExpression = replaced as? KtLabeledExpression ?: return
+            val lambdaExpression = labeledExpression.baseExpression as? KtLambdaExpression ?: return
+            val returnLabel = labeledExpression.getLabelNameAsName() ?: return
+            returnSaver.restore(lambdaExpression, returnLabel)
+        }
     }
 }
