@@ -274,12 +274,11 @@
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
     <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
     <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction"/>
-    <action id="Git.Stage.Show.Staged" class="git4idea.index.actions.GitShowStagedVersionAction">
-      <add-to-group group-id="Git.ContextMenu" relative-to-action="ChangesView.RevertFiles" anchor="after"/>
-    </action>
-    <action id="Git.Stage.Show.Local" class="git4idea.index.actions.GitShowLocalVersionAction">
-      <add-to-group group-id="EditorPopupMenu"/>
-    </action>
+    <action id="Git.Stage.Show.Staged" class="git4idea.index.actions.GitShowStagedVersionAction"/>
+    <action id="Git.Stage.Show.Local" class="git4idea.index.actions.GitShowLocalVersionAction"/>
+    <action id="Git.Stage.Compare.Local.Staged" class="git4idea.index.actions.GitStageCompareLocalWithStagedAction"/>
+    <action id="Git.Stage.Compare.Staged.Local" class="git4idea.index.actions.GitStageCompareStagedWithLocalAction"/>
+    <action id="Git.Stage.Compare.Staged.Head" class="git4idea.index.actions.GitStageCompareStagedWithHeadAction"/>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
@@ -309,6 +308,19 @@
       <separator/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="LocalHistory"/>
+    </group>
+    <group id="Git.Stage.Local.File.Menu" popup="false">
+      <reference id="Git.Stage.Show.Staged"/>
+      <reference id="Git.Stage.Compare.Local.Staged"/>
+
+      <add-to-group group-id="Git.ContextMenu" relative-to-action="ChangesView.RevertFiles" anchor="after"/>
+    </group>
+    <group id="Git.Stage.Index.File.Menu" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+      <reference id="Git.Stage.Show.Local"/>
+      <reference id="Git.Stage.Compare.Staged.Head"/>
+      <reference id="Git.Stage.Compare.Staged.Local"/>
+
+      <add-to-group group-id="EditorPopupMenu"/>
     </group>
 
     <action id="Git.Stash.Pop" class="git4idea.stash.ui.GitPopStashAction"/>
