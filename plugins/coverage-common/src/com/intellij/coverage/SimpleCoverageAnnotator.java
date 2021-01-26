@@ -260,11 +260,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return true;
   }
 
-  public void annotate(@NotNull final VirtualFile contentRoot,
-                       @NotNull final CoverageSuitesBundle suite,
-                       final @NotNull CoverageDataManager dataManager, @NotNull final ProjectData data,
-                       final Project project,
-                       final Annotator annotator) {
+  protected void annotate(@NotNull final VirtualFile contentRoot,
+                          @NotNull final CoverageSuitesBundle suite,
+                          final @NotNull CoverageDataManager dataManager, @NotNull final ProjectData data,
+                          final Project project,
+                          final Annotator annotator) {
     if (!contentRoot.isValid()) {
       return;
     }
@@ -406,7 +406,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return calcPercent(info.coveredLineCount, info.totalLineCount);
   }
 
-  private static int calcPercent(final int covered, final int total) {
+  protected static int calcPercent(final int covered, final int total) {
     return total != 0 ? (int)((double)covered / total * 100) : 100;
   }
 
