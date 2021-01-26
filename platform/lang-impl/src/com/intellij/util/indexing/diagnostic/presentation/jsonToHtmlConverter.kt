@@ -1,4 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("unused", "DuplicatedCode", "HardCodedStringLiteral")
+
 package com.intellij.util.indexing.diagnostic.presentation
 
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -8,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
 import org.jetbrains.annotations.Nls
 
-@Suppress("HardCodedStringLiteral")
 fun JsonIndexDiagnostic.generateHtml(): String {
   return html {
     body {
@@ -55,7 +56,10 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr { td("Number of file providers"); td(projectIndexingHistory.numberOfFileProviders.toString()) }
           tr { td("Number of files"); td(projectIndexingHistory.totalNumberOfFiles.toString()) }
           tr { td("Number of up-to-date files"); td(projectIndexingHistory.totalNumberOfUpToDateFiles.toString()) }
-          tr { td("Number of files indexed by infrastructure extensions"); td(projectIndexingHistory.totalNumberOfFilesIndexedByInfrastructureExtensions.toString()) }
+          tr {
+            td("Number of files indexed by infrastructure extensions")
+            td(projectIndexingHistory.totalNumberOfFilesIndexedByInfrastructureExtensions.toString())
+          }
 
           val times = projectIndexingHistory.times
           tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
@@ -162,15 +166,15 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
               td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
               td(scanningStats.timeIndexingWithoutContent.presentableDuration())
-              if (scanningStats.scannedFilesNonIndexedByInfrastructureExtensions != null) {
-                td(scanningStats.scannedFilesNonIndexedByInfrastructureExtensions.joinToString("\n") { it.presentablePath })
-              } else {
-                td("<unknown>")
+              td {
+                textarea {
+                  rawText(scanningStats.scannedFilesNonIndexedByInfrastructureExtensions.orEmpty().joinToString("\n") { it.presentablePath })
+                }
               }
-              if (scanningStats.filesFullyIndexedByInfrastructureExtensions != null) {
-                td(scanningStats.filesFullyIndexedByInfrastructureExtensions.joinToString("\n") { it.presentablePath })
-              } else {
-                td("<unknown>")
+              td {
+                textarea {
+                  rawText(scanningStats.filesFullyIndexedByInfrastructureExtensions.orEmpty().joinToString("\n") { it.presentablePath })
+                }
               }
             }
           }
@@ -197,12 +201,9 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(providerStats.totalNumberOfFiles.toString())
               td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
               td(providerStats.numberOfTooLargeForIndexingFiles.toString())
-              val indexedFiles = providerStats.indexedFiles
-              if (indexedFiles != null) {
-                td(indexedFiles.joinToString("\n") { it.presentablePath })
-              }
-              else {
-                td("<unknown>")
+              td {
+                val indexedFiles = providerStats.indexedFiles
+                textarea { rawText(indexedFiles.orEmpty().joinToString("\n") { it.presentablePath }) }
               }
             }
           }
@@ -218,11 +219,10 @@ private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
   return tagBuilder.toFragment().wrapWith(tag)
 }
 
-private fun HtmlBuilder.text(@Nls text: String) {
-  append(text)
-}
+private fun HtmlBuilder.text(@Nls text: String) = append(text)
+private fun HtmlBuilder.rawText(@Nls text: String) = appendRaw(text)
 
-private infix operator fun HtmlBuilder.plus(@Nls text: String) = text(text)
+private infix operator fun HtmlBuilder.plus(@Nls text: String): HtmlBuilder = text(text)
 private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("h1")))
 
 private fun HtmlBuilder.table(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("table")))
@@ -233,6 +233,23 @@ private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit) = append(createTag(body
 private fun HtmlBuilder.th(@Nls text: String) = th { text(text) }
 private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
 private fun HtmlBuilder.td(@Nls text: String) = td { text(text) }
+
+private fun HtmlBuilder.textarea(
+  columns: Int = 75,
+  rows: Int = 10,
+  body: HtmlBuilder.() -> Unit
+) = append(
+  createTag(
+    body,
+    tag("textarea")
+      .attr("cols", columns)
+      .attr("rows", rows)
+      .attr("readonly", "true")
+      .attr("placeholder", "empty")
+      .attr("style", "white-space: pre;")
+  ))
+
+private fun HtmlBuilder.textarea(@Nls text: String) = textarea { rawText(text) }
 
 private fun HtmlBuilder.div(body: HtmlBuilder.() -> Unit) = append(createTag(body, div()))
 private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
