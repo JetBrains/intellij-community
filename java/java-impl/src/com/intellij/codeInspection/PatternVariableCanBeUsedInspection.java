@@ -28,10 +28,14 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         if (identifier == null) return;
         PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()),
                                                          PsiTypeCastExpression.class);
-        if (cast == null || cast.getOperand() == null || cast.getCastType() == null) return;
+        if (cast == null || cast.getCastType() == null) return;
+        PsiExpression operand = cast.getOperand();
+        if (operand == null) return;
         PsiType castType = cast.getCastType().getType();
         if (castType instanceof PsiPrimitiveType) return;
         if (!variable.getType().equals(castType)) return;
+        PsiType operandType = operand.getType();
+        if (operandType == null || castType.isAssignableFrom(operandType)) return;
         PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
         if (scope == null) return;
         PsiDeclarationStatement declaration = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
