@@ -361,6 +361,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
           if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
             ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecorator.class, myComponent),
                                          decorator -> {
+                                           if (decorator.isHeaderVisible()) return;
                                            String id = decorator.getToolWindowId();
                                            ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
                                            ToolWindow window = manager.getToolWindow(id);
@@ -372,7 +373,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         @Override
         public void mouseDragged(MouseEvent e) {
           InternalDecorator decorator = ComponentUtil.getParentOfType(InternalDecorator.class, myComponent);
-          if (decorator == null) return;
+          if (decorator == null || decorator.isHeaderVisible()) return;
           ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(decorator.getToolWindowId());
           ToolWindowAnchor anchor = window != null ? window.getAnchor() : null;
           if (anchor == ToolWindowAnchor.BOTTOM && SwingUtilities.isLeftMouseButton(e) && myPressPoint != null) {
@@ -394,6 +395,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mouseEntered(MouseEvent e) {
+          InternalDecorator decorator = ComponentUtil.getParentOfType(InternalDecorator.class, myComponent);
+          if (decorator == null || decorator.isHeaderVisible()) {
+            e.getComponent().setCursor(Cursor.getDefaultCursor());
+            return;
+          }
           e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
         }
 
@@ -1565,7 +1571,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       super.paintComponent(g);
       if (!Registry.is("debugger.new.tool.window.layout")) return;
       InternalDecorator decorator = ComponentUtil.getParentOfType(InternalDecorator.class, myComponent);
-      if (decorator != null && myTabs.getTabCount() > 0) {
+      if (decorator != null && myTabs.getTabCount() > 0 && !decorator.isHeaderVisible()) {
         UIUtil.drawHeader(g, 0, getWidth(), decorator.getHeaderHeight(), decorator.isActive(), true, false, false);
       }
     }
