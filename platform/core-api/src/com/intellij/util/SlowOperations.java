@@ -45,7 +45,7 @@ public final class SlowOperations {
       return;
     }
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || !application.isDispatchThread() || ourAllowedFlag) {
+    if (application.isUnitTestMode() || !application.isDispatchThread() || application.isWriteAccessAllowed() || ourAllowedFlag) {
       return;
     }
     String stackTrace = ExceptionUtil.currentStackTrace();
