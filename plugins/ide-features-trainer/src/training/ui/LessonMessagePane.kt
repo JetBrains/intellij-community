@@ -176,7 +176,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
     val startRect = modelToView(lessonMessage.start) ?: return null
     val endRect = modelToView(lessonMessage.end - 1) ?: return null
-    return Rectangle(startRect.x, startRect.y, endRect.x + endRect.width - startRect.x, endRect.y + endRect.height - startRect.y)
+    return Rectangle(startRect.x, startRect.y, endRect.x + endRect.width - startRect.x, endRect.y + endRect.height - startRect.y + activeTaskInset*2)
   }
 
   fun redrawMessages() {
