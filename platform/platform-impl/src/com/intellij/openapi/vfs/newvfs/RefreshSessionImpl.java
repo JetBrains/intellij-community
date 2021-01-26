@@ -189,7 +189,7 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents(@NotNull List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  void fireEvents(@NotNull List<? extends DisclosedVfsEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     try {
       ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
@@ -217,7 +217,7 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  private void fireEventsInWriteAction(@NotNull List<? extends VFileEvent> events,
+  private void fireEventsInWriteAction(@NotNull List<? extends DisclosedVfsEvent> events,
                                        @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 

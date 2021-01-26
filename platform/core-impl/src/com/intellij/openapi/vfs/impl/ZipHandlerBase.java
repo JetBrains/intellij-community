@@ -11,6 +11,7 @@ import com.intellij.util.io.ResourceHandle;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -23,7 +24,24 @@ import java.util.zip.ZipFile;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
   @ApiStatus.Internal
-  public static final boolean USE_CRC_INSTEAD_OF_TIMESTAMP = SystemProperties.is("zip.handler.uses.crc.instead.of.timestamp");
+  public static volatile boolean USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
+
+  private static boolean getUseCrcInsteadOfTimestampPropertyValue() {
+    return SystemProperties.is("zip.handler.uses.crc.instead.of.timestamp");
+  }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void forceUseCrcInsteadOfTimestamp() {
+    USE_CRC_INSTEAD_OF_TIMESTAMP = true;
+  }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void resetUseCrcInsteadOfTimestamp() {
+    USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
+  }
+
 
   public ZipHandlerBase(@NotNull String path) {
     super(path);
