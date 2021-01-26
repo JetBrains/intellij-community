@@ -29,7 +29,9 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.WeighingService
 import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.util.ProximityLocation
 import com.intellij.psi.util.proximity.PsiProximityComparator
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -51,6 +53,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.name.parentOrNull
@@ -274,13 +277,16 @@ class KotlinAddImportAction internal constructor(
 
 private class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
     private val classifier = ImportableFqNameClassifier(file)
-    private val proximityComparator = PsiProximityComparator(file)
+    private val statsManager = StatisticsManager.getInstance()
+    private val proximityLocation = ProximityLocation(file, file.module)
 
     inner class Priority(descriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) : Comparable<Priority> {
         private val isDeprecated = isDeprecatedAtCallSite(descriptor) { languageVersionSettings }
         private val fqName = descriptor.importableFqName!!
         private val classification = classifier.classify(fqName, false)
         private val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(file.project, descriptor)
+        private val lastUseRecency = statsManager.getLastUseRecency(KotlinStatisticsInfo.forDescriptor(descriptor))
+        private val proximityWeight = WeighingService.weigh(PsiProximityComparator.WEIGHER_KEY, declaration, proximityLocation)
 
         override fun compareTo(other: Priority): Int {
             if (isDeprecated != other.isDeprecated) {
@@ -290,8 +296,11 @@ private class Prioritizer(private val file: KtFile, private val compareNames: Bo
             val c1 = classification.compareTo(other.classification)
             if (c1 != 0) return c1
 
-            val c2 = proximityComparator.compare(declaration, other.declaration)
+            val c2 = lastUseRecency.compareTo(other.lastUseRecency)
             if (c2 != 0) return c2
+
+            val c3 = proximityWeight.compareTo(other.proximityWeight)
+            if (c3 != 0) return -c3 // n.b. reversed
 
             if (compareNames) {
                 return fqName.asString().compareTo(other.fqName.asString())
