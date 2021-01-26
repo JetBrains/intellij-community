@@ -38,12 +38,14 @@ final class VmOptionsGenerator {
 
   private static List<String> vmMemoryOptions(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
+      case JvmArchitecture.x32:
+        return ['-Xms128m', '-Xmx512m', '-XX:ReservedCodeCacheSize=384m']
       // when changing, please review usages of `ProductProperties#getCustomJvmMemoryOptionsX64` and synchronize if necessary
-      case JvmArchitecture.x32: return ['-Xms128m', '-Xmx512m', '-XX:ReservedCodeCacheSize=384m']
-      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
-      case JvmArchitecture.aarch64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
-      // todo review options for aarch64
+      case JvmArchitecture.x64:
+      case JvmArchitecture.aarch64:
+        return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
+      default:
+        throw new AssertionError(arch)
     }
-    throw new AssertionError(arch)
   }
 }
