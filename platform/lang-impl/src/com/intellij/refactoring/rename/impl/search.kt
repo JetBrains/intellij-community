@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
-import com.intellij.find.usages.impl.TextUsage
+import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.model.psi.impl.allReferencesInElement
 import com.intellij.model.psi.impl.hasReferencesInElement
@@ -141,6 +141,6 @@ private fun Query<out TextOccurrence>.mapToUsages(
 ): Query<out RenameUsage> {
   return mapping { occurrence: TextOccurrence ->
     val rangeInElement = TextRange.from(occurrence.offsetInElement, searchString.length)
-    TextRenameUsage(TextUsage(occurrence.element, rangeInElement), textReplacement)
+    TextRenameUsage(PsiUsage.textUsage(occurrence.element, rangeInElement), textReplacement)
   }
 }

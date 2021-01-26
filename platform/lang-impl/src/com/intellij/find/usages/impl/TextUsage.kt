@@ -4,7 +4,6 @@ package com.intellij.find.usages.impl
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
@@ -13,13 +12,6 @@ internal class TextUsage(
   override val file: PsiFile,
   override val range: TextRange
 ) : PsiUsage {
-
-  constructor(
-    element: PsiElement, rangeInElement: TextRange
-  ) : this(
-    file = if (element is PsiFile) element else element.containingFile,
-    range = if (element is PsiFile) rangeInElement else rangeInElement.shiftRight(element.textRange.startOffset)
-  )
 
   override fun createPointer(): Pointer<out TextUsage> = TextUsagePointer(file, range)
 

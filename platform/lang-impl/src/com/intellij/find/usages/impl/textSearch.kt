@@ -3,6 +3,7 @@
 
 package com.intellij.find.usages.impl
 
+import com.intellij.find.usages.api.PsiUsage
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.Usage
 import com.intellij.model.psi.impl.hasReferencesInElement
@@ -29,7 +30,7 @@ internal fun buildTextQuery(project: Project, searchString: String, searchScope:
         emptyList()
       }
       else {
-        listOf(PlainTextUsage(TextUsage(start, TextRange.from(offsetInStart, length))))
+        listOf(PlainTextUsage(PsiUsage.textUsage(start, TextRange.from(offsetInStart, length))))
       }
     }
 }

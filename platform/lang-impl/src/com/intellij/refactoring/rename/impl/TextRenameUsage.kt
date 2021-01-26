@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
-import com.intellij.find.usages.impl.TextUsage
+import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -14,21 +14,21 @@ import com.intellij.util.text.StringOperation
 internal typealias TextReplacement = (newName: String) -> String?
 
 internal class TextRenameUsage(
-  private val textUsage: TextUsage,
+  private val psiUsage: PsiUsage,
   private val textReplacement: TextReplacement
 ) : PsiRenameUsage, ModifiableRenameUsage {
 
   override val declaration: Boolean get() = false
 
-  override val file: PsiFile get() = textUsage.file
+  override val file: PsiFile get() = psiUsage.file
 
-  override val range: TextRange get() = textUsage.range
+  override val range: TextRange get() = psiUsage.range
 
-  override fun createPointer(): Pointer<out TextRenameUsage> = TextUsagePointer(textUsage, textReplacement)
+  override fun createPointer(): Pointer<out TextRenameUsage> = TextUsagePointer(psiUsage, textReplacement)
 
-  private class TextUsagePointer(textUsage: TextUsage, private val textReplacement: TextReplacement) : Pointer<TextRenameUsage> {
+  private class TextUsagePointer(psiUsage: PsiUsage, private val textReplacement: TextReplacement) : Pointer<TextRenameUsage> {
 
-    private val myTextUsagePointer: Pointer<out TextUsage> = textUsage.createPointer()
+    private val myTextUsagePointer: Pointer<out PsiUsage> = psiUsage.createPointer()
 
     override fun dereference(): TextRenameUsage? {
       return myTextUsagePointer.dereference()?.let {

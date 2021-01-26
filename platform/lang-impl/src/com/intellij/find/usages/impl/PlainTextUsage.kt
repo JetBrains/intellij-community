@@ -4,9 +4,9 @@ package com.intellij.find.usages.impl
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 
-internal class PlainTextUsage(private val textUsage: TextUsage) : PsiUsage by textUsage {
+internal class PlainTextUsage(private val psiUsage: PsiUsage) : PsiUsage by psiUsage {
 
   override fun createPointer(): Pointer<out PsiUsage> {
-    return Pointer.delegatingPointer(textUsage.createPointer(), javaClass, ::PlainTextUsage)
+    return Pointer.delegatingPointer(psiUsage.createPointer(), javaClass, ::PlainTextUsage)
   }
 }
