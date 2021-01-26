@@ -145,6 +145,8 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             th("Time processing up-to-date files")
             th("Time updating content-less indexes")
             th("Time indexing without content")
+            th("Scanned files (not indexed by extensions)")
+            th("Files fully indexed by extensions")
           }
         }
         tbody {
@@ -160,6 +162,16 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
               td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
               td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+              if (scanningStats.scannedFilesNonIndexedByInfrastructureExtensions != null) {
+                td(scanningStats.scannedFilesNonIndexedByInfrastructureExtensions.joinToString("\n") { it.presentablePath })
+              } else {
+                td("<unknown>")
+              }
+              if (scanningStats.filesFullyIndexedByInfrastructureExtensions != null) {
+                td(scanningStats.filesFullyIndexedByInfrastructureExtensions.joinToString("\n") { it.presentablePath })
+              } else {
+                td("<unknown>")
+              }
             }
           }
         }

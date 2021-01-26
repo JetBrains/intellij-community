@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class JsonScanningStatistics(
@@ -14,5 +15,9 @@ data class JsonScanningStatistics(
   val scanningTime: JsonDuration,
   val timeProcessingUpToDateFiles: JsonDuration,
   val timeUpdatingContentLessIndexes: JsonDuration,
-  val timeIndexingWithoutContent: JsonDuration
+  val timeIndexingWithoutContent: JsonDuration,
+
+  // Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
+  val scannedFilesNonIndexedByInfrastructureExtensions: List<PortableFilePath>?,
+  val filesFullyIndexedByInfrastructureExtensions: List<PortableFilePath>?
 )

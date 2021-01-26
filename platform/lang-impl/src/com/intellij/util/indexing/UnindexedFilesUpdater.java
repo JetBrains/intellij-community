@@ -335,7 +335,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
           if (status.getShouldIndex() && ourTestMode == null) {
             files.add(fileOrDir);
           }
-          scanningStatistics.addStatus(status, statusTime);
+          scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
         }
         return true;
       };

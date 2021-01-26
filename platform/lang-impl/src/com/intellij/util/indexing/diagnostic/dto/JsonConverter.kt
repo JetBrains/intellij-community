@@ -10,8 +10,17 @@ fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 // Can be used to skip int value from JSON if it is equal to 0 (to not pollute the JSON report).
 typealias PositiveInt = Int?
 
-fun ScanningStatistics.toJsonStatistics() =
-  JsonScanningStatistics(
+fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
+  val (scannedFilesNonIndexedByInfrastructureExtensions, filesFullyIndexedByInfrastructureExtensions) =
+    if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+      scannedFiles.filter { !it.wasFullyIndexedByInfrastructureExtension }.map { it.portableFilePath } to
+        scannedFiles.filter { it.wasFullyIndexedByInfrastructureExtension }.map { it.portableFilePath }
+    }
+    else {
+      null to null
+    }
+
+  return JsonScanningStatistics(
     providerName = fileSetName,
     numberOfScannedFiles = numberOfScannedFiles,
     numberOfFilesForIndexing = numberOfFilesForIndexing,
@@ -21,8 +30,11 @@ fun ScanningStatistics.toJsonStatistics() =
     scanningTime = JsonDuration(scanningTime),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
     timeUpdatingContentLessIndexes = JsonDuration(timeUpdatingContentLessIndexes),
-    timeIndexingWithoutContent = JsonDuration(timeIndexingWithoutContent)
+    timeIndexingWithoutContent = JsonDuration(timeIndexingWithoutContent),
+    filesFullyIndexedByInfrastructureExtensions = filesFullyIndexedByInfrastructureExtensions,
+    scannedFilesNonIndexedByInfrastructureExtensions = scannedFilesNonIndexedByInfrastructureExtensions
   )
+}
 
 fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
   val indexedFilePaths = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) indexedFiles else null
