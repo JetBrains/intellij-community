@@ -11,14 +11,12 @@ fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 typealias PositiveInt = Int?
 
 fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
-  val (scannedFilesNonIndexedByInfrastructureExtensions, filesFullyIndexedByInfrastructureExtensions) =
-    if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      scannedFiles.filter { !it.wasFullyIndexedByInfrastructureExtension }.map { it.portableFilePath } to
-        scannedFiles.filter { it.wasFullyIndexedByInfrastructureExtension }.map { it.portableFilePath }
-    }
-    else {
-      null to null
-    }
+  val jsonScannedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+    scannedFiles.map { it.toJson() }
+  }
+  else {
+    null
+  }
 
   return JsonScanningStatistics(
     providerName = fileSetName,
@@ -31,19 +29,24 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
     timeUpdatingContentLessIndexes = JsonDuration(timeUpdatingContentLessIndexes),
     timeIndexingWithoutContent = JsonDuration(timeIndexingWithoutContent),
-    filesFullyIndexedByInfrastructureExtensions = filesFullyIndexedByInfrastructureExtensions,
-    scannedFilesNonIndexedByInfrastructureExtensions = scannedFilesNonIndexedByInfrastructureExtensions
+    scannedFiles = jsonScannedFiles
   )
 }
 
+fun ScanningStatistics.ScannedFile.toJson(): JsonScanningStatistics.JsonScannedFile =
+  JsonScanningStatistics.JsonScannedFile(
+    path = portableFilePath,
+    isUpToDate = isUpToDate,
+    wasFullyIndexedByInfrastructureExtension = wasFullyIndexedByInfrastructureExtension
+  )
+
 @Suppress("DuplicatedCode")
 fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
-  val (indexedFiles, filesFullyIndexedByExtensions) = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-    indexedFiles.filter { !it.wasFullyIndexedByExtensions }.map { it.portableFilePath } to
-      indexedFiles.filter { it.wasFullyIndexedByExtensions }.map { it.portableFilePath }
+  val jsonIndexedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+    indexedFiles.map { it.toJson() }
   }
   else {
-    null to null
+    null
   }
 
   return JsonFileProviderIndexStatistics(
@@ -52,10 +55,14 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
     totalIndexingTime = JsonDuration(totalIndexingTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
-    indexedFiles = indexedFiles,
-    filesFullyIndexedByExtensions = filesFullyIndexedByExtensions
+    indexedFiles = jsonIndexedFiles
   )
 }
+
+fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
+  path = portableFilePath,
+  wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
+)
 
 fun ProjectIndexingHistory.IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(

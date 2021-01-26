@@ -16,8 +16,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.ZonedDateTime
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
 import kotlin.streams.toList
 
 /**
@@ -127,11 +125,12 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             JsonDuration(456),
             JsonDuration(789),
             JsonDuration(222),
-            scannedFilesNonIndexedByInfrastructureExtensions = listOf(
-              PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java")
-            ),
-            filesFullyIndexedByInfrastructureExtensions = listOf(
-              PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/b.java")
+            scannedFiles = listOf(
+              JsonScanningStatistics.JsonScannedFile(
+                path = PortableFilePath.RelativePath (PortableFilePath.ProjectRoot, "src/a.java"),
+                isUpToDate = true,
+                wasFullyIndexedByInfrastructureExtension = false
+              )
             )
           )
         ),
@@ -143,10 +142,10 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             JsonDuration(123),
             1,
             listOf(
-              PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java")
-            ),
-            listOf(
-              PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/b.java")
+              JsonFileProviderIndexStatistics.JsonIndexedFile(
+                path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
+                wasFullyIndexedByExtensions = true
+              )
             )
           )
         )
@@ -154,6 +153,9 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     )
 
     val mapper = jacksonObjectMapper().registerKotlinModule()
+
+    println(mapper.writeValueAsString(indexDiagnostic))
+
     val deserialized = mapper.readValue<JsonIndexDiagnostic>(mapper.writeValueAsString(indexDiagnostic))
     Assert.assertEquals(indexDiagnostic, deserialized)
   }

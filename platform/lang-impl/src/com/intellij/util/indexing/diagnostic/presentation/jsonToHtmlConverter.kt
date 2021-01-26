@@ -149,8 +149,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             th("Time processing up-to-date files")
             th("Time updating content-less indexes")
             th("Time indexing without content")
-            th("Scanned files (not indexed by extensions)")
-            th("Files fully indexed by extensions")
+            th("Scanned files")
           }
         }
         tbody {
@@ -169,13 +168,14 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td {
                 textarea {
                   rawText(
-                    scanningStats.scannedFilesNonIndexedByInfrastructureExtensions.orEmpty().joinToString("\n") { it.presentablePath }
+                    scanningStats.scannedFiles.orEmpty().joinToString("\n") { file ->
+                      file.path.presentablePath + when {
+                        file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
+                        file.isUpToDate -> " [up-to-date]"
+                        else -> ""
+                      }
+                    }
                   )
-                }
-              }
-              td {
-                textarea {
-                  rawText(scanningStats.filesFullyIndexedByInfrastructureExtensions.orEmpty().joinToString("\n") { it.presentablePath })
                 }
               }
             }
@@ -192,8 +192,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             th("Number of indexed files")
             th("Number of files indexed by infrastructure extensions")
             th("Number of too large for indexing files")
-            th("Files (not fully indexed by extensions)")
-            th("Files fully indexed by extensions")
+            th("Indexed files")
           }
         }
         tbody {
@@ -204,8 +203,13 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(providerStats.totalNumberOfFiles.toString())
               td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
               td(providerStats.numberOfTooLargeForIndexingFiles.toString())
-              td { textarea { rawText(providerStats.indexedFiles.orEmpty().joinToString("\n") { it.presentablePath }) } }
-              td { textarea { rawText(providerStats.filesFullyIndexedByExtensions.orEmpty().joinToString("\n") { it.presentablePath }) } }
+              td {
+                textarea {
+                  rawText(providerStats.indexedFiles.orEmpty().joinToString("\n") { file ->
+                    file.path.presentablePath + if (file.wasFullyIndexedByExtensions) " [by infrastructure]" else ""
+                  })
+                }
+              }
             }
           }
         }

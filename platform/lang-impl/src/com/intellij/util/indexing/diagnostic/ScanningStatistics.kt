@@ -28,7 +28,7 @@ class ScanningStatistics(val fileSetName: String) {
 
   val scannedFiles = arrayListOf<ScannedFile>()
 
-  data class ScannedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByInfrastructureExtension: Boolean)
+  data class ScannedFile(val portableFilePath: PortableFilePath, val isUpToDate: Boolean, val wasFullyIndexedByInfrastructureExtension: Boolean)
 
   fun addStatus(fileOrDir: VirtualFile, unindexedFileStatus: UnindexedFileStatus, statusTime: Long, project: Project) {
     if (fileOrDir.isDirectory) return
@@ -47,7 +47,7 @@ class ScanningStatistics(val fileSetName: String) {
     }
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       val portableFilePath = getIndexedFilePath(fileOrDir, project)
-      scannedFiles += ScannedFile(portableFilePath, unindexedFileStatus.wasFullyIndexedByInfrastructureExtension)
+      scannedFiles += ScannedFile(portableFilePath, !unindexedFileStatus.shouldIndex, unindexedFileStatus.wasFullyIndexedByInfrastructureExtension)
     }
   }
 
