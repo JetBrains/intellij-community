@@ -611,23 +611,19 @@ public final class HighlightControlFlowUtil {
     }
     PsiReferenceExpression reference = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiReferenceExpression.class);
     PsiVariable variable = reference == null ? null : ObjectUtils.tryCast(reference.resolve(), PsiVariable.class);
-    if (!(variable instanceof PsiPatternVariable)) {
-      if (variable == null || !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
-      final boolean canWrite = canWriteToFinal(variable, expression, reference, containingFile) && checkWriteToFinalInsideLambda(variable, reference) == null;
-      if (canWrite) return null;
-    }
+    if (variable == null || !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
+    final boolean canWrite = canWriteToFinal(variable, expression, reference, containingFile) && checkWriteToFinalInsideLambda(variable, reference) == null;
+    if (canWrite) return null;
     final String name = variable.getName();
     String description = JavaErrorBundle.message("assignment.to.final.variable", name);
     final HighlightInfo highlightInfo =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference).descriptionAndTooltip(description).create();
-    if (!(variable instanceof PsiPatternVariable)) {
-      final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
-      if (innerClass == null || variable instanceof PsiField) {
-        HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
-      }
-      else {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
-      }
+    final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
+    if (innerClass == null || variable instanceof PsiField) {
+      HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
+    }
+    else {
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
     }
     return highlightInfo;
   }

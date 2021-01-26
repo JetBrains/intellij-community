@@ -1381,7 +1381,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
       PsiVariable variable = (PsiVariable)resolved;
       boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);
-      if (isFinal && !variable.hasInitializer()) {
+      if (isFinal && !variable.hasInitializer() && !(variable instanceof PsiPatternVariable)) {
         if (!myHolder.hasErrorResults()) {
           myHolder.add(HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, myFinalVarProblems));
         }

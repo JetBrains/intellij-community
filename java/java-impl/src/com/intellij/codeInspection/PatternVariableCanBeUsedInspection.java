@@ -36,7 +36,8 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         if (scope == null) return;
         PsiDeclarationStatement declaration = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
         if (declaration == null) return;
-        if (!variable.hasModifierProperty(PsiModifier.FINAL) &&
+        if (!PsiUtil.isLanguageLevel16OrHigher(holder.getFile()) &&
+            !variable.hasModifierProperty(PsiModifier.FINAL) &&
             !HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return;
         PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(cast);
         if (instanceOf != null) {
@@ -54,7 +55,7 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
     private final SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
     private final String myName;
 
-    public PatternVariableCanBeUsedFix(@NotNull String name, @NotNull PsiInstanceOfExpression instanceOf) {
+    private PatternVariableCanBeUsedFix(@NotNull String name, @NotNull PsiInstanceOfExpression instanceOf) {
       myName = name;
       myInstanceOfPointer = SmartPointerManager.createPointer(instanceOf);
     }
@@ -85,7 +86,11 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       PsiInstanceOfExpression instanceOf = myInstanceOfPointer.getElement();
       if (instanceOf == null) return;
       CommentTracker ct = new CommentTracker();
-      ct.replace(instanceOf, ct.text(instanceOf.getOperand()) + " instanceof " + typeElement.getText() + " " + variable.getName());
+      PsiModifierList modifierList = variable.getModifierList();
+      String modifiers = modifierList == null || modifierList.getTextLength() == 0 || !PsiUtil.isLanguageLevel16OrHigher(variable) ? 
+                         "" : modifierList.getText() + " ";
+      ct.replace(instanceOf, ct.text(instanceOf.getOperand()) + 
+                             " instanceof " + modifiers + typeElement.getText() + " " + variable.getName());
       ct.deleteAndRestoreComments(variable);
     }
 

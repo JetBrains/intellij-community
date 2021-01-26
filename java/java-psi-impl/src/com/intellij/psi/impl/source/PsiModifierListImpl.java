@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -184,6 +185,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       Collections.addAll(implicitModifiers, FINAL);
     }
     else if (parent instanceof PsiResourceVariable) {
+      Collections.addAll(implicitModifiers, FINAL);
+    }
+    else if (parent instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(parent)) {
       Collections.addAll(implicitModifiers, FINAL);
     }
     return implicitModifiers;

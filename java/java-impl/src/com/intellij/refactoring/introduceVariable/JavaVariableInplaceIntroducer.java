@@ -40,6 +40,7 @@ import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -249,7 +250,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   @Override
   @Nullable
   protected JComponent getComponent() {
-    if (getVariable() instanceof PsiPatternVariable) return null;
+    if (getVariable() instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(getVariable())) return null;
     if (myCantChangeFinalModifier && !(myCanBeVarType && getVariable() instanceof PsiLocalVariable)) return null;
     if (!myCantChangeFinalModifier) {
       myCanBeFinalCb = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.final"));

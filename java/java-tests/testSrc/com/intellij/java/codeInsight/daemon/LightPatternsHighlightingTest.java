@@ -36,8 +36,11 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   public void testInstanceOfInSwitch() {
     doTest();
   }
-  public void testReassignPatternVariable() {
+  public void testReassignPatternVariableJava15() {
     doTest();
+  }
+  public void testReassignPatternVariable() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
   }
   public void testUnusedPatternVariable() {
     myFixture.enableInspections(new UnusedDeclarationInspection());

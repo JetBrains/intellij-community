@@ -112,8 +112,10 @@ final class VariableExtractor {
 
     highlight(var);
 
-    if (!(var instanceof PsiPatternVariable)) {
+    if (!(var instanceof PsiPatternVariable) || PsiUtil.isLanguageLevel16OrHigher(myContainer.getContainingFile())) {
       PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
+    }
+    if (!(var instanceof PsiPatternVariable)) {
       if (mySettings.isDeclareVarType()) {
         PsiTypeElement typeElement = var.getTypeElement();
         LOG.assertTrue(typeElement != null);
