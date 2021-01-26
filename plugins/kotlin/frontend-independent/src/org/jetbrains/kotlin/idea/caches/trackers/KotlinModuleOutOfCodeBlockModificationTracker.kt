@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
@@ -13,15 +15,15 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.CommonProcessors
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinModuleOutOfCodeBlockModificationTracker private constructor(private val module: Module, private val updater: Updater) :
-    ModificationTracker {
-
-    constructor(module: Module) :
-            this(module, KotlinCodeBlockModificationListener.getInstance(module.project).perModuleOutOfCodeBlockTrackerUpdater)
+class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) : ModificationTracker {
 
     private val kotlinOutOfCodeBlockTracker = KotlinCodeBlockModificationListener.getInstance(module.project).kotlinOutOfCodeBlockTracker
+
+    private val updater
+        get() = getUpdaterInstance(module.project)
 
     private val dependencies by lazy {
         // Avoid implicit capturing for this to make CachedValueStabilityChecker happy
@@ -61,17 +63,18 @@ class KotlinModuleOutOfCodeBlockModificationTracker private constructor(private 
     }
 
     companion object {
+        internal fun getUpdaterInstance(project: Project): Updater =
+            project.getServiceSafe()
+
         @TestOnly
-        fun getModificationCount(module: Module): Long {
-            val updater = KotlinCodeBlockModificationListener.getInstance(module.project).perModuleOutOfCodeBlockTrackerUpdater
-            return updater.getModificationCount(module)
-        }
+        fun getModificationCount(module: Module): Long = getUpdaterInstance(module.project).getModificationCount(module)
     }
 
-    internal class Updater(project: Project) {
-        private val kotlinOfOfCodeBlockTracker by lazy {
-            KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
-        }
+    @Service
+    class Updater(private val project: Project): Disposable {
+        private val kotlinOfOfCodeBlockTracker
+            get() =
+                KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
 
         private val perModuleModCount = mutableMapOf<Module, Long>()
 
@@ -117,5 +120,7 @@ class KotlinModuleOutOfCodeBlockModificationTracker private constructor(private 
             lastAffectedModule = null
             perModuleModCount.clear()
         }
+
+        override fun dispose() = clean()
     }
 }

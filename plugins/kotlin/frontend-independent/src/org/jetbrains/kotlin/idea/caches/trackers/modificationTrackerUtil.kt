@@ -13,7 +13,7 @@ fun getLatestModificationCount(modules: Collection<Module>): Long {
         return ModificationTracker.NEVER_CHANGED.modificationCount
 
     val modificationCountUpdater =
-        KotlinCodeBlockModificationListener.getInstance(modules.first().project).perModuleOutOfCodeBlockTrackerUpdater
+        KotlinModuleOutOfCodeBlockModificationTracker.getUpdaterInstance(modules.first().project)
     return modules.maxOfOrNull { modificationCountUpdater.getModificationCount(it) }
         ?: ModificationTracker.NEVER_CHANGED.modificationCount
 }

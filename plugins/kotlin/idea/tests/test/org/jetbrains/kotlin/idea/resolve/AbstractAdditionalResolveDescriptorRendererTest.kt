@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
@@ -35,6 +36,10 @@ abstract class AbstractAdditionalResolveDescriptorRendererTest : AbstractDescrip
         mockProject.registerService(TreeAspect::class.java, TreeAspect())
         mockProject.registerService(PomModel::class.java, PomModelImpl(project))
         mockProject.registerService(PureKotlinCodeBlockModificationListener::class.java, PureKotlinCodeBlockModificationListener(mockProject))
+        mockProject.registerService(
+            KotlinModuleOutOfCodeBlockModificationTracker.Updater::class.java,
+            KotlinModuleOutOfCodeBlockModificationTracker.Updater(mockProject)
+        )
         mockProject.registerService(KotlinCodeBlockModificationListener::class.java, KotlinCodeBlockModificationListener(mockProject))
     }
 
