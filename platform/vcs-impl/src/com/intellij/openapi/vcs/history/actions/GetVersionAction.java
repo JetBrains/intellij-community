@@ -105,39 +105,6 @@ public class GetVersionAction extends AnAction implements DumbAware {
     new MyWriteVersionTask(project, actionTitle, providers, onFinished).queue();
   }
 
-
-  private static void refreshFile(@NotNull FilePath filePath) {
-    VirtualFile file = filePath.getVirtualFile();
-    if (file != null) {
-      file.refresh(false, false);
-    }
-    else {
-      VirtualFile parent = filePath.getVirtualFileParent();
-      if (parent != null) {
-        parent.refresh(false, true);
-      }
-    }
-  }
-
-  private static void write(@NotNull FilePath filePath, byte @Nullable [] revision) throws IOException {
-    VirtualFile virtualFile = filePath.getVirtualFile();
-    if (revision == null) {
-      if (virtualFile != null) {
-        FileUtil.delete(filePath.getIOFile());
-      }
-    }
-    else {
-      if (virtualFile == null) {
-        FileUtil.writeToFile(filePath.getIOFile(), revision);
-      }
-      else {
-        virtualFile.setBinaryContent(revision);
-        // Avoid MemoryDiskConflictResolver. We've got user consent to override file in ReplaceFileConfirmationDialog.
-        FileDocumentManager.getInstance().reloadFiles(virtualFile);
-      }
-    }
-  }
-
   private static class MyWriteVersionTask extends Task.Backgroundable {
     @NotNull private final @NlsContexts.Label String myActionTitle;
     @NotNull private final List<FileRevisionProvider> myProviders;
@@ -184,6 +151,38 @@ public class GetVersionAction extends AnAction implements DumbAware {
       }
       finally {
         action.finish();
+      }
+    }
+
+    private static void write(@NotNull FilePath filePath, byte @Nullable [] revision) throws IOException {
+      VirtualFile virtualFile = filePath.getVirtualFile();
+      if (revision == null) {
+        if (virtualFile != null) {
+          FileUtil.delete(filePath.getIOFile());
+        }
+      }
+      else {
+        if (virtualFile == null) {
+          FileUtil.writeToFile(filePath.getIOFile(), revision);
+        }
+        else {
+          virtualFile.setBinaryContent(revision);
+          // Avoid MemoryDiskConflictResolver. We've got user consent to override file in ReplaceFileConfirmationDialog.
+          FileDocumentManager.getInstance().reloadFiles(virtualFile);
+        }
+      }
+    }
+
+    private static void refreshFile(@NotNull FilePath filePath) {
+      VirtualFile file = filePath.getVirtualFile();
+      if (file != null) {
+        file.refresh(false, false);
+      }
+      else {
+        VirtualFile parent = filePath.getVirtualFileParent();
+        if (parent != null) {
+          parent.refresh(false, true);
+        }
       }
     }
 
