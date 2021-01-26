@@ -286,7 +286,7 @@ fun LessonContext.highlightButtonById(actionId: String): CompletableFuture<Boole
       invokeLater {
         feature.complete(result.isNotEmpty())
         for (button in result) {
-          val options = LearningUiHighlightingManager.HighlightingOptions(clearPreviousHighlights = false)
+          val options = LearningUiHighlightingManager.HighlightingOptions(usePulsation = true, clearPreviousHighlights = false)
           LearningUiHighlightingManager.highlightComponent(button, options)
         }
       }

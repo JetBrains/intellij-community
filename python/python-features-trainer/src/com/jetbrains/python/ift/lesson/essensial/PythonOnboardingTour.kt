@@ -198,7 +198,7 @@ class PythonOnboardingTour(module: Module) :
 
     task {
       text("Let's run this sample. Right click at the free space somewhere in the editor to invoke the context menu.")
-      triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionMenuItem ->
         ui.text?.contains(runItem) ?: false
       }
     }
@@ -230,7 +230,7 @@ class PythonOnboardingTour(module: Module) :
 
   private fun LessonContext.openLearnToolwindow() {
     task {
-      triggerByUiComponentAndHighlight { stripe: StripeButton ->
+      triggerByUiComponentAndHighlight(usePulsation = true) { stripe: StripeButton ->
         stripe.windowInfo.id == "Learn"
       }
     }
@@ -253,7 +253,7 @@ class PythonOnboardingTour(module: Module) :
       LessonUtil.hideStandardToolwindows(project)
     }
     task {
-      triggerByUiComponentAndHighlight { stripe: StripeButton ->
+      triggerByUiComponentAndHighlight(usePulsation = true) { stripe: StripeButton ->
         stripe.windowInfo.id == "Project"
       }
     }
