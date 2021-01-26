@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.build.BuildProgressListener;
@@ -1322,6 +1322,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void addManagerListener(Listener listener) {
     myManagerListeners.add(listener);
+  }
+
+  public void addManagerListener(Listener listener, @NotNull Disposable parentDisposable) {
+    myManagerListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myManagerListeners.remove(listener));
   }
 
   public void addProjectsTreeListener(MavenProjectsTree.Listener listener) {
