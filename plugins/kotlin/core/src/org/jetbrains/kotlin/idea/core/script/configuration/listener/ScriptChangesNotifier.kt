@@ -33,7 +33,8 @@ internal class ScriptChangesNotifier(
     }
 
     private fun listenForChangesInScripts() {
-        project.messageBus.connect().subscribe(
+        val parentDisposable = KotlinPluginDisposable.getInstance(project)
+        project.messageBus.connect(parentDisposable).subscribe(
             FileEditorManagerListener.FILE_EDITOR_MANAGER,
             object : FileEditorManagerListener {
                 override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
@@ -45,7 +46,7 @@ internal class ScriptChangesNotifier(
                 }
 
                 private fun runScriptDependenciesUpdateIfNeeded(file: VirtualFile) {
-                    if (ApplicationManager.getApplication().isUnitTestMode) {
+                    if (isUnitTestMode()) {
                         getListener(project, file)?.editorActivated(file)
                     } else {
                         AppExecutorUtil.getAppExecutorService().submit {
@@ -68,7 +69,7 @@ internal class ScriptChangesNotifier(
                         return
                     }
 
-                    if (ApplicationManager.getApplication().isUnitTestMode) {
+                    if (isUnitTestMode()) {
                         getListener(project, file)?.documentChanged(file)
                     } else {
                         scriptsQueue.cancelAllRequests()
@@ -80,7 +81,7 @@ internal class ScriptChangesNotifier(
                     }
                 }
             },
-            project.messageBus.connect(),
+            parentDisposable
         )
     }
 

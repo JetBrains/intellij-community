@@ -239,7 +239,7 @@ private object TestOutputHandler : ScratchOutputHandlerAdapter() {
     }
 
     override fun onFinish(file: ScratchFile) {
-        TransactionGuard.submitTransaction(file.project, Runnable {
+        TransactionGuard.submitTransaction(KotlinPluginDisposable.getInstance(file.project), Runnable {
             val psiFile = file.getPsiFile()
                 ?: error(
                     "PsiFile cannot be found for scratch to render inlays in tests:\n" +

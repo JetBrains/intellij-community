@@ -20,6 +20,7 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 
@@ -59,7 +60,7 @@ class InlayScratchOutputHandler(
     }
 
     private fun createInlay(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
-        TransactionGuard.submitTransaction(file.project, Runnable {
+        TransactionGuard.submitTransaction(KotlinPluginDisposable.getInstance(file.project), Runnable {
             val editor = textEditor.editor
             val line = expression.lineStart
 
