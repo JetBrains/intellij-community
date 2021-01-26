@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -97,7 +97,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
       return;
     }
 
-    ToolWindowManagerImpl windowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+    ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
 
     ToolWindowEventSource source;
     if (e.getInputEvent() instanceof KeyEvent) {
@@ -118,14 +118,27 @@ public class ActivateToolWindowAction extends DumbAwareAction {
         if (hasEmptyState() && !toolWindow.isAvailable()) {
           toolWindow.setAvailable(true);
         }
-        windowManager.activateToolWindow(myToolWindowId, null, true, source);
+        if (windowManager instanceof ToolWindowManagerImpl) {
+          ((ToolWindowManagerImpl) windowManager).activateToolWindow(myToolWindowId, null, true, source);
+        }
+        else {
+          toolWindow.activate(null);
+        }
       }
       else if (hasEmptyState()) {
         createEmptyState(project);
       }
     }
     else {
-      windowManager.hideToolWindow(myToolWindowId, false, true, source);
+      if (windowManager instanceof ToolWindowManagerImpl) {
+        ((ToolWindowManagerImpl) windowManager).hideToolWindow(myToolWindowId, false, true, source);
+      }
+      else {
+        ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);
+        if (toolWindow != null) {
+          toolWindow.hide(null);
+        }
+      }
     }
   }
 
