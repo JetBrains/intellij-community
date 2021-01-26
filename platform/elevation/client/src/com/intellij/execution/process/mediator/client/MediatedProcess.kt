@@ -60,7 +60,9 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
     outFile: File?,
     errFile: File?,
   ) : this(
-    handle = MediatedProcessHandle(processMediatorClient, command, workingDir, environVars, inFile, outFile, errFile),
+    handle = MediatedProcessHandle(processMediatorClient) {
+      createProcess(command, workingDir, environVars, inFile, outFile, errFile)
+    },
     pipeStdin = (inFile == null),
     pipeStdout = (outFile == null),
     pipeStderr = (errFile == null),
@@ -173,12 +175,7 @@ open class MediatedProcess private constructor(private val handle: MediatedProce
  */
 private class MediatedProcessHandle(
   private val client: ProcessMediatorClient,
-  command: List<String>,
-  workingDir: File,
-  environVars: Map<String, String>,
-  inFile: File?,
-  outFile: File?,
-  errFile: File?,
+  createProcess: suspend ProcessMediatorClient.() -> Long,
 ) {
 
   private val parentScope: CoroutineScope = client.coroutineScope
@@ -202,7 +199,7 @@ private class MediatedProcessHandle(
 
   val pid: Deferred<Long> = parentScope.async {
     try {
-      client.createProcess(command, workingDir, environVars, inFile, outFile, errFile)
+      client.createProcess()
     }
     catch (e: Throwable) {
       releaseJob.cancel("Failed to create process")
