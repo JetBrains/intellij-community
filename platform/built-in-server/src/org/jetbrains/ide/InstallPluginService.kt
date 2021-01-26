@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
+import com.google.gson.reflect.TypeToken
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -36,15 +37,23 @@ internal class InstallPluginService : RestService() {
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val pluginId = getStringParameter("pluginId", urlDecoder)
+    val passedPluginIds = getStringParameter("pluginIds", urlDecoder)
     val action = getStringParameter("action", urlDecoder)
 
-    if (pluginId.isNullOrBlank()) {
+    if (pluginId.isNullOrBlank() && passedPluginIds.isNullOrBlank()) {
       return productInfo(request, context)
     }
 
+    val pluginIds = if (pluginId.isNullOrBlank()) {
+      gson.fromJson(passedPluginIds, object : TypeToken<List<String?>?>() {}.type)
+    }
+    else {
+      listOf(pluginId)
+    }
+
     return when (action) {
-      "checkCompatibility" -> checkCompatibility(request, context, pluginId)
-      "install" -> installPlugin(request, context, pluginId)
+      "checkCompatibility" -> checkCompatibility(request, context, pluginIds)
+      "install" -> installPlugin(request, context, pluginIds)
       else -> productInfo(request, context)
     }
   }
@@ -52,10 +61,10 @@ internal class InstallPluginService : RestService() {
   private fun checkCompatibility(
     request: FullHttpRequest,
     context: ChannelHandlerContext,
-    pluginId: String
+    pluginIds: List<String>
   ): Nothing? {
     //check if there is an update for this IDE with this ID.
-    val compatibleUpdateExists = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(pluginId) != null
+    val compatibleUpdateExists = pluginIds.all { MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(it) != null }
     val out = BufferExposingByteArrayOutputStream()
 
     val writer = createJsonWriter(out)
@@ -70,17 +79,16 @@ internal class InstallPluginService : RestService() {
 
   private fun installPlugin(request: FullHttpRequest,
                             context: ChannelHandlerContext,
-                            pluginId: String): Nothing? {
-    PluginId.findId(pluginId)?.let {
-      if (isAvailable) {
-        isAvailable = false
-        val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          AppIcon.getInstance().requestAttention(effectiveProject, true)
-          PluginsAdvertiser.installAndEnable(setOf(it)) { }
-          isAvailable = true
-        }, effectiveProject.disposed)
-      }
+                            pluginIds: List<String>): Nothing? {
+    val plugins = pluginIds.mapNotNull { PluginId.findId(it) }
+    if (isAvailable) {
+      isAvailable = false
+      val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
+      ApplicationManager.getApplication().invokeLater(Runnable {
+        AppIcon.getInstance().requestAttention(effectiveProject, true)
+        PluginsAdvertiser.installAndEnable(plugins.toSet()) { }
+        isAvailable = true
+      }, effectiveProject.disposed)
     }
 
     sendOk(request, context)
