@@ -33,6 +33,13 @@ class AtomicBooleanProperty(initial: Boolean) : BooleanProperty, AtomicProperty<
     return newValue
   }
 
+  fun compareAndSet(expect: Boolean, update: Boolean): Boolean {
+    val succeed = value.compareAndSet(expect, update)
+    if (succeed) {
+      submitChangeEvents(expect, update)
+    }
+    return succeed
+  }
 
   private fun submitChangeEvents(oldValue: Boolean, newValue: Boolean) {
     when {
