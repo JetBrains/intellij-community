@@ -410,7 +410,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     catch (Throwable e) {
       projectIndexingHistory.getTimes().setWasInterrupted(true);
       if (e instanceof ControlFlowException) {
-        LOG.info("Unindexed files update canceled");
+        LOG.info("Cancelled");
       }
       throw e;
     }
