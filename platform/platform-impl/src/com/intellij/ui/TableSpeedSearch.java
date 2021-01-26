@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.ListIterator;
 
@@ -47,8 +48,19 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
   @NotNull
   @Override
-  protected ListIterator<Object> getElementIterator(int startingIndex) {
-    return new MyListIterator(startingIndex);
+  protected ListIterator<Object> getElementIterator(int startingViewIndex) {
+    int count = getElementCount();
+    return new AbstractList<>() {
+      @Override
+      public Object get(int index) {
+        return index;
+      }
+
+      @Override
+      public int size() {
+        return count;
+      }
+    }.listIterator(startingViewIndex);
   }
 
   @Override
@@ -81,72 +93,12 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   }
 
   @Override
-  protected Object @NotNull [] getAllElements() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
   protected String getElementText(Object element) {
     final int index = ((Integer)element).intValue();
     int row = index / myComponent.getColumnCount();
     int col = index % myComponent.getColumnCount();
     Object value = myComponent.getValueAt(row, col);
     return myToStringConvertor.fun(value, new Cell(row, col));
-  }
-
-  private class MyListIterator implements ListIterator<Object> {
-
-    private int myCursor;
-
-    MyListIterator(int startingIndex) {
-      final int total = getElementCount();
-      myCursor = startingIndex < 0 ? total : startingIndex;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myCursor < getElementCount();
-    }
-
-    @Override
-    public Object next() {
-      return myCursor++;
-    }
-
-    @Override
-    public boolean hasPrevious() {
-      return myCursor > 0;
-    }
-
-    @Override
-    public Object previous() {
-      return (myCursor--) - 1;
-    }
-
-    @Override
-    public int nextIndex() {
-      return myCursor;
-    }
-
-    @Override
-    public int previousIndex() {
-      return myCursor - 1;
-    }
-
-    @Override
-    public void remove() {
-      throw new AssertionError("Not Implemented");
-    }
-
-    @Override
-    public void set(Object o) {
-      throw new AssertionError("Not Implemented");
-    }
-
-    @Override
-    public void add(Object o) {
-      throw new AssertionError("Not Implemented");
-    }
   }
 
   @NotNull

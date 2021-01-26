@@ -45,13 +45,13 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
   }
 
   @Override
-  protected Object @NotNull [] getAllElements() {
-    ListModel model = myComponent.getModel();
-    Object[] elements = new Object[model.getSize()];
-    for (int i = 0; i < elements.length; i++) {
-      elements[i] = model.getElementAt(i);
-    }
-    return elements;
+  protected int getElementCount() {
+    return myComponent.getModel().getSize();
+  }
+
+  @Override
+  protected Object getElementAt(int viewIndex) {
+    return myComponent.getModel().getElementAt(viewIndex);
   }
 
   @Override

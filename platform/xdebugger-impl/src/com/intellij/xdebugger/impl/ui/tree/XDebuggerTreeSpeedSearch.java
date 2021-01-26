@@ -23,6 +23,7 @@ import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
@@ -93,15 +94,15 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     return null;
   }
 
+  @NotNull
   @Override
-  protected Object @NotNull [] getAllElements() {
+  protected JBIterable<TreePath> allPaths() {
     XDebuggerTreeNode root = ObjectUtils.tryCast(myComponent.getModel().getRoot(), XDebuggerTreeNode.class);
     int initialLevel = root != null ? root.getPath().getPathCount() : 0;
 
     return TreeUtil.treePathTraverser(myComponent)
         .expand(n -> myComponent.isExpanded(n) || n.getPathCount() - initialLevel < SEARCH_DEPTH)
         .traverse()
-        .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode))
-        .toArray(TreeUtil.EMPTY_TREE_PATH);
+        .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode));
   }
 }

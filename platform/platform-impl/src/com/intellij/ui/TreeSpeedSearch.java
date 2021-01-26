@@ -61,6 +61,10 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     new MySelectAllAction(tree, this).registerCustomShortcutSet(tree, null);
   }
 
+  public void setCanExpand(boolean canExpand) {
+    myCanExpand = canExpand;
+  }
+
   @Override
   protected void selectElement(Object element, String selectedText) {
     TreeUtil.selectPath(myComponent, (TreePath)element);
@@ -75,22 +79,35 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
+  @NotNull
   @Override
-  protected Object @NotNull [] getAllElements() {
+  protected final ListIterator<Object> getElementIterator(int startingViewIndex) {
+    return allPaths().addAllTo(new ArrayList<Object>()).listIterator(startingViewIndex);
+  }
+
+  @Override
+  protected final int getElementCount() {
+    return allPaths().size();
+  }
+
+  @NotNull
+  protected JBIterable<TreePath> allPaths() {
+    return allPaths(getComponent(), myCanExpand);
+  }
+
+  static @NotNull JBIterable<TreePath> allPaths(JTree tree, boolean expand) {
     JBIterable<TreePath> paths;
-    if (myCanExpand) {
-      paths = TreeUtil.treePathTraverser(myComponent).traverse();
+    if (expand) {
+      paths = TreeUtil.treePathTraverser(tree).traverse();
     }
     else {
-      TreePath[] arr = new TreePath[myComponent.getRowCount()];
+      TreePath[] arr = new TreePath[tree.getRowCount()];
       for (int i = 0; i < arr.length; i++) {
-        arr[i] = myComponent.getPathForRow(i);
+        arr[i] = tree.getPathForRow(i);
       }
       paths = JBIterable.of(arr);
     }
-    return paths
-      .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode))
-      .toArray(TreeUtil.EMPTY_TREE_PATH);
+    return paths.filter(o -> !(o.getLastPathComponent() instanceof LoadingNode));
   }
 
   @Override

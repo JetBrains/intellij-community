@@ -624,9 +624,8 @@ public final class Switcher extends AnAction implements DumbAware {
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
               mySpeedSearch.hidePopup();
-              Object[] elements = mySpeedSearch.getAllElements();
-              if (elements != null && elements.length > 0) {
-                mySpeedSearch.selectElement(elements[0], "");
+              if (mySpeedSearch.getElementCount() > 0) {
+                mySpeedSearch.selectElement(mySpeedSearch.getElementAt(0), "");
               }
             }
             else {
@@ -1324,26 +1323,17 @@ public final class Switcher extends AnAction implements DumbAware {
       }
 
       @Override
-      protected Object @NotNull [] getAllElements() {
-        ListModel filesModel = myComponent.files.getModel();
-        Object[] files = new Object[filesModel.getSize()];
-        for (int i = 0; i < files.length; i++) {
-          files[i] = filesModel.getElementAt(i);
-        }
-
-        ListModel twModel = myComponent.toolWindows.getModel();
-        Object[] toolWindows = new Object[twModel.getSize()];
-        for (int i = 0; i < toolWindows.length; i++) {
-          toolWindows[i] = twModel.getElementAt(i);
-        }
-
-        Object[] elements = new Object[files.length + toolWindows.length];
-        System.arraycopy(files, 0, elements, 0, files.length);
-        System.arraycopy(toolWindows, 0, elements, files.length, toolWindows.length);
-
-        return elements;
+      protected int getElementCount() {
+        return myComponent.files.getModel().getSize() + myComponent.toolWindows.getModel().getSize();
       }
 
+      @Override
+      protected Object getElementAt(int viewIndex) {
+        ListModel<FileInfo> filesModel = myComponent.files.getModel();
+        ListModel<Object> twModel = myComponent.toolWindows.getModel();
+        if (viewIndex < filesModel.getSize()) return filesModel.getElementAt(viewIndex);
+        return twModel.getElementAt(viewIndex - filesModel.getSize());
+      }
 
       @Override
       protected String getElementText(Object element) {

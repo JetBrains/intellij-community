@@ -36,13 +36,13 @@ public abstract class TableViewSpeedSearch<Item> extends SpeedSearchBase<TableVi
   }
 
   @Override
-  protected int convertIndexToModel(int viewIndex) {
-    return myComponent.convertRowIndexToModel(viewIndex);
+  protected int getElementCount() {
+    return getComponent().getItems().size();
   }
 
   @Override
-  protected Object @NotNull [] getAllElements() {
-    return getComponent().getItems().toArray();
+  protected Object getElementAt(int viewIndex) {
+    return getComponent().getItems().get(myComponent.convertRowIndexToModel(viewIndex));
   }
 
   @Nullable
