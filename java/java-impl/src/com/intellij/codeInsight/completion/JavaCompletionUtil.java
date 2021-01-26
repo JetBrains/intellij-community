@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -33,6 +33,7 @@ import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.jsp.JspxLanguage;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -959,7 +960,7 @@ public final class JavaCompletionUtil {
 
   @NotNull
   public static String escapeXmlIfNeeded(InsertionContext context, @NotNull String generics) {
-    if (context.getFile().getViewProvider().getBaseLanguage() == StdLanguages.JSPX) {
+    if (context.getFile().getViewProvider().getBaseLanguage() instanceof JspxLanguage) {
       return StringUtil.escapeXmlEntities(generics);
     }
     return generics;
