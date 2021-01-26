@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
@@ -193,8 +194,14 @@ class ChainMethodCallsBlockBuilder {
   }
 
   private static boolean isMethodCall(@NotNull ChainedCallChunk callChunk) {
-    List<ASTNode> nodes = callChunk.nodes;
-    return nodes.size() >= 3 && nodes.get(2).getElementType() == JavaElementType.EXPRESSION_LIST;
+    for (Iterator<ASTNode> iter = callChunk.nodes.iterator(); iter.hasNext();) {
+      ASTNode node = iter.next();
+      if (node.getElementType() == JavaTokenType.IDENTIFIER) {
+        node = iter.hasNext() ? iter.next() : null;
+        return node != null && node.getElementType() == JavaElementType.EXPRESSION_LIST;
+      }
+    }
+    return false;
   }
 
 

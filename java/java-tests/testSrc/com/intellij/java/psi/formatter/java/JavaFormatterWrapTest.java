@@ -970,4 +970,28 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testIdea248594() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+
+    doTextTest(
+      "public class Test {\n" +
+      "    void foo() {\n" +
+      "        String zozo = List.<String>of(\"titi\", \"toto\", \"tutu\").stream().filter(it -> it.contains(\"i\"))\n" +
+      "                .findAny().<String>map(it -> it.replaceFirst(\"t\", \"l\")).orElse(\"zozoggrezgzee\");\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    void foo() {\n" +
+      "        String zozo = List.<String>of(\"titi\", \"toto\", \"tutu\")\n" +
+      "                .stream()\n" +
+      "                .filter(it -> it.contains(\"i\"))\n" +
+      "                .findAny()\n" +
+      "                .<String>map(it -> it.replaceFirst(\"t\", \"l\"))\n" +
+      "                .orElse(\"zozoggrezgzee\");\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
