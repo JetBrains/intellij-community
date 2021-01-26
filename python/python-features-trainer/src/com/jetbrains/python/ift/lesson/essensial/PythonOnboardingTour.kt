@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
@@ -24,7 +25,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.StripeButton
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
@@ -44,6 +44,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.JDialog
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -102,11 +103,9 @@ class PythonOnboardingTour(module: Module) :
     searchEverywhereTasks()
 
     task {
-      val closePath = ActionsBundle.message("group.FileMenu.text").dropMnemonic() + " | " + ActionsBundle.message("action.CloseProject.text").dropMnemonic()
-      text("You have just completed the onboarding tour! " +
-           "<ide/> Feature Trainer provides more task-oriented lessons. Try them as you work with the IDE. " +
-           "To start with your own Python project, close this demo by selecting ${strong(closePath)} from the main menu. " +
-           "Then you'll be able to open an existing project or create a new project in <ide/>.")
+      text("You have just completed the onboarding tour! Now you may follow the dialog and start to work with your project. " +
+           "<strong>Or</strong> you may close the dialog and continue to learn <ide/>." +
+           "This course provides more task-oriented lessons!")
     }
   }
 
@@ -431,48 +430,33 @@ class PythonOnboardingTour(module: Module) :
   }
 
   private fun LessonContext.searchEverywhereTasks() {
-    caret("AVERAGE", select = true)
     task("SearchEverywhere") {
-      text("You may notice we selected ${code("AVERAGE")}. Let's look at another important <ide/> feature: " +
-           "${LessonUtil.actionName(it)}. Press ${LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)} two times in a row.")
+      text("Now you may want to create your own project or open/import existing one. Let's press ${LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)} twice.")
       trigger(it)
       restoreIfModifiedOrMoved()
     }
 
+    val newProject = ActionsBundle.message("action.NewDirectoryProject.text")
+    val openProject = ActionsBundle.message("action.OpenFile.text").dropMnemonic()
     task {
-      text("Here you can find any entity in your project or any feature in <ide/> by its name! As you see, selected text automatically " +
-           "copied into input string. And the only item we found by now is the ${code("find_average")} function from the current file. " +
-           "Later you may pass the ${strong(LessonsBundle.message("search.everywhere.lesson.name"))} lesson to learn " +
-           "more about code navigation and library staff discover.")
-      text("Now let's clear the ${LessonUtil.actionName("SearchEverywhere")} input field.")
-      stateCheck { checkWordInSearch("") }
-      restoreIfModifiedOrMoved()
-    }
-
-    val toggleCase = ActionsBundle.message("action.EditorToggleCase.text")
-    task {
-      text("Suppose we want to make ${code("AVERAGE")} string to be lower case. Let's look for the corresponding action. " +
-           "Type ${strong("case")} into this search string.")
+      text("It is the Search Everywhere popup. Here you can find any code entity in your project <strong>or</strong> any action IDE or option by its name. " +
+           "Now start typing ${strong(newProject)} or ${strong(openProject)}.")
       triggerByListItemAndHighlight { item ->
-        (item as? GotoActionModel.MatchedValue)?.value?.let { GotoActionItemProvider.getActionText(it) } == toggleCase
+        (item as? GotoActionModel.MatchedValue)?.value?.let { GotoActionItemProvider.getActionText(it) }.let {
+          it == newProject || it == openProject
+        }
       }
-      restoreIfModifiedOrMoved()
     }
 
-    actionTask("EditorToggleCase") {
-      "We found ${strong(toggleCase)} action. Note that it has its own shortcut and you can remember and use it later. " +
-      "But it may be needed rarely so you can just find it again when you will need it. Now apply the action: " +
-      "select highlighted item and press ${LessonUtil.rawEnter()}. Or just click it."
-    }
-
+    val openDialogTitle = IdeBundle.message("title.open.file.or.project")
+    val newDialogTitle = IdeBundle.message("title.new.project")
     task {
-      text("You may want to look for some <ide/> feature without any interference with you own or library code entities. " +
-           "You can pass ${strong(LessonsBundle.message("goto.action.lesson.name"))} lesson to learn how to do it and more.")
+      text("Apply the action: select highlighted item and press ${LessonUtil.rawEnter()}. Or just click it by mouse.")
+      triggerByUiComponentAndHighlight(false, false) { dialog: JDialog ->
+        dialog.title == openDialogTitle || dialog.title == newDialogTitle
+      }
     }
   }
-
-  private fun TaskRuntimeContext.checkWordInSearch(expected: String): Boolean =
-    (focusOwner as? ExtendableTextField)?.text.equals(expected, ignoreCase = true)
 
   private fun TaskRuntimeContext.runManager() = RunManager.getInstance(project)
   private fun TaskRuntimeContext.configurations() =
