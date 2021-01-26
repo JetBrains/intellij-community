@@ -439,9 +439,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                              JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
       }
     }
-    if (reporter.isOnTheFly()) {
-      ContainerUtil.addIfNotNull(fixes, createExplainFix(ref, new TrackingRunner.ValueDfaProblemType(value)));
-    }
+    ContainerUtil.addIfNotNull(fixes, createExplainFix(ref, new TrackingRunner.ValueDfaProblemType(value)));
 
     ProblemHighlightType type;
     String message;
@@ -683,15 +681,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiJavaCodeReferenceElement annoName = annotation.getNameReferenceElement();
     assert annoName != null;
     String msg = JavaAnalysisBundle
-      .message("dataflow.message.return.notnull.from.nullable", NullableStuffInspectionBase.getPresentableAnnoName(annotation), method.getName());
-    LocalQuickFix[] fixes = {AddAnnotationPsiFix.createAddNotNullFix(method)};
-    if (holder.isOnTheFly()) {
-      fixes = ArrayUtil.append(fixes, new SetInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
-                                                                 JavaAnalysisBundle
-                                                                   .message(
-                                                                     "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
-                                                                 false));
-    }
+      .message("dataflow.message.return.notnull.from.nullable", NullableStuffInspectionBase.getPresentableAnnoName(annotation),
+               method.getName());
+    LocalQuickFix[] fixes = {AddAnnotationPsiFix.createAddNotNullFix(method),
+      new SetInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
+                                 JavaAnalysisBundle
+                                   .message(
+                                     "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
+                                 false)};
     holder.registerProblem(annoName, msg, fixes);
   }
 
@@ -702,7 +699,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(call -> {
       String message = getContractMessage(JavaMethodContractUtil.getMethodCallContracts(call));
-      LocalQuickFix causeFix = reporter.isOnTheFly() ? createExplainFix(call, new TrackingRunner.FailingCallDfaProblemType()) : null;
+      LocalQuickFix causeFix = createExplainFix(call, new TrackingRunner.FailingCallDfaProblemType());
       reporter.registerProblem(getElementToHighlight(call), message, causeFix);
     });
   }
@@ -804,9 +801,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       assert castType != null;
       assert operand != null;
       List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, realType, reporter.isOnTheFly(), alwaysFails));
-      if (reporter.isOnTheFly()) {
-        fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
-      }
+      fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
       String text = PsiExpressionTrimRenderer.render(operand);
       String message = alwaysFails ?
                        JavaAnalysisBundle.message("dataflow.message.cce.always", text) :
@@ -843,7 +838,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
       ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
     }
-    if (reporter.isOnTheFly() && psiAnchor instanceof PsiExpression) {
+    if (psiAnchor instanceof PsiExpression) {
       ContainerUtil.addIfNotNull(fixes, createExplainFix(
         (PsiExpression)psiAnchor, new TrackingRunner.ValueDfaProblemType(evaluatesToTrue)));
     }

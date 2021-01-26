@@ -17,6 +17,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.stream.Stream;
+
 public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implements ProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(ProblemDescriptorBase.class);
 
@@ -42,7 +44,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
                                @Nullable TextRange rangeInElement,
                                final boolean showTooltip,
                                boolean onTheFly) {
-    super(fixes, descriptionTemplate);
+    super(filterFixes(fixes, onTheFly), descriptionTemplate);
     myShowTooltip = showTooltip;
     PsiFile startContainingFile = startElement.getContainingFile();
     LOG.assertTrue(startContainingFile != null && startContainingFile.isValid() || startElement.isValid(), startElement);
@@ -88,6 +90,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
     myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
+  }
+
+  private static LocalQuickFix[] filterFixes(LocalQuickFix[] fixes, boolean onTheFly) {
+    if (onTheFly || fixes == null) return fixes;
+    return Stream.of(fixes).filter(fix -> fix != null && !(fix instanceof OnTheFlyFix)).toArray(LocalQuickFix[]::new);
   }
 
   public boolean isOnTheFly() {

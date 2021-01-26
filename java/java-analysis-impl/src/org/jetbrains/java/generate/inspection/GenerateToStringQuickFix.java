@@ -15,7 +15,7 @@
  */
 package org.jetbrains.java.generate.inspection;
 
-import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.OnTheFlyFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ import org.jetbrains.java.generate.GenerateToStringActionHandler;
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
  */
-public final class GenerateToStringQuickFix implements LocalQuickFix {
+public final class GenerateToStringQuickFix implements OnTheFlyFix {
 
   public static final GenerateToStringQuickFix INSTANCE = new GenerateToStringQuickFix();
 
