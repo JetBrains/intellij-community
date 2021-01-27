@@ -4,17 +4,14 @@ package com.intellij.usages.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.DarculaColors;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageGroup;
@@ -23,7 +20,6 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.FontUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,11 +28,6 @@ import java.awt.*;
 
 final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final Logger LOG = Logger.getInstance(UsageViewTreeCellRenderer.class);
-  private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-  private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
-  private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
-  private static final SimpleTextAttributes ourNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
-  private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
   private static final Insets STANDARD_IPAD_NOWIFI = JBUI.insets(1, 2);
   private boolean myRowBoundsCalled;
 
@@ -73,7 +64,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     if (value instanceof Node && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
       if (!node.isValid()) {
-        append(UsageViewBundle.message("node.invalid") + " ", StartupUiUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes);
+        append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
       }
       if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
         showAsReadOnly = true;
@@ -108,7 +99,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         LOG.assertTrue(treeNode instanceof Node);
         if (!((Node)treeNode).isValid()) {
           if (!getCharSequence(false).toString().contains(UsageViewBundle.message("node.invalid"))) {
-            append(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
+            append(UsageViewBundle.message("node.invalid"), UsageTreeColors.INVALID_ATTRIBUTES);
           }
           return;
         }
@@ -117,7 +108,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         final ItemPresentation presentation = usageTarget.getPresentation();
         LOG.assertTrue(presentation != null);
         if (showAsReadOnly) {
-          append(UsageViewBundle.message("node.readonly") + " ", ourReadOnlyAttributes);
+          append(UsageViewBundle.message("node.readonly") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
         }
         final String text = presentation.getPresentableText();
         append(text == null ? "" : text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -131,12 +122,12 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
         else {
           append(node.getGroup().getText(myView),
-                 patchAttrs(node, showAsReadOnly ? ourReadOnlyAttributes : SimpleTextAttributes.REGULAR_ATTRIBUTES));
+                 patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
           setIcon(node.getGroup().getIcon(expanded));
         }
 
         int count = node.getRecursiveUsageCount();
-        SimpleTextAttributes attributes = patchAttrs(node, ourNumberOfUsagesAttribute);
+        SimpleTextAttributes attributes = patchAttrs(node, UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES);
         append(FontUtil.spaceAndThinSpace() + UsageViewBundle.message("usage.view.counter", count),
                SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
       }
@@ -144,7 +135,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         UsageNode node = (UsageNode)treeNode;
         setIcon(node.getUsage().getPresentation().getIcon());
         if (showAsReadOnly) {
-          append(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, ourReadOnlyAttributes));
+          append(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, UsageTreeColors.READ_ONLY_ATTRIBUTES));
         }
 
         if (node.isValid()) {

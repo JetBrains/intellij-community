@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.DuplicateNodeRenderer;
+import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -191,7 +192,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       renderer.setToolTipText(sliceUsage.getPresentation().getTooltipText());
     }
     else {
-      renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
+      renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
     }
   }
 

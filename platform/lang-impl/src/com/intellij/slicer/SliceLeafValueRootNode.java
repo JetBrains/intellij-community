@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.TextChunk;
@@ -78,7 +79,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     if (usage != null) {
       PsiElement element = usage.getElement();
       if (element == null) {
-        renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
+        renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
       }
       else {
         appendElementText(usage, element, renderer);
