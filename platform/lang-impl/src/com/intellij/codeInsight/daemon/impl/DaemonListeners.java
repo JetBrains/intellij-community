@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
@@ -59,6 +59,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -356,6 +357,8 @@ public final class DaemonListeners implements Disposable {
     restartOnExtensionChange(ExternalLanguageAnnotators.EP_NAME, "external annotators list changed");
 
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      private Disposable mySuspendUpdateOnTimerDisposable;
+
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         PsiManager.getInstance(myProject).dropPsiCaches();
@@ -365,7 +368,9 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         PsiManager.getInstance(myProject).dropPsiCaches();
-        stopDaemon(false, "Plugin will be uninstalled");
+        mySuspendUpdateOnTimerDisposable = Disposer.newDisposable();
+        myDaemonCodeAnalyzer.cancelSubmittedPasses();
+        myDaemonCodeAnalyzer.disableUpdateByTimer(mySuspendUpdateOnTimerDisposable);
         removeHighlightersOnPluginUnload(pluginDescriptor);
         myDaemonCodeAnalyzer.clearProgressIndicator();
         myDaemonCodeAnalyzer.cleanAllFileLevelHighlights();
@@ -374,6 +379,8 @@ public final class DaemonListeners implements Disposable {
 
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        Disposer.dispose(mySuspendUpdateOnTimerDisposable);
+        mySuspendUpdateOnTimerDisposable = null;
         stopDaemonAndRestartAllFiles("Plugin unloaded");
       }
     });
