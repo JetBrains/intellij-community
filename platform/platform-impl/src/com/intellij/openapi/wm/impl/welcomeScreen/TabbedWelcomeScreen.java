@@ -168,7 +168,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       this(tabName, WelcomeScreenEventCollector.TabType.TabNavOther);
     }
 
-    DefaultWelcomeScreenTab(@NotNull @Nls String tabName, @NotNull WelcomeScreenEventCollector.TabType tabType) {
+    public DefaultWelcomeScreenTab(@NotNull @Nls String tabName, @NotNull WelcomeScreenEventCollector.TabType tabType) {
       myLabel = new JBLabel(tabName);
       myType = tabType;
       myKeyComponent = JBUI.Panels.simplePanel().addToLeft(myLabel).withBackground(WelcomeScreenUIManager.getMainTabListBackground())

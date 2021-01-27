@@ -10,13 +10,13 @@ import com.intellij.openapi.wm.WelcomeScreenTab
 import javax.swing.UIManager
 
 class WelcomeScreenEventCollector : CounterUsagesCollector() {
-  internal enum class TabType { TabNavProject, TabNavCustomize, TabNavPlugins, TabNavTutorials, TabNavOther }
+  enum class TabType { TabNavProject, TabNavCustomize, TabNavPlugins, TabNavTutorials, TabNavDebugger, TabNavOther }
 
   override fun getGroup() = GROUP
 
-  internal companion object {
+  companion object {
 
-    private val GROUP = EventLogGroup("welcomescreen.interaction", 1)
+    private val GROUP = EventLogGroup("welcomescreen.interaction", 2)
 
     private val shown = GROUP.registerEvent("screen.shown", EventFields.Boolean("first_start"), EventFields.Boolean("config_imported"))
 
@@ -34,6 +34,9 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
     private val colorBlindnessChanged = GROUP.registerEvent("color.blindness.changed", EventFields.Boolean("enabled"))
     private val keymapChanged = GROUP.registerEvent("keymap.changed", EventFields.StringValidatedByEnum("keymap_name", "keymaps"))
     private val pluginsModified = GROUP.registerEvent("plugins.modified")
+
+    private val debuggerTabProcessesSearchUsed = GROUP.registerEvent("debugger.processes.search")
+    private val debuggerAttachUsed = GROUP.registerEvent("debugger.attach")
 
     @JvmStatic
     fun logWelcomeScreenShown() = shown.log(ConfigImportHelper.isFirstSession(), ConfigImportHelper.isConfigImported())
@@ -60,5 +63,9 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun logPluginsModified(): Unit = pluginsModified.log()
+
+    //Rider-specific log events
+    fun logDebuggerProcessesSearchUsed() = debuggerTabProcessesSearchUsed.log()
+    fun logDebuggerAttached() = debuggerAttachUsed.log()
   }
 }
