@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.share
 
 import circlet.client.api.RepoDetails
 import circlet.client.api.identifier
 import circlet.client.api.impl.vcsPasswords
-import circlet.client.td
 import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -50,12 +51,13 @@ import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
-import libraries.klogging.KLogger
 import libraries.klogging.logger
 import runtime.Ui
 
-class SpaceShareProjectAction : DumbAwareAction() {
-  private val log: KLogger = logger<SpaceShareProjectAction>()
+private class SpaceShareProjectAction : DumbAwareAction() {
+  companion object {
+    private val LOG = logger<SpaceShareProjectAction>()
+  }
 
   private val git: Git = Git.getInstance()
 
@@ -95,11 +97,19 @@ class SpaceShareProjectAction : DumbAwareAction() {
   }
 
   private fun shareProject(project: Project, file: VirtualFile?) {
-    FileDocumentManager.getInstance().saveAllDocuments()
+    ApplicationManager.getApplication().invokeLater(
+      {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        // create project and repository on Space
+        val details = createSpaceProject(project) ?: return@invokeLater
+        pushProjectToSpace(project, file, details)
+      },
+      ModalityState.NON_MODAL
+    )
+  }
 
-    // create project and repository on Space
-    val result = createSpaceProject(project) ?: return
-    val (repoInfo, repoDetails, url) = result
+  private fun pushProjectToSpace(project: Project, file: VirtualFile?, details: SpaceShareProjectDialog.Result) {
+    val (repoInfo, repoDetails, url) = details
 
     object : Task.Backgroundable(project, SpaceBundle.message("share.project.action.progress.title.sharing.title")) {
       override fun run(indicator: ProgressIndicator) {
@@ -110,15 +120,15 @@ class SpaceShareProjectAction : DumbAwareAction() {
         else {
           VcsRepositoryManager.getInstance(project).getRepositoryForFile(project.baseDir, false)
         }
-        log.info("Found repository: $repository")
+        LOG.info("Found repository: $repository")
         val root = repository?.root ?: project.guessProjectDir() ?: return
-        log.info("Found project root: $root")
+        LOG.info("Found project root: $root")
 
         // create repository if needed
         if (repository == null) {
-          log.info { "No git repo detected, creating empty git repository" }
+          LOG.info { "No git repo detected, creating empty git repository" }
           if (!createEmptyGitRepository(project, root, indicator)) {
-            log.error("Unable to init git repository")
+            LOG.error("Unable to init git repository")
             return
           }
         }
@@ -132,13 +142,13 @@ class SpaceShareProjectAction : DumbAwareAction() {
 
         // commit
         if (!performFirstCommitIfRequired(project, root, gitRepo, indicator, repoInfo.name, url)) {
-          log.info("Commit not finished")
+          LOG.info("Commit not finished")
           return
         }
 
         // push
         if (!pushCurrentBranch(project, gitRepo, remoteName, remoteUrl, repoInfo.name, url, indicator)) {
-          log.info("Push not finished")
+          LOG.info("Push not finished")
           return
         }
 
@@ -156,7 +166,6 @@ class SpaceShareProjectAction : DumbAwareAction() {
     val space = SpaceWorkspaceComponent.getInstance()
     val client = space.workspace.value?.client ?: return SpaceHttpPasswordState.NotSet
     val me = space.workspace.value?.me?.value ?: return SpaceHttpPasswordState.NotSet
-    val td = client.td
     val gitHttpPassword = client.api.vcsPasswords().getVcsPassword(me.identifier)
     if (gitHttpPassword == null) {
       val passwordDialog = SpaceSetGitHttpPasswordDialog(me, client)
@@ -171,15 +180,15 @@ class SpaceShareProjectAction : DumbAwareAction() {
   }
 
   private fun createSpaceProject(project: Project): SpaceShareProjectDialog.Result? {
-    log.info("Creating repository on Space")
+    LOG.info("Creating repository on Space")
     val shareProjectDialog = SpaceShareProjectDialog(project)
     if (shareProjectDialog.showAndGet()) {
       val result = shareProjectDialog.result
       if (result == null) {
-        log.info("Repository not created")
+        LOG.info("Repository not created")
         return null
       }
-      log.info("Repository created successfully: $result")
+      LOG.info("Repository created successfully: $result")
       return result
     }
     return null
@@ -192,7 +201,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
       VcsNotifier.getInstance(project).notifyError(GIT_REPO_INIT_ERROR,
                                                    GitBundle.message("initializing.title"),
                                                    result.errorOutputAsHtmlString)
-      log.info { "Failed to create empty git repo: " + result.errorOutputAsJoinedString }
+      LOG.info { "Failed to create empty git repo: " + result.errorOutputAsJoinedString }
       return false
     }
     GitInit.refreshAndConfigureVcsMappings(project, root, root.path)
@@ -213,7 +222,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
       gitRepo.update()
     }
     else {
-      log.error {
+      LOG.error {
         commandResult.errorOutputAsJoinedString
       }
     }
@@ -231,7 +240,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
     }
 
     try {
-      log.info("Adding files for commit")
+      LOG.info("Adding files for commit")
       indicator.text = SpaceBundle.message("share.project.action.progress.title.adding.files.title")
 
       // ask for files to add
@@ -255,7 +264,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
       GitFileUtils.deleteFilesFromCache(project, root, filesToDelete)
 
       // commit
-      log.info("Performing commit")
+      LOG.info("Performing commit")
       indicator.text = SpaceBundle.message("share.project.action.progress.title.committing.title")
       val handler = GitLineHandler(project, root, GitCommand.COMMIT)
       handler.setStdoutSuppressed(false)
@@ -266,7 +275,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
       VcsFileUtil.markFilesDirty(project, affectedFiles)
     }
     catch (e: VcsException) {
-      log.warn(e)
+      LOG.warn(e)
       val repositoryLink = formatLink(url, "'$name'") // NON-NLS
       notifyError(project, wrapInHtmlLines( // NON-NLS
         SpaceBundle.message("share.project.error.notification.initial.commit.failed.message", repositoryLink),
@@ -275,7 +284,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
       return false
     }
 
-    log.info("Successfully created initial commit")
+    LOG.info("Successfully created initial commit")
     return true
   }
 
@@ -306,7 +315,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
                                 name: String,
                                 url: String,
                                 indicator: ProgressIndicator): Boolean {
-    log.info("Pushing to master")
+    LOG.info("Pushing to master")
     indicator.text = SpaceBundle.message("share.project.action.progress.title.pushing.title")
 
     val currentBranch = repository.currentBranch
