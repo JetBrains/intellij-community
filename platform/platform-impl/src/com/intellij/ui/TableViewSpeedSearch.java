@@ -37,7 +37,8 @@ public abstract class TableViewSpeedSearch<Item> extends TableSpeedSearchBase<Ta
 
   @Override
   protected int getElementCount() {
-    return getComponent().getItems().size();
+    // if filtering is enabled rowCount != itemsSize
+    return getComponent().getRowCount();
   }
 
   @Override
