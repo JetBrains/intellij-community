@@ -246,6 +246,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         LOG.warn(t);
       }
     }
+
+    GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
     File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
     if (initScript != null) {
       executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
@@ -274,7 +276,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             buildFinishWaiter.countDown();
           }
         });
-      if(gradleVersion != null && DeprecatedGradleVersionIssue.isDeprecated(gradleVersion)) {
+      if (gradleVersion != null && DeprecatedGradleVersionIssue.isDeprecated(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
       }
       performanceTrace.addTrace(allModels.getPerformanceTrace());
@@ -302,7 +304,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
 
     String projectName = allModels.getMainBuild().getName();
-    ModifiableGradleProjectModelImpl modifiableGradleProjectModel = new ModifiableGradleProjectModelImpl(projectName, resolverCtx.getProjectPath());
+    ModifiableGradleProjectModelImpl modifiableGradleProjectModel =
+      new ModifiableGradleProjectModelImpl(projectName, resolverCtx.getProjectPath());
     ToolingModelsProvider modelsProvider = new ToolingModelsProviderImpl(allModels);
     ProjectModelContributor.EP_NAME.forEachExtensionSafe(extension -> {
       resolverCtx.checkCancelled();
@@ -332,7 +335,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final Map<String /* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetsMap = new HashMap<>();
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, sourceSetsMap);
 
-    final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap = CollectionFactory.createFilePathMap();
+    final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap =
+      CollectionFactory.createFilePathMap();
     projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
     final Map<String/* artifact path */, String /* module id*/> artifactsMap = CollectionFactory.createFilePathMap();
     projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
@@ -664,7 +668,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final File buildDir = externalProject.getBuildDir();
     final MultiMap<String, ContentRootData> sourceSetRoots = MultiMap.create();
     Collection<DataNode<ContentRootData>> contentRootNodes = findAll(moduleNode, ProjectKeys.CONTENT_ROOT);
-    if(contentRootNodes.size() <= 1) return;
+    if (contentRootNodes.size() <= 1) return;
 
     for (DataNode<ContentRootData> contentRootNode : contentRootNodes) {
       File root = new File(contentRootNode.getData().getRootPath());
@@ -697,7 +701,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           }
           break;
         }
-        if(sourceSetRoots.size() == 1) break;
+        if (sourceSetRoots.size() == 1) break;
       }
 
       if (mergedContentRoot == null) {

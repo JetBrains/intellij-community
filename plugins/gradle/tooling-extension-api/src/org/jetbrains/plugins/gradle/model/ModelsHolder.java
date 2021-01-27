@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
@@ -161,13 +162,25 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
   private static String extractMapKey(@NotNull Class modelClazz, @NotNull ProjectIdentifier projectIdentifier) {
     String prefix = getModelKeyPrefix(modelClazz);
     BuildIdentifier buildIdentifier = projectIdentifier.getBuildIdentifier();
-    return prefix + '/' + (buildIdentifier.getRootDir().getPath().hashCode() + projectIdentifier.getProjectPath());
+    String paths = getPathsString(buildIdentifier.getRootDir());
+    return prefix + '/' + (paths.hashCode() + projectIdentifier.getProjectPath());
   }
 
   @NotNull
   private static String extractMapKey(@NotNull Class modelClazz, @NotNull BuildIdentifier buildIdentifier) {
     String prefix = getModelKeyPrefix(modelClazz);
-    return prefix + '/' + buildIdentifier.getRootDir().getPath().hashCode() + ":";
+    String paths = getPathsString(buildIdentifier.getRootDir());
+    return prefix + '/' + paths.hashCode() + ":";
+  }
+
+  @NotNull
+  private static String getPathsString(File dir) {
+    StringBuilder buf = new StringBuilder();
+    while(dir != null) {
+      buf.append(dir.getName());
+      dir = dir.getParentFile();
+    }
+    return buf.toString();
   }
 
   private ProjectIdentifier getProjectIdentifier(@NotNull P project) {

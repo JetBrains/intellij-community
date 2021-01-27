@@ -773,7 +773,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     List<String> lines = new ArrayList<>();
 
     String esRtJarPath = FileUtil.toCanonicalPath(PathManager.getJarPathForClass(ExternalSystemSourceType.class));
-    lines.add("initscript { dependencies { classpath files(\""+ esRtJarPath + "\") } }"); // bring external-system-rt.jar
+    lines.add("initscript { dependencies { classpath files(mapPath(\""+ esRtJarPath + "\")) } }"); // bring external-system-rt.jar
 
     for (DebuggerBackendExtension extension: DebuggerBackendExtension.EP_NAME.getExtensionList()) {
       lines.addAll(extension.initializationCode(dispatchPort, debugOptions));

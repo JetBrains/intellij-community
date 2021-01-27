@@ -499,6 +499,18 @@ public class GradleExecutionHelper {
     });
   }
 
+  @ApiStatus.Internal
+  public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
+    try {
+      File initScriptFile = writeToFileGradleInitScript(
+        "ext.mapPath = { path -> System.getenv(\"path_mapping: $path\") ?: path }", "ijmapper");
+      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      LOG.warn("Can't generate IJ gradle init script", e);
+    }
+  }
+
   @Nullable
   public static String getBuildSrcDefaultInitScript() {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/buildSrcInit.gradle");
@@ -671,7 +683,7 @@ public class GradleExecutionHelper {
     buf.append('[');
     for (Iterator<String> it = jarPaths.iterator(); it.hasNext(); ) {
       String jarPath = it.next();
-      buf.append('\"').append(jarPath).append('\"');
+      buf.append("mapPath(\"").append(jarPath).append("\")");
       if (it.hasNext()) {
         buf.append(',');
       }

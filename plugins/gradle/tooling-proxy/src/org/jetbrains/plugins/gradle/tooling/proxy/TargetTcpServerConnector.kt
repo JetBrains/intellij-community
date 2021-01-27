@@ -51,6 +51,7 @@ class TargetTcpServerConnector(executorFactory: ExecutorFactory,
       }
 
       val allowRemote = !System.getProperty(LOCAL_BUILD_PROPERTY, "false").toBoolean()
+      LOG.debug("Allow remote $allowRemote")
       acceptor = incomingConnector.accept(connectEvent, allowRemote)
       started = true
       return acceptor.address

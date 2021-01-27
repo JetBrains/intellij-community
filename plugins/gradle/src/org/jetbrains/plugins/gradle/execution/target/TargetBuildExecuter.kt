@@ -44,7 +44,7 @@ abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>, R : Any?
 
       override fun isStopped(): Boolean = stopped
     }
-    val gradleProxyRunner = GradleProxyRunner(project, consumerOperationParameters)
+    val gradleProxyRunner = GradleServerRunner(project, consumerOperationParameters)
     gradleProxyRunner.run(environmentConfiguration,
                           targetBuildParametersBuilder,
                           targetProgressIndicator,

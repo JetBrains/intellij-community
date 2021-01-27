@@ -15,8 +15,12 @@ import org.gradle.launcher.daemon.protocol.Failure
 import org.gradle.launcher.daemon.protocol.Success
 import org.gradle.tooling.*
 import org.gradle.tooling.events.OperationType
+import org.gradle.tooling.internal.consumer.BlockingResultHandler
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.net.InetAddress
+import java.nio.file.Path
+import java.util.*
 
 object Main {
   const val LOCAL_BUILD_PROPERTY = "idea.gradle.target.local"
@@ -38,7 +42,54 @@ object Main {
   }
 
   private fun doMain() {
-    serverConnector = TargetTcpServerConnector(DefaultExecutorFactory(), InetAddressFactory(),
+    val targetHost = System.getenv("targetHost")
+    val inetAddressFactory: InetAddressFactory
+    if (targetHost.isNullOrBlank()) {
+      inetAddressFactory = InetAddressFactory()
+    }
+    else {
+      val inetAddresses = InetAddresses()
+      val inetAddress = inetAddresses.remote.find { it.hostName == targetHost || it.hostAddress == targetHost }
+      inetAddressFactory = object : InetAddressFactory() {
+        override fun getLocalBindingAddress(): InetAddress {
+          return inetAddress ?: super.getLocalBindingAddress()
+        }
+      }
+    }
+
+    val targetPathMapping = System.getenv("target_path_mapping")?.run {
+      String(Base64.getDecoder().decode(this.toByteArray(Charsets.UTF_8)), Charsets.UTF_8)
+    }
+    val pathMappingPath = targetPathMapping?.lines()?.iterator()?.run {
+      val map = mutableMapOf<String, String>()
+      while (hasNext()) {
+        val localPath = next()
+        if (hasNext()) {
+          val targetPath = next()
+          map[targetPath] = localPath
+        }
+      }
+      map
+    } ?: emptyMap()
+
+    val envMap = mutableMapOf<String, String>()
+    val classpath = System.getProperty("java.class.path")
+    for (path in classpath.split(File.pathSeparator)) {
+      val s = pathMappingPath[path]
+      val mapping: String?
+      if (s != null) {
+        mapping = s
+      }
+      else {
+        val of = Path.of(path)
+        mapping = pathMappingPath[of.parent.toString()]?.run { Path.of(this, of.fileName.toString()).toString() }
+      }
+      mapping?.let {
+        envMap["path_mapping: $mapping"] = path
+      }
+    }
+
+    serverConnector = TargetTcpServerConnector(DefaultExecutorFactory(), inetAddressFactory,
                                                DaemonMessageSerializer.create(BuildActionSerializer.create()))
     incomingConnectionHandler = TargetIncomingConnectionHandler()
     val address = serverConnector.start(incomingConnectionHandler) { LOG.error("connection error") } as InetEndpoint
@@ -53,57 +104,59 @@ object Main {
     val workingDirectory = File(".").canonicalFile
     LOG.debug("Working directory: ${workingDirectory.absolutePath}")
     connector.forProjectDirectory(workingDirectory.absoluteFile)
-    connector.connect().use { connection ->
-      val resultHandler: ResultHandler<Any?> = object : ResultHandler<Any?> {
-        override fun onComplete(result: Any?) {
-          LOG.debug("operation result: $result")
-          incomingConnectionHandler.dispatch(Success(result))
-        }
-
-        override fun onFailure(connectionException: GradleConnectionException?) {
-          LOG.debug("GradleConnectionException: $connectionException")
-          incomingConnectionHandler.dispatch(Failure(connectionException))
-        }
+    val resultHandler = BlockingResultHandler(Any::class.java)
+    val connection = connector.connect()
+    val operation = when (targetBuildParameters) {
+      is BuildLauncherParameters -> connection.newBuild().apply { forTasks(*targetBuildParameters.tasks.toTypedArray()) }
+      is TestLauncherParameters -> connection.newTestLauncher()
+      is ModelBuilderParameters<*> -> connection.model(targetBuildParameters.modelType).apply {
+        forTasks(*targetBuildParameters.tasks.toTypedArray())
       }
-      val operation = when (targetBuildParameters) {
-        is BuildLauncherParameters -> connection.newBuild().apply { forTasks(*targetBuildParameters.tasks.toTypedArray()) }
-        is TestLauncherParameters -> connection.newTestLauncher()
-        is ModelBuilderParameters<*> -> connection.model(targetBuildParameters.modelType).apply {
+      is BuildActionParameters<*> -> connection.action(targetBuildParameters.buildAction).apply {
+        forTasks(*targetBuildParameters.tasks.toTypedArray())
+      }
+      is PhasedBuildActionParameters<*> -> connection.action()
+        .projectsLoaded(targetBuildParameters.projectsLoadedAction, IntermediateResultHandler {
+          //resultHandler.onComplete(it)
+        })
+        .buildFinished(targetBuildParameters.buildFinishedAction, IntermediateResultHandler {
+          resultHandler.onComplete(it)
+        })
+        .build().apply {
           forTasks(*targetBuildParameters.tasks.toTypedArray())
         }
-        is BuildActionParameters<*> -> connection.action(targetBuildParameters.buildAction).apply {
-          forTasks(*targetBuildParameters.tasks.toTypedArray())
-        }
-        is PhasedBuildActionParameters<*> -> connection.action()
-          .projectsLoaded(targetBuildParameters.projectsLoadedAction, IntermediateResultHandler {
-            //resultHandler.onComplete(it)
-          })
-          .buildFinished(targetBuildParameters.buildFinishedAction, IntermediateResultHandler {
-            resultHandler.onComplete(it)
-          })
-          .build().apply {
-            forTasks(*targetBuildParameters.tasks.toTypedArray())
-          }
-      }
-      operation.apply {
-        setStandardError(System.err)
-        setStandardOutput(System.out)
-        addProgressListener(
-          org.gradle.tooling.events.ProgressListener {
-            // empty listener to supply tasks progress events subscription
-          },
-          OperationType.TASK
-        )
-        withArguments(targetBuildParameters.arguments)
-        setJvmArguments(targetBuildParameters.jvmArguments)
+    }
+    operation.apply {
+      setStandardError(System.err)
+      setStandardOutput(System.out)
+      addProgressListener(
+        org.gradle.tooling.events.ProgressListener {
+          // empty listener to supply tasks progress events subscription
+        },
+        OperationType.TASK
+      )
+      withArguments(targetBuildParameters.arguments)
+      setJvmArguments(targetBuildParameters.jvmArguments)
+      setEnvironmentVariables(envMap)
 
-        when (this) {
-          is BuildLauncher -> run(resultHandler)
-          is TestLauncher -> run(resultHandler)
-          is ModelBuilder<*> -> get(resultHandler)
-          is BuildActionExecuter<*> -> run(resultHandler)
-        }
+      when (this) {
+        is BuildLauncher -> run(resultHandler)
+        is TestLauncher -> run(resultHandler)
+        is ModelBuilder<*> -> get(resultHandler)
+        is BuildActionExecuter<*> -> run(resultHandler)
       }
+    }
+    try {
+      val result = resultHandler.result
+      LOG.debug("operation result: $result")
+      incomingConnectionHandler.dispatch(Success(result))
+    }
+    catch (t: Throwable) {
+      LOG.debug("GradleConnectionException: $t")
+      incomingConnectionHandler.dispatch(Failure(t))
+    }
+    finally {
+      connection.close()
     }
   }
 

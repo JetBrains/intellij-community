@@ -198,6 +198,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     if (!initScripts.isEmpty()) {
       try {
+        GradleExecutionHelper.attachTargetPathMapperInitScript(effectiveSettings);
         File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(
           StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
         effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
