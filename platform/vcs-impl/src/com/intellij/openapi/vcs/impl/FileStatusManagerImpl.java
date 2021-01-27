@@ -44,7 +44,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final FileStatusProvider myFileStatusProvider;
+  private final VcsFileStatusProvider myFileStatusProvider;
 
   private static class FileStatusNull implements FileStatus {
     private static final FileStatus INSTANCE = new FileStatusNull();
