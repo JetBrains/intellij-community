@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class PyExecuteSelectionAction extends DumbAwareAction {
 
@@ -231,19 +231,20 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
       });
   }
 
-  public static Collection<RunContentDescriptor> getConsoles(Project project) {
+  private static Collection<RunContentDescriptor> getConsoles(Project project) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
     if (toolWindow != null && toolWindow.getToolWindow().isVisible()) {
       RunContentDescriptor selectedContentDescriptor = toolWindow.getSelectedContentDescriptor();
-      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : new ArrayList<>();
+      return selectedContentDescriptor != null && isAlive(selectedContentDescriptor) ?
+             Lists.newArrayList(selectedContentDescriptor) : new ArrayList<>();
     }
 
     Collection<RunContentDescriptor> descriptors =
       ExecutionHelper.findRunningConsole(project, dom -> dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom));
 
     if (descriptors.isEmpty() && toolWindow != null && toolWindow.isInitialized()) {
-      return toolWindow.getConsoleContentDescriptors();
+      return ContainerUtil.filter(toolWindow.getConsoleContentDescriptors(), PyExecuteSelectionAction::isAlive);
     }
     else {
       return descriptors;
@@ -272,12 +273,11 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
 
   private static void showConsole(final Project project, final Consumer<PyCodeExecutor> consumer) {
     final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
+    final Collection<RunContentDescriptor> descriptors = getConsoles(project);
 
-    if (toolWindow != null && toolWindow.getConsoleContentDescriptors().size() > 0) {
+    if (toolWindow != null && !descriptors.isEmpty()) {
       toolWindow.activate(() -> {
-        List<RunContentDescriptor> descs = toolWindow.getConsoleContentDescriptors();
-
-        RunContentDescriptor descriptor = descs.get(0);
+        RunContentDescriptor descriptor = descriptors.stream().findFirst().orElse(null);
         if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
           consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
         }
