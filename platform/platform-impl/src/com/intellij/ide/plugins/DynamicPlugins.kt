@@ -61,6 +61,7 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -77,6 +78,7 @@ import com.intellij.util.ref.GCWatcher
 import net.sf.cglib.core.ClassNameReader
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
+import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.nio.channels.FileChannel
 import java.nio.file.FileVisitResult
@@ -492,6 +494,7 @@ object DynamicPlugins {
           MessagePool.getInstance().clearErrors()
           LaterInvocator.purgeExpiredItems()
           FileAttribute.resetRegisteredIds()
+          resetFocusCycleRoot()
 
           for (classLoader in classLoaders) {
             IconLoader.detachClassLoader(classLoader)
@@ -583,6 +586,19 @@ object DynamicPlugins {
     }
 
     return classLoaderUnloaded
+  }
+
+  private fun resetFocusCycleRoot() {
+    val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    var focusCycleRoot = focusManager.currentFocusCycleRoot
+    if (focusCycleRoot != null) {
+      while (focusCycleRoot != null && focusCycleRoot !is IdeFrameImpl) {
+        focusCycleRoot = focusCycleRoot.parent
+      }
+      if (focusCycleRoot is IdeFrameImpl) {
+        focusManager.setGlobalCurrentFocusCycleRoot(focusCycleRoot)
+      }
+    }
   }
 
   private fun unloadLoadedOptionalDependenciesOnPlugin(dependencyPluginDescriptor: IdeaPluginDescriptorImpl, classLoaders: WeakList<PluginClassLoader>) {
