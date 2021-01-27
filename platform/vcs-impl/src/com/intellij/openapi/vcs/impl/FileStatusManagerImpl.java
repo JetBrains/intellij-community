@@ -131,7 +131,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
       }
 
       for (Project project : projectManager.getOpenProjects()) {
-        getInstance(project).refreshFileStatusFromDocument(file, document);
+        VcsFileStatusProvider.getInstance(project).refreshFileStatusFromDocument(file, document);
       }
     }
   }
@@ -288,10 +288,5 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     Boolean immediate = myWhetherExactlyParentToChanged.get(file);
     if (immediate == null) return status;
     return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE : FileStatus.NOT_CHANGED_RECURSIVE;
-  }
-
-  @Override
-  public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {
-    myFileStatusProvider.refreshFileStatusFromDocument(file, doc);
   }
 }

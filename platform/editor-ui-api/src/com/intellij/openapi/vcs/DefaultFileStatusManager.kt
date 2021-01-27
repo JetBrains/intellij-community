@@ -1,7 +1,6 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import java.awt.Color
 
@@ -11,7 +10,6 @@ class DefaultFileStatusManager : FileStatusManager() {
 
     override fun fileStatusesChanged() = Unit
     override fun fileStatusChanged(file: VirtualFile?) = Unit
-    override fun refreshFileStatusFromDocument(file: VirtualFile?, doc: Document?) = Unit
 
     override fun addFileStatusListener(listener: FileStatusListener) = Unit
     override fun addFileStatusListener(listener: FileStatusListener, parentDisposable: Disposable) = Unit
