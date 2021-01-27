@@ -25,7 +25,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
 
   public CompositeSettingsEditor() {}
 
-  public CompositeSettingsEditor(@Nullable Factory<Settings> factory) {
+  public CompositeSettingsEditor(@Nullable Factory<? extends Settings> factory) {
     super(factory);
 
     if (factory != null) {
@@ -33,6 +33,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
     }
   }
 
+  @NotNull
   public abstract CompositeSettingsBuilder<Settings> getBuilder();
 
   @Override

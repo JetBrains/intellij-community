@@ -69,12 +69,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   }
 
   @Override
-  public Collection<SettingsEditor<Settings>> getEditors() {
+  public @NotNull Collection<SettingsEditor<Settings>> getEditors() {
     return new ArrayList<>(myFragments);
   }
 
   @Override
-  public JComponent createCompoundEditor() {
+  public @NotNull JComponent createCompoundEditor() {
     if (myMain == null) {
       myPanel.setBorder(JBUI.Borders.emptyLeft(5));
       addLine(new JSeparator());

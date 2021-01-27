@@ -71,7 +71,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   }
 
   @Override
-  public CompositeSettingsBuilder<Settings> getBuilder() {
+  public @NotNull CompositeSettingsBuilder<Settings> getBuilder() {
     return new FragmentedSettingsBuilder<>(getFragments(), null);
   }
 

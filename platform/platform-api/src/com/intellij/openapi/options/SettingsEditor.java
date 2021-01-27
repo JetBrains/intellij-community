@@ -21,7 +21,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   private final List<SettingsEditorListener<Settings>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private UserActivityWatcher myWatcher;
   private boolean myIsInUpdate = false;
-  private final Factory<Settings> mySettingsFactory;
+  private final Factory<? extends Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
 
@@ -38,7 +38,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     this(null);
   }
 
-  public SettingsEditor(@Nullable Factory<Settings> settingsFactory) {
+  public SettingsEditor(@Nullable Factory<? extends Settings> settingsFactory) {
     mySettingsFactory = settingsFactory;
     Disposer.register(this, new Disposable() {
       @Override
@@ -66,7 +66,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     return myOwner;
   }
 
-  public Factory<Settings> getFactory() {
+  public Factory<? extends Settings> getFactory() {
     return mySettingsFactory;
   }
 
