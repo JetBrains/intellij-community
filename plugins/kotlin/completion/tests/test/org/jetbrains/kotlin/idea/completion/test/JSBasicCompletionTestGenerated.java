@@ -85,11 +85,6 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             runTest("testData/basic/common/ConsiderExtensionType.kt");
         }
 
-        @TestMetadata("CoroutineContext.kt")
-        public void testCoroutineContext() throws Exception {
-            runTest("testData/basic/common/CoroutineContext.kt");
-        }
-
         @TestMetadata("CoroutineContextReleaseCoroutines.kt")
         public void testCoroutineContextReleaseCoroutines() throws Exception {
             runTest("testData/basic/common/CoroutineContextReleaseCoroutines.kt");
