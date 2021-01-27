@@ -77,7 +77,6 @@ internal class MultiplatformModelImportingContextImpl(
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
 
-
     /** see [initializeCompilations] */
     override lateinit var compilations: Collection<KotlinCompilation>
         private set

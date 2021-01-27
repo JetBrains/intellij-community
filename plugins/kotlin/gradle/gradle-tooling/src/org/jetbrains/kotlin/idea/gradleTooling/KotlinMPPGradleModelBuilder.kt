@@ -85,7 +85,9 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = dependencyMapper.toDependencyMap(),
                 partialCacheAware = detachableCompilerArgumentsCacheMapper.detachCacheAware()
-            )
+            ).apply {
+                kotlinImportingDiagnostics += collectDiagnostics(importingContext)
+            }
             return model
         } catch (throwable: Throwable) {
             project.logger.error("Failed building KotlinMPPGradleModel", throwable)
@@ -936,6 +938,17 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
     companion object {
         private val logger = Logging.getLogger(KotlinMPPGradleModelBuilder::class.java)
         private const val COMPILER_ARGUMENT_AWARE_CLASS = "org.jetbrains.kotlin.gradle.internal.CompilerArgumentAware"
+
+        private val DEFAULT_IMPORTING_CHECKERS = listOf(
+            OrphanSourceSetImportingChecker
+        )
+
+        private fun KotlinMPPGradleModel.collectDiagnostics(importingContext: MultiplatformModelImportingContext): KotlinImportingDiagnosticsContainer =
+            mutableSetOf<KotlinImportingDiagnostic>().apply {
+                DEFAULT_IMPORTING_CHECKERS.forEach {
+                    it.check(this@collectDiagnostics, this, importingContext)
+                }
+            }
 
         private val Task.isCompilerArgumentAware: Boolean
             get() = javaClass.classLoader.loadClassOrNull(COMPILER_ARGUMENT_AWARE_CLASS)?.isAssignableFrom(javaClass) ?: false
