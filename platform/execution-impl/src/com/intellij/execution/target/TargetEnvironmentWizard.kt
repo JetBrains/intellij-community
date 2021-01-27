@@ -5,10 +5,12 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.ide.wizard.AbstractWizardEx
 import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
@@ -18,6 +20,14 @@ class TargetEnvironmentWizard(project: Project,
                               val subject: TargetEnvironmentConfiguration,
                               steps: List<AbstractWizardStepEx>)
   : AbstractWizardEx(title, project, steps) {
+
+  init {
+    for (step in steps) {
+      if (step is ValidationCallbackConsumer) {
+        step.accept { setErrorInfoAll(step.doValidateAll()) }
+      }
+    }
+  }
 
   override fun getHelpId(): String = "reference.remote.target.wizard.${subject.typeId}"
 
@@ -50,5 +60,9 @@ class TargetEnvironmentWizard(project: Project,
      * To compensate empty TargetEnvironmentWizard.createContentPaneBorder()
      */
     fun defaultDialogInsets() = UIUtil.getRegularPanelInsets()
+  }
+
+  interface ValidationCallbackConsumer : Consumer<() -> Unit> {
+    fun doValidateAll(): MutableList<ValidationInfo>
   }
 }
