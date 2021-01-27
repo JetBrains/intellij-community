@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.isOverridableOrOverrides
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.receiverValue
@@ -31,7 +32,10 @@ import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.checkers.isRestrictsSuspensionReceiver
@@ -102,13 +106,14 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     }
 
     private fun KtCallExpression?.isInFunctionWithDefaultDispatcher(): Boolean {
-        val propertyDescriptor = (this?.receiverValue() as? ImplicitClassReceiver)?.classDescriptor
-            ?.getMemberScope(emptyList())
-            ?.getContributedDescriptors(DescriptorKindFilter.VARIABLES)
-            ?.filterIsInstance<PropertyDescriptor>()
-            ?.singleOrNull() ?: return false
-        val propertyType = propertyDescriptor.type
-        if (!propertyType.isCoroutineContext()) return false
+        val classDescriptor = (this?.receiverValue() as? ImplicitClassReceiver)?.classDescriptor ?: return false
+        if (classDescriptor.typeConstructor.supertypes.none { it.fqName?.asString() == COROUTINE_SCOPE }) return false
+        val propertyDescriptor = classDescriptor
+            .unsubstitutedMemberScope
+            .getContributedDescriptors(DescriptorKindFilter.VARIABLES)
+            .filterIsInstance<PropertyDescriptor>()
+            .singleOrNull { it.isOverridableOrOverrides && it.type.isCoroutineContext() }
+            ?: return false
 
         val initializer = (propertyDescriptor.findPsi() as? KtProperty)?.initializer
         return initializer?.hasBlockFriendlyDispatcher() ?: false
@@ -162,6 +167,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     companion object {
         private const val BLOCKING_CONTEXT_ANNOTATION = "org.jetbrains.annotations.BlockingContext"
         private const val IO_DISPATCHER_FQN = "kotlinx.coroutines.Dispatchers.IO"
+        private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
         private const val COROUTINE_CONTEXT = "kotlin.coroutines.CoroutineContext"
         private const val FLOW_ON_FQN = "kotlinx.coroutines.flow.flowOn"
     }
