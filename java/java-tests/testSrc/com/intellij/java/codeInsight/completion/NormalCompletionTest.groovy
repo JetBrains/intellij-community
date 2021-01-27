@@ -1618,7 +1618,7 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testImplementViaOverrideCompletion() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override', 'public void run'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...', 'public void run'
     lookup.currentItem = lookup.items[2]
     myFixture.type('\n')
     checkResult()
@@ -1627,7 +1627,8 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
   }
@@ -1635,7 +1636,8 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
   }
@@ -1643,7 +1645,8 @@ class XInternalError {}
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsInMulticaretMode() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
   }
