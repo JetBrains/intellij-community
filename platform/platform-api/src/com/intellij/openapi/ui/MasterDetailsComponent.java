@@ -749,19 +749,27 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                       boolean hasFocus) {
       if (value instanceof MyNode) {
         final MyNode node = (MyNode)value;
-        setIcon(node.getIcon(expanded));
-        final Font font = UIUtil.getTreeFont();
-        if (node.isDisplayInBold()) {
-          setFont(font.deriveFont(Font.BOLD));
-        }
-        else {
-          setFont(font.deriveFont(Font.PLAIN));
-        }
-
-        SimpleTextAttributes attributes = node.isDisplayInBold() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES :
-                                          SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        append(node.getDisplayName(), SimpleTextAttributes.merge(getAdditionalAttributes(node), attributes));
+        renderIcon(node, expanded);
+        renderName(node);
       }
+    }
+
+    protected void renderIcon(@NotNull MyNode node, boolean expanded) {
+      setIcon(node.getIcon(expanded));
+    }
+
+    protected void renderName(@NotNull MyNode node) {
+      final Font font = UIUtil.getTreeFont();
+      if (node.isDisplayInBold()) {
+        setFont(font.deriveFont(Font.BOLD));
+      }
+      else {
+        setFont(font.deriveFont(Font.PLAIN));
+      }
+
+      SimpleTextAttributes attributes = node.isDisplayInBold() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES :
+                                        SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      append(node.getDisplayName(), SimpleTextAttributes.merge(getAdditionalAttributes(node), attributes));
     }
 
     protected @NotNull SimpleTextAttributes getAdditionalAttributes(@NotNull MyNode node) {
