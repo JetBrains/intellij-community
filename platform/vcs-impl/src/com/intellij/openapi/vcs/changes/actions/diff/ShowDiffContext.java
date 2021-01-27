@@ -69,4 +69,15 @@ public class ShowDiffContext {
     if (!myRequestContext.containsKey(change)) myRequestContext.put(change, new HashMap<>());
     myRequestContext.get(change).put(key, value);
   }
+
+  @NotNull
+  public static ShowDiffContext createStaticChangeContext(@NotNull Map<Key<?>, Object> map) {
+    return new ShowDiffContext() {
+      @NotNull
+      @Override
+      public Map<Key<?>, Object> getChangeContext(@NotNull Change change) {
+        return map;
+      }
+    };
+  }
 }

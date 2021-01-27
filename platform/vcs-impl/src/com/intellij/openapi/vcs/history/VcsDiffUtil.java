@@ -47,7 +47,9 @@ public final class VcsDiffUtil {
                                  @NotNull @Nls String revNumTitle2,
                                  @NotNull FilePath filePath) {
     if (filePath.isDirectory()) {
-      showChangesDialog(project, getDialogTitle(filePath, revNumTitle1, revNumTitle2), new ArrayList<>(changes));
+      String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
+                                             revNumTitle1, revNumTitle2, filePath.getName());
+      showChangesDialog(project, dialogTitle, new ArrayList<>(changes));
     }
     else {
       if (changes.isEmpty()) {
@@ -57,25 +59,10 @@ public final class VcsDiffUtil {
         Map<Key<?>, Object> revTitlesMap = new HashMap<>(2);
         revTitlesMap.put(VCS_DIFF_LEFT_CONTENT_TITLE, revNumTitle1);
         revTitlesMap.put(VCS_DIFF_RIGHT_CONTENT_TITLE, revNumTitle2);
-        ShowDiffContext showDiffContext = new ShowDiffContext() {
-          @NotNull
-          @Override
-          public Map<Key<?>, Object> getChangeContext(@NotNull Change change) {
-            return revTitlesMap;
-          }
-        };
+        ShowDiffContext showDiffContext = ShowDiffContext.createStaticChangeContext(revTitlesMap);
         ShowDiffAction.showDiffForChange(project, changes, 0, showDiffContext);
       }
     }
-  }
-
-  @NotNull
-  private static @NlsContexts.DialogTitle String getDialogTitle(@NotNull final FilePath filePath, @NotNull final String revNumTitle1,
-                                                                @NotNull final String revNumTitle2) {
-    return VcsBundle.message("history.dialog.title.difference.between.versions.in",
-                             revNumTitle1,
-                             revNumTitle2,
-                             filePath.getName());
   }
 
   @Nls

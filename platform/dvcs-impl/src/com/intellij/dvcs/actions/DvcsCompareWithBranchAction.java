@@ -1,23 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.actions;
 
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
@@ -25,11 +33,8 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.COULD_NOT_COMPARE_WITH_BRANCH;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
@@ -88,32 +93,38 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
                                                     @NotNull final VirtualFile file,
                                                     @NotNull final @NlsSafe String head,
                                                     @NotNull final @NlsSafe String compare) {
-    new Task.Backgroundable(project, DvcsBundle.message("progress.title.collecting.changes"), true) {
-      private Collection<Change> changes;
+    FilePath filePath = VcsUtil.getFilePath(file);
+    String revNumTitle1 = VcsDiffUtil.getRevisionTitle(compare, false);
+    String revNumTitle2 = VcsDiffUtil.getRevisionTitle(head, true);
 
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          changes = getDiffChanges(project, file, compare);
-        }
-        catch (VcsException e) {
-          VcsNotifier.getInstance(project).notifyImportantWarning(
-            COULD_NOT_COMPARE_WITH_BRANCH,
-            DvcsBundle.message("notification.title.couldn.t.compare.with.branch"),
-            DvcsBundle.message("notification.message.couldn.t.compare.with.branch",
-                               file.isDirectory() ? 1 : 0, file.getPresentableUrl(), compare, e.getMessage()));
-        }
-      }
+    if (file.isDirectory()) {
+      String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
+                                             revNumTitle1, revNumTitle2, filePath.getName());
+      CompareWithLocalDialog.showDialog(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
+        return getDiffChanges(project, file, compare);
+      });
+    }
+    else {
+      DiffRequestChain requestChain = new ChangeDiffRequestChain.Async() {
+        @Override
+        protected @NotNull ListSelection<ChangeDiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
+          try {
+            Collection<Change> changes = getDiffChanges(project, file, compare);
 
-      @Override
-      public void onSuccess() {
-        //if changes null -> then exception occurred before
-        if (changes != null) {
-          VcsDiffUtil.showDiffFor(project, changes, VcsDiffUtil.getRevisionTitle(compare, false), VcsDiffUtil.getRevisionTitle(head, true),
-                                  VcsUtil.getFilePath(file));
+            Map<Key<?>, Object> changeContext = new HashMap<>(2);
+            changeContext.put(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE, revNumTitle1);
+            changeContext.put(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE, revNumTitle2);
+
+            return ListSelection.createAt(new ArrayList<>(changes), 0)
+              .map(change -> ChangeDiffRequestProducer.create(project, change, changeContext));
+          }
+          catch (VcsException e) {
+            throw new DiffRequestProducerException(e);
+          }
         }
-      }
-    }.queue();
+      };
+      DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT);
+    }
   }
 
   @NlsSafe
