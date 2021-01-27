@@ -69,9 +69,12 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
 
   @Nullable
   private String getJdkRoot(JrePathEditor pathEditor, Module module) {
-    if (!pathEditor.isAlternativeJreSelected() && module != null) {
-      Sdk sdk = JavaParameters.getJdkToRunModule(module, productionOnly());
-      return sdk != null ? sdk.getHomePath() : null;
+    if (!pathEditor.isAlternativeJreSelected()) {
+      if (module != null) {
+        Sdk sdk = JavaParameters.getJdkToRunModule(module, productionOnly());
+        return sdk != null ? sdk.getHomePath() : null;
+      }
+      return null;
     }
     String jrePathOrName = pathEditor.getJrePathOrName();
     if (jrePathOrName != null) {
