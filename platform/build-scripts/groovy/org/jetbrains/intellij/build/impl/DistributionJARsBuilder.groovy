@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -624,9 +624,7 @@ final class DistributionJARsBuilder {
       List<Map.Entry<String, Path>> toArchive = new ArrayList<>()
       for (plugin in pluginsToPublish) {
         String directory = getActualPluginDirectoryName(plugin, buildContext)
-        Path targetDirectory = whiteList.contains(plugin.mainModule)
-          ? nonBundledPluginsArtifacts.resolve("auto-uploading")
-          : nonBundledPluginsArtifacts
+        Path targetDirectory = whiteList.contains(plugin.mainModule) ? autoUploadingDir : nonBundledPluginsArtifacts
         Path destFile = targetDirectory.resolve("$directory-${pluginVersion}.zip")
 
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
@@ -661,6 +659,11 @@ final class DistributionJARsBuilder {
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts.toString())
         buildContext.notifyArtifactWasBuilt(nonBundledPluginsArtifacts.resolve("plugins.xml"))
+
+        def autoUploadingDirPath = autoUploadingDir.toString()
+        def autoUploadingPlugins = pluginsToIncludeInCustomRepository.findAll { it.pluginZip.startsWith(autoUploadingDirPath) }
+        new PluginRepositoryXmlGenerator(buildContext).generate(autoUploadingPlugins, autoUploadingDirPath)
+        buildContext.notifyArtifactWasBuilt(autoUploadingDir.resolve("plugins.xml"))
       }
     }
   }
