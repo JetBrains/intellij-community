@@ -108,17 +108,6 @@ public enum LanguageLevel {
     myVersion = version;
   }
 
-  /**
-   * @return an int where major and minor version are represented decimally: "version 2.5" is 25.
-   * @deprecated please migrate to {@link LanguageLevel#getMajorVersion()} and {@link LanguageLevel#getMinorVersion()}
-   * since this method disclose {@link LanguageLevel} internals.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public int getVersion() {
-    return myVersion;
-  }
-
   public int getMajorVersion() {
     return myVersion / 100;
   }

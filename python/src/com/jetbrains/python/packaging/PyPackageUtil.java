@@ -44,7 +44,6 @@ import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -505,18 +504,6 @@ public final class PyPackageUtil {
     }
 
     return null;
-  }
-
-  /**
-   * @deprecated Use {@link #runOnChangeUnderInterpreterPaths(Sdk, Disposable, Runnable)} passing a package manager as
-   * the parent disposable.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
-    Application app = ApplicationManager.getApplication();
-    Disposable parentDisposable = sdk instanceof Disposable ? (Disposable)sdk : app;
-    runOnChangeUnderInterpreterPaths(sdk, parentDisposable, runnable);
   }
 
   /**

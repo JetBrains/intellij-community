@@ -310,7 +310,6 @@ public final class PyRefactoringUtil {
     }
 
     final String shortestName = ContainerUtil.getFirstItem(suggestions);
-    //noinspection ConstantConditions
     return appendNumberUntilValid(shortestName, scopeAnchor, isValid);
   }
 
@@ -349,7 +348,7 @@ public final class PyRefactoringUtil {
         final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
         final Properties properties = fileTemplateManager.getDefaultProperties();
         properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
-        final String content = (template != null) ? template.getText(properties) : null;
+        final String content = template.getText(properties);
         psi = PyExtractSuperclassHelper.placeFile(project,
                                                   StringUtil.notNullize(
                                                     file.getParent(),
@@ -408,17 +407,5 @@ public final class PyRefactoringUtil {
       final PyElement element = classMemberInfo.getMember();
       return (element instanceof PyClass) && PyNames.OBJECT.equals(element.getName());
     }
-  }
-
-
-  /**
-   * @deprecated TODO: remove in 2021.1
-   */
-  @NotNull
-  @Deprecated
-  public static PsiElement addElementToStatementList(@NotNull PsiElement element,
-                                                     @NotNull PyStatementList statementList,
-                                                     boolean toTheBeginning) {
-    return PyPsiRefactoringUtil.addElementToStatementList(element, statementList, toTheBeginning);
   }
 }
