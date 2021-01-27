@@ -91,11 +91,12 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
       logData.addData(OPEN_FILE_TYPES_KEY, fem.openFiles.map { file -> file.fileType.name }.distinct())
     }
 
+    val currentTime = System.currentTimeMillis()
     val data = logData.build()
     (data as? MutableMap)?.put(
       COLLECTED_RESULTS_DATA_KEY,
       elements.take(REPORTED_ITEMS_LIMIT).map {
-        getListItemsNames(it, globalSummary, localActionsStats).toMap()
+        getListItemsNames(it, currentTime, globalSummary, localActionsStats).toMap()
       }
     )
 
@@ -121,6 +122,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
   }
 
   private fun getListItemsNames(item: SearchEverywhereFoundElementInfo,
+                                currentTime: Long,
                                 globalSummaryManager: ActionsGlobalSummaryManager,
                                 localSummary: Map<String, ActionSummary>): ItemInfo {
     val element = item.getElement()
@@ -131,10 +133,11 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
       return ItemInfo(null, contributorId, hashMapOf(IS_ACTION_DATA_KEY to false))
     }
-    return fillActionItemInfo(item, element.value, globalSummaryManager, localSummary, contributorId)
+    return fillActionItemInfo(item, currentTime, element.value, globalSummaryManager, localSummary, contributorId)
   }
 
   private fun fillActionItemInfo(item: SearchEverywhereFoundElementInfo,
+                                 currentTime: Long,
                                  element: GotoActionModel.ActionWrapper,
                                  globalSummaryManager: ActionsGlobalSummaryManager,
                                  localSummary: Map<String, ActionSummary>,
@@ -164,7 +167,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     data[WEIGHT_KEY] = presentation.weight
 
     localSummary[actionId]?.let {
-      data[TIME_SINCE_LAST_USAGE_DATA_KEY] = System.currentTimeMillis() - it.lastUsedTimestamp
+      data[TIME_SINCE_LAST_USAGE_DATA_KEY] = currentTime - it.lastUsedTimestamp
       data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
     }
 
