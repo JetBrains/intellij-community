@@ -1,76 +1,72 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.tooling.proxy;
+package org.jetbrains.plugins.gradle.tooling.proxy
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory
+import java.net.InetAddress
+import java.net.SocketException
+import java.lang.RuntimeException
+import java.net.NetworkInterface
+import java.util.*
 
-class InetAddresses {
-  private static final int REACHABLE_TIMEOUT_MS = 50;
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
-  private final List<InetAddress> loopback = new ArrayList();
-  private final List<InetAddress> remote = new ArrayList();
+internal class InetAddresses {
+  private val loopback: MutableList<InetAddress> = mutableListOf()
+  val remote: MutableList<InetAddress> = mutableListOf()
 
-  InetAddresses() throws SocketException {
-    this.analyzeNetworkInterfaces();
-  }
-
-  private void analyzeNetworkInterfaces() throws SocketException {
-    Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+  @Throws(SocketException::class)
+  private fun analyzeNetworkInterfaces() {
+    val interfaces = NetworkInterface.getNetworkInterfaces()
     if (interfaces != null) {
-      while(interfaces.hasMoreElements()) {
-        this.analyzeNetworkInterface((NetworkInterface)interfaces.nextElement());
+      while (interfaces.hasMoreElements()) {
+        analyzeNetworkInterface(interfaces.nextElement() as NetworkInterface)
       }
     }
-
   }
 
-  private void analyzeNetworkInterface(NetworkInterface networkInterface) {
-    this.logger.debug("Adding IP addresses for network interface {}", networkInterface.getDisplayName());
-
+  private fun analyzeNetworkInterface(networkInterface: NetworkInterface) {
+    logger.debug("Adding IP addresses for network interface {}", networkInterface.displayName)
     try {
-      boolean isLoopbackInterface = networkInterface.isLoopback();
-      this.logger.debug("Is this a loopback interface? {}", isLoopbackInterface);
-      Enumeration candidates = networkInterface.getInetAddresses();
-
-      while(candidates.hasMoreElements()) {
-        InetAddress candidate = (InetAddress)candidates.nextElement();
+      val isLoopbackInterface = networkInterface.isLoopback
+      logger.debug("Is this a loopback interface? {}", isLoopbackInterface)
+      val candidates: Enumeration<*> = networkInterface.inetAddresses
+      while (candidates.hasMoreElements()) {
+        val candidate = candidates.nextElement() as InetAddress
         if (isLoopbackInterface) {
-          if (candidate.isLoopbackAddress()) {
+          if (candidate.isLoopbackAddress) {
             if (candidate.isReachable(REACHABLE_TIMEOUT_MS)) {
-              this.logger.debug("Adding loopback address {}", candidate);
-              this.loopback.add(candidate);
-            } else {
-              this.logger.debug("Ignoring unreachable local address on loopback interface {}", candidate);
+              logger.debug("Adding loopback address {}", candidate)
+              loopback.add(candidate)
             }
-          } else {
-            this.logger.debug("Ignoring remote address on loopback interface {}", candidate);
+            else {
+              logger.debug("Ignoring unreachable local address on loopback interface {}", candidate)
+            }
           }
-        } else if (candidate.isLoopbackAddress()) {
-          this.logger.debug("Ignoring loopback address on remote interface {}", candidate);
-        } else {
-          this.logger.debug("Adding remote address {}", candidate);
-          this.remote.add(candidate);
+          else {
+            logger.debug("Ignoring remote address on loopback interface {}", candidate)
+          }
+        }
+        else if (candidate.isLoopbackAddress) {
+          logger.debug("Ignoring loopback address on remote interface {}", candidate)
+        }
+        else {
+          logger.debug("Adding remote address {}", candidate)
+          remote.add(candidate)
         }
       }
-    } catch (SocketException var5) {
-      this.logger.debug("Error while querying interface {} for IP addresses", networkInterface, var5);
-    } catch (Throwable var6) {
-      throw new RuntimeException(String.format("Could not determine the IP addresses for network interface %s", networkInterface.getName()), var6);
     }
-
+    catch (e: SocketException) {
+      logger.debug("Error while querying interface {} for IP addresses", networkInterface, e)
+    }
+    catch (t: Throwable) {
+      throw RuntimeException(String.format("Could not determine the IP addresses for network interface %s", networkInterface.name), t)
+    }
   }
 
-  public List<InetAddress> getLoopback() {
-    return this.loopback;
+  companion object {
+    private val logger = LoggerFactory.getLogger(InetAddresses::class.java)
+    private const val REACHABLE_TIMEOUT_MS = 50
   }
 
-  public List<InetAddress> getRemote() {
-    return this.remote;
+  init {
+    analyzeNetworkInterfaces()
   }
 }
