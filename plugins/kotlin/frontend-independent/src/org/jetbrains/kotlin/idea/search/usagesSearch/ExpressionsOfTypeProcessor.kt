@@ -19,6 +19,7 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -595,7 +596,7 @@ class ExpressionsOfTypeProcessor(
                 val parent = typeRefParent.parent
                 if (parent is KtSuperTypeCallEntry) {
                     val classOrObject = (parent.parent as KtSuperTypeList).parent as KtClassOrObject
-                    val psiClass = classOrObject.providedToLightClass()
+                    val psiClass = classOrObject.toLightClass()
                     psiClass?.let { addClassToProcess(it) }
                     return true
                 }
@@ -604,7 +605,7 @@ class ExpressionsOfTypeProcessor(
             is KtSuperTypeListEntry -> { // super-interface name in the list of bases
                 if (typeRef == typeRefParent.typeReference) {
                     val classOrObject = (typeRefParent.parent as KtSuperTypeList).parent as KtClassOrObject
-                    val psiClass = classOrObject.providedToLightClass()
+                    val psiClass = classOrObject.toLightClass()
                     psiClass?.let { addClassToProcess(it) }
                     return true
                 }

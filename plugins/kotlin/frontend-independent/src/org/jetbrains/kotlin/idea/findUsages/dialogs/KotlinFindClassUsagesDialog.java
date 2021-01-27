@@ -17,7 +17,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.idea.KotlinIndependentBundle;
 import org.jetbrains.kotlin.idea.findUsages.KotlinClassFindUsagesOptions;
@@ -27,6 +26,8 @@ import org.jetbrains.kotlin.psi.KtClassOrObject;
 import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
 
 import javax.swing.*;
+
+import static org.jetbrains.kotlin.asJava.LightClassUtilsKt.toLightClass;
 
 public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
     private StateRestoringCheckBox constructorUsages;
@@ -50,7 +51,7 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
 
     @NotNull
     private static PsiClass getRepresentingPsiClass(@NotNull KtClassOrObject classOrObject) {
-        PsiClass lightClass = LightClassProvider.Companion.providedToLightClass(classOrObject);
+        PsiClass lightClass = toLightClass(classOrObject);
         if (lightClass != null) return lightClass;
 
         // TODO: Remove this code when light classes are generated for builtins
