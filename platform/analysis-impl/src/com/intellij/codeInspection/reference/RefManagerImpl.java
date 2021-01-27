@@ -457,7 +457,8 @@ public class RefManagerImpl extends RefManager {
       else if (processExternalElements) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
-          RefManagerExtension externalFileManagerExtension = myExtensions.values().stream().filter(ex -> ex.shouldProcessExternalFile(file)).findFirst().orElse(null);
+          RefManagerExtension<?> externalFileManagerExtension =
+            ContainerUtil.find(myExtensions.values(), ex -> ex.shouldProcessExternalFile(file));
           if (externalFileManagerExtension == null) {
             if (element instanceof PsiFile) {
               VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
