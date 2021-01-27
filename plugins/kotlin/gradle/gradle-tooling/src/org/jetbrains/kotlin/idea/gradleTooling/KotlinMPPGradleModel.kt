@@ -48,6 +48,7 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
     val extraFeatures: ExtraFeatures
     val kotlinNativeHome: String
     val partialCacheAware: CompilerArgumentsCacheAware
+    val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer
 
     @Deprecated("Use 'sourceSetsByName' instead", ReplaceWith("sourceSetsByName"), DeprecationLevel.ERROR)
     val sourceSets: Map<String, KotlinSourceSet>
