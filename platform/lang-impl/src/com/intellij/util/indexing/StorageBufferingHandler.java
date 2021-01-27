@@ -26,10 +26,7 @@ abstract class StorageBufferingHandler {
     if (myPreviousDataBufferingState != transientInMemoryIndices) {
       synchronized (myBufferingStateUpdateLock) {
         if (myPreviousDataBufferingState != transientInMemoryIndices) {
-          getIndexes().forEach(index -> {
-            assert index != null;
-            index.setBufferingEnabled(transientInMemoryIndices);
-          });
+          getIndexes().forEach(index -> index.setBufferingEnabled(transientInMemoryIndices));
           myPreviousDataBufferingState = transientInMemoryIndices;
         }
       }

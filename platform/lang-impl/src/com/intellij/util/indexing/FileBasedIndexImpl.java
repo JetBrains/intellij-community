@@ -295,9 +295,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @ApiStatus.Internal
   public void dumpIndexStatistics() {
-    IndexConfiguration state = getRegisteredIndexes().getState();
-    String statistics = state.getIndexIDs().stream().map(id -> {
-      var indexStats = state.getIndex(id).dumpStatistics();
+    String statistics = getRegisteredIndexes().getState().getIndexIDs().stream().map(id -> {
+      var indexStats = getIndex(id).dumpStatistics();
       if (indexStats == null) return null;
       return "id = " + id + ": " + indexStats;
     }).filter(Objects::nonNull).collect(Collectors.joining(", "));
@@ -402,23 +401,29 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                               @NotNull IndexConfiguration state,
                                               @NotNull IndexVersionRegistrationSink registrationStatusSink)
     throws Exception {
-    final ID<K, V> name = extension.getName();
-
-    final InputFilter inputFilter = extension.getInputFilter();
-    final Set<FileType> addedTypes;
-    if (inputFilter instanceof FileBasedIndex.FileTypeSpecificInputFilter) {
-      addedTypes = new HashSet<>();
-      ((FileBasedIndex.FileTypeSpecificInputFilter)inputFilter).registerFileTypesUsedForIndexing(type -> {
-        if (type != null) addedTypes.add(type);
-      });
-    }
-    else {
-      addedTypes = null;
-    }
-
+    ID<K, V> name = extension.getName();
+    Set<FileType> addedTypes;
+    InputFilter inputFilter;
     boolean contentHashesEnumeratorOk = true;
-    if (VfsAwareMapReduceIndex.hasSnapshotMapping(extension)) {
-      contentHashesEnumeratorOk = SnapshotHashEnumeratorService.getInstance().initialize();
+
+    try {
+      inputFilter = extension.getInputFilter();
+      if (inputFilter instanceof FileBasedIndex.FileTypeSpecificInputFilter) {
+        addedTypes = new HashSet<>();
+        ((FileBasedIndex.FileTypeSpecificInputFilter)inputFilter).registerFileTypesUsedForIndexing(type -> {
+          if (type != null) addedTypes.add(type);
+        });
+      }
+      else {
+        addedTypes = null;
+      }
+
+      if (VfsAwareMapReduceIndex.hasSnapshotMapping(extension)) {
+        contentHashesEnumeratorOk = SnapshotHashEnumeratorService.getInstance().initialize();
+      }
+    } catch (Exception e) {
+      state.registerIndexInitializationProblem(name, e);
+      throw e;
     }
 
     int attemptCount = 2;
@@ -447,6 +452,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         boolean lastAttempt = attempt == attemptCount - 1;
         if (lastAttempt) {
+          state.registerIndexInitializationProblem(name, e);
           throw e;
         }
         else if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -512,8 +518,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         IndexConfiguration state = getState();
         for (ID<?, ?> indexId : state.getIndexIDs()) {
           try {
-            final UpdatableIndex<?, ?, FileContent> index = state.getIndex(indexId);
-            assert index != null;
+            UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
             if (!RebuildStatus.isOk(indexId)) {
               index.clear(); // if the index was scheduled for rebuild, only clean it
             }
@@ -579,11 +584,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private void removeTransientFileDataFromIndices(Collection<? extends ID<?, ?>> indices, int inputId, VirtualFile file) {
     for (ID<?, ?> indexId : indices) {
-      final UpdatableIndex<?, ?, FileContent> index = myRegisteredIndexes.getState().getIndex(indexId);
-      if (index == null) {
-        throw new AssertionError("index '" + indexId.getName() + "' can't be found among registered indexes: " + myRegisteredIndexes.getState().getIndexIDs());
-      }
-      index.removeTransientDataForFile(inputId);
+      getIndex(indexId).removeTransientDataForFile(inputId);
     }
 
     Document document = myFileDocumentManager.getCachedDocument(file);
@@ -705,10 +706,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     getChangedFilesCollector().ensureUpToDate();
 
     myTransactionMap = SmartFMap.emptyMap();
-    IndexConfiguration state = getState();
-    for (ID<?, ?> indexId : state.getIndexIDs()) {
-      final UpdatableIndex<?, ?, FileContent> index = state.getIndex(indexId);
-      assert index != null;
+    for (ID<?, ?> indexId : getState().getIndexIDs()) {
+      final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
       index.cleanupForNextTest();
     }
   }
@@ -830,10 +829,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void clearIndex(@NotNull final ID<?, ?> indexId) throws StorageException {
     advanceIndexVersion(indexId);
-
-    final UpdatableIndex<?, ?, FileContent> index = myRegisteredIndexes.getState().getIndex(indexId);
-    assert index != null : "Index with key " + indexId + " not found or not registered properly";
-    index.clear();
+    getIndex(indexId).clear();
   }
 
   private void advanceIndexVersion(ID<?, ?> indexId) {
@@ -1020,7 +1016,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     @Override
     protected Stream<UpdatableIndex<?, ?, ?>> getIndexes() {
       IndexConfiguration state = getState();
-      return state.getIndexIDs().stream().map(id -> state.getIndex(id));
+      return state.getIndexIDs().stream().map(id -> getIndex(id));
     }
   };
 
@@ -1048,8 +1044,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     for (ID<?, ?> indexId : state.getIndexIDs()) {
       if (skipContentDependentIndexes && myRegisteredIndexes.isContentDependentIndex(indexId)) continue;
-      final UpdatableIndex<?, ?, FileContent> index = state.getIndex(indexId);
-      assert index != null;
+      UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
       index.cleanupMemoryStorage();
     }
   }
@@ -1110,7 +1105,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
     UpdatableIndex<K, V, FileContent> index = getState().getIndex(indexId);
     if (index == null) {
-      throw new IllegalStateException("Index is not created for `" + indexId.getName() + "`");
+      Throwable initializationProblem = getState().getInitializationProblem(indexId);
+      String message = "Index is not created for `" + indexId.getName() + "`";
+      throw initializationProblem != null
+      ? new IllegalStateException(message, initializationProblem)
+      : new IllegalStateException(message);
     }
     return index;
   }
