@@ -110,7 +110,7 @@ internal object SpaceReviewInfoPanelFactory {
       }
     }
 
-    val openTimelineLinkLabel = LinkLabel.create(SpaceBundle.message("review.details.view.timeline.link.action")) {
+    val openTimelineLinkLabel = LinkLabel.create(SpaceBundle.message("review.details.view.chat.link.action")) {
       openReviewInEditor(detailsVm.ideaProject,
                          detailsVm.workspace,
                          detailsVm.spaceProjectInfo,
