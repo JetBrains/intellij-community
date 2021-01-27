@@ -410,7 +410,6 @@ public class InspectionTree extends Tree {
     }
     Set<InspectionTreeNode> processedNodes = new THashSet<>();
     List<InspectionTreeNode> toRemove = new ArrayList<>();
-    List<TreePath> pathsToSelect = new ArrayList<>();
     for (TreePath path : selected) {
       Object[] nodePath = path.getPath();
 
@@ -421,29 +420,27 @@ public class InspectionTree extends Tree {
 
         if (shouldDelete(node)) {
           toRemove.add(node);
-          TreePath toSelect = getParentPath(path, nodePath.length - i);
-          if (toSelect != null) {
-            pathsToSelect.add(toSelect);
-          }
           break;
         }
       }
     }
 
-    InspectionTreeNode nodeToSelect = null;
+    if (toRemove.isEmpty()) return;
+
+    TreePath pathToSelect = null;
     if (selected.length == 1) {
-      final Object selectedNode = selected[0].getLastPathComponent();
-      if (selectedNode instanceof InspectionTreeNode) {
-        final var children = ((InspectionTreeNode) selectedNode).myParent.myChildren;
-        if (children != null && children.myChildren.length > 1) {
-          final int index = ArrayUtil.indexOf(children.myChildren, selectedNode);
-          final boolean last = index + 1 == children.myChildren.length;
-          nodeToSelect = children.myChildren[index + (last ? -1 : 1)];
-        }
+      final InspectionTreeNode nextNode = myModel
+        .traverseFrom((InspectionTreeNode) selected[0].getLastPathComponent(), true)
+        .filter(n -> !shouldDelete(n)).first();
+      if (nextNode != null) pathToSelect = TreeUtil.getPathFromRoot(nextNode);
+    } else {
+      TreePath commonAliveAncestorPath = TreePathUtil.findCommonAncestor(selected);
+      while (commonAliveAncestorPath != null && shouldDelete((InspectionTreeNode) commonAliveAncestorPath.getLastPathComponent())) {
+        commonAliveAncestorPath = commonAliveAncestorPath.getParentPath();
       }
+      if (commonAliveAncestorPath != null) pathToSelect = commonAliveAncestorPath;
     }
 
-    if (toRemove.isEmpty()) return;
     Set<InspectionTreeNode> parents = new THashSet<>();
     for (InspectionTreeNode node : toRemove) {
       InspectionTreeNode parent = node.getParent();
@@ -457,23 +454,10 @@ public class InspectionTree extends Tree {
       parent.dropProblemCountCaches();
     }
 
-    if (nodeToSelect == null) {
-      TreePath commonPath = TreePathUtil.findCommonAncestor(pathsToSelect);
-      if (commonPath != null) TreeUtil.selectPath(this, commonPath);
-    } else {
-      TreeUtil.selectNode(this, nodeToSelect);
-    }
+    TreeUtil.selectPath(this, pathToSelect);
 
     revalidate();
     repaint();
-  }
-
-  private static TreePath getParentPath(TreePath path, int ord) {
-    TreePath parent = path;
-    for (int j = 0; j < ord; j++) {
-      parent = parent.getParentPath();
-    }
-    return parent;
   }
 
   private boolean shouldDelete(InspectionTreeNode node) {
