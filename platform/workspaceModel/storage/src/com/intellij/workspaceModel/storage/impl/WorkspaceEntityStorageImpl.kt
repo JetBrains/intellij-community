@@ -226,6 +226,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
       LOG.debug { "Cascade removing: ${ClassToIntConverter.getClassOrDie(it.clazz)}-${it.arrayId}" }
       this.changeLog.addRemoveEvent(it)
     }
+
+    if (!this.brokenConsistency) {
+      this.assertConsistencyInStrictMode("Check after removing entity", null, null, null)
+    }
   }
 
   private fun ArrayListMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
@@ -973,8 +977,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
   internal fun assertConsistencyInStrictMode(message: String,
                                              sourceFilter: ((EntitySource) -> Boolean)?,
-                                             left: WorkspaceEntityStorage,
-                                             right: WorkspaceEntityStorage) {
+                                             left: WorkspaceEntityStorage?,
+                                             right: WorkspaceEntityStorage?) {
     if (StrictMode.rbsEnabled) {
       try {
         this.assertConsistency()
@@ -990,12 +994,12 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   internal fun reportConsistencyIssue(message: String,
                                       e: Throwable,
                                       sourceFilter: ((EntitySource) -> Boolean)?,
-                                      left: WorkspaceEntityStorage,
-                                      right: WorkspaceEntityStorage,
+                                      left: WorkspaceEntityStorage?,
+                                      right: WorkspaceEntityStorage?,
                                       resulting: WorkspaceEntityStorage) {
     val entitySourceFilter = if (sourceFilter != null) {
-      val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()
-      allEntitySources.addAll((right as AbstractEntityStorage).indexes.entitySourceIndex.entries())
+      val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
+      allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())
       allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
     }
     else null
@@ -1016,11 +1020,11 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   private fun serializeContentToFolder(contentFolder: Path,
-                                       left: WorkspaceEntityStorage,
-                                       right: WorkspaceEntityStorage,
+                                       left: WorkspaceEntityStorage?,
+                                       right: WorkspaceEntityStorage?,
                                        resulting: WorkspaceEntityStorage): File? {
-    serializeEntityStorage(contentFolder.resolve("Left_Store"), left)
-    serializeEntityStorage(contentFolder.resolve("Right_Store"), right)
+    left?.let { serializeEntityStorage(contentFolder.resolve("Left_Store"), it) }
+    right?.let { serializeEntityStorage(contentFolder.resolve("Right_Store"), it) }
     serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting)
     serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
 
