@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.openapi.util.RecursionManager
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.component2
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -39,13 +40,14 @@ class CollectingGroovyInferenceSession(
     fun getContextSubstitutor(resolveResult: GroovyMethodResult,
                               nearestCall: GrCall): PsiSubstitutor = RecursionManager.doPreventingRecursion(resolveResult, true) {
       val collectingSession = CollectingGroovyInferenceSession(nearestCall.parentOfType<GrMethod>()!!.typeParameters, nearestCall)
-      buildTopLevelSession(nearestCall, collectingSession).inferSubst(resolveResult)
+      findExpression(nearestCall)?.let(collectingSession::addExpression)
+      collectingSession.inferSubst(resolveResult)
     } ?: PsiSubstitutor.EMPTY
   }
 
   private fun substituteForeignTypeParameters(type: PsiType?): PsiType? {
     return type?.accept(object : PsiTypeMapper() {
-      override fun visitClassType(classType: PsiClassType): PsiType? {
+      override fun visitClassType(classType: PsiClassType): PsiType {
         if (classType.isTypeParameter()) {
           return myInferenceVariables.find { it.delegate.name == classType.canonicalText }?.type() ?: classType
         }
@@ -54,6 +56,16 @@ class CollectingGroovyInferenceSession(
         }
       }
     })
+  }
+
+  override fun addConstraint(constraint: ConstraintFormula?) {
+    if (constraint is MethodCallConstraint) {
+      val method = constraint.result.candidate?.method ?: return
+      if (method.returnTypeElement == null) {
+        return super.addConstraint(MethodCallConstraint(null, constraint.result, constraint.context))
+      }
+    }
+    return super.addConstraint(constraint)
   }
 
   override fun substituteWithInferenceVariables(type: PsiType?): PsiType? =
