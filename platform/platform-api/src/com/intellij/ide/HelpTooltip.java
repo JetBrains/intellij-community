@@ -600,7 +600,7 @@ public class HelpTooltip {
       setFont(deriveHeaderFont(getFont()));
       setForeground(UIUtil.getToolTipForeground());
 
-      if (obeyWidth) {
+      if (obeyWidth || title.length() > MAX_WIDTH.get()) {
         View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
         float width = v.getPreferredSpan(View.X_AXIS);
         isMultiline = isMultiline || width > MAX_WIDTH.get();
