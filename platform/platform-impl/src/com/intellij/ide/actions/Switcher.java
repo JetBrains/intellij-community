@@ -1170,7 +1170,7 @@ public final class Switcher extends AnAction implements DumbAware {
               VirtualFile file = info.first;
               if (mode == RIGHT_SPLIT) {
                 if (splitWindow == null) {
-                  splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null);
+                  splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null, true);
                 }
                 else {
                   manager.openFileWithProviders(file, true, splitWindow);

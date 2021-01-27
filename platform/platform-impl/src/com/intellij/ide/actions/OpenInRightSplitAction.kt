@@ -58,24 +58,24 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
   companion object {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
 
-    fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null): EditorWindow? {
+    fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null, requestFocus: Boolean = true): EditorWindow? {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
       val splitters = fileEditorManager.splitters
 
       val providers = FileEditorProviderManager.getInstance().getProviders(project, file)
       if (providers.isEmpty()) {
-        element?.navigate(true)
+        element?.navigate(requestFocus)
         return null
       }
 
-      val editorWindow = splitters.openInRightSplit(file)
+      val editorWindow = splitters.openInRightSplit(file, requestFocus)
       if (editorWindow == null) {
-        element?.navigate(true)
+        element?.navigate(requestFocus)
         return null
       }
 
       if (element != null && element !is PsiFile) {
-        ApplicationManager.getApplication().invokeLater({ element.navigate(true) }, project.disposed)
+        ApplicationManager.getApplication().invokeLater({ element.navigate(requestFocus) }, project.disposed)
       }
       return editorWindow
     }

@@ -1109,6 +1109,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Nullable
   public EditorWindow openInRightSplit(@NotNull VirtualFile file) {
+    return openInRightSplit(file, true);
+  }
+
+  @Nullable
+  public EditorWindow openInRightSplit(@NotNull VirtualFile file, boolean requestFocus) {
     EditorWindow window = getCurrentWindow();
 
     if (window == null) {
@@ -1121,13 +1126,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         //reuse
         EditorWindow rightSplitWindow = findWindowWith(component);
         if (rightSplitWindow != null) {
-          myManager.openFileWithProviders(file, true, rightSplitWindow);
+          myManager.openFileWithProviders(file, requestFocus, rightSplitWindow);
           return rightSplitWindow;
         }
       }
     }
 
-    return window.split(SwingConstants.VERTICAL, true, file, true);
+    return window.split(SwingConstants.VERTICAL, true, file, requestFocus);
   }
 
   public static boolean focusDefaultComponentInSplittersIfPresent(@NotNull Project project) {
