@@ -22,6 +22,7 @@ import training.ui.LessonMessagePane
 import training.ui.MessageFactory
 import training.ui.UISettings
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
@@ -48,14 +49,19 @@ internal object LessonExecutorUtil {
   fun showBalloonMessage(text: String, ui: JComponent, balloonConfig: LearningBalloonConfig, actionsRecorder: ActionsRecorder, project: Project) {
     val messages = MessageFactory.convert(text)
     val messagesPane = LessonMessagePane(false)
+    messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
     messagesPane.isOpaque = false
     messagesPane.addMessage(messages)
+
+    val preferredSize = messagesPane.preferredSize
+
     messagesPane.toolTipText = LearnBundle.message("learn.stop.hint")
     val balloonPanel = JPanel()
     balloonPanel.border = EmptyBorder(8, 8, 8, 8)
     balloonPanel.isOpaque = false
     balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
-    balloonPanel.preferredSize = balloonConfig.dimension
+    var height = preferredSize.height + 16
+    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 2)) + 16
     balloonPanel.add(messagesPane)
     val gotItCallBack = balloonConfig.gotItCallBack
     if (gotItCallBack != null) {
@@ -66,7 +72,10 @@ internal object LessonExecutorUtil {
           gotItCallBack()
         }
       }
+      height += stopButton.preferredSize.height
     }
+
+    balloonPanel.preferredSize = Dimension(width, height)
 
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
       .setCloseButtonEnabled(false)

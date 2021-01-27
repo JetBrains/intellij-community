@@ -38,7 +38,6 @@ import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
 import java.lang.reflect.Modifier
@@ -253,17 +252,9 @@ fun TaskRuntimeContext.closeAllFindTabs() {
   }
 }
 
-fun LessonContext.gotItTask(position: Balloon.Position, dimension: Dimension, @Nls text: TaskContext.() -> String) {
-  task {
-    val gotIt = CompletableFuture<Boolean>()
-    text(text(), LearningBalloonConfig(position, dimension) { gotIt.complete(true) })
-    addStep(gotIt)
-  }
-}
-
-fun TaskContext.gotItStep(position: Balloon.Position, dimension: Dimension, @Nls text: String) {
+fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String) {
   val gotIt = CompletableFuture<Boolean>()
-  text(text, LearningBalloonConfig(position, dimension, false) { gotIt.complete(true) })
+  text(text, LearningBalloonConfig(position, width, false) { gotIt.complete(true) })
   addStep(gotIt)
 }
 

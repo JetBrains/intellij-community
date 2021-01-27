@@ -41,7 +41,6 @@ import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.ui.LearningUiHighlightingManager
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -118,7 +117,7 @@ class PythonOnboardingTour(module: Module) :
     caret(sample.startOffset)
 
     toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
-      text("Click here", LearningBalloonConfig(Balloon.Position.below, Dimension(100, 50), duplicateMessage = false))
+      text("Click here", LearningBalloonConfig(Balloon.Position.below, width = 0, duplicateMessage = false))
       "You may notice that method ${code("find_average")} returns wrong answer. Let's debug it and stop at the" +
       "${code("return")} statement. First of all, set breakpoint: just click at the gutter in the highlighted area."
     }
@@ -152,7 +151,7 @@ class PythonOnboardingTour(module: Module) :
 
     task {
       text("Press ${strong(UIBundle.message("got.it"))} to proceed.")
-      gotItStep(Balloon.Position.above, Dimension(500, 150),
+      gotItStep(Balloon.Position.above, 500,
                 "This tool provides you with debugging actions, such as step in, step over, run to the cursor, and so on. " +
                 "The ${strong(LessonsBundle.message("debug.workflow.lesson.name"))} lesson can give you an overview of them. " +
                 "We suggest that you try it later!")
@@ -160,7 +159,7 @@ class PythonOnboardingTour(module: Module) :
 
     highlightButtonByIdTask("Stop")
     actionTask("Stop") {
-      buttonBalloon("Let's stop debugging")
+      buttonBalloon("Let's stop debugging") { list -> list.minByOrNull { it.locationOnScreen.y } }
       "Let's stop debugging. Click at ${icon(AllIcons.Actions.Suspend)} icon."
     }
 
@@ -176,10 +175,11 @@ class PythonOnboardingTour(module: Module) :
     }
   }
 
-  private fun TaskContext.buttonBalloon(message: String) {
+  private fun TaskContext.buttonBalloon(message: String, chooser: (List<JComponent>) -> JComponent? = { it.firstOrNull()}) {
+    val highlightingComponent = chooser(LearningUiHighlightingManager.highlightingComponents.filterIsInstance<JComponent>())
     val useBalloon = LearningBalloonConfig(Balloon.Position.below,
-                                           Dimension(200, 50),
-                                           highlightingComponent = LearningUiHighlightingManager.highlightingComponents.firstOrNull() as? JComponent,
+                                           width = 0,
+                                           highlightingComponent = highlightingComponent,
                                            duplicateMessage = false)
     text(message, useBalloon)
   }
@@ -222,7 +222,7 @@ class PythonOnboardingTour(module: Module) :
            "You can modify it later to specify the way PyCharm executes your code.")
 
       text("Press ${strong(UIBundle.message("got.it"))} to proceed.")
-      gotItStep(Balloon.Position.below, Dimension(400, 200),
+      gotItStep(Balloon.Position.below, 400,
                 "Use this toolbar to select a configuration from the list, modify it, rerun it, debug your code, collect code coverage, " +
                 "and profile your application. Try other lessons to learn more details about running and debugging code.")
     }
@@ -237,7 +237,7 @@ class PythonOnboardingTour(module: Module) :
 
     task {
       text("Let's switch to the Learn tool window and continue this lesson.",
-           LearningBalloonConfig(Balloon.Position.atRight, dimension = Dimension(300, 100)))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 300))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow("Learn")?.isVisible == true
       }
@@ -263,7 +263,7 @@ class PythonOnboardingTour(module: Module) :
 
       text("One of the main tool windows is Project View toolwindow. Let's click at its <strong>stripe button</strong> to open it " +
            "and look at our simple demo project! Or you can open it by ${action("ActivateProjectToolWindow")} shortcut.",
-           LearningBalloonConfig(Balloon.Position.atRight, Dimension(300, 120)))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 300))
       triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 1 && path.getPathComponent(0).toString().contains("PyCharmLearningProject")
         if (result) {
@@ -284,7 +284,7 @@ class PythonOnboardingTour(module: Module) :
     task {
       text("Here you can see several top-level items: the project directory itself, external library (from the configured SDK and so on) " +
            "and some other auxiliary staff. Now let's expand the project directory item.",
-           LearningBalloonConfig(Balloon.Position.atRight, Dimension(500, 150)))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 400))
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         path.pathCount >= 3 && path.getPathComponent(2).toString().contains(demoFileName)
       }
@@ -292,7 +292,7 @@ class PythonOnboardingTour(module: Module) :
 
     task {
       text("Double-click to open ${code(demoFileName)}.",
-           LearningBalloonConfig(Balloon.Position.atRight, dimension = Dimension(300, 100)))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       stateCheck l@{
         if (FileEditorManager.getInstance(project).selectedTextEditor == null) return@l false
         virtualFile.name == demoFileName
