@@ -92,7 +92,7 @@ import static com.intellij.testFramework.RunAll.runAll;
  * <p/>
  * NOTE: Because of the performance difference, we recommend plugin developers to write light tests whenever possible.
  * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/testing_plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
  *
  * @author yole
  */
