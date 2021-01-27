@@ -134,7 +134,9 @@ public final class CustomMethodHandlers {
       instanceCall("java.util.Random", "nextInt").parameterTypes("int"),
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int"),
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), CustomMethodHandlers::randomNextInt)
-    .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), CustomMethodHandlers::copyOfArray);
+    .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), CustomMethodHandlers::copyOfArray)
+    .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterTypes("T[]"), CustomMethodHandlers::collectionToArray)
+    .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray);
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -442,5 +444,28 @@ public final class CustomMethodHandlers {
       return intRangeClamped(LongRangeSet.point(0).fromRelation(relation));
     }
     return TOP;
+  }
+
+  private static @NotNull DfType collectionToArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+    DfType result = NOT_NULL_OBJECT;
+    LongRangeSet finalRange;
+    DfaValue collection = arguments.myQualifier;
+    LongRangeSet collectionSizeRange = DfIntType.extractRange(state.getDfType(COLLECTION_SIZE.createValue(factory, collection)));
+    if (arguments.myArguments.length == 1) {
+      DfaValue array = arguments.myArguments[0];
+      DfType arrType = state.getDfType(array);
+      TypeConstraint constraint = TypeConstraint.fromDfType(arrType);
+      if (constraint.isExact()) {
+        result = constraint.asDfType().meet(NOT_NULL_OBJECT);
+      }
+      // Array size is max of collection size and argument array size
+      LongRangeSet arraySizeRange = DfIntType.extractRange(state.getDfType(ARRAY_LENGTH.createValue(factory, array)));
+      LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GE).intersect(arraySizeRange);
+      LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).intersect(collectionSizeRange);
+      finalRange = biggerArrays.unite(biggerCollections);
+    } else {
+      finalRange = collectionSizeRange; 
+    }
+    return result.meet(ARRAY_LENGTH.asDfType(intRange(finalRange)));
   }
 }

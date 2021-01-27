@@ -688,4 +688,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testArraysCopyOf() { doTest(); }
   public void testArrayNegativeSize() { doTest(); }
   public void testPresizedList() { doTest(); }
+  public void testCollectionToArray() { doTest(); }
 }
