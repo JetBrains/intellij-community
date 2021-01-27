@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorLinePainter;
 import com.intellij.openapi.editor.LineExtensionInfo;
@@ -42,6 +43,7 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class XDebuggerEditorLinePainter extends EditorLinePainter {
+  private static final Logger LOG = Logger.getInstance(XDebuggerEditorLinePainter.class);
   public static final Key<Map<Variable, VariableValue>> CACHE = Key.create("debug.inline.variables.cache");
   // we want to limit number of line extensions to avoid very slow painting
   // the constant is rather random (feel free to adjust it upon getting a new information)
@@ -194,6 +196,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       }
     }
     catch (Exception e) {
+      LOG.error(e);
       return null;
     }
     return text;
