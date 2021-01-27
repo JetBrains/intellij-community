@@ -14,8 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.TextEditorWithPreview
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
@@ -107,13 +106,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
           if (gotItTooltip.canShow()) {
             connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
               override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-                fileEditors.find { fe ->
-                  when (fe) {
-                    is PsiAwareTextEditorImpl -> editor == fe.editor
-                    is TextEditorWithPreview -> editor == fe.editor
-                    else -> false
-                  }
-                }?.let { _ ->
+                fileEditors.find { fe -> (fe is TextEditor) && editor == fe.editor }?.let { _ ->
                   gotItTooltip.setOnBalloonCreated { balloon ->
                     balloon.addListener(object: JBPopupListener {
                       override fun onClosed(event: LightweightWindowEvent) {
