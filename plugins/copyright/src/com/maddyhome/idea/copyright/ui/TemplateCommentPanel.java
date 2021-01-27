@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.UIUtil;
@@ -91,7 +92,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   private final boolean allowBlock;
 
 
-  public TemplateCommentPanel(FileType fileType, TemplateCommentPanel parentPanel, String[] locations, Project project) {
+  public TemplateCommentPanel(FileType fileType, TemplateCommentPanel parentPanel, String @NlsContexts.RadioButton [] locations, Project project) {
     this.parentPanel = parentPanel;
     myProject = project;
 
