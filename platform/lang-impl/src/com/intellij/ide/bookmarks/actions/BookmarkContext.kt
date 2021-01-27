@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.awt.RelativePoint
@@ -42,12 +43,18 @@ internal data class BookmarkContext(val project: Project, val file: VirtualFile,
   }
 
   internal fun getPointOnGutter(component: Component?) =
-    if (component !is EditorGutterComponentEx || editor == null || line < 0) null
-    else {
-      RelativePoint(component, editor.logicalPositionToXY(LogicalPosition(line, 0)).apply {
-        x = component.iconAreaOffset
+    if (editor == null || line < 0) null
+    else getGutter(component)?.let {
+      RelativePoint(it, editor.logicalPositionToXY(LogicalPosition(line, 0)).apply {
+        x = it.iconAreaOffset
         y += editor.lineHeight
       })
+    }
+
+  private fun getGutter(component: Component?) =
+    component as? EditorGutterComponentEx ?: when (Registry.`is`("ide.bookmark.mnemonic.chooser.always.above.gutter")) {
+      true -> editor?.gutter as? EditorGutterComponentEx
+      else -> null
     }
 }
 
