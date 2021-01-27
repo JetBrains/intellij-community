@@ -43,6 +43,7 @@ import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,8 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   private final @NotNull LoadingDecorator myLoadingDecorator;
 
+  private final @Nullable @Nls String myMessagePlaceholder;
+
   private static final @NotNull EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
     editor.setBackgroundColor(null); // to use background from set color scheme
     editor.setColorsScheme(getCommitMessageColorScheme());
@@ -92,11 +95,23 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     this(project, true, true, true);
   }
 
-  public CommitMessage(@NotNull Project project, boolean withSeparator, boolean showToolbar, boolean runInspections) {
-    super(new BorderLayout());
+  public CommitMessage(@NotNull Project project,
+                       boolean withSeparator,
+                       boolean showToolbar,
+                       boolean runInspections) {
+    this(project, withSeparator, showToolbar, runInspections, null);
+  }
 
+  public CommitMessage(@NotNull Project project,
+                       boolean withSeparator,
+                       boolean showToolbar,
+                       boolean runInspections,
+                       @Nullable @Nls String messagePlaceholder) {
+    super(new BorderLayout());
+    myMessagePlaceholder = messagePlaceholder;
     myEditorField = createCommitMessageEditor(project, runInspections);
     myEditorField.getDocument().putUserData(DATA_KEY, this);
+    myEditorField.setPlaceholder(myMessagePlaceholder);
 
     myLoadingDecorator = new LoadingDecorator(myEditorField, this, 0);
     add(myLoadingDecorator.getComponent(), BorderLayout.CENTER);
@@ -127,11 +142,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   public void stopLoading() {
     myLoadingDecorator.stopLoading();
     myEditorField.setEnabled(true);
+    myEditorField.setPlaceholder(myMessagePlaceholder);
   }
 
   @Override
   public void startLoading() {
     myEditorField.setEnabled(false);
+    myEditorField.setPlaceholder(null);
     myLoadingDecorator.startLoading(false);
   }
 

@@ -66,9 +66,8 @@ abstract class NonModalCommitPanel(
     component.isOpaque = false
   }
 
-  val commitMessage = CommitMessage(project, false, false, true).apply {
+  val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
-    editorField.setPlaceholder(message("commit.message.placeholder"))
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
