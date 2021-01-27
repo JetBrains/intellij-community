@@ -78,6 +78,7 @@
               icon="SpaceIcons.MainToolwindow">
       </action>
       <add-to-group group-id="NavBarToolBar" anchor="last"/>
+      <add-to-group group-id="MainToolBar" anchor="last"/>
     </group>
 
 
