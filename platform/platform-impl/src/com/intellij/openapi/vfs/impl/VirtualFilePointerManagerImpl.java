@@ -131,11 +131,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                    boolean addSubdirectoryPointers,
                                    @NotNull NewVirtualFileSystem fs,
                                    @NotNull VFileEvent event) {
-    addRelevantPointers(file, parent, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs, true, event);
+    addRelevantPointers(parent, file, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs, true, event);
   }
 
-  private void addRelevantPointers(@Nullable VirtualFile file,
-                                   @NotNull VirtualFileSystemEntry parent,
+  private void addRelevantPointers(@NotNull VirtualFileSystemEntry parent,
+                                   @Nullable VirtualFile file,
                                    int childNameId,
                                    @NotNull MultiMap<? super VirtualFilePointerListener, ? super VirtualFilePointerImpl> toFirePointers,
                                    @NotNull List<? super NodeToUpdate> toUpdateNodes,
@@ -341,13 +341,14 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                                           @Nullable VirtualFilePointerListener listener,
                                                           @NotNull NewVirtualFileSystem fs) {
     VirtualFileSystem fsFromFile = file == null ? VirtualFileManager.getInstance().getFileSystem(VirtualFileManager.extractProtocol(url)) : file.getFileSystem();
-    assert fs == fsFromFile : "fs=" + fs + "; file.fs=" + fsFromFile;
+    assert fs == fsFromFile : "fs=" + fs + "; file.fs=" + fsFromFile+"; url="+url+"; file="+file;
 
     FilePartNodeRoot root = getRoot(fs);
-    FilePartNode node = (file == null ?
-                         root.findOrCreateByPath(fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path, fs)
-                         : root.findOrCreateByFile(file)).node;
-    assert fs == node.myFS : "fs=" + fs + "; myFS=" + node.myFS;
+    NodeToUpdate toUpdate = file == null ?
+        root.findOrCreateByPath(fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path, fs)
+        : root.findOrCreateByFile(file);
+    FilePartNode node = toUpdate.node;
+    assert fs == node.myFS : "fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file;
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
     if (pointer == null) {
@@ -534,7 +535,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
               addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
 
               // old pointers remain valid after rename, no need to fire
-              addRelevantPointers(eventFile, parent, FilePartNode.getNameId(eventFile), toFirePointers, toUpdateNodes, true, fs, false, event);
+              addRelevantPointers(parent, eventFile, FilePartNode.getNameId(eventFile), toFirePointers, toUpdateNodes, true, fs, false, event);
             }
           }
         }
