@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.editor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -27,6 +29,7 @@ import org.editorconfig.configmanagement.EditorConfigEncodingCache;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.psi.EditorConfigOption;
 import org.editorconfig.language.psi.EditorConfigSection;
+import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,6 +55,12 @@ public class EditorConfigStatusListener implements CodeStyleSettingsListener, Di
 
   @Override
   public final void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
+    CodeStyleSettings settings = CodeStyle.getSettings(myProject);
+    if (settings.getCustomSettingsIfCreated(EditorConfigSettings.class) == null) {
+      // plugin is currently being unloaded, can't run any updates
+      return;
+    }
+
     boolean newEnabledStatus = Utils.isEnabled(myProject);
     if (myEnabledStatus != newEnabledStatus) {
       myEnabledStatus = newEnabledStatus;
