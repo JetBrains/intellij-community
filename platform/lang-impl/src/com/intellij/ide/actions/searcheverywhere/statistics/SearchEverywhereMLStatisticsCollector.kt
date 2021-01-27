@@ -158,7 +158,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
       data[GROUP_LENGTH_KEY] = it.length
     }
 
-    val presentation = element.presentation
+    val presentation = if (element.hasPresentation()) element.presentation else action.templatePresentation
     data[HAS_ICON_KEY] = presentation.icon != null
     data[IS_ENABLED_KEY] = presentation.isEnabled
     data[WEIGHT_KEY] = presentation.weight

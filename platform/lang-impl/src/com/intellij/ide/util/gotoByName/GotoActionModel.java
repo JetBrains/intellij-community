@@ -729,7 +729,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return ObjectUtils.notNull(myPresentation, myAction.getTemplatePresentation());
     }
 
-    private boolean hasPresentation() {
+    public boolean hasPresentation() {
       return myPresentation != null;
     }
 
