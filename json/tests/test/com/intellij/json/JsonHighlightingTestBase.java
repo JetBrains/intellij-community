@@ -11,4 +11,8 @@ public abstract class JsonHighlightingTestBase extends JsonTestCase {
   protected void doTestHighlighting(boolean checkInfo, boolean checkWeakWarning, boolean checkWarning) {
     myFixture.testHighlighting(checkWarning, checkInfo, checkWeakWarning, "/highlighting/" + getTestName(false) + "." + getExtension());
   }
+
+  protected void doTestHighlightingForJsonLines(boolean checkInfo, boolean checkWeakWarning, boolean checkWarning) {
+    myFixture.testHighlighting(checkWarning, checkInfo, checkWeakWarning, "/highlighting/" + getTestName(false) + ".jsonl");
+  }
 }
