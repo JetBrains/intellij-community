@@ -171,6 +171,14 @@ internal object UpdateInstaller {
       val javaCopy = File(tempDir, "jre")
       if (javaCopy.exists()) FileUtil.delete(javaCopy)
       FileUtil.copyDir(File(java), javaCopy)
+
+      val jnf = File(java, "../Frameworks/JavaNativeFoundation.framework")
+      if (jnf.isDirectory) {
+        val jnfCopy = File(tempDir, "Frameworks/JavaNativeFoundation.framework")
+        if (jnfCopy.exists()) FileUtil.delete(jnfCopy)
+        FileUtil.copyDir(jnf, jnfCopy)
+      }
+
       java = javaCopy.path
     }
 
@@ -218,6 +226,7 @@ internal object UpdateInstaller {
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
   private fun getJdkSuffix(): String = when {
+    SystemInfo.isMac && SystemInfo.isArm64 -> "-jbr11-aarch64"
     !SystemInfo.isMac && Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr-x86")) -> "-jbr11-x86"
     Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr")) -> "-jbr11"
     else -> "-no-jbr"

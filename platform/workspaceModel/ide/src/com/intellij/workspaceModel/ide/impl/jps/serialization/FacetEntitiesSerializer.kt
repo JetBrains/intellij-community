@@ -78,6 +78,12 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
   }
 
   internal fun saveFacetEntities(facets: List<FacetEntity>, writer: JpsFileContentWriter) {
+    val fileUrl = imlFileUrl.url
+    if (facets.isEmpty()) {
+      writer.saveComponent(fileUrl, componentName, null)
+      return
+    }
+
     val facetManagerState = FacetManagerState()
     val facetStates = HashMap<String, FacetState>()
     val facetsByName = facets.groupByTo(HashMap()) { it.name }
@@ -94,7 +100,6 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     }
     val componentTag = JDomSerializationUtil.createComponentElement(componentName)
     XmlSerializer.serializeInto(facetManagerState, componentTag)
-    val fileUrl = imlFileUrl.url
     if (externalStorage && FileUtil.extensionEquals(fileUrl, "iml")) {
       // Trying to catch https://ea.jetbrains.com/browser/ea_problems/239676
       logger<FacetEntitiesSerializer>().error("""Incorrect file for the serializer

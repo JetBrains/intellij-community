@@ -12,12 +12,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
+import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
+import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 import java.util.Arrays;
 
-public class MavenGeneralPanel implements PanelWithAnchor {
+public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservable {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox outputLevelCombo;
@@ -123,5 +125,19 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   @ApiStatus.Internal
   public void applyTargetEnvironmentConfiguration(@NotNull Project project, @Nullable String targetName) {
     mavenPathsForm.apply(project, targetName);
+  }
+
+  @Override
+  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
+    watcher.registerComponent("workOffline", checkboxWorkOffline);
+    mavenPathsForm.registerSettingsWatcher(watcher);
+    watcher.registerComponent("produceExceptionErrorMessages", checkboxProduceExceptionErrorMessages);
+    watcher.registerComponent("usePluginRegistry", checkboxUsePluginRegistry);
+    watcher.registerComponent("recursive", checkboxRecursive);
+    watcher.registerComponent("alwaysUpdateSnapshots", alwaysUpdateSnapshotsCheckBox);
+    watcher.registerComponent("threadsEditor", threadsEditor);
+    watcher.registerComponent("outputLevel", outputLevelCombo);
+    watcher.registerComponent("checksumPolicy", checksumPolicyCombo);
+    watcher.registerComponent("failPolicy", failPolicyCombo);
   }
 }

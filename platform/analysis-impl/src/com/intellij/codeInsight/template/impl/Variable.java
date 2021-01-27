@@ -34,6 +34,16 @@ public class Variable implements Cloneable {
   private Expression myDefaultValueExpression;
   private final boolean mySkipOnStart;
 
+  public Variable(@NotNull Variable from) {
+    myName = from.myName;
+    myExpression = from.myExpression;
+    myDefaultValueExpression = from.myDefaultValueExpression;
+    myExpressionString = from.myExpressionString;
+    myDefaultValueString = from.myDefaultValueString;
+    myAlwaysStopAt = from.myAlwaysStopAt;
+    mySkipOnStart = from.mySkipOnStart;
+  }
+
   public Variable(@NotNull @NlsSafe String name, @Nullable Expression expression, @Nullable Expression defaultValueExpression,
                   boolean alwaysStopAt, boolean skipOnStart) {
     myName = name;

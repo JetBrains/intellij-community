@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenRunnerParametersPanel implements PanelWithAnchor {
+public class MavenRunnerParametersPanel implements PanelWithAnchor, MavenSettingsObservable {
   private JPanel panel;
   protected LabeledComponent<TextFieldWithBrowseButton> workingDirComponent;
   protected LabeledComponent<EditorTextField> goalsComponent;
@@ -180,5 +180,13 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
     } else {
       myResolveToWorkspaceCheckBox.setToolTipText(MavenConfigurableBundle.message("maven.settings.runner.resolve.workspace.artifacts.tooltip"));
     }
+  }
+
+  @Override
+  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
+    watcher.registerComponent("workingDir", workingDirComponent);
+    watcher.registerComponent("goals", goalsComponent);
+    watcher.registerComponent("profiles", profilesComponent);
+    watcher.registerComponent("resolveToWorkspace", myResolveToWorkspaceCheckBox);
   }
 }

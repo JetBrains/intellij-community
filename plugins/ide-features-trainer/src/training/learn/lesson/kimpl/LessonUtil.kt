@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.kimpl
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -171,6 +169,10 @@ object LessonUtil {
   fun rawKeyStroke(keyCode: Int): String {
     val keyStroke = KeymapUtil.getKeyStrokeText(KeyStroke.getKeyStroke(keyCode, 0))
     return "<raw_action>$keyStroke</raw_action>"
+  }
+
+  fun rawKeyStroke(keyStroke: KeyStroke): String {
+    return "<raw_action>${KeymapUtil.getKeyStrokeText(keyStroke)}</raw_action>"
   }
 
   fun rawEnter(): String = rawKeyStroke(KeyEvent.VK_ENTER)

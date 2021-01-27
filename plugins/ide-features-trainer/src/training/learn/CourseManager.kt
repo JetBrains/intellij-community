@@ -15,6 +15,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
+import training.util.courseCanBeUsed
 import training.util.switchOnExperimentalLessons
 
 class CourseManager internal constructor() : Disposable {
@@ -79,7 +80,9 @@ class CourseManager internal constructor() : Disposable {
       .size
   }
 
-  private fun initAllModules(): List<Module> = COURSE_MODULES_EP.extensions.map { it.instance.modules() }.flatten()
+  private fun initAllModules(): List<Module> = COURSE_MODULES_EP.extensions
+    .filter { courseCanBeUsed(it.language) }
+    .map { it.instance.modules() }.flatten()
 
   private fun getAllModules(): List<Module> {
     if (currentConfiguration != switchOnExperimentalLessons) {

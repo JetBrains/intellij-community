@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit2.configuration;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.application.JavaSettingsEditorBase;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -8,6 +9,9 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
 
 import javax.swing.*;
@@ -25,14 +29,21 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
 
   @Override
   protected void customizeFragments(List<SettingsEditorFragment<JUnitConfiguration, ?>> fragments,
-                                    ModuleClasspathCombo classpathCombo,
+                                    SettingsEditorFragment<JUnitConfiguration, ModuleClasspathCombo> moduleClasspath,
                                     CommonParameterFragments<JUnitConfiguration> commonParameterFragments) {
-    DefaultJreSelector jreSelector = DefaultJreSelector.fromModuleDependencies(classpathCombo, false);
+    DefaultJreSelector jreSelector = DefaultJreSelector.fromModuleDependencies(moduleClasspath.component(), false);
     SettingsEditorFragment<JUnitConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
-    fragments.add(createShortenClasspath(classpathCombo, jrePath, false));
+    fragments.add(createShortenClasspath(moduleClasspath.component(), jrePath, false));
+    if (FilenameIndex.getFilesByName(mySettings.getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(mySettings.getProject())).length > 0) {
+      fragments.add(SettingsEditorFragment.createTag("test.use.module.path",
+                                                     ExecutionBundle.message("do.not.use.module.path.tag"),
+                                                     ExecutionBundle.message("group.java.options"),
+                                                           configuration -> !configuration.isUseModulePath(),
+                                                     (configuration, value) -> configuration.setUseModulePath(!value)));
+    }
 
-    ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), classpathCombo);
+    ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), moduleClasspath.component());
     JUnitTestKindFragment testKind = new JUnitTestKindFragment(getProject(), moduleSelector);
     fragments.add(testKind);
 
@@ -49,6 +60,14 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                                   : scope == TestSearchScope.SINGLE_MODULE
                                                     ? JUnitBundle.message("search.scope.module")
                                                     : JUnitBundle.message("search.scope.module.deps"));
+    scopeFragment.addSettingsEditorListener(editor -> {
+
+      boolean disableModuleClasspath = testKind.disableModuleClasspath(scopeFragment.getSelectedVariant() == TestSearchScope.WHOLE_PROJECT);
+      moduleClasspath.setSelected(!disableModuleClasspath);
+      if (disableModuleClasspath) {
+        moduleClasspath.component().setSelectedModule(null);
+      }
+    });
     fragments.add(scopeFragment);
 
     VariantTagFragment<JUnitConfiguration, String> repeat =

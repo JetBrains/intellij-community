@@ -52,7 +52,9 @@ abstract class TaskContext : LearningDslBase {
 
   open fun proposeRestore(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) = Unit
 
-  open fun showWarning(@Language("HTML") @Nls text: String, warningRequired: TaskRuntimeContext.() -> Boolean) = Unit
+  open fun showWarning(@Language("HTML") @Nls text: String,
+                       restoreTaskWhenResolved: Boolean = false,
+                       warningRequired: TaskRuntimeContext.() -> Boolean) = Unit
 
   /**
    * Write a text to the learn panel (panel with a learning tasks).

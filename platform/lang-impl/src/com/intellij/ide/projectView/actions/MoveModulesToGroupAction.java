@@ -7,9 +7,10 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.NlsActions.ActionText;
@@ -48,15 +49,16 @@ public class MoveModulesToGroupAction extends AnAction {
 
   public static void doMove(final Module @NotNull [] modules, final ModuleGroup group, @Nullable final DataContext dataContext) {
     Project project = modules[0].getProject();
+    ModifiableModuleModel modifiableModuleModel = dataContext != null
+                                  ? LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext)
+                                  : null;
+    ModifiableModuleModel model =
+      modifiableModuleModel != null ? modifiableModuleModel : ModuleManager.getInstance(project).getModifiableModel();
     for (final Module module : modules) {
-      ModifiableModuleModel model = dataContext != null
-                                    ? LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext)
-                                    : null;
-      if (model != null){
-        model.setModuleGroupPath(module, group == null ? null : group.getGroupPath());
-      } else {
-        ModuleManagerImpl.getInstanceImpl(project).setModuleGroupPath(module, group == null ? null : group.getGroupPath());
-      }
+      model.setModuleGroupPath(module, group == null ? null : group.getGroupPath());
+    }
+    if (modifiableModuleModel == null) {
+      WriteAction.run(model::commit);
     }
 
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();

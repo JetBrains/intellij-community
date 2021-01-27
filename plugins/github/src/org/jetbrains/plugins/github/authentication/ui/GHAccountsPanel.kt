@@ -49,11 +49,7 @@ internal class GHAccountsPanel(
   private val executorFactory: GithubApiRequestExecutor.Factory,
   private val avatarLoader: CachingGithubUserAvatarLoader,
   private val imageResizer: GithubImageResizer
-) : BorderLayoutPanel(), Disposable, DataProvider {
-
-  companion object {
-    val KEY: DataKey<GHAccountsPanel> = DataKey.create("Github.AccountsPanel")
-  }
+) : BorderLayoutPanel(), GHAccountsHost, Disposable, DataProvider {
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>()
   private val accountList = JBList<GithubAccountDecorator>(accountListModel).apply {
@@ -106,10 +102,9 @@ internal class GHAccountsPanel(
     Disposer.register(this, progressManager)
   }
 
-  override fun getData(dataId: String): Any? {
-    if (KEY.`is`(dataId)) return this
-    return null
-  }
+  override fun getData(dataId: String): Any? =
+    if (GHAccountsHost.KEY.`is`(dataId)) this
+    else null
 
   private fun showAddAccountActions(point: RelativePoint) {
     val group = actionManager.getAction("Github.Accounts.AddAccount") as ActionGroup
@@ -131,7 +126,7 @@ internal class GHAccountsPanel(
     loadAccountDetails(decorator)
   }
 
-  fun addAccount(server: GithubServerPath, login: String, token: String) {
+  override fun addAccount(server: GithubServerPath, login: String, token: String) {
     val githubAccount = GithubAccountManager.createAccount(login, server)
     newTokensMap[githubAccount] = token
 
@@ -140,7 +135,7 @@ internal class GHAccountsPanel(
     loadAccountDetails(accountData)
   }
 
-  fun isAccountUnique(login: String, server: GithubServerPath) =
+  override fun isAccountUnique(login: String, server: GithubServerPath) =
     accountListModel.items.none { it.account.name == login && it.account.server.equals(server, true) }
 
   fun loadExistingAccountsDetails() {

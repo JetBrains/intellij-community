@@ -31,7 +31,8 @@ class LessonManager {
   private val learnPanel: LearnPanel?
     get() = LearningUiManager.activeToolWindow?.learnPanel
 
-  private var currentLessonExecutor: LessonExecutor? = null
+  internal var currentLessonExecutor: LessonExecutor? = null
+    private set
 
   var shownRestoreNotification : TaskContext.RestoreNotification? = null
     private set

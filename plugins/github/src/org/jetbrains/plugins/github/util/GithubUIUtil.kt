@@ -240,6 +240,8 @@ object GithubUIUtil {
     return result
   }
 
+  fun getPRTimelineWidth() = (getFontEM(JLabel()) * 42).toInt()
+
   data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
 
   sealed class SelectionListCellRenderer<T> : ListCellRenderer<SelectableWrapper<T>>, BorderLayoutPanel() {

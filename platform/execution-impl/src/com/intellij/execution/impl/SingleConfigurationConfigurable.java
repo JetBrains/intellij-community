@@ -8,7 +8,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
-import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
+import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -539,8 +539,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private void setTargetName(String chosenTarget) {
     myDefaultTargetName = chosenTarget;
     SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
-    if (editor instanceof RunnerAndConfigurationSettingsEditor) {
-      ((RunnerAndConfigurationSettingsEditor)editor).targetChanged(chosenTarget);
+    if (editor instanceof TargetAwareRunConfigurationEditor) {
+      ((TargetAwareRunConfigurationEditor)editor).targetChanged(chosenTarget);
     }
   }
 }

@@ -23,51 +23,7 @@ import kotlin.math.max
 open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
   init {
     editorKit = object : JBHtmlEditorKit(true) {
-      override fun getViewFactory(): ViewFactory {
-        return object : JBHtmlFactory() {
-          override fun create(elem: Element): View {
-            if ("icon-inline" == elem.name) {
-              val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)
-                ?.let { IconLoader.getIcon(it as String, iconsClass) }
-
-              if (icon != null) {
-                return object : InlineView(elem) {
-
-                  override fun getPreferredSpan(axis: Int): Float {
-                    when (axis) {
-                      View.X_AXIS -> return icon.iconWidth.toFloat() + super.getPreferredSpan(axis)
-                      else -> return super.getPreferredSpan(axis)
-                    }
-                  }
-
-                  override fun paint(g: Graphics, allocation: Shape) {
-                    super.paint(g, allocation)
-                    icon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
-                  }
-                }
-              }
-            }
-
-            val view = super.create(elem)
-            if (view is ParagraphView) {
-              return object : ParagraphView(elem) {
-                override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements {
-                  var r = r
-                  if (r == null) {
-                    r = SizeRequirements()
-                  }
-                  r.minimum = layoutPool.getMinimumSpan(axis).toInt()
-                  r.preferred = max(r.minimum, layoutPool.getPreferredSpan(axis).toInt())
-                  r.maximum = Integer.MAX_VALUE
-                  r.alignment = 0.5f
-                  return r
-                }
-              }
-            }
-            return view
-          }
-        }
-      }
+      override fun getViewFactory() = createViewFactory(iconsClass)
     }
 
     isEditable = false
@@ -87,6 +43,52 @@ open class BaseHtmlEditorPane(iconsClass: Class<*>) : JEditorPane() {
     }
     else {
       text = "<html><body>$body</body></html>"
+    }
+  }
+
+  protected open fun createViewFactory(iconsClass: Class<*>): ViewFactory = HtmlEditorViewFactory(iconsClass)
+
+  protected open class HtmlEditorViewFactory(private val iconsClass: Class<*>) : JBHtmlEditorKit.JBHtmlFactory() {
+    override fun create(elem: Element): View {
+      if ("icon-inline" == elem.name) {
+        val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)
+          ?.let { IconLoader.getIcon(it as String, iconsClass) }
+
+        if (icon != null) {
+          return object : InlineView(elem) {
+
+            override fun getPreferredSpan(axis: Int): Float {
+              when (axis) {
+                View.X_AXIS -> return icon.iconWidth.toFloat() + super.getPreferredSpan(axis)
+                else -> return super.getPreferredSpan(axis)
+              }
+            }
+
+            override fun paint(g: Graphics, allocation: Shape) {
+              super.paint(g, allocation)
+              icon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
+            }
+          }
+        }
+      }
+
+      val view = super.create(elem)
+      if (view is ParagraphView) {
+        return object : ParagraphView(elem) {
+          override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements {
+            var r = r
+            if (r == null) {
+              r = SizeRequirements()
+            }
+            r.minimum = layoutPool.getMinimumSpan(axis).toInt()
+            r.preferred = max(r.minimum, layoutPool.getPreferredSpan(axis).toInt())
+            r.maximum = Integer.MAX_VALUE
+            r.alignment = 0.5f
+            return r
+          }
+        }
+      }
+      return view
     }
   }
 }

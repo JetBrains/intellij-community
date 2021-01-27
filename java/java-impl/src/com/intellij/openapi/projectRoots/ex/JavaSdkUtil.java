@@ -72,7 +72,7 @@ public final class JavaSdkUtil {
     return moduleJdk == null ? projectJdk : moduleJdk;
   }
 
-  @Contract("null, _ -> false")
+  @Contract("null, _ -> true")
   public static boolean isJdkAtLeast(@Nullable Sdk jdk, @NotNull JavaSdkVersion expected) {
     return JavaSdkVersionUtil.isAtLeast(jdk, expected);
   }

@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public class QualifiedRatedResolveResult extends RatedResolveResult implements QualifiedResolveResult {
 
@@ -42,5 +43,19 @@ public class QualifiedRatedResolveResult extends RatedResolveResult implements Q
   @Override
   public boolean isImplicit() {
     return myIsImplicit;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    QualifiedRatedResolveResult result = (QualifiedRatedResolveResult)o;
+    return myIsImplicit == result.myIsImplicit && myQualifiers.equals(result.myQualifiers);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), myQualifiers, myIsImplicit);
   }
 }

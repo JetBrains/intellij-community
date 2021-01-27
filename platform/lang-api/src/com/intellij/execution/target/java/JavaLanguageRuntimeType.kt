@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -16,6 +17,7 @@ import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
+import java.util.function.Supplier
 
 class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
   override val icon = AllIcons.FileTypes.Java
@@ -39,6 +41,14 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
                                   config: JavaLanguageRuntimeConfiguration,
                                   target: TargetEnvironmentConfiguration): Configurable {
     return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target, project)
+  }
+
+  override fun createConfigurable(project: Project,
+                                  config: JavaLanguageRuntimeConfiguration,
+                                  targetEnvironmentType: TargetEnvironmentType<*>,
+                                  targetSupplier: Supplier<TargetEnvironmentConfiguration>): Configurable {
+    return ApplicationManager.getApplication().getService(JavaLanguageRuntimeUIFactory::class.java).create(config, targetEnvironmentType,
+                                                                                                           targetSupplier, project)
   }
 
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): JavaLanguageRuntimeConfiguration? {

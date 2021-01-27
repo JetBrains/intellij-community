@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +25,6 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -188,14 +188,15 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
     private static boolean isNewStringFromByteArrayParams(PsiExpression[] params) {
-      final List<String> targetTypes = Arrays.asList(JAVA_LANG_STRING, JAVA_NIO_CHARSET_CHARSET);
       if (params.length == 0 || !TypeUtils.typeEquals("byte[]", params[0].getType())) {
         return false;
       }
       if (params.length == 1) return true;
       if (params.length == 2) {
         PsiType type = params[1].getType();
-        return type != null && targetTypes.contains(type.getCanonicalText());
+        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(params[1]);
+        return TypeUtils.typeEquals(JAVA_LANG_STRING, type) ||
+               (TypeUtils.typeEquals(JAVA_NIO_CHARSET_CHARSET, type) && languageLevel.isAtLeast(LanguageLevel.JDK_10));
       }
       return false;
     }

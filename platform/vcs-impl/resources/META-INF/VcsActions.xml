@@ -492,6 +492,14 @@
       <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
     </group>
 
+    <group id="CommitView.GearActions">
+      <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>
+      <action id="CommitView.ShowEditorPreviewOnDoubleClick"
+              class="com.intellij.openapi.vcs.changes.actions.ShowEditorPreviewOnDoubleClickToggleAction"/>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
+
     <group id="Vcs.Show.Toolwindow.Tab">
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
       <action id="Vcs.Show.Local.Changes" class="com.intellij.vcs.VcsShowLocalChangesAction"/>

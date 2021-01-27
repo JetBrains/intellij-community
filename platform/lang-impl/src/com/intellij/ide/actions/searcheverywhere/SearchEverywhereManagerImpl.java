@@ -78,8 +78,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     Project project = initEvent.getProject();
     Component contextComponent = initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
-    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor>
-      contributors = createContributors(initEvent, project, contextComponent);
+    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors = createContributors(initEvent, project, contextComponent);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors.keySet());
     mySearchEverywhereUI = createView(myProject, contributors);
     contributors.keySet().forEach(c -> Disposer.register(mySearchEverywhereUI, c));
@@ -166,9 +165,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       return Collections.singletonMap(factory.createContributor(initEvent), SearchEverywhereTabDescriptor.IDE);
     }
 
-    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> res =
-      new TreeMap<>(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
-
+    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> res = new HashMap<>();
     res.put(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)),
             SearchEverywhereTabDescriptor.IDE);
     res.put(new RecentFilesSEContributor(initEvent), SearchEverywhereTabDescriptor.PROJECT);
@@ -258,8 +255,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myEverywhere = everywhere;
   }
 
-  private SearchEverywhereUI createView(Project project,
-                                            Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
+  private SearchEverywhereUI createView(Project project, Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }

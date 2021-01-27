@@ -57,6 +57,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     myInFullScreen = true;
     storeFullScreenStateIfNeeded();
     myFullScreenQueue.runFromQueue();
+
+    myTabsHandler.enterFullScreen();
   }
 
   private void exitFullScreen() {
@@ -66,6 +68,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
     myFullScreenQueue.runFromQueue();
+
+    myTabsHandler.exitFullScreen();
   }
 
   private void storeFullScreenStateIfNeeded() {
@@ -102,10 +106,13 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   private final FullScreenQueue myFullScreenQueue = new FullScreenQueue();
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
+  private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
 
   public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     super(frame);
+
+    myTabsHandler = new MacWinTabsHandler(frame, parentDisposable);
 
     if (leaveFullScreenMethod != null || toggleFullScreenMethod != null) {
       FullScreenUtilities.setWindowCanFullScreen(frame, true);
@@ -140,6 +147,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
             rootPane.setBorder(null);
           }
+          myTabsHandler.enteringFullScreen();
         }
 
         @Override
@@ -167,6 +175,16 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         }
       });
     }
+  }
+
+  @Override
+  public void frameShow() {
+    myTabsHandler.frameShow();
+  }
+
+  @Override
+  public void setProject() {
+    myTabsHandler.setProject();
   }
 
   @Override

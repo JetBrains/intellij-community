@@ -5,9 +5,11 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.ModuleManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,7 +40,11 @@ public class NewModuleInGroupAction extends NewModuleAction {
     if (!ModuleGrouperKt.isQualifiedModuleNamesEnabled(module.getProject())) {
       ModuleGroup group = (ModuleGroup) dataFromContext;
       if (group != null) {
-        ModuleManagerImpl.getInstanceImpl(module.getProject()).setModuleGroupPath(module, group.getGroupPath());
+        WriteAction.run(() -> {
+          ModifiableModuleModel modifiableModel = ModuleManager.getInstance(module.getProject()).getModifiableModel();
+          modifiableModel.setModuleGroupPath(module, group.getGroupPath());
+          modifiableModel.commit();
+        });
       }
     }
   }

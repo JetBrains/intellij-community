@@ -4,7 +4,6 @@ package com.intellij.execution.application;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaCodeFragment;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
 
   @Override
   protected void customizeFragments(List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments,
-                                    ModuleClasspathCombo classpathCombo,
+                                    SettingsEditorFragment<ApplicationConfiguration, ModuleClasspathCombo> moduleClasspath,
                                     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments) {
     fragments.add(SettingsEditorFragment.createTag("include.provided",
                                                    ExecutionBundle.message("application.configuration.include.provided.scope"),
@@ -30,18 +29,19 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                      (configuration, value) -> configuration.getOptions().setIncludeProvidedScope(value)));
     fragments.add(commonParameterFragments.programArguments());
     fragments.add(commonParameterFragments.createRedirectFragment());
-    SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(classpathCombo);
+    SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(moduleClasspath.component());
     fragments.add(mainClassFragment);
-    DefaultJreSelector jreSelector = DefaultJreSelector.fromSourceRootsDependencies(classpathCombo, mainClassFragment.component());
+    DefaultJreSelector jreSelector = DefaultJreSelector.fromSourceRootsDependencies(moduleClasspath.component(), mainClassFragment.component());
     SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
-    fragments.add(createShortenClasspath(classpathCombo, jrePath, true));
+    fragments.add(createShortenClasspath(moduleClasspath.component(), jrePath, true));
   }
 
   @NotNull
   private SettingsEditorFragment<ApplicationConfiguration, EditorTextField> createMainClass(ModuleClasspathCombo classpathCombo) {
+    ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), classpathCombo);
     EditorTextField mainClass = ClassEditorField.createClassField(getProject(), () -> classpathCombo.getSelectedModule(),
-                                                                  JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE, null);
+                                                                  ApplicationConfigurable.getVisibilityChecker(moduleSelector), null);
     mainClass.setBackground(UIUtil.getTextFieldBackground());
     mainClass.setShowPlaceholderWhenFocused(true);
     CommonParameterFragments.setMonospaced(mainClass);

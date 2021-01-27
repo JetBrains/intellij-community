@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
+import training.util.courseCanBeUsed
 import training.util.findLanguageByID
 import training.util.trainerPluginConfigName
 
@@ -18,7 +19,9 @@ import training.util.trainerPluginConfigName
 class LangManager : PersistentStateComponent<LangManager.State> {
 
   val supportedLanguagesExtensions: List<LanguageExtensionPoint<LangSupport>>
-    get() = ExtensionPointName<LanguageExtensionPoint<LangSupport>>(LangSupport.EP_NAME).extensions.toList()
+    get() = ExtensionPointName<LanguageExtensionPoint<LangSupport>>(LangSupport.EP_NAME).extensions
+      .filter { courseCanBeUsed(it.language) }
+      .toList()
 
   private var myState = State(null)
 

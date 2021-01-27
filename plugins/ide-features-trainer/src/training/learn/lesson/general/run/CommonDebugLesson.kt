@@ -378,7 +378,7 @@ abstract class CommonDebugLesson(module: Module, id: String, languageId: String)
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { debugTree: XDebuggerTree ->
         val dialog = UIUtil.getParentOfType(JDialog::class.java, debugTree)
         val root = debugTree.root
-        dialog?.title == "Evaluate" && root?.children?.size == 1
+        dialog?.title == XDebuggerBundle.message("xdebugger.evaluate.dialog.title") && root?.children?.size == 1
       }
       proposeModificationRestore(afterFixText)
       test { GuiTestUtil.shortcut(Key.ENTER) }

@@ -134,7 +134,9 @@ public class SearchEverywhereHeader {
     if (Registry.is("search.everywhere.group.contributors.by.type")) {
       return createGroupedTabs(contributors);
     } else {
-      return createSeparateTabs(new ArrayList<>(contributors.keySet()));
+      ArrayList<SearchEverywhereContributor<?>> contributorsList = new ArrayList<>(contributors.keySet());
+      contributorsList.sort(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
+      return createSeparateTabs(contributorsList);
     }
   }
 

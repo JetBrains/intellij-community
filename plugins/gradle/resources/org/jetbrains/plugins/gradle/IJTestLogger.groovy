@@ -1,7 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+
 import groovy.xml.MarkupBuilder
-import org.gradle.api.tasks.testing.*
+import org.gradle.api.tasks.testing.TestDescriptor
+import org.gradle.api.tasks.testing.TestListener
+import org.gradle.api.tasks.testing.TestOutputEvent
+import org.gradle.api.tasks.testing.TestOutputListener
+import org.gradle.api.tasks.testing.TestResult
 
 class IJTestEventLogger {
   static def configureTestEventLogging(def task) {
@@ -43,7 +48,7 @@ class IJTestEventLogger {
     xml.event(type: testEventType) {
       test(id: testDescriptor.id, parentId: testDescriptor.parent?.id ?: '') {
         if (testDescriptor) {
-          descriptor(name: testDescriptor.name ?: '', className: testDescriptor.className ?: '')
+          descriptor(name: getName(testDescriptor) ?: '', className: testDescriptor.className ?: '')
         }
         if (testEvent) {
           def message = escapeCdata(testEvent.message)
@@ -144,5 +149,13 @@ class IJTestEventLogger {
     StringWriter sw = new StringWriter()
     t.printStackTrace(new PrintWriter(sw))
     sw.toString()
+  }
+
+  static def getName(TestDescriptor descriptor) {
+    try {
+      return descriptor.getDisplayName()
+    } catch (Throwable ignore) {
+      return descriptor.getName()
+    }
   }
 }

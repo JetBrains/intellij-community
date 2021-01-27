@@ -155,11 +155,12 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return
       Objects.equals(myName, that.myName) &&
       Objects.equals(myNameIdentifier, that.myNameIdentifier) &&
-      Objects.equals(myModifierList, that.myModifierList);
+      Objects.equals(myModifierList, that.myModifierList) &&
+      Objects.equals(getContainingClass(), that.getContainingClass());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myName, myNameIdentifier, myModifierList);
+    return Objects.hash(myName, myNameIdentifier, myModifierList, getContainingClass());
   }
 }

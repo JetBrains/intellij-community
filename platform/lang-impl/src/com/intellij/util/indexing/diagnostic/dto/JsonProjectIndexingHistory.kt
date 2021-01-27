@@ -15,7 +15,6 @@ data class JsonProjectIndexingHistory(
   val tooLargeForIndexingFiles: List<JsonTooLargeForIndexingFile>?,
   val totalStatsPerFileType: List<JsonStatsPerFileType>,
   val totalStatsPerIndexer: List<JsonStatsPerIndexer>,
-  val scanningStatistics: List<JsonScanningStatistics>,
   val fileProviderStatistics: List<JsonFileProviderIndexStatistics>
 ) {
 

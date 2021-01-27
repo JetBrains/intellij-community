@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class ListSelectioner extends BasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    return e instanceof PsiParameterList || e instanceof PsiExpressionList;
+    return e instanceof PsiParameterList || e instanceof PsiExpressionList || e instanceof PsiRecordHeader;
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.intellij.jdkEx;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.MethodInvocator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -120,5 +121,47 @@ public final class JdkEx {
       catch (ClassNotFoundException ignore) {
       }
     }
+  }
+
+  private static MethodInvocator mySetTabbingMode;
+
+  @Nullable
+  private static MethodInvocator getTabbingModeInvocator() {
+    if (!SystemInfo.isJetBrainsJvm || !SystemInfo.isMacOSBigSur || !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true)) {
+      return null;
+    }
+    if (mySetTabbingMode == null) {
+      try {
+        mySetTabbingMode = new MethodInvocator(false, Class.forName("java.awt.Window"), "setTabbingMode");
+        if (mySetTabbingMode.isAvailable()) {
+          return mySetTabbingMode;
+        }
+      }
+      catch (ClassNotFoundException ignore) {
+      }
+      return null;
+    }
+    return mySetTabbingMode.isAvailable() ? mySetTabbingMode : null;
+  }
+
+  public static boolean isTabbingModeAvailable() {
+    return getTabbingModeInvocator() != null;
+  }
+
+  public static boolean setTabbingMode(@NotNull Window window, @Nullable Runnable moveTabToNewWindowCallback) {
+    MethodInvocator invocator = getTabbingModeInvocator();
+    if (invocator != null) {
+      invocator.invoke(window);
+      if (moveTabToNewWindowCallback != null) {
+        try {
+          new MethodInvocator(false, Class.forName("java.awt.Window"), "setMoveTabToNewWindowCallback", Runnable.class)
+            .invoke(window, moveTabToNewWindowCallback);
+        }
+        catch (ClassNotFoundException ignore) {
+        }
+      }
+      return true;
+    }
+    return false;
   }
 }

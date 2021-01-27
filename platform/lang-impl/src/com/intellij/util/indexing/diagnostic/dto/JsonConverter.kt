@@ -125,7 +125,6 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
     tooLargeForIndexingFiles = totalTooLargeFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.percentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.percentages },
-    scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingTime.nano }
   )
 

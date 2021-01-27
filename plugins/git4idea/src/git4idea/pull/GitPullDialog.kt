@@ -31,6 +31,7 @@ import git4idea.config.GitPullSettings
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
+import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
@@ -343,6 +344,7 @@ class GitPullDialog(private val project: Project,
 
   private fun createBranchField() = ComboBoxWithAutoCompletion(MutableCollectionComboBoxModel(mutableListOf<String>()),
                                                                project).apply {
+    prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setPlaceholder(GitBundle.message("pull.branch.field.placeholder"))
     object : RefreshAction() {
       override fun actionPerformed(e: AnActionEvent) {

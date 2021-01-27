@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.ui.mac.MacWinTabsHandler;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,8 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   @Override
   public abstract boolean isInFullScreen();
 
+  public void setProject() {
+  }
   /**
    * Returns applied state or rejected promise if cannot be applied.
    */
@@ -65,6 +68,14 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
     }
 
     return null;
+  }
+
+  @NotNull
+  public static JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
+    if (SystemInfo.isMac) {
+      return MacWinTabsHandler.wrapRootPaneNorthSide(rootPane, northComponent);
+    }
+    return northComponent;
   }
 
   protected void notifyFrameComponents(boolean state) {

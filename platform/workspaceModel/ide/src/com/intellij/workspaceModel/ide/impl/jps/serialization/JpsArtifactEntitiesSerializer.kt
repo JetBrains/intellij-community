@@ -44,6 +44,10 @@ internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource:
     get() = false
   override val additionalEntityTypes: List<Class<out WorkspaceEntity>>
     get() = listOf(ArtifactsOrderEntity::class.java)
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    writer.saveComponent(fileUrl, ARTIFACT_MANAGER_COMPONENT_NAME, null)
+  }
 }
 
 /**

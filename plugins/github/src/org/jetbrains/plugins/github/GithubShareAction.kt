@@ -61,7 +61,6 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.FlowLayout
 import java.io.IOException
-import java.util.*
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -103,18 +102,6 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       FileDocumentManager.getInstance().saveAllDocuments()
 
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
-
-      if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
-      val authManager = service<GithubAuthenticationManager>()
-      if (!authManager.ensureHasAccounts(project)) return
-      val accounts = authManager.getAccounts()
-
-      val progressManager = service<ProgressManager>()
-      val requestExecutorManager = service<GithubApiRequestExecutorManager>()
-      val accountInformationProvider = service<GithubAccountInformationProvider>()
-      val gitHelper = service<GithubGitHelper>()
-      val git = service<Git>()
-
       val possibleRemotes = gitRepository
         ?.let(project.service<GHProjectRepositoriesManager>()::findKnownRepositories)
         ?.map { it.gitRemote.url }.orEmpty()
@@ -125,6 +112,14 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           return
         }
       }
+
+      if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
+      val authManager = service<GithubAuthenticationManager>()
+      val progressManager = service<ProgressManager>()
+      val requestExecutorManager = service<GithubApiRequestExecutorManager>()
+      val accountInformationProvider = service<GithubAccountInformationProvider>()
+      val gitHelper = service<GithubGitHelper>()
+      val git = service<Git>()
 
       val accountInformationLoader = object : (GithubAccount, Component) -> Pair<Boolean, Set<String>> {
         private val loadedInfo = mutableMapOf<GithubAccount, Pair<Boolean, Set<String>>>()
@@ -145,7 +140,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       }
 
       val shareDialog = GithubShareDialog(project,
-                                          accounts,
+                                          authManager.getAccounts(),
                                           authManager.getDefaultAccount(project),
                                           gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(),
                                           accountInformationLoader)
@@ -158,7 +153,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       val isPrivate: Boolean = shareDialog.isPrivate()
       val remoteName: String = shareDialog.getRemoteName()
       val description: String = shareDialog.getDescription()
-      val account: GithubAccount = shareDialog.getAccount()
+      val account: GithubAccount = shareDialog.getAccount()!!
 
       val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
       object : Task.Backgroundable(project, GithubBundle.message("share.process")) {

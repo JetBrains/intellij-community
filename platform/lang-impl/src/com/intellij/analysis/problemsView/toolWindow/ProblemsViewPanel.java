@@ -40,6 +40,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
@@ -61,7 +62,10 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
   private final Tree myTree;
   private final TreeExpander myTreeExpander;
+  private final AtomicReference<Long> myShowTime = new AtomicReference<>();
   private final SingleAlarm mySelectionAlarm = new SingleAlarm(() -> {
+    ProblemNode node = TreeUtil.getLastUserObject(ProblemNode.class, getTree().getSelectionPath());
+    if (node != null) ProblemsViewStatsCollector.problemSelected(this, node.getProblem());
     updateAutoscroll();
     updatePreview();
   }, 50, stateForComponent(this), this);
@@ -187,6 +191,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
 
   @Override
   public void dispose() {
+    visibilityChangedTo(false);
     myPreview.preview(false);
   }
 
@@ -286,7 +291,17 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
         ((ToolWindowEx)window).setAdditionalGearActions(group);
       }
     }
+    visibilityChangedTo(selected);
+  }
+
+  void visibilityChangedTo(boolean visible) {
+    if (visible) {
+      myShowTime.set(System.nanoTime());
+      ProblemsViewStatsCollector.tabShown(this);
+    }
     else {
+      Long time = myShowTime.getAndSet(null);
+      if (time != null) ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
       IntentionsUI.getInstance(getProject()).hide();
     }
   }

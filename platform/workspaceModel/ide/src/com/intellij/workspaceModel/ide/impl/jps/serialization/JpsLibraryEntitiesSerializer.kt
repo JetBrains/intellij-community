@@ -45,6 +45,10 @@ internal class JpsLibrariesFileSerializer(entitySource: JpsFileEntitySource.Exac
     get() = false
   override val entityFilter: (LibraryEntity) -> Boolean
     get() = { it.tableId == libraryTableId && (it.entitySource as? JpsImportedEntitySource)?.storedExternally != true }
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, null)
+  }
 }
 
 internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsFileEntitySource.ExactFile,
@@ -64,6 +68,10 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsF
   override fun getExternalSystemId(libraryEntity: LibraryEntity): String? {
     val source = libraryEntity.entitySource
     return (source as? JpsImportedEntitySource)?.externalSystemId
+  }
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, null)
   }
 }
 

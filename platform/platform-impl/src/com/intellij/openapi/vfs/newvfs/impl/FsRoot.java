@@ -61,6 +61,11 @@ public final class FsRoot extends VirtualDirectoryImpl {
     return getFileSystem().getProtocol() + URLUtil.SCHEME_SEPARATOR + getPath();
   }
 
+  @Override
+  public @NotNull String getPresentableName() {
+    return getFileSystem().extractPresentableUrl(getName());
+  }
+
   private static boolean looksCanonical(@NotNull String pathBeforeSlash) {
     if (pathBeforeSlash.endsWith("/")) {
       return false;

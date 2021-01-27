@@ -142,7 +142,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
     CompoundRendererProvider.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
-    reloadRenderers();
+    addDebugProcessListener(new DebugProcessAdapterImpl() {
+      @Override
+      public void processAttached(DebugProcessImpl process) {
+        reloadRenderers();
+      }
+    }, myDisposable);
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
       public void paused(@NotNull SuspendContext suspendContext) {
@@ -748,6 +753,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void removeEvaluationListener(EvaluationListener evaluationListener) {
     myEvaluationDispatcher.removeListener(evaluationListener);
+  }
+
+
+  @Override
+  public void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable) {
+    myDebugProcessDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override

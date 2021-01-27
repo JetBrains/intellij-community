@@ -26,6 +26,7 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public boolean DISABLE_MANAGE_IGNORE_FILES = false;
   public boolean MARK_EXCLUDED_AS_IGNORED = true;
   public boolean COMMIT_FROM_LOCAL_CHANGES = false;
+  public boolean SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK = true;
 
   public static VcsApplicationSettings getInstance() {
     return ApplicationManager.getApplication().getService(VcsApplicationSettings.class);

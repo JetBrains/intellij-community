@@ -507,6 +507,16 @@ public class ChangesViewManager implements ChangesViewEx,
 
           return myModelUpdateInProgress;
         }
+
+        @Override
+        protected boolean isPreviewOnDoubleClickAllowed() {
+          return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK;
+        }
+
+        @Override
+        protected boolean isPreviewOnEnterAllowed() {
+          return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK;
+        }
       };
       editorPreview.setEscapeHandler(() -> {
         editorPreview.closePreview();

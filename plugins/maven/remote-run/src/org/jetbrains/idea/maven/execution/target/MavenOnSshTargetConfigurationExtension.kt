@@ -8,7 +8,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.text.nullize
 import com.jetbrains.plugins.remotesdk.target.ssh.target.SshTargetEnvironmentConfiguration
 import java.nio.file.Path
 
@@ -25,9 +24,7 @@ class MavenOnSshTargetConfigurationExtension : TargetConfigurationMavenExtension
     if (applicationDir.isBlank()) return null
 
     val fileSeparator = targetEnvironmentRequest.targetPlatform.platform.fileSeparator
-    val sha = localRootPath.sha256()
-    val prefix = Path.of(volumeDescriptor.defaultPath).fileName.toString().nullize()?.let { it + "_" } ?: ""
-    val targetRootParentDirName = "$prefix${sha.take(16)}"
+    val targetRootParentDirName = localRootPath.sha256().take(16)
     val targetRootParentDir = applicationDir + fileSeparator + targetRootParentDirName
     val targetRootPath = TargetEnvironment.TargetPath.Temporary(volumeDescriptor.type.id, targetRootParentDir)
     return UploadRoot(localRootPath, targetRootPath).also {

@@ -21,7 +21,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.function.Consumer;
 
-public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerAndConfigurationSettings> {
+public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerAndConfigurationSettings> implements
+                                                                                                         TargetAwareRunConfigurationEditor {
 
   private final RunConfigurationFragmentedEditor<RunConfigurationBase<?>> myConfigurationEditor;
   private final Consumer<JComponent> myConfigurationCreator;
@@ -43,6 +44,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
                     : null;
   }
 
+  @Override
   public void targetChanged(String targetName) {
     myConfigurationEditor.targetChanged(targetName);
   }

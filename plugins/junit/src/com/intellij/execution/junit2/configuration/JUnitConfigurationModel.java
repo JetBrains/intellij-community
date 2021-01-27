@@ -308,5 +308,13 @@ public class JUnitConfigurationModel {
     comboBox.setModel(aModel);
     comboBox.setSelectedIndex(selectedIndex);
   }
+
+  public boolean disableModuleClasspath(boolean wholeProjectSelected) {
+    return wholeProjectSelected && (myType == ALL_IN_PACKAGE ||
+                                    myType == PATTERN ||
+                                    myType == CATEGORY ||
+                                    myType == TAGS ||
+                                    myType == UNIQUE_ID);
+  }
 }
 

@@ -94,11 +94,19 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<>();
 
-    group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
+    MavenRunnerParametersSettingEditor runnerParamsEditor = new MavenRunnerParametersSettingEditor(getProject());
+    MavenGeneralSettingsEditor generalSettingsEditor = new MavenGeneralSettingsEditor(getProject());
+    MavenRunnerSettingsEditor runnerSettingsEditor = new MavenRunnerSettingsEditor(getProject());
 
-    group.addEditor(CommonBundle.message("tab.title.general"), new MavenGeneralSettingsEditor(getProject()));
-    group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenRunnerSettingsEditor(getProject()));
+    runnerParamsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.params", false));
+    generalSettingsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.general", true));
+    runnerSettingsEditor.registerSettingsWatcher(new MavenRCSettingsWatcherImpl(getProject(), "maven.runner", true));
+
+    group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), runnerParamsEditor);
+    group.addEditor(CommonBundle.message("tab.title.general"), generalSettingsEditor);
+    group.addEditor(RunnerBundle.message("maven.tab.runner"), runnerSettingsEditor);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
+
     return group;
   }
 
@@ -198,6 +206,15 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   @Override
   public void setDefaultTargetName(@Nullable String targetName) {
     getOptions().setRemoteTarget(targetName);
+  }
+
+  @Override
+  public void onNewConfigurationCreated() {
+    super.onNewConfigurationCreated();
+    if (!getName().equals(suggestedName())) {
+      // prevent RC name reset by RunConfigurable.installUpdateListeners on target change in UI
+      getOptions().setNameGenerated(false);
+    }
   }
 
   public static class MavenSettings implements Cloneable {

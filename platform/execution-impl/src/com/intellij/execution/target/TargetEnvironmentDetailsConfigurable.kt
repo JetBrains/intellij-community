@@ -9,6 +9,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -62,7 +63,14 @@ internal class TargetEnvironmentDetailsConfigurable(
 
     panel.add(targetConfigurable.createComponent() ?: throw IllegalStateException())
 
-    languagesPanel = TargetEnvironmentLanguagesPanel(project, config, config.runtimes) {
+    val targetSupplier: Supplier<TargetEnvironmentConfiguration>
+    if (targetConfigurable is BrowsableTargetEnvironmentType.ConfigurableCurrentConfigurationProvider)
+      targetSupplier = Supplier<TargetEnvironmentConfiguration>(targetConfigurable::getCurrentConfiguration)
+    else {
+      targetSupplier = Supplier<TargetEnvironmentConfiguration> { config }
+    }
+
+    languagesPanel = TargetEnvironmentLanguagesPanel(project, config.getTargetType(), targetSupplier, config.runtimes) {
       forceRefreshUI()
     }
     panel.add(languagesPanel!!.component)

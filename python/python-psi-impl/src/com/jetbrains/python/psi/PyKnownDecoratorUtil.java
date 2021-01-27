@@ -2,22 +2,21 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.*;
-import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.PyUtil.turnConstructorIntoClass;
 
 /**
  * Contains list of well-behaved decorators from Pythons standard library, that don't change
@@ -118,7 +117,11 @@ public final class PyKnownDecoratorUtil {
                                                                                              ASYNCIO_COROUTINES_COROUTINE,
                                                                                              TYPES_COROUTINE);
 
-  private static final Map<String, List<KnownDecorator>> BY_SHORT_NAME = StreamEx.of(values()).groupingBy(KnownDecorator::getShortName);
+  private static final Map<QualifiedName, KnownDecorator> BY_QUALIFIED_NAME =
+    StreamEx.of(values()).toMap(KnownDecorator::getQualifiedName, x -> x);
+
+  private static final Map<String, List<KnownDecorator>> BY_SHORT_NAME =
+    StreamEx.of(values()).groupingBy(KnownDecorator::getShortName);
 
   /**
    * Map decorators of element to {@link PyKnownDecoratorUtil.KnownDecorator}.
@@ -135,11 +138,9 @@ public final class PyKnownDecoratorUtil {
       return Collections.emptyList();
     }
 
-    return StreamEx
-      .of(decoratorList.getDecorators())
+    return StreamEx.of(decoratorList.getDecorators())
       .flatMap(decorator -> asKnownDecorators(decorator, context).stream())
-      .nonNull()
-      .toList();
+      .toImmutableList();
   }
 
   @NotNull
@@ -148,36 +149,31 @@ public final class PyKnownDecoratorUtil {
     if (qualifiedName == null) {
       return Collections.emptyList();
     }
-
     if (context.maySwitchToAST(decorator)) {
-      PyQualifiedNameOwner resolved = as(resolveDecorator(decorator), PyQualifiedNameOwner.class);
-      resolved = ObjectUtils.chooseNotNull(turnConstructorIntoClass(as(resolved, PyFunction.class)), resolved);
-
-      if (resolved != null && resolved.getQualifiedName() != null) {
-        final QualifiedName resolvedName = QualifiedName.fromDottedString(resolved.getQualifiedName());
-        final List<KnownDecorator> knownDecorators = BY_SHORT_NAME.getOrDefault(resolvedName.getLastComponent(), Collections.emptyList());
-
-        return ContainerUtil.filter(knownDecorators, knownDecorator -> resolvedName.equals(knownDecorator.getQualifiedName()));
+      PsiFile containingFile = decorator.getContainingFile();
+      List<PsiElement> resolved;
+      if (containingFile instanceof PyiFile) {
+        // In .pyi files it's safe to resolve decorators such as "@overload" flow-insensitively.
+        resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, (ScopeOwner)containingFile, context);
       }
+      else {
+        resolved = PyUtil.multiResolveTopPriority(Objects.requireNonNull(decorator.getCallee()),
+                                                  PyResolveContext.defaultContext().withTypeEvalContext(context));
+      }
+      return StreamEx.of(resolved)
+        .select(PyQualifiedNameOwner.class)
+        .map(PyQualifiedNameOwner::getQualifiedName)
+        .nonNull()
+        .map(QualifiedName::fromDottedString)
+        .map(BY_QUALIFIED_NAME::get)
+        .nonNull()
+        .toImmutableList();
     }
     else {
-      return BY_SHORT_NAME.getOrDefault(qualifiedName.getLastComponent(), Collections.emptyList());
+      // The method might have been called during building of PSI stub indexes. Thus, we can't leave this file's boundaries.
+      // TODO Use proper local resolve to imported names here
+      return Collections.unmodifiableList(BY_SHORT_NAME.getOrDefault(qualifiedName.getLastComponent(), Collections.emptyList()));
     }
-
-    return Collections.emptyList();
-  }
-
-  @Nullable
-  private static PsiElement resolveDecorator(@NotNull PyDecorator decorator) {
-    final PyExpression callee = decorator.getCallee();
-    if (callee == null) {
-      return null;
-    }
-    final PsiReference reference = callee.getReference();
-    if (reference == null) {
-      return null;
-    }
-    return reference.resolve();
   }
 
   /**
@@ -201,12 +197,7 @@ public final class PyKnownDecoratorUtil {
    * @see PyKnownDecoratorUtil.KnownDecorator
    */
   public static boolean hasAbstractDecorator(@NotNull PyDecoratable element, @NotNull TypeEvalContext context) {
-    final List<KnownDecorator> knownDecorators = getKnownDecorators(element, context);
-    if (knownDecorators.isEmpty()) {
-      return false;
-    }
-    knownDecorators.retainAll(ABSTRACT_DECORATORS);
-    return !knownDecorators.isEmpty();
+    return ContainerUtil.exists(getKnownDecorators(element, context), ABSTRACT_DECORATORS::contains);
   }
 
   public static boolean isPropertyDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {

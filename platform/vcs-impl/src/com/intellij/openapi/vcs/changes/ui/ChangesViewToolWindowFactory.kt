@@ -4,14 +4,10 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.IdeActions.ACTION_CHECKIN_PROJECT
-import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
@@ -28,7 +24,6 @@ import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import com.intellij.vcs.commit.CommitWorkflowManager.Companion.setCommitFromLocalChanges
 import javax.swing.JComponent
 
 private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
@@ -43,7 +38,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     super.init(window)
 
     window as ToolWindowEx
-    window.setAdditionalGearActions(DefaultActionGroup(SwitchToCommitDialogAction()))
+    window.setAdditionalGearActions(ActionManager.getInstance().getAction("CommitView.GearActions") as ActionGroup)
   }
 
   override fun shouldBeAvailable(project: Project): Boolean {
@@ -53,19 +48,6 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(HIDE_ID_LABEL, "true")
     super.createToolWindowContent(project, toolWindow)
-  }
-}
-
-private class SwitchToCommitDialogAction : DumbAwareAction() {
-  init {
-    templatePresentation.text = message("action.switch.to.commit.dialog.text")
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    setCommitFromLocalChanges(false)
-
-    val commitAction = ActionManager.getInstance().getAction(ACTION_CHECKIN_PROJECT) ?: return
-    invokeAction(commitAction, e.dataContext, e.place, e.inputEvent, null)
   }
 }
 

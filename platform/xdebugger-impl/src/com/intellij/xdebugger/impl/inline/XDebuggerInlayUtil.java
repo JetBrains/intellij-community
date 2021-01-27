@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -18,26 +17,15 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.MathUtil;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XNamedValue;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
-import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
-import com.intellij.xdebugger.impl.frame.XWatchesView;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +35,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.function.Consumer;
 
 public final class XDebuggerInlayUtil {
   public static final Key<Helper> HELPER_KEY = Key.create("xdebug.inlay.helper");
@@ -63,65 +50,15 @@ public final class XDebuggerInlayUtil {
                                            @NotNull VirtualFile file,
                                            @NotNull XSourcePosition position,
                                            Document document) {
-    XValue container = valueNode.getValueContainer();
-    SimpleColoredText valuePresentation = XDebuggerEditorLinePainter.createPresentation(valueNode);
-    if (valuePresentation != null) {
+    if (valueNode.getValuePresentation() != null) {
       UIUtil.invokeLaterIfNeeded(() -> {
-
-        TextAttributes attributes = XDebuggerEditorLinePainter.getAttributes(position.getLine(), position.getFile(), session);
-
-        SimpleColoredText variablePresentation = XDebuggerEditorLinePainter
-          .computeVariablePresentationWithChanges(valueNode, valueNode.getName(), valuePresentation, attributes, position.getLine(), session.getProject());
-
-
         int offset = document.getLineEndOffset(position.getLine());
         Project project = session.getProject();
-
         FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(file);
         if (editor instanceof TextEditor) {
           Editor e = ((TextEditor)editor).getEditor();
-
-          XDebuggerTreeCreator creator =
-            new XDebuggerTreeCreator(project, session.getDebugProcess().getEditorsProvider(), session.getCurrentPosition(), ((XDebugSessionImpl)session).getValueMarkers());
-
-          Consumer<Inlay> onClick = (inlay) -> {
-            InlineDebugRenderer inlayRenderer = (InlineDebugRenderer)inlay.getRenderer();
-            if (inlayRenderer.myPopupIsShown) {
-              return;
-            }
-            String name = "valueName";
-            if (container instanceof XNamedValue) {
-              name = ((XNamedValue)container).getName();
-            }
-            Pair<XValue, String> descriptor = Pair.create(container, name);
-            Rectangle bounds = inlay.getBounds();
-            Point point = new Point(bounds.x, bounds.y + bounds.height);
-
-            inlayRenderer.myPopupIsShown = true;
-            XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, valueNode, e, point, position, session, () -> {
-              ApplicationManager.getApplication().invokeLater(() -> { inlayRenderer.myPopupIsShown = false; });
-            });
-          };
-
           boolean customNode = valueNode instanceof InlineWatchNodeImpl;
-          XWatchesView view = null;
-          if (customNode) {
-            XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
-            if (tab != null) {
-               view = tab.getWatchesView();
-            }
-          }
-
-          Producer<Boolean> isInExecutionPointHighlight = () -> {
-            XSourcePosition debuggerPosition = session.getCurrentPosition();
-            if (debuggerPosition != null) {
-              return position.getFile().equals(debuggerPosition.getFile())
-                     && position.getLine() == debuggerPosition.getLine()
-                     && ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).isFullLineHighlighter();
-            }
-            return false;
-          };
-          InlineDebugRenderer renderer = new InlineDebugRenderer(variablePresentation, valueNode, view, isInExecutionPointHighlight, onClick);
+          InlineDebugRenderer renderer = new InlineDebugRenderer(valueNode, position, session, e);
           Inlay<InlineDebugRenderer> inlay = ((InlayModelImpl)e.getInlayModel()).addAfterLineEndDebuggerHint(offset, customNode, renderer);
           if (customNode) {
             ((InlineWatchNodeImpl)valueNode).inlayCreated(inlay);

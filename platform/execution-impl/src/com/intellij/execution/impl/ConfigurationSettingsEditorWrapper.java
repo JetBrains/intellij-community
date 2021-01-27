@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.WithoutOwnBeforeRunSteps;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunConfigurationFragmentedEditor;
 import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
+import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -34,7 +35,7 @@ import java.awt.*;
 import java.util.List;
 
 public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
-  implements BeforeRunStepsPanel.StepsBeforeRunListener {
+  implements BeforeRunStepsPanel.StepsBeforeRunListener, TargetAwareRunConfigurationEditor {
   public static final DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");
   @NonNls private static final String EXPAND_PROPERTY_KEY = "ExpandBeforeRunStepsPanel";
 
@@ -212,6 +213,11 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
         }
       }
     });
+  }
+
+  @Override
+  public void targetChanged(String targetName) {
+    myEditor.targetChanged(targetName);
   }
 
   private static void createConfiguration(JComponent component, RunnerAndConfigurationSettings settings) {

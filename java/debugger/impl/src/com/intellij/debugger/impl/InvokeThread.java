@@ -144,6 +144,12 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
             break;
           }
           catch (ProcessCanceledException ignored) {}
+          catch (CompletionException e) {
+            if (e.getCause() instanceof VMDisconnectedException) {
+              break;
+            }
+            reportCommandError(e);
+          }
           catch (RuntimeException e) {
             if(e.getCause() instanceof InterruptedException) {
               break;

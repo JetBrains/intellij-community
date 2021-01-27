@@ -40,7 +40,7 @@ class SoftLinksTest {
 
     // Check
     assertNotNull(builder.resolve(NameId(newId)))
-    assertOneElement(builder.indexes.softLinks.getIdsByEntry(NameId(newId)))
+    assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
   }
 
   @Test
@@ -69,7 +69,7 @@ class SoftLinksTest {
 
     // Check
     assertNotNull(builder.resolve(NameId(newId)))
-    assertOneElement(builder.indexes.softLinks.getIdsByEntry(NameId(newId)))
+    assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
 
     // Change persistent id to the initial value
     val anotherNewBuilder = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
@@ -83,7 +83,7 @@ class SoftLinksTest {
 
     // Check
     assertNotNull(builder.resolve(NameId(id)))
-    assertOneElement(builder.indexes.softLinks.getIdsByEntry(NameId(id)))
+    assertOneElement(builder.referrers(NameId(id), WithSoftLinkEntity::class.java).toList())
   }
 
   @Test

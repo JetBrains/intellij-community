@@ -50,7 +50,7 @@ private class MessageInfo(val title: String,
                           window: Window?,
                           val defaultOptionIndex: Int,
                           val doNotAskDialogOption: DoNotAskOption?) {
-  val message = StringUtil.stripHtml(message ?: "", true).replace("%", "%%")
+  val message = StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message ?: "", "\n")).replace("%", "%%").replace("&nbsp;", " ")
   val window = window ?: JBMacMessages.getForemostWindow()
   val nativeWindow: ID = MacUtil.findWindowFromJavaWindow(this.window)
 }

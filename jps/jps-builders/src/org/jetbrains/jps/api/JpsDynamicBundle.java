@@ -21,7 +21,7 @@ import java.util.ResourceBundle;
 public abstract class JpsDynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(JpsDynamicBundle.class);
 
-  private static final Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
+  private static final Method SET_PARENT = getSetParentMethod();
   private static final ClassLoader ourLangBundleLoader;
   static {
     ClassLoader loader = null;
@@ -38,7 +38,15 @@ public abstract class JpsDynamicBundle extends AbstractBundle {
       ourLangBundleLoader = loader;
     }
   }
-  
+  private static Method getSetParentMethod() {
+    try {
+      return ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
+    }
+    catch (Throwable e) {
+      return null;
+    }
+  }
+
   protected JpsDynamicBundle(@NonNls @NotNull String pathToBundle) {
     super(pathToBundle);
   }

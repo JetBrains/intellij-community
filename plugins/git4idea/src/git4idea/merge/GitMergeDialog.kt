@@ -54,6 +54,8 @@ import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
+internal const val GIT_REF_PROTOTYPE_VALUE = "origin/long-enough-branch-name"
+
 internal fun createRepositoryField(repositories: List<GitRepository>,
                                    defaultRoot: VirtualFile? = null) = ComboBox(CollectionComboBoxModel(repositories)).apply {
   item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
@@ -71,10 +73,7 @@ internal fun createSouthPanelWithOptionsDropDown(southPanel: JComponent, optionD
 
 internal fun validateBranchField(branchField: ComboBoxWithAutoCompletion<String>,
                                  @PropertyKey(resourceBundle = GitBundle.BUNDLE) emptyFieldMessage: String): ValidationInfo? {
-  val item = branchField.item ?: ""
-  val text = branchField.getText()
-  val value = if (item == text) item else text
-
+  val value = branchField.getText()
   if (value.isNullOrEmpty()) {
     return ValidationInfo(GitBundle.message(emptyFieldMessage), branchField)
   }
@@ -152,13 +151,13 @@ class GitMergeDialog(private val project: Project,
 
   fun getSelectedRoot(): VirtualFile = repositoryField.item.root
 
-  fun getSelectedBranch() = getSelectedRepository().branches.findBranchByName(branchField.item)
-                            ?: error("Unable to find branch: ${branchField.item}")
+  fun getSelectedBranch() = getSelectedRepository().branches.findBranchByName(branchField.getText().orEmpty())
+                            ?: error("Unable to find branch: ${branchField.getText().orEmpty()}")
 
   fun shouldCommitAfterMerge() = !isOptionSelected(GitMergeOption.NO_COMMIT)
 
   private fun saveSettings() {
-    mergeSettings.branch = branchField.item
+    mergeSettings.branch = branchField.getText()
     mergeSettings.options = selectedOptions
   }
 
@@ -240,7 +239,7 @@ class GitMergeDialog(private val project: Project,
       startTrackingValidation()
     }
 
-    branchField.selectedItem = branchToSelect
+    branchField.item = branchToSelect
   }
 
   private fun splitAndSortBranches(branches: List<@NlsSafe String>): List<@NlsSafe String> {
@@ -337,6 +336,7 @@ class GitMergeDialog(private val project: Project,
 
   private fun createBranchField() = ComboBoxWithAutoCompletion(MutableCollectionComboBoxModel(mutableListOf<String>()),
                                                                project).apply {
+    prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setPlaceholder(GitBundle.message("merge.branch.field.placeholder"))
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(

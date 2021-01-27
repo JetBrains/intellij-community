@@ -82,6 +82,26 @@ class EntityStorageSerializationTest {
 
     assertTrue(result is SerializationResult.Fail<*>)
   }
+
+  @Test
+  fun `read broken cache`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = WorkspaceEntityStorageBuilder.create() as WorkspaceEntityStorageBuilderImpl
+
+    builder.addSampleEntity("myString")
+
+    val stream = ByteArrayOutputStream()
+    serializer.serializeCache(stream, builder.toStorage())
+
+    // Remove random byte from a serialised store
+    val inputStream = stream.toByteArray().filterIndexed { i, _ -> i != 3 }.toByteArray().inputStream()
+
+    val result = serializer.deserializeCache(inputStream)
+
+    assertNull(result)
+  }
 }
 
 // Kotlin tip: Use the ugly ${'$'} to insert the $ into the multiline string

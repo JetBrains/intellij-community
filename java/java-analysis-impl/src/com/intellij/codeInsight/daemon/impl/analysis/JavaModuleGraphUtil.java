@@ -293,8 +293,8 @@ public final class JavaModuleGraphUtil {
     public Trinity<String, PsiJavaModule, PsiJavaModule> findConflict(PsiJavaModule source) {
       Map<String, PsiJavaModule> exports = new HashMap<>();
       return processExports(source, (pkg, m) -> {
-        PsiJavaModule existing = exports.put(pkg, m);
-        return existing != null ? new Trinity<>(pkg, existing, m) : null;
+        PsiJavaModule found = exports.put(pkg, m);
+        return found == null || found instanceof LightJavaModule && m instanceof LightJavaModule ? null : new Trinity<>(pkg, found, m);
       });
     }
 

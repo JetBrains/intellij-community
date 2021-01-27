@@ -15,10 +15,10 @@ public final class JavaSdkVersionUtil {
     return version == null || version.isAtLeast(expected);
   }
 
-  @Contract("null, _ -> false")
+  @Contract("null, _ -> true")
   public static boolean isAtLeast(@Nullable Sdk jdk, @NotNull JavaSdkVersion expected) {
     JavaSdkVersion actual = getJavaSdkVersion(jdk);
-    return actual != null && actual.isAtLeast(expected);
+    return actual == null || actual.isAtLeast(expected);
   }
 
   public static JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {

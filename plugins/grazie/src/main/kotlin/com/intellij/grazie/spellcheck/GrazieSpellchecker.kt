@@ -12,6 +12,7 @@ import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.openapi.util.ClassLoaderUtil
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
+import org.languagetool.rules.spelling.hunspell.HunspellRule
 import org.slf4j.LoggerFactory
 
 object GrazieSpellchecker : GrazieStateLifecycle {
@@ -49,12 +50,27 @@ object GrazieSpellchecker : GrazieStateLifecycle {
   override fun init(state: GrazieConfig.State) {
     checkers = state.availableLanguages.filterNot { it.isEnglish() }.mapNotNull { lang ->
       val tool = LangTool.getTool(lang, state)
-      tool.allSpellingCheckRules.firstOrNull()?.let { SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT) }
+      tool.allSpellingCheckRules.firstOrNull()?.let {
+        SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT)
+      }
     }.toLinkedSet()
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
     init(newState)
+  }
+
+  private fun Throwable.isFromHunspellRuleInit(): Boolean {
+    return stackTrace.any { it.className == HunspellRule::class.java.canonicalName && it.methodName == "init" }
+  }
+
+  private fun disableHunspellRuleInitialization(rule: SpellingCheckRule) {
+    if (rule !is HunspellRule) return
+
+    val field = HunspellRule::class.java.getDeclaredField("needsInit")
+    if (field.trySetAccessible()) {
+       field.set(rule, false)
+    }
   }
 
   fun isCorrect(word: String): Boolean? {
@@ -67,6 +83,10 @@ object GrazieSpellchecker : GrazieStateLifecycle {
         speller.check(word)
       }
       catch (t: Throwable) {
+        if (t.isFromHunspellRuleInit()) {
+          disableHunspellRuleInitialization(speller.speller)
+        }
+
         logger.warn("Got exception during check for spelling mistakes by LanguageTool with word: $word", t)
         false
       }
@@ -82,6 +102,10 @@ object GrazieSpellchecker : GrazieStateLifecycle {
         speller.suggest(word)
       }
       catch (t: Throwable) {
+        if (t.isFromHunspellRuleInit()) {
+          disableHunspellRuleInitialization(speller.speller)
+        }
+
         logger.warn("Got exception during suggest for spelling mistakes by LanguageTool with word: $word", t)
         null
       }

@@ -74,7 +74,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       }
     }
 
-    myContentPane.add(myNorthPanel, BorderLayout.NORTH);
+    myContentPane.add(IdeFrameDecorator.wrapRootPaneNorthSide(this, myNorthPanel), BorderLayout.NORTH);
 
     // listen to mouse motion events for a11y
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {

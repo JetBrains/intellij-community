@@ -4,6 +4,7 @@ package com.intellij.ui.mac.foundation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.sun.jna.Pointer;
@@ -15,6 +16,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -140,29 +142,44 @@ public final class MacUtil {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.KEY_EVENT_MASK);
   }
 
-  public static ID findWindowFromJavaWindow(final Window w) {
-    ID windowId = null;
-    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
+  @NotNull
+  public static ID getWindowFromJavaWindow(@Nullable Window w) {
+    if (w == null) {
+      return ID.NIL;
+    }
+    if (SystemInfo.isJetBrainsJvm) {
       try {
         Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
         Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
-        Object peer = componentAccessor.getClass().getMethod("getPeer", Component.class).invoke(componentAccessor, w);
-        Class<?> cWindowPeerClass  = peer.getClass();
-        Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
-        Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
-        Class<?> cPlatformWindowClass = cPlatformWindow.getClass();
-        Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
-        windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
+        Method getPeer = componentAccessor.getClass().getMethod("getPeer", Component.class);
+        getPeer.setAccessible(true);
+        Object peer = getPeer.invoke(componentAccessor, w);
+        if (peer != null) {
+          Class<?> cWindowPeerClass  = peer.getClass();
+          Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
+          Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
+          if (cPlatformWindow != null) {
+            Field ptr = cPlatformWindow.getClass().getSuperclass().getDeclaredField("ptr");
+            ptr.setAccessible(true);
+            return new ID(ptr.getLong(cPlatformWindow));
+          }
+        }
       }
-      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchFieldException e) {
         LOG.debug(e);
       }
     }
-    else {
-      String foremostWindowTitle = getWindowTitle(w);
-      windowId = findWindowForTitle(foremostWindowTitle);
+    return ID.NIL;
+  }
+
+  public static ID findWindowFromJavaWindow(final Window w) {
+    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
+      ID window = getWindowFromJavaWindow(w);
+      if (!ID.NIL.equals(window)) {
+        return window;
+      }
     }
-    return windowId;
+    return findWindowForTitle(getWindowTitle(w));
   }
 
   @Nullable

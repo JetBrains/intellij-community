@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -24,16 +25,16 @@ abstract class BaseAddAccountWithTokenAction : DumbAwareAction() {
   abstract val defaultServer: String
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.getData(GHAccountsPanel.KEY) != null
+    e.presentation.isEnabledAndVisible = e.getData(GHAccountsHost.KEY) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val accountsPanel = e.getData(GHAccountsPanel.KEY)!!
-    val dialog = newAddAccountDialog(e.project, accountsPanel, accountsPanel::isAccountUnique)
+    val accountsHost = e.getData(GHAccountsHost.KEY)!!
+    val dialog = newAddAccountDialog(e.project, e.getData(CONTEXT_COMPONENT), accountsHost::isAccountUnique)
 
     dialog.setServer(defaultServer, defaultServer != GithubServerPath.DEFAULT_HOST)
     if (dialog.showAndGet()) {
-      accountsPanel.addAccount(dialog.server, dialog.login, dialog.token)
+      accountsHost.addAccount(dialog.server, dialog.login, dialog.token)
     }
   }
 }

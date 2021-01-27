@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -373,10 +374,10 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
         // Support JSX empty tags
         PsiElement startTag = tag.getFirstChild();
         PsiElement endTag = tag.getLastChild();
-        if (endTag instanceof XmlToken && endTag.getNode ().getElementType() == XmlTokenType.XML_TAG_END) {
+        if (endTag instanceof XmlToken && endTag.getNode().getElementType() == XmlTokenType.XML_TAG_END) {
           endTag = PsiTreeUtil.skipWhitespacesBackward(endTag);
         }
-        if (startTag != endTag && startTag != null && endTag != null) {
+        if (startTag != endTag && startTag instanceof LeafPsiElement && endTag instanceof LeafPsiElement) {
           int startTagOffset = startTag.getNode().getStartOffset();
           int endTagOffset = endTag.getNode().getStartOffset();
           if (startTagOffset + 1 == offset) {

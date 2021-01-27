@@ -21,6 +21,7 @@ import training.learn.lesson.general.*
 import training.learn.lesson.general.assistance.CodeFormatLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson
 import training.learn.lesson.general.assistance.QuickPopupsLesson
+import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
 import training.learn.lesson.kimpl.LessonUtil
 
@@ -95,6 +96,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.PROJECT) {
       listOf(
         JavaSearchEverywhereLesson(it),
+        FindInFilesLesson(it, lang, "src/warehouse/FindInFilesSample.java"),
         JavaFileStructureLesson(it),
         JavaDeclarationAndUsagesLesson(it),
         JavaInheritanceHierarchyLesson(it),

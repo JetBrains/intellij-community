@@ -29,10 +29,10 @@ public class JBCefTestHelper {
   public static void loadAndWait(@NotNull CountDownLatch latch, @NotNull Runnable loadAction) {
     loadAction.run();
 
-    TestCase.assertTrue(wait(latch));
+    TestCase.assertTrue(await(latch));
   }
 
-  public static boolean wait(@NotNull CountDownLatch latch) {
+  public static boolean await(@NotNull CountDownLatch latch) {
     try {
       return latch.await(10, TimeUnit.SECONDS);
     }

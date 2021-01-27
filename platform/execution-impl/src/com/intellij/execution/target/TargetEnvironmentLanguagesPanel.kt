@@ -15,6 +15,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.util.function.Consumer
+import java.util.function.Supplier
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -22,7 +23,8 @@ import javax.swing.JPanel
 typealias LanguagesList = ContributedConfigurationsList<LanguageRuntimeConfiguration, LanguageRuntimeType<out LanguageRuntimeConfiguration>>
 
 class TargetEnvironmentLanguagesPanel(private val project: Project,
-                                      private val target: TargetEnvironmentConfiguration,
+                                      private val targetEnvironmentType: TargetEnvironmentType<*>,
+                                      private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
                                       val languagesList: LanguagesList,
                                       private val parentRefresh: () -> Unit) {
 
@@ -82,7 +84,7 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
   }
 
   private fun createRuntimePanel(language: LanguageRuntimeConfiguration): LanguagePanel {
-    val configurable = language.getRuntimeType().createConfigurable(project, language, target)
+    val configurable = language.getRuntimeType().createConfigurable(project, language, targetEnvironmentType, targetSupplier)
     val panel = panel {
       row {
         val separator = TitledSeparator(language.getRuntimeType().configurableDescription)

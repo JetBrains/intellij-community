@@ -547,12 +547,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private void onScopeChanged() {
-    final int selectedItem = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
-    final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE ||
-                                              selectedItem == JUnitConfigurationModel.PATTERN ||
-                                              selectedItem == JUnitConfigurationModel.CATEGORY ||
-                                              selectedItem == JUnitConfigurationModel.TAGS ||
-                                              selectedItem == JUnitConfigurationModel.UNIQUE_ID ) && myWholeProjectScope.isSelected();
+    final boolean allInPackageAllInProject = myModel.disableModuleClasspath(myWholeProjectScope.isSelected());
     myModule.setEnabled(!allInPackageAllInProject);
     if (allInPackageAllInProject) {
       myModule.getComponent().setSelectedItem(null);

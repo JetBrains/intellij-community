@@ -119,6 +119,10 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     return myTypeChooser.getItem();
   }
 
+  public boolean disableModuleClasspath(boolean wholeProjectSelected) {
+    return myModel.disableModuleClasspath(wholeProjectSelected);
+  }
+
   private <T extends JComponent> void setupField(int kind,
                                                  JComponent field,
                                                  @Nullable Object document,

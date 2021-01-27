@@ -577,28 +577,32 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private void removeFileDataFromIndices(@NotNull Collection<? extends ID<?, ?>> affectedIndices, int inputId, VirtualFile file) {
-    // document diff can depend on previous value that will be removed
-    removeTransientFileDataFromIndices(affectedIndices, inputId, file);
+    try {
+      // document diff can depend on previous value that will be removed
+      removeTransientFileDataFromIndices(affectedIndices, inputId, file);
 
-    Throwable unexpectedError = null;
-    for (ID<?, ?> indexId : affectedIndices) {
-      try {
-        updateSingleIndex(indexId, null, inputId, null);
-      }
-      catch (ProcessCanceledException pce) {
-        LOG.error(pce);
-      }
-      catch (Throwable e) {
-        LOG.info(e);
-        if (unexpectedError == null) {
-          unexpectedError = e;
+      Throwable unexpectedError = null;
+      for (ID<?, ?> indexId : affectedIndices) {
+        try {
+          updateSingleIndex(indexId, null, inputId, null);
+        }
+        catch (ProcessCanceledException pce) {
+          LOG.error(pce);
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+          if (unexpectedError == null) {
+            unexpectedError = e;
+          }
         }
       }
-    }
-    IndexingStamp.flushCache(inputId);
 
-    if (unexpectedError != null) {
-      LOG.error(unexpectedError);
+      if (unexpectedError != null) {
+        LOG.error(unexpectedError);
+      }
+    }
+    finally {
+      IndexingStamp.flushCache(inputId);
     }
   }
 
@@ -1222,6 +1226,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     FileIndexingResult indexingResult;
     try {
+      if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
+        file = ((DeletedVirtualFileStub)file).getOriginalFile();
+        content = new CachedFileContent(file);
+      }
+
+      boolean isValid = file.isValid();
       // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
       // in this case we consider that current indexing (out of roots backed CacheUpdater) will cover its content
       if (file.isValid() && content.getTimeStamp() != file.getTimeStamp()) {
@@ -1229,24 +1239,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
 
       boolean isIndexesDeleted;
-
-      boolean isValid = file.isValid();
       if (!isValid || isTooLarge(file)) {
         isIndexesDeleted = true;
         ProgressManager.checkCanceled();
         removeDataFromIndicesForFile(fileId, file);
-        if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
-          CachedFileContent resurrectedFileContent = new CachedFileContent(((DeletedVirtualFileStub)file).getOriginalFile());
-          indexingResult = doIndexFileContent(project, resurrectedFileContent);
-        }
-        else {
-          indexingResult = new FileIndexingResult(true,
-                                                  Collections.emptyMap(),
-                                                  Collections.emptyMap(),
-                                                  file.getFileType(),
-                                                  Collections.emptySet(),
-                                                  false);
-        }
+        indexingResult = new FileIndexingResult(true,
+                                                Collections.emptyMap(),
+                                                Collections.emptyMap(),
+                                                file.getFileType(),
+                                                Collections.emptySet(),
+                                                false);
       }
       else {
         isIndexesDeleted = false;
@@ -1480,8 +1482,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                  ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
 
       if (myStorageBufferingHandler.runUpdate(false, storageUpdate)) {
-        myStorageBufferingHandler.assertOnTheDiskMode();
-
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {
             if (!isMock(currentFC.getFile())) {

@@ -6,11 +6,13 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
+import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 
 import javax.swing.*;
 
-public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
+public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfiguration> implements MavenSettingsObservable {
 
   private final MavenGeneralPanel myPanel;
 
@@ -83,5 +85,12 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
 
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
+    getComponent(); // make sure controls are initialized
+    watcher.registerUseProjectSettingsCheckbox(myUseProjectSettings);
+    myPanel.registerSettingsWatcher(watcher);
   }
 }

@@ -87,7 +87,9 @@ class LearnToolWindow internal constructor(val project: Project, private val who
 
   /** May be a temporary solution */
   private fun setChooseLanguageButton() {
-    wholeToolWindow.setTitleActions(listOf(ChooseProgrammingLanguageForLearningAction(this)))
+    if (LangManager.getInstance().supportedLanguagesExtensions.isNotEmpty() && LangManager.getInstance().supportedLanguagesExtensions.size > 1) {
+      wholeToolWindow.setTitleActions(listOf(ChooseProgrammingLanguageForLearningAction(this)))
+    }
   }
 
   private fun updateScrollPane() {

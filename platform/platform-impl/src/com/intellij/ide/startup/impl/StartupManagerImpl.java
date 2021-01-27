@@ -4,6 +4,8 @@ package com.intellij.ide.startup.impl;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -298,7 +300,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
     long startTime = StartUpMeasurer.getCurrentTime();
     try {
-      extension.runActivity(myProject);
+      runStartupActivity(extension);
     }
     catch (ServiceNotReadyException e) {
       LOG.error(new Exception(e));
@@ -319,6 +321,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     long duration = StartUpMeasurer.addCompletedActivity(startTime, extension.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId, StartUpMeasurer.MEASURE_THRESHOLD);
     if (uiFreezeWarned != null && duration > EDT_WARN_THRESHOLD_IN_NANO) {
       reportUiFreeze(uiFreezeWarned);
+    }
+  }
+
+  private void runStartupActivity(@NotNull StartupActivity activity) {
+    if (!LightEdit.owns(myProject) || activity instanceof LightEditCompatible) {
+      activity.runActivity(myProject);
     }
   }
 
@@ -410,7 +418,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extension.runActivity(myProject);
+          runStartupActivity(extension);
         }
       }, myProject);
       List<StartupActivity.Background> activities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
@@ -423,7 +431,7 @@ public class StartupManagerImpl extends StartupManagerEx {
             return;
           }
 
-          activity.runActivity(myProject);
+          runStartupActivity(activity);
         }
       });
       if (LOG.isDebugEnabled()) {

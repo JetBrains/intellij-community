@@ -172,7 +172,8 @@ class PythonRenameLesson(module: Module)
   }
 
   private fun TaskContext.showWarningIfFindToolbarClosed() {
-    showWarning(PythonLessonsBundle.message("python.rename.find.window.closed.warning", action("ActivateFindToolWindow"))) {
+    showWarning(PythonLessonsBundle.message("python.rename.find.window.closed.warning", action("ActivateFindToolWindow")),
+                restoreTaskWhenResolved = true) {
       previous.ui?.isShowing != true
     }
   }

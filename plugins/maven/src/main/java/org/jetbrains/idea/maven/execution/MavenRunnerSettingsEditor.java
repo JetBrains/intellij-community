@@ -12,7 +12,7 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import javax.swing.*;
 
-public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
+public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfiguration> implements MavenSettingsObservable {
 
   private final MavenRunnerPanel myPanel;
 
@@ -78,5 +78,12 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
 
     myUseProjectSettings = pair.second;
     return pair.first;
+  }
+
+  @Override
+  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
+    getComponent(); // make sure controls are initialized
+    watcher.registerUseProjectSettingsCheckbox(myUseProjectSettings);
+    myPanel.registerSettingsWatcher(watcher);
   }
 }

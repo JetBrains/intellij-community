@@ -353,7 +353,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         continue;
       }
       Font font = tableFont;
-      VcsLogHighlighter.TextStyle style = getStyle(row, getColumnViewIndex(logColumn), false, false).getTextStyle();
+      VcsLogHighlighter.TextStyle style = getStyle(row, getColumnViewIndex(logColumn), false, false, false).getTextStyle();
       if (BOLD.equals(style)) {
         font = tableFont.deriveFont(Font.BOLD);
       }
@@ -582,7 +582,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                                                 int column,
                                                 boolean hasFocus,
                                                 final boolean selected) {
-    VcsCommitStyle style = getStyle(row, column, hasFocus, selected);
+    VcsCommitStyle style = getStyle(row, column, hasFocus, selected, row == getHoveredRow(this));
 
     assert style.getBackground() != null && style.getForeground() != null && style.getTextStyle() != null;
 
@@ -605,7 +605,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @NotNull
-  VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected) {
+  VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected, boolean hovered) {
     VcsCommitStyle baseStyle = getBaseStyle(row, column, hasFocus, selected);
 
     VisibleGraph<Integer> visibleGraph = getVisibleGraph();
@@ -625,7 +625,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
-    if (!selected && row == getHoveredRow(this)) {
+    if (!selected && hovered) {
       Color background = Objects.requireNonNull(style.getBackground());
       VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(getHoveredBackgroundColor(background));
       style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));
@@ -727,7 +727,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private void paintTopBottomBorder(@NotNull Graphics g, int x, int y, int width, int height, boolean isTopBorder) {
     int targetRow = isTopBorder ? 0 : getRowCount() - 1;
     if (targetRow >= 0 && targetRow < getRowCount()) {
-      g.setColor(getStyle(targetRow, getColumnViewIndex(Commit.INSTANCE), hasFocus(), false).getBackground());
+      g.setColor(getStyle(targetRow, getColumnViewIndex(Commit.INSTANCE), hasFocus(), false, false).getBackground());
       g.fillRect(x, y, width, height);
       if (myColorManager.hasMultiplePaths()) {
         g.setColor(getPathBackgroundColor(getModel().getValueAt(targetRow, Root.INSTANCE), myColorManager));
