@@ -36,7 +36,7 @@ class TomlParserDefinition : ParserDefinition {
 
     override fun getCommentTokens(): TokenSet = COMMENTS
 
-    override fun getFileNodeType(): IFileElementType? = FILE
+    override fun getFileNodeType(): IFileElementType = FILE
 
     override fun createLexer(project: Project?): Lexer = TomlLexer()
 
