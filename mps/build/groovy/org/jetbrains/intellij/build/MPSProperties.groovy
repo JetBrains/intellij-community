@@ -101,8 +101,7 @@ class MPSProperties extends JetBrainsProductProperties {
             fileset(dir: "$context.paths.communityHome/bin/linux/")
         }
         context.ant.copy(todir: "$targetDirectory/bin/mac/") {
-            fileset(dir: "$context.paths.communityHome/bin/mac/",
-                    excludes: "*.sh")
+            fileset(dir: "$context.paths.communityHome/bin/mac/", excludes: "*.sh")
         }
         context.ant.copy(todir: "$targetDirectory/bin/win/") {
             fileset(dir: "$context.paths.communityHome/bin/win/")
@@ -122,6 +121,11 @@ class MPSProperties extends JetBrainsProductProperties {
 
         //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
         context.ant.move(file: "$targetDirectory/lib/annotations-java5.jar", tofile: "$targetDirectory/lib/annotations.jar")
+
+        // scripts needed for mac signing
+        context.ant.copy(todir: "$targetDirectory/build/tools/mac/scripts/") {
+            fileset(dir: "$context.paths.communityHome/platform/build-scripts/tools/mac/scripts/")
+        }
 
         BuildTasksImpl.generateBuildTxt(context, "$targetDirectory/lib")
     }
