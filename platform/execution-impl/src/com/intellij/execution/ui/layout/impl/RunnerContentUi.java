@@ -816,7 +816,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         }
 
         if (myManager.getComponent().isShowing() && !isStateBeingRestored()) {
-          grid.restoreLastUiState();
+          setStateIsBeingRestored(true, RunnerContentUi.this);
+          try {
+            grid.restoreLastUiState();
+          } finally {
+            setStateIsBeingRestored(false, RunnerContentUi.this);
+          }
         }
 
         updateTabsUI(false);
