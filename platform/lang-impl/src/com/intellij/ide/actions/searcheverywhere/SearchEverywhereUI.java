@@ -531,7 +531,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     registerSelectItemAction();
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-    DumbAwareAction.create(__ -> closePopup(false))
+    DumbAwareAction.create(__ -> sendStatisticsAndClose())
       .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -581,7 +581,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       public void focusLost(FocusEvent e) {
         Component oppositeComponent = e.getOppositeComponent();
         if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(SearchEverywhereUI.this, oppositeComponent)) {
-          closePopup(false);
+          sendStatisticsAndClose();
         }
       }
     });
@@ -759,12 +759,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    myMLStatisticsCollector.recordSelectedItem(indexes, closePopup, () -> myListModel.getFoundElements(),
+    myMLStatisticsCollector.recordSelectedItem(indexes, closePopup, () -> myListModel.getFoundElementsInfo(),
                                                mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
                                                mySearchField.getText().length(), myHeader.getSelectedTab().getID());
 
     if (closePopup) {
-      closePopup(true);
+      closePopup();
     }
     else {
       ApplicationManager.getApplication().invokeLater(() -> myResultsList.repaint());
@@ -808,13 +808,17 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  private void closePopup(boolean withSelection) {
-    if (!withSelection && isShowing()) {
+  private void sendStatisticsAndClose() {
+    if (isShowing()) {
       myMLStatisticsCollector.recordPopupClosed(
-        () -> myListModel.getFoundElements(),
+        () -> myListModel.getFoundElementsInfo(),
         mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
         mySearchField.getText().length(), myHeader.getSelectedTab().getID());
     }
+    closePopup();
+  }
+
+  private void closePopup() {
     ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
     stopSearching();
     searchFinishedHandler.run();
@@ -960,7 +964,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       else {
         showInFindWindow(targets, usages, presentation);
       }
-      closePopup(false);
+      sendStatisticsAndClose();
     }
 
     private void fillUsages(Collection<Object> foundElements, Collection<? super Usage> usages, Collection<? super PsiElement> targets) {

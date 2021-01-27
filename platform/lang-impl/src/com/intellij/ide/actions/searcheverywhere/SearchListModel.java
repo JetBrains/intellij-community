@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,10 +98,8 @@ abstract class SearchListModel extends AbstractListModel<Object> {
   }
 
   @NotNull
-  public List<SearchEverywhereFoundElementInfo> getFoundElements() {
-    return listElements.stream()
-      .filter(info -> info.element != MORE_ELEMENT)
-      .collect(Collectors.toList());
+  public List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
+    return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT);
   }
 
   public Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> getFoundElementsMap() {
