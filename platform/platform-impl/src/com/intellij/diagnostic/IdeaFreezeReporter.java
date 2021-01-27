@@ -33,7 +33,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final String THROWABLE_FILE_NAME = ".throwable";
   public static final String APPINFO_FILE_NAME = ".appinfo";
   // common sub-stack contains more than the specified % samples
-  private static final double COMMON_SUB_STACK_WEIGHT = 0.75;
+  private static final double COMMON_SUB_STACK_WEIGHT = 0.25;
 
   @SuppressWarnings("FieldMayBeFinal")
   private static boolean DEBUG = false;
