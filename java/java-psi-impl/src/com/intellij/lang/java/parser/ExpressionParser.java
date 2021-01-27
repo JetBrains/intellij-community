@@ -48,6 +48,7 @@ public class ExpressionParser {
   private static final TokenSet ID_OR_SUPER = TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.SUPER_KEYWORD);
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
+  private static final TokenSet PATTERN_MODIFIERS = TokenSet.create(JavaTokenType.FINAL_KEYWORD);
 
   private static final Key<Boolean> CASE_LABEL = Key.create("java.parser.case.label.expr");
 
@@ -181,19 +182,18 @@ public class ExpressionParser {
 
     PsiBuilder.Marker pattern = builder.mark();
     PsiBuilder.Marker patternVariable = builder.mark();
-    PsiBuilder.Marker modifiersWithIsEmpty =
-      myParser.getDeclarationParser().parseModifierList(builder, TokenSet.create(JavaTokenType.FINAL_KEYWORD)).first;
+    PsiBuilder.Marker modifiers = myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS).first;
 
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
     if (type == null) {
       patternVariable.drop();
       pattern.drop();
-      modifiersWithIsEmpty.drop();
+      modifiers.drop();
       return null;
     }
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
       patternVariable.drop();
-      modifiersWithIsEmpty.drop();
+      modifiers.drop();
     } else {
       patternVariable.done(JavaElementType.PATTERN_VARIABLE);
     }
