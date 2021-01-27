@@ -32,7 +32,7 @@ import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
  * @author Anna Kozlova
  */
 public class NavBarModel {
-  private List<Object> myModel = Collections.emptyList();
+  private List<Object> myModel;
   private int mySelectedIndex;
   private final Project myProject;
   private final NavBarModelListener myNotificator;
@@ -49,6 +49,7 @@ public class NavBarModel {
     myProject = project;
     myNotificator = notificator;
     myBuilder = builder;
+    myModel = Collections.singletonList(myProject);
   }
 
   public int getSelectedIndex() {
@@ -205,16 +206,21 @@ public class NavBarModel {
 
   protected void setModel(List<Object> model, boolean force) {
     if (!model.equals(TreeAnchorizer.retrieveList(myModel))) {
-      myModel = TreeAnchorizer.anchorizeList(model);
+      myModel = anchorizeList(model);
       myNotificator.modelChanged();
 
       mySelectedIndex = myModel.size() - 1;
       myNotificator.selectionChanged();
     }
     else if (force) {
-      myModel = TreeAnchorizer.anchorizeList(model);
+      myModel = anchorizeList(model);
       myNotificator.modelChanged();
     }
+  }
+
+  private @NotNull List<Object> anchorizeList(@NotNull List<Object> model) {
+    List<Object> list = TreeAnchorizer.anchorizeList(model);
+    return !list.isEmpty() ? list : Collections.singletonList(myProject);
   }
 
   public void updateModel(final Object object) {
