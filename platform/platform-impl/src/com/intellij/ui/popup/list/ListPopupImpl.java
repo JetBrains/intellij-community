@@ -28,7 +28,6 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -487,7 +486,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     private int myLastSelectedIndex = -2;
     private ExtendMode myExtendMode = ExtendMode.NO_EXTEND;
     private Point myLastMouseLocation;
-    private final Alarm myShowSubmenuAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null);
+    private Timer myShowSubmenuTimer;
 
     /**
      * this method should be changed only in par with
@@ -578,18 +577,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
       disposeChildren();
 
-      if (myShowSubmenuAlarm.getActiveRequestCount() > 0) {
-        myShowSubmenuAlarm.cancelAllRequests();
+      if (myShowSubmenuTimer != null && myShowSubmenuTimer.isRunning()) {
+        myShowSubmenuTimer.stop();
+        myShowSubmenuTimer = null;
       }
 
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(forIndex);
       PopupStep<?> step = listStep.onChosen(selectedValue, false);
       if (withTimer) {
-        myShowSubmenuAlarm.addRequest(() -> {
-          if (!isDisposed() && myLastSelectedIndex != forIndex) return;
-          showNextStepPopup(step, selectedValue);
-        }, 250);
+        myShowSubmenuTimer = new Timer(250, e -> {
+          if (!isDisposed() && myLastSelectedIndex == forIndex) showNextStepPopup(step, selectedValue);
+        });
+        myShowSubmenuTimer.setRepeats(false);
+        myShowSubmenuTimer.start();
       }
       else {
         showNextStepPopup(step, selectedValue);
