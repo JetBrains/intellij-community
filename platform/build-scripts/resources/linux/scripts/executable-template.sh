@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
@@ -56,6 +56,7 @@ IDE_BIN_HOME=$(pwd)
 IDE_HOME=$("$DIRNAME" "$IDE_BIN_HOME")
 cd "${OLDPWD}" || exit 2
 
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 PRODUCT_VENDOR="__product_vendor__"
 PATHS_SELECTOR="__system_selector__"
 
@@ -68,8 +69,8 @@ if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
   JDK="$__product_uc___JDK"
 fi
 
-if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
-  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
+if [ -z "$JDK" ] && [ -s "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
+  USER_JRE=$("$CAT" "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
   if [ -x "$USER_JRE/bin/java" ]; then
     JDK="$USER_JRE"
   fi
@@ -167,23 +168,25 @@ VM_OPTIONS_FILE=""
 if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; then
   # explicit
   VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
-elif [ -r "$IDE_HOME.vmoptions" ]; then
+elif [ -r "${IDE_HOME}.vmoptions" ]; then
   # Toolbox
-  VM_OPTIONS_FILE="$IDE_HOME.vmoptions"
-elif [ -r "${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__$BITS.vmoptions" ]; then
+  VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
+elif [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions" ]; then
   # user-overridden
-  VM_OPTIONS_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__$BITS.vmoptions"
-elif [ -r "$IDE_BIN_HOME/__vm_options__$BITS.vmoptions" ]; then
+  VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions"
+elif [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
   # default, standard installation
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/__vm_options__$BITS.vmoptions"
+  VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
 else
   # default, universal package
   test "$OS_TYPE" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/$OS_SPECIFIC/__vm_options__$BITS.vmoptions"
+  if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions" ]; then
+    VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
+  fi
 fi
 
 VM_OPTIONS=""
-if [ -r "$VM_OPTIONS_FILE" ]; then
+if [ -n "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=$("$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*")
 else
   message "Cannot find VM options file"
