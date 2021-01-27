@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -2181,7 +2181,8 @@ public class JBTabsImpl extends JComponent
   }
 
   private void processRemove(final TabInfo info, boolean forcedNow) {
-    remove(myInfo2Label.get(info));
+    TabLabel tabLabel = myInfo2Label.get(info);
+    remove(tabLabel);
     remove(myInfo2Toolbar.get(info));
 
     JComponent tabComponent = info.getComponent();
@@ -2198,6 +2199,9 @@ public class JBTabsImpl extends JComponent
     myInfo2Label.remove(info);
     myInfo2Page.remove(info);
     myInfo2Toolbar.remove(info);
+    if (tabLabelAtMouse == tabLabel) {
+      tabLabelAtMouse = null;
+    }
     resetTabsCache();
 
     updateAll(false);
