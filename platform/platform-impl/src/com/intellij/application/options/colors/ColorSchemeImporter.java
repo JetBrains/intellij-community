@@ -46,7 +46,7 @@ public class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
   public EditorColorsScheme importScheme(@NotNull Project project,
                                          @NotNull VirtualFile selectedFile,
                                          @NotNull EditorColorsScheme currentScheme,
-                                         @NotNull SchemeFactory<EditorColorsScheme> schemeFactory) throws SchemeImportException {
+                                         @NotNull SchemeFactory<? extends EditorColorsScheme> schemeFactory) throws SchemeImportException {
     Element root = SchemeImportUtil.loadSchemeDom(selectedFile);
     String name = getSchemeName(root);
     EditorColorsScheme scheme = schemeFactory.createNewScheme(name);
