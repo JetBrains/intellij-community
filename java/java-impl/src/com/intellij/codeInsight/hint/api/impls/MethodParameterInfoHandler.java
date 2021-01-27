@@ -57,6 +57,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static final String WHITESPACE_OR_LINE_BREAKS = " \t\n";
   private static final Key<Inlay> CURRENT_HINT = Key.create("current.hint");
   private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
+  private static final Set<String> NON_DOCUMENTED_JETBRAINS_ANNOTATIONS = Set.of(
+    "org.jetbrains.annotations.Debug.Renderer",
+    "org.intellij.lang.annotations.Flow",
+    "org.intellij.lang.annotations.Subst",
+    "org.jetbrains.annotations.Async.Schedule",
+    "org.jetbrains.annotations.Async.Execute"
+  );
 
   @Override
   @Nullable
@@ -762,6 +769,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
         final PsiElement resolved = element.resolve();
+        if (resolved == null) {
+          String qualifiedName = annotation.getQualifiedName();
+          if (NON_DOCUMENTED_JETBRAINS_ANNOTATIONS.contains(qualifiedName)) continue;
+        }
         if (resolved instanceof PsiClass &&
             (!JavaDocInfoGenerator.isDocumentedAnnotationType((PsiClass)resolved) ||
              AnnotationTargetUtil.findAnnotationTarget((PsiClass)resolved, PsiAnnotation.TargetType.TYPE_USE) != null)) {
