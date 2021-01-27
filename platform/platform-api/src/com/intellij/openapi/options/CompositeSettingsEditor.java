@@ -3,6 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Alarm;
@@ -54,7 +55,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
       try {
         myEditor.applyTo(settings);
       }
-      catch (ConfigurationException e) {
+      catch (ConfigurationException | ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {
