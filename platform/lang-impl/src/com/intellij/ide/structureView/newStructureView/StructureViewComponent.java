@@ -69,6 +69,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -281,6 +282,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private void addTreeMouseListeners() {
     EditSourceOnDoubleClickHandler.install(getTree());
+    installTreePopupHandlers();
+  }
+
+  protected void installTreePopupHandlers() {
     CustomizationUtil.installPopupHandler(getTree(), IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionPlaces.STRUCTURE_VIEW_POPUP);
   }
 
