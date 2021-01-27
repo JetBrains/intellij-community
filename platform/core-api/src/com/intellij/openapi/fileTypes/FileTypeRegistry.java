@@ -8,12 +8,9 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * A service for retrieving file types for files.
@@ -143,19 +140,6 @@ public abstract class FileTypeRegistry {
      */
     @Nullable
     FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText);
-
-    /**
-     * Returns the file type that this detector is capable of detecting, or null if it can detect
-     * multiple file types.
-     *
-     * @deprecated unused
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-    @Nullable
-    default Collection<? extends FileType> getDetectedFileTypes() {
-      return null;
-    }
 
     /**
      * Defines how much content is required for this detector to detect file type reliably. At least such amount of bytes
