@@ -62,7 +62,6 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
       logData.addData(SELECTED_INDEXES_DATA_KEY, indexes.map { it.toString() })
     }
     logData.addData(CLOSE_POPUP_KEY, closePopup)
-    logData.addData(SESSION_ID_LOG_DATA_KEY, mySessionId)
     logData.addData(TOTAL_NUMBER_OF_ITEMS_DATA_KEY, elements.size)
     logData.addData(TYPED_SYMBOL_KEYS, symbolsTyped)
     logData.addData(TYPED_BACKSPACES_DATA_KEY, backspacesTyped)
@@ -128,7 +127,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     val element = item.getElement()
     val contributorId = item.getContributor()?.searchProviderId ?: "undefined"
     if (element !is MatchedValue) { // not an action/option
-      return ItemInfo(element.javaClass.name, contributorId, emptyMap())
+      return ItemInfo(null, contributorId, emptyMap())
     }
     if (element.value !is GotoActionModel.ActionWrapper) { // an option (OptionDescriptor)
       return ItemInfo(null, contributorId, hashMapOf(IS_ACTION_DATA_KEY to false))
@@ -182,10 +181,12 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
 
   data class ItemInfo(val id: String?, val contributorId: String, val additionalData: Map<String, Any>) {
     fun toMap(): Map<String, Any> {
-      val result = hashMapOf(
-        "contributorId" to contributorId,
-        "additionalData" to additionalData
+      val result: HashMap<String, Any> = hashMapOf(
+        "contributorId" to contributorId
       )
+      if (additionalData.isNotEmpty()) {
+        result["additionalData"] = additionalData
+      }
       id?.let {
         result += "id" to it
       }
