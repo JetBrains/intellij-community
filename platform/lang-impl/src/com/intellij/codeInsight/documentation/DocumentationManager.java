@@ -148,6 +148,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   @Override
+  protected String getToolwindowTitle() {
+    return CodeInsightBundle.message("documentation.tool.window.title");
+  }
+
+  @Override
   protected DocumentationComponent createComponent() {
     return new DocumentationComponent(this);
   }

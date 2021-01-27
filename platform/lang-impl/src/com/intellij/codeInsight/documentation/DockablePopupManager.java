@@ -108,6 +108,12 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract String getToolwindowId();
 
+  protected @NlsContexts.TabTitle String getToolwindowTitle() {
+    LOG.error(getClass().getName() + " should override getToolwindowTitle() method");
+    //noinspection HardCodedStringLiteral
+    return getToolwindowId(); // fallback for API compatibility
+  }
+
   public Content recreateToolWindow(PsiElement element, PsiElement originalElement) {
     if (myToolWindow == null) {
       createToolWindow(element, originalElement);
@@ -142,7 +148,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolwindowId());
     if (toolWindow == null) {
       toolWindow = toolWindowManager
-        .registerToolWindow(RegisterToolWindowTask.closable(getToolwindowId(), AllIcons.Toolwindows.Documentation, ToolWindowAnchor.RIGHT));
+        .registerToolWindow(RegisterToolWindowTask.closable(getToolwindowId(), this::getToolwindowTitle,
+                                                            AllIcons.Toolwindows.Documentation, ToolWindowAnchor.RIGHT));
     }
     else {
       toolWindow.setAvailable(true);

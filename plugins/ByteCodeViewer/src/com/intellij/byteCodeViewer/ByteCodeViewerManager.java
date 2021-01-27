@@ -71,6 +71,11 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
   }
 
   @Override
+  protected String getToolwindowTitle() {
+    return JavaByteCodeViewerBundle.message("show.bytecode.tool.window.title");
+  }
+
+  @Override
   protected String getAutoUpdateTitle() {
     return JavaByteCodeViewerBundle.message("show.bytecode.for.current.element.action.name");
   }
