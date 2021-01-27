@@ -301,7 +301,9 @@ final class CodeStyleSettingsPresentations {
     result.put(new CodeStyleSettingPresentation.SettingsGroup(customizableOptions.WRAPPING_CALL_CHAIN), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("WRAP_FIRST_METHOD_IN_CALL_CHAIN",
                                        ApplicationBundle.message("wrapping.chained.method.call.first.on.new.line")),
-      new CodeStyleSettingPresentation("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"))
+      new CodeStyleSettingPresentation("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline")),
+      new CodeStyleCommaSeparatedIdentifiersPresentation("BUILDER_METHODS", ApplicationBundle.message("wrapping.builder.methods")),
+      new CodeStyleSettingPresentation("KEEP_BUILDER_METHODS_INDENTS", ApplicationBundle.message("wrapping.builder.methods.keep.indents"))
     ));
 
     result.put(new CodeStyleSettingPresentation.SettingsGroup(customizableOptions.WRAPPING_IF_STATEMENT), ContainerUtil.immutableList(

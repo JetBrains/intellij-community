@@ -386,7 +386,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     public abstract void setValue(Object value, CodeStyleSettings settings);
   }
 
-  private abstract class FieldOption extends Option {
+  protected abstract class FieldOption extends Option {
     @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
     @NotNull final Field field;
 
@@ -866,16 +866,16 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
           myIntOptionsEditor.setDefaultValue(intOption.getDefaultValue());
           myIntOptionsEditor.setValue((Integer)node.getValue());
         }
-        else {
-          myCurrentEditor = getCustomNodeEditor(node);
-        }
-        if (myCurrentEditor == null) {
+        else if (node.getKey() instanceof SelectionOption) {
           myCurrentEditor = myOptionsEditor;
           myOptionsEditor.setCell(table, row, column);
           myOptionsEditor.setText(String.valueOf(node.getValue()));
           //noinspection ConfusingArgumentToVarargsMethod
           myOptionsEditor.setOptions(((SelectionOption)node.getKey()).options);
           myOptionsEditor.setDefaultValue(node.getValue());
+        }
+        else {
+          myCurrentEditor = getCustomNodeEditor(node);
         }
       }
 

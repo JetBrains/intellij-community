@@ -188,7 +188,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
                                    "ALIGN_CONSECUTIVE_ASSIGNMENTS",
                                    "ALIGN_SUBSEQUENT_SIMPLE_METHODS",
-                                   "WRAP_FIRST_METHOD_IN_CALL_CHAIN");
+                                   "WRAP_FIRST_METHOD_IN_CALL_CHAIN",
+                                   "BUILDER_METHODS",
+                                   "KEEP_BUILDER_METHODS_INDENTS");
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
