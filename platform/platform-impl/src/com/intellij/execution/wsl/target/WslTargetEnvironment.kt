@@ -86,6 +86,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     var line = GeneralCommandLine(commandLine.collectCommandsSynchronously())
+    line.environment.putAll(commandLine.environmentVariables)
     val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory)
     line = distribution.patchCommandLine(line, null, options)
     return line.createProcess()
