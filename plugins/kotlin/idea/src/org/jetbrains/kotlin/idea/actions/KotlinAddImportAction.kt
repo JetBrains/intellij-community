@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isOneSegmentFQN
@@ -59,6 +60,8 @@ import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JPanel
@@ -71,13 +74,15 @@ internal fun createSingleImportAction(
     fqNames: Collection<FqName>
 ): KotlinAddImportAction {
     val file = element.containingKtFile
-    val prioritizer = Prioritizer(element.containingKtFile)
-    val variants = fqNames.mapNotNull { fqName ->
+    val prioritizer = Prioritizer(file)
+    val variants = fqNames.asSequence().mapNotNull { fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
-        val priority = sameFqNameDescriptors.minOfOrNull { prioritizer.priority(it, file.languageVersionSettings) }
-            ?: return@mapNotNull null
-        Prioritizer.VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
-    }.sortedBy { it.priority }.map { it.variant }
+        val priority = sameFqNameDescriptors.minOfOrNull {
+            prioritizer.priority(it, file.languageVersionSettings)
+        } ?: return@mapNotNull null
+
+        VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
+    }
 
     return KotlinAddImportAction(project, editor, element, variants)
 }
@@ -89,15 +94,19 @@ internal fun createSingleImportActionForConstructor(
     fqNames: Collection<FqName>
 ): KotlinAddImportAction {
     val file = element.containingKtFile
-    val prioritizer = Prioritizer(element.containingKtFile)
-    val variants = fqNames.mapNotNull { fqName ->
+    val prioritizer = Prioritizer(file)
+    val variants = fqNames.asSequence().mapNotNull { fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName.parent())
             .filterIsInstance<ClassDescriptor>()
             .flatMap { it.constructors }
-        val priority = sameFqNameDescriptors.minOfOrNull { prioritizer.priority(it, file.languageVersionSettings) }
-            ?: return@mapNotNull null
-        Prioritizer.VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
-    }.sortedBy { it.priority }.map { it.variant }
+
+        val priority = sameFqNameDescriptors.minOfOrNull {
+            prioritizer.priority(it, file.languageVersionSettings)
+        } ?: return@mapNotNull null
+
+        VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
+    }
+
     return KotlinAddImportAction(project, editor, element, variants)
 }
 
@@ -108,10 +117,9 @@ internal fun createGroupedImportsAction(
     autoImportDescription: String,
     fqNames: Collection<FqName>
 ): KotlinAddImportAction {
-    val prioritizer = DescriptorGroupPrioritizer(element.containingKtFile)
-
     val file = element.containingKtFile
-    val variants = fqNames.groupBy { it.parentOrNull() ?: FqName.ROOT }.map {
+    val prioritizer = DescriptorGroupPrioritizer(file)
+    val variants = fqNames.groupBy { it.parentOrNull() ?: FqName.ROOT }.asSequence().map {
         val samePackageFqNames = it.value
         val descriptors = samePackageFqNames.flatMap { fqName -> file.resolveImportReference(fqName) }
         val variant = if (samePackageFqNames.size > 1) {
@@ -120,13 +128,9 @@ internal fun createGroupedImportsAction(
             SingleImportVariant(samePackageFqNames.first(), descriptors, project)
         }
 
-            val priority = prioritizer.priority(descriptors, file.languageVersionSettings)
-            DescriptorGroupPrioritizer.VariantWithPriority(variant, priority)
-        }
-        .sortedBy {
-            it.priority
-        }
-        .map { it.variant }
+        val priority = prioritizer.priority(descriptors, file.languageVersionSettings)
+        VariantWithPriority(variant, priority)
+    }
 
     return KotlinAddImportAction(project, editor, element, variants)
 }
@@ -139,32 +143,54 @@ class KotlinAddImportAction internal constructor(
     private val project: Project,
     private val editor: Editor,
     private val element: KtElement,
-    private val variants: List<AutoImportVariant>
+    private val variants: Sequence<VariantWithPriority>
 ) : QuestionAction {
-    fun showHint(): Boolean {
-        if (variants.isEmpty()) return false
+    private var singleImportVariant: AutoImportVariant? = null
 
-        val hintText = ShowAutoImportPass.getMessage(variants.size > 1, variants.first().hint)
-        HintManager.getInstance().showQuestionHint(editor, hintText, element.textOffset, element.textRange!!.endOffset, this)
+    private fun variantsList(): List<AutoImportVariant> = if (singleImportVariant != null && !isUnitTestMode())
+        listOf(singleImportVariant!!)
+    else
+        variants.sortedBy { it.priority }.map { it.variant }.toList()
+
+    fun showHint(): Boolean {
+        val iterator = variants.iterator()
+        if (!iterator.hasNext()) return false
+
+        val first = iterator.next().variant
+        val multiple = if (iterator.hasNext()) {
+            true
+        } else {
+            singleImportVariant = first
+            false
+        }
+
+        val hintText = ShowAutoImportPass.getMessage(multiple, first.hint)
+        HintManager.getInstance().showQuestionHint(editor, hintText, element.startOffset, element.endOffset, this)
 
         return true
     }
 
     fun isUnambiguous(): Boolean {
-        return variants.size == 1 && variants[0].descriptorsToImport.all { it is ClassDescriptor }
+        singleImportVariant = variants.singleOrNull()?.variant?.takeIf { variant ->
+            variant.descriptorsToImport.all { it is ClassDescriptor }
+        }
+
+        return singleImportVariant != null
     }
 
     override fun execute(): Boolean {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         if (!element.isValid) return false
-        if (variants.isEmpty()) return false
 
-        if (variants.size == 1 || ApplicationManager.getApplication().isUnitTestMode) {
-            addImport(variants.first())
+        val variantsList = variantsList()
+        if (variantsList.isEmpty()) return false
+
+        if (variantsList.size == 1 || isUnitTestMode()) {
+            addImport(variantsList.first())
             return true
         }
 
-        object : ListPopupImpl(project, getVariantSelectionPopup()) {
+        object : ListPopupImpl(project, getVariantSelectionPopup(variantsList)) {
             private val psiRenderer = DefaultPsiElementCellRenderer()
 
             @Suppress("UNCHECKED_CAST")
@@ -188,7 +214,7 @@ class KotlinAddImportAction internal constructor(
         return true
     }
 
-    private fun getVariantSelectionPopup(): BaseListPopupStep<AutoImportVariant> {
+    private fun getVariantSelectionPopup(variants: List<AutoImportVariant>): BaseListPopupStep<AutoImportVariant> {
         return object : BaseListPopupStep<AutoImportVariant>(KotlinBundle.message("action.add.import.chooser.title"), variants) {
             override fun isAutoSelectionEnabled() = false
 
@@ -271,12 +297,16 @@ class KotlinAddImportAction internal constructor(
     }
 }
 
+internal interface ComparablePriority : Comparable<ComparablePriority>
+
+internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ComparablePriority)
+
 private class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
     private val classifier = ImportableFqNameClassifier(file)
     private val statsManager = StatisticsManager.getInstance()
     private val proximityLocation = ProximityLocation(file, file.module)
 
-    inner class Priority(descriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) : Comparable<Priority> {
+    inner class Priority(descriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) : ComparablePriority {
         private val isDeprecated = isDeprecatedAtCallSite(descriptor) { languageVersionSettings }
         private val fqName = descriptor.importableFqName!!
         private val classification = classifier.classify(fqName, false)
@@ -284,7 +314,9 @@ private class Prioritizer(private val file: KtFile, private val compareNames: Bo
         private val lastUseRecency = statsManager.getLastUseRecency(KotlinStatisticsInfo.forDescriptor(descriptor))
         private val proximityWeight = WeighingService.weigh(PsiProximityComparator.WEIGHER_KEY, declaration, proximityLocation)
 
-        override fun compareTo(other: Priority): Int {
+        override fun compareTo(other: ComparablePriority): Int {
+            other as Priority
+
             if (isDeprecated != other.isDeprecated) {
                 return if (isDeprecated) +1 else -1
             }
@@ -306,10 +338,10 @@ private class Prioritizer(private val file: KtFile, private val compareNames: Bo
         }
     }
 
-    fun priority(descriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) =
-        Priority(descriptor, languageVersionSettings)
-
-    data class VariantWithPriority(val variant: AutoImportVariant, val priority: Priority)
+    fun priority(
+        descriptor: DeclarationDescriptor,
+        languageVersionSettings: LanguageVersionSettings,
+    ) = Priority(descriptor, languageVersionSettings)
 }
 
 private class DescriptorGroupPrioritizer(file: KtFile) {
@@ -318,10 +350,12 @@ private class DescriptorGroupPrioritizer(file: KtFile) {
     inner class Priority(
         val descriptors: List<DeclarationDescriptor>,
         languageVersionSettings: LanguageVersionSettings
-    ) : Comparable<Priority> {
+    ) : ComparablePriority {
         val ownDescriptorsPriority = descriptors.maxOf { prioritizer.priority(it, languageVersionSettings) }
 
-        override fun compareTo(other: Priority): Int {
+        override fun compareTo(other: ComparablePriority): Int {
+            other as Priority
+
             val c1 = ownDescriptorsPriority.compareTo(other.ownDescriptorsPriority)
             if (c1 != 0) return c1
 
@@ -329,10 +363,10 @@ private class DescriptorGroupPrioritizer(file: KtFile) {
         }
     }
 
-    fun priority(descriptors: List<DeclarationDescriptor>, languageVersionSettings: LanguageVersionSettings) =
-        Priority(descriptors, languageVersionSettings)
-
-    data class VariantWithPriority(val variant: AutoImportVariant, val priority: Priority)
+    fun priority(
+        descriptors: List<DeclarationDescriptor>,
+        languageVersionSettings: LanguageVersionSettings
+    ) = Priority(descriptors, languageVersionSettings)
 }
 
 internal abstract class AutoImportVariant(
