@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
-data class SignatureInferenceOptions(val searchScope: SearchScope,
+data class SignatureInferenceOptions(val shouldUseReducedScope : Boolean,
                                      val signatureInferenceContext: SignatureInferenceContext)
 
 class SignatureInferenceEnvironment(originalMethod: GrMethod,

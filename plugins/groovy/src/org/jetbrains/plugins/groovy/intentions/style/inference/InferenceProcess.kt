@@ -24,7 +24,8 @@ fun runInferenceProcess(method: GrMethod, options: SignatureInferenceOptions): G
   if (overridableMethod != null) {
     return convertToGroovyMethod(overridableMethod) ?: method
   }
-  val environment = SignatureInferenceEnvironment(originalMethod, options.searchScope, options.signatureInferenceContext)
+  val searchScope = getSearchScope(method, options.shouldUseReducedScope) ?: return method
+  val environment = SignatureInferenceEnvironment(originalMethod, searchScope, options.signatureInferenceContext)
   val driver = createDriver(originalMethod, environment)
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
   val virtualMethodPointer: SmartPsiElementPointer<GrMethod> = createVirtualMethod(method) ?: return method
