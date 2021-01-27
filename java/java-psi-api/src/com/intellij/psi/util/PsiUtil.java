@@ -701,7 +701,16 @@ public final class PsiUtil extends PsiUtilCore {
       return equalOnEquivalentClasses(s1, containingClass1, s2, containingClass2);
     }
 
-    return containingClass1 == null && containingClass2 == null;
+    if (containingClass1 == null && containingClass2 == null) {
+      if (aClass == bClass && isLocalClass(aClass)) {
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+        return containingClass != null && equalOnEquivalentClasses(s1, containingClass, s2, containingClass);
+      }
+      return true;
+    }
+
+    return false;
+    
   }
 
   /**
@@ -945,6 +954,10 @@ public final class PsiUtil extends PsiUtilCore {
       }
 
       if (currentOwner.hasModifierProperty(PsiModifier.STATIC)) break;
+      if (currentOwner instanceof PsiClass && isLocalClass((PsiClass)currentOwner)) {
+        currentOwner = PsiTreeUtil.getParentOfType(currentOwner, PsiTypeParameterListOwner.class);
+        continue;
+      }
       currentOwner = currentOwner.getContainingClass();
     }
 

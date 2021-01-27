@@ -274,7 +274,7 @@ public final class PsiImplUtil {
     }
     final PsiTypeParameter[] typeParameters = classClass.getTypeParameters();
     if (typeParameters.length == 1) {
-      substitutor = substitutor.put(typeParameters[0], operandType);
+      substitutor = substitutor.put(typeParameters[0], operandType instanceof PsiClassType ? ((PsiClassType)operandType).rawType() : operandType);
     }
 
     return new PsiImmediateClassType(classClass, substitutor);
