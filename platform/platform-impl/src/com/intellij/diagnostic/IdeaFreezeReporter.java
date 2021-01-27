@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -32,6 +32,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final String MESSAGE_FILE_NAME = ".message";
   private static final String THROWABLE_FILE_NAME = ".throwable";
   public static final String APPINFO_FILE_NAME = ".appinfo";
+  // common sub-stack contains more than the specified % samples
+  private static final double COMMON_SUB_STACK_WEIGHT = 0.75;
 
   @SuppressWarnings("FieldMayBeFinal")
   private static boolean DEBUG = false;
@@ -294,7 +296,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
     CallTreeNode root = CallTreeNode.buildTree(causeThreads, dumpInterval);
     int classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size();
-    CallTreeNode commonStackNode = root.findDominantCommonStack(causeThreads.size() * dumpInterval / 2);
+    CallTreeNode commonStackNode = root.findDominantCommonStack((long)(causeThreads.size() * dumpInterval * COMMON_SUB_STACK_WEIGHT));
     List<StackTraceElement> commonStack = commonStackNode != null ? commonStackNode.getStack() : null;
 
     boolean nonEdtCause = false;
