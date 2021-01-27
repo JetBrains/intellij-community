@@ -53,7 +53,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   };
 
-  final ThreadLocal<UntrustedCertificateStrategy> myUntrustedCertificateStrategy =
+  public final ThreadLocal<UntrustedCertificateStrategy> myUntrustedCertificateStrategy =
     ThreadLocal.withInitial(() -> UntrustedCertificateStrategy.ASK_USER);
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
