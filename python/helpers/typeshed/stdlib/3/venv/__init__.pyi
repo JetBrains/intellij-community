@@ -9,8 +9,7 @@ class EnvBuilder:
     symlinks: bool
     upgrade: bool
     with_pip: bool
-    if sys.version_info >= (3, 6):
-        prompt: Optional[str]
+    prompt: Optional[str]
 
     if sys.version_info >= (3, 9):
         def __init__(
@@ -23,16 +22,6 @@ class EnvBuilder:
             prompt: Optional[str] = ...,
             upgrade_deps: bool = ...,
         ) -> None: ...
-    elif sys.version_info >= (3, 6):
-        def __init__(
-            self,
-            system_site_packages: bool = ...,
-            clear: bool = ...,
-            symlinks: bool = ...,
-            upgrade: bool = ...,
-            with_pip: bool = ...,
-            prompt: Optional[str] = ...,
-        ) -> None: ...
     else:
         def __init__(
             self,
@@ -41,6 +30,7 @@ class EnvBuilder:
             symlinks: bool = ...,
             upgrade: bool = ...,
             with_pip: bool = ...,
+            prompt: Optional[str] = ...,
         ) -> None: ...
     def create(self, env_dir: AnyPath) -> None: ...
     def clear_directory(self, path: AnyPath) -> None: ...  # undocumented
@@ -67,7 +57,7 @@ if sys.version_info >= (3, 9):
         upgrade_deps: bool = ...,
     ) -> None: ...
 
-elif sys.version_info >= (3, 6):
+else:
     def create(
         env_dir: AnyPath,
         system_site_packages: bool = ...,
@@ -75,11 +65,6 @@ elif sys.version_info >= (3, 6):
         symlinks: bool = ...,
         with_pip: bool = ...,
         prompt: Optional[str] = ...,
-    ) -> None: ...
-
-else:
-    def create(
-        env_dir: AnyPath, system_site_packages: bool = ..., clear: bool = ..., symlinks: bool = ..., with_pip: bool = ...
     ) -> None: ...
 
 def main(args: Optional[Sequence[str]] = ...) -> None: ...

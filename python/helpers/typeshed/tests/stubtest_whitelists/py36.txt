@@ -1,3 +1,7 @@
+_collections_abc.AsyncGenerator.ag_await
+_collections_abc.AsyncGenerator.ag_code
+_collections_abc.AsyncGenerator.ag_frame
+_collections_abc.AsyncGenerator.ag_running
 asyncio.Future.__init__
 asyncio.exceptions  # Added in Python 3.8
 asyncio.format_helpers  # Added in Python 3.7
@@ -15,10 +19,6 @@ collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame
 collections.AsyncGenerator.ag_running
 collections.UserString.maketrans
-collections.abc.AsyncGenerator.ag_await
-collections.abc.AsyncGenerator.ag_code
-collections.abc.AsyncGenerator.ag_frame
-collections.abc.AsyncGenerator.ag_running
 contextlib._GeneratorContextManager.__init__
 copy.PyStringMap
 ctypes.CDLL.__init__
@@ -30,6 +30,7 @@ importlib.metadata
 importlib.resources
 io.StringIO.readline
 ipaddress._BaseNetwork.__init__
+itertools.accumulate
 json.loads
 mmap.ACCESS_DEFAULT
 multiprocessing.shared_memory

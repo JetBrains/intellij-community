@@ -1,4 +1,3 @@
-import sys
 from types import TracebackType
 from typing import Any, Optional, Tuple, Type, Union
 
@@ -60,9 +59,8 @@ REG_EXPAND_SZ: int
 REG_LINK: int
 REG_MULTI_SZ: int
 REG_NONE: int
-if sys.version_info >= (3, 6):
-    REG_QWORD: int
-    REG_QWORD_LITTLE_ENDIAN: int
+REG_QWORD: int
+REG_QWORD_LITTLE_ENDIAN: int
 REG_RESOURCE_LIST: int
 REG_FULL_RESOURCE_DESCRIPTOR: int
 REG_RESOURCE_REQUIREMENTS_LIST: int

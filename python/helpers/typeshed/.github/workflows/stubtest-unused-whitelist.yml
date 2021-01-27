@@ -50,7 +50,7 @@ jobs:
       - name: Remove entries from whitelists
         run: python scripts/update-stubtest-whitelist.py stubtest-output
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v2
+        uses: peter-evans/create-pull-request@v3
         with:
           commit-message: Remove unused stubtest whitelist entries
           title: "[gh-action] Remove unused stubtest whitelist entries"

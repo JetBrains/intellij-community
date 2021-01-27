@@ -15,7 +15,7 @@ STDLIB_NAMESPACE = "stdlib"
 THIRD_PARTY_NAMESPACE = "stubs"
 DEFAULT_VERSION = "0.1"
 DEFAULT_PY3_VERSION = "3.6"
-PY2_NAMESPACE = "python2"
+PY2_NAMESPACE = "@python2"
 OUTPUT_DIR = "out"
 
 # Third party imports (type ignored) of missing stubs.
@@ -33,20 +33,26 @@ package_to_distribution = {
     "pyre_extensions": "pyre-extensions",
     "attr": "attrs",
     "concurrent": "futures",
+    "click_spinner": "click-spinner",
     "Crypto": "pycrypto",
     "datetimerange": "DateTimeRange",
     "dateutil": "python-dateutil",
+    "deprecated": "Deprecated",
     "enum": "enum34",
     "flask": "Flask",
     "gflags": "python-gflags",
     "google": "protobuf",
+    "jack": "JACK-Client",
     "jinja2": "Jinja2",
+    "markdown": "Markdown",
     "markupsafe": "MarkupSafe",
     "OpenSSL": "openssl-python",
     "pymysql": "PyMySQL",
+    "pyrfc3339": "pyRFC3339",
     "pyVmomi": "pyvmomi",
     "routes": "Routes",
     "typed_ast": "typed-ast",
+    "slugify": "python-slugify",
     "werkzeug": "Werkzeug",
 }
 

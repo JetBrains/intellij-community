@@ -215,6 +215,7 @@ class HeaderError(TarError): ...
 
 class TarInfo:
     name: str
+    path: str
     size: int
     mtime: int
     mode: int

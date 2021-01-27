@@ -1,5 +1,5 @@
 import sys
-from typing import Any, BinaryIO, Iterable, List, Optional, Sequence, Text, TextIO, Tuple, TypeVar, Union, overload
+from typing import Any, BinaryIO, Iterable, List, Optional, Text, TextIO, Tuple, TypeVar, Union, overload
 from typing_extensions import Literal
 
 # ----- Constants -----

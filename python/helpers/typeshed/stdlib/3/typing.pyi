@@ -1,7 +1,10 @@
 import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 import sys
 from abc import ABCMeta, abstractmethod
-from types import CodeType, FrameType, TracebackType
+from types import BuiltinFunctionType, CodeType, FrameType, FunctionType, MethodType, ModuleType, TracebackType
+
+if sys.version_info >= (3, 7):
+    from types import MethodDescriptorType, MethodWrapperType, WrapperDescriptorType
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -58,6 +61,7 @@ if sys.version_info >= (3, 10):
         def __init__(self, name: str) -> None: ...
     Concatenate: _SpecialForm = ...
     TypeAlias: _SpecialForm = ...
+    TypeGuard: _SpecialForm = ...
 
 # Return type that indicates a function does not return.
 # This type is equivalent to the None type, but the no-op Union is necessary to
@@ -585,9 +589,31 @@ class Pattern(Generic[AnyStr]):
 
 # Functions
 
+if sys.version_info >= (3, 7):
+    _get_type_hints_obj_allowed_types = Union[
+        object,
+        Callable[..., Any],
+        FunctionType,
+        BuiltinFunctionType,
+        MethodType,
+        ModuleType,
+        WrapperDescriptorType,
+        MethodWrapperType,
+        MethodDescriptorType,
+    ]
+else:
+    _get_type_hints_obj_allowed_types = Union[
+        object,
+        Callable[..., Any],
+        FunctionType,
+        BuiltinFunctionType,
+        MethodType,
+        ModuleType,
+    ]
+
 if sys.version_info >= (3, 9):
     def get_type_hints(
-        obj: Callable[..., Any],
+        obj: _get_type_hints_obj_allowed_types,
         globalns: Optional[Dict[str, Any]] = ...,
         localns: Optional[Dict[str, Any]] = ...,
         include_extras: bool = ...,
@@ -595,7 +621,9 @@ if sys.version_info >= (3, 9):
 
 else:
     def get_type_hints(
-        obj: Callable[..., Any], globalns: Optional[Dict[str, Any]] = ..., localns: Optional[Dict[str, Any]] = ...
+        obj: _get_type_hints_obj_allowed_types,
+        globalns: Optional[Dict[str, Any]] = ...,
+        localns: Optional[Dict[str, Any]] = ...,
     ) -> Dict[str, Any]: ...
 
 if sys.version_info >= (3, 8):
@@ -606,6 +634,8 @@ if sys.version_info >= (3, 8):
 def cast(typ: Type[_T], val: Any) -> _T: ...
 @overload
 def cast(typ: str, val: Any) -> Any: ...
+@overload
+def cast(typ: object, val: Any) -> Any: ...
 
 # Type constructors
 

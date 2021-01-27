@@ -20,6 +20,7 @@ from typing import (
     Union,
     overload,
 )
+from typing_extensions import Literal
 
 # Internal type aliases
 _section = Mapping[str, str]
@@ -58,6 +59,23 @@ class RawConfigParser(_parser):
 
     BOOLEAN_STATES: ClassVar[Mapping[str, bool]] = ...  # Undocumented
     default_section: str
+    @overload
+    def __init__(
+        self,
+        defaults: Optional[Mapping[str, Optional[str]]] = ...,
+        dict_type: Type[Mapping[str, str]] = ...,
+        allow_no_value: Literal[True] = ...,
+        *,
+        delimiters: Sequence[str] = ...,
+        comment_prefixes: Sequence[str] = ...,
+        inline_comment_prefixes: Optional[Sequence[str]] = ...,
+        strict: bool = ...,
+        empty_lines_in_values: bool = ...,
+        default_section: str = ...,
+        interpolation: Optional[Interpolation] = ...,
+        converters: _converters = ...,
+    ) -> None: ...
+    @overload
     def __init__(
         self,
         defaults: Optional[_section] = ...,
@@ -157,18 +175,18 @@ class SectionProxy(MutableMapping[str, str]):
     @overload
     def getint(self, option: str, *, raw: bool = ..., vars: Optional[_section] = ...) -> int: ...
     @overload
-    def getint(self, option: str, *, raw: bool = ..., vars: Optional[_section] = ..., fallback: _T = ...) -> Union[int, _T]: ...
+    def getint(self, option: str, fallback: _T = ..., *, raw: bool = ..., vars: Optional[_section] = ...) -> Union[int, _T]: ...
     @overload
     def getfloat(self, option: str, *, raw: bool = ..., vars: Optional[_section] = ...) -> float: ...
     @overload
     def getfloat(
-        self, option: str, *, raw: bool = ..., vars: Optional[_section] = ..., fallback: _T = ...
+        self, option: str, fallback: _T = ..., *, raw: bool = ..., vars: Optional[_section] = ...
     ) -> Union[float, _T]: ...
     @overload
     def getboolean(self, option: str, *, raw: bool = ..., vars: Optional[_section] = ...) -> bool: ...
     @overload
     def getboolean(
-        self, option: str, *, raw: bool = ..., vars: Optional[_section] = ..., fallback: _T = ...
+        self, option: str, fallback: _T = ..., *, raw: bool = ..., vars: Optional[_section] = ...
     ) -> Union[bool, _T]: ...
     # SectionProxy can have arbitrary attributes when custon converters are used
     def __getattr__(self, key: str) -> Callable[..., Any]: ...

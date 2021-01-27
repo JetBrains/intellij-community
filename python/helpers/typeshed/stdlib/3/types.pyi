@@ -15,6 +15,7 @@ from typing import (
     Union,
     overload,
 )
+from typing_extensions import Literal, final
 
 # ModuleType is exported from this module, but for circular import
 # reasons exists in its own stub file (with ModuleSpec and Loader).
@@ -324,3 +325,10 @@ if sys.version_info >= (3, 9):
         __parameters__: Tuple[Any, ...]
         def __init__(self, origin: type, args: Any) -> None: ...
         def __getattr__(self, name: str) -> Any: ...  # incomplete
+
+if sys.version_info >= (3, 10):
+    @final
+    class NoneType:
+        def __bool__(self) -> Literal[False]: ...
+    EllipsisType = ellipsis  # noqa F811 from builtins
+    NotImplementedType = _NotImplementedType  # noqa F811 from builtins

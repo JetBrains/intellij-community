@@ -51,7 +51,7 @@ class _AttributeHolder:
 class _ActionsContainer:
     description: Optional[_Text]
     prefix_chars: _Text
-    argument_default: Optional[_Text]
+    argument_default: Any
     conflict_handler: _Text
 
     _registries: Dict[_Text, Dict[Any, Any]]
@@ -63,7 +63,7 @@ class _ActionsContainer:
     _negative_number_matcher: Pattern[str]
     _has_negative_number_optionals: List[bool]
     def __init__(
-        self, description: Optional[Text], prefix_chars: Text, argument_default: Optional[Text], conflict_handler: Text
+        self, description: Optional[Text], prefix_chars: Text, argument_default: Any, conflict_handler: Text
     ) -> None: ...
     def register(self, registry_name: Text, value: Any, object: Any) -> None: ...
     def _registry_get(self, registry_name: Text, value: Any, default: Any = ...) -> Any: ...
@@ -128,7 +128,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
             formatter_class: _FormatterClass = ...,
             prefix_chars: str = ...,
             fromfile_prefix_chars: Optional[str] = ...,
-            argument_default: Optional[str] = ...,
+            argument_default: Any = ...,
             conflict_handler: str = ...,
             add_help: bool = ...,
             allow_abbrev: bool = ...,
@@ -145,7 +145,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
             formatter_class: _FormatterClass = ...,
             prefix_chars: str = ...,
             fromfile_prefix_chars: Optional[str] = ...,
-            argument_default: Optional[str] = ...,
+            argument_default: Any = ...,
             conflict_handler: str = ...,
             add_help: bool = ...,
             allow_abbrev: bool = ...,
@@ -161,7 +161,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
             formatter_class: _FormatterClass = ...,
             prefix_chars: Text = ...,
             fromfile_prefix_chars: Optional[Text] = ...,
-            argument_default: Optional[Text] = ...,
+            argument_default: Any = ...,
             conflict_handler: Text = ...,
             add_help: bool = ...,
         ) -> None: ...

@@ -1,6 +1,6 @@
 import sys
 from types import TracebackType
-from typing import IO, Any, Callable, ContextManager, Generic, Iterable, Iterator, Optional, Type, TypeVar, overload
+from typing import IO, Any, Callable, ContextManager, Iterable, Iterator, Optional, Type, TypeVar, overload
 
 if sys.version_info >= (3, 5):
     from typing import AsyncContextManager, AsyncIterator

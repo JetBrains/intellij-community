@@ -1,7 +1,19 @@
 _ast.ImportFrom.level
+_collections_abc.AsyncGenerator.ag_await
+_collections_abc.AsyncGenerator.ag_code
+_collections_abc.AsyncGenerator.ag_frame
+_collections_abc.AsyncGenerator.ag_running
+_collections_abc.AsyncGenerator.asend
+_collections_abc.AsyncGenerator.athrow
+_collections_abc.Container.__contains__
+_collections_abc.Coroutine.send
+_collections_abc.Coroutine.throw
+_collections_abc.Generator.send
+_collections_abc.Generator.throw
+_collections_abc.ItemsView.__reversed__
+_collections_abc.KeysView.__reversed__
+_collections_abc.ValuesView.__reversed__
 _dummy_thread
-_thread.ExceptHookArgs
-_thread._ExceptHookArgs
 ast.Bytes.__new__
 ast.Ellipsis.__new__
 ast.ExtSlice.__new__
@@ -36,9 +48,8 @@ collections.abc.ValuesView.__reversed__
 contextvars.Context.__init__
 contextvars.Context.get
 copy.PyStringMap
-dataclasses.Field.__init__
-dataclasses.InitVar.__init__
 dataclasses.field
+dataclasses.InitVar.__class_getitem__  # stubtest bug. doesn't do the right thing with overload + implicit classmethod __class_getitem__
 dummy_threading
 email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
@@ -53,6 +64,7 @@ hmac.new  # Stub is a white lie; see comments in the stub
 http.client.HTTPSConnection.__init__
 http.cookiejar.DefaultCookiePolicy.__init__
 http.server.SimpleHTTPRequestHandler.__init__
+importlib.abc.Traversable.__init__  # Inherits __init__ from typing.Protocol
 importlib.metadata.DistributionFinder.Context.pattern
 importlib.metadata.EntryPointBase
 ipaddress.IPv4Interface.hostmask
@@ -67,10 +79,6 @@ logging.handlers.WatchedFileHandler.__init__
 macpath  # module removed in 3.8
 macurl2path  # module removed in 3.7
 mmap.MADV_[A-Z_]+  # platform dependent constants
-multiprocessing.managers.SharedMemoryServer.__init__
-multiprocessing.pool.CLOSE
-multiprocessing.pool.RUN
-multiprocessing.pool.TERMINATE
 multiprocessing.spawn._main
 nntplib.NNTP.starttls
 os.MFD_HUGE_32MB
@@ -152,10 +160,7 @@ contextlib.AsyncExitStack.push_async_callback
 contextlib.ExitStack.callback
 contextvars.ContextVar.reset
 contextvars.ContextVar.set
-dataclasses.dataclass
-dataclasses.replace
 io.IncrementalNewlineDecoder.setstate
-itertools.tee
 lzma.LZMACompressor.compress
 lzma.is_check_supported
 os.initgroups

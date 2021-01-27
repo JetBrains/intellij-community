@@ -4,8 +4,8 @@ from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 
 families: List[None]
 
-_TConnection = TypeVar("_TConnection", bound=Connection)
-_TListener = TypeVar("_TListener", bound=Listener)
+_ConnectionT = TypeVar("_ConnectionT", bound=Connection)
+_ListenerT = TypeVar("_ListenerT", bound=Listener)
 _Address = Union[str, Tuple[str, int]]
 
 class Connection(object):
@@ -15,7 +15,7 @@ class Connection(object):
     recv_bytes: Any
     send: Any
     send_bytes: Any
-    def __enter__(self: _TConnection) -> _TConnection: ...
+    def __enter__(self: _ConnectionT) -> _ConnectionT: ...
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None: ...
@@ -27,7 +27,7 @@ class Listener(object):
     _backlog_queue: Optional[Queue[Any]]
     @property
     def address(self) -> Optional[Queue[Any]]: ...
-    def __enter__(self: _TListener) -> _TListener: ...
+    def __enter__(self: _ListenerT) -> _ListenerT: ...
     def __exit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None: ...

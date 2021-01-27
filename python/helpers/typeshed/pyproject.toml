@@ -1,11 +1,13 @@
 [tool.black]
 line_length = 130
 target_version = ["py37"]
+exclude = ".*_pb2.pyi"
 
 [tool.isort]
 profile = "black"
 combine_as_imports = true
 line_length = 130
+skip_glob = "*_pb2.pyi"
 extra_standard_library = [
     "typing_extensions",
     "_typeshed",

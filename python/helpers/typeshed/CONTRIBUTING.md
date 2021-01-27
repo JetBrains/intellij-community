@@ -226,7 +226,7 @@ rule is that they should be as concise as possible.  Specifically:
 
 Stubs should be reformatted with the formatters
 [black](https://github.com/psf/black) and
-[isort](https://github.com/timothycrosley/isort) before submission.
+[isort](https://github.com/PyCQA/isort) before submission.
 These formatters are included in typeshed's `requirements-tests-py3.txt` file.
 A sample `pre-commit` file is included in the typeshed repository.  Copy it
 to `.git/hooks` and adjust the path to your virtual environment's `bin`

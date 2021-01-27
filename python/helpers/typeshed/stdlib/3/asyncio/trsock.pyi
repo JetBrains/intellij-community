@@ -1,7 +1,7 @@
 import socket
 import sys
 from types import TracebackType
-from typing import Any, BinaryIO, Iterable, List, NoReturn, Optional, Sequence, Tuple, Type, Union, overload
+from typing import Any, BinaryIO, Iterable, List, NoReturn, Optional, Tuple, Type, Union, overload
 
 if sys.version_info >= (3, 8):
     # These are based in socket, maybe move them out into _typeshed.pyi or such

@@ -1,5 +1,5 @@
 import sys
-from typing import NamedTuple, Optional, Tuple, overload
+from typing import NamedTuple, Tuple, overload
 
 RLIMIT_AS: int
 RLIMIT_CORE: int

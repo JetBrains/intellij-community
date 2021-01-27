@@ -33,8 +33,8 @@ os.fspath(<warning descr="Unexpected type(s):(B)Possible type(s):(PathLike[Union
 os.fsencode(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)
 os.fsdecode(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)
 
-Path(<warning descr="Expected type 'Union[str, PurePath, PathLike[str]]', got 'B' instead">b</warning>)
-PurePath(<warning descr="Expected type 'Union[str, PurePath, PathLike[str]]', got 'B' instead">b</warning>)
+Path(<warning descr="Expected type 'Union[str, PathLike[str]]', got 'B' instead">b</warning>)
+PurePath(<warning descr="Expected type 'Union[str, PathLike[str]]', got 'B' instead">b</warning>)
 
 os.path.abspath(<warning descr="Unexpected type(s):(B)Possible type(s):(AnyStr)(PathLike[Union[Union[str, bytes], Any]])">b</warning>)
 
