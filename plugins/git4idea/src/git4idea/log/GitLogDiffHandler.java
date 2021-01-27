@@ -11,7 +11,7 @@ import com.intellij.diff.chains.SimpleDiffRequestProducer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.dvcs.actions.CompareWithLocalDialog;
+import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
