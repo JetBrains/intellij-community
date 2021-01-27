@@ -38,6 +38,7 @@ internal class MessageTitleComponent(
     isVisible = false
     createEditButton(message)?.let { add(it) }
     createDeleteButton(message)?.let { add(it) }
+    add(createStartThreadButton(message))
   }
 
   init {
@@ -109,5 +110,18 @@ internal class MessageTitleComponent(
         message.startEditing()
       }
     }
+  }
+
+  private fun createStartThreadButton(message: SpaceChatItem): JComponent {
+    val startThreadVm = message.startThreadVm
+    val button = InlineIconButton(VcsCodeReviewIcons.Comment, VcsCodeReviewIcons.CommentHovered).apply {
+      actionListener = ActionListener {
+        startThreadVm.startWritingFirstMessage()
+      }
+    }
+    startThreadVm.canStartThread.forEach(lifetime) {
+      button.isVisible = it
+    }
+    return button
   }
 }

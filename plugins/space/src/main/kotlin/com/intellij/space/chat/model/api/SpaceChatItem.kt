@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.codereview.timeline.TimelineItem
 import runtime.reactive.MutableProperty
 
-interface SpaceChatItem : TimelineItem {
+internal interface SpaceChatItem : TimelineItem {
   val id: TID
 
   val chat: M2ChannelVm
@@ -40,6 +40,8 @@ interface SpaceChatItem : TimelineItem {
   val isEditing: MutableProperty<Boolean>
 
   val canEdit: Boolean
+
+  val startThreadVm: SpaceChatStartThreadVm
 
   val pending: Boolean?
 

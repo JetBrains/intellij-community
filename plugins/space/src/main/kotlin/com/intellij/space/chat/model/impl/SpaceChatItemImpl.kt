@@ -37,6 +37,8 @@ internal class SpaceChatItemImpl private constructor(
 
   override val isEdited = record.edited != null
 
+  override val startThreadVm = SpaceChatStartThreadVmImpl(messageVm)
+
   override val pending = record.pending
 
   override val attachments = record.attachments ?: listOf()

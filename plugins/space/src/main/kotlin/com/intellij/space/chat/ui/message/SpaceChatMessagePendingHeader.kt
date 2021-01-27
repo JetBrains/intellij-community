@@ -7,12 +7,11 @@ import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class SpaceChatMessagePendingHeader(private val item: SpaceChatItem) : JPanel(HorizontalLayout(5)) {
+internal class SpaceChatMessagePendingHeader(private val item: SpaceChatItem) : JPanel(HorizontalLayout(5)) {
   init {
     isOpaque = false
     isVisible = item.pending == true

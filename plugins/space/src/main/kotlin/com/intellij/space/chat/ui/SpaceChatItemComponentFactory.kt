@@ -67,21 +67,7 @@ internal class SpaceChatItemComponentFactory(
       when (val details = item.details) {
         is CodeDiscussionAddedFeedEvent ->
           codeDiscussionComponentFactory.createComponent(details, item.thread!!) ?: createUnsupportedMessageTypePanel(item.link)
-        is M2TextItemContent -> {
-          val messagePanel = createSimpleMessageComponent(item)
-          val thread = item.thread
-          if (thread == null) {
-            messagePanel
-          }
-          else {
-            val threadComponent = createThreadComponent(project, lifetime, thread, replyActionFactory)
-            JPanel(VerticalLayout(0)).apply {
-              isOpaque = false
-              add(messagePanel, VerticalLayout.FILL_HORIZONTAL)
-              add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
-            }
-          }
-        }
+        is M2TextItemContent -> createSimpleMessageComponent(item)
         is ReviewCompletionStateChangedEvent -> SpaceStyledMessageComponent(createSimpleMessageComponent(item))
         is ReviewerChangedEvent -> {
           val user = details.uid.resolve().link()
@@ -133,7 +119,7 @@ internal class SpaceChatItemComponentFactory(
       item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
       MessageTitleComponent(lifetime, item),
       SpaceChatMessagePendingHeader(item),
-      createEditableContent(component, item)
+      createEditableContent(component.addThreadComponentIfNeeded(item).addStartThreadField(item), item)
     )
   }
 
@@ -145,6 +131,57 @@ internal class SpaceChatItemComponentFactory(
       SpaceBundle.message("chat.unsupported.message.type")
     }
     return JBLabel(description, AllIcons.General.Warning, SwingConstants.LEFT).setCopyable(true)
+  }
+
+  private fun JComponent.addThreadComponentIfNeeded(message: SpaceChatItem): JComponent {
+    val thread = message.thread
+    return if (thread == null || message.details is CodeDiscussionAddedFeedEvent) {
+      this
+    }
+    else {
+      val threadComponent = createThreadComponent(project, lifetime, thread, replyActionFactory)
+      JPanel(VerticalLayout(0)).apply {
+        isOpaque = false
+        add(this@addThreadComponentIfNeeded, VerticalLayout.FILL_HORIZONTAL)
+        add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
+      }
+    }
+  }
+
+  private fun JComponent.addStartThreadField(message: SpaceChatItem): JComponent {
+    val startThreadVm = message.startThreadVm
+    val submittableModel = object : SubmittableTextFieldModelBase("") {
+      override fun submit() {
+        isBusy = true
+        launch(lifetime, Ui) {
+          startThreadVm.startThread(document.text)
+          // keep model busy because message will be fully redrawn with new thread
+        }
+      }
+    }
+
+    val isWritingFirstMessageModel = SingleValueModelImpl(false)
+    startThreadVm.isWritingFirstMessage.forEach(lifetime) {
+      isWritingFirstMessageModel.value = it
+    }
+    val emptyPanel = JPanel().apply {
+      isOpaque = false
+      border = JBUI.Borders.empty()
+    }
+    val firstThreadMessageField = ToggleableContainer.create(isWritingFirstMessageModel, { emptyPanel }, {
+      SpaceChatNewMessageWithAvatarComponent(
+        lifetime,
+        SpaceChatAvatarType.THREAD,
+        submittableModel,
+        onCancel = { startThreadVm.stopWritingFirstMessage() }
+      )
+    })
+    return JPanel(VerticalLayout(0)).apply {
+      isOpaque = false
+      border = JBUI.Borders.empty()
+      add(this@addStartThreadField, VerticalLayout.FILL_HORIZONTAL)
+      add(firstThreadMessageField, VerticalLayout.FILL_HORIZONTAL)
+    }
   }
 
   private fun createEditableContent(content: JComponent, message: SpaceChatItem): JComponent {
