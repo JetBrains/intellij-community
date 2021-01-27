@@ -478,9 +478,12 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 }
             }
 
-            mainModuleNode.kotlinNativeHome = mppModel.kotlinNativeHome
-            mainModuleNode.coroutines = mppModel.extraFeatures.coroutinesState
-            mainModuleNode.isHmpp = mppModel.extraFeatures.isHMPPEnabled
+            with(mainModuleNode) {
+                kotlinNativeHome = mppModel.kotlinNativeHome
+                coroutines = mppModel.extraFeatures.coroutinesState
+                isHmpp = mppModel.extraFeatures.isHMPPEnabled
+                kotlinImportingDiagnosticsContainer = mppModel.kotlinImportingDiagnostics
+            }
             //TODO improve passing version of used multiplatform
         }
 
