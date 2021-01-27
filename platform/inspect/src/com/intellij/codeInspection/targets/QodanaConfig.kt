@@ -121,9 +121,19 @@ class QodanaConfig(var version: String = CONFIG_VERSION,
         if (tools != null) {
           val level = levelSupplier.invoke(tools)
           val scope = createScope("qodana.$level.${it.name}", it.getScope(project), project)
+          if (!tools.isEnabled) {
+            disableAllScopes(tools)
+            tools.isEnabled = true
+          }
           tools.addTool(scope, tools.tool, true, level)
         }
       }
+    }
+  }
+
+  private fun disableAllScopes(tools: ToolsImpl) {
+    tools.tools.forEach {
+      it.isEnabled = false
     }
   }
 
