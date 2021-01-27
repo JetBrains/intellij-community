@@ -250,8 +250,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   @Override
   @Nullable
   protected JComponent getComponent() {
-    if (getVariable() instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(getVariable())) return null;
-    if (myCantChangeFinalModifier && !(myCanBeVarType && getVariable() instanceof PsiLocalVariable)) return null;
+    final PsiVariable variable = getVariable();
+    if (variable instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(variable)) return null;
+    if (myCantChangeFinalModifier && !(myCanBeVarType && variable instanceof PsiLocalVariable)) return null;
     if (!myCantChangeFinalModifier) {
       myCanBeFinalCb = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.final"));
       myCanBeFinalCb.setSelected(createFinals());
@@ -271,7 +272,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       });
     }
 
-    if (myCanBeVarType && getVariable() instanceof PsiLocalVariable) {
+    if (myCanBeVarType && variable instanceof PsiLocalVariable) {
       myCanBeVarTypeCb = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.var.type"));
       myCanBeVarTypeCb.setSelected(IntroduceVariableBase.createVarType());
       myCanBeVarTypeCb.addActionListener(new ActionListener() {
