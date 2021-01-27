@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
@@ -32,7 +32,7 @@ open class ClosureSamParameterEnhancer : AbstractClosureParameterEnhancer() {
 
   private fun expectedType(expression: GrFunctionalExpression): PsiType? {
     val parent = expression.parent
-    if (!PsiUtil.isCompileStatic(expression)) {
+    if (!isCompileStatic(expression)) {
       if (parent is GrSafeCastExpression) {
         return parent.castTypeElement?.type
       }
