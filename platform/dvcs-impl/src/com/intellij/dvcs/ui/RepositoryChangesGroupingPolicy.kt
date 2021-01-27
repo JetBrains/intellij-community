@@ -5,11 +5,14 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyKey
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.BaseChangesGroupingPolicy
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.StaticFilePath
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.*
+import com.intellij.vcsUtil.VcsUtil
+import java.util.*
 import javax.swing.tree.DefaultTreeModel
 
 class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
@@ -19,28 +22,37 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
     val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
 
     val filePath = nodePath.filePath
+    val repository = getRepositoryFor(filePath)
+    if (repository == null || repositoryManager.isExternal(repository)) return nextPolicyParent
+
+    val grandParent = nextPolicyParent ?: subtreeRoot
+    val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
+
+    REPOSITORY_CACHE.getValue(cachingRoot)[repository]?.let { return it }
+
+    val repoNode = RepositoryChangesBrowserNode(repository)
+    repoNode.markAsHelperNode()
+
+    model.insertNodeInto(repoNode, grandParent, grandParent.childCount)
+
+    REPOSITORY_CACHE.getValue(cachingRoot)[repository] = repoNode
+    IS_CACHING_ROOT.set(repoNode, true)
+    DIRECTORY_CACHE.getValue(repoNode)[staticFrom(repository.root).key] = repoNode
+    return repoNode
+  }
+
+  private fun getRepositoryFor(filePath: FilePath): Repository? {
     val repository = repositoryManager.getRepositoryForFile(filePath, true)
-    if (repository != null) {
-      if (repositoryManager.isExternal(repository)) return nextPolicyParent
 
-      val grandParent = nextPolicyParent ?: subtreeRoot
-      val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
-
-      REPOSITORY_CACHE.getValue(cachingRoot)[repository]?.let { return it }
-
-      RepositoryChangesBrowserNode(repository).let {
-        it.markAsHelperNode()
-
-        model.insertNodeInto(it, grandParent, grandParent.childCount)
-
-        REPOSITORY_CACHE.getValue(cachingRoot)[repository] = it
-        IS_CACHING_ROOT.set(it, true)
-        DIRECTORY_CACHE.getValue(it)[staticFrom(repository.root).key] = it
-        return it
-      }
+    // assign submodule change to the parent repository
+    if (repository != null &&
+        !repository.vcs.areDirectoriesVersionedItems() &&
+        Objects.equals(repository.root.path, filePath.path)) {
+      val parentRepo = repositoryManager.getRepositoryForFile(repository.root.parent, true)
+      if (parentRepo != null) return parentRepo
     }
 
-    return nextPolicyParent
+    return repository
   }
 
   internal class Factory : ChangesGroupingPolicyFactory() {
