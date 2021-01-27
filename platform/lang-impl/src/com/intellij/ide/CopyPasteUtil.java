@@ -2,12 +2,10 @@
 
 package com.intellij.ide;
 
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
@@ -29,15 +27,6 @@ public final class CopyPasteUtil {
 
   public static class DefaultCopyPasteListener implements CopyPasteManager.ContentChangedListener {
     private final Consumer<? super PsiElement> consumer;
-
-    /**
-     * @deprecated use {@link #DefaultCopyPasteListener(Consumer)}
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-    public DefaultCopyPasteListener(AbstractTreeUpdater updater) {
-      this(element -> updater.addSubtreeToUpdateByElement(element));
-    }
 
     private DefaultCopyPasteListener(@NotNull Consumer<? super PsiElement> consumer) {
       this.consumer = consumer;

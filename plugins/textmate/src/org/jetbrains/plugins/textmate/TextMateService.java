@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
@@ -40,15 +39,6 @@ public abstract class TextMateService {
    * 4. fill the extensions mapping for {@link TextMateFileType}
    */
   public abstract void reloadEnabledBundles();
-
-  /**
-   * @deprecated use {@link #reloadEnabledBundles()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void registerEnabledBundles(boolean builtin) {
-    reloadEnabledBundles();
-  }
 
   @Nullable
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);

@@ -97,9 +97,6 @@
 
     <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler" dynamic="true"/>
 
-    <!--dead code-->
-    <extensionPoint name="xml.util.htmlDoctypeProvider" interface="com.intellij.xml.util.HtmlDoctypeProvider"/>
-
     <extensionPoint name="xml.namedReferenceProvider"
                     dynamic="true"
                     beanClass="com.intellij.xml.XmlNamedReferenceProviderBean">

@@ -693,16 +693,6 @@ public final class ContainerUtil {
     return list.subList(from, list.size());
   }
 
-  /**
-   * @deprecated Use {@link Collection#addAll(Collection)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Collection<? extends T> elements) {
-    DeprecatedMethodException.report("Use `collection.addAll(elements)` instead. "+collection.getClass()+"."+elements.getClass());
-    collection.addAll(elements);
-  }
-
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Iterable<? extends T> appendix) {
     addAll(collection, appendix.iterator());
   }

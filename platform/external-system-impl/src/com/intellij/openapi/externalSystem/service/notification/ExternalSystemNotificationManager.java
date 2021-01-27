@@ -238,13 +238,6 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void clearNotifications(final @NotNull NotificationSource notificationSource,
-                                 final @NotNull ProjectSystemId externalSystemId) {
-    clearNotifications(null, notificationSource, externalSystemId);
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void clearNotifications(final @Nullable String groupName,
                                  final @NotNull NotificationSource notificationSource,
                                  final @NotNull ProjectSystemId externalSystemId) {

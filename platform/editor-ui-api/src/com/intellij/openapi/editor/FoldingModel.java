@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.util.DeprecatedMethodException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,16 +38,6 @@ public interface FoldingModel {
    */
   @Nullable
   FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
-
-  /**
-   * @deprecated Does nothing
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  default boolean addFoldRegion(@NotNull FoldRegion region) {
-    DeprecatedMethodException.report("Use addFoldRegion(int,int,String) instead");
-    return true;
-  }
 
   /**
    * Removes the specified fold region. This method must be called

@@ -202,19 +202,6 @@ public final class FindInProjectUtil {
     };
   }
 
-  /**
-   * @deprecated Use {@link #findUsages(FindModel, Project, Processor, FindUsagesProcessPresentation)} instead. To remove in IDEA 16
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static void findUsages(@NotNull FindModel findModel,
-                                @Nullable final PsiDirectory psiDirectory,
-                                @NotNull final Project project,
-                                @NotNull final Processor<? super UsageInfo> consumer,
-                                @NotNull FindUsagesProcessPresentation processPresentation) {
-    findUsages(findModel, project, consumer, processPresentation);
-  }
-
   public static void findUsages(@NotNull FindModel findModel,
                                 @NotNull final Project project,
                                 @NotNull final Processor<? super UsageInfo> consumer,

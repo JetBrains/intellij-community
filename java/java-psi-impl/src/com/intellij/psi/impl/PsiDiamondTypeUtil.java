@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -79,17 +78,6 @@ public final class PsiDiamondTypeUtil {
       }
     }
     return false;
-  }
-
-  /**
-   * @deprecated please use {@link com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil#replaceExplicitWithDiamond(PsiElement)}
-   * To be deleted in 2019.3
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
-    PsiElement replacement = createExplicitReplacement(psiElement);
-    return replacement == null ? psiElement : psiElement.replace(replacement);
   }
 
   public static PsiElement createExplicitReplacement(PsiElement psiElement) {

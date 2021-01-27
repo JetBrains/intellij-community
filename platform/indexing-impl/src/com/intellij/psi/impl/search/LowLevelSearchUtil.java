@@ -25,7 +25,6 @@ import gnu.trove.TIntProcedure;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -237,20 +236,6 @@ public final class LowLevelSearchUtil {
   // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
   // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
   private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = CollectionFactory.createConcurrentWeakIdentityMap();
-
-  /**
-   * @deprecated please use {@link #processTexts(CharSequence, int, int, StringSearcher, IntPredicate)}
-   */
-  @ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static boolean processTextOccurrences(@NotNull CharSequence text,
-                                               int startOffset,
-                                               int endOffset,
-                                               @NotNull StringSearcher searcher,
-                                               @SuppressWarnings("unused") @Nullable ProgressIndicator progress,
-                                               @NotNull TIntProcedure processor) {
-    return processTextOccurrences(text, startOffset, endOffset, searcher, processor);
-  }
 
   /**
    * @deprecated Use {@link #processTexts(CharSequence, int, int, StringSearcher, IntPredicate)}
