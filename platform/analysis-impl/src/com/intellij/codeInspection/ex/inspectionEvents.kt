@@ -4,23 +4,19 @@ package com.intellij.codeInspection.ex
 fun InspectListener.reportWhenInspectionFinished(toolWrapper: InspectionToolWrapper<*, *>,
                                                  kind: InspectListener.InspectionKind,
                                                  inspectAction: Runnable) {
-  val start = System.nanoTime()
+  val start = System.currentTimeMillis()
   try {
     inspectAction.run()
-    inspectionFinished(start, System.nanoTime(), Thread.currentThread().id, toolWrapper, kind)
-  } catch (e: Throwable ) {
-    inspectionFinished(start, System.nanoTime(), Thread.currentThread().id, toolWrapper, kind)
-    throw e
+  } finally {
+    inspectionFinished(System.currentTimeMillis() - start, Thread.currentThread().id, toolWrapper, kind)
   }
 }
 
 fun InspectListener.reportWhenActivityFinished(activityKind: InspectListener.ActivityKind, activity: Runnable) {
-  val start = System.nanoTime()
+  val start = System.currentTimeMillis()
   try {
     activity.run()
-    activityFinished(start, System.nanoTime(), Thread.currentThread().id, activityKind)
-  } catch (e: Throwable ) {
-    activityFinished(start, System.nanoTime(), Thread.currentThread().id, activityKind)
-    throw e
+  } finally {
+    activityFinished(System.currentTimeMillis() - start, Thread.currentThread().id, activityKind)
   }
 }
