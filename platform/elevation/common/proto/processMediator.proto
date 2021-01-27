@@ -26,19 +26,25 @@ message AdjustQuotaRequest {
 }
 
 service ProcessManager {
-  rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
+  // The resulting server stream emit a single element on start, and doesn't end until the client closes the RPC,
+  // which defines the lifetime of the handle.
+  rpc OpenHandle (google.protobuf.Empty) returns (stream OpenHandleReply);
 
+  rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply);
   rpc DestroyProcess (DestroyProcessRequest) returns (google.protobuf.Empty);
   rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply);
 
   rpc WriteStream (stream WriteStreamRequest) returns (stream google.protobuf.Empty);
   rpc ReadStream (ReadStreamRequest) returns (stream DataChunk);
+}
 
-  rpc Release (ReleaseRequest) returns (google.protobuf.Empty);
+message OpenHandleReply {
+  uint64 handle_id = 1;
 }
 
 message CreateProcessRequest {
-  CommandLine command_line = 1;
+  uint64 handle_id = 1;
+  CommandLine command_line = 2;
 }
 
 message CreateProcessReply {
@@ -46,25 +52,21 @@ message CreateProcessReply {
 }
 
 message DestroyProcessRequest {
-  uint64 pid = 1;
+  uint64 handle_id = 1;
   bool force = 2;
   bool destroy_group = 3;
 }
 
 message AwaitTerminationRequest {
-  uint64 pid = 1;
+  uint64 handle_id = 1;
 }
 
 message AwaitTerminationReply {
   uint32 exit_code = 1;
 }
 
-message ReleaseRequest {
-  uint64 pid = 1;
-}
-
 message FileHandle {
-  uint64 pid = 1;
+  uint64 handle_id = 1;
   uint32 fd = 2;
 }
 
@@ -91,4 +93,3 @@ message CommandLine {
   string err_file = 5;
   map<string, string> environ = 6;
 }
-

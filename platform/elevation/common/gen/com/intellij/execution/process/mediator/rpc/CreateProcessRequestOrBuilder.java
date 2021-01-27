@@ -8,17 +8,23 @@ public interface CreateProcessRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+   * <code>uint64 handle_id = 1;</code>
+   * @return The handleId.
+   */
+  long getHandleId();
+
+  /**
+   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
    * @return Whether the commandLine field is set.
    */
   boolean hasCommandLine();
   /**
-   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
    * @return The commandLine.
    */
   com.intellij.execution.process.mediator.rpc.CommandLine getCommandLine();
   /**
-   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
    */
   com.intellij.execution.process.mediator.rpc.CommandLineOrBuilder getCommandLineOrBuilder();
 }

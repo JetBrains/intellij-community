@@ -27,6 +27,37 @@ public final class ProcessManagerGrpc {
   public static final String SERVICE_NAME = "intellij.process.mediator.rpc.ProcessManager";
 
   // Static method descriptors that strictly reflect the proto.
+  private static volatile io.grpc.MethodDescriptor<com.google.protobuf.Empty,
+      com.intellij.execution.process.mediator.rpc.OpenHandleReply> getOpenHandleMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "OpenHandle",
+      requestType = com.google.protobuf.Empty.class,
+      responseType = com.intellij.execution.process.mediator.rpc.OpenHandleReply.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+  public static io.grpc.MethodDescriptor<com.google.protobuf.Empty,
+      com.intellij.execution.process.mediator.rpc.OpenHandleReply> getOpenHandleMethod() {
+    io.grpc.MethodDescriptor<com.google.protobuf.Empty, com.intellij.execution.process.mediator.rpc.OpenHandleReply> getOpenHandleMethod;
+    if ((getOpenHandleMethod = ProcessManagerGrpc.getOpenHandleMethod) == null) {
+      synchronized (ProcessManagerGrpc.class) {
+        if ((getOpenHandleMethod = ProcessManagerGrpc.getOpenHandleMethod) == null) {
+          ProcessManagerGrpc.getOpenHandleMethod = getOpenHandleMethod =
+              io.grpc.MethodDescriptor.<com.google.protobuf.Empty, com.intellij.execution.process.mediator.rpc.OpenHandleReply>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "OpenHandle"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.google.protobuf.Empty.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.intellij.execution.process.mediator.rpc.OpenHandleReply.getDefaultInstance()))
+              .setSchemaDescriptor(new ProcessManagerMethodDescriptorSupplier("OpenHandle"))
+              .build();
+        }
+      }
+    }
+    return getOpenHandleMethod;
+  }
+
   private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.CreateProcessRequest,
       com.intellij.execution.process.mediator.rpc.CreateProcessReply> getCreateProcessMethod;
 
@@ -182,37 +213,6 @@ public final class ProcessManagerGrpc {
     return getReadStreamMethod;
   }
 
-  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.ReleaseRequest,
-      com.google.protobuf.Empty> getReleaseMethod;
-
-  @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "Release",
-      requestType = com.intellij.execution.process.mediator.rpc.ReleaseRequest.class,
-      responseType = com.google.protobuf.Empty.class,
-      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.ReleaseRequest,
-      com.google.protobuf.Empty> getReleaseMethod() {
-    io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.ReleaseRequest, com.google.protobuf.Empty> getReleaseMethod;
-    if ((getReleaseMethod = ProcessManagerGrpc.getReleaseMethod) == null) {
-      synchronized (ProcessManagerGrpc.class) {
-        if ((getReleaseMethod = ProcessManagerGrpc.getReleaseMethod) == null) {
-          ProcessManagerGrpc.getReleaseMethod = getReleaseMethod =
-              io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.ReleaseRequest, com.google.protobuf.Empty>newBuilder()
-              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "Release"))
-              .setSampledToLocalTracing(true)
-              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.intellij.execution.process.mediator.rpc.ReleaseRequest.getDefaultInstance()))
-              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.google.protobuf.Empty.getDefaultInstance()))
-              .setSchemaDescriptor(new ProcessManagerMethodDescriptorSupplier("Release"))
-              .build();
-        }
-      }
-    }
-    return getReleaseMethod;
-  }
-
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -262,6 +262,17 @@ public final class ProcessManagerGrpc {
   public static abstract class ProcessManagerImplBase implements io.grpc.BindableService {
 
     /**
+     * <pre>
+     * The resulting server stream emit a single element on start, and doesn't end until the client closes the RPC,
+     * which defines the lifetime of the handle.
+     * </pre>
+     */
+    public void openHandle(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.OpenHandleReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getOpenHandleMethod(), responseObserver);
+    }
+
+    /**
      */
     public void createProcess(com.intellij.execution.process.mediator.rpc.CreateProcessRequest request,
         io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.CreateProcessReply> responseObserver) {
@@ -296,15 +307,15 @@ public final class ProcessManagerGrpc {
       asyncUnimplementedUnaryCall(getReadStreamMethod(), responseObserver);
     }
 
-    /**
-     */
-    public void release(com.intellij.execution.process.mediator.rpc.ReleaseRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      asyncUnimplementedUnaryCall(getReleaseMethod(), responseObserver);
-    }
-
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
+          .addMethod(
+            getOpenHandleMethod(),
+            asyncServerStreamingCall(
+              new MethodHandlers<
+                com.google.protobuf.Empty,
+                com.intellij.execution.process.mediator.rpc.OpenHandleReply>(
+                  this, METHODID_OPEN_HANDLE)))
           .addMethod(
             getCreateProcessMethod(),
             asyncUnaryCall(
@@ -340,13 +351,6 @@ public final class ProcessManagerGrpc {
                 com.intellij.execution.process.mediator.rpc.ReadStreamRequest,
                 com.intellij.execution.process.mediator.rpc.DataChunk>(
                   this, METHODID_READ_STREAM)))
-          .addMethod(
-            getReleaseMethod(),
-            asyncUnaryCall(
-              new MethodHandlers<
-                com.intellij.execution.process.mediator.rpc.ReleaseRequest,
-                com.google.protobuf.Empty>(
-                  this, METHODID_RELEASE)))
           .build();
     }
   }
@@ -363,6 +367,18 @@ public final class ProcessManagerGrpc {
     protected ProcessManagerStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new ProcessManagerStub(channel, callOptions);
+    }
+
+    /**
+     * <pre>
+     * The resulting server stream emit a single element on start, and doesn't end until the client closes the RPC,
+     * which defines the lifetime of the handle.
+     * </pre>
+     */
+    public void openHandle(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.OpenHandleReply> responseObserver) {
+      asyncServerStreamingCall(
+          getChannel().newCall(getOpenHandleMethod(), getCallOptions()), request, responseObserver);
     }
 
     /**
@@ -404,14 +420,6 @@ public final class ProcessManagerGrpc {
       asyncServerStreamingCall(
           getChannel().newCall(getReadStreamMethod(), getCallOptions()), request, responseObserver);
     }
-
-    /**
-     */
-    public void release(com.intellij.execution.process.mediator.rpc.ReleaseRequest request,
-        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
-      asyncUnaryCall(
-          getChannel().newCall(getReleaseMethod(), getCallOptions()), request, responseObserver);
-    }
   }
 
   /**
@@ -426,6 +434,18 @@ public final class ProcessManagerGrpc {
     protected ProcessManagerBlockingStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new ProcessManagerBlockingStub(channel, callOptions);
+    }
+
+    /**
+     * <pre>
+     * The resulting server stream emit a single element on start, and doesn't end until the client closes the RPC,
+     * which defines the lifetime of the handle.
+     * </pre>
+     */
+    public java.util.Iterator<com.intellij.execution.process.mediator.rpc.OpenHandleReply> openHandle(
+        com.google.protobuf.Empty request) {
+      return blockingServerStreamingCall(
+          getChannel(), getOpenHandleMethod(), getCallOptions(), request);
     }
 
     /**
@@ -455,13 +475,6 @@ public final class ProcessManagerGrpc {
         com.intellij.execution.process.mediator.rpc.ReadStreamRequest request) {
       return blockingServerStreamingCall(
           getChannel(), getReadStreamMethod(), getCallOptions(), request);
-    }
-
-    /**
-     */
-    public com.google.protobuf.Empty release(com.intellij.execution.process.mediator.rpc.ReleaseRequest request) {
-      return blockingUnaryCall(
-          getChannel(), getReleaseMethod(), getCallOptions(), request);
     }
   }
 
@@ -502,21 +515,13 @@ public final class ProcessManagerGrpc {
       return futureUnaryCall(
           getChannel().newCall(getAwaitTerminationMethod(), getCallOptions()), request);
     }
-
-    /**
-     */
-    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> release(
-        com.intellij.execution.process.mediator.rpc.ReleaseRequest request) {
-      return futureUnaryCall(
-          getChannel().newCall(getReleaseMethod(), getCallOptions()), request);
-    }
   }
 
-  private static final int METHODID_CREATE_PROCESS = 0;
-  private static final int METHODID_DESTROY_PROCESS = 1;
-  private static final int METHODID_AWAIT_TERMINATION = 2;
-  private static final int METHODID_READ_STREAM = 3;
-  private static final int METHODID_RELEASE = 4;
+  private static final int METHODID_OPEN_HANDLE = 0;
+  private static final int METHODID_CREATE_PROCESS = 1;
+  private static final int METHODID_DESTROY_PROCESS = 2;
+  private static final int METHODID_AWAIT_TERMINATION = 3;
+  private static final int METHODID_READ_STREAM = 4;
   private static final int METHODID_WRITE_STREAM = 5;
 
   private static final class MethodHandlers<Req, Resp> implements
@@ -536,6 +541,10 @@ public final class ProcessManagerGrpc {
     @java.lang.SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
+        case METHODID_OPEN_HANDLE:
+          serviceImpl.openHandle((com.google.protobuf.Empty) request,
+              (io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.OpenHandleReply>) responseObserver);
+          break;
         case METHODID_CREATE_PROCESS:
           serviceImpl.createProcess((com.intellij.execution.process.mediator.rpc.CreateProcessRequest) request,
               (io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.CreateProcessReply>) responseObserver);
@@ -551,10 +560,6 @@ public final class ProcessManagerGrpc {
         case METHODID_READ_STREAM:
           serviceImpl.readStream((com.intellij.execution.process.mediator.rpc.ReadStreamRequest) request,
               (io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.DataChunk>) responseObserver);
-          break;
-        case METHODID_RELEASE:
-          serviceImpl.release((com.intellij.execution.process.mediator.rpc.ReleaseRequest) request,
-              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -620,12 +625,12 @@ public final class ProcessManagerGrpc {
         if (result == null) {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new ProcessManagerFileDescriptorSupplier())
+              .addMethod(getOpenHandleMethod())
               .addMethod(getCreateProcessMethod())
               .addMethod(getDestroyProcessMethod())
               .addMethod(getAwaitTerminationMethod())
               .addMethod(getWriteStreamMethod())
               .addMethod(getReadStreamMethod())
-              .addMethod(getReleaseMethod())
               .build();
         }
       }

@@ -37,7 +37,18 @@ class ProcessMediatorClient private constructor(
     adjustQuotaBlocking(initialQuotaOptions)
   }
 
-  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
+  fun openHandle(): Flow<Long> {
+    return ExceptionAsStatus.unwrap {
+      processManagerStub.openHandle(Empty.getDefaultInstance())
+    }.map {
+      it.handleId
+    }.catch { cause ->
+      ExceptionAsStatus.unwrap { throw cause }
+    }
+  }
+
+  suspend fun createProcess(handleId: Long,
+                            command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Long {
     val commandLine = CommandLine.newBuilder()
       .addAllCommand(command)
@@ -49,16 +60,19 @@ class ProcessMediatorClient private constructor(
         errFile?.let { setErrFile(it.absolutePath) }
       }
       .build()
-    val request = CreateProcessRequest.newBuilder().setCommandLine(commandLine).build()
+    val request = CreateProcessRequest.newBuilder()
+      .setHandleId(handleId)
+      .setCommandLine(commandLine)
+      .build()
     val response = ExceptionAsStatus.unwrap {
       processManagerStub.createProcess(request)
     }
     return response.pid
   }
 
-  suspend fun destroyProcess(pid: Long, force: Boolean, destroyGroup: Boolean) {
+  suspend fun destroyProcess(handleId: Long, force: Boolean, destroyGroup: Boolean) {
     val request = DestroyProcessRequest.newBuilder()
-      .setPid(pid)
+      .setHandleId(handleId)
       .setForce(force)
       .setDestroyGroup(destroyGroup)
       .build()
@@ -67,9 +81,9 @@ class ProcessMediatorClient private constructor(
     }
   }
 
-  suspend fun awaitTermination(pid: Long): Int {
+  suspend fun awaitTermination(handleId: Long): Int {
     val request = AwaitTerminationRequest.newBuilder()
-      .setPid(pid)
+      .setHandleId(handleId)
       .build()
     val reply = ExceptionAsStatus.unwrap {
       processManagerStub.awaitTermination(request)
@@ -77,9 +91,9 @@ class ProcessMediatorClient private constructor(
     return reply.exitCode
   }
 
-  fun readStream(pid: Long, fd: Int): Flow<ByteString> {
+  fun readStream(handleId: Long, fd: Int): Flow<ByteString> {
     val handle = FileHandle.newBuilder()
-      .setPid(pid)
+      .setHandleId(handleId)
       .setFd(fd)
       .build()
     val request = ReadStreamRequest.newBuilder()
@@ -95,9 +109,9 @@ class ProcessMediatorClient private constructor(
     }
   }
 
-  suspend fun writeStream(pid: Long, fd: Int, chunkFlow: Flow<ByteString>): Flow<Unit> {
+  fun writeStream(handleId: Long, fd: Int, chunkFlow: Flow<ByteString>): Flow<Unit> {
     val handle = FileHandle.newBuilder()
-      .setPid(pid)
+      .setHandleId(handleId)
       .setFd(fd)
       .build()
     val handleRequest = WriteStreamRequest.newBuilder()
@@ -120,13 +134,6 @@ class ProcessMediatorClient private constructor(
     }.map {}.catch { cause ->
       ExceptionAsStatus.unwrap { throw cause }
     }
-  }
-
-  suspend fun release(pid: Long) {
-    val request = ReleaseRequest.newBuilder()
-      .setPid(pid)
-      .build()
-    ExceptionAsStatus.unwrap { processManagerStub.release(request) }
   }
 
   suspend fun adjustQuota(newOptions: QuotaOptions) {

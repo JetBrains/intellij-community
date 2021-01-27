@@ -9,14 +9,13 @@ import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.plus
 import java.io.Closeable
 
 class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
                                   builder: ServerBuilder<*>,
                                   credentials: DaemonClientCredentials) : Closeable {
   private val quotaManager = TimeQuotaManager(coroutineScope)
-  private val processManager = ProcessManager(coroutineScope + quotaManager.asJob())
+  private val processManager = ProcessManager()
 
   private val server: Server
 

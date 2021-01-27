@@ -8,6 +8,7 @@ import com.intellij.execution.process.mediator.rpc.*
 import io.grpc.ServerInterceptors
 import io.grpc.ServerServiceDefinition
 import kotlinx.coroutines.channels.consume
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import java.io.File
 
@@ -16,18 +17,35 @@ internal class ProcessManagerServerService(
   private val quotaManager: QuotaManager,
 ) : ProcessManagerGrpcKt.ProcessManagerCoroutineImplBase() {
 
+  override fun openHandle(request: Empty): Flow<OpenHandleReply> {
+    return flow {
+      quotaManager.runIfPermitted {
+        coroutineScope {
+          val handle = processManager.openHandle(this)
+          val reply = OpenHandleReply.newBuilder()
+            .setHandleId(handle.handleId)
+            .build()
+          emit(reply)
+          // Now it doesn't actually leave the scope until the RPC is cancelled by the client (or due to a disconnect),
+          // or until the handle itself is closed through ProcessManager.close().
+        }
+      }
+    }.catch { cause ->
+      ExceptionAsStatus.wrap { throw cause }
+    }
+  }
+
   override suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply {
     val commandLine = request.commandLine
 
     val pid = ExceptionAsStatus.wrap {
-      quotaManager.runIfPermitted {
-        processManager.createProcess(commandLine.commandList,
-                                     File(commandLine.workingDir),
-                                     commandLine.environMap,
-                                     commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
-                                     commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
-                                     commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
-      } ?: throw QuotaExceededException()
+      processManager.createProcess(request.handleId,
+                                   commandLine.commandList,
+                                   File(commandLine.workingDir),
+                                   commandLine.environMap,
+                                   commandLine.inFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                   commandLine.outFile.takeUnless { it.isEmpty() }?.let { File(it) },
+                                   commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
     }
 
     return CreateProcessReply.newBuilder()
@@ -37,31 +55,24 @@ internal class ProcessManagerServerService(
 
   override suspend fun destroyProcess(request: DestroyProcessRequest): Empty {
     ExceptionAsStatus.wrap {
-      processManager.destroyProcess(request.pid, request.force, request.destroyGroup)
+      processManager.destroyProcess(request.handleId, request.force, request.destroyGroup)
     }
     return Empty.getDefaultInstance()
   }
 
   override suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply {
     val exitCode = ExceptionAsStatus.wrap {
-      processManager.awaitTermination(request.pid)
+      processManager.awaitTermination(request.handleId)
     }
     return AwaitTerminationReply.newBuilder()
       .setExitCode(exitCode)
       .build()
   }
 
-  override suspend fun release(request: ReleaseRequest): Empty {
-    ExceptionAsStatus.wrap {
-      processManager.release(request.pid)
-    }
-    return Empty.getDefaultInstance()
-  }
-
   override fun readStream(request: ReadStreamRequest): Flow<DataChunk> {
-    val handle = request.handle
+    val fileHandle = request.handle
     return ExceptionAsStatus.wrap {
-      processManager.readStream(handle.pid, handle.fd)
+      processManager.readStream(fileHandle.handleId, fileHandle.fd)
     }.map { buffer ->
       DataChunk.newBuilder()
         .setBuffer(buffer)
@@ -76,7 +87,7 @@ internal class ProcessManagerServerService(
     return channelFlow<Unit> {
       @Suppress("EXPERIMENTAL_API_USAGE")
       requests.produceIn(this).consume {
-        val handle = receive().also { request ->
+        val fileHandle = receive().also { request ->
           require(request.hasHandle()) { "the first request must specify the handle" }
         }.handle
 
@@ -85,7 +96,7 @@ internal class ProcessManagerServerService(
           request.chunk.buffer
         }
 
-        processManager.writeStream(handle.pid, handle.fd, chunkFlow, channel)
+        processManager.writeStream(fileHandle.handleId, fileHandle.fd, chunkFlow, channel)
       }
     }.map {
       Empty.getDefaultInstance()

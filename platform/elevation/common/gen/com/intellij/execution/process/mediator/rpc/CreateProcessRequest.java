@@ -48,7 +48,12 @@ private static final long serialVersionUID = 0L;
           case 0:
             done = true;
             break;
-          case 10: {
+          case 8: {
+
+            handleId_ = input.readUInt64();
+            break;
+          }
+          case 18: {
             com.intellij.execution.process.mediator.rpc.CommandLine.Builder subBuilder = null;
             if (commandLine_ != null) {
               subBuilder = commandLine_.toBuilder();
@@ -93,10 +98,21 @@ private static final long serialVersionUID = 0L;
             com.intellij.execution.process.mediator.rpc.CreateProcessRequest.class, com.intellij.execution.process.mediator.rpc.CreateProcessRequest.Builder.class);
   }
 
-  public static final int COMMAND_LINE_FIELD_NUMBER = 1;
+  public static final int HANDLE_ID_FIELD_NUMBER = 1;
+  private long handleId_;
+  /**
+   * <code>uint64 handle_id = 1;</code>
+   * @return The handleId.
+   */
+  @java.lang.Override
+  public long getHandleId() {
+    return handleId_;
+  }
+
+  public static final int COMMAND_LINE_FIELD_NUMBER = 2;
   private com.intellij.execution.process.mediator.rpc.CommandLine commandLine_;
   /**
-   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
    * @return Whether the commandLine field is set.
    */
   @java.lang.Override
@@ -104,7 +120,7 @@ private static final long serialVersionUID = 0L;
     return commandLine_ != null;
   }
   /**
-   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
    * @return The commandLine.
    */
   @java.lang.Override
@@ -112,7 +128,7 @@ private static final long serialVersionUID = 0L;
     return commandLine_ == null ? com.intellij.execution.process.mediator.rpc.CommandLine.getDefaultInstance() : commandLine_;
   }
   /**
-   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+   * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
    */
   @java.lang.Override
   public com.intellij.execution.process.mediator.rpc.CommandLineOrBuilder getCommandLineOrBuilder() {
@@ -133,8 +149,11 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
+    if (handleId_ != 0L) {
+      output.writeUInt64(1, handleId_);
+    }
     if (commandLine_ != null) {
-      output.writeMessage(1, getCommandLine());
+      output.writeMessage(2, getCommandLine());
     }
     unknownFields.writeTo(output);
   }
@@ -145,9 +164,13 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
+    if (handleId_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(1, handleId_);
+    }
     if (commandLine_ != null) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(1, getCommandLine());
+        .computeMessageSize(2, getCommandLine());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -164,6 +187,8 @@ private static final long serialVersionUID = 0L;
     }
     com.intellij.execution.process.mediator.rpc.CreateProcessRequest other = (com.intellij.execution.process.mediator.rpc.CreateProcessRequest) obj;
 
+    if (getHandleId()
+        != other.getHandleId()) return false;
     if (hasCommandLine() != other.hasCommandLine()) return false;
     if (hasCommandLine()) {
       if (!getCommandLine()
@@ -180,6 +205,9 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
+    hash = (37 * hash) + HANDLE_ID_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getHandleId());
     if (hasCommandLine()) {
       hash = (37 * hash) + COMMAND_LINE_FIELD_NUMBER;
       hash = (53 * hash) + getCommandLine().hashCode();
@@ -317,6 +345,8 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public Builder clear() {
       super.clear();
+      handleId_ = 0L;
+
       if (commandLineBuilder_ == null) {
         commandLine_ = null;
       } else {
@@ -349,6 +379,7 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.intellij.execution.process.mediator.rpc.CreateProcessRequest buildPartial() {
       com.intellij.execution.process.mediator.rpc.CreateProcessRequest result = new com.intellij.execution.process.mediator.rpc.CreateProcessRequest(this);
+      result.handleId_ = handleId_;
       if (commandLineBuilder_ == null) {
         result.commandLine_ = commandLine_;
       } else {
@@ -402,6 +433,9 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(com.intellij.execution.process.mediator.rpc.CreateProcessRequest other) {
       if (other == com.intellij.execution.process.mediator.rpc.CreateProcessRequest.getDefaultInstance()) return this;
+      if (other.getHandleId() != 0L) {
+        setHandleId(other.getHandleId());
+      }
       if (other.hasCommandLine()) {
         mergeCommandLine(other.getCommandLine());
       }
@@ -434,18 +468,49 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private long handleId_ ;
+    /**
+     * <code>uint64 handle_id = 1;</code>
+     * @return The handleId.
+     */
+    @java.lang.Override
+    public long getHandleId() {
+      return handleId_;
+    }
+    /**
+     * <code>uint64 handle_id = 1;</code>
+     * @param value The handleId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setHandleId(long value) {
+      
+      handleId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>uint64 handle_id = 1;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearHandleId() {
+      
+      handleId_ = 0L;
+      onChanged();
+      return this;
+    }
+
     private com.intellij.execution.process.mediator.rpc.CommandLine commandLine_;
     private com.google.protobuf.SingleFieldBuilderV3<
         com.intellij.execution.process.mediator.rpc.CommandLine, com.intellij.execution.process.mediator.rpc.CommandLine.Builder, com.intellij.execution.process.mediator.rpc.CommandLineOrBuilder> commandLineBuilder_;
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      * @return Whether the commandLine field is set.
      */
     public boolean hasCommandLine() {
       return commandLineBuilder_ != null || commandLine_ != null;
     }
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      * @return The commandLine.
      */
     public com.intellij.execution.process.mediator.rpc.CommandLine getCommandLine() {
@@ -456,7 +521,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     public Builder setCommandLine(com.intellij.execution.process.mediator.rpc.CommandLine value) {
       if (commandLineBuilder_ == null) {
@@ -472,7 +537,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     public Builder setCommandLine(
         com.intellij.execution.process.mediator.rpc.CommandLine.Builder builderForValue) {
@@ -486,7 +551,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     public Builder mergeCommandLine(com.intellij.execution.process.mediator.rpc.CommandLine value) {
       if (commandLineBuilder_ == null) {
@@ -504,7 +569,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     public Builder clearCommandLine() {
       if (commandLineBuilder_ == null) {
@@ -518,7 +583,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     public com.intellij.execution.process.mediator.rpc.CommandLine.Builder getCommandLineBuilder() {
       
@@ -526,7 +591,7 @@ private static final long serialVersionUID = 0L;
       return getCommandLineFieldBuilder().getBuilder();
     }
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     public com.intellij.execution.process.mediator.rpc.CommandLineOrBuilder getCommandLineOrBuilder() {
       if (commandLineBuilder_ != null) {
@@ -537,7 +602,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 1;</code>
+     * <code>.intellij.process.mediator.rpc.CommandLine command_line = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.intellij.execution.process.mediator.rpc.CommandLine, com.intellij.execution.process.mediator.rpc.CommandLine.Builder, com.intellij.execution.process.mediator.rpc.CommandLineOrBuilder> 

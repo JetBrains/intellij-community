@@ -4,25 +4,25 @@
 package com.intellij.execution.process.mediator.rpc;
 
 /**
- * Protobuf type {@code intellij.process.mediator.rpc.ReleaseRequest}
+ * Protobuf type {@code intellij.process.mediator.rpc.OpenHandleReply}
  */
-public final class ReleaseRequest extends
+public final class OpenHandleReply extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:intellij.process.mediator.rpc.ReleaseRequest)
-    ReleaseRequestOrBuilder {
+    // @@protoc_insertion_point(message_implements:intellij.process.mediator.rpc.OpenHandleReply)
+    OpenHandleReplyOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use ReleaseRequest.newBuilder() to construct.
-  private ReleaseRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use OpenHandleReply.newBuilder() to construct.
+  private OpenHandleReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private ReleaseRequest() {
+  private OpenHandleReply() {
   }
 
   @java.lang.Override
   @SuppressWarnings({"unused"})
   protected java.lang.Object newInstance(
       UnusedPrivateParameter unused) {
-    return new ReleaseRequest();
+    return new OpenHandleReply();
   }
 
   @java.lang.Override
@@ -30,7 +30,7 @@ private static final long serialVersionUID = 0L;
   getUnknownFields() {
     return this.unknownFields;
   }
-  private ReleaseRequest(
+  private OpenHandleReply(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -50,7 +50,7 @@ private static final long serialVersionUID = 0L;
             break;
           case 8: {
 
-            pid_ = input.readUInt64();
+            handleId_ = input.readUInt64();
             break;
           }
           default: {
@@ -74,26 +74,26 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_ReleaseRequest_descriptor;
+    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_OpenHandleReply_descriptor;
   }
 
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_ReleaseRequest_fieldAccessorTable
+    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_OpenHandleReply_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.intellij.execution.process.mediator.rpc.ReleaseRequest.class, com.intellij.execution.process.mediator.rpc.ReleaseRequest.Builder.class);
+            com.intellij.execution.process.mediator.rpc.OpenHandleReply.class, com.intellij.execution.process.mediator.rpc.OpenHandleReply.Builder.class);
   }
 
-  public static final int PID_FIELD_NUMBER = 1;
-  private long pid_;
+  public static final int HANDLE_ID_FIELD_NUMBER = 1;
+  private long handleId_;
   /**
-   * <code>uint64 pid = 1;</code>
-   * @return The pid.
+   * <code>uint64 handle_id = 1;</code>
+   * @return The handleId.
    */
   @java.lang.Override
-  public long getPid() {
-    return pid_;
+  public long getHandleId() {
+    return handleId_;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -110,8 +110,8 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (pid_ != 0L) {
-      output.writeUInt64(1, pid_);
+    if (handleId_ != 0L) {
+      output.writeUInt64(1, handleId_);
     }
     unknownFields.writeTo(output);
   }
@@ -122,9 +122,9 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (pid_ != 0L) {
+    if (handleId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-        .computeUInt64Size(1, pid_);
+        .computeUInt64Size(1, handleId_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -136,13 +136,13 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.intellij.execution.process.mediator.rpc.ReleaseRequest)) {
+    if (!(obj instanceof com.intellij.execution.process.mediator.rpc.OpenHandleReply)) {
       return super.equals(obj);
     }
-    com.intellij.execution.process.mediator.rpc.ReleaseRequest other = (com.intellij.execution.process.mediator.rpc.ReleaseRequest) obj;
+    com.intellij.execution.process.mediator.rpc.OpenHandleReply other = (com.intellij.execution.process.mediator.rpc.OpenHandleReply) obj;
 
-    if (getPid()
-        != other.getPid()) return false;
+    if (getHandleId()
+        != other.getHandleId()) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -154,77 +154,77 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    hash = (37 * hash) + PID_FIELD_NUMBER;
+    hash = (37 * hash) + HANDLE_ID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getPid());
+        getHandleId());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
   }
 
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(byte[] data)
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(java.io.InputStream input)
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseDelimitedFrom(java.io.InputStream input)
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseDelimitedFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -237,7 +237,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.intellij.execution.process.mediator.rpc.ReleaseRequest prototype) {
+  public static Builder newBuilder(com.intellij.execution.process.mediator.rpc.OpenHandleReply prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @java.lang.Override
@@ -253,26 +253,26 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
-   * Protobuf type {@code intellij.process.mediator.rpc.ReleaseRequest}
+   * Protobuf type {@code intellij.process.mediator.rpc.OpenHandleReply}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:intellij.process.mediator.rpc.ReleaseRequest)
-      com.intellij.execution.process.mediator.rpc.ReleaseRequestOrBuilder {
+      // @@protoc_insertion_point(builder_implements:intellij.process.mediator.rpc.OpenHandleReply)
+      com.intellij.execution.process.mediator.rpc.OpenHandleReplyOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_ReleaseRequest_descriptor;
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_OpenHandleReply_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_ReleaseRequest_fieldAccessorTable
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_OpenHandleReply_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.intellij.execution.process.mediator.rpc.ReleaseRequest.class, com.intellij.execution.process.mediator.rpc.ReleaseRequest.Builder.class);
+              com.intellij.execution.process.mediator.rpc.OpenHandleReply.class, com.intellij.execution.process.mediator.rpc.OpenHandleReply.Builder.class);
     }
 
-    // Construct using com.intellij.execution.process.mediator.rpc.ReleaseRequest.newBuilder()
+    // Construct using com.intellij.execution.process.mediator.rpc.OpenHandleReply.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -290,7 +290,7 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      pid_ = 0L;
+      handleId_ = 0L;
 
       return this;
     }
@@ -298,17 +298,17 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_ReleaseRequest_descriptor;
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_OpenHandleReply_descriptor;
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.ReleaseRequest getDefaultInstanceForType() {
-      return com.intellij.execution.process.mediator.rpc.ReleaseRequest.getDefaultInstance();
+    public com.intellij.execution.process.mediator.rpc.OpenHandleReply getDefaultInstanceForType() {
+      return com.intellij.execution.process.mediator.rpc.OpenHandleReply.getDefaultInstance();
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.ReleaseRequest build() {
-      com.intellij.execution.process.mediator.rpc.ReleaseRequest result = buildPartial();
+    public com.intellij.execution.process.mediator.rpc.OpenHandleReply build() {
+      com.intellij.execution.process.mediator.rpc.OpenHandleReply result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -316,9 +316,9 @@ private static final long serialVersionUID = 0L;
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.ReleaseRequest buildPartial() {
-      com.intellij.execution.process.mediator.rpc.ReleaseRequest result = new com.intellij.execution.process.mediator.rpc.ReleaseRequest(this);
-      result.pid_ = pid_;
+    public com.intellij.execution.process.mediator.rpc.OpenHandleReply buildPartial() {
+      com.intellij.execution.process.mediator.rpc.OpenHandleReply result = new com.intellij.execution.process.mediator.rpc.OpenHandleReply(this);
+      result.handleId_ = handleId_;
       onBuilt();
       return result;
     }
@@ -357,18 +357,18 @@ private static final long serialVersionUID = 0L;
     }
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.intellij.execution.process.mediator.rpc.ReleaseRequest) {
-        return mergeFrom((com.intellij.execution.process.mediator.rpc.ReleaseRequest)other);
+      if (other instanceof com.intellij.execution.process.mediator.rpc.OpenHandleReply) {
+        return mergeFrom((com.intellij.execution.process.mediator.rpc.OpenHandleReply)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.intellij.execution.process.mediator.rpc.ReleaseRequest other) {
-      if (other == com.intellij.execution.process.mediator.rpc.ReleaseRequest.getDefaultInstance()) return this;
-      if (other.getPid() != 0L) {
-        setPid(other.getPid());
+    public Builder mergeFrom(com.intellij.execution.process.mediator.rpc.OpenHandleReply other) {
+      if (other == com.intellij.execution.process.mediator.rpc.OpenHandleReply.getDefaultInstance()) return this;
+      if (other.getHandleId() != 0L) {
+        setHandleId(other.getHandleId());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -385,11 +385,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.mediator.rpc.ReleaseRequest parsedMessage = null;
+      com.intellij.execution.process.mediator.rpc.OpenHandleReply parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.mediator.rpc.ReleaseRequest) e.getUnfinishedMessage();
+        parsedMessage = (com.intellij.execution.process.mediator.rpc.OpenHandleReply) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -399,33 +399,33 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private long pid_ ;
+    private long handleId_ ;
     /**
-     * <code>uint64 pid = 1;</code>
-     * @return The pid.
+     * <code>uint64 handle_id = 1;</code>
+     * @return The handleId.
      */
     @java.lang.Override
-    public long getPid() {
-      return pid_;
+    public long getHandleId() {
+      return handleId_;
     }
     /**
-     * <code>uint64 pid = 1;</code>
-     * @param value The pid to set.
+     * <code>uint64 handle_id = 1;</code>
+     * @param value The handleId to set.
      * @return This builder for chaining.
      */
-    public Builder setPid(long value) {
+    public Builder setHandleId(long value) {
       
-      pid_ = value;
+      handleId_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>uint64 pid = 1;</code>
+     * <code>uint64 handle_id = 1;</code>
      * @return This builder for chaining.
      */
-    public Builder clearPid() {
+    public Builder clearHandleId() {
       
-      pid_ = 0L;
+      handleId_ = 0L;
       onChanged();
       return this;
     }
@@ -442,41 +442,41 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:intellij.process.mediator.rpc.ReleaseRequest)
+    // @@protoc_insertion_point(builder_scope:intellij.process.mediator.rpc.OpenHandleReply)
   }
 
-  // @@protoc_insertion_point(class_scope:intellij.process.mediator.rpc.ReleaseRequest)
-  private static final com.intellij.execution.process.mediator.rpc.ReleaseRequest DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:intellij.process.mediator.rpc.OpenHandleReply)
+  private static final com.intellij.execution.process.mediator.rpc.OpenHandleReply DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.intellij.execution.process.mediator.rpc.ReleaseRequest();
+    DEFAULT_INSTANCE = new com.intellij.execution.process.mediator.rpc.OpenHandleReply();
   }
 
-  public static com.intellij.execution.process.mediator.rpc.ReleaseRequest getDefaultInstance() {
+  public static com.intellij.execution.process.mediator.rpc.OpenHandleReply getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<ReleaseRequest>
-      PARSER = new com.google.protobuf.AbstractParser<ReleaseRequest>() {
+  private static final com.google.protobuf.Parser<OpenHandleReply>
+      PARSER = new com.google.protobuf.AbstractParser<OpenHandleReply>() {
     @java.lang.Override
-    public ReleaseRequest parsePartialFrom(
+    public OpenHandleReply parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new ReleaseRequest(input, extensionRegistry);
+      return new OpenHandleReply(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<ReleaseRequest> parser() {
+  public static com.google.protobuf.Parser<OpenHandleReply> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<ReleaseRequest> getParserForType() {
+  public com.google.protobuf.Parser<OpenHandleReply> getParserForType() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.intellij.execution.process.mediator.rpc.ReleaseRequest getDefaultInstanceForType() {
+  public com.intellij.execution.process.mediator.rpc.OpenHandleReply getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

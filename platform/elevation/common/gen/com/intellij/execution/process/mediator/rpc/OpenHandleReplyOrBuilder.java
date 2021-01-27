@@ -3,8 +3,8 @@
 
 package com.intellij.execution.process.mediator.rpc;
 
-public interface AwaitTerminationRequestOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:intellij.process.mediator.rpc.AwaitTerminationRequest)
+public interface OpenHandleReplyOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:intellij.process.mediator.rpc.OpenHandleReply)
     com.google.protobuf.MessageOrBuilder {
 
   /**

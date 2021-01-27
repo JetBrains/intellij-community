@@ -1,4 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package com.intellij.execution.process.mediator.client
 
 import com.google.protobuf.ByteString
@@ -7,12 +9,8 @@ import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.execution.process.mediator.util.ChannelInputStream
 import com.intellij.execution.process.mediator.util.ChannelOutputStream
 import com.intellij.execution.process.mediator.util.blockingGet
-import com.intellij.execution.process.mediator.util.childSupervisorJob
-import com.intellij.util.io.runClosingOnFailure
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asCompletableFuture
 import java.io.*
@@ -24,10 +22,8 @@ private val CLEANER = Cleaner.create()
 
 class MediatedProcess private constructor(
   private val handle: MediatedProcessHandle,
-  private val pid: Long,
-  pipeStdin: Boolean,
-  pipeStdout: Boolean,
-  pipeStderr: Boolean,
+  command: List<String>, workingDir: File, environVars: Map<String, String>,
+  inFile: File?, outFile: File?, errFile: File?,
 ) : Process(), SelfKiller {
 
   companion object {
@@ -36,38 +32,39 @@ class MediatedProcess private constructor(
             CancellationException::class)
     fun create(processMediatorClient: ProcessMediatorClient,
                processBuilder: ProcessBuilder): MediatedProcess {
-
+      val workingDir = processBuilder.directory() ?: File(".").normalize()  // defaults to current working directory
       val inFile = processBuilder.redirectInput().file()
       val outFile = processBuilder.redirectOutput().file()
       val errFile = processBuilder.redirectError().file()
 
-      return MediatedProcessHandle(processMediatorClient) {
-        // See a to-do comment in the daemon ProcessManager regarding the handle lifetime and cleanup.
-        createProcess(processBuilder.command(),
-                      processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
-                      processBuilder.environment(),
-                      inFile, outFile, errFile)
-      }.runClosingOnFailure handle@{
-        // if anything goes wrong during process creation, this will fail with the corresponding exception
-        val pid = pid.blockingGet()
-
-        MediatedProcess(this@handle, pid,
-                        pipeStdin = (inFile == null),
-                        pipeStdout = (outFile == null),
-                        pipeStderr = (errFile == null)).also {
-          CLEANER.register(it, this@handle::releaseAsync)
+      val handle = MediatedProcessHandle.create(processMediatorClient)
+      return try {
+        MediatedProcess(handle,
+                        processBuilder.command(), workingDir, processBuilder.environment(),
+                        inFile, outFile, errFile).also {
+          CLEANER.register(it, handle::releaseAsync)
         }
+      }
+      catch (e: Throwable) {
+        handle.rpcScope.cancel(e as? CancellationException ?: CancellationException("Failed to create process", e))
+        throw e
       }
     }
   }
 
-  private val stdin: OutputStream = if (pipeStdin) createOutputStream(0) else NullOutputStream
-  private val stdout: InputStream = if (pipeStdout) createInputStream(1) else NullInputStream
-  private val stderr: InputStream = if (pipeStderr) createInputStream(2) else NullInputStream
+  private val pid = runBlocking {
+    handle.rpc { handleId ->
+      createProcess(handleId, command, workingDir, environVars, inFile, outFile, errFile)
+    }
+  }
+
+  private val stdin: OutputStream = if (inFile == null) createOutputStream(0) else NullOutputStream
+  private val stdout: InputStream = if (outFile == null) createInputStream(1) else NullInputStream
+  private val stderr: InputStream = if (errFile == null) createInputStream(2) else NullInputStream
 
   private val termination: Deferred<Int> = handle.rpcScope.async {
-    handle.rpc {
-      awaitTermination(pid)
+    handle.rpc { handleId ->
+      awaitTermination(handleId)
     }
   }
 
@@ -82,11 +79,11 @@ class MediatedProcess private constructor(
     val ackFlow = MutableStateFlow<Long?>(0L)
 
     val channel = handle.rpcScope.actor<ByteString>(capacity = Channel.BUFFERED) {
-      handle.rpc {
+      handle.rpc { handleId ->
         try {
           // NOTE: Must never consume the channel associated with the actor. In fact, the channel IS the actor coroutine,
           //       and cancelling it makes the coroutine die in a horrible way leaving the remote call in a broken state.
-          writeStream(pid, fd, channel.receiveAsFlow())
+          writeStream(handleId, fd, channel.receiveAsFlow())
             .onCompletion { ackFlow.value = null }
             .fold(0L) { l, _ ->
               (l + 1).also {
@@ -106,9 +103,9 @@ class MediatedProcess private constructor(
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun createInputStream(fd: Int): InputStream {
     val channel = handle.rpcScope.produce<ByteString>(capacity = Channel.BUFFERED) {
-      handle.rpc {
+      handle.rpc { handleId ->
         try {
-          readStream(pid, fd).collect(channel::send)
+          readStream(handleId, fd).collect(channel::send)
         }
         catch (e: IOException) {
           channel.close(e)
@@ -143,8 +140,8 @@ class MediatedProcess private constructor(
 
   fun destroy(force: Boolean, destroyGroup: Boolean = false) {
     handle.rpcScope.launch {
-      handle.rpc {
-        destroyProcess(pid, force, destroyGroup)
+      handle.rpc { handleId ->
+        destroyProcess(handleId, force, destroyGroup)
       }
     }
   }
@@ -164,49 +161,53 @@ class MediatedProcess private constructor(
  * and the whole process lifecycle is contained within the coroutine scope of the client.
  * Normal remote calls (those besides process creation and release) are performed within the scope of the handle object.
  */
-private class MediatedProcessHandle(
+private class MediatedProcessHandle private constructor(
   private val client: ProcessMediatorClient,
-  createProcess: suspend ProcessMediatorClient.() -> Long,
-) : AutoCloseable {
+  private val handleId: Long,
+  private val lifetimeChannel: ReceiveChannel<*>,
+) {
+  companion object {
+    fun create(client: ProcessMediatorClient): MediatedProcessHandle {
+      val lifetimeChannel = client.openHandle().produceIn(client.coroutineScope)
+      try {
+        val handleId = runBlocking {
+          lifetimeChannel.receiveOrNull() ?: throw IOException("Failed to receive handleId")
+        }
+        return MediatedProcessHandle(client, handleId, lifetimeChannel)
+      }
+      catch (e: Throwable) {
+        lifetimeChannel.cancel(e as? CancellationException ?: CancellationException("Failed to initialize client-side handle", e))
+        throw e
+      }
+    }
+  }
 
   private val parentScope: CoroutineScope = client.coroutineScope
 
-  /** Controls all operations except CreateProcess() and Release(). */
-  private val rpcJob: CompletableJob = parentScope.childSupervisorJob()
+  private val lifetimeJob = parentScope.launch {
+    try {
+      lifetimeChannel.receive()
+    }
+    catch (e: ClosedReceiveChannelException) {
+      throw CancellationException("closed", e)
+    }
+    error("unreachable")
+  }
+  private val rpcJob: CompletableJob = SupervisorJob(lifetimeJob).apply {
+    invokeOnCompletion { e ->
+      lifetimeChannel.cancel(e as? CancellationException ?: CancellationException("Complete", e))
+    }
+  }
   val rpcScope: CoroutineScope = parentScope + rpcJob
 
-  private val releaseJob = parentScope.launch(start = CoroutineStart.LAZY) {
-    try {
-      rpcJob.cancelAndJoin()
-    }
-    finally {
-      // must be called exactly once;
-      // once invoked, the pid is no more valid, and the process must be assumed reaped
-      client.release(pid.await())
-    }
-  }.apply {
-    rpcJob.invokeOnCompletion { start() }
-  }
-
-  val pid: Deferred<Long> = parentScope.async {
-    try {
-      client.createProcess()
-    }
-    catch (e: Throwable) {
-      releaseJob.cancel("Failed to create process")
-      rpcJob.cancel("Failed to create process")
-      throw e
-    }
-  }
-
-  suspend fun <R> rpc(block: suspend ProcessMediatorClient.() -> R): R {
+  suspend fun <R> rpc(block: suspend ProcessMediatorClient.(handleId: Long) -> R): R {
     rpcScope.ensureActive()
     coroutineContext.ensureActive()
-    // Perform the call in the scope of this handle, so that it is dispatched in the same way
-    // as CreateProcess() and Release(). This overrides the parent so that we can await for
-    // the call to complete before Release, but we ensure the caller is still able to cancel it.
+    // Perform the call in the scope of this handle, so that it is dispatched in the same way as OpenHandle().
+    // This overrides the parent so that we can await for the call to complete before closing the lifetimeChannel;
+    // at the same time we ensure the caller is still able to cancel it.
     val deferred = rpcScope.async {
-      client.block()
+      client.block(handleId)
     }
     return try {
       deferred.await()
@@ -222,6 +223,4 @@ private class MediatedProcessHandle(
     // and once all of them finish don't accept new calls
     rpcJob.complete()
   }
-
-  override fun close() = releaseAsync()
 }

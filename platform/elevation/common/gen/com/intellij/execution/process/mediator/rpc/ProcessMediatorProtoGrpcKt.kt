@@ -152,6 +152,10 @@ object ProcessManagerGrpcKt {
   val serviceDescriptor: ServiceDescriptor
     get() = ProcessManagerGrpc.getServiceDescriptor()
 
+  val openHandleMethod: MethodDescriptor<Empty, OpenHandleReply>
+    @JvmStatic
+    get() = ProcessManagerGrpc.getOpenHandleMethod()
+
   val createProcessMethod: MethodDescriptor<CreateProcessRequest, CreateProcessReply>
     @JvmStatic
     get() = ProcessManagerGrpc.getCreateProcessMethod()
@@ -172,10 +176,6 @@ object ProcessManagerGrpcKt {
     @JvmStatic
     get() = ProcessManagerGrpc.getReadStreamMethod()
 
-  val releaseMethod: MethodDescriptor<ReleaseRequest, Empty>
-    @JvmStatic
-    get() = ProcessManagerGrpc.getReleaseMethod()
-
   /**
    * A stub for issuing RPCs to a(n) intellij.process.mediator.rpc.ProcessManager service as
    * suspending coroutines.
@@ -188,6 +188,24 @@ object ProcessManagerGrpcKt {
     override fun build(channel: Channel, callOptions: CallOptions): ProcessManagerCoroutineStub =
         ProcessManagerCoroutineStub(channel, callOptions)
 
+    /**
+     * Returns a [Flow] that, when collected, executes this RPC and emits responses from the
+     * server as they arrive.  That flow finishes normally if the server closes its response with
+     * [`Status.OK`][Status], and fails by throwing a [StatusException] otherwise.  If
+     * collecting the flow downstream fails exceptionally (including via cancellation), the RPC
+     * is cancelled with that exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @return A flow that, when collected, emits the responses from the server.
+     */
+    fun openHandle(request: Empty): Flow<OpenHandleReply> = serverStreamingRpc(
+      channel,
+      ProcessManagerGrpc.getOpenHandleMethod(),
+      request,
+      callOptions,
+      Metadata()
+    )
     /**
      * Executes this RPC and returns the response message, suspending until the RPC completes
      * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
@@ -282,23 +300,6 @@ object ProcessManagerGrpcKt {
       request,
       callOptions,
       Metadata()
-    )
-    /**
-     * Executes this RPC and returns the response message, suspending until the RPC completes
-     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
-     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
-     * with the corresponding exception as a cause.
-     *
-     * @param request The request message to send to the server.
-     *
-     * @return The single response from the server.
-     */
-    suspend fun release(request: ReleaseRequest): Empty = unaryRpc(
-      channel,
-      ProcessManagerGrpc.getReleaseMethod(),
-      request,
-      callOptions,
-      Metadata()
     )}
 
   /**
@@ -308,6 +309,22 @@ object ProcessManagerGrpcKt {
   abstract class ProcessManagerCoroutineImplBase(
     coroutineContext: CoroutineContext = EmptyCoroutineContext
   ) : AbstractCoroutineServerImpl(coroutineContext) {
+    /**
+     * Returns a [Flow] of responses to an RPC for
+     * intellij.process.mediator.rpc.ProcessManager.OpenHandle.
+     *
+     * If creating or collecting the returned flow fails with a [StatusException], the RPC
+     * will fail with the corresponding [Status].  If it fails with a
+     * [java.util.concurrent.CancellationException], the RPC will fail with status
+     * `Status.CANCELLED`.  If creating
+     * or collecting the returned flow fails for any other reason, the RPC will fail with
+     * `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    open fun openHandle(request: Empty): Flow<OpenHandleReply> = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.OpenHandle is unimplemented"))
+
     /**
      * Returns the response to an RPC for
      * intellij.process.mediator.rpc.ProcessManager.CreateProcess.
@@ -389,22 +406,13 @@ object ProcessManagerGrpcKt {
     open fun readStream(request: ReadStreamRequest): Flow<DataChunk> = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.ReadStream is unimplemented"))
 
-    /**
-     * Returns the response to an RPC for intellij.process.mediator.rpc.ProcessManager.Release.
-     *
-     * If this method fails with a [StatusException], the RPC will fail with the corresponding
-     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
-     * will fail
-     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
-     * fail with `Status.UNKNOWN` with the exception as a cause.
-     *
-     * @param request The request from the client.
-     */
-    open suspend fun release(request: ReleaseRequest): Empty = throw
-        StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.ProcessManager.Release is unimplemented"))
-
     final override fun bindService(): ServerServiceDefinition =
         builder(ProcessManagerGrpc.getServiceDescriptor())
+      .addMethod(serverStreamingServerMethodDefinition(
+      context = this.context,
+      descriptor = ProcessManagerGrpc.getOpenHandleMethod(),
+      implementation = ::openHandle
+    ))
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
       descriptor = ProcessManagerGrpc.getCreateProcessMethod(),
@@ -429,11 +437,6 @@ object ProcessManagerGrpcKt {
       context = this.context,
       descriptor = ProcessManagerGrpc.getReadStreamMethod(),
       implementation = ::readStream
-    ))
-      .addMethod(unaryServerMethodDefinition(
-      context = this.context,
-      descriptor = ProcessManagerGrpc.getReleaseMethod(),
-      implementation = ::release
     )).build()
   }
 }

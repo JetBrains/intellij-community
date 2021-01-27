@@ -11,16 +11,23 @@ import java.util.concurrent.atomic.AtomicReference
 interface QuotaManager : Closeable {
   fun check(): Boolean
 
-  /** The returned job completes as soon as the quota is exceeded, but never before [check] starts returning false. */
+  /**
+   * The returned job completes as soon as the quota is exceeded and all [runIfPermitted] blocks finished,
+   * but never before [check] starts returning false.
+   */
   fun asJob(): Job
 }
 
-
-internal suspend fun <R : Any> QuotaManager.runIfPermitted(block: suspend () -> R): R? {
+/**
+ * Check if the quota has not been exceeded yet,
+ * and prevents the manager from completing its [job][QuotaManager.asJob] until the block finishes.
+ */
+@Throws(QuotaExceededException::class)
+internal inline fun <R : Any> QuotaManager.runIfPermitted(block: () -> R): R {
   val childJob = Job(this.asJob())  // prevents the QuotaManager Job from finishing in case quota exceeds while running the block
   try {
     if (!this.check()) {
-      return null
+      throw QuotaExceededException()
     }
     check(childJob.isActive) { "check() returned true after asJob() has completed" }
 

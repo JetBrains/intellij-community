@@ -8,10 +8,10 @@ public interface FileHandleOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>uint64 pid = 1;</code>
-   * @return The pid.
+   * <code>uint64 handle_id = 1;</code>
+   * @return The handleId.
    */
-  long getPid();
+  long getHandleId();
 
   /**
    * <code>uint32 fd = 2;</code>

@@ -12,62 +12,47 @@ import kotlinx.coroutines.future.await
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 typealias Pid = Long
 
-internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
+internal class ProcessManager : Closeable {
+  private val handleIdCounter = AtomicLong()
   private val handleMap = ConcurrentHashMap<Pid, Handle>()
-  private val parentJob = coroutineScope.coroutineContext[Job]
 
-  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>,
-                            inFile: File?, outFile: File?, errFile: File?): Pid {
-    // The ref job acts like a reference in ref-counting collectors preventing parentJob from completion
-    // (a parent job does not complete until all its children complete). When everything goes well and starting the process succeeds,
-    // the ownership of the job is transferred to the newly created handle.
-    //
-    // Although great care is taken to ensure the ref job is not left unattended along the way,
-    // there's still a risk that something goes wrong on the middleware level: the resulting PID may get lost before the client
-    // receives it, making it impossible to ever release it, or simply the Release RPC can fail.
-    //
-    // The only reliable way to ensure a handle gets closed eventually no matter what,
-    // is to arrange a (probably streaming) RPC that lasts during the whole lifetime of the handle,
-    // releasing it on an RPC failure, which is detected by gRPC using keepalive messages and a controllable timeout.
-    //
-    // TODO[eldar] this should be fixed on the RPC level in ProcessManagerServerService
-    val refJob = Job(parentJob)
-    refJob.ensureActive()
-    try {
-      val processBuilder = ProcessBuilder().apply {
-        command(command)
-        directory(workingDir)
-        environment().run {
-          clear()
-          putAll(environVars)
-        }
-        inFile?.let { redirectInput(it) }
-        outFile?.let { redirectOutput(it) }
-        errFile?.let { redirectError(it) }
+  fun openHandle(coroutineScope: CoroutineScope): Handle {
+    val handleId = handleIdCounter.incrementAndGet()
+    return Handle(handleId, coroutineScope).also { handle ->
+      handleMap[handleId] = handle
+      handle.lifetimeJob.invokeOnCompletion {
+        handleMap.remove(handleId)  // may not be there when called from ProcessManager.close()
       }
-
-      val process = withContext(Dispatchers.IO) {
-        @Suppress("BlockingMethodInNonBlockingContext")
-        processBuilder.start()
-      }
-      val pid = process.pid()
-
-      val handle = Handle(process, refJob)
-      registerHandle(pid, handle)
-
-      return pid
-    }
-    catch (e: Throwable) {
-      refJob.cancel("Failed to create process", e)
-      throw e
     }
   }
 
-  fun destroyProcess(pid: Pid, force: Boolean, destroyGroup: Boolean) {
-    val handle = getHandle(pid)
+  suspend fun createProcess(handleId: Long,
+                            command: List<String>, workingDir: File, environVars: Map<String, String>,
+                            inFile: File?, outFile: File?, errFile: File?): Pid {
+    val handle = getHandle(handleId)
+
+    val processBuilder = ProcessBuilder().apply {
+      command(command)
+      directory(workingDir)
+      environment().run {
+        clear()
+        putAll(environVars)
+      }
+      inFile?.let { redirectInput(it) }
+      outFile?.let { redirectOutput(it) }
+      errFile?.let { redirectError(it) }
+    }
+    val process = handle.startProcess(processBuilder)
+
+    return process.pid()
+  }
+
+  fun destroyProcess(handleId: Long, force: Boolean, destroyGroup: Boolean) {
+    val handle = getHandle(handleId)
     val process = handle.process
     val processHandle = process.toHandle()
     if (destroyGroup) {
@@ -94,20 +79,20 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
     }
   }
 
-  suspend fun awaitTermination(pid: Pid): Int {
-    val handle = getHandle(pid)
+  suspend fun awaitTermination(handleId: Long): Int {
+    val handle = getHandle(handleId)
     val process = handle.process
 
     return process.onExit().await().exitValue()
   }
 
-  fun readStream(pid: Pid, fd: Int): Flow<ByteString> {
-    val handle = getHandle(pid)
+  fun readStream(handleId: Long, fd: Int): Flow<ByteString> {
+    val handle = getHandle(handleId)
     val process = handle.process
     val inputStream = when (fd) {
       STDOUT -> process.inputStream
       STDERR -> process.errorStream
-      else -> throw IllegalArgumentException("Unknown process output FD $fd for PID $pid")
+      else -> throw IllegalArgumentException("Unknown process output FD $fd for PID $handleId")
     }
     val buffer = ByteArray(8192)
     @Suppress("BlockingMethodInNonBlockingContext", "EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
@@ -123,18 +108,18 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
     }.flowOn(Dispatchers.IO)
   }
 
-  suspend fun writeStream(pid: Pid, fd: Int, chunkFlow: Flow<ByteString>, ackChannel: SendChannel<Unit>?) {
-    val handle = getHandle(pid)
+  suspend fun writeStream(handleId: Long, fd: Int, chunkFlow: Flow<ByteString>, ackChannel: SendChannel<Unit>?) {
+    val handle = getHandle(handleId)
     val process = handle.process
     val outputStream = when (fd) {
       STDIN -> process.outputStream
-      else -> throw IllegalArgumentException("Unknown process input FD $fd for PID $pid")
+      else -> throw IllegalArgumentException("Unknown process input FD $fd for PID $handleId")
     }
     @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
       outputStream.use { outputStream ->
         with(currentCoroutineContext()) {
-          handle.process.onExit().whenComplete { _, _ ->
+          process.onExit().whenComplete { _, _ ->
             job.cancel("Process exited")
           }
         }
@@ -151,40 +136,41 @@ internal class ProcessManager(coroutineScope: CoroutineScope) : Closeable {
     }
   }
 
-  fun release(pid: Pid) {
-    unregisterHandle(pid).release()
-  }
-
-  private fun registerHandle(pid: Pid, handle: Handle) {
-    handleMap.putIfAbsent(pid, handle).also { previous ->
-      check(previous == null) { "Duplicate PID $pid" }
-    }
-  }
-
-  private fun getHandle(pid: Pid): Handle {
-    val handle = handleMap[pid]
-    return requireNotNull(handle) { "Unknown PID $pid" }
-  }
-
-  private fun unregisterHandle(pid: Pid): Handle {
-    val handle = handleMap.remove(pid)
-    return requireNotNull(handle) { "Unknown PID $pid" }
+  private fun getHandle(handleId: Long): Handle {
+    val handle = handleMap[handleId]
+    return requireNotNull(handle) { "Unknown handle ID $handleId" }
   }
 
   override fun close() {
     while (true) {
-      val pid = handleMap.keys.firstOrNull() ?: break
-      handleMap.remove(pid)?.release()
+      val handleId = handleMap.keys.firstOrNull() ?: break
+      val handle = handleMap.remove(handleId) ?: continue
+      handle.lifetimeJob.cancel("closed")
     }
   }
 
-  private data class Handle(
-    val process: Process,
-    private val refJob: CompletableJob,
-  ) {
-    fun release() {
-      refJob.cancel("process released")
-      process.destroy()  // TODO should we really destroy it?
+  class Handle(val handleId: Long, coroutineScope: CoroutineScope) {
+    val lifetimeJob: Job = Job(coroutineScope.coroutineContext.job).also {
+      it.ensureActive()
+    }
+
+    val process: Process
+      get() = checkNotNull(_process) { "Process has not been created yet" }
+
+    @Volatile
+    private var _process: Process? = null
+
+    suspend fun startProcess(processBuilder: ProcessBuilder): Process {
+      check(_process == null) { "Process has already been initialized" }
+      withContext(Dispatchers.IO) {
+        synchronized(this) {
+          check(_process == null) { "Process has already been initialized" }
+          lifetimeJob.ensureActive()
+          @Suppress("BlockingMethodInNonBlockingContext")
+          _process = processBuilder.start()
+        }
+      }
+      return process
     }
   }
 }

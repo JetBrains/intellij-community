@@ -50,7 +50,7 @@ private static final long serialVersionUID = 0L;
             break;
           case 8: {
 
-            pid_ = input.readUInt64();
+            handleId_ = input.readUInt64();
             break;
           }
           case 16: {
@@ -90,15 +90,15 @@ private static final long serialVersionUID = 0L;
             com.intellij.execution.process.mediator.rpc.FileHandle.class, com.intellij.execution.process.mediator.rpc.FileHandle.Builder.class);
   }
 
-  public static final int PID_FIELD_NUMBER = 1;
-  private long pid_;
+  public static final int HANDLE_ID_FIELD_NUMBER = 1;
+  private long handleId_;
   /**
-   * <code>uint64 pid = 1;</code>
-   * @return The pid.
+   * <code>uint64 handle_id = 1;</code>
+   * @return The handleId.
    */
   @java.lang.Override
-  public long getPid() {
-    return pid_;
+  public long getHandleId() {
+    return handleId_;
   }
 
   public static final int FD_FIELD_NUMBER = 2;
@@ -126,8 +126,8 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (pid_ != 0L) {
-      output.writeUInt64(1, pid_);
+    if (handleId_ != 0L) {
+      output.writeUInt64(1, handleId_);
     }
     if (fd_ != 0) {
       output.writeUInt32(2, fd_);
@@ -141,9 +141,9 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (pid_ != 0L) {
+    if (handleId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-        .computeUInt64Size(1, pid_);
+        .computeUInt64Size(1, handleId_);
     }
     if (fd_ != 0) {
       size += com.google.protobuf.CodedOutputStream
@@ -164,8 +164,8 @@ private static final long serialVersionUID = 0L;
     }
     com.intellij.execution.process.mediator.rpc.FileHandle other = (com.intellij.execution.process.mediator.rpc.FileHandle) obj;
 
-    if (getPid()
-        != other.getPid()) return false;
+    if (getHandleId()
+        != other.getHandleId()) return false;
     if (getFd()
         != other.getFd()) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
@@ -179,9 +179,9 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    hash = (37 * hash) + PID_FIELD_NUMBER;
+    hash = (37 * hash) + HANDLE_ID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getPid());
+        getHandleId());
     hash = (37 * hash) + FD_FIELD_NUMBER;
     hash = (53 * hash) + getFd();
     hash = (29 * hash) + unknownFields.hashCode();
@@ -317,7 +317,7 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      pid_ = 0L;
+      handleId_ = 0L;
 
       fd_ = 0;
 
@@ -347,7 +347,7 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.intellij.execution.process.mediator.rpc.FileHandle buildPartial() {
       com.intellij.execution.process.mediator.rpc.FileHandle result = new com.intellij.execution.process.mediator.rpc.FileHandle(this);
-      result.pid_ = pid_;
+      result.handleId_ = handleId_;
       result.fd_ = fd_;
       onBuilt();
       return result;
@@ -397,8 +397,8 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(com.intellij.execution.process.mediator.rpc.FileHandle other) {
       if (other == com.intellij.execution.process.mediator.rpc.FileHandle.getDefaultInstance()) return this;
-      if (other.getPid() != 0L) {
-        setPid(other.getPid());
+      if (other.getHandleId() != 0L) {
+        setHandleId(other.getHandleId());
       }
       if (other.getFd() != 0) {
         setFd(other.getFd());
@@ -432,33 +432,33 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private long pid_ ;
+    private long handleId_ ;
     /**
-     * <code>uint64 pid = 1;</code>
-     * @return The pid.
+     * <code>uint64 handle_id = 1;</code>
+     * @return The handleId.
      */
     @java.lang.Override
-    public long getPid() {
-      return pid_;
+    public long getHandleId() {
+      return handleId_;
     }
     /**
-     * <code>uint64 pid = 1;</code>
-     * @param value The pid to set.
+     * <code>uint64 handle_id = 1;</code>
+     * @param value The handleId to set.
      * @return This builder for chaining.
      */
-    public Builder setPid(long value) {
+    public Builder setHandleId(long value) {
       
-      pid_ = value;
+      handleId_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>uint64 pid = 1;</code>
+     * <code>uint64 handle_id = 1;</code>
      * @return This builder for chaining.
      */
-    public Builder clearPid() {
+    public Builder clearHandleId() {
       
-      pid_ = 0L;
+      handleId_ = 0L;
       onChanged();
       return this;
     }
