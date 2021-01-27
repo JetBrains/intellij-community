@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.configuration
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -33,13 +34,10 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 
-  override fun isApplicable(module: Module): Boolean = module.pipFile != null
-
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, Source.CONFIGURATOR)
 
-  override fun getIntentionName(module: Module): String {
-    return PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", module.pipFile?.name)
-  }
+  override fun getIntention(module: Module): @IntentionName  String? =
+    module.pipFile?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
 
   override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, Source.INSPECTION)
 

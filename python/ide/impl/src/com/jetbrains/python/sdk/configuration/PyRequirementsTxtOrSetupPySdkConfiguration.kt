@@ -44,13 +44,10 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
   private val LOGGER = Logger.getInstance(PyRequirementsTxtOrSetupPySdkConfiguration::class.java)
 
-  override fun isApplicable(module: Module): Boolean = getRequirementsTxtOrSetupPy(module) != null
-
   override fun createAndAddSdkForConfigurator(module: Module) = createAndAddSdk(module, Source.CONFIGURATOR)
 
-  override fun getIntentionName(module: Module): @IntentionName String {
-    return PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", getRequirementsTxtOrSetupPy(module)?.name)
-  }
+  override fun getIntention(module: Module): @IntentionName String? =
+    getRequirementsTxtOrSetupPy(module)?.let {  PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name)}
 
   override fun createAndAddSdkForInspection(module: Module) = createAndAddSdk(module, Source.INSPECTION)
 

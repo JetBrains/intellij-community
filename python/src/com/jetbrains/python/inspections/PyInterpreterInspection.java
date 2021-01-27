@@ -38,6 +38,7 @@ import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
 import com.jetbrains.python.ui.PyUiUtil;
+import kotlin.Pair;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,8 +167,9 @@ public final class PyInterpreterInspection extends PyInspection {
 
       if (detectedAssociatedSdk != null) return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
 
-      final var extension = PyProjectSdkConfigurationExtension.getEP_NAME().findFirstSafe(e -> e.isApplicable(module));
-      if (extension != null) return new UseProvidedInterpreterFix(module, extension);
+      final Pair<@IntentionName String, PyProjectSdkConfigurationExtension> textAndExtension
+        = PyProjectSdkConfigurationExtension.findForModule(module);
+      if (textAndExtension != null) return new UseProvidedInterpreterFix(module, textAndExtension.getSecond(), textAndExtension.getFirst());
 
       if (name == null) return null;
 
@@ -357,9 +359,16 @@ public final class PyInterpreterInspection extends PyInspection {
     @NotNull
     private final PyProjectSdkConfigurationExtension myExtension;
 
-    private UseProvidedInterpreterFix(@NotNull Module module, @NotNull PyProjectSdkConfigurationExtension extension) {
+    @NotNull
+    @IntentionName
+    private final String myName;
+
+    private UseProvidedInterpreterFix(@NotNull Module module,
+                                      @NotNull PyProjectSdkConfigurationExtension extension,
+                                      @NotNull @IntentionName String name) {
       myModule = module;
       myExtension = extension;
+      myName = name;
     }
 
     @Override
@@ -369,7 +378,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public @IntentionName @NotNull String getName() {
-      return myExtension.getIntentionName(myModule);
+      return myName;
     }
 
     @Override

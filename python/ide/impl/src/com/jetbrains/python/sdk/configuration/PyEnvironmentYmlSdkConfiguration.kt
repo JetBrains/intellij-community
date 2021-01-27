@@ -41,12 +41,10 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   private val LOGGER = Logger.getInstance(PyEnvironmentYmlSdkConfiguration::class.java)
 
-  override fun isApplicable(module: Module): Boolean = getEnvironmentYml(module) != null
-
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
 
-  override fun getIntentionName(module: Module): @IntentionName String {
-    return PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
+  override fun getIntention(module: Module): @IntentionName String? = getEnvironmentYml(module)?.let {
+    PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
   }
 
   override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)

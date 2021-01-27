@@ -20,18 +20,11 @@ interface PyProjectSdkConfigurationExtension {
   companion object {
     @JvmStatic
     val EP_NAME = ExtensionPointName.create<PyProjectSdkConfigurationExtension>("Pythonid.projectSdkConfigurationExtension")
-  }
 
-  /**
-   * Called by sdk configurator and interpreter inspection
-   * to determine if an extension could configure or suggest an interpreter for the passed [module].
-   *
-   * First applicable extension is processed, others are ignored.
-   * If there is no applicable extension, configurator and inspection guess a suitable interpreter.
-   *
-   * Could be called from AWT hence should be as fast as possible.
-   */
-  fun isApplicable(module: Module): Boolean
+    @JvmStatic
+    fun findForModule(module: Module): Pair<@IntentionName String, PyProjectSdkConfigurationExtension>? =
+      EP_NAME.computeSafeIfAny { ext -> ext.getIntention(module)?.let { Pair(it, ext) } }
+  }
 
   /**
    * An implementation is responsible for interpreter setup and registration in IDE.
@@ -43,11 +36,21 @@ interface PyProjectSdkConfigurationExtension {
   fun createAndAddSdkForConfigurator(module: Module): Sdk?
 
   /**
-   * Returned string is used as a quick fix name.
+   * Called by sdk configurator and interpreter inspection
+   * to determine if an extension could configure or suggest an interpreter for the passed [module].
+   *
+   * First applicable extension is processed, others are ignored.
+   * If there is no applicable extension, configurator and inspection guess a suitable interpreter.
+   *
+   * Could be called from AWT hence should be as fast as possible.
+   *
+   * If returned value is `null`, then the extension can't be used to configure an interpreter (not applicable).
+   * Otherwise returned string is used as a quick fix name.
+   *
    * Example: `Create a virtual environment using requirements.txt`.
    */
   @IntentionName
-  fun getIntentionName(module: Module): String
+  fun getIntention(module: Module): String?
 
   /**
    * An implementation is responsible for interpreter setup and registration in IDE.
