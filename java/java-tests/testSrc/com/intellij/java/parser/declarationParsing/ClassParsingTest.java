@@ -26,6 +26,7 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testEnumWithConstants4() { doTest(true); }
   public void testEnumWithConstants5() { doTest(true); }
   public void testEnumWithConstants6() { doTest(true); }
+  public void testEnumWithConstantsDoubleComma() { doTest(true); }
   public void testEnumWithInitializedConstants() { doTest(true); }
   public void testEnumWithAnnotatedConstants() { doTest(true); }
   public void testEnumWithImport() { doTest(true); }

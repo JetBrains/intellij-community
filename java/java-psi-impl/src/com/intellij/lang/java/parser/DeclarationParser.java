@@ -153,6 +153,7 @@ public class DeclarationParser {
 
   private void parseEnumConstants(final PsiBuilder builder) {
     boolean first = true;
+    boolean seenCommaBefore = false;
     while (builder.getTokenType() != null) {
       if (expect(builder, JavaTokenType.SEMICOLON)) {
         return;
@@ -173,7 +174,15 @@ public class DeclarationParser {
 
       first = false;
 
-      if (!expect(builder, JavaTokenType.COMMA) &&
+      int commaCount = 0;
+      while (builder.getTokenType() == JavaTokenType.COMMA) {
+        if (commaCount > 0) {
+          error(builder, JavaPsiBundle.message("expected.identifier"));
+        }
+        builder.advanceLexer();
+        commaCount++;
+      }
+      if (commaCount == 0 &&
           builder.getTokenType() != null &&
           builder.getTokenType() != JavaTokenType.SEMICOLON) {
         error(builder, JavaPsiBundle.message("expected.comma.or.semicolon"));
