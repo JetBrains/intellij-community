@@ -5,6 +5,7 @@ import circlet.platform.client.BatchResult
 import circlet.platform.client.resolve
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Pair
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.bindScroll
@@ -59,6 +60,14 @@ internal fun showPopup(selectorVm: SpaceReviewersSelectorVm,
     model.removeAll()
     it.isLoading.forEach(lifetime) { isLoading ->
       list.setPaintBusy(isLoading)
+      list.setEmptyText(
+        if (isLoading) {
+          SpaceBundle.message("review.reviewers.selector.loading")
+        }
+        else {
+          SpaceBundle.message("review.reviewers.selector.list.empty.text")
+        }
+      )
     }
     val authors = participantsVm.authors.value.map { author -> author.user.resolve() }.toSet()
     it.batches.forEach(lifetime) { batchResult ->
