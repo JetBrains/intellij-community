@@ -4,6 +4,7 @@ package com.intellij.space.vcs.review.details.selector
 import circlet.platform.client.BatchResult
 import circlet.platform.client.resolve
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Pair
 import com.intellij.space.ui.LoadableListVmImpl
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.bindScroll
@@ -17,9 +18,12 @@ import com.intellij.util.ui.UIUtil
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import runtime.Ui
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.KeyStroke
 import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 
@@ -38,16 +42,7 @@ internal fun showPopup(selectorVm: SpaceReviewersSelectorVm,
     addMouseListener(object : MouseAdapter() {
       override fun mouseReleased(e: MouseEvent) {
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed) {
-          for (item in selectedValuesList) {
-            launch(lifetime, Ui) {
-              val isReviewer = item.checked.value.contains(item.reviewer.id)
-              if (isReviewer) {
-                participantsVm.removeReviewer(item.reviewer)
-              } else {
-                participantsVm.addReviewer(item.reviewer)
-              }
-            }
-          }
+          selectReviewers(lifetime, participantsVm)
           repaint()
         }
       }
@@ -107,8 +102,23 @@ internal fun showPopup(selectorVm: SpaceReviewersSelectorVm,
     .setCancelOnClickOutside(true)
     .setResizable(true)
     .setMovable(true)
+    .setKeyboardActions(listOf(Pair.create(ActionListener { list.selectReviewers(lifetime, participantsVm) },
+                                           KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
     .createPopup()
     .showUnderneathOf(parent)
 }
 
+private fun JBList<CheckedReviewer>.selectReviewers(lifetime: Lifetime, participantsVm: SpaceReviewParticipantsVm) {
+  for (item in selectedValuesList) {
+    launch(lifetime, Ui) {
+      val isReviewer = item.checked.value.contains(item.reviewer.id)
+      if (isReviewer) {
+        participantsVm.removeReviewer(item.reviewer)
+      }
+      else {
+        participantsVm.addReviewer(item.reviewer)
+      }
+    }
+  }
+}
 
