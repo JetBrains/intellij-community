@@ -78,7 +78,8 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
         public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
           return aspect instanceof TreeAspect;
         }
-      }
+      },
+      disposable
     );
   }
 
