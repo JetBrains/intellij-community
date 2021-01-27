@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
@@ -45,6 +44,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
 import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -53,6 +53,7 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isOneSegmentFQN
@@ -147,10 +148,15 @@ class KotlinAddImportAction internal constructor(
 ) : QuestionAction {
     private var singleImportVariant: AutoImportVariant? = null
 
-    private fun variantsList(): List<AutoImportVariant> = if (singleImportVariant != null && !isUnitTestMode())
-        listOf(singleImportVariant!!)
-    else
-        variants.sortedBy { it.priority }.map { it.variant }.toList()
+    private fun variantsList(): List<AutoImportVariant> {
+        if (singleImportVariant != null && !isUnitTestMode()) return listOf(singleImportVariant!!)
+
+        return project.runSynchronouslyWithProgress(KotlinBundle.message("import.progress.text.resolve.imports"), true) {
+            runReadAction {
+                variants.sortedBy { it.priority }.map { it.variant }.toList()
+            }
+        }.orEmpty()
+    }
 
     fun showHint(): Boolean {
         val iterator = variants.iterator()
