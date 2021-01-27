@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.Disposable;
@@ -145,6 +145,9 @@ public class EditorTracker implements Disposable {
       List<Editor> editorsList = myWindowToEditorsMap.get(oldWindow);
       boolean removed = editorsList.remove(editor);
       LOG.assertTrue(removed);
+      if (oldWindow == myActiveWindow) {
+        updateActiveEditors(myActiveWindow);
+      }
 
       if (editorsList.isEmpty()) {
         myWindowToEditorsMap.remove(oldWindow);
@@ -172,7 +175,10 @@ public class EditorTracker implements Disposable {
 
   private void setActiveWindow(@Nullable Window window) {
     myActiveWindow = window;
+    updateActiveEditors(window);
+  }
 
+  private void updateActiveEditors(@Nullable Window window) {
     List<Editor> list = window == null ? null : myWindowToEditorsMap.get(window);
     if (list == null) {
       setActiveEditors(Collections.emptyList());
