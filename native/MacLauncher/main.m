@@ -1,8 +1,10 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 #import "Launcher.h"
 
 #define FOREVER ((CFTimeInterval) 1e20)
 
-static void timer_empty(CFRunLoopTimerRef timer, void *info) {
+static void timer_empty(__unused CFRunLoopTimerRef timer, __unused void *info) {
 }
 
 static void parkRunLoop() {
