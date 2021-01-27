@@ -508,6 +508,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 kotlinNativeHome = mppModel.kotlinNativeHome
                 coroutines = mppModel.extraFeatures.coroutinesState
                 isHmpp = mppModel.extraFeatures.isHMPPEnabled
+                kotlinImportingDiagnosticsContainer = mppModel.kotlinImportingDiagnostics
                 mainModuleNode.createChild(KotlinGradleProjectData.KEY, this)
             }
             //TODO improve passing version of used multiplatform
