@@ -487,7 +487,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     private int myLastSelectedIndex = -2;
     private ExtendMode myExtendMode = ExtendMode.NO_EXTEND;
     private Point myLastMouseLocation;
-    private final Alarm myShowSubmenuAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ListPopupImpl.this);
+    private final Alarm myShowSubmenuAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null);
 
     /**
      * this method should be changed only in par with
@@ -587,7 +587,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       PopupStep<?> step = listStep.onChosen(selectedValue, false);
       if (withTimer) {
         myShowSubmenuAlarm.addRequest(() -> {
-          if (myLastSelectedIndex != forIndex) return;
+          if (!isDisposed() && myLastSelectedIndex != forIndex) return;
           showNextStepPopup(step, selectedValue);
         }, 250);
       }
