@@ -280,6 +280,7 @@ data class KotlinMPPGradleModelImpl(
     override val kotlinNativeHome: String,
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
     override val partialCacheAware: CompilerArgumentsCacheAware,
+    override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf()
 ) : KotlinMPPGradleModel {
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
         sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
@@ -298,7 +299,8 @@ data class KotlinMPPGradleModelImpl(
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
-        partialCacheAware = CompilerArgumentsCacheAwareImpl(mppModel.partialCacheAware)
+        partialCacheAware = CompilerArgumentsCacheAwareImpl(mppModel.partialCacheAware),
+        kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.toMutableSet()
 
     )
 }

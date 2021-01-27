@@ -21,9 +21,9 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
 private val MPP_BUILDER_LOGGER = Logging.getLogger(KotlinMPPGradleModelBuilder::class.java)
+private val DEFAULT_IMPORTING_CHECKERS = listOf(OrphanSourceSetImportingChecker)
 
 class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
-
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
         return ErrorMessageBuilder
             .create(project, e, "Gradle import errors")
@@ -69,13 +69,22 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
                 partialCacheAware = detachableCompilerArgumentsCacheMapper.detachCacheAware()
-            )
+            ).apply {
+                kotlinImportingDiagnostics += collectDiagnostics(importingContext)
+            }
             return model
         } catch (throwable: Throwable) {
             project.logger.error("Failed building KotlinMPPGradleModel", throwable)
             throw throwable
         }
     }
+
+    private fun KotlinMPPGradleModel.collectDiagnostics(importingContext: MultiplatformModelImportingContext): KotlinImportingDiagnosticsContainer =
+        mutableSetOf<KotlinImportingDiagnostic>().apply {
+            DEFAULT_IMPORTING_CHECKERS.forEach {
+                it.check(this@collectDiagnostics, this, importingContext)
+            }
+        }
 
     private fun filterOrphanSourceSets(
         importingContext: MultiplatformModelImportingContext
