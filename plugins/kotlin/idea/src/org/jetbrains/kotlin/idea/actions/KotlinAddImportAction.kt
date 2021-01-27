@@ -34,7 +34,6 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.ProximityLocation
 import com.intellij.psi.util.proximity.PsiProximityComparator
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.ui.popup.list.PopupListElementRenderer
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -61,6 +60,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import java.awt.BorderLayout
+import javax.swing.Icon
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
@@ -76,7 +76,7 @@ internal fun createSingleImportAction(
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
         val priority = sameFqNameDescriptors.minOfOrNull { prioritizer.priority(it, file.languageVersionSettings) }
             ?: return@mapNotNull null
-        Prioritizer.VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors), priority)
+        Prioritizer.VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
     }.sortedBy { it.priority }.map { it.variant }
 
     return KotlinAddImportAction(project, editor, element, variants)
@@ -96,7 +96,7 @@ internal fun createSingleImportActionForConstructor(
             .flatMap { it.constructors }
         val priority = sameFqNameDescriptors.minOfOrNull { prioritizer.priority(it, file.languageVersionSettings) }
             ?: return@mapNotNull null
-        Prioritizer.VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors), priority)
+        Prioritizer.VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
     }.sortedBy { it.priority }.map { it.variant }
     return KotlinAddImportAction(project, editor, element, variants)
 }
@@ -111,16 +111,14 @@ internal fun createGroupedImportsAction(
     val prioritizer = DescriptorGroupPrioritizer(element.containingKtFile)
 
     val file = element.containingKtFile
-    val variants = fqNames
-        .groupBy { it.parentOrNull() ?: FqName.ROOT }
-        .map {
-            val samePackageFqNames = it.value
-            val descriptors = samePackageFqNames.flatMap { fqName -> file.resolveImportReference(fqName) }
-            val variant = if (samePackageFqNames.size > 1) {
-                GroupedImportVariant(autoImportDescription, descriptors)
-            } else {
-                SingleImportVariant(samePackageFqNames.first(), descriptors)
-            }
+    val variants = fqNames.groupBy { it.parentOrNull() ?: FqName.ROOT }.map {
+        val samePackageFqNames = it.value
+        val descriptors = samePackageFqNames.flatMap { fqName -> file.resolveImportReference(fqName) }
+        val variant = if (samePackageFqNames.size > 1) {
+            GroupedImportVariant(autoImportDescription, descriptors, project)
+        } else {
+            SingleImportVariant(samePackageFqNames.first(), descriptors, project)
+        }
 
             val priority = prioritizer.priority(descriptors, file.languageVersionSettings)
             DescriptorGroupPrioritizer.VariantWithPriority(variant, priority)
@@ -166,19 +164,17 @@ class KotlinAddImportAction internal constructor(
             return true
         }
 
-        object : ListPopupImpl(getVariantSelectionPopup()) {
+        object : ListPopupImpl(project, getVariantSelectionPopup()) {
+            private val psiRenderer = DefaultPsiElementCellRenderer()
+
             @Suppress("UNCHECKED_CAST")
             override fun getListElementRenderer(): ListCellRenderer<AutoImportVariant> {
-                val baseRenderer = super.getListElementRenderer() as PopupListElementRenderer<Any>
-                val psiRenderer = DefaultPsiElementCellRenderer()
                 return ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
                     JPanel(BorderLayout()).apply {
-                        baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-                        add(baseRenderer.nextStepLabel, BorderLayout.EAST)
                         add(
                             psiRenderer.getListCellRendererComponent(
                                 list,
-                                value.declarationToImport(project),
+                                value.declarationToImport,
                                 index,
                                 isSelected,
                                 cellHasFocus
@@ -224,7 +220,7 @@ class KotlinAddImportAction internal constructor(
 
             override fun hasSubstep(selectedValue: AutoImportVariant?) = true
             override fun getTextFor(value: AutoImportVariant) = value.hint
-            override fun getIconFor(value: AutoImportVariant) = value.icon(project)
+            override fun getIconFor(value: AutoImportVariant) = value.icon
         }
     }
 
@@ -339,36 +335,40 @@ private class DescriptorGroupPrioritizer(file: KtFile) {
     data class VariantWithPriority(val variant: AutoImportVariant, val priority: Priority)
 }
 
-internal interface AutoImportVariant {
-    val descriptorsToImport: Collection<DeclarationDescriptor>
-    val hint: String
-    val excludeFqNameCheck: FqName
-
-    fun icon(project: Project) = KotlinDescriptorIconProvider.getIcon(descriptorsToImport.first(), declarationToImport(project), 0)
-
-    fun declarationToImport(project: Project): PsiElement? =
-        DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptorsToImport.first())
+internal abstract class AutoImportVariant(
+    val descriptorsToImport: Collection<DeclarationDescriptor>,
+    val excludeFqNameCheck: FqName,
+    project: Project,
+) {
+    abstract val hint: String
+    val declarationToImport: PsiElement? = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptorsToImport.first())
+    val icon: Icon? = KotlinDescriptorIconProvider.getIcon(descriptorsToImport.first(), declarationToImport, 0)
 }
 
 private class GroupedImportVariant(
     val autoImportDescription: String,
-    val descriptors: Collection<DeclarationDescriptor>
-) : AutoImportVariant {
-    override val excludeFqNameCheck: FqName = descriptors.first().importableFqName!!.parent()
-    override val descriptorsToImport: Collection<DeclarationDescriptor> get() = descriptors
+    descriptors: Collection<DeclarationDescriptor>,
+    project: Project
+) : AutoImportVariant(
+    descriptorsToImport = descriptors,
+    excludeFqNameCheck = descriptors.first().importableFqName!!.parent(),
+    project = project,
+) {
     override val hint: String get() = KotlinBundle.message("0.from.1", autoImportDescription, excludeFqNameCheck)
 }
 
 private class SingleImportVariant(
-    override val excludeFqNameCheck: FqName,
-    val descriptors: Collection<DeclarationDescriptor>
-) : AutoImportVariant {
-    override val descriptorsToImport: Collection<DeclarationDescriptor>
-        get() = listOf(
-            descriptors.singleOrNull()
-                ?: descriptors.minByOrNull { if (it is ClassDescriptor) 0 else 1 }
-                ?: error("we create the class with not-empty descriptors always")
-        )
-
+    excludeFqNameCheck: FqName,
+    descriptors: Collection<DeclarationDescriptor>,
+    project: Project
+) : AutoImportVariant(
+    descriptorsToImport = listOf(
+        descriptors.singleOrNull()
+            ?: descriptors.minByOrNull { if (it is ClassDescriptor) 0 else 1 }
+            ?: error("we create the class with not-empty descriptors always")
+    ),
+    excludeFqNameCheck = excludeFqNameCheck,
+    project = project,
+) {
     override val hint: String get() = excludeFqNameCheck.asString()
 }
