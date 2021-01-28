@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  *
  * @author yole
  */
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.PARAMETER})
 public @interface TestDataFile {
 }
