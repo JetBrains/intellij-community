@@ -68,7 +68,7 @@ class PluginCertificateConfigurable :
     ".der", ".DER"
   )
   private val EMPTY_PANEL = "empty.panel"
-  private val myTrustManager: MutableTrustManager = CertificateManager.instance.customTrustManager
+  private val myTrustManager: MutableTrustManager = PluginCertificateStore.instance.customTrustManager
   private val myTreeBuilder: CertificateTreeBuilder = CertificateTreeBuilder(myTree)
   private val myCertificates = mutableSetOf<X509Certificate>()
 
@@ -109,7 +109,7 @@ class PluginCertificateConfigurable :
     for (certificate in original) {
       addCertificatePanel(certificate!!)
     }
-    if (!myCertificates.isEmpty()) {
+    if (myCertificates.isNotEmpty()) {
       myTreeBuilder.selectFirstCertificate()
     }
   }
