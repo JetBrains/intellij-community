@@ -114,54 +114,6 @@ class PluginCertificateConfigurable :
     return myRootPanel
   }
 
-  private fun init() {
-    // show newly added certificates
-    // show newly added certificates
-    myTrustManager.addListener(this)
-
-    myTree.emptyText.text = IdeBundle.message("settings.certificate.no.certificates")
-    myTree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
-    myTree.isRootVisible = false
-    //myTree.setShowsRootHandles(false);
-
-    //myTree.setShowsRootHandles(false);
-
-    myTree.addTreeSelectionListener {
-      val certificate = myTreeBuilder.getFirstSelectedCertificate(true)
-      if (certificate != null) {
-        showCard(getCardName(certificate))
-      }
-    }
-
-    myCertificatesListPanel.border = IdeBorderFactory.createTitledBorder(
-      IdeBundle.message("settings.certificate.accepted.certificates"), false, JBUI.insetsTop(8))
-      .setShowLine(false)
-  }
-
-  private fun addCertificate(certificate: X509Certificate) {
-    myCertificates.add(certificate)
-    myTreeBuilder.addCertificate(certificate)
-    addCertificatePanel(certificate)
-    myTreeBuilder.selectCertificate(certificate)
-  }
-
-  private fun showCard(cardName: String) {
-    (myDetailsPanel.layout as CardLayout).show(myDetailsPanel, cardName)
-  }
-
-  private fun getCardName(certificate: X509Certificate): String {
-    return certificate.subjectX500Principal.name
-  }
-
-  private fun addCertificatePanel(certificate: X509Certificate) {
-    val uniqueName = getCardName(certificate)
-    val infoPanel: JPanel = CertificateInfoPanel(certificate)
-    UIUtil.addInsets(infoPanel, UIUtil.PANEL_REGULAR_INSETS)
-    val scrollPane = JBScrollPane(infoPanel)
-    //scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    myDetailsPanel.add(scrollPane, uniqueName)
-  }
-
   override fun certificateAdded(certificate: X509Certificate) {
     UIUtil.invokeLaterIfNeeded {
       if (!myCertificates.contains(certificate)) {
@@ -201,6 +153,51 @@ class PluginCertificateConfigurable :
   override fun disposeUIResources() {
     Disposer.dispose(myTreeBuilder)
     myTrustManager.removeListener(this)
+  }
+
+  private fun init() {
+    // show newly added certificates
+    // show newly added certificates
+    myTrustManager.addListener(this)
+
+    myTree.emptyText.text = IdeBundle.message("settings.certificate.no.certificates")
+    myTree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+    myTree.isRootVisible = false
+    //myTree.setShowsRootHandles(false);
+
+    //myTree.setShowsRootHandles(false);
+
+    myTree.addTreeSelectionListener {
+      val certificate = myTreeBuilder.getFirstSelectedCertificate(true)
+      if (certificate != null) {
+        showCard(getCardName(certificate))
+      }
+    }
+
+    myCertificatesListPanel.border = IdeBorderFactory.createTitledBorder(
+      IdeBundle.message("settings.certificate.accepted.certificates"), false, JBUI.insetsTop(8))
+      .setShowLine(false)
+  }
+
+  private fun addCertificate(certificate: X509Certificate) {
+    myCertificates.add(certificate)
+    myTreeBuilder.addCertificate(certificate)
+    addCertificatePanel(certificate)
+    myTreeBuilder.selectCertificate(certificate)
+  }
+
+  private fun showCard(cardName: String) {
+    (myDetailsPanel.layout as CardLayout).show(myDetailsPanel, cardName)
+  }
+
+  private fun getCardName(certificate: X509Certificate): String = certificate.subjectX500Principal.name
+
+  private fun addCertificatePanel(certificate: X509Certificate) {
+    val uniqueName = getCardName(certificate)
+    val infoPanel: JPanel = CertificateInfoPanel(certificate)
+    UIUtil.addInsets(infoPanel, UIUtil.PANEL_REGULAR_INSETS)
+    val scrollPane = JBScrollPane(infoPanel)
+    myDetailsPanel.add(scrollPane, uniqueName)
   }
 
 }
