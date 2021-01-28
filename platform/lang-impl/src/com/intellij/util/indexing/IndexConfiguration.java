@@ -22,7 +22,7 @@ final class IndexConfiguration {
   private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = CollectionFactory.createSmallMemoryFootprintMap();
   private volatile boolean myFreezed;
 
-  <K, V> UpdatableIndex<K, V, FileContent> getIndex(@NotNull ID<K, V> indexId) {
+  @Nullable <K, V> UpdatableIndex<K, V, FileContent> getIndex(@NotNull ID<K, V> indexId) {
     assert myFreezed;
     final Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId.getUniqueId());
 

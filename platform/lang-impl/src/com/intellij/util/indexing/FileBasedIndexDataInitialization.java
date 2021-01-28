@@ -22,6 +22,9 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -33,13 +36,18 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
   private static final NotificationGroup NOTIFICATIONS = NotificationGroup.balloonGroup("Indexing", PluginManagerCore.CORE_ID);
   private static final Logger LOG = Logger.getInstance(FileBasedIndexDataInitialization.class);
 
-  private final IndexConfiguration state = new IndexConfiguration();
-  private final IndexVersionRegistrationSink registrationResultSink = new IndexVersionRegistrationSink();
-  private boolean currentVersionCorrupted;
+  private boolean myCurrentVersionCorrupted;
+
   @NotNull
   private final FileBasedIndexImpl myFileBasedIndex;
   @NotNull
   private final RegisteredIndexes myRegisteredIndexes;
+  @NotNull
+  private final IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
+  @NotNull
+  private final IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
+  @NotNull
+  private final IndexConfiguration myState = new IndexConfiguration();
 
   FileBasedIndexDataInitialization(@NotNull FileBasedIndexImpl index, @NotNull RegisteredIndexes registeredIndexes) {
     myFileBasedIndex = index;
@@ -66,7 +74,10 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
 
       tasks.add(() -> {
         try {
-          FileBasedIndexImpl.registerIndexer(extension, state, registrationResultSink);
+          FileBasedIndexImpl.registerIndexer(extension,
+                                             myState,
+                                             myRegistrationResultSink,
+                                             myStaleIds);
         }
         catch (IOException io) {
           throw io;
@@ -100,16 +111,16 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
 
     PersistentIndicesConfiguration.loadConfiguration();
 
-    currentVersionCorrupted = CorruptionMarker.requireInvalidation();
+    myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
     for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
       FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize();
-      currentVersionCorrupted = currentVersionCorrupted ||
+      myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
                                 result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
     boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
-    currentVersionCorrupted = currentVersionCorrupted || storageLayoutChanged;
+    myCurrentVersionCorrupted = myCurrentVersionCorrupted || storageLayoutChanged;
 
-    if (currentVersionCorrupted) {
+    if (myCurrentVersionCorrupted) {
       CorruptionMarker.dropIndexes();
     }
 
@@ -119,20 +130,20 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
   @Override
   protected IndexConfiguration finish() {
     try {
-      state.finalizeFileTypeMappingForIndices();
+      myState.finalizeFileTypeMappingForIndices();
 
       showChangedIndexesNotification();
 
-      registrationResultSink.logChangedAndFullyBuiltIndices(
+      myRegistrationResultSink.logChangedAndFullyBuiltIndices(
         FileBasedIndexImpl.LOG,
         "Indexes to be rebuilt after version change:",
-        currentVersionCorrupted ? "Indexes to be rebuilt after corruption:" : "Indices to be built:"
+        myCurrentVersionCorrupted ? "Indexes to be rebuilt after corruption:" : "Indices to be built:"
       );
 
-      state.freeze();
-      myRegisteredIndexes.setState(state); // memory barrier
+      myState.freeze();
+      myRegisteredIndexes.setState(myState); // memory barrier
       // check if rebuild was requested for any index during registration
-      for (ID<?, ?> indexId : state.getIndexIDs()) {
+      for (ID<?, ?> indexId : myState.getIndexIDs()) {
         try {
           RebuildStatus.clearIndexIfNecessary(indexId, () -> myFileBasedIndex.clearIndex(indexId));
         }
@@ -142,14 +153,16 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
         }
       }
 
-      return state;
+      StaleIndexesChecker.clearStaleIndexes(myStaleIds);
+
+      return myState;
     }
     finally {
 
       myFileBasedIndex.setUpFlusher();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
-      saveRegisteredIndicesAndDropUnregisteredOnes(state.getIndexIDs());
+      saveRegisteredIndicesAndDropUnregisteredOnes(myState.getIndexIDs());
     }
   }
 
@@ -158,11 +171,11 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
 
     String rebuildNotification = null;
 
-    if (currentVersionCorrupted) {
+    if (myCurrentVersionCorrupted) {
       rebuildNotification = IndexingBundle.message("index.corrupted.notification.text");
     }
-    else if (registrationResultSink.hasChangedIndexes()) {
-      rebuildNotification = IndexingBundle.message("index.format.changed.notification.text", registrationResultSink.changedIndices());
+    else if (myRegistrationResultSink.hasChangedIndexes()) {
+      rebuildNotification = IndexingBundle.message("index.format.changed.notification.text", myRegistrationResultSink.changedIndices());
     }
 
     if (rebuildNotification != null) {
