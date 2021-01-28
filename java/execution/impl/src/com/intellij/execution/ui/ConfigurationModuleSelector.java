@@ -65,14 +65,16 @@ public class ConfigurationModuleSelector {
   }
 
   public ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox) {
-    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
+    this(project, modulesDescriptionsComboBox, null);
   }
 
-  private ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox, @NlsContexts.ListItem @NotNull String emptySelectionText) {
+  private ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox, @NlsContexts.ListItem @Nullable String emptySelectionText) {
     myProject = project;
     myModulesDescriptionsComboBox = modulesDescriptionsComboBox;
     myModulesList = null;
-    modulesDescriptionsComboBox.allowEmptySelection(emptySelectionText);
+    if (emptySelectionText != null) {
+      modulesDescriptionsComboBox.allowEmptySelection(emptySelectionText);
+    }
   }
 
   public ConfigurationModuleSelector(@NotNull Project project, ModulesComboBox modulesComboBox, @NlsContexts.ListItem String noModule) {
