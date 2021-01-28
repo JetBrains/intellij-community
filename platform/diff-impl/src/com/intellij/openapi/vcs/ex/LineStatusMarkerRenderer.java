@@ -3,6 +3,9 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DefaultFlagsProvider;
 import com.intellij.openapi.diff.DiffBundle;
@@ -49,7 +52,7 @@ public abstract class LineStatusMarkerRenderer {
 
   @NotNull private final MergingUpdateQueue myUpdateQueue;
   private boolean myDisposed;
-  @NotNull private final RangeHighlighter myHighlighter;
+  @NotNull private RangeHighlighter myHighlighter;
   @NotNull private final List<RangeHighlighter> myTooltipHighlighters = new ArrayList<>();
 
   LineStatusMarkerRenderer(@NotNull LineStatusTrackerI<?> tracker) {
@@ -64,12 +67,29 @@ public abstract class LineStatusMarkerRenderer {
       destroyHighlighters();
     });
 
+    ApplicationManager.getApplication().getMessageBus().connect(myTracker.getDisposable())
+      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          scheduleValidateHighlighter();
+        }
+      });
+
     scheduleUpdate();
   }
 
   public void scheduleUpdate() {
     myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
       updateHighlighters();
+    }));
+  }
+
+  public void scheduleValidateHighlighter() {
+    // IDEA-246614
+    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "validate highlighter", () -> {
+      if (myDisposed || myHighlighter.isValid()) return;
+      disposeHighlighter(myHighlighter);
+      myHighlighter = createGutterHighlighter();
     }));
   }
 
