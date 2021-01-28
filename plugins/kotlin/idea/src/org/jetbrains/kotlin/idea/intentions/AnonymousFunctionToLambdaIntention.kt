@@ -11,11 +11,13 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParenthesesIfPossible
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.contentRange
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -58,8 +60,22 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
         val returnSaver = ReturnSaver(element)
         val body = element.bodyExpression!!
         val newExpression = KtPsiFactory(element).buildExpression {
-            if (callElement == null && !returnSaver.isEmpty) {
-                appendFixedText("lBlock@")
+            if (!returnSaver.isEmpty) {
+                val returnLabels = element.bodyExpression
+                    ?.collectDescendantsOfType<KtExpression>()
+                    ?.mapNotNull {
+                        when (it) {
+                            is KtLabeledExpression -> it.getLabelName()
+                            is KtCallExpression -> it.calleeExpression?.text
+                            else -> null
+                        }
+                    }
+                    .orEmpty()
+                val calleeText = callElement?.calleeExpression?.text
+                if (callElement == null || calleeText in returnLabels) {
+                    val label = KotlinNameSuggester.suggestNameByName(calleeText ?: "block") { it !in returnLabels }
+                    appendFixedText("$label@")
+                }
             }
             appendFixedText("{")
 
@@ -97,14 +113,15 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
         }
 
         val replaced = element.replaced(newExpression)
-        commentSaver.restore(replaced, forceAdjustIndent = true/* by some reason lambda body is sometimes not properly indented */)
-
         if (callElement != null) {
             val callExpression = replaced.parents.firstIsInstance<KtCallExpression>()
             val callee = callExpression.getCalleeExpressionIfAny() as? KtNameReferenceExpression ?: return
 
-            val returnLabel = callee.getReferencedNameAsName()
-            returnSaver.restore(replaced as KtLambdaExpression, returnLabel)
+            val labeledExpression = replaced as? KtLabeledExpression
+            val returnLabel = labeledExpression?.getLabelNameAsName() ?: callee.getReferencedNameAsName()
+            val lambda = (labeledExpression?.baseExpression ?: replaced) as KtLambdaExpression
+            returnSaver.restore(lambda, returnLabel)
+            commentSaver.restore(replaced, forceAdjustIndent = true)
 
             callExpression.getLastLambdaExpression()?.moveFunctionLiteralOutsideParenthesesIfPossible()
         } else {
@@ -112,6 +129,7 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
             val lambdaExpression = labeledExpression.baseExpression as? KtLambdaExpression ?: return
             val returnLabel = labeledExpression.getLabelNameAsName() ?: return
             returnSaver.restore(lambdaExpression, returnLabel)
+            commentSaver.restore(replaced, forceAdjustIndent = true)
         }
     }
 }

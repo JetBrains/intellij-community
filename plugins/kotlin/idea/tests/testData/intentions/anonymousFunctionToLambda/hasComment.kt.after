@@ -1,0 +1,7 @@
+fun foo(f: () -> Unit) {
+    f()
+}
+
+fun main() {
+    foo /* comment */ { val p = 1 }
+}

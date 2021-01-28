@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -100,7 +101,11 @@ fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
 }
 
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
-    val call = ((parent as? KtValueArgument)?.parent as? KtValueArgumentList)?.parent as? KtCallExpression ?: return
+    val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
+        KtPsiUtil.deparenthesize(it.getArgumentExpression()) == this
+    } ?: return
+    val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return
+    val call = valueArgumentList.parent as? KtCallExpression ?: return
     if (call.canMoveLambdaOutsideParentheses()) {
         call.moveFunctionLiteralOutsideParentheses()
     }

@@ -1,5 +1,5 @@
-val test = lBlock@{ i: Int, s: String ->
-    if (i == 42) return@lBlock s
+val test = block@{ i: Int, s: String ->
+    if (i == 42) return@block s
 
     if (s == "test") "$s" else "$i"
 }

@@ -2235,6 +2235,31 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/anonymousFunctionToLambda/fullParam.kt");
         }
 
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/hasComment.kt");
+        }
+
+        @TestMetadata("hasComment2.kt")
+        public void testHasComment2() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/hasComment2.kt");
+        }
+
+        @TestMetadata("hasLabel.kt")
+        public void testHasLabel() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/hasLabel.kt");
+        }
+
+        @TestMetadata("hasLabel2.kt")
+        public void testHasLabel2() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/hasLabel2.kt");
+        }
+
+        @TestMetadata("hasLabel3.kt")
+        public void testHasLabel3() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/hasLabel3.kt");
+        }
+
         @TestMetadata("moveOut.kt")
         public void testMoveOut() throws Exception {
             runTest("testData/intentions/anonymousFunctionToLambda/moveOut.kt");
