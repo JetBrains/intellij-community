@@ -2,11 +2,10 @@
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -175,15 +174,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
   @NotNull
   SearchScope getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
-    if (target instanceof TypeSafeDataProvider) {
-      SearchScope[] scope = new SearchScope[1];
-      ((TypeSafeDataProvider)target).calcData(UsageView.USAGE_SCOPE, new DataSink() {
-        @Override
-        public <T> void put(DataKey<T> key, T data) {
-          scope[0] = (SearchScope)data;
-        }
-      });
-      return scope[0];
+    DataProvider dataProvider = DataManagerImpl.getDataProviderEx(target);
+    SearchScope scope = dataProvider != null ? UsageView.USAGE_SCOPE.getData(dataProvider) : null;
+    if (scope != null) {
+      return scope;
     }
     return GlobalSearchScope.everythingScope(myProject); // by default do not warn of falling out of scope
   }

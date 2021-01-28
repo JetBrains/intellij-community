@@ -45,7 +45,7 @@ import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsLast;
 
-public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
+public class MemberChooser<T extends ClassMember> extends DialogWrapper implements DataProvider {
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
   protected JComponent[] myOptionControls;
@@ -662,16 +662,17 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     super.dispose();
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-    if (key.equals(CommonDataKeys.PSI_ELEMENT)) {
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
         T selectedElement = mySelectedElements.iterator().next();
-        if (selectedElement instanceof ClassMemberWithElement) {
-          sink.put(CommonDataKeys.PSI_ELEMENT, ((ClassMemberWithElement)selectedElement).getElement());
-        }
+        return selectedElement instanceof ClassMemberWithElement ?
+               ((ClassMemberWithElement)selectedElement).getElement() : null;
       }
     }
+    return null;
   }
 
   private class MyTreeSelectionListener implements TreeSelectionListener {

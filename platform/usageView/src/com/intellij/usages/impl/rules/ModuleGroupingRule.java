@@ -3,10 +3,8 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleType;
@@ -141,7 +139,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
   }
 
-  private static class ModuleUsageGroup extends UsageGroupBase implements TypeSafeDataProvider {
+  private static class ModuleUsageGroup extends UsageGroupBase implements DataProvider {
     private final Module myModule;
     private final ModuleGrouper myGrouper;
 
@@ -184,12 +182,14 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       return UsageViewBundle.message("node.group.module", getText(null));
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (LangDataKeys.MODULE_CONTEXT == key) {
-        sink.put(LangDataKeys.MODULE_CONTEXT, myModule);
+    public Object getData(@NotNull String dataId) {
+      if (!isValid()) return null;
+      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
+        return myModule;
       }
+      return null;
     }
   }
 

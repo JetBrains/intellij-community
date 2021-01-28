@@ -1990,7 +1990,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myModel.areTargetsValid();
   }
 
-  private final class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator, Disposable {
+  private final class MyPanel extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
     @Nullable private OccurenceNavigatorSupport mySupport;
     private final CopyProvider myCopyProvider;
 
@@ -2078,78 +2078,74 @@ public class UsageViewImpl implements UsageViewEx {
       return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-      if (key == CommonDataKeys.PROJECT) {
-        sink.put(CommonDataKeys.PROJECT, myProject);
+    public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myProject;
       }
-      else if (key == USAGE_VIEW_KEY) {
-        sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
+      else if (USAGE_VIEW_KEY.is(dataId)) {
+        return UsageViewImpl.this;
       }
-      else if (key == ExclusionHandler.EXCLUSION_HANDLER) {
-        sink.put(ExclusionHandler.EXCLUSION_HANDLER, myExclusionHandler);
+      else if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
+        return myExclusionHandler;
       }
 
-      else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
+      else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
         Node[] nodes = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNodes() : null;
-        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(nodes));
+        return getNavigatablesForNodes(nodes);
       }
 
-      else if (key == PlatformDataKeys.EXPORTER_TO_TEXT_FILE) {
-        sink.put(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myTextFileExporter);
+      else if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
+        return myTextFileExporter;
       }
 
-      else if (key == USAGES_KEY) {
+      else if (USAGES_KEY.is(dataId)) {
         Set<Usage> selectedUsages = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsages() : null;
-        sink.put(USAGES_KEY, selectedUsages == null ? null : selectedUsages.toArray(Usage.EMPTY_ARRAY));
+        return selectedUsages == null ? null : selectedUsages.toArray(Usage.EMPTY_ARRAY);
       }
 
-      else if (key == USAGE_TARGETS_KEY) {
+      else if (USAGE_TARGETS_KEY.is(dataId)) {
         UsageTarget[] targets = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsageTargets() : null;
-        sink.put(USAGE_TARGETS_KEY, targets);
+        return targets;
       }
 
-      else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
+      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         Set<Usage> usages = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsages() : null;
         Usage[] ua = usages == null ? null : usages.toArray(Usage.EMPTY_ARRAY);
         UsageTarget[] usageTargets = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsageTargets() : null;
-        VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, usageTargets);
-        sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, data);
+        return UsageDataUtil.provideVirtualFileArray(ua, usageTargets);
       }
-      else if (key == PlatformDataKeys.HELP_ID) {
-        sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
+      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return HELP_ID;
       }
-      else if (key == PlatformDataKeys.COPY_PROVIDER) {
-        sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+      else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return myCopyProvider;
       }
-      else if (key == LangDataKeys.PSI_ELEMENT_ARRAY) {
+      else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
-          sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
+          return getSelectedUsages()
             .stream()
             .filter(u -> u instanceof PsiElementUsage)
             .map(u -> ((PsiElementUsage)u).getElement())
             .filter(Objects::nonNull)
-            .toArray(PsiElement.ARRAY_FACTORY::create));
+            .toArray(PsiElement.ARRAY_FACTORY::create);
         }
       }
       else {
         // can arrive here outside EDT from usage view preview.
         // ignore all these fancy actions in this case.
         Node node = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNode() : null;
-        if (node != null) {
-          Object userObject = node.getUserObject();
-          if (userObject instanceof TypeSafeDataProvider) {
-            ((TypeSafeDataProvider)userObject).calcData(key, sink);
-          }
-          else if (userObject instanceof DataProvider) {
-            DataProvider dataProvider = (DataProvider)userObject;
-            Object data = dataProvider.getData(key.getName());
-            if (data != null) {
-              sink.put(key, data);
-            }
+        Object userObject = TreeUtil.getUserObject(node);
+        if (userObject instanceof DataProvider) {
+          DataProvider dataProvider = (DataProvider)userObject;
+          Object data = dataProvider.getData(dataId);
+          if (data != null) {
+            return data;
           }
         }
       }
+      return null;
     }
   }
 

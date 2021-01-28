@@ -8,10 +8,8 @@ import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.model.Pointer
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
@@ -28,7 +26,7 @@ internal class SearchTarget2UsageTarget<O>(
   private val project: Project,
   target: SearchTarget,
   private val allOptions: AllSearchOptions<O>
-) : UsageTarget, TypeSafeDataProvider, ConfigurableUsageTarget {
+) : UsageTarget, DataProvider, ConfigurableUsageTarget {
 
   private val myPointer: Pointer<out SearchTarget> = target.createPointer()
   override fun isValid(): Boolean = myPointer.dereference() != null
@@ -94,9 +92,10 @@ internal class SearchTarget2UsageTarget<O>(
 
   // ----- data context -----
 
-  override fun calcData(key: DataKey<*>, sink: DataSink) {
-    if (key === UsageView.USAGE_SCOPE) {
-      sink.put(UsageView.USAGE_SCOPE, allOptions.options.searchScope)
+  override fun getData(dataId: String): Any? {
+    if (UsageView.USAGE_SCOPE.`is`(dataId)) {
+      return allOptions.options.searchScope
     }
+    return null
   }
 }

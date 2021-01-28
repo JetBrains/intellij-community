@@ -55,7 +55,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDataProvider {
+public abstract class AbstractTableView<T> extends JPanel implements DataProvider {
   private final MyTableView myTable = new MyTableView();
   @NonNls private final String myHelpID;
   @Nls(capitalization = Nls.Capitalization.Sentence) private final String myEmptyPaneText;
@@ -230,11 +230,13 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     return myTableModel;
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (PlatformDataKeys.HELP_ID.equals(key)) {
-      sink.put(PlatformDataKeys.HELP_ID, getHelpId());
+  public Object getData(@NotNull String dataId) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return getHelpId();
     }
+    return null;
   }
 
   private String getHelpId() {

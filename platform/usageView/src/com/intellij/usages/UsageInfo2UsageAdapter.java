@@ -5,9 +5,7 @@ import com.intellij.ide.SelectInEditorManager;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -45,7 +43,7 @@ import java.util.*;
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
-                                               RenameableUsage, TypeSafeDataProvider, UsagePresentation {
+                                               RenameableUsage, DataProvider, UsagePresentation {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
 
@@ -441,15 +439,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return result;
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-    if (key == UsageView.USAGE_INFO_KEY) {
-      sink.put(UsageView.USAGE_INFO_KEY, getUsageInfo());
+  public Object getData(@NotNull String dataId) {
+    if (UsageView.USAGE_INFO_KEY.is(dataId)) {
+      return getUsageInfo();
     }
-    if (key == UsageView.USAGE_INFO_LIST_KEY) {
-      List<UsageInfo> list = Arrays.asList(getMergedInfos());
-      sink.put(UsageView.USAGE_INFO_LIST_KEY, list);
+    if (UsageView.USAGE_INFO_LIST_KEY.is(dataId)) {
+      return Arrays.asList(getMergedInfos());
     }
+    return null;
   }
 
   private long myModificationStamp;

@@ -50,7 +50,10 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.util.*;
@@ -458,7 +461,7 @@ public final class FindInProjectUtil {
     }
   }
 
-  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {
+  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, DataProvider {
     @NotNull protected final Project myProject;
     @NotNull protected final FindModel myFindModel;
 
@@ -537,12 +540,13 @@ public final class FindInProjectUtil {
       return ActionManager.getInstance().getKeyboardShortcut("FindInPath");
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-      if (UsageView.USAGE_SCOPE.equals(key)) {
-        SearchScope scope = getScopeFromModel(myProject, myFindModel);
-        sink.put(UsageView.USAGE_SCOPE, scope);
+    public Object getData(@NotNull String dataId) {
+      if (UsageView.USAGE_SCOPE.is(dataId)) {
+        return getScopeFromModel(myProject, myFindModel);
       }
+      return null;
     }
   }
 

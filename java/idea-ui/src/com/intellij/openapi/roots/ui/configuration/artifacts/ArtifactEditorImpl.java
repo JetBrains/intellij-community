@@ -8,7 +8,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -59,7 +58,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class ArtifactEditorImpl implements ArtifactEditorEx {
+public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;
@@ -190,7 +189,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public JComponent createMainComponent() {
     myLayoutTreeComponent.initTree();
-    DataManager.registerDataProvider(myMainPanel, new TypeSafeDataProviderAdapter(new MyDataProvider()));
+    DataManager.registerDataProvider(myMainPanel, this);
 
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
@@ -550,13 +549,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return helpId != null ? helpId : "reference.settingsdialog.project.structure.artifacts";
   }
 
-  private class MyDataProvider implements TypeSafeDataProvider {
-    @Override
-    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-      if (ARTIFACTS_EDITOR_KEY.equals(key)) {
-        sink.put(ARTIFACTS_EDITOR_KEY, ArtifactEditorImpl.this);
-      }
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (ARTIFACTS_EDITOR_KEY.is(dataId)) {
+      return this;
     }
+    return null;
   }
 
 }
