@@ -32,54 +32,13 @@ class CertificateManager() {
   private val myTrustManager = NotNullLazyValue.atomicLazy {
     ConfirmingTrustManager.createForStorage(DEFAULT_PATH, DEFAULT_PASSWORD)
   }
-  private val mySslContext = NotNullLazyValue.atomicLazy { calcSslContext() }
 
-  /**
-   * Creates special kind of `SSLContext`, which X509TrustManager first checks certificate presence in
-   * in default system-wide trust store (usually located at `${JAVA_HOME}/lib/security/cacerts` or specified by
-   * `javax.net.ssl.trustStore` property) and when in the one specified by the constant [.DEFAULT_PATH].
-   * If certificate wasn't found in either, manager will ask user, whether it can be
-   * accepted (like web-browsers do) and then, if it does, certificate will be added to specified trust store.
-   *
-   *
-   * If any error occurred during creation its message will be logged and system default SSL context will be returned
-   * so clients don't have to deal with awkward JSSE errors.
-   *
-   * This method may be used for transition to HttpClient 4.x (see `HttpClientBuilder#setSslContext(SSLContext)`)
-   * and `org.apache.http.conn.ssl.SSLConnectionSocketFactory()`.
-   *
-   * @return instance of SSLContext with described behavior or default SSL context in case of error
-   */
-  @get:Synchronized
-  val sslContext: SSLContext
-    get() = mySslContext.value
-
-  private fun calcSslContext(): SSLContext {
-    val context: SSLContext = getSystemSslContext()
-    try {
-      // SSLContext context = SSLContext.getDefault();
-      // NOTE: existence of default trust manager can be checked here as
-      // assert systemManager.getAcceptedIssuers().length != 0
-      context.init(getDefaultKeyManagers(), arrayOf<TrustManager>(
-        trustManager), null)
-    }
-    catch (e: KeyManagementException) {
-      LOG.error(e)
-    }
-    return context
-  }
-
-  val cacertsPath: String
-    get() = DEFAULT_PATH
-  val password: String
-    get() = DEFAULT_PASSWORD
-  val trustManager: ConfirmingTrustManager
-    get() = myTrustManager.value
-  val customTrustManager: MutableTrustManager
-    get() = trustManager.customManager
+  val cacertsPath: String = DEFAULT_PATH
+  val password = DEFAULT_PASSWORD
+  val trustManager = myTrustManager.value
+  val customTrustManager: MutableTrustManager = trustManager.customManager
 
   companion object {
-    val COMPONENT_NAME: @NonNls String = "Certificate Manager"
     val DEFAULT_PATH = java.lang.String.join(File.separator, PathManager.getConfigPath(), "plugins", "cacerts")
     val DEFAULT_PASSWORD: @NonNls String = "changeit"
     private val LOG = Logger.getInstance(CertificateManager::class.java)
@@ -92,65 +51,8 @@ class CertificateManager() {
     val instance: CertificateManager
       get() = ApplicationManager.getApplication().getService(CertificateManager::class.java)
 
-
-    // NOTE: SSLContext.getDefault() should not be called because it automatically creates
-    // default context which can't be initialized twice
-    val systemSslContext: SSLContext
-      get() {
-        // NOTE: SSLContext.getDefault() should not be called because it automatically creates
-        // default context which can't be initialized twice
-        try {
-          // actually TLSv1 support is mandatory for Java platform
-          val context = SSLContext.getInstance(CertificateUtil.TLS)
-          context.init(null, null, null)
-          return context
-        }
-        catch (e: NoSuchAlgorithmException) {
-          LOG.error(e)
-          throw AssertionError("Cannot get system SSL context")
-        }
-        catch (e: KeyManagementException) {
-          LOG.error(e)
-          throw AssertionError("Cannot initialize system SSL context")
-        }
-      }
   }
 
-  /**
-   * Component initialization constructor
-   */
-  init {
-    AppExecutorUtil.getAppExecutorService().execute {
-      try {
-        // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
-        // Protocol.registerProtocol("https", createDefault().createProtocol());
-        SSLContext.setDefault(sslContext)
-        LOG.info("Default SSL context initialized")
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
-    }
-  }
-
-  fun getSystemSslContext(): SSLContext {
-    // NOTE: SSLContext.getDefault() should not be called because it automatically creates
-    // default context which can't be initialized twice
-    return try {
-      // actually TLSv1 support is mandatory for Java platform
-      val context = SSLContext.getInstance(CertificateUtil.TLS)
-      context.init(null, null, null)
-      context
-    }
-    catch (e: NoSuchAlgorithmException) {
-      LOG.error(e)
-      throw AssertionError("Cannot get system SSL context")
-    }
-    catch (e: KeyManagementException) {
-      LOG.error(e)
-      throw AssertionError("Cannot initialize system SSL context")
-    }
-  }
 
   /**
    * Workaround for IDEA-124057. Manually find key store specified via VM options.
