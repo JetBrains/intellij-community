@@ -34,6 +34,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
+import java.awt.Rectangle
 import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -78,9 +79,33 @@ class SubmittableTextField(
     add(textFieldWithOverlay, CC().grow().pushX())
     add(cancelButton, CC().alignY("top").hideMode(3))
 
-
     Controller(this, textField, busyLabel, submitButton, cancelButton, onCancel)
     UiNotifyConnector(textField, ValidatorActivatable(textField))
+
+    installScrollIfChangedController()
+  }
+
+  private fun installScrollIfChangedController() {
+    fun scroll() {
+      scrollRectToVisible(Rectangle(0, 0, width, height))
+    }
+
+    model.document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        scroll()
+      }
+    })
+
+    // previous listener doesn't work properly when text field's size is changed because
+    // component is not resized at this moment, so we need to handle resizing too
+    // it also produces such behavior: resize of the ancestor will scroll to the field
+    addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        if (UIUtil.isFocusAncestor(this@SubmittableTextField)) {
+          scroll()
+        }
+      }
+    })
   }
 
   private inner class ValidatorActivatable(private val textField: EditorTextField) : Activatable {
