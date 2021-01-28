@@ -34,7 +34,6 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -239,9 +238,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
       counter.incrementAndGet();
       dumbService.unsafeRunWhenSmart(() -> {
-        SlowOperations.allowSlowOperations(
-          () -> runActivity(uiFreezeWarned, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator())
-        );
+        runActivity(uiFreezeWarned, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
         dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet());
       });
     });
