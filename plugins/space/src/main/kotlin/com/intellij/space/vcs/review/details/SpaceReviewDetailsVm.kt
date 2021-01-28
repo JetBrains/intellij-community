@@ -12,8 +12,10 @@ import circlet.platform.client.*
 import circlet.workspaces.Workspace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.space.editor.SpaceVirtualFilesManager
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
@@ -126,7 +128,10 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
                                                  projectKey,
                                                  selectedChangesVm,
                                                  SpaceReviewDiffLoader(lifetime, client),
-                                                 participantsVm)
+                                                 participantsVm).also {
+   ideaProject.service<SpaceVirtualFilesManager>()
+      .updateDiffPresentation(selectedChangesVm, it)
+  }
 }
 
 private fun <T> selectedOrAll(tab: SelectedTab, selected: T, all: T): T = when (tab) {

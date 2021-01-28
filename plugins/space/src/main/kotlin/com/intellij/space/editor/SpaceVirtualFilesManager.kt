@@ -13,6 +13,7 @@ import com.intellij.space.chat.editor.SpaceChatFile
 import com.intellij.space.chat.model.api.SpaceChatHeaderDetails
 import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
+import com.intellij.space.vcs.review.details.diff.SpaceDiffFileData
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFileId
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.util.containers.ContainerUtil.createWeakValueMap
@@ -44,7 +45,14 @@ internal class SpaceVirtualFilesManager(private val project: Project) : Disposab
     changesVm: runtime.reactive.Property<SpaceReviewChangesVm>,
     diffVm: SpaceDiffVm
   ): SpaceDiffFile = SpaceDiffFileId(diffVm.projectKey.key, diffVm.reviewKey, diffVm.reviewId).let { fileId ->
-    diffFiles.getOrPut(fileId) { SpaceDiffFile(sessionId, project.locationHash, fileId, changesVm, diffVm) }
+    diffFiles.getOrPut(fileId) { SpaceDiffFile(sessionId, project.locationHash, fileId, diffVm.reviewKey) }
+      .apply { updateDiffPresentation(changesVm, diffVm) }
+  }
+
+  fun updateDiffPresentation(changesVm: runtime.reactive.Property<SpaceReviewChangesVm>,
+                             diffVm: SpaceDiffVm) {
+    val fileId = SpaceDiffFileId(diffVm.projectKey.key, diffVm.reviewKey, diffVm.reviewId)
+    diffFiles[fileId]?.updateDiffFileData(SpaceDiffFileData(changesVm, diffVm))
   }
 
   override fun dispose() {

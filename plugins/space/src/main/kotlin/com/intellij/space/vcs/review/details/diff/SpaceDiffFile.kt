@@ -10,6 +10,9 @@ import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.vcs.review.details.SpaceReviewChangesVm
 import com.intellij.testFramework.LightVirtualFile
 import icons.SpaceIcons
+import runtime.reactive.MutableProperty
+import runtime.reactive.Property
+import runtime.reactive.mutableProperty
 import javax.swing.Icon
 
 internal data class SpaceDiffFileId(val projectKey: String, val reviewKey: String, val reviewId: TID)
@@ -18,14 +21,18 @@ internal class SpaceDiffFile(
   private val sessionId: String,
   private val projectHash: String,
   val fileId: SpaceDiffFileId,
-  val changesVm: runtime.reactive.Property<SpaceReviewChangesVm>,
-  val diffVm: SpaceDiffVm
-) : LightVirtualFile(SpaceBundle.message("review.diff.tab.title", diffVm.reviewKey),
+  reviewKey: String
+) : LightVirtualFile(SpaceBundle.message("review.diff.tab.title", reviewKey),
                      SpaceDiffFileType,
                      ""), DiffContentVirtualFile, VirtualFilePathWrapper {
 
   init {
     isWritable = false
+  }
+  val spaceDiffFileData: MutableProperty<SpaceDiffFileData?> = mutableProperty(null)
+
+  fun updateDiffFileData(newSpaceFileData: SpaceDiffFileData) {
+    spaceDiffFileData.value = newSpaceFileData
   }
 
   override fun getFileSystem() = SpaceDiffComplexPathVirtualFileSystem.getInstance()
@@ -70,3 +77,8 @@ object SpaceDiffFileType : FileType {
 
   override fun isReadOnly(): Boolean = true
 }
+
+internal data class SpaceDiffFileData(
+  val changesVm: Property<SpaceReviewChangesVm>,
+  val spaceDiffVm: SpaceDiffVm
+)
