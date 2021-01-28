@@ -280,7 +280,8 @@ public final class AnnotationTargetUtil {
   }
 
   /**
-   * Prefers "normal" target when type use annotation appears at the place where it's also applicable
+   * Prefers "normal" target when type use annotation appears at the place where it's also applicable.
+   * Treat nullability annotations as TYPE_USE: we need to copy these annotations otherwise, and then the place of the annotation in modifier list may differ
    * 
    * @param modifierList the place where annotation appears
    * 
@@ -298,6 +299,7 @@ public final class AnnotationTargetUtil {
       Set<PsiAnnotation.TargetType> targets = getAnnotationTargets(annotationClass);
       if (targets != null && targets.contains(PsiAnnotation.TargetType.TYPE_USE) &&
           (targets.size() == 1 ||
+           NullableNotNullManager.isNullabilityAnnotation(annotation) ||
            !ContainerUtil.exists(getTargetsForLocation(modifierList),
                                  target -> target != PsiAnnotation.TargetType.TYPE_USE && targets.contains(target)))) {
         return true;

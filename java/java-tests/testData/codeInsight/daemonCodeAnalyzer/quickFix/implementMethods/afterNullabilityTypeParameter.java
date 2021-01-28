@@ -9,9 +9,8 @@ abstract class Foo<T> {
 
 class FooImpl extends Foo<String> {
 
-    @Nullable
     @Override
-    public String getSmth() {
+    public @Nullable String getSmth() {
         return null;
     }
 }
