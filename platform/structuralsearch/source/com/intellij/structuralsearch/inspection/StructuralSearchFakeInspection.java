@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -23,7 +23,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +45,16 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   public StructuralSearchFakeInspection(@NotNull Collection<@NotNull Configuration> configurations) {
     if (configurations.isEmpty()) throw new IllegalArgumentException();
+
     myConfigurations = new SmartList<>(configurations);
     myConfigurations.sort(Comparator.comparingInt(Configuration::getOrder));
+    final int size = myConfigurations.size();
+    for (int i = 0; i < size; i++) {
+      final Configuration configuration = myConfigurations.get(i);
+      if (configuration.getOrder() != i) {
+        configuration.setOrder(i); // fix corruption
+      }
+    }
     myMainConfiguration = myConfigurations.get(0);
   }
 
@@ -69,8 +76,6 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return true;
   }
 
-  @SuppressWarnings("PatternValidation")
-  @Pattern(VALID_ID_PATTERN)
   @NotNull
   @Override
   public String getID() {
@@ -186,13 +191,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     list.setSelectedIndices(indices);
     list.scrollRectToVisible(list.getCellBounds(indices[0], indices[indices.length - 1]));
     model.fireContentsChanged(list);
-
-    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
-    if (profile == null) return;
-    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
-    inspection.addConfigurations(myConfigurations);
-    profile.setModified(true);
+    saveChangesToProfile(list);
   }
 
   @NotNull
@@ -241,14 +240,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     }
     final int index = list.getSelectedIndex();
     list.scrollRectToVisible(list.getCellBounds(index, index));
-
-
-    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
-    if (profile == null) return;
-    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
-    inspection.addConfigurations(myConfigurations);
-    profile.setModified(true);
+    saveChangesToProfile(list);
   }
 
   private void performEdit(@NotNull JList<Configuration> list) {
@@ -267,14 +259,16 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       myMainConfiguration = newConfiguration;
     }
     myConfigurations.set(index, newConfiguration);
-    final MyListModel model = (MyListModel)list.getModel();
-    model.fireContentsChanged(list);
+    ((MyListModel)list.getModel()).fireContentsChanged(list);
+    saveChangesToProfile(list);
+  }
 
+  private void saveChangesToProfile(@NotNull JList<Configuration> list) {
     final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
     if (profile == null) return;
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    inspection.removeConfiguration(configuration);
-    inspection.addConfiguration(newConfiguration);
+    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
+    inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
   }
 
