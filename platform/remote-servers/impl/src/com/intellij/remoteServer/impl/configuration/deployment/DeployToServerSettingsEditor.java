@@ -4,6 +4,7 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -82,16 +83,18 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       updateBeforeRunOptions(selectedSource, true);
     }
     if (selectedSource != null && selectedServer != null) {
-      myDeploymentSettingsComponent.removeAll();
-      myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
-      if (myDeploymentSettingsEditor != null) {
-        if (myDeploymentConfiguration != null) {
-          myDeploymentSettingsEditor.resetFrom(myDeploymentConfiguration);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myDeploymentSettingsComponent.removeAll();
+        myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
+        if (myDeploymentSettingsEditor != null) {
+          if (myDeploymentConfiguration != null) {
+            myDeploymentSettingsEditor.resetFrom(myDeploymentConfiguration);
+          }
+          myDeploymentSettingsEditor.addSettingsEditorListener(e -> fireEditorStateChanged());
+          Disposer.register(this, myDeploymentSettingsEditor);
+          myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
         }
-        myDeploymentSettingsEditor.addSettingsEditorListener(e -> fireEditorStateChanged());
-        Disposer.register(this, myDeploymentSettingsEditor);
-        myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
-      }
+      });
     }
     myLastSelectedSource = selectedSource;
     myLastSelectedServer = selectedServer;
