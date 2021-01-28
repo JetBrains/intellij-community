@@ -56,12 +56,7 @@ class PluginCertificateConfigurable :
                   IdeBundle.message("settings.certificate.not.imported")
                 )
               }
-              else -> {
-                myCertificates.add(certificate)
-                myTreeBuilder.addCertificate(certificate)
-                addCertificatePanel(certificate)
-                myTreeBuilder.selectCertificate(certificate)
-              }
+              else -> addCertificate(certificate)
             }
           }
         }
@@ -141,6 +136,13 @@ class PluginCertificateConfigurable :
     myCertificatesListPanel.border = IdeBorderFactory.createTitledBorder(
       IdeBundle.message("settings.certificate.accepted.certificates"), false, JBUI.insetsTop(8))
       .setShowLine(false)
+  }
+
+  private fun addCertificate(certificate: X509Certificate) {
+    myCertificates.add(certificate)
+    myTreeBuilder.addCertificate(certificate)
+    addCertificatePanel(certificate)
+    myTreeBuilder.selectCertificate(certificate)
   }
 
   private fun showCard(cardName: String) {
