@@ -60,7 +60,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     JavaParameters parameters = state.getJavaParameters();
     parameters.setUseDynamicClasspath(project);
     state.resolveServerSocketPort(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
-    //parameters.getVMParametersList().addParametersString("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5007");
+    //parameters.getVMParametersList().addParametersString("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5007");
     GeneralCommandLine commandLine = parameters.toCommandLine();
 
     OSProcessHandler process = new OSProcessHandler(commandLine);
@@ -83,7 +83,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
 
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        String text = event.getText();
+        String text = event.getText().trim();
         if (StringUtil.isEmptyOrSpaces(text)) return;
         try {
           if (outputType == ProcessOutputTypes.STDOUT) {
