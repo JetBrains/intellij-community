@@ -145,7 +145,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
       return null;
     }
 
-    VirtualFile parent = root;
+    VirtualFile parent = root.isDirectory() ? root : root.getParent();
     while (parent != null) {
       // do not check same directory twice
       if (!skipDirs.add(parent)) {
