@@ -293,6 +293,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     return (template == null) ? new SearchConfiguration(getUserDefined(), getUserDefined()) : new SearchConfiguration(template);
   }
 
+  static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
+    return SSRBundle.message("new.template.defaultname");
+  }
+
   private void setTextFromContext() {
     final Editor editor = myEditor;
     if (editor != null) {
@@ -923,6 +927,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   @Override
+  protected @NotNull Alarm.ThreadToUse getValidationThreadToUse() {
+    return Alarm.ThreadToUse.POOLED_THREAD;
+  }
+
+  @Override
   protected @NotNull List<ValidationInfo> doValidateAll() {
     final JRootPane component = getRootPane();
     if (component == null) {
@@ -1326,10 +1335,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
       }
     }
-  }
-
-  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
-    return SSRBundle.message("new.template.defaultname");
   }
 
   private class MyEditorTextField extends EditorTextField {
