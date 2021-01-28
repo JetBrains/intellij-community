@@ -37,41 +37,8 @@ class PluginCertificateConfigurable :
     row {
       val decorator = ToolbarDecorator.createDecorator(myTree)
         .disableUpDownActions()
-        .setAddAction { // show choose file dialog, add certificate
-          FileChooser.chooseFile(CERTIFICATE_DESCRIPTOR, null, null) { file: VirtualFile ->
-            val path = file.path
-            val certificate = CertificateUtil.loadX509Certificate(path)
-            when {
-              certificate == null -> {
-                Messages.showErrorDialog(
-                  myRootPanel,
-                  IdeBundle.message("settings.certificate.malformed.x509.server.certificate"),
-                  IdeBundle.message("settings.certificate.not.imported")
-                )
-              }
-              myCertificates.contains(certificate) -> {
-                Messages.showWarningDialog(
-                  myRootPanel,
-                  IdeBundle.message("settings.certificate.certificate.already.exists"),
-                  IdeBundle.message("settings.certificate.not.imported")
-                )
-              }
-              else -> addCertificate(certificate)
-            }
-          }
-        }
-        .setRemoveAction { // allow to delete several certificates at once
-          for (certificate in myTreeBuilder.getSelectedCertificates(true)) {
-            myCertificates.remove(certificate)
-            myTreeBuilder.removeCertificate(certificate)
-          }
-          if (myCertificates.isEmpty()) {
-            showCard(EMPTY_PANEL)
-          }
-          else {
-            myTreeBuilder.selectFirstCertificate()
-          }
-        }
+        .setAddAction { chooseFileAndAdd() }
+        .setRemoveAction { removeSelectedCertificates() }
         .createPanel()
       decorator(growX)
     }
@@ -101,10 +68,7 @@ class PluginCertificateConfigurable :
     ".der", ".DER"
   )
   private val EMPTY_PANEL = "empty.panel"
-
-
   private val myTrustManager: MutableTrustManager = CertificateManager.instance.customTrustManager
-
   private val myTreeBuilder: CertificateTreeBuilder = CertificateTreeBuilder(myTree)
   private val myCertificates = mutableSetOf<X509Certificate>()
 
@@ -157,16 +121,10 @@ class PluginCertificateConfigurable :
 
   private fun init() {
     // show newly added certificates
-    // show newly added certificates
     myTrustManager.addListener(this)
-
     myTree.emptyText.text = IdeBundle.message("settings.certificate.no.certificates")
     myTree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
     myTree.isRootVisible = false
-    //myTree.setShowsRootHandles(false);
-
-    //myTree.setShowsRootHandles(false);
-
     myTree.addTreeSelectionListener {
       val certificate = myTreeBuilder.getFirstSelectedCertificate(true)
       if (certificate != null) {
@@ -179,11 +137,48 @@ class PluginCertificateConfigurable :
       .setShowLine(false)
   }
 
+  private fun chooseFileAndAdd() {
+    FileChooser.chooseFile(CERTIFICATE_DESCRIPTOR, null, null) { file: VirtualFile ->
+      val path = file.path
+      val certificate = CertificateUtil.loadX509Certificate(path)
+      when {
+        certificate == null -> {
+          Messages.showErrorDialog(
+            myRootPanel,
+            IdeBundle.message("settings.certificate.malformed.x509.server.certificate"),
+            IdeBundle.message("settings.certificate.not.imported")
+          )
+        }
+        myCertificates.contains(certificate) -> {
+          Messages.showWarningDialog(
+            myRootPanel,
+            IdeBundle.message("settings.certificate.certificate.already.exists"),
+            IdeBundle.message("settings.certificate.not.imported")
+          )
+        }
+        else -> addCertificate(certificate)
+      }
+    }
+  }
+
   private fun addCertificate(certificate: X509Certificate) {
     myCertificates.add(certificate)
     myTreeBuilder.addCertificate(certificate)
     addCertificatePanel(certificate)
     myTreeBuilder.selectCertificate(certificate)
+  }
+
+  private fun removeSelectedCertificates() {
+    for (certificate in myTreeBuilder.getSelectedCertificates(true)) {
+      myCertificates.remove(certificate)
+      myTreeBuilder.removeCertificate(certificate)
+    }
+    if (myCertificates.isEmpty()) {
+      showCard(EMPTY_PANEL)
+    }
+    else {
+      myTreeBuilder.selectFirstCertificate()
+    }
   }
 
   private fun showCard(cardName: String) {
