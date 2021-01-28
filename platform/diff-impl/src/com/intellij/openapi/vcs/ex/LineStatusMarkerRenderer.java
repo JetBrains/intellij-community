@@ -55,24 +55,9 @@ public abstract class LineStatusMarkerRenderer {
   LineStatusMarkerRenderer(@NotNull LineStatusTrackerI<?> tracker) {
     myTracker = tracker;
     myEditorFilter = getEditorFilter();
-
-    Document document = myTracker.getDocument();
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
-    myHighlighter = markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.getTextLength(),
-                                                                       DiffDrawUtil.LST_LINE_MARKER_LAYER,
-                                                                       HighlighterTargetArea.LINES_IN_RANGE,
-                                                                       false, it -> {
-        it.setGreedyToLeft(true);
-        it.setGreedyToRight(true);
-
-        it.setLineMarkerRenderer(new MyActiveGutterRenderer());
-        if (myEditorFilter != null) it.setEditorFilter(myEditorFilter);
-
-        // ensure key is there in MarkupModelListener.afterAdded event
-        it.putUserData(MAIN_KEY, true);
-      });
-
     myUpdateQueue = new MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, ANY_COMPONENT, myTracker.getDisposable());
+
+    myHighlighter = createGutterHighlighter();
 
     Disposer.register(myTracker.getDisposable(), () -> {
       myDisposed = true;
@@ -86,6 +71,25 @@ public abstract class LineStatusMarkerRenderer {
     myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
       updateHighlighters();
     }));
+  }
+
+  @NotNull
+  private RangeHighlighter createGutterHighlighter() {
+    Document document = myTracker.getDocument();
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
+    return markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.getTextLength(),
+                                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                              HighlighterTargetArea.LINES_IN_RANGE,
+                                                              false, it -> {
+        it.setGreedyToLeft(true);
+        it.setGreedyToRight(true);
+
+        it.setLineMarkerRenderer(new MyActiveGutterRenderer());
+        if (myEditorFilter != null) it.setEditorFilter(myEditorFilter);
+
+        // ensure key is there in MarkupModelListener.afterAdded event
+        it.putUserData(MAIN_KEY, true);
+      });
   }
 
   @RequiresEdt
