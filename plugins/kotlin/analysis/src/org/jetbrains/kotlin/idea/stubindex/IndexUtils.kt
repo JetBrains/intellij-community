@@ -16,16 +16,23 @@ import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.util.aliasImportMap
 
 fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
-    if (stub.isExtension()) {
-        val declaration = stub.psi
-        val containingTypeReference = declaration.receiverTypeReference!!
-        containingTypeReference.typeElement?.index(declaration, containingTypeReference) { typeName ->
-            val name = declaration.name ?: return@index
-            sink.occurrence(
-                KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.key,
-                KotlinTopLevelExtensionsByReceiverTypeIndex.buildKey(typeName, name)
-            )
-        }
+    KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
+}
+
+private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeIndex.indexExtension(
+    stub: KotlinCallableStubBase<TDeclaration>,
+    sink: IndexSink
+) {
+    if (!stub.isExtension()) return
+
+    val declaration = stub.psi
+    val callableName = declaration.name ?: return
+    val containingTypeReference = declaration.receiverTypeReference!!
+    containingTypeReference.typeElement?.index(declaration, containingTypeReference) { typeName ->
+        sink.occurrence(
+            key,
+            buildKey(typeName, callableName)
+        )
     }
 }
 

@@ -5,30 +5,30 @@
 
 package org.jetbrains.kotlin.idea.stubindex
 
-import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-
-class KotlinTopLevelExtensionsByReceiverTypeIndex private constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
-
+class KotlinTopLevelExtensionsByReceiverTypeIndex private constructor() : KotlinExtensionsByReceiverTypeIndex() {
     override fun getKey() = KEY
 
-    override fun get(s: String, project: Project, scope: GlobalSearchScope) =
-        StubIndex.getElements(KEY, s, project, scope, KtCallableDeclaration::class.java)
-
     companion object {
-        private val KEY =
-            KotlinIndexUtil.createIndexKey<String, KtCallableDeclaration>(KotlinTopLevelExtensionsByReceiverTypeIndex::class.java)
-        private const val SEPARATOR = '\n'
+        private val KEY = KotlinIndexUtil.createIndexKey(KotlinTopLevelExtensionsByReceiverTypeIndex::class.java)
 
         val INSTANCE: KotlinTopLevelExtensionsByReceiverTypeIndex = KotlinTopLevelExtensionsByReceiverTypeIndex()
 
-        fun buildKey(receiverTypeName: String, callableName: String): String = receiverTypeName + SEPARATOR + callableName
+        @Deprecated(
+            "Use instance method in 'KotlinExtensionsByReceiverTypeIndex' instead of the static one",
+            ReplaceWith("KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.buildKey(receiverTypeName, callableName)")
+        )
+        fun buildKey(receiverTypeName: String, callableName: String): String = INSTANCE.buildKey(receiverTypeName, callableName)
 
-        fun receiverTypeNameFromKey(key: String): String = key.substringBefore(SEPARATOR, "")
+        @Deprecated(
+            "Use instance method in 'KotlinExtensionsByReceiverTypeIndex' instead of the static one",
+            ReplaceWith("KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.receiverTypeNameFromKey(key)")
+        )
+        fun receiverTypeNameFromKey(key: String): String = INSTANCE.receiverTypeNameFromKey(key)
 
-        fun callableNameFromKey(key: String): String = key.substringAfter(SEPARATOR, "")
+        @Deprecated(
+            "Use instance method in 'KotlinExtensionsByReceiverTypeIndex' instead of the static one",
+            ReplaceWith("KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.callableNameFromKey(key)")
+        )
+        fun callableNameFromKey(key: String): String = INSTANCE.callableNameFromKey(key)
     }
 }

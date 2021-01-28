@@ -156,21 +156,13 @@ class KotlinIndicesHelper(
     ): Collection<CallableDescriptor> {
         if (receiverTypes.isEmpty()) return emptyList()
 
-        val receiverTypeNames = HashSet<String>()
-        receiverTypes.forEach { receiverTypeNames.addTypeNames(it) }
-
-        val index = KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE
-
-        val declarations = index.getAllKeys(project)
-            .asSequence()
-            .filter {
-                ProgressManager.checkCanceled()
-                KotlinTopLevelExtensionsByReceiverTypeIndex.receiverTypeNameFromKey(it) in receiverTypeNames
-                        && nameFilter(KotlinTopLevelExtensionsByReceiverTypeIndex.callableNameFromKey(it))
-            }
-            .flatMap { index.get(it, project, scope).asSequence() }.filter(declarationFilter)
-
-        val suitableExtensions = findSuitableExtensions(declarations, receiverTypes, callTypeAndReceiver.callType)
+        val topLevelExtensionsIndex = KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE
+        val suitableTopLevelExtensions = topLevelExtensionsIndex.getSuitableExtensions(
+            receiverTypes,
+            nameFilter,
+            declarationFilter,
+            callTypeAndReceiver
+        )
 
         val additionalDescriptors = ArrayList<CallableDescriptor>(0)
 
@@ -180,11 +172,10 @@ class KotlinIndicesHelper(
         }
 
         return if (additionalDescriptors.isNotEmpty())
-            suitableExtensions + additionalDescriptors
+            suitableTopLevelExtensions + additionalDescriptors
         else
-            suitableExtensions
+            suitableTopLevelExtensions
     }
-
 
     fun resolveTypeAliasesUsingIndex(type: KotlinType, originalTypeName: String): Set<TypeAliasDescriptor> {
         val typeConstructor = type.constructor
@@ -205,6 +196,23 @@ class KotlinIndicesHelper(
 
         searchRecursively(originalTypeName)
         return out.values.toSet()
+    }
+
+    private fun KotlinExtensionsByReceiverTypeIndex.getSuitableExtensions(
+        receiverTypes: Collection<KotlinType>,
+        nameFilter: (String) -> Boolean,
+        declarationFilter: (KtDeclaration) -> Boolean,
+        callTypeAndReceiver: CallTypeAndReceiver<*, *>
+    ): Collection<CallableDescriptor> {
+        val receiverTypeNames = collectAllNamesOfTypes(receiverTypes)
+
+        val declarations = getAllKeys(project).asSequence()
+            .onEach { ProgressManager.checkCanceled() }
+            .filter { receiverTypeNameFromKey(it) in receiverTypeNames && nameFilter(callableNameFromKey(it)) }
+            .flatMap { get(it, project, scope) }
+            .filter(declarationFilter)
+
+        return findSuitableExtensions(declarations, receiverTypes, callTypeAndReceiver.callType)
     }
 
     private fun possibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
@@ -231,6 +239,12 @@ class KotlinIndicesHelper(
             addAll(possibleTypeAliasExpansionNames(typeName))
         }
         constructor.supertypes.forEach { addTypeNames(it) }
+    }
+
+    private fun collectAllNamesOfTypes(types: Collection<KotlinType>): HashSet<String> {
+        val receiverTypeNames = HashSet<String>()
+        types.forEach { receiverTypeNames.addTypeNames(it) }
+        return receiverTypeNames
     }
 
     /**
