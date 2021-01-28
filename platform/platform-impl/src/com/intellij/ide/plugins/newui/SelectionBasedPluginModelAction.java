@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginEnableDisableAction;
@@ -181,15 +182,12 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
                                                                      @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
     DefaultActionGroup result = new DefaultActionGroup();
-    addActionsTo(
-      result,
-      createEnableDisableAction,
-      createUninstallAction
-    );
+    addActionsTo(result,
+                 createEnableDisableAction,
+                 createUninstallAction);
 
-    return TabbedPaneHeaderComponent.createToolbar(
-      IdeBundle.message("plugin.settings.link.title"),
-      result
-    );
+    return TabbedPaneHeaderComponent.createToolbar(result,
+                                                   IdeBundle.message("plugin.settings.link.title"),
+                                                   AllIcons.General.GearHover);
   }
 }

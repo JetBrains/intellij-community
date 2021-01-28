@@ -88,18 +88,22 @@ public class TabbedPaneHeaderComponent extends JPanel {
     myTabbedPane.setOpaque(false);
 
     add(myTabbedPane);
-    add(createToolbar(IdeBundle.message("plugin.manager.tooltip"), actions), BorderLayout.EAST);
+    add(createToolbar(actions,
+                      IdeBundle.message("plugin.manager.tooltip"),
+                      AllIcons.General.GearPlain),
+        BorderLayout.EAST);
   }
 
-  static @NotNull JComponent createToolbar(@Nullable @NlsActions.ActionText String tooltip,
-                                           @NotNull DefaultActionGroup actions) {
+  static @NotNull JComponent createToolbar(@NotNull DefaultActionGroup actions,
+                                           @Nullable @NlsActions.ActionText String tooltip,
+                                           @NotNull Icon icon) {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     ActionToolbar toolbar =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarActionGroup.add(new DumbAwareAction(tooltip, tooltip, AllIcons.General.GearPlain) {
+    toolbarActionGroup.add(new DumbAwareAction(tooltip, tooltip, icon) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().
