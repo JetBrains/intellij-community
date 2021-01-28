@@ -313,6 +313,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             runTest("testData/quickfix/autoImports/importKotlinStaticPropertyOverloadedSetterFromJava.test");
         }
 
+        @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
+        public void testImportOperatorInvokeWithConvention() throws Exception {
+            runTest("testData/quickfix/autoImports/ImportOperatorInvokeWithConvention.before.Main.kt");
+        }
+
         @TestMetadata("importTrait.before.Main.kt")
         public void testImportTrait() throws Exception {
             runTest("testData/quickfix/autoImports/importTrait.before.Main.kt");
