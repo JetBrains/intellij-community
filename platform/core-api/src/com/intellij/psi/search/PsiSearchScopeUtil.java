@@ -2,6 +2,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.lang.LanguageMatcher;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -11,8 +12,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.notebook.editor.BackedVirtualFile.getOriginFileIfBacked;
 
 public final class PsiSearchScopeUtil {
 
@@ -38,7 +37,7 @@ public final class PsiSearchScopeUtil {
       return true;
     }
     while (file != null) {
-      if (globalScope.contains(getOriginFileIfBacked(file.getOriginalFile().getViewProvider().getVirtualFile()))) {
+      if (globalScope.contains(BackedVirtualFile.getOriginFileIfBacked(file.getOriginalFile().getViewProvider().getVirtualFile()))) {
         return true;
       }
       PsiElement context = file.getContext();
