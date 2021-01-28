@@ -45,6 +45,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -240,7 +241,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
 
     // avoid creating empty unnecessary container
-    if (!flatPaths.isEmpty() || !excludedUrls.isEmpty()) {
+    if (!WorkspaceModel.isEnabled() && (!flatPaths.isEmpty() || !excludedUrls.isEmpty())) {
       Disposer.register(this, disposable);
       // creating a container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
       VirtualFilePointerContainer container =
