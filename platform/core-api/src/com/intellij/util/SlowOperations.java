@@ -22,7 +22,7 @@ public final class SlowOperations {
     "org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor",
     "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
   };
-  private static boolean ourAllowedFlag = false;
+  private static boolean ourAllowedFlag = System.getenv("TEAMCITY_VERSION") != null;
 
   private SlowOperations() {}
 
