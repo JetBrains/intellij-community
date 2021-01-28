@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -510,9 +511,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private void processVirtualFile(@NotNull VirtualFile vfile,
                                   @NotNull AtomicBoolean stopped,
                                   @NotNull Processor<? super PsiFile> localProcessor) throws ApplicationUtil.CannotRunReadActionException {
-    PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
-    if (file != null && !(file instanceof PsiBinaryFile)) {
-      ApplicationUtil.tryRunReadAction(() -> {
+    if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+      PsiFile file = vfile.isValid() ? myManager.findFile(vfile) : null;
+      if (file != null && !(file instanceof PsiBinaryFile)) {
         Project project = myManager.getProject();
         if (project.isDisposed()) throw new ProcessCanceledException();
         if (!DumbUtil.getInstance(project).mayUseIndices()) {
@@ -535,8 +536,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             break;
           }
         }
-      });
-    }
+      }
+    })) {
+      throw ApplicationUtil.CannotRunReadActionException.create();
+    };
   }
 
   private void getFilesWithText(@NotNull GlobalSearchScope scope,

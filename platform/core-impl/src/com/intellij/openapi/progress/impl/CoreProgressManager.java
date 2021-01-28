@@ -496,12 +496,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           }
         }
 
-        ApplicationUtil.invokeLaterSomewhere(() -> {
+        ApplicationUtil.invokeLaterSomewhere(task.whereToRunCallbacks(), modality, () -> {
           finishTask(task, result.isCanceled(), result.getThrowable() instanceof ProcessCanceledException ? null : result.getThrowable());
           if (indicatorDisposable != null) {
             Disposer.dispose(indicatorDisposable);
           }
-        }, task.whereToRunCallbacks(), modality);
+        });
       }));
   }
 
@@ -533,7 +533,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                                      task.isModal(),
                                                                      task.getProject(), parentComponent, task.getCancelText());
 
-    ApplicationUtil.invokeAndWaitSomewhere(() -> finishTask(task, !result, exceptionRef.get()), task.whereToRunCallbacks());
+    ApplicationUtil.invokeAndWaitSomewhere(task.whereToRunCallbacks(), ApplicationManager.getApplication().getDefaultModalityState(),
+                                           () -> finishTask(task, !result, exceptionRef.get()));
     return result;
   }
 
@@ -561,9 +562,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
     Throwable finalException = exception;
 
-    ApplicationUtil.invokeAndWaitSomewhere(() -> finishTask(task, finalCanceled, finalException),
-                                           task.whereToRunCallbacks(),
-                                           modalityState);
+    ApplicationUtil.invokeAndWaitSomewhere(task.whereToRunCallbacks(), modalityState, () -> finishTask(task, finalCanceled, finalException));
   }
 
   protected void finishTask(@NotNull Task task, boolean canceled, @Nullable Throwable error) {

@@ -21,25 +21,20 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class ApplicationUtil {
-
   // throws exception if can't grab read action right now
   public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
     final Ref<T> result = new Ref<>();
-    tryRunReadAction(() -> result.set(computable.compute()));
-    return result.get();
-  }
-
-  public static void tryRunReadAction(@NotNull final Runnable computable) throws CannotRunReadActionException {
-    if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(computable)) {
+    if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(() -> result.set(computable.compute()))) {
       throw CannotRunReadActionException.create();
     }
+    return result.get();
   }
 
   /**
    * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
-  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
+  public static <T> T runWithCheckCanceled(@NotNull final Callable<? extends T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
     final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
@@ -93,11 +88,7 @@ public final class ApplicationUtil {
     }
   }
 
-  public static void invokeLaterSomewhere(@NotNull Runnable r, @NotNull EdtReplacementThread thread) {
-    invokeLaterSomewhere(r, thread, ApplicationManager.getApplication().getDefaultModalityState());
-  }
-
-  public static void invokeLaterSomewhere(@NotNull Runnable r, @NotNull EdtReplacementThread thread, @NotNull ModalityState modalityState) {
+  public static void invokeLaterSomewhere(@NotNull EdtReplacementThread thread, @NotNull ModalityState modalityState, @NotNull Runnable r) {
     switch (thread) {
       case EDT:
         SwingUtilities.invokeLater(r);
@@ -111,13 +102,7 @@ public final class ApplicationUtil {
     }
   }
 
-  public static void invokeAndWaitSomewhere(Runnable runnable, EdtReplacementThread thread) {
-    invokeAndWaitSomewhere(runnable, thread, ApplicationManager.getApplication().getDefaultModalityState());
-  }
-
-  public static void invokeAndWaitSomewhere(@NotNull Runnable r,
-                                            @NotNull EdtReplacementThread thread,
-                                            @NotNull ModalityState modalityState) {
+  public static void invokeAndWaitSomewhere(@NotNull EdtReplacementThread thread, @NotNull ModalityState modalityState, @NotNull Runnable r) {
     switch (thread) {
       case EDT:
         if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteThread()) {
