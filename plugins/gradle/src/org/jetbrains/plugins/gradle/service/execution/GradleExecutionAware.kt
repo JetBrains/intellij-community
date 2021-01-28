@@ -57,7 +57,7 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
     return TargetEnvironmentsManager.getInstance(project).targets.findByName(targetName) ?: return localEnvironment()
   }
 
-  override fun getEnvironmentConfiguration(externalProjectPath: String,
+  override fun getEnvironmentConfiguration(projectPath: String,
                                            isPreviewMode: Boolean,
                                            taskNotificationListener: ExternalSystemTaskNotificationListener,
                                            project: Project): TargetEnvironmentConfiguration? {

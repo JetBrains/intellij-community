@@ -154,7 +154,7 @@ public final class ExternalSystemApiUtil {
    */
   @NotNull
   public static String toCanonicalPath(@NotNull String path) {
-    String p = normalizePath(new File(path).getAbsolutePath());
+    String p = normalizePath(path);
     assert p != null;
     return FileUtil.toCanonicalPath(p);
   }

@@ -103,8 +103,8 @@ class GradleServerRunner(project: Project,
   private class GradleServerProcessListener(private val targetProgressIndicator: TargetProgressIndicator,
                                             private val resultHandler: ResultHandler<Any?>,
                                             private val gradleServerEventsListener: GradleServerEventsListener) : ProcessListener {
-    private var connectionAddressReceived = false
-    var resultReceived = false
+    @Volatile private var connectionAddressReceived = false
+    @Volatile var resultReceived = false
     val resultHandlerWrapper: ResultHandler<Any?> = object : ResultHandler<Any?> {
       override fun onComplete(result: Any?) {
         resultReceived = true

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.Consumer;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectIdentifier;
@@ -26,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Iterator;
@@ -41,6 +42,7 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
   @NotNull private final B myRootModel;
   @NotNull private final Map<String, Object> myModelsById = new LinkedHashMap<String, Object>();
   @Nullable private ToolingSerializer mySerializer;
+  @Nullable private Consumer<Object> myPathsConverter;
 
   public ModelsHolder(@NotNull B rootModel) {
     myRootModel = rootModel;
@@ -52,6 +54,11 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
     for (SerializationService<?> service : additionalSerializerServices) {
       mySerializer.register(service);
     }
+  }
+
+  @ApiStatus.Internal
+  void convertPaths(@NotNull Consumer<Object> pathsConverter) {
+    myPathsConverter = pathsConverter;
   }
 
   @NotNull
@@ -117,6 +124,9 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
         try {
           T deserializedData = mySerializer.read((byte[])entry.getValue(), modelClazz);
           if (modelClazz.isInstance(deserializedData)) {
+            if (myPathsConverter != null) {
+              myPathsConverter.consume(deserializedData);
+            }
             myModelsById.put(key, deserializedData);
           }
           else {
@@ -159,28 +169,24 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
   }
 
   @NotNull
-  private static String extractMapKey(@NotNull Class modelClazz, @NotNull ProjectIdentifier projectIdentifier) {
-    String prefix = getModelKeyPrefix(modelClazz);
-    BuildIdentifier buildIdentifier = projectIdentifier.getBuildIdentifier();
-    String paths = getPathsString(buildIdentifier.getRootDir());
-    return prefix + '/' + (paths.hashCode() + projectIdentifier.getProjectPath());
+  private String extractMapKey(@NotNull Class modelClazz, @NotNull ProjectIdentifier projectIdentifier) {
+    String modelKeyPrefix = getModelKeyPrefix(modelClazz);
+    String buildKeyPrefix = getBuildKeyPrefix(projectIdentifier.getBuildIdentifier());
+    return modelKeyPrefix + '/' + (buildKeyPrefix + projectIdentifier.getProjectPath());
   }
 
   @NotNull
-  private static String extractMapKey(@NotNull Class modelClazz, @NotNull BuildIdentifier buildIdentifier) {
-    String prefix = getModelKeyPrefix(modelClazz);
-    String paths = getPathsString(buildIdentifier.getRootDir());
-    return prefix + '/' + paths.hashCode() + ":";
+  private String extractMapKey(@NotNull Class modelClazz, @NotNull BuildIdentifier buildIdentifier) {
+    String modelKeyPrefix = getModelKeyPrefix(modelClazz);
+    String buildKeyPrefix = getBuildKeyPrefix(buildIdentifier);
+    return modelKeyPrefix + '/' + buildKeyPrefix + ":";
   }
 
   @NotNull
-  private static String getPathsString(File dir) {
-    StringBuilder buf = new StringBuilder();
-    while(dir != null) {
-      buf.append(dir.getName());
-      dir = dir.getParentFile();
-    }
-    return buf.toString();
+  protected String getBuildKeyPrefix(@NotNull BuildIdentifier buildIdentifier) {
+    String path = buildIdentifier.getRootDir().getPath();
+    String systemIndependentName = FileUtilRt.toSystemIndependentName(path);
+    return String.valueOf(systemIndependentName.hashCode());
   }
 
   private ProjectIdentifier getProjectIdentifier(@NotNull P project) {

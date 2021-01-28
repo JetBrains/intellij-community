@@ -9,7 +9,7 @@ public final class InternalBuildIdentifier implements BuildIdentifier {
   private final File rootDir;
 
   public InternalBuildIdentifier(File rootDir) {
-    this.rootDir = rootDir.getAbsoluteFile();
+    this.rootDir = rootDir;
   }
 
   @Override

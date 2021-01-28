@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.util.Consumer;
 import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -297,9 +298,10 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     Object convert(Object object);
   }
 
-  public static class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
+  public static final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     @NotNull private final List<Build> includedBuilds = new ArrayList<Build>();
     private final Map<String, Long> performanceTrace = new LinkedHashMap<String, Long>();
+    private transient Map<String, String> myBuildsKeyPrefixesMapping;
 
     public AllModels(@NotNull Build mainBuild) {
       super(mainBuild);
@@ -348,6 +350,37 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     public Map<String, Long> getPerformanceTrace() {
       return performanceTrace;
+    }
+
+    @Override
+    public void convertPaths(@NotNull Consumer<Object> pathsConverter) {
+      super.convertPaths(pathsConverter);
+      BuildEnvironment buildEnvironment = getBuildEnvironment();
+      if (buildEnvironment != null) {
+        pathsConverter.consume(buildEnvironment);
+      }
+      myBuildsKeyPrefixesMapping = new HashMap<String, String>();
+      convertPaths(pathsConverter, getMainBuild());
+      for (Build includedBuild : includedBuilds) {
+        convertPaths(pathsConverter, includedBuild);
+      }
+    }
+
+    private void convertPaths(@NotNull Consumer<Object> fileMapper, @NotNull Build build) {
+      String originalKey = getBuildKeyPrefix(build.getBuildIdentifier());
+      fileMapper.consume(build);
+      String currentKey = getBuildKeyPrefix(build.getBuildIdentifier());
+      if (!originalKey.equals(currentKey)) {
+        myBuildsKeyPrefixesMapping.put(currentKey, originalKey);
+      }
+    }
+
+    @NotNull
+    @Override
+    protected String getBuildKeyPrefix(@NotNull BuildIdentifier buildIdentifier) {
+      String currentKey = super.getBuildKeyPrefix(buildIdentifier);
+      String originalKey = myBuildsKeyPrefixesMapping == null ? null : myBuildsKeyPrefixesMapping.get(currentKey);
+      return originalKey == null ? currentKey : originalKey;
     }
   }
 

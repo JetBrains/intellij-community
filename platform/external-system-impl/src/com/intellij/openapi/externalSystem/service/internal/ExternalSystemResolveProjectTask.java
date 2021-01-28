@@ -29,6 +29,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathMapper;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,12 +84,16 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
       boolean isRunOnTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets");
       TargetEnvironmentConfiguration environmentConfiguration = null;
+      PathMapper targetPathMapper = null;
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(getExternalSystemId())) {
         executionAware.prepareExecution(this, myProjectPath, myIsPreviewMode, progressNotificationListener, ideProject);
 
         if (!isRunOnTargetsEnabled || environmentConfiguration != null) continue;
         environmentConfiguration =
           executionAware.getEnvironmentConfiguration(myProjectPath, myIsPreviewMode, progressNotificationListener, ideProject);
+        if (environmentConfiguration != null) {
+          targetPathMapper = executionAware.getTargetPathMapper(myProjectPath);
+        }
       }
 
       final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
@@ -100,7 +105,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       if (StringUtil.isNotEmpty(myArguments)) {
         settings.withArguments(ParametersListUtil.parse(myArguments));
       }
-      ExternalSystemExecutionAware.setEnvironmentConfiguration(settings, environmentConfiguration);
+      ExternalSystemExecutionAware.setEnvironmentConfiguration(settings, environmentConfiguration, targetPathMapper);
     }
     catch (Exception e) {
       progressNotificationManager.onFailure(id, e);

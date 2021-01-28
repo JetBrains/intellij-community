@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyedExtensionCollector
+import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -31,17 +32,23 @@ interface ExternalSystemExecutionAware {
     project: Project
   )
 
+  @JvmDefault
   fun getEnvironmentConfiguration(runConfiguration: ExternalSystemRunConfiguration,
                                   taskNotificationListener: ExternalSystemTaskNotificationListener,
                                   project: Project): TargetEnvironmentConfiguration? = null
 
-  fun getEnvironmentConfiguration(externalProjectPath: String,
+  @JvmDefault
+  fun getEnvironmentConfiguration(projectPath: String,
                                   isPreviewMode: Boolean,
                                   taskNotificationListener: ExternalSystemTaskNotificationListener,
                                   project: Project): TargetEnvironmentConfiguration? = null
 
+  @JvmDefault
+  fun getTargetPathMapper(projectPath: String): PathMapper? = null
+
   companion object {
     private val TARGET_ENVIRONMENT_CONFIGURATION: Key<TargetEnvironmentConfiguration> = Key.create("Target environment configuration")
+    private val TARGET_PATH_MAPPER: Key<PathMapper> = Key.create("Target path mapper")
     private val EP_COLLECTOR = KeyedExtensionCollector<ExternalSystemExecutionAware, ProjectSystemId>("com.intellij.externalExecutionAware")
 
     @JvmStatic
@@ -52,9 +59,15 @@ interface ExternalSystemExecutionAware {
     @JvmStatic
     fun ExternalSystemExecutionSettings.getEnvironmentConfiguration() = getUserData(TARGET_ENVIRONMENT_CONFIGURATION)
 
+    @JvmStatic
+    fun ExternalSystemExecutionSettings.getTargetPathMapper() = getUserData(TARGET_PATH_MAPPER)
+
     @ApiStatus.Internal
     @JvmStatic
-    fun ExternalSystemExecutionSettings.setEnvironmentConfiguration(configuration: TargetEnvironmentConfiguration?) =
+    fun ExternalSystemExecutionSettings.setEnvironmentConfiguration(configuration: TargetEnvironmentConfiguration?,
+                                                                    targetPathMapper: PathMapper?) {
       putUserData(TARGET_ENVIRONMENT_CONFIGURATION, configuration)
+      putUserData(TARGET_PATH_MAPPER, targetPathMapper)
+    }
   }
 }

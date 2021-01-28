@@ -157,7 +157,7 @@ public final class GradleUtil {
             // The file points to 'build.gradle' at the moment but we keep it's parent dir path instead.
             file = file.getParentFile();
           }
-          return ExternalSystemApiUtil.toCanonicalPath(file.getCanonicalPath());
+          return ExternalSystemApiUtil.toCanonicalPath(file.getPath());
         }
       }
     }

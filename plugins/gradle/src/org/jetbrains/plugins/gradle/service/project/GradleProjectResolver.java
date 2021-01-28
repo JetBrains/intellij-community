@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.PerformanceTrace;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
@@ -22,9 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -51,9 +50,10 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
+import org.jetbrains.plugins.gradle.util.ReflectionTraverser;
 
 import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
@@ -202,9 +202,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         useCustomSerialization = false;
       }
     }
-    final ProjectImportAction projectImportAction = useCustomSerialization ?
-      new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode(), isCompositeBuildsSupported) :
-      new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported);
+    final ProjectImportAction projectImportAction =
+      useCustomSerialization
+      ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode(), isCompositeBuildsSupported)
+      : new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported);
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -299,6 +300,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     allModels.setBuildEnvironment(buildEnvironment);
+    maybeConvertTargetPaths(executionSettings, allModels);
 
     final long startDataConversionTime = System.currentTimeMillis();
     extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
@@ -411,7 +413,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
         if (moduleData instanceof GradleSourceSetData) {
           for (File artifactFile : moduleData.getArtifacts()) {
-            artifactsMap.put(toCanonicalPath(artifactFile.getAbsolutePath()), moduleData.getId());
+            artifactsMap.put(toCanonicalPath(artifactFile.getPath()), moduleData.getId());
           }
         }
       }
@@ -449,6 +451,30 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
     LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
     return projectDataNode;
+  }
+
+  private static void maybeConvertTargetPaths(GradleExecutionSettings executionSettings, ProjectImportAction.AllModels allModels) {
+    PathMapper targetPathMapper = ExternalSystemExecutionAware.getTargetPathMapper(executionSettings);
+    if (targetPathMapper == null) return;
+    allModels.convertPaths(rootObject -> {
+      ReflectionTraverser.traverse(rootObject, new ReflectionTraverser.Visitor() {
+        @Override
+        public void process(@NotNull Object obj) {
+          if (obj instanceof File) {
+            String remotePath = ((File)obj).getPath();
+            if (!targetPathMapper.canReplaceRemote(remotePath)) return;
+            String localPath = targetPathMapper.convertToLocal(remotePath);
+            try {
+              Field field = File.class.getDeclaredField("path");
+              field.setAccessible(true);
+              field.set(obj, localPath);
+            }
+            catch (Throwable ignore) {
+            }
+          }
+        }
+      });
+    });
   }
 
   private static void configureExecutionArgumentsAndVmOptions(@NotNull GradleExecutionSettings executionSettings,
@@ -500,26 +526,16 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           }
           String rootProjectName = build.getName();
           BuildParticipant buildParticipant = new BuildParticipant();
-          try {
-            String projectPath = toCanonicalPath(build.getBuildIdentifier().getRootDir().getCanonicalPath());
-            buildParticipant.setRootProjectName(rootProjectName);
-            buildParticipant.setRootPath(projectPath);
-            if (ideaProject != null) {
-              for (IdeaModule module : ideaProject.getModules()) {
-                try {
-                  String modulePath = toCanonicalPath(module.getGradleProject().getProjectDirectory().getCanonicalPath());
-                  buildParticipant.getProjects().add(modulePath);
-                }
-                catch (IOException e) {
-                  LOG.warn("construction of the canonical path for the module fails", e);
-                }
-              }
+          String projectPath = toCanonicalPath(build.getBuildIdentifier().getRootDir().getPath());
+          buildParticipant.setRootProjectName(rootProjectName);
+          buildParticipant.setRootPath(projectPath);
+          if (ideaProject != null) {
+            for (IdeaModule module : ideaProject.getModules()) {
+              String modulePath = toCanonicalPath(module.getGradleProject().getProjectDirectory().getPath());
+              buildParticipant.getProjects().add(modulePath);
             }
-            compositeBuildData.getCompositeParticipants().add(buildParticipant);
           }
-          catch (IOException e) {
-            LOG.warn("construction of the canonical path for the module fails", e);
-          }
+          compositeBuildData.getCompositeParticipants().add(buildParticipant);
         }
       }
       projectDataNode.createChild(CompositeBuildData.KEY, compositeBuildData);
@@ -546,8 +562,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final Collection<DataNode<LibraryDependencyData>> libraryDependencies =
       findAllRecursively(projectDataNode, ProjectKeys.LIBRARY_DEPENDENCY);
 
-    LibraryDataNodeSubstitutor librarySubstitutor =
-      new LibraryDataNodeSubstitutor(context, gradleUserHomeDir, gradleHomeDir, gradleVersion, sourceSetMap, moduleOutputsMap, artifactsMap);
+    LibraryDataNodeSubstitutor librarySubstitutor = new LibraryDataNodeSubstitutor(
+      context, gradleUserHomeDir, gradleHomeDir, gradleVersion, sourceSetMap, moduleOutputsMap, artifactsMap);
     for (DataNode<LibraryDependencyData> libraryDependencyDataNode : libraryDependencies) {
       librarySubstitutor.run(libraryDependencyDataNode);
     }
@@ -607,6 +623,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private static class Counter {
     int count;
+
     void increment() {
       count++;
     }
@@ -679,7 +696,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
 
       ContentRootData mergedContentRoot = null;
-      String rootPath = toCanonicalPath(root.getAbsolutePath());
+      String rootPath = toCanonicalPath(root.getPath());
       Set<String> paths = new HashSet<>(sourceSetRoots.keySet());
       for (String path : paths) {
         if (FileUtil.isAncestor(rootPath, path, true)) {
@@ -705,7 +722,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
 
       if (mergedContentRoot == null) {
-        mergedContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, root.getAbsolutePath());
+        mergedContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, root.getPath());
         sourceSetRoots.putValue(mergedContentRoot.getRootPath(), mergedContentRoot);
       }
 

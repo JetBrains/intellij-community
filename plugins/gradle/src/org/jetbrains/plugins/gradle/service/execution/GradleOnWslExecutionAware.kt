@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
+import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
@@ -10,6 +11,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
+import com.intellij.util.PathMapper
 
 class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
   override fun prepareExecution(
@@ -28,17 +30,34 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
     return resolveWslEnvironment(projectPath)
   }
 
-  override fun getEnvironmentConfiguration(externalProjectPath: String,
+  override fun getEnvironmentConfiguration(projectPath: String,
                                            isPreviewMode: Boolean,
                                            taskNotificationListener: ExternalSystemTaskNotificationListener,
                                            project: Project): TargetEnvironmentConfiguration? {
-    return resolveWslEnvironment(externalProjectPath)
+    return resolveWslEnvironment(projectPath)
+  }
+
+  override fun getTargetPathMapper(projectPath: String): PathMapper? {
+    val wslDistribution = resolveWslDistribution(projectPath) ?: return null
+    return object : PathMapper {
+      override fun isEmpty(): Boolean = false
+      override fun canReplaceLocal(localPath: String): Boolean = true
+      override fun convertToLocal(remotePath: String): String = wslDistribution.getWindowsPath(remotePath) ?: remotePath
+      override fun canReplaceRemote(remotePath: String): Boolean = true
+      override fun convertToRemote(localPath: String): String = wslDistribution.getWslPath(localPath) ?: localPath
+      override fun convertToRemote(paths: MutableCollection<String>): List<String> = paths.map { convertToRemote(it) }
+    }
   }
 
   private fun resolveWslEnvironment(path: String): TargetEnvironmentConfiguration? {
-    val pathInWsl = WslDistributionManager.getInstance().parseWslPath(path)
-    val wslDistribution = pathInWsl?.second ?: return null
-    return wslDistribution.let { WslTargetEnvironmentConfiguration(it).withJavaRuntime() }
+    val wslDistribution = resolveWslDistribution(path) ?: return null
+    return WslTargetEnvironmentConfiguration(wslDistribution).withJavaRuntime()
+  }
+
+  private fun resolveWslDistribution(path: String): WSLDistribution? {
+    if (!WslDistributionManager.isWslPath(path)) return null
+    return WslDistributionManager.getInstance().distributionFromPath(path)
+
   }
 }
 

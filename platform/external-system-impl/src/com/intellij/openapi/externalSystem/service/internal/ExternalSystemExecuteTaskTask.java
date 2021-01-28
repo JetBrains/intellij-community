@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTa
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.PathMapper;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
@@ -94,12 +95,16 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
       boolean isRunOnTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets");
       TargetEnvironmentConfiguration environmentConfiguration = null;
+      PathMapper targetPathMapper = null;
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
         executionAware.prepareExecution(this, projectPath, false, progressNotificationListener, project);
 
         if (!isRunOnTargetsEnabled || environmentConfiguration != null) continue;
         environmentConfiguration =
           executionAware.getEnvironmentConfiguration(myConfiguration, progressNotificationListener, project);
+        if (environmentConfiguration != null) {
+          targetPathMapper = executionAware.getTargetPathMapper(projectPath);
+        }
       }
 
       final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
@@ -108,7 +113,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       for (Key key : keyFMap.getKeys()) {
         settings.putUserData(key, keyFMap.get(key));
       }
-      ExternalSystemExecutionAware.setEnvironmentConfiguration(settings, environmentConfiguration);
+      ExternalSystemExecutionAware.setEnvironmentConfiguration(settings, environmentConfiguration, targetPathMapper);
 
       RemoteExternalSystemFacade facade = manager.getFacade(project, projectPath, projectSystemId);
       taskManager = facade.getTaskManager();
