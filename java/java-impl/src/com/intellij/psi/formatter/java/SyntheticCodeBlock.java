@@ -95,7 +95,6 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
 
   @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
-    if (child1 instanceof IndentBlock) return Spacing.getReadOnlySpacing();
     return JavaSpacePropertyProcessor.getSpacing(child2, mySettings, myJavaSettings);
   }
 

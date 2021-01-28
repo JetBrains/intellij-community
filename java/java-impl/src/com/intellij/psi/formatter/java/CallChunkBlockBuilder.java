@@ -51,27 +51,18 @@ public class CallChunkBlockBuilder {
                       int relativeIndentSize) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
     final ASTNode firstNode = subNodes.get(0);
-    Wrap wrapToApply = null;
     if (firstNode.getElementType() == JavaTokenType.DOT) {
-      if (mySettings.KEEP_BUILDER_METHODS_INDENTS && relativeIndentSize > 0) {
-        subBlocks.add(new IndentBlock(firstNode, relativeIndentSize));
-      }
-      else {
-        wrapToApply = wrap;
-      }
       AlignmentStrategy strategy = AlignmentStrategy.getNullStrategy();
-      Block block = newJavaBlock(firstNode, mySettings, myJavaSettings, Indent.getNoneIndent(), null, strategy, myFormattingMode);
+      Indent indent = relativeIndentSize > 0 ? Indent.getSpaceIndent(relativeIndentSize) : Indent.getNoneIndent();
+      Block block = newJavaBlock(firstNode, mySettings, myJavaSettings, indent, null, strategy, myFormattingMode);
       subBlocks.add(block);
       subNodes.remove(0);
       if (!subNodes.isEmpty()) {
         subBlocks.add(create(subNodes, wrap, null, -1));
       }
+      return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings, Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
     }
-    else {
-      subBlocks.addAll(createJavaBlocks(subNodes));
-    }
-    return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
-                                  Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrapToApply);
+    return new SyntheticCodeBlock(createJavaBlocks(subNodes), alignment, mySettings, myJavaSettings, Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), null);
   }
 
   @NotNull

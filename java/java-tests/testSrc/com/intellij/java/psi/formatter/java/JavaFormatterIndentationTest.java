@@ -673,22 +673,22 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "class Test {\n" +
       "    public static void main(String[] args) {\n" +
       "        PanelBuilder.wrap(getCenterPanel(), \"review-view\")\n" +
-      "                .flowPanel(\"sidebar-offset\")   //content\n" +
-      "                  .widget(myReviewHints)\n" +
-      "                  .flowPanel(\"island\")          //changes island\n" +
-      "                    .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\") //paneToolbar\n" +
-      "                      .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\") //paneToolbarLeft\n" +
-      "                        .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
-      "                        .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
-      "                        .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
-      "                      .end()\n" +
-      "                    .end()\n" +
-      "                    .flowPanel(\"revision-files-standalone\") // review changes view\n" +
-      "                      .widget(myChangesListView)\n" +
-      "                    .end()\n" +
+      "            .flowPanel(\"sidebar-offset\")   //content\n" +
+      "              .widget(myReviewHints)\n" +
+      "              .flowPanel(\"island\")          //changes island\n" +
+      "                .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\") //paneToolbar\n" +
+      "                  .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\") //paneToolbarLeft\n" +
+      "                    .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
+      "                    .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
+      "                    .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
       "                  .end()\n" +
-      "                  .widget(myReviewFeedView)\n" +
-      "                .end();\n" +
+      "                .end()\n" +
+      "                .flowPanel(\"revision-files-standalone\") // review changes view\n" +
+      "                  .widget(myChangesListView)\n" +
+      "                .end()\n" +
+      "              .end()\n" +
+      "              .widget(myReviewFeedView)\n" +
+      "            .end();\n" +
       "    }\n" +
       "}",
 
