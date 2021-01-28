@@ -12,12 +12,14 @@ import com.intellij.internal.ml.ngram.VocabularyWithLimit
 
 class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
 
-  private fun doTestNGramBase(openedFiles: List<String>, nGramLength: Int, maxSequenceLength: Int, vocabularyLimit: Int,
+  private fun doTestNGramBase(openedFiles: List<String>, nGramLength: Int,
+                              maxSequenceLength: Int, vocabularyLimit: Int, maxIdx: Int? = null,
                               expectedInternalState: FilePredictionRunnerAssertion,
                               assertion: (FileHistoryManager) -> Unit) {
     val state = FilePredictionHistoryState()
     val model = JMModel(counter = ArrayTrieCounter(), order = nGramLength, lambda = 1.0)
     val vocabulary = VocabularyWithLimit(vocabularyLimit, nGramLength, maxSequenceLength, 2)
+    maxIdx?.let { vocabulary.recent.setMaxTokenIndex(it) }
     val runner = NGramIncrementalModelRunner(nGramLength, 1.0, model, vocabulary)
     val manager = FileHistoryManager(runner, state, vocabularyLimit)
     try {
@@ -37,9 +39,10 @@ class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
                           nGramOrder: Int,
                           vocabularyLimit: Int = 3,
                           maxSequenceLength: Int = 10000,
+                          maxIdx: Int? = null,
                           expectedInternalState: FilePredictionRunnerAssertion,
                           expected: List<Pair<String, NextFileProbability>> = emptyList()) {
-    doTestNGramBase(openedFiles, nGramOrder, maxSequenceLength, vocabularyLimit, expectedInternalState) { manager ->
+    doTestNGramBase(openedFiles, nGramOrder, maxSequenceLength, vocabularyLimit, maxIdx, expectedInternalState) { manager ->
       var total = 0.0
       val actual = manager.calcNGramFeatures(expected.map { it.first })
       for (expectedEntry in expected) {
@@ -56,9 +59,10 @@ class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
                              nGramOrder: Int,
                              vocabularyLimit: Int = 3,
                              maxSequenceLength: Int = 10000,
+                             maxIdx: Int? = null,
                              expectedInternalState: FilePredictionRunnerAssertion,
                              expected: List<Pair<String, Double>> = emptyList()) {
-    doTestNGramBase(openedFiles, nGramOrder, maxSequenceLength, vocabularyLimit, expectedInternalState) { manager ->
+    doTestNGramBase(openedFiles, nGramOrder, maxSequenceLength, vocabularyLimit, maxIdx, expectedInternalState) { manager ->
       var total = 0.0
       val actual = manager.calcNGramFeatures(expected.map { it.first })
       for (expectedEntry in expected) {
@@ -74,33 +78,37 @@ class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
   private fun doTestBiGramMle(openedFiles: List<String>,
                               vocabularyLimit: Int = 3,
                               maxSequenceLength: Int = 10000,
+                              maxIdx: Int? = null,
                               expectedInternalState: FilePredictionRunnerAssertion,
                               expected: List<Pair<String, Double>> = emptyList()) {
-    doTestNGramMle(openedFiles, 2, vocabularyLimit, maxSequenceLength, expectedInternalState, expected)
+    doTestNGramMle(openedFiles, 2, vocabularyLimit, maxSequenceLength, maxIdx, expectedInternalState, expected)
   }
 
   private fun doTestTriGramMle(openedFiles: List<String>,
                                vocabularyLimit: Int = 3,
                                maxSequenceLength: Int = 10000,
+                               maxIdx: Int? = null,
                                expectedInternalState: FilePredictionRunnerAssertion,
                                expected: List<Pair<String, Double>> = emptyList()) {
-    doTestNGramMle(openedFiles, 3, vocabularyLimit, maxSequenceLength, expectedInternalState, expected)
+    doTestNGramMle(openedFiles, 3, vocabularyLimit, maxSequenceLength, maxIdx, expectedInternalState, expected)
   }
 
   private fun doTestUniGram(openedFiles: List<String>,
                             vocabularyLimit: Int = 3,
                             maxSequenceLength: Int = 10000,
+                            maxIdx: Int? = null,
                             expectedInternalState: FilePredictionRunnerAssertion,
                             expected: List<Pair<String, NextFileProbability>> = emptyList()) {
-    doTestNGram(openedFiles, 1, vocabularyLimit, maxSequenceLength, expectedInternalState, expected)
+    doTestNGram(openedFiles, 1, vocabularyLimit, maxSequenceLength, maxIdx, expectedInternalState, expected)
   }
 
   private fun doTestBiGram(openedFiles: List<String>,
                            vocabularyLimit: Int = 3,
                            maxSequenceLength: Int = 10000,
+                           maxIdx: Int? = null,
                            expectedInternalState: FilePredictionRunnerAssertion,
                            expected: List<Pair<String, NextFileProbability>> = emptyList()) {
-    doTestNGram(openedFiles, 2, vocabularyLimit, maxSequenceLength, expectedInternalState, expected)
+    doTestNGram(openedFiles, 2, vocabularyLimit, maxSequenceLength, maxIdx, expectedInternalState, expected)
   }
 
   fun `test unigram with all unique files`() {
@@ -478,6 +486,32 @@ class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
         "f" to 0.25,
         "g" to 0.25,
         "h" to 0.25,
+        "x" to 0.0
+      )
+    )
+  }
+
+  fun `test bigram mle with forgotten all unique tokens and index reset`() {
+    val state = FilePredictionRunnerAssertion()
+      .withVocabulary(8)
+      .withFileSequence(listOf(7, 8, 9, 10))
+      .withRecentFiles(7, listOf("c", "d", "e", "f", "g", "h", "i", "j"), listOf(0, 0, 1, 2, 3, 4, 5, 6))
+
+    doTestBiGramMle(
+      openedFiles = listOf("a", "b", "c", "d", "e", "f", "g", "h", "i", "j"),
+      vocabularyLimit = 8, maxSequenceLength = 4, maxIdx = 8,
+      expectedInternalState = state,
+      expected = listOf(
+        "a" to 0.0,
+        "b" to 0.0,
+        "c" to 0.0,
+        "d" to 0.0,
+        "e" to 0.0,
+        "f" to 0.0,
+        "g" to 0.25,
+        "h" to 0.25,
+        "i" to 0.25,
+        "j" to 0.25,
         "x" to 0.0
       )
     )
@@ -973,6 +1007,35 @@ class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
         "b", "b", "c", "c", "c", "d", "d", "d", "d", "d"
       ),
       vocabularyLimit = 4, maxSequenceLength = 7,
+      expectedInternalState = state,
+      expected = listOf(
+        "a" to 0.0,
+        "b" to 0.0,
+        "c" to 0.0,
+        "d" to 1.0,
+        "x" to 0.0
+      )
+    )
+  }
+
+  fun `test trigram mle for repeated symbol with sequence limit and index reset`() {
+    val state = FilePredictionRunnerAssertion()
+      .withVocabulary(4)
+      .withFileSequence(listOf(
+        3, 3, 4, 4, 4, 4, 4
+      ))
+      .withRecentFiles(
+        14,
+        listOf("a", "b", "c", "d"),
+        listOf(0, 5, 8, 13)
+      )
+
+    doTestTriGramMle(
+      openedFiles = listOf(
+        "a", "b", "b", "b", "a", "a", "a", "b", "b", "b",
+        "b", "b", "c", "c", "c", "d", "d", "d", "d", "d"
+      ),
+      vocabularyLimit = 4, maxSequenceLength = 7, maxIdx = 14,
       expectedInternalState = state,
       expected = listOf(
         "a" to 0.0,

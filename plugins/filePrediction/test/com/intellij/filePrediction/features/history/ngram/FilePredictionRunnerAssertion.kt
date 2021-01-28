@@ -53,7 +53,7 @@ internal class FilePredictionRunnerAssertion {
 
     if (withRecentFiles) {
       val recent = vocabulary.recent
-      TestCase.assertEquals("Next file sequence index is different from expected", nextFileSequenceIdx, recent.getNextTokenIndex())
+      TestCase.assertEquals("Next file sequence index is different from expected", nextFileSequenceIdx, recent.lastIndex() + 1)
 
       val tokens = recent.getRecentTokens()
       TestCase.assertEquals("Recent files are different from expected", recentFiles, tokens.map { it.first })

@@ -24,7 +24,7 @@ class VocabularyWithLimit(var maxVocabularySize: Int,
 
   private val counter: AtomicInteger = AtomicInteger(1)
 
-  val recent: NGramRecentTokens = NGramRecentTokens()
+  val recent: NGramRecentTokens = NGramRecentTokens(maxSequenceSize)
   val recentSequence: NGramRecentTokensSequence = NGramRecentTokensSequence(maxSequenceSize, nGramOrder, sequenceInitialSize)
 
   /**
@@ -128,33 +128,38 @@ class VocabularyWithLimit(var maxVocabularySize: Int,
 }
 
 /**
- * Stores recent tokens (recent) with an id of it last appearance (recentIdx).
+ * Stores recent tokens (recent) with an id of it last appearance
  *
  * Last token appearance is used to find a minimum sequence which have to be forgotten together with the token.
  */
-class NGramRecentTokens : Externalizable {
-  private val nextTokenIdx: AtomicInteger = AtomicInteger(1)
+class NGramRecentTokens(private val maxSequenceSize: Int) : Externalizable {
+  private var maxTokenIndex: Int = Int.MAX_VALUE - 1
 
+  private val nextTokenIndex: AtomicInteger = AtomicInteger(1)
   private val recent: LinkedHashMap<String, Int> = LinkedHashMap()
-
-  @TestOnly
-  fun getNextTokenIndex(): Int = nextTokenIdx.get()
-
-  @TestOnly
-  fun getRecentTokens(): List<Pair<String, Int>> {
-    val recentTokens = arrayListOf<Pair<String, Int>>()
-    for ((key, value) in recent) {
-      recentTokens.add(key to value)
-    }
-    return recentTokens
-  }
 
   @Synchronized
   fun update(token: String) {
     if (recent.containsKey(token)) {
       recent.remove(token)
     }
-    recent[token] = nextTokenIdx.getAndIncrement()
+    recent[token] = nextTokenIndex.getAndIncrement()
+
+    if (nextTokenIndex.get() > maxTokenIndex) {
+      // shift token index to avoid token index overflow
+      resetTokenIndex()
+    }
+  }
+
+  private fun resetTokenIndex() {
+    val first = nextTokenIndex.get() - maxSequenceSize
+    var newLast = 0
+    for ((key, value) in recent) {
+      val newIdx = max(value - first + 1, 0)
+      recent[key] = newIdx
+      newLast = max(newLast, newIdx)
+    }
+    nextTokenIndex.set(newLast + 1)
   }
 
   @Synchronized
@@ -168,7 +173,7 @@ class NGramRecentTokens : Externalizable {
   fun contains(token: String): Boolean = recent.contains(token)
 
   @Synchronized
-  fun lastIndex(): Int = nextTokenIdx.get() - 1
+  fun lastIndex(): Int = nextTokenIndex.get() - 1
 
   @Synchronized
   fun size(): Int = recent.size
@@ -176,7 +181,7 @@ class NGramRecentTokens : Externalizable {
   @Synchronized
   @Throws(IOException::class)
   override fun writeExternal(out: ObjectOutput) {
-    out.writeInt(nextTokenIdx.get())
+    out.writeInt(nextTokenIndex.get())
     out.writeInt(recent.size)
     for (entry in recent) {
       out.writeObject(entry.key)
@@ -187,11 +192,25 @@ class NGramRecentTokens : Externalizable {
   @Synchronized
   @Throws(IOException::class)
   override fun readExternal(ins: ObjectInput) {
-    nextTokenIdx.set(ins.readInt())
+    nextTokenIndex.set(ins.readInt())
 
     val recentSize = ins.readInt()
     for (i in 0 until recentSize) {
       recent[ins.readObject() as String] = ins.readInt()
     }
+  }
+
+  @TestOnly
+  fun setMaxTokenIndex(newMax: Int) {
+    maxTokenIndex = newMax
+  }
+
+  @TestOnly
+  fun getRecentTokens(): List<Pair<String, Int>> {
+    val recentTokens = arrayListOf<Pair<String, Int>>()
+    for ((key, value) in recent) {
+      recentTokens.add(key to value)
+    }
+    return recentTokens
   }
 }
