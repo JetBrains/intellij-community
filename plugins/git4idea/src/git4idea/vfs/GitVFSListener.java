@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +21,6 @@ import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
-import git4idea.i18n.GitBundle;
 import git4idea.index.GitStageManagerKt;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
@@ -63,7 +62,7 @@ public final class GitVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected String getSingleFileAddPromptTemplate() {
-    return GitBundle.getString("vfs.listener.add.single.prompt");
+    return message("vfs.listener.add.single.prompt");
   }
 
   @Override
@@ -148,7 +147,7 @@ public final class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected String getSingleFileDeletePromptTemplate() {
-    return GitBundle.getString("vfs.listener.delete.single.prompt");
+    return message("vfs.listener.delete.single.prompt");
   }
 
   @Override

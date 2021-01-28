@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -117,8 +117,8 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
   }
 
   private fun showXCodeLicenseError(errorNotifier: ErrorNotifier) {
-    errorNotifier.showError(GitBundle.getString("git.executable.validation.error.xcode.title"),
-                            GitBundle.getString("git.executable.validation.error.xcode.message"),
+    errorNotifier.showError(GitBundle.message("git.executable.validation.error.xcode.title"),
+                            GitBundle.message("git.executable.validation.error.xcode.message"),
                             getLinkToConfigure(project))
   }
 

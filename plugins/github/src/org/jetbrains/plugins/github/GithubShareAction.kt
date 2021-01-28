@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github
 
@@ -222,7 +222,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           val result = Git.getInstance().init(project, root)
           if (!result.success()) {
             VcsNotifier.getInstance(project).notifyError(GithubNotificationIdsHolder.GIT_REPO_INIT_REPO,
-                                                         GitBundle.getString("initializing.title"),
+                                                         GitBundle.message("initializing.title"),
                                                          result.errorOutputAsHtmlString)
             LOG.info("Failed to create empty git repo: " + result.errorOutputAsJoinedString)
             return false

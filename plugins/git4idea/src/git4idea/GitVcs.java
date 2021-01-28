@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
@@ -48,7 +48,6 @@ import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
 import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
-import git4idea.util.GitVcsConsoleWriter;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.*;
 
@@ -256,7 +255,7 @@ public final class GitVcs extends AbstractVcs {
         buffer.append(exception.getMessage());
       }
       final String msg = buffer.toString();
-      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title")));
+      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(myProject, msg, GitBundle.message("error.dialog.title")));
     }
   }
 

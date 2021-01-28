@@ -220,7 +220,7 @@ class GitCommitOptionsUi(
     if (authorWarning?.isDisposed == false) return
 
     val builder = JBPopupFactory.getInstance()
-      .createBalloonBuilder(JLabel(GitBundle.getString("commit.author.diffs")))
+      .createBalloonBuilder(JLabel(GitBundle.message("commit.author.diffs")))
       .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")) // NON-NLS
       .setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor())
       .setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor())

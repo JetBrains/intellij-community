@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
@@ -56,9 +56,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.regex.Pattern;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 /**
  * Basic functionality for git handler execution.
@@ -354,7 +352,7 @@ public abstract class GitImplBase implements Git {
     }
     else {
       return GitCommandResult.startError(
-        GitBundle.getString("git.executable.validation.error.start.title") + ": \n" +
+        GitBundle.message("git.executable.validation.error.start.title") + ": \n" +
         GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
       );
     }
