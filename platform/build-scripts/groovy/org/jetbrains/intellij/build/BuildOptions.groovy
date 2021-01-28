@@ -78,6 +78,8 @@ class BuildOptions {
   static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Build Windows 32-bit JRE tar.gz. */
   static final String WINDOWS_JRE_FOR_X86_STEP = "windows_jre_x86"
+  /** Sign *.exe files in Windows distribution. */
+  static final String WIN_SIGN_STEP = "windows_sign"
   /** Build Frankenstein artifacts. */
   static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */
