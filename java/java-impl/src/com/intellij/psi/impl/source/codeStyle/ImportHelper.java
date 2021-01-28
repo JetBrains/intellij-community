@@ -98,7 +98,7 @@ public final class ImportHelper{
       collectNamesToImport(file, nonImports)
         .stream()
         .filter(filter)
-        .sorted(Comparator.comparing(o -> o.getFirst()))
+        .sorted(Pair.comparingByFirst())
         .collect(Collectors.toList());
 
     List<Pair<String, Boolean>> resultList = sortItemsAccordingToSettings(names, mySettings);

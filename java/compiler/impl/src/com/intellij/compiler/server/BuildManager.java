@@ -1001,7 +1001,7 @@ public final class BuildManager implements Disposable {
     return candidates.stream()
       .map(sdk -> new Pair<>(sdk, JavaVersion.tryParse(sdk.getVersionString())))
       .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
-      .max(Comparator.comparing(p -> p.second))
+      .max(Pair.comparingBySecond())
       .map(p -> new Pair<>(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
       .orElseGet(() -> {
         Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();

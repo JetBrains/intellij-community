@@ -16,7 +16,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +40,7 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
         myPlugins.add(pair(pluginDescription.getKey(), pluginDescription.getValue()));
       }
     }
-    myPlugins.sort(Comparator.comparing(o -> o.first));
+    myPlugins.sort(Pair.comparingByFirst());
   }
 
   @NotNull

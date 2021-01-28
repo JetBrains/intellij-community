@@ -2,8 +2,6 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +49,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
       }
     });
 
-    keys.sort(Comparator.comparing(o -> o.second));
+    keys.sort(Pair.comparingBySecond());
 
     for (final Pair<K, String> a: keys) {
       final Collection<V> b = get(a.first);
