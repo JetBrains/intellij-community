@@ -12,7 +12,7 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
   companion object {
     private const val DEFAULT_LAMBDA: Double = 0.5
     private const val LAST_STORED_TOKENS: Int = 200
-    private const val LAST_STORED_TOKENS_SEQUENCE: Int = 10000
+    private const val LAST_STORED_TOKENS_SEQUENCE: Int = 5000
 
     fun createNewModelRunner(order: Int, lambda: Double = DEFAULT_LAMBDA): NGramIncrementalModelRunner {
       return NGramIncrementalModelRunner(

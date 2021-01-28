@@ -72,7 +72,7 @@ class VocabularyWithLimit(var maxVocabularySize: Int,
     val toRemove: ArrayList<String> = arrayListOf()
     var latestAppearance = 0
     while (recent.size() >= maxVocabularySize) {
-      val (token, idx) = recent.removeAt(0)
+      val (token, idx) = recent.removeEldest()
       latestAppearance = max(latestAppearance, idx)
       toRemove.add(token)
     }
@@ -85,22 +85,13 @@ class VocabularyWithLimit(var maxVocabularySize: Int,
     }
 
     if (tokens.isNotEmpty()) {
-      val newToken = tokens.last()
-      updateRecent(recent.lastIndexOf(tokens.last()), newToken)
+      recent.update(tokens.last())
     }
-  }
-
-  private fun updateRecent(oldIndex: Int, token: String) {
-    if (oldIndex >= 0) {
-      recent.removeAt(oldIndex)
-    }
-    recent.add(token)
   }
 
   private fun assertUpdateIsIncremental(tokens: List<String>) {
     for (i in 0..tokens.size - 2) {
-      val oldIndex = recent.lastIndexOf(tokens[i])
-      assert(oldIndex >= recent.size() - tokens.size + i + 1 && oldIndex <= recent.size() - 1) {
+      assert(recent.contains(tokens[i])) {
         "Cannot find previous token in recent: ${tokens[i]} in $tokens"
       }
     }
@@ -144,70 +135,52 @@ class VocabularyWithLimit(var maxVocabularySize: Int,
 class NGramRecentTokens : Externalizable {
   private val nextTokenIdx: AtomicInteger = AtomicInteger(1)
 
-  private val recent: ArrayList<String> = arrayListOf()
-  private val recentIdx: ArrayList<Int> = arrayListOf()
+  private val recent: LinkedHashMap<String, Int> = LinkedHashMap()
 
   @TestOnly
   fun getNextTokenIndex(): Int = nextTokenIdx.get()
 
   @TestOnly
   fun getRecentTokens(): List<Pair<String, Int>> {
-    assertStateConsistent()
     val recentTokens = arrayListOf<Pair<String, Int>>()
-    for ((i, recent) in recent.withIndex()) {
-      recentTokens.add(recent to recentIdx[i])
+    for ((key, value) in recent) {
+      recentTokens.add(key to value)
     }
     return recentTokens
   }
 
   @Synchronized
-  fun add(token: String) {
-    assertStateConsistent()
-
-    recent.add(token)
-    recentIdx.add(nextTokenIdx.getAndIncrement())
+  fun update(token: String) {
+    if (recent.containsKey(token)) {
+      recent.remove(token)
+    }
+    recent[token] = nextTokenIdx.getAndIncrement()
   }
 
   @Synchronized
-  fun removeAt(index: Int): Pair<String, Int> {
-    assertStateConsistent()
-    val id = recentIdx.removeAt(index)
-    val token = recent.removeAt(index)
+  fun removeEldest(): Pair<String, Int> {
+    val (token, id) = recent.iterator().next()
+    recent.remove(token)
     return token to id
   }
 
   @Synchronized
-  fun lastIndexOf(token: String): Int {
-    assertStateConsistent()
-    return recent.lastIndexOf(token)
-  }
+  fun contains(token: String): Boolean = recent.contains(token)
 
   @Synchronized
-  fun lastIndex(): Int {
-    assertStateConsistent()
-    return recentIdx.last()
-  }
+  fun lastIndex(): Int = nextTokenIdx.get() - 1
 
   @Synchronized
-  fun size(): Int {
-    assertStateConsistent()
-    return recent.size
-  }
-
-  private fun assertStateConsistent() {
-    assert(recent.size == recentIdx.size) {
-      "Number of recent tokens should be equal to number of recent ids: ${recent.size} vs. ${recentIdx.size} ($recent vs. $recentIdx)"
-    }
-  }
+  fun size(): Int = recent.size
 
   @Synchronized
   @Throws(IOException::class)
   override fun writeExternal(out: ObjectOutput) {
     out.writeInt(nextTokenIdx.get())
     out.writeInt(recent.size)
-    for (i in 0 until recent.size) {
-      out.writeObject(recent[i])
-      out.writeInt(recentIdx[i])
+    for (entry in recent) {
+      out.writeObject(entry.key)
+      out.writeInt(entry.value)
     }
   }
 
@@ -218,8 +191,7 @@ class NGramRecentTokens : Externalizable {
 
     val recentSize = ins.readInt()
     for (i in 0 until recentSize) {
-      recent.add(ins.readObject() as String)
-      recentIdx.add(ins.readInt())
+      recent[ins.readObject() as String] = ins.readInt()
     }
   }
 }
