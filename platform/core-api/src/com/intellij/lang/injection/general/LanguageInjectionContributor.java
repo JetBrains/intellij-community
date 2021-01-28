@@ -10,10 +10,42 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Extension point to provide the injection information for the given context in terms <i>what</i> to inject.
- * Could be implemented by Language Plugins or Framework/Libraries Plugins to provide some context-specific injections,
- * which cannot be done via <a href="https://www.jetbrains.com/help/idea/language-injections-settings.html">IntelliLang.xml</a>
- * (which is actually handled by {@link org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector DefaultLanguageInjector}
- * implementation of this interface)
+ * Could be implemented by Language Plugins or Framework/Libraries Plugins to provide some context-specific injections.
+ *
+ * <p>
+ * For instance if you want to inject a YAML or JSON to a literal of your language depending on some conditions you could implement
+ * this interface like:
+ * <code><pre>
+ * public final class MyConfigInjector implements LanguageInjectionContributor {
+ *   public Injection getInjection(@NotNull PsiElement context) {
+ *     if (!isConfigPlace(context)) return null;
+ *
+ *     if (shouldInjectYaml(context)) {
+ *       return new SimpleInjection(YAMLLanguage.INSTANCE.getID(), "", "", null);
+ *     }
+ *     else if (shouldInjectJSON(context)) {
+ *       return new SimpleInjection(JsonLanguage.INSTANCE.getID(), "", "", null);
+ *     }
+ *     return null;
+ *   }
+ * }
+ * </pre></code>
+ *
+ * and register in in your {@code plugin.xml}:
+ * <pre>
+ * {@code
+ *     <languageInjectionContributor implementationClass="MyConfigInjector"
+ *                                   language="YourLanguage"/>
+ * }
+ * </pre>
+ * </p>
+ *
+ * <p>
+ * NOTE:
+ * for simple cases injection could be configured via <a href="https://www.jetbrains.com/help/idea/language-injections-settings.html">IntelliLang.xml</a>
+ * and handled by {@link org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector DefaultLanguageInjector} so there will be no need
+ * to implement this interface
+ * </p>
  *
  * @see com.intellij.lang.injection.MultiHostInjector
  * @see LanguageInjectionPerformer
