@@ -7,11 +7,13 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.IdeBorderFactory.createBorder
@@ -20,6 +22,7 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -55,7 +58,12 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesActio
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
 import java.awt.Component
+import java.awt.datatransfer.DataFlavor
+import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
+import javax.swing.Action
 import javax.swing.JComponent
+import javax.swing.TransferHandler
 import javax.swing.event.TreeSelectionListener
 
 internal class BranchesDashboardUi(project: Project, private val logUi: BranchesVcsLogUi) : Disposable {
@@ -147,6 +155,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     deleteAction.registerCustomShortcutSet(CustomShortcutSet(*shortcuts), branchesTreeWithLogPanel)
 
     createFocusFilterFieldAction(branchesSearchField)
+    installPasteAction(tree)
 
     val groupByDirectoryAction = GroupBranchByDirectoryAction(tree)
     val toggleFavoriteAction = ToggleFavoriteAction()
@@ -216,6 +225,20 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
         IdeFocusManager.getInstance(project).requestFocus(tree.component, true)
       }
     }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Find"), branchesTreePanel)
+  }
+
+  private fun installPasteAction(tree: FilteringBranchesTree) {
+    tree.component.actionMap.put(TransferHandler.getPasteAction().getValue(Action.NAME), object: AbstractAction () {
+      override fun actionPerformed(e: ActionEvent?) {
+        val speedSearch = tree.searchModel.speedSearch as? SpeedSearch ?: return
+        val pasteContent =
+          CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor)
+            // the same filtering logic as in javax.swing.text.PlainDocument.insertString (e.g. DnD to search field)
+            ?.let { StringUtil.convertLineSeparators(it, " ") }
+        speedSearch.type(pasteContent)
+        speedSearch.update()
+      }
+    })
   }
 
   inner class BranchesTreePanel : BorderLayoutPanel(), DataProvider {
