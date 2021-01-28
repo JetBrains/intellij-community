@@ -379,9 +379,10 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
 
 
     if (!showLookupHint && activeLookup != null && activeLookup.isShown()) {
-      p1Ok = p1.y + hintSize.height + 50 < layeredPane.getHeight();
-      p2Ok = p2.y - hintSize.height - 50 >= 0;
       Rectangle lookupBounds = activeLookup.getBounds();
+
+      p1Ok = p1.y + hintSize.height + 50 < layeredPane.getHeight() && !isHintIntersectWithLookup(p1, hintSize, lookupBounds, isRealPopup);
+      p2Ok = p2.y - hintSize.height - 50 >= 0 && !isHintIntersectWithLookup(p2, hintSize, lookupBounds, isRealPopup);
 
       if (activeLookup.isPositionedAboveCaret()) {
         if (!p1Ok) {
@@ -415,13 +416,15 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
         }
       }
     }
+    else {
+      p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
+      p2Ok = p2.y >= 0;
+    }
 
     if (isRealPopup) {
       hint.setForceShowAsPopup(false);
     }
 
-    p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
-    p2Ok = p2.y >= 0;
 
     if (!showLookupHint) {
       if (preferredPosition != HintManager.DEFAULT) {
@@ -447,6 +450,14 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     int screenY = aRectangle.y + aRectangle.height / 2;
     Rectangle screen = ScreenUtil.getScreenRectangle(screenX, screenY);
     return screen.contains(aRectangle);
+  }
+
+  private static boolean isHintIntersectWithLookup(Point hintPoint, Dimension hintSize, Rectangle lookupBounds, boolean isRealPopup){
+    Point leftTopPoint = isRealPopup
+      ? hintPoint
+      : new Point(hintPoint.x - hintSize.width / 2, hintPoint.y - hintSize.height);
+
+    return lookupBounds.intersects(new Rectangle(leftTopPoint, hintSize));
   }
 
   @Override
