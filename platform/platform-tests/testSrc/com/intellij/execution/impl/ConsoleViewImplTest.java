@@ -157,12 +157,11 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testTypingAfterMultipleCR() {
-    final EditorActionManager actionManager = EditorActionManager.getInstance();
     final TypedAction typedAction = TypedAction.getInstance();
-    final TestDataProvider dataContext = new TestDataProvider(getProject());
 
     final ConsoleViewImpl console = myConsole;
     final Editor editor = console.getEditor();
+    final DataContext dataContext = ((EditorEx)editor).getDataContext();
     console.print("System output\n", ConsoleViewContentType.SYSTEM_OUTPUT);
     console.print("\r\r\r\r\r\r\r", ConsoleViewContentType.NORMAL_OUTPUT);
     console.flushDeferredText();
