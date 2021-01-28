@@ -220,6 +220,9 @@ public final class ScreenUtil {
    * @return a visible area rectangle
    */
   public static Rectangle getScreenRectangle(int x, int y) {
+    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) {
+      return new Rectangle(x, y, 0, 0);
+    }
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     if (devices.length == 0) {
       return new Rectangle(x, y, 0, 0);
