@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.StripeButton
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
@@ -101,11 +100,11 @@ class PythonOnboardingTour(module: Module) :
     searchEverywhereTasks()
 
     task {
-      val closePath = ActionsBundle.message("group.FileMenu.text").dropMnemonic() + " | " + ActionsBundle.message("action.CloseProject.text").dropMnemonic()
-      text("You have just completed the onboarding tour! " +
-           "<ide/> Feature Trainer provides more task-oriented lessons. Try them as you work with the IDE. " +
-           "To start with your own Python project, close this demo by selecting ${strong(closePath)} from the main menu. " +
-           "Then you'll be able to open an existing project or create a new project in <ide/>.")
+      text("Congratulations! You have completed the onboarding tour. At this point you can:\n" +
+           "  - Close the learning project\n" +
+           "  - Create your own new project\n" +
+           "  - Open an existing project\n" +
+           "  - Continue your study")
     }
   }
 
@@ -118,15 +117,15 @@ class PythonOnboardingTour(module: Module) :
 
     toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
       text("Click here", LearningBalloonConfig(Balloon.Position.below, width = 0, duplicateMessage = false))
-      "You may notice that method ${code("find_average")} returns wrong answer. Let's debug it and stop at the" +
-      "${code("return")} statement. First of all, set breakpoint: just click at the gutter in the highlighted area."
+      "You may notice that the method ${code("find_average")} returns an incorrect value. " +
+      "To debug it, let's stop at the return statement. Click the gutter in the highlighted area to set a breakpoint."
     }
 
     highlightButtonByIdTask("Debug")
 
     actionTask("Debug") {
-      buttonBalloon("Let's start debug")
-      "Let's start debug. Click at ${icon(AllIcons.Actions.StartDebugger)} icon."
+      buttonBalloon("Let's start debugging")
+      "Let’s start debugging. Click the ${icon(AllIcons.Actions.StartDebugger)} icon."
     }
 
     task {
@@ -152,15 +151,14 @@ class PythonOnboardingTour(module: Module) :
     task {
       text("Press ${strong(UIBundle.message("got.it"))} to proceed.")
       gotItStep(Balloon.Position.above, 500,
-                "This tool provides you with debugging actions, such as step in, step over, run to the cursor, and so on. " +
-                "The ${strong(LessonsBundle.message("debug.workflow.lesson.name"))} lesson can give you an overview of them. " +
-                "We suggest that you try it later!")
+                "This toolbar provides various debugging actions, such as step in, step over, run to the cursor, and so on. " +
+                "We suggest that you take the ${strong(LessonsBundle.message("debug.workflow.lesson.name"))} lesson later to try them!")
     }
 
     highlightButtonByIdTask("Stop")
     actionTask("Stop") {
       buttonBalloon("Let's stop debugging") { list -> list.minByOrNull { it.locationOnScreen.y } }
-      "Let's stop debugging. Click at ${icon(AllIcons.Actions.Suspend)} icon."
+      "Now stop debugging. Click the ${icon(AllIcons.Actions.Suspend)} icon."
     }
 
     prepareRuntimeTask {
@@ -197,14 +195,13 @@ class PythonOnboardingTour(module: Module) :
     val runItem = ExecutionBundle.message("default.runner.start.action.text").dropMnemonic() + " '$demoConfigurationName'"
 
     task {
-      text("Let's run this sample. Right click at the free space somewhere in the editor to invoke the context menu.")
+      text("Right-click the editor to invoke the context menu and run the demo sample.")
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionMenuItem ->
         ui.text?.contains(runItem) ?: false
       }
     }
     task {
-      text("And choose ${strong(runItem)}. You may see it has ${action("RunClass")} shortcut. " +
-           "You can use it instead of this menu.")
+      text("Choose ${strong(runItem)} or try the ${action("RunClass")} shortcut.")
       toolWindowShowed("Run")
       stateCheck {
         configurations().isNotEmpty()
@@ -223,8 +220,8 @@ class PythonOnboardingTour(module: Module) :
 
       text("Press ${strong(UIBundle.message("got.it"))} to proceed.")
       gotItStep(Balloon.Position.below, 400,
-                "Use this toolbar to select a configuration from the list, modify it, rerun it, debug your code, collect code coverage, " +
-                "and profile your application. Try other lessons to learn more details about running and debugging code.")
+                "You can use this toolbar to modify a run configuration, rerun it, debug your code, collect code coverage, " +
+                "and profile your application. Try these workflows in other lessons.")
     }
   }
 
@@ -261,8 +258,8 @@ class PythonOnboardingTour(module: Module) :
     task {
       var collapsed = false
 
-      text("One of the main tool windows is Project View toolwindow. Let's click at its <strong>stripe button</strong> to open it " +
-           "and look at our simple demo project! Or you can open it by ${action("ActivateProjectToolWindow")} shortcut.",
+      text("Project view is one of the main tool windows. Click its stripe button to open it and look at a simple demo project. " +
+           "You can also open it by pressing ${action("ActivateProjectToolWindow")}.",
            LearningBalloonConfig(Balloon.Position.atRight, width = 300))
       triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 1 && path.getPathComponent(0).toString().contains("PyCharmLearningProject")
@@ -282,8 +279,8 @@ class PythonOnboardingTour(module: Module) :
     waitBeforeContinue(500)
 
     task {
-      text("Here you can see several top-level items: the project directory itself, external library (from the configured SDK and so on) " +
-           "and some other auxiliary staff. Now let's expand the project directory item.",
+      text("Project view contains the project directory, SDK-specific external libraries, and scratch files. " +
+           "Expand the project directory to proceed.",
            LearningBalloonConfig(Balloon.Position.atRight, width = 400))
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         path.pathCount >= 3 && path.getPathComponent(2).toString().contains(demoFileName)
@@ -307,7 +304,7 @@ class PythonOnboardingTour(module: Module) :
       FocusManagerImpl.getInstance(project).requestFocusInProject(editor.contentComponent, project)
     }
     task {
-      text("It seems we need to divide the ${code("result")} sum by ${code("values")} length. " +
+      text("It seems that we need to divide the result sum by the values length. " +
            "Type ${code(" / l")}")
       var wasEmpty = false
       proposeRestore {
@@ -340,7 +337,7 @@ class PythonOnboardingTour(module: Module) :
     }
 
     task("EditorChooseLookupItem") {
-      text("Apply ${strong("values")} item. You can start to type the variable to reduce completion list.")
+      text("Select the ${code("values")} item. Type ${strong("var")} to reduce the completion list.")
       trigger(it) {
         checkEditorModification(completionPosition, "/len(values)")
       }
@@ -370,8 +367,8 @@ class PythonOnboardingTour(module: Module) :
     val reformatMessage = PyBundle.message("QFIX.reformat.file")
     caret(",6")
     task("ShowIntentionActions") {
-      text("We moved the caret at the warning. In many cases <ide/> can guess how to fix warnings, syntax errors or guess your " +
-           "<strong>intention</strong>. So let's invoke one of the most useful actions, ${LessonUtil.actionName(it)}. Press ${action(it)}.")
+      text("The caret is now on the line with some warnings indicated by the yellow bulb. " +
+           "To preview the warnings and apply a quick fix, press ${action(it)}.")
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(reformatMessage)
       }
@@ -379,7 +376,7 @@ class PythonOnboardingTour(module: Module) :
     }
 
     task {
-      text("Let's apply the first item, quick fix for this problem: ${strong(reformatMessage)}.")
+      text("Let’s apply the first item: ${strong(reformatMessage)}.")
       stateCheck {
         // TODO: make normal check
         previous.sample.text != editor.document.text
@@ -390,9 +387,8 @@ class PythonOnboardingTour(module: Module) :
     val returnTypeMessage = PyPsiBundle.message("INTN.specify.return.type.in.annotation")
     caret("find_average")
     task("ShowIntentionActions") {
-      text("<ide/> knows a lot of intentions. During your everyday work try to invoke ${LessonUtil.actionName(it)} every time you " +
-           "think there might be a good solution or intention. You will save a lot of time and make coding process to be much more fun! " +
-           "Now let's look what can be applied for ${code("find_average")} method. Press ${action(it)} again.")
+      text("<ide/> provides a lot of intentions that save your time and make coding easier. " +
+           "Press ${action(it)} again to see that can be applied to ${code("find_average")}.")
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(returnTypeMessage)
       }
@@ -433,26 +429,17 @@ class PythonOnboardingTour(module: Module) :
   private fun LessonContext.searchEverywhereTasks() {
     caret("AVERAGE", select = true)
     task("SearchEverywhere") {
-      text("You may notice we selected ${code("AVERAGE")}. Let's look at another important <ide/> feature: " +
-           "${LessonUtil.actionName(it)}. Press ${LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)} two times in a row.")
+      text("You may notice we selected ${code("AVERAGE")}. " +
+           "Press ${LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)} two times to open the ${LessonUtil.actionName(it)} dialog.")
       trigger(it)
-      restoreIfModifiedOrMoved()
-    }
-
-    task {
-      text("Here you can find any entity in your project or any feature in <ide/> by its name! As you see, selected text automatically " +
-           "copied into input string. And the only item we found by now is the ${code("find_average")} function from the current file. " +
-           "Later you may pass the ${strong(LessonsBundle.message("search.everywhere.lesson.name"))} lesson to learn " +
-           "more about code navigation and library staff discover.")
-      text("Now let's clear the ${LessonUtil.actionName("SearchEverywhere")} input field.")
-      stateCheck { checkWordInSearch("") }
       restoreIfModifiedOrMoved()
     }
 
     val toggleCase = ActionsBundle.message("action.EditorToggleCase.text")
     task {
-      text("Suppose we want to make ${code("AVERAGE")} string to be lower case. Let's look for the corresponding action. " +
-           "Type ${strong("case")} into this search string.")
+      text("Here you can find any entity in your project or any feature in <ide/> by its name! As you see, selected text automatically " +
+           "copied into input string. And the only item we found by now is the ${code("find_average")} function from the current file.")
+      text("Now let's replace ${strong("AVERAGE")} by ${strong("case")} in the input field.")
       triggerByListItemAndHighlight { item ->
         (item as? GotoActionModel.MatchedValue)?.value?.let { GotoActionItemProvider.getActionText(it) } == toggleCase
       }
@@ -460,19 +447,10 @@ class PythonOnboardingTour(module: Module) :
     }
 
     actionTask("EditorToggleCase") {
-      "We found ${strong(toggleCase)} action. Note that it has its own shortcut and you can remember and use it later. " +
-      "But it may be needed rarely so you can just find it again when you will need it. Now apply the action: " +
-      "select highlighted item and press ${LessonUtil.rawEnter()}. Or just click it."
-    }
-
-    task {
-      text("You may want to look for some <ide/> feature without any interference with you own or library code entities. " +
-           "You can pass ${strong(LessonsBundle.message("goto.action.lesson.name"))} lesson to learn how to do it and more.")
+      "You can see the ${strong(toggleCase)} action. " +
+      "Let's apply the action: select highlighted item and press ${LessonUtil.rawEnter()}. Or just click it."
     }
   }
-
-  private fun TaskRuntimeContext.checkWordInSearch(expected: String): Boolean =
-    (focusOwner as? ExtendableTextField)?.text.equals(expected, ignoreCase = true)
 
   private fun TaskRuntimeContext.runManager() = RunManager.getInstance(project)
   private fun TaskRuntimeContext.configurations() =
