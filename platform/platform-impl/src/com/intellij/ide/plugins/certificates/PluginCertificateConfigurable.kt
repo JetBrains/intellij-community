@@ -76,14 +76,14 @@ class PluginCertificateConfigurable :
       decorator(growX)
     }
   }
-  private val myDetailsPanel: JPanel = panel {}
+  private val myDetailsPanel: JPanel = JPanel(CardLayout())
 
   val myRootPanel = panel {
     row {
       myCertificatesListPanel()
     }
     row {
-      myDetailsPanel()
+      myDetailsPanel(growX)
     }
   }
 
