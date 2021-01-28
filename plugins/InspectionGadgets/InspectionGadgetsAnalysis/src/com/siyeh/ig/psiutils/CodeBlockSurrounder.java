@@ -281,7 +281,8 @@ public abstract class CodeBlockSurrounder {
 
   private static CodeBlockSurrounder forStatement(PsiStatement statement, PsiExpression expression) {
     PsiElement statementParent = statement.getParent();
-    if (statementParent instanceof PsiLabeledStatement || statementParent instanceof PsiForStatement) {
+    PsiForStatement forStatement = ObjectUtils.tryCast(statementParent, PsiForStatement.class);
+    if (statementParent instanceof PsiLabeledStatement || (forStatement != null && forStatement.getBody() != statement)) {
       statement = (PsiStatement)statementParent;
       statementParent = statement.getParent();
     }
