@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 // not final for android
@@ -169,6 +169,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
     @Override
     public void activate(@Nullable Runnable runnable) {
+      if (runnable != null) runnable.run();
     }
 
     @Override
@@ -344,10 +345,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
     @Override
     public void activate(final @Nullable Runnable runnable, final boolean autoFocusContents) {
+      activate(runnable);
     }
 
     @Override
     public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
+      activate(runnable);
     }
 
     @Override
