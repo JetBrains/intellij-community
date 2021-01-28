@@ -712,6 +712,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, testDataFilePath);
             }
 
+            @TestMetadata("annotationsAreNotShown.kt")
+            public void testAnnotationsAreNotShown() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/annotationsAreNotShown.kt");
+            }
+
             @TestMetadata("capturedValues1.kt")
             public void testCapturedValues1() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/capturedValues1.kt");
@@ -875,6 +880,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             @TestMetadata("frameThis0This0.kt")
             public void testFrameThis0This0() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/frameThis0This0.kt");
+            }
+
+            @TestMetadata("gettersAreNotDuplicated.kt")
+            public void testGettersAreNotDuplicated() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/gettersAreNotDuplicated.kt");
             }
 
             @TestMetadata("hideContinuationThis.kt")

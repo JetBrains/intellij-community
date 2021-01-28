@@ -72,7 +72,8 @@ class KotlinClassRenderer : ClassRenderer() {
         for (fieldNode in fieldNodes) {
             result.add(fieldNode)
             val name = fieldNode.descriptor.name.removeSuffix("\$delegate")
-            namesToIndex[name]?.let { index ->
+            val index = namesToIndex[name] ?: continue
+            if (!added[index]) {
                 result.add(getterNodes[index])
                 added[index] = true
             }
@@ -86,8 +87,9 @@ class KotlinClassRenderer : ClassRenderer() {
         filter { method ->
             !method.isAbstract &&
             GetterDescriptor.GETTER_PREFIXES.any { method.name().startsWith(it) } &&
-            method.name() != "getClass" &&
             method.argumentTypeNames().isEmpty() &&
+            method.name() != "getClass" &&
+            !method.name().endsWith("\$annotations") &&
             method.declaringType().isInKotlinSources() &&
             !DebuggerUtils.isSimpleGetter(method)
         }
