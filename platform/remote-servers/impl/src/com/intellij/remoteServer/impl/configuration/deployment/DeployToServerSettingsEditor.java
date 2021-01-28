@@ -67,6 +67,11 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
 
   protected final void updateDeploymentSettingsEditor() {
     RemoteServer<S> selectedServer = myServerCombo.getSelectedServer();
+
+    if (selectedServer == null) {
+      myDeploymentSettingsComponent.removeAll();
+    }
+
     DeploymentSource selectedSource = getSelectedSource();
     if (Comparing.equal(selectedSource, myLastSelectedSource) && Comparing.equal(selectedServer, myLastSelectedServer)) {
       return;
