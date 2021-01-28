@@ -26,9 +26,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   private JLabel myShortcutLabel;
   private @Nullable JLabel myValueLabel;
 
-  private JComponent myRightPart;
-  private JComponent myLeftPart;
-  private JComponent mySeparator;
+  protected JComponent myRightPart;
+  protected JComponent myLeftPart;
+  protected JComponent mySeparator;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
@@ -102,7 +102,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     JPanel left = new JPanel(new BorderLayout());
     left.setBorder(JBUI.Borders.empty());
-    left.add(middleItemComponent, BorderLayout.WEST);
+    left.add(middleItemComponent, BorderLayout.CENTER);
 
     JPanel right = new JPanel(new BorderLayout());
     int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.NextStep.getIconWidth()) / 2;
