@@ -110,9 +110,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
       VcsRoot vcsRoot = getVcsRootFor(dir, null);
       if (vcsRoot != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Found VCS " + vcsRoot.getVcs() + " in " + vcsRoot.getPath() + " under " + root.getPath());
-        }
+        LOG.debug("Found VCS ", vcsRoot.getVcs(), " in ", vcsRoot.getPath(), " under ", root);
         result.add(vcsRoot);
       }
       return CONTINUE;
@@ -155,7 +153,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
       }
       VcsRoot vcsRoot = getVcsRootFor(parent, root);
       if (vcsRoot != null) {
-        LOG.debug("Found VCS " + vcsRoot.getVcs() + " in " + vcsRoot.getPath() + " above " + root.getPath());
+        LOG.debug("Found VCS ", vcsRoot.getVcs(), " in ", vcsRoot.getPath(), " above ", root);
         return vcsRoot;
       }
 
