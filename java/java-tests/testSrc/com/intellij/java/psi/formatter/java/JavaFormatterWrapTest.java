@@ -24,8 +24,8 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
  *
  * @author Denis Zhdanov
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
-  @SuppressWarnings("SpellCheckingInspection")
   public void testWrappingAnnotationArrayParameters() {
     getSettings().RIGHT_MARGIN = 80;
     getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -990,6 +990,31 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "                .findAny()\n" +
       "                .<String>map(it -> it.replaceFirst(\"t\", \"l\"))\n" +
       "                .orElse(\"zozoggrezgzee\");\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testWrapMixedBuilderAndNonBuilderChainedCalls() {
+    getSettings().BUILDER_METHODS = "start,addInt,addText,end";
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+
+    doTextTest(
+      "public class Test {\n" +
+      "\n" +
+      "    void foo() {\n" +
+      "        String result = this.nonBuilder().start().addInt().addText().end().toString();\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "\n" +
+      "    void foo() {\n" +
+      "        String result = this.nonBuilder()\n" +
+      "                .start()\n" +
+      "                .addInt()\n" +
+      "                .addText()\n" +
+      "                .end().toString();\n" +
       "    }\n" +
       "}"
     );

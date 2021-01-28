@@ -73,6 +73,7 @@ class ChainMethodCallsBlockBuilder {
     List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes);
 
     Wrap wrap = null;
+    Wrap builderMethodWrap = Wrap.createWrap(WrapType.ALWAYS, mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN);
     Alignment chainedCallsAlignment = null;
 
     List<Block> blocks = new ArrayList<>();
@@ -81,10 +82,9 @@ class ChainMethodCallsBlockBuilder {
 
     for (int i = 0; i < methodCall.size(); i++) {
       ChainedCallChunk currentCallChunk = methodCall.get(i);
-      if (isMethodCall(currentCallChunk) || isComment(currentCallChunk)) {
+      if (isMethodCall(currentCallChunk) && !isBuilderMethod(currentCallChunk) || isComment(currentCallChunk)) {
         if (wrap == null) {
-          int wrapSetting = isBuilderMethod(currentCallChunk) ? CommonCodeStyleSettings.WRAP_ALWAYS : mySettings.METHOD_CALL_CHAIN_WRAP;
-          wrap = createCallChunkWrap(i, methodCall, wrapSetting);
+          wrap = createCallChunkWrap(i, methodCall, mySettings.METHOD_CALL_CHAIN_WRAP);
         }
         if (chainedCallsAlignment == null) {
           chainedCallsAlignment = createCallChunkAlignment(i, methodCall);
@@ -96,7 +96,9 @@ class ChainMethodCallsBlockBuilder {
       }
 
       CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
-      blocks.add(builder.create(currentCallChunk.nodes, wrap, chainedCallsAlignment, getRelativeIndentSize(commonIndentSize, currentCallChunk)));
+      blocks.add(builder.create(currentCallChunk.nodes,
+                                isBuilderMethod(currentCallChunk) ? builderMethodWrap : wrap, chainedCallsAlignment,
+                                getRelativeIndentSize(commonIndentSize, currentCallChunk)));
     }
 
     return blocks;
