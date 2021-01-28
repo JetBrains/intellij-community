@@ -17,13 +17,13 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="sqlite-svn" type="repository">
-        <properties maven-id="org.xerial:sqlite-jdbc:3.20.1" />
+        <properties maven-id="org.xerial:sqlite-jdbc:3.34.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.20.1/sqlite-jdbc-3.20.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.34.0/sqlite-jdbc-3.34.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.20.1/sqlite-jdbc-3.20.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.34.0/sqlite-jdbc-3.34.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
