@@ -24,7 +24,7 @@ public final class StaleIndexesChecker {
 
   static @NotNull IntSet checkIndexForStaleRecords(@NotNull UpdatableIndex<?, ?, FileContent> index,
                                                    boolean onStartup) throws StorageException {
-    if (!ApplicationManager.getApplication().isInternal()) {
+    if (!ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isEAP()) {
       return IntSets.EMPTY_SET;
     }
     IndexExtension<?, ?, FileContent> extension = index.getExtension();
