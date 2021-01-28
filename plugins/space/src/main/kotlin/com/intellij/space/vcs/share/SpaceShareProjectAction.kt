@@ -85,7 +85,7 @@ private class SpaceShareProjectAction : DumbAwareAction() {
     }
     launch(Lifetime.Eternal, Ui) {
       // check that http password set before start sharing process
-      if (SpaceSettings.getInstance().cloneType == CloneType.HTTP) {
+      if (SpaceSettings.getInstance().cloneType == CloneType.HTTPS) {
         if (checkAndSetGitHttpPassword() is SpaceHttpPasswordState.Set) {
           shareProject(project, file)
         }
@@ -211,7 +211,7 @@ private class SpaceShareProjectAction : DumbAwareAction() {
 
   private fun addRemoteUrl(repoDetails: RepoDetails, git: Git, gitRepo: GitRepository, indicator: ProgressIndicator): Pair<String, String> {
     val remoteUrl = when (SpaceSettings.getInstance().cloneType) {
-      CloneType.HTTP -> repoDetails.urls.httpUrl
+      CloneType.HTTPS -> repoDetails.urls.httpUrl
       CloneType.SSH -> repoDetails.urls.sshUrl
     } as String
 

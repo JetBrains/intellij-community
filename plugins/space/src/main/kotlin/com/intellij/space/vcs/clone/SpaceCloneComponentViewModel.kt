@@ -13,7 +13,7 @@ import circlet.platform.client.resolveRefsOrFetch
 import circlet.platform.client.xTransformedPagedListOnFlux
 import circlet.workspaces.Workspace
 import com.intellij.space.settings.CloneType
-import com.intellij.space.settings.CloneType.HTTP
+import com.intellij.space.settings.CloneType.HTTPS
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.vcs.SpaceHttpPasswordState
 import com.intellij.space.vcs.SpaceKeysState
@@ -99,7 +99,7 @@ internal class SpaceCloneComponentViewModel(
   }
 
   private suspend fun loadSshState(cloneType: CloneType): SpaceKeysState {
-    if (cloneType == HTTP) return SpaceKeysState.NotChecked
+    if (cloneType == HTTPS) return SpaceKeysState.NotChecked
 
     return ssh.sshKeys(me.value.identifier).let {
       if (it.isNullOrEmpty()) SpaceKeysState.NotSet else SpaceKeysState.Set(it)

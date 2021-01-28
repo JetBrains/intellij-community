@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.clone
 
 import circlet.client.api.englishFullName
@@ -216,7 +216,7 @@ private class CloneView(
     cloneViewModel.isLoading.forEach(lifetime, list::setPaintBusy)
 
     cloneViewModel.spaceHttpPasswordState.forEach(lifetime) {
-      if (cloneViewModel.cloneType.value == CloneType.HTTP) {
+      if (cloneViewModel.cloneType.value == CloneType.HTTPS) {
         passwordStatus.clear()
         passwordStatus.append(SpaceBundle.message("clone.dialog.error.http.password.not.set.text"), SimpleTextAttributes.ERROR_ATTRIBUTES)
         linkLabel.setListener({ _, _ -> setGitHttpPassword() }, null)
@@ -367,7 +367,7 @@ private class CloneView(
     val repositoryUrls = list.selectedValue?.repoDetails?.value?.urls
     cloneViewModel.selectedUrl.value = when (settings.cloneType) {
       CloneType.SSH -> repositoryUrls?.sshUrl
-      CloneType.HTTP -> repositoryUrls?.httpUrl
+      CloneType.HTTPS -> repositoryUrls?.httpUrl
     }
   }
 
