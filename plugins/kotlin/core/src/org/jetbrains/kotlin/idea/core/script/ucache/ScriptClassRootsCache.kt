@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
@@ -14,11 +15,12 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependencies.Companion.scriptCacheDependencies
-import org.jetbrains.kotlin.idea.core.util.cachedFileAttribute
-import org.jetbrains.kotlin.idea.core.util.readObject
-import org.jetbrains.kotlin.idea.core.util.writeObject
+import org.jetbrains.kotlin.idea.core.util.*
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.io.File
 import java.io.Serializable
 import java.lang.ref.Reference
@@ -224,7 +226,9 @@ internal class ScriptCacheDependencies(
     }
 
     fun save(project: Project) {
-        project.scriptCacheDependenciesFile()?.scriptCacheDependencies = this
+        project.scriptCacheDependenciesFile()?.let { file ->
+            ScriptCacheDependenciesFile[project, file] = this
+        }
     }
 
     override fun equals(other: Any?): Boolean {
@@ -254,7 +258,7 @@ internal class ScriptCacheDependencies(
 
         fun Project.scriptCacheDependencies(): ScriptCacheDependencies? =
             try {
-                scriptCacheDependenciesFile()?.scriptCacheDependencies
+                scriptCacheDependenciesFile()?.let { file -> ScriptCacheDependenciesFile[this, file] }
             } catch (e: Exception) {
                 null
             }
@@ -263,9 +267,18 @@ internal class ScriptCacheDependencies(
 
 }
 
-private var VirtualFile.scriptCacheDependencies: ScriptCacheDependencies? by cachedFileAttribute(
+@Service
+internal class ScriptCacheDependenciesFile: AbstractFileAttributePropertyService<ScriptCacheDependencies>(
     name = "kotlin-script-cache-dependencies",
     version = 1,
-    read = { readObject() },
-    write = { writeObject(it) }
-)
+    read = DataInputStream::readObject,
+    write = DataOutputStream::writeObject
+) {
+    companion object {
+        operator fun get(project: Project, file: VirtualFile) = project.getServiceSafe<ScriptCacheDependenciesFile>()[file]
+
+        operator fun set(project: Project, file: VirtualFile, newValue: ScriptCacheDependencies?) {
+            project.getServiceSafe<ScriptCacheDependenciesFile>()[file] = newValue
+        }
+    }
+}

@@ -5,18 +5,20 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration.cache
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.util.cachedFileAttribute
-import org.jetbrains.kotlin.idea.core.util.readObject
-import org.jetbrains.kotlin.idea.core.util.writeObject
+import org.jetbrains.kotlin.idea.core.util.*
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper.FromCompilationConfiguration
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.io.Serializable
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.withDefaultsFrom
@@ -59,7 +61,7 @@ internal class ScriptConfigurationFileAttributeCache(
     private fun load(
         virtualFile: VirtualFile
     ): ScriptConfigurationSnapshotForFS? {
-        val configurationSnapshot = virtualFile.scriptConfigurationSnapshot ?: return null
+        val configurationSnapshot = ScriptConfigurationSnapshotFile[project, virtualFile] ?: return null
         scriptingDebugLog(virtualFile) { "configuration from fileAttributes = $configurationSnapshot" }
 
         val configuration = configurationSnapshot.configuration ?: return null
@@ -87,27 +89,34 @@ internal class ScriptConfigurationFileAttributeCache(
     }
 
     fun save(file: VirtualFile, value: ScriptConfigurationSnapshot?) {
-        if (value == null) {
-            file.scriptConfigurationSnapshot = null
-        } else {
-            file.scriptConfigurationSnapshot = ScriptConfigurationSnapshotForFS(
-                value.inputs,
-                value.reports,
-                value.configuration?.configuration
+        ScriptConfigurationSnapshotFile[project, file] = value?.let {
+            ScriptConfigurationSnapshotForFS(
+                it.inputs,
+                it.reports,
+                it.configuration?.configuration
             )
         }
     }
 }
 
-private class ScriptConfigurationSnapshotForFS(
+class ScriptConfigurationSnapshotForFS(
     val inputs: CachedConfigurationInputs,
     val reports: List<ScriptDiagnostic>,
     val configuration: ScriptCompilationConfiguration?
 ) : Serializable
 
-private var VirtualFile.scriptConfigurationSnapshot: ScriptConfigurationSnapshotForFS? by cachedFileAttribute(
+@Service
+class ScriptConfigurationSnapshotFile: AbstractFileAttributePropertyService<ScriptConfigurationSnapshotForFS>(
     name = "kotlin-script-dependencies",
     version = 5,
-    read = { readObject<ScriptConfigurationSnapshotForFS>() },
-    write = { writeObject<ScriptConfigurationSnapshotForFS>(it) }
-)
+    read = DataInputStream::readObject,
+    write = DataOutputStream::writeObject
+) {
+    companion object {
+        operator fun get(project: Project, file: VirtualFile) = project.getServiceSafe<ScriptConfigurationSnapshotFile>()[file]
+
+        operator fun set(project: Project, file: VirtualFile, newValue: ScriptConfigurationSnapshotForFS?) {
+            project.getServiceSafe<ScriptConfigurationSnapshotFile>()[file] = newValue
+        }
+    }
+}

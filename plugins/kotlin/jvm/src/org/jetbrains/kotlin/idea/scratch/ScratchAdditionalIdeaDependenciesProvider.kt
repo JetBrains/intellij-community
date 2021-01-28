@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
-import org.jetbrains.kotlin.idea.core.script.scriptRelatedModuleName
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 class ScratchAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider() {
@@ -20,7 +20,7 @@ class ScratchAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenci
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> {
         if (!file.isKotlinScratch) return emptyList()
 
-        val scratchModule = file.scriptRelatedModuleName?.let {
+        val scratchModule = ScriptRelatedModuleNameFile[project, file]?.let {
             ModuleManager.getInstance(project).findModuleByName(it)
         } ?: return emptyList()
 

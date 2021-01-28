@@ -22,7 +22,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.scriptRelatedModuleName
+import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.util.projectStructure.getModule
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 import org.jetbrains.kotlin.psi.KtFile
@@ -33,17 +33,17 @@ class ScratchFileModuleInfoProvider : StartupActivity {
 
     override fun runActivity(project: Project) {
         project.messageBus.connect().subscribe(ScratchFileListener.TOPIC, object : ScratchFileListener {
-            override fun fileCreated(scratchFile: ScratchFile) {
-                val ktFile = scratchFile.getPsiFile() as? KtFile ?: return
-                val file = ktFile.virtualFile ?: return
+            override fun fileCreated(file: ScratchFile) {
+                val ktFile = file.getPsiFile() as? KtFile ?: return
+                val virtualFile = ktFile.virtualFile ?: return
 
-                if (file.extension != STD_SCRIPT_SUFFIX) {
-                    LOG.error("Kotlin Scratch file should have .kts extension. Cannot add scratch panel for ${file.path}")
+                if (virtualFile.extension != STD_SCRIPT_SUFFIX) {
+                    LOG.error("Kotlin Scratch file should have .kts extension. Cannot add scratch panel for ${virtualFile.path}")
                     return
                 }
 
-                scratchFile.addModuleListener { psiFile, module ->
-                    psiFile.virtualFile.scriptRelatedModuleName = module?.name
+                file.addModuleListener { psiFile, module ->
+                    ScriptRelatedModuleNameFile[project, psiFile.virtualFile] = module?.name
 
                     // Drop caches for old module
                     ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
@@ -51,12 +51,12 @@ class ScratchFileModuleInfoProvider : StartupActivity {
                     DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
                 }
 
-                if (file.isKotlinWorksheet) {
-                    val module = file.getModule(project) ?: return
-                    scratchFile.setModule(module)
+                if (virtualFile.isKotlinWorksheet) {
+                    val module = virtualFile.getModule(project) ?: return
+                    file.setModule(module)
                 } else {
-                    val module = file.scriptRelatedModuleName?.let { ModuleManager.getInstance(project).findModuleByName(it) } ?: return
-                    scratchFile.setModule(module)
+                    val module = ScriptRelatedModuleNameFile[project, virtualFile]?.let { ModuleManager.getInstance(project).findModuleByName(it) } ?: return
+                    file.setModule(module)
                 }
             }
         })

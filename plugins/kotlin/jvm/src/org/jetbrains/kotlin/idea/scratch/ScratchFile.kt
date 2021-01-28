@@ -24,7 +24,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.messages.Topic
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.scratch.ui.scratchFileOptions
+import org.jetbrains.kotlin.idea.scratch.ui.ScratchFileOptionsFile
 
 abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     var replScratchExecutor: SequentialScratchExecutor? = null
@@ -59,13 +59,15 @@ abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     }
 
     val options: ScratchFileOptions
-        get() = getPsiFile()?.virtualFile?.scratchFileOptions ?: ScratchFileOptions()
+        get() = getPsiFile()?.virtualFile?.let {
+            ScratchFileOptionsFile[project, it]
+        } ?: ScratchFileOptions()
 
     fun saveOptions(update: ScratchFileOptions.() -> ScratchFileOptions) {
         val virtualFile = getPsiFile()?.virtualFile ?: return
         with(virtualFile) {
-            val configToUpdate = scratchFileOptions ?: ScratchFileOptions()
-            scratchFileOptions = configToUpdate.update()
+            val configToUpdate = ScratchFileOptionsFile[project, this] ?: ScratchFileOptions()
+            ScratchFileOptionsFile[project, this] = configToUpdate.update()
         }
     }
 

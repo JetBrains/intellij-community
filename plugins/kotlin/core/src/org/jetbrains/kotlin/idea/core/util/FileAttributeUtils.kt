@@ -5,42 +5,28 @@
 
 package org.jetbrains.kotlin.idea.core.util
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.NullableLazyKey
-import com.intellij.openapi.util.io.DataInputOutputUtilRt
+import com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq
+import com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq
-import com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq
+import com.intellij.util.ObjectUtils
 import com.intellij.util.io.IOUtil.readUTF
 import com.intellij.util.io.IOUtil.writeUTF
 import java.io.*
-import kotlin.reflect.KProperty
+import java.util.concurrent.ConcurrentHashMap
 
-inline fun <T : Any> cachedFileAttribute(
+abstract class AbstractFileAttributePropertyService<T: Any>(
     name: String,
     version: Int,
-    crossinline read: DataInputStream.() -> T,
-    crossinline write: DataOutputStream.(T) -> Unit
-): FileAttributeProperty<T> {
-    return object : FileAttributeProperty<T>(name, version) {
-        override fun readValue(input: DataInputStream): T = read(input)
-        override fun writeValue(output: DataOutputStream, value: T) = write(output, value)
-    }
-}
-
-abstract class FileAttributeProperty<T : Any>(name: String, version: Int, private val default: T? = null) {
-    abstract fun readValue(input: DataInputStream): T
-    abstract fun writeValue(output: DataOutputStream, value: T)
-
-    private val attribute = FileAttribute(name, version, false)
-
-    @Suppress("LeakingThis")
-    private val cache = NullableLazyKey.create(
-        "FileAttributeProperty.$name",
-        this::computeValue
-    )
+    private val default: T? = null,
+    private val read: DataInputStream.() -> T,
+    private val write: DataOutputStream.(T) -> Unit
+): Disposable {
+    private val attribute = attribute(name, version)
+    private val cache = ConcurrentHashMap<VirtualFile, Any?>()
 
     private fun computeValue(file: VirtualFile): T? {
         if (file !is VirtualFileWithId || !file.isValid) return null
@@ -48,32 +34,57 @@ abstract class FileAttributeProperty<T : Any>(name: String, version: Int, privat
         return attribute.readAttribute(file)?.use { input ->
             try {
                 input.readNullable {
-                    readValue(input)
+                    read(input)
                 }
             } catch (e: Throwable) {
                 Logger.getInstance("#org.jetbrains.kotlin.idea.core.util.FileAttributeProperty")
                     .warn("Unable to read attribute from $file", e)
-                file.putUserData(cache, null)
                 null
             }
         } ?: default
     }
 
-    operator fun setValue(file: VirtualFile, property: KProperty<*>, newValue: T?) {
+    operator fun set(file: VirtualFile, newValue: T?) {
         if (file !is VirtualFileWithId || !file.isValid) return
 
         attribute.writeAttribute(file).use { output ->
             output.writeNullable(newValue) { value ->
-                writeValue(output, value)
+                write(output, value)
             }
         }
 
         // clear cache
-        file.putUserData(cache, null)
+        cache.remove(file)
     }
 
-    operator fun getValue(file: VirtualFile, property: KProperty<*>): T? =
-        cache.getValue(file)
+    @Suppress("UNCHECKED_CAST")
+    operator fun get(file: VirtualFile): T? =
+        cache.computeIfAbsent(file) {
+            computeValue(file) ?: ObjectUtils.NULL
+        }.takeIf { it != ObjectUtils.NULL } as T?
+
+    override fun dispose() {
+        cache.clear()
+    }
+
+    companion object {
+        @JvmStatic
+        private val attributes = mutableMapOf<String, FileAttribute>()
+
+        @JvmStatic
+        private fun attribute(name: String, version: Int): FileAttribute {
+            val attribute = synchronized(attributes) {
+                attributes.computeIfAbsent(name) {
+                    FileAttribute(name, version, false)
+                }
+            }
+            check(attribute.version == version) {
+                "FileAttribute version $version differs with existed one ${attribute.version}"
+            }
+            return attribute
+        }
+    }
+
 }
 
 fun DataInput.readStringList(): List<String> = readSeq(this) { readString() }

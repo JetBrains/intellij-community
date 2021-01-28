@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.core.script.scriptRelatedModuleName
+import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.project.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
@@ -115,7 +115,7 @@ private fun detectDefaultTargetPlatformVersion(platform: TargetPlatform?): Targe
 
 private fun getLanguageSettingsForScripts(project: Project, file: VirtualFile, scriptDefinition: ScriptDefinition): ScriptLanguageSettings {
     val scriptModule = file.let {
-        it.scriptRelatedModuleName?.let { module -> ModuleManager.getInstance(project).findModuleByName(module) }
+        ScriptRelatedModuleNameFile[project, it]?.let { module -> ModuleManager.getInstance(project).findModuleByName(module) }
             ?: ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(it)
     }
 
