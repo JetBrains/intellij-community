@@ -5,8 +5,6 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -18,8 +16,8 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -28,13 +26,15 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   private final VfsEventsMerger myEventMerger = new VfsEventsMerger();
 
   @NotNull
-  private final NullableLazyValue<VirtualFile> myConfig = AtomicNullableLazyValue.createValue(() -> {
-    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
+  private final CachedValue<VirtualFile> myConfig = new CachedValueImpl<>(() -> {
+    return new CachedValueProvider.Result<>(findVFileByPath(PathManager.getConfigPath()),
+                                            VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
   });
 
   @NotNull
-  private final NullableLazyValue<VirtualFile> myLog = AtomicNullableLazyValue.createValue(() -> {
-    return LocalFileSystem.getInstance().findFileByIoFile(new File(PathManager.getLogPath()));
+  private final CachedValue<VirtualFile> myLog = new CachedValueImpl<>(() -> {
+    return new CachedValueProvider.Result<>(findVFileByPath(PathManager.getLogPath()),
+                                            VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
   });
 
   @NotNull
@@ -195,5 +195,10 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     if (configValue != null && VfsUtilCore.isAncestor(configValue, file, false)) return true;
 
     return false;
+  }
+
+  @Nullable
+  private static VirtualFile findVFileByPath(@NotNull String path) {
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 }
