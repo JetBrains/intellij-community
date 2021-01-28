@@ -98,12 +98,14 @@ class PluginCertificateConfigurable :
     }
   }
 
-  private val CERTIFICATE_DESCRIPTOR = FileTypeDescriptor(IdeBundle.message("settings.certificate.choose.certificate"),
-                                                          ".crt", ".CRT",
-                                                          ".cer", ".CER",
-                                                          ".pem", ".PEM",
-                                                          ".der", ".DER")
-  val EMPTY_PANEL = "empty.panel"
+  private val CERTIFICATE_DESCRIPTOR = FileTypeDescriptor(
+    IdeBundle.message("settings.certificate.choose.certificate"),
+    ".crt", ".CRT",
+    ".cer", ".CER",
+    ".pem", ".PEM",
+    ".der", ".DER"
+  )
+  private val EMPTY_PANEL = "empty.panel"
 
 
   private val myTrustManager: MutableTrustManager = CertificateManager.instance.customTrustManager
