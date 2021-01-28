@@ -2,11 +2,14 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -14,34 +17,58 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class HeadlessDataManager extends DataManagerImpl {
-  private static final class HeadlessContext extends UserDataHolderBase implements DataContext {
-    private final @Nullable DataProvider myProvider1;
-    private final @Nullable DataProvider myProvider2;
 
-    HeadlessContext(@Nullable DataProvider provider1, @Nullable DataProvider provider2) {
-      myProvider1 = provider1;
-      myProvider2 = provider2;
+  private static final class HeadlessContext implements DataContext, UserDataHolder {
+    private final DataProvider myProvider;
+    private final DataContext myParent;
+    private Map<Key<?>, Object> myUserData;
+
+    HeadlessContext(@Nullable DataProvider provider, @Nullable DataContext parent) {
+      myProvider = provider;
+      myParent = parent;
     }
 
     @Override
     @Nullable
     public Object getData(@NotNull String dataId) {
-      if (myProvider1 != null) {
-        var result = myProvider1.getData(dataId);
-        if (result != null) {
-          return result;
+      Object result = getDataFromSelfOrParent(dataId);
+      if (result == null) {
+        GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
+        if (rule != null) {
+          return rule.getData(this::getDataFromSelfOrParent);
         }
       }
-      if (myProvider2 != null) {
-        var result = myProvider2.getData(dataId);
-        if (result != null) {
-          return result;
-        }
+      return result;
+    }
+
+    @Nullable
+    private Object getDataFromSelfOrParent(@NotNull String dataId) {
+      Object result = myProvider == null ? null : myProvider.getData(dataId);
+      return result != null ? result :
+             myParent != null ? myParent.getData(dataId) : null;
+    }
+
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      //noinspection unchecked
+      return (T)getOrCreateMap().get(key);
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+      getOrCreateMap().put(key, value);
+    }
+
+    private @NotNull Map<Key<?>, Object> getOrCreateMap() {
+      Map<Key<?>, Object> userData = myUserData;
+      if (userData == null) {
+        myUserData = userData = ContainerUtil.createWeakValueMap();
       }
-      return null;
+      return userData;
     }
   }
 
@@ -61,8 +88,8 @@ public class HeadlessDataManager extends DataManagerImpl {
   }
 
   /**
-   * By default {@link HeadlessDataManager} never traverses across Swing component hierarchy and never calls any
-   * {@link com.intellij.ide.impl.dataRules.GetDataRule}. This method enables usage of production {@link DataManagerImpl} in the test mode.
+   * By default {@link HeadlessDataManager} never traverses across Swing component hierarchy.
+   * This method enables usage of production {@link DataManagerImpl} in the test mode.
    *
    * @param disposable Specifies when the forwarding should be unregistered.
    * @throws IllegalStateException If already called and still not disposed.
@@ -83,7 +110,7 @@ public class HeadlessDataManager extends DataManagerImpl {
   @NotNull
   @Override
   public DataContext getDataContext() {
-    return new HeadlessContext(myTestDataProvider, productionDataProvider(super::getDataContext));
+    return new HeadlessContext(myTestDataProvider, productionDataContext(super::getDataContext));
   }
 
   @NotNull
@@ -97,18 +124,17 @@ public class HeadlessDataManager extends DataManagerImpl {
   @NotNull
   @Override
   public DataContext getDataContext(Component component) {
-    return new HeadlessContext(myTestDataProvider, productionDataProvider(() -> super.getDataContext(component)));
+    return new HeadlessContext(myTestDataProvider, productionDataContext(() -> super.getDataContext(component)));
   }
 
   @NotNull
   @Override
   public DataContext getDataContext(@NotNull Component component, int x, int y) {
-    return new HeadlessContext(myTestDataProvider, productionDataProvider(() -> super.getDataContext(component, x, y)));
+    return new HeadlessContext(myTestDataProvider, productionDataContext(() -> super.getDataContext(component, x, y)));
   }
 
-  private DataProvider productionDataProvider(Supplier<@NotNull DataContext> dataContextSupplier) {
-    return myUseProductionDataManager
-           ? dataId -> dataContextSupplier.get().getData(dataId)
-           : null;
+  @Nullable
+  private DataContext productionDataContext(@NotNull Supplier<@NotNull DataContext> dataContextSupplier) {
+    return myUseProductionDataManager ? dataContextSupplier.get() : null;
   }
 }
