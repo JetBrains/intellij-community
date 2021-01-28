@@ -67,8 +67,10 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     }
 
     Set<VcsRoot> detectedRoots = new HashSet<>();
-    scanForRootsInsideDir(myProject, dirToScan, null, detectedRoots);
-    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(dirToScan), detectedRoots));
+    Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
+
+    scanForRootsInsideDir(myProject, dirToScan, null, scannedDirs, detectedRoots);
+    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(dirToScan), scannedDirs, detectedRoots));
     return detectedRoots;
   }
 
@@ -87,28 +89,34 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
     Set<VcsRoot> detectedRoots = new HashSet<>();
     Set<VirtualFile> skipDirs = new HashSet<>();
+    Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
 
     // process inner content roots first
     contentRoots.sort(Comparator.comparing(root -> -root.getPath().length()));
     for (VirtualFile dir : contentRoots) {
-      scanForRootsInsideDir(myProject, dir, skipDirs, detectedRoots);
+      scanForRootsInsideDir(myProject, dir, skipDirs, scannedDirs, detectedRoots);
       skipDirs.add(dir);
     }
 
-    detectedRoots.addAll(scanForRootsAboveDirs(contentRoots, detectedRoots));
+    detectedRoots.addAll(scanForRootsAboveDirs(contentRoots, scannedDirs, detectedRoots));
     return detectedRoots;
   }
 
   private void scanForRootsInsideDir(@NotNull Project project,
                                      @NotNull VirtualFile root,
                                      @Nullable Set<VirtualFile> skipDirs,
+                                     @NotNull Map<VirtualFile, Boolean> scannedDirs,
                                      @NotNull Set<VcsRoot> result) {
     VcsRootScanner.visitDirsRecursivelyWithoutExcluded(project, root, false, dir -> {
       if (skipDirs != null && skipDirs.contains(dir)) {
         return SKIP_CHILDREN;
       }
 
+      if (scannedDirs.containsKey(dir)) return CONTINUE;
+
       VcsRoot vcsRoot = getVcsRootFor(dir, null);
+      scannedDirs.put(dir, vcsRoot != null);
+
       if (vcsRoot != null) {
         LOG.debug("Found VCS ", vcsRoot.getVcs(), " in ", vcsRoot.getPath(), " under ", root);
         result.add(vcsRoot);
@@ -119,6 +127,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private Collection<VcsRoot> scanForRootsAboveDirs(@NotNull Collection<VirtualFile> dirsToScan,
+                                                    @NotNull Map<VirtualFile, Boolean> scannedDirs,
                                                     @NotNull Collection<VcsRoot> detectedRoots) {
     Set<VirtualFile> skipDirs = new HashSet<>();
     for (VcsRoot root : detectedRoots) {
@@ -130,36 +139,40 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
     Set<VcsRoot> result = new HashSet<>();
     for (VirtualFile dir : dirsToScan) {
-      VcsRoot root = scanForRootsAboveDir(dir, skipDirs);
-      if (root != null) {
-        result.add(root);
-      }
+      scanForRootsAboveDir(dir, scannedDirs, skipDirs, result);
     }
     return result;
   }
 
-  @Nullable
-  private VcsRoot scanForRootsAboveDir(@NotNull VirtualFile root, @NotNull Set<VirtualFile> skipDirs) {
+  private void scanForRootsAboveDir(@NotNull VirtualFile root,
+                                    @NotNull Map<VirtualFile, Boolean> scannedDirs,
+                                    @NotNull Set<VirtualFile> skipDirs,
+                                    @NotNull Set<VcsRoot> result) {
     Pattern ignorePattern = VcsRootScanner.parseDirIgnorePattern();
     if (VcsRootScanner.isUnderIgnoredDirectory(myProject, ignorePattern, root)) {
-      return null;
+      return;
     }
 
     VirtualFile parent = root.isDirectory() ? root : root.getParent();
     while (parent != null) {
-      // do not check same directory twice
-      if (!skipDirs.add(parent)) {
-        break;
-      }
-      VcsRoot vcsRoot = getVcsRootFor(parent, root);
-      if (vcsRoot != null) {
-        LOG.debug("Found VCS ", vcsRoot.getVcs(), " in ", vcsRoot.getPath(), " above ", root);
-        return vcsRoot;
+      // do not check same directory twice.
+      // NB: we ignore differences in 'dirToCheckForIgnore' here and might miss some roots, that ignore one content root but not the other.
+      if (!skipDirs.add(parent)) return;
+      if (scannedDirs.get(parent) == Boolean.TRUE) return;
+
+      if (!scannedDirs.containsKey(parent)) {
+        VcsRoot vcsRoot = getVcsRootFor(parent, root);
+        scannedDirs.put(parent, vcsRoot != null);
+
+        if (vcsRoot != null) {
+          LOG.debug("Found VCS ", vcsRoot.getVcs(), " in ", vcsRoot.getPath(), " above ", root);
+          result.add(vcsRoot);
+          return;
+        }
       }
 
       parent = parent.getParent();
     }
-    return null;
   }
 
   private @Nullable VcsRoot getVcsRootFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
