@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfo
@@ -73,6 +73,8 @@ class BuildOptions {
   static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
   static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
+  /** Sign *.exe files in Windows distribution. */
+  static final String WIN_SIGN_STEP = "windows_sign"
   /** Build Frankenstein artifacts. */
   static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */

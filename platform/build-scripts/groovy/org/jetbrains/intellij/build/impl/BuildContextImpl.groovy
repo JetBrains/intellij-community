@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -195,9 +195,10 @@ class BuildContextImpl extends BuildContext {
   @Override
   void signExeFile(String path) {
     if (proprietaryBuildTools.signTool != null) {
-      messages.progress("Signing $path")
-      proprietaryBuildTools.signTool.signExeFile(path, this)
-      messages.info("Signed $path")
+      executeStep("Signing $path", BuildOptions.WIN_SIGN_STEP) {
+        proprietaryBuildTools.signTool.signExeFile(path, this)
+        messages.info("Signed $path")
+      }
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")
