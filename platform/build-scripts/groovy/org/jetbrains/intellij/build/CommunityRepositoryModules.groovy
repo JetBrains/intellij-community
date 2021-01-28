@@ -129,6 +129,9 @@ final class CommunityRepositoryModules {
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
     },
+    plugin("intellij.vcs.svn"){
+      withProjectLibrary("sqlite")
+    },
     plugin("intellij.xpath") {
       withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },

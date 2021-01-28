@@ -701,8 +701,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://xerces.apache.org/xerces2-j/"),
     new LibraryLicense(name: "Xerial SQLite JDBC", libraryName: "sqlite", license: "Apache 2.0",
                        url: "https://github.com/xerial/sqlite-jdbc"),
-    new LibraryLicense(name: "Xerial SQLite JDBC", libraryName: "sqlite-svn", license: "Apache 2.0",
-                       url: "https://github.com/xerial/sqlite-jdbc"),
     new LibraryLicense(name: "xml-apis-ext", libraryName: "xml-apis-ext", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
                        url: "http://xerces.apache.org/xml-commons/components/external"),

@@ -15,18 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library name="sqlite-svn" type="repository">
-        <properties maven-id="org.xerial:sqlite-jdbc:3.34.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.34.0/sqlite-jdbc-3.34.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.34.0/sqlite-jdbc-3.34.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="library" name="Guava" level="project" />
@@ -40,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" scope="RUNTIME" name="sqlite" level="project" />
   </component>
 </module>
