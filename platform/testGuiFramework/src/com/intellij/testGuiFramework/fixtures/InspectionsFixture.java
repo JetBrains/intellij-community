@@ -42,10 +42,8 @@ public class InspectionsFixture extends ToolWindowFixture {
   }
 
   public static void describe(@NotNull InspectionTreeNode node, @NotNull StringBuilder sb, int depth) {
-    for (int i = 0; i < depth; i++) {
-      sb.append("    ");
-    }
-    sb.append(node.toString());
+    sb.append("    ".repeat(depth));
+    sb.append(node);
     sb.append("\n");
 
     // The exact order of the results sometimes varies so sort the children alphabetically

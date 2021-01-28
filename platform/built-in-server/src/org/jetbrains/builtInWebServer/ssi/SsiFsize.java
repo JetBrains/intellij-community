@@ -91,10 +91,6 @@ final class SsiFsize implements SsiCommand {
       return result;
     }
 
-    StringBuilder buf = new StringBuilder();
-    for (int i = 0; i < charsToAdd; i++) {
-      buf.append(' ');
-    }
-    return buf.append(result).toString();
+    return " ".repeat(charsToAdd) + result;
   }
 }

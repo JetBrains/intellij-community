@@ -347,12 +347,8 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       int appendedLines = Math.max(lines1, lines2) + 1;
       totalLines += appendedLines;
 
-      for (int i = lines1; i < appendedLines; i++) {
-        builder1.append('\n');
-      }
-      for (int i = lines2; i < appendedLines; i++) {
-        builder2.append('\n');
-      }
+      builder1.append("\n".repeat(appendedLines - lines1));
+      builder2.append("\n".repeat(appendedLines - lines2));
 
       diffChanges.add(new DiffChange(record, start, totalLines, start, totalLines));
     }
