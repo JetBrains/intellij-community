@@ -667,7 +667,7 @@ public final class FormSourceCodeGenerator {
     final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
 
     // see SCR #35990
-    Arrays.sort(introspectedProperties, (p1, p2) -> p1.getName().compareTo(p2.getName()));
+    Arrays.sort(introspectedProperties, Comparator.comparing(p -> p.getName()));
 
     for (final LwIntrospectedProperty property : introspectedProperties) {
       if (property instanceof LwIntroComponentProperty) {

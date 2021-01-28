@@ -23,6 +23,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -146,7 +147,7 @@ public class FontEditorDialog extends DialogWrapper {
         result.add(FontDescriptor.fromSwingFont((String) key));
       }
     }
-    result.sort((o1, o2) -> o1.getSwingFont().compareTo(o2.getSwingFont()));
+    result.sort(Comparator.comparing(FontDescriptor::getSwingFont));
     return result.toArray(new FontDescriptor[0]);
   }
 

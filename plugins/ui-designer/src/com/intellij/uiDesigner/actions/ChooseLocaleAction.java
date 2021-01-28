@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Locale;
 
 /**
@@ -45,7 +46,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     if (editor != null) {
       Locale[] locales = FormEditingUtil.collectUsedLocales(editor.getModule(), editor.getRootContainer());
       if (locales.length > 1 || (locales.length == 1 && locales [0].getDisplayName().length() > 0)) {
-        Arrays.sort(locales, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
+        Arrays.sort(locales, Comparator.comparing(Locale::getDisplayName));
         for(Locale locale: locales) {
           group.add(new SetLocaleAction(editor, locale, true));
         }

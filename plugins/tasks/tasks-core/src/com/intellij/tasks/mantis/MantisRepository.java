@@ -26,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigInteger;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -201,7 +198,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       project.setFilters(projectFilters);
     }
 
-    commonFilters.sort((f1, f2) -> f1.getName().compareTo(f2.getName()));
+    commonFilters.sort(Comparator.comparing(MantisFilter::getName));
     commonFilters.add(0, MantisFilter.newUndefined());
 
     MantisProject undefined = MantisProject.newUndefined();
