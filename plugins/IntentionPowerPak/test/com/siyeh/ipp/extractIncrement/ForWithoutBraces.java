@@ -1,5 +1,6 @@
 class Main {
   void foo(int i, int j) {
-    for (;;i = j++<caret>) {}
+    for (;;)
+      i = j++<caret>;
   }
 }
