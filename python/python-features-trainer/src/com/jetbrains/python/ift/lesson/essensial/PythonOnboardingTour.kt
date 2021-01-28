@@ -39,6 +39,8 @@ import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiManager
+import training.util.invokeActionForFocusContext
 import java.awt.Component
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
@@ -101,11 +103,16 @@ class PythonOnboardingTour(module: Module) :
 
     task {
       text("Congratulations! You have completed the onboarding tour. At this point you can:\n" +
-           "  - Close the learning project\n" +
-           "  - Create your own new project\n" +
-           "  - Open an existing project\n" +
-           "  - Continue your study")
+           "  - <callback ${getCallBackActionId("CloseProject")}>Close</callback> the learning project\n" +
+           "  - <callback ${getCallBackActionId("NewDirectoryProject")}>Create</callback> your own new project\n" +
+           "  - <callback ${getCallBackActionId("OpenFile")}>Open</callback> an existing project\n" +
+           "  - <callback id=\"${LearningUiManager.addCallback { LearningUiManager.resetModulesView() }}\">Continue</callback> your study")
     }
+  }
+
+  private fun getCallBackActionId(actionId: String): String {
+    val action = ActionManager.getInstance().getAction(actionId) ?: error("No action with Id $actionId")
+    return "id=\"${LearningUiManager.addCallback { invokeActionForFocusContext(action) }}\""
   }
 
   private fun LessonContext.debugTasks() {

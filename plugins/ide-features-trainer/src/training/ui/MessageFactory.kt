@@ -72,12 +72,26 @@ object MessageFactory {
         val text: String = StringUtil.unescapeXmlEntities(outputter.outputString(content.content))
         var textFn = { text }
         var link: String? = null
+        var runnable: Runnable? = null
         when (content.name) {
           "icon" -> error("Need to return reflection-based icon processing")
           "icon_idx" -> type = MessagePart.MessageType.ICON_IDX
           "code" -> type = MessagePart.MessageType.CODE
           "shortcut" -> type = MessagePart.MessageType.SHORTCUT
           "strong" -> type = MessagePart.MessageType.TEXT_BOLD
+          "callback" -> {
+            type = MessagePart.MessageType.LINK
+            val id = content.getAttributeValue("id")
+            if (id != null) {
+              val callback = LearningUiManager.getAndClearCallback(id.toInt())
+              if (callback != null) {
+                runnable = Runnable { callback() }
+              }
+              else {
+                LOG.error("Unknown callback with id $id and text $text")
+              }
+            }
+          }
           "a" -> {
             type = MessagePart.MessageType.LINK
             link = content.getAttributeValue("href")
@@ -105,6 +119,7 @@ object MessageFactory {
         }
         val message = MessagePart(type, textFn)
         message.link = link
+        message.runnable = runnable
         list.add(message)
       }
     }
