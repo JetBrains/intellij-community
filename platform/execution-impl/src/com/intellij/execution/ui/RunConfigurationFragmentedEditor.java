@@ -171,8 +171,8 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       fragment.applyEditorTo(clone);
       if (!fragment.isInitiallyVisible(clone)) {
         JComponent component = fragment.getEditorComponent();
-        new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", fragment.getName()),
-                         fragment).
+        String text = fragment.getName().replace("\u001B", "");
+        new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
           withHeader(ExecutionBundle.message("gotIt.popup.title")).
           show(component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
       }
