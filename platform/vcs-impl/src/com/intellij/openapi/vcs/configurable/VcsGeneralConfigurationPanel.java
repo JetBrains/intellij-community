@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -292,9 +291,9 @@ public class VcsGeneralConfigurationPanel implements Disposable {
   }
 
   private enum ShowPatchAfterCreation {
-    ASK(VcsBundle.getString("settings.confirmation.option.text.ask"), null),
-    YES(VcsBundle.getString("settings.confirmation.option.text.yes"), true),
-    NO(VcsBundle.getString("settings.confirmation.option.text.no"), false);
+    ASK(VcsBundle.message("settings.confirmation.option.text.ask"), null),
+    YES(VcsBundle.message("settings.confirmation.option.text.yes"), true),
+    NO(VcsBundle.message("settings.confirmation.option.text.no"), false);
 
     private final String myText;
     private final Boolean myState;

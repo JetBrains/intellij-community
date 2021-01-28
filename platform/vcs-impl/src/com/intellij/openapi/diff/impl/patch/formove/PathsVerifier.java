@@ -25,9 +25,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -617,7 +615,7 @@ public final class PathsVerifier {
           List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
           Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
             files, title, VcsBundle.message("patch.apply.overwrite.existing.files.prompt"), title,
-            VcsBundle.getString("patch.apply.overwrite.existing.file.prompt"),
+            VcsBundle.message("patch.apply.overwrite.existing.file.prompt"),
             VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
             CommonBundle.message("button.overwrite"), IdeBundle.message("button.cancel"));
           if (selected != null) {

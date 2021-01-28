@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.DataManager;
@@ -37,7 +37,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
 
   VcsUpdateInfoScopeFilterConfigurable(@NotNull Project project, VcsConfiguration vcsConfiguration) {
     myVcsConfiguration = vcsConfiguration;
-    myCheckbox = new JCheckBox(VcsBundle.getString("settings.filter.update.project.info.by.scope"));
+    myCheckbox = new JCheckBox(VcsBundle.message("settings.filter.update.project.info.by.scope"));
     myComboBox = new ComboBox();
 
     myComboBox.setEnabled(myCheckbox.isSelected());
@@ -62,7 +62,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
   @Nls
   @Override
   public String getDisplayName() {
-    return VcsBundle.getString("settings.filter.update.project.info.by.scope");
+    return VcsBundle.message("settings.filter.update.project.info.by.scope");
   }
 
   @Nullable

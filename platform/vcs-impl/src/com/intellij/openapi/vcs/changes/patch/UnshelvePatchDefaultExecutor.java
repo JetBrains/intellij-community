@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ public final class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecuto
       applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     }
     Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    new Task.Backgroundable(myProject, VcsBundle.getString("unshelve.changes.progress.title")) {
+    new Task.Backgroundable(myProject, VcsBundle.message("unshelve.changes.progress.title")) {
       ApplyPatchStatus myApplyPatchStatus;
 
       @Override

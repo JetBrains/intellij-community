@@ -45,8 +45,8 @@ abstract class DvcsCloneDialogComponent(var project: Project,
                                            project,
                                            fcd)
     mainPanel = panel {
-      row(VcsBundle.getString("vcs.common.labels.url")) { urlEditor(growX) }
-      row(VcsBundle.getString("vcs.common.labels.directory")) { directoryField(growX) }
+      row(VcsBundle.message("vcs.common.labels.url")) { urlEditor(growX) }
+      row(VcsBundle.message("vcs.common.labels.directory")) { directoryField(growX) }
         .largeGapAfter()
       row {
         errorComponent = BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0)

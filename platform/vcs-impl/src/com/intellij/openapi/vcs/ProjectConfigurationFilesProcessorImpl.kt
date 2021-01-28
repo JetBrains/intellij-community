@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -96,12 +96,12 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   override fun notificationMessage(): String = VcsBundle.message("project.configuration.files.add.notification.message", vcsName)
 
-  override val showActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.view")
-  override val forCurrentProjectActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.add")
+  override val showActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.view")
+  override val forCurrentProjectActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.add")
 
 
   override val forAllProjectsActionText: String? = null
-  override val muteActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.mute")
+  override val muteActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.mute")
   override val viewFilesDialogTitle: String? = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
 
   override fun rememberForAllProjects() {}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.Disposable
@@ -86,7 +86,7 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
   }
 
   class DisplayNameSupplier : Supplier<String> {
-    override fun get(): String = VcsBundle.getString("committed.changes.tab")
+    override fun get(): String = VcsBundle.message("committed.changes.tab")
   }
 
   companion object {
