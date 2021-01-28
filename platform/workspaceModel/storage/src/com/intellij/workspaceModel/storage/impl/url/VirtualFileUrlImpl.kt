@@ -20,11 +20,7 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
     return cachedUrl!!
   }
 
-  override fun getFileName(): String {
-    val fileUrl = url
-    val index = fileUrl.lastIndexOf('/')
-    return if (index >= 0) fileUrl.substring(index + 1) else fileUrl
-  }
+  override fun getFileName(): String = url.substringAfterLast('/')
 
   override fun getPresentableUrl(): String {
     val calculatedUrl = this.url

@@ -61,25 +61,9 @@ internal class ProjectRootsChangeListener(private val project: Project) {
           ProjectRootManagerImpl.RootsChangeType.GENERIC
         }
       }
-      if (result == null) {
-        result = currentRootsChangeType
-      }
-      else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.GENERIC) {
-        result = ProjectRootManagerImpl.RootsChangeType.GENERIC
-        break
-      }
-      else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED &&
-               result == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
-        continue
-      }
-      else if (currentRootsChangeType == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED &&
-               result == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED) {
-        continue
-      }
-      else {
-        result = ProjectRootManagerImpl.RootsChangeType.GENERIC
-        break
-      }
+
+      result = calculateRootsChangeType(result, currentRootsChangeType)
+      if (result == ProjectRootManagerImpl.RootsChangeType.GENERIC) break
     }
     return result ?: ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED
   }
@@ -96,6 +80,28 @@ internal class ProjectRootsChangeListener(private val project: Project) {
   }
 
   companion object {
+    internal fun calculateRootsChangeType(result: ProjectRootManagerImpl.RootsChangeType?,
+                                          change: ProjectRootManagerImpl.RootsChangeType): ProjectRootManagerImpl.RootsChangeType {
+      if (result == ProjectRootManagerImpl.RootsChangeType.GENERIC) return result
+      if (result == null) {
+        return change
+      }
+      else if (change == ProjectRootManagerImpl.RootsChangeType.GENERIC) {
+        return ProjectRootManagerImpl.RootsChangeType.GENERIC
+      }
+      else if (change == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED &&
+               result == ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED) {
+        return result
+      }
+      else if (change == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED &&
+               result == ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED) {
+        return result
+      }
+      else {
+        return ProjectRootManagerImpl.RootsChangeType.GENERIC
+      }
+    }
+
     internal fun shouldFireRootsChanged(entity: WorkspaceEntity, project: Project): Boolean {
       return when (entity) {
         // Library changes should not fire any events if the library is not included in any of order entries

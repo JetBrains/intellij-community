@@ -6,7 +6,21 @@ import java.util.List;
 public interface VirtualFileUrl {
   String getUrl();
   String getFileName();
+
+  /**
+   * @return representation of the url without protocol
+   */
   String getPresentableUrl();
+
+  /**
+   * @return the list of descendants for the current node
+   */
   List<VirtualFileUrl> getSubTreeFileUrls();
+
+  /**
+   * Resolve the given path against virtual url
+   * @param relativePath for resolve
+   * @return instance representing the resolved path
+   */
   VirtualFileUrl append(String relativePath);
 }

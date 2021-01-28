@@ -77,7 +77,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     unsubscribeListeners()
   }
 
-  fun isFiringEvent() = isFiringEvent
+  fun isFiringEvent(): Boolean = isFiringEvent
 
   private fun unsubscribeListeners() {
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()

@@ -28,9 +28,7 @@ class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl): Virtual
     return true
   }
 
-  override fun hashCode(): Int {
-    return super.hashCode()
-  }
+  override fun hashCode(): Int = id
 
   private fun findVirtualFile(): VirtualFile? {
     val fileManager = VirtualFileManager.getInstance()
