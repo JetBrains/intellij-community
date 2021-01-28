@@ -153,7 +153,7 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
         }
       }
 
-      StaleIndexesChecker.clearStaleIndexes(myStaleIds);
+      //StaleIndexesChecker.clearStaleIndexes(myStaleIds);
 
       return myState;
     }
