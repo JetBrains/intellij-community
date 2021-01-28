@@ -657,7 +657,7 @@ object DynamicPlugins {
       val subDescriptor = dependency.subDescriptor ?: continue
       val classLoader = subDescriptor.classLoader
       if (!pluginStateChecker.isPluginOrModuleLoaded(dependency.id)) {
-        LOG.assertTrue(classLoader == null)
+        LOG.assertTrue(classLoader == null, "Expected not to have any subdescriptor classloader when dependency ${dependency.id} is not loaded")
         continue
       }
 
