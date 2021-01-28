@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileTypeDescriptor
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -22,6 +23,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.CardLayout
 import java.security.cert.X509Certificate
+import java.util.HashSet
 import javax.swing.JPanel
 import javax.swing.tree.TreeSelectionModel
 
@@ -93,6 +95,38 @@ class PluginCertificateConfigurable :
       if (myCertificates.contains(certificate)) {
         myCertificates.remove(certificate)
         myTreeBuilder.removeCertificate(certificate)
+      }
+    }
+  }
+
+  override fun isModified(): Boolean {
+    return myCertificates != HashSet(myTrustManager.certificates)
+  }
+
+  @Throws(ConfigurationException::class)
+  override fun apply() {
+    val existing = myTrustManager.certificates
+    val added: MutableSet<X509Certificate> = HashSet(myCertificates)
+    added.removeAll(existing)
+    val removed: MutableSet<X509Certificate> = HashSet(existing)
+    removed.removeAll(myCertificates)
+    for (certificate in added) {
+      if (!myTrustManager.addCertificate(certificate)) {
+        throw ConfigurationException(
+          IdeBundle.message(
+            "settings.certificate.cannot.add.certificate.for", CertificateUtil.getCommonName(certificate)
+          ),
+          IdeBundle.message("settings.certificate.cannot.add.certificate"))
+      }
+    }
+    for (certificate in removed) {
+      if (!myTrustManager.removeCertificate(certificate)) {
+        throw ConfigurationException(
+          IdeBundle.message(
+            "settings.certificate.cannot.remove.certificate.for",
+            CertificateUtil.getCommonName(certificate)
+          ),
+          IdeBundle.message("settings.certificate.cannot.remove.certificate"))
       }
     }
   }
