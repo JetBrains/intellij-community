@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.TestUtils;
@@ -59,13 +60,33 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLanguageInjection
   }
 
   @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
+    UExpression myLiteral = UastContextKt.toUElement(getElement(), UExpression.class);
+    if (myLiteral == null) return false;
+    PsiClass psiClazz = getPsiClazz(myLiteral);
+    if (psiClazz == null) return false;
+    PsiClass elementClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (elementClass == null) return false;
+    if (psiClazz.isInheritor(elementClass, false) || elementClass.isInheritor(psiClazz, false)) {
+      return true;
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiClass getPsiClazz(UExpression myLiteral) {
+    UClass clazz = UastUtils.getParentOfType(myLiteral, UClass.class);
+    if (clazz == null) return null;
+    return clazz.getPsi();
+  }
+
+  @Override
   @Nullable
   public PsiElement resolve() {
     UExpression myLiteral = UastContextKt.toUElement(getElement(), UExpression.class);
     if (myLiteral == null) return null;
-    UClass clazz = UastUtils.getParentOfType(myLiteral, UClass.class);
-    if (clazz == null) return null;
-    PsiClass psiClazz = clazz.getPsi();
+    PsiClass psiClazz = getPsiClazz(myLiteral);
+    if (psiClazz == null) return null;
     String methodName = (String)myLiteral.evaluate();
     if (methodName == null) return null;
     String className = StringUtil.getPackageName(methodName, '#');
