@@ -23,11 +23,15 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
@@ -54,7 +58,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
   @Override
   public int getVersion() {
-    return ClassFileStubBuilder.STUB_VERSION + 5;
+    return ClassFileStubBuilder.STUB_VERSION + 6;
   }
 
   @NotNull
@@ -86,7 +90,22 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   @NotNull
   @Override
   public DataExternalizer<ByteArraySequence> getValueExternalizer() {
-    return ByteSequenceDataExternalizer.INSTANCE;
+    return new DataExternalizer<>() {
+      @Override
+      public void save(@NotNull DataOutput out, ByteArraySequence value) throws IOException {
+        int length = value.length();
+        DataInputOutputUtil.writeINT(out, length);
+        out.write(value.getInternalBuffer(), value.getOffset(), length);
+      }
+
+      @Override
+      public ByteArraySequence read(@NotNull DataInput in) throws IOException {
+        int length = DataInputOutputUtil.readINT(in);
+        byte[] buf = new byte[length];
+        in.readFully(buf);
+        return ByteArraySequence.create(buf);
+      }
+    };
   }
 
   @Nullable
