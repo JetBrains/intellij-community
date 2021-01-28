@@ -12,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
  * Extension point to provide the injection information for the given context in terms <i>what</i> to inject.
  * Could be implemented by Language Plugins or Framework/Libraries Plugins to provide some context-specific injections,
  * which cannot be done via <a href="https://www.jetbrains.com/help/idea/language-injections-settings.html">IntelliLang.xml</a>
- * (which is actually handler by {@code org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector} implementation of this interface)
+ * (which is actually handled by {@link org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector DefaultLanguageInjector}
+ * implementation of this interface)
  *
  * @see com.intellij.lang.injection.MultiHostInjector
  * @see LanguageInjectionPerformer

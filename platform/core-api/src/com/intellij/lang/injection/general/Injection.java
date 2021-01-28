@@ -35,7 +35,7 @@ public interface Injection {
   /**
    * @return the ID of a tool which will provide UI utils to manage this injection.
    *
-   * If the <code>LanguageInjectionSupport</code> with such ID is registered it will be used
+   * If the {@code LanguageInjectionSupport} with such ID is registered it will be used
    * if {@link LanguageInjectionPerformer} will not force other implementation
    */
   @Nullable
