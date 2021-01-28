@@ -81,7 +81,7 @@ class LightTestMigration {
   }
 
   private Pair<Path, String> processSingleFileTest(Path javaFile) throws Exception {
-    String fileText = new String(Files.readAllBytes(javaFile), StandardCharsets.UTF_8);
+    String fileText = Files.readString(javaFile);
     String testName = myName.isEmpty() ? javaFile.getFileName().toString().replaceFirst(".java$", "") : myName;
     myBaseDir = myName.isEmpty() ? myDir : myDir.getParent();
     Path targetFile = myBaseDir.resolve(testName + ".java");
