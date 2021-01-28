@@ -50,12 +50,6 @@ class ImportAndCheckNavigation : MultiplePluginVersionGradleImportingTestCase() 
 
     override fun testDataDirName() = "importAndCheckNavigation"
 
-    private fun configureAndImportProject(): List<VirtualFile> {
-        val files = configureByFiles()
-        importProject(false)
-        return files
-    }
-
     private fun VirtualFile.collectReferencesToTest(): Map<PsiReference, String> {
         if (extension != "kt") return emptyMap()
 

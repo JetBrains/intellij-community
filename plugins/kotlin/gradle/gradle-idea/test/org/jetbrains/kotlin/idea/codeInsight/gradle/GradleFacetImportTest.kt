@@ -889,10 +889,6 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    override fun importProject() {
-        super.importProject(true)
-    }
-
     override fun createImportSpec(): ImportSpec {
         return ImportSpecBuilder(super.createImportSpec())
             .createDirectoriesForEmptyContentRoots()
