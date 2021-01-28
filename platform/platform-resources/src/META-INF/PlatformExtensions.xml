@@ -513,6 +513,14 @@
                              key="configurable.CertificateConfigurable.display.name"
                              id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
+    <applicationConfigurable
+      groupId="tools"
+      bundle="messages.UIBundle"
+      key="plugins.certificates.display.name"
+      id="plugin.certificates"
+      instance="com.intellij.ide.plugins.certificates.PluginCertificateConfigurable"
+    />
+
     <fileType name="ARCHIVE" implementationClass="com.intellij.ide.highlighter.ArchiveFileType" fieldName="INSTANCE"
               extensions="zip;jar;war;ear;swc;ane;egg;apk"/>
     <fileType name="PLAIN_TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextFileType" fieldName="INSTANCE" language="TEXT"
