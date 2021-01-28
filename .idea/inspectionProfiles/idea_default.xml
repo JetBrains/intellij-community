@@ -804,7 +804,7 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" regexp=".*Performance.*" negateName="true" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Anonymous Disposable passed to method" description="Do not pass Disposer.newDisposable() or similar to method expecting Disposable, because it can cause memory leak via Disposer tree.&#10;Instead, pass Disposable which you can guarantee to be disposed at the time needed." problemDescriptor="Anonymous Disposable passed to method: possible memory leak" text="new $f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+      <searchConfiguration name="Anonymous Disposable passed to method" description="Do not pass Disposer.newDisposable() or similar to method expecting Disposable, because it can cause memory leak via Disposer tree.&#10;Instead, pass Disposable which you can guarantee to be disposed at the time needed." problemDescriptor="Anonymous Disposable passed to method: possible memory leak" text="new $f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -812,7 +812,7 @@
         <constraint name="a" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="newDisposable" regexp="newDisposable" target="true" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Anonymous Disposable passed to method" text="$f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+      <searchConfiguration name="Anonymous Disposable passed to method" text="$f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -869,29 +869,29 @@
         <constraint name="Field" within="" contains="" />
         <constraint name="elements" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can be simplified to ReadAction.compute" created="1516639178225" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
+      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
         <constraint name="SearchScope" within="" contains="" />
         <constraint name="e" within="" contains="" />
         <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Computable" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can be simplified to ReadAction.compute" text="$application$.runReadAction(($C$)()-&gt;$e$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
+      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(($C$)()-&gt;$e$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
         <constraint name="e" within="" contains="" />
         <constraint name="C" minCount="0" within="" contains="" />
         <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can be simplified to ReadAction.compute" text="$application$.runReadAction($Computable$() {&#10;  fun compute() {&#10;    return $e$&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute { $e$ }">
+      <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction($Computable$() {&#10;  fun compute() {&#10;    return $e$&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute { $e$ }">
         <constraint name="e" within="" contains="" />
         <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Computable" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can simplify to getInstanceEx" text="(PsiManagerEx)PsiManager.getInstance($project$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="PsiManagerEx.getInstanceEx($project$)">
+      <replaceConfiguration name="can simplify to getInstanceEx()" uuid="83b2549d-3689-355b-bb4a-b2b6d2dad4fc" text="(PsiManagerEx)PsiManager.getInstance($project$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="PsiManagerEx.getInstanceEx($project$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="project" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can simplify to getInstanceEx" text="PsiManager.getInstance($project$) as PsiManagerEx" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="PsiManagerEx.getInstanceEx($project$)">
+      <replaceConfiguration name="can simplify to getInstanceEx()" uuid="83b2549d-3689-355b-bb4a-b2b6d2dad4fc" text="PsiManager.getInstance($project$) as PsiManagerEx" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="PsiManagerEx.getInstanceEx($project$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="project" within="" contains="" />
       </replaceConfiguration>
@@ -929,24 +929,24 @@
       </replaceConfiguration>
       <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="new HashSet&lt;&gt;(Arrays.asList($list$))" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.set($list$)">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="list" maxCount="32000" within="" contains="" />
+        <constraint name="list" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="HashSet(Arrays.asList($list$))" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.set($list$)">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="list" maxCount="32000" within="" contains="" />
+        <constraint name="list" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.unmodifiableList(Arrays.asList($c$))" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.immutableList($c$)">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="c" maxCount="32000" within="" contains="" />
+        <constraint name="c" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.unmodifiableList(Arrays.asList($c$))" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.immutableList($c$)">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="c" maxCount="32000" within="" contains="" />
+        <constraint name="c" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.newConcurrentSet()">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can use StringUtil" uuid="e2009598-65b8-3ae6-a9f8-9159d2b2e27a" text="if ($s$.endsWith($e$)) {&#10;  $s$ = $s$.substring(0, $s$.length() - $e$.length());&#10;}" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$s$ = com.intellij.openapi.util.text.StringUtil.trimEnd($s$, $e$);&#10;">
+      <replaceConfiguration name="can use StringUtil" uuid="e2009598-65b8-3ae6-a9f8-9159d2b2e27a" text="if ($s$.endsWith($e$)) {&#10;  $s$ = $s$.substring(0, $s$.length() - $e$.length());&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$s$ = com.intellij.openapi.util.text.StringUtil.trimEnd($s$, $e$);&#10;">
         <constraint name="s" within="" contains="" />
         <constraint name="e" within="" contains="" />
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def stringUtil = JavaPsiFacade.getInstance(e.getProject()).findClass(&quot;com.intellij.openapi.util.text.StringUtil&quot;, GlobalSearchScope.allScope(e.getProject()));&#10;def strVirtualFile = PsiUtil.getVirtualFile(stringUtil);&#10;&#10;e instanceof PsiLiteralExpression &amp;&amp;&#10;e.getParent().getParent().getParent() instanceof PsiIfStatement &amp;&amp;&#10;((PsiIfStatement)e.getParent().getParent().getParent()).getElseBranch() == null &amp;&amp;&#10;strVirtualFile != null &amp;&amp;  &#10;e.getResolveScope().contains(strVirtualFile)&#10;&#10;&quot;" target="true" within="" contains="" />
@@ -1118,44 +1118,45 @@
         <constraint name="ref" within="" contains="" />
         <constraint name="SwiftType" regexp="Swift(?!Inout).+Type" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="File.createTempFile" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
+      <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
         <constraint name="prefix" within="" contains="" />
         <constraint name="suffix" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="File.createTempFile" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
+      <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
         <constraint name="prefix" within="" contains="" />
         <constraint name="suffix" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="File.createTempFile" text="java.io.File.createTempFile($prefix$, $suffix$, $dir$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($dir$, $prefix$, $suffix$, true)">
+      <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$, $dir$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($dir$, $prefix$, $suffix$, true)">
         <constraint name="prefix" within="" contains="" />
         <constraint name="suffix" within="" contains="" />
         <constraint name="dir" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="File.createTempFile" text="java.io.File.createTempFile($prefix$, $suffix$, $dir$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($dir$, $prefix$, $suffix$, true)">
+      <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$, $dir$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($dir$, $prefix$, $suffix$, true)">
         <constraint name="prefix" within="" contains="" />
         <constraint name="suffix" within="" contains="" />
         <constraint name="dir" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" text="$Instance$.findAnnotation($Parameter$) != null" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.hasAnnotation($Parameter$)">
+      <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" text="$Instance$.findAnnotation($Parameter$) != null" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.hasAnnotation($Parameter$)">
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" text="$Instance$.findAnnotation($Parameter$) != null" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.hasAnnotation($Parameter$)">
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" text="$Instance$.findAnnotation($Parameter$) == null&#10;" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$Instance$.hasAnnotation($Parameter$)">
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="findAnnotation(name) can be simplified" uuid="7228acac-afb8-381c-b31f-ad9cdefe3a81" text="$Instance$.findAnnotation($Parameter$) == null&#10;" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$Instance$.hasAnnotation($Parameter$)">
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
-        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="incorrect DumbAware check" created="1522680840725" text="$target$ instanceof DumbAware" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.project.DumbService.isDumbAware($target$)">
@@ -1165,19 +1166,19 @@
         <constraint name="target" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="invalid use of ArrayUtil.contains: always returns false" text="com.intellij.util.ArrayUtil.contains($t$, $e$)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$e$.contains($t$)">
+      <replaceConfiguration name="invalid use of ArrayUtil.contains(): always returns false" uuid="676e5e3d-30ef-3f51-88a6-6366b80d5d76" text="com.intellij.util.ArrayUtil.contains($t$, $e$)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$e$.contains($t$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="t" within="" contains="" />
         <constraint name="e" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="invalid use of ArrayUtil.contains: always returns false" text="com.intellij.util.ArrayUtil.contains($t$, $e$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$e$.contains($t$)">
+      <replaceConfiguration name="invalid use of ArrayUtil.contains(): always returns false" uuid="676e5e3d-30ef-3f51-88a6-6366b80d5d76" text="com.intellij.util.ArrayUtil.contains($t$, $e$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$e$.contains($t$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="t" within="" contains="" />
         <constraint name="e" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="Logger.getInstance(unknown class)" text="Logger.getInstance(&quot;#$c$&quot;)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def fqn = c.getValue().substring(1);&#10;if (fqn.indexOf('.') == -1) return false;&#10;def shortName = com.intellij.openapi.util.text.StringUtil.getShortName(fqn);&#10;if (!shortName.equals(com.intellij.openapi.util.text.StringUtil.capitalize(shortName))) return false;&#10;&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));&#10; cClass == null&#10;&quot;" target="true" within="" contains="" />
-        <constraint name="c" within="" contains="" />
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def fqn = c.getValue().substring(1);&#10;if (fqn.indexOf('.') == -1) return false;&#10;def shortName = com.intellij.openapi.util.text.StringUtil.getShortName(fqn);&#10;if (!shortName.equals(com.intellij.openapi.util.text.StringUtil.capitalize(shortName))) return false;&#10;&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));&#10; cClass == null&#10;&quot;" within="" contains="" />
+        <constraint name="c" target="true" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="com.intellij.openapi.diagnostic.Logger.getInstance(&quot;#&quot; + $c$.class.getName())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.Logger.getInstance($c$.class)">
         <constraint name="c" within="" contains="" />
@@ -1202,7 +1203,7 @@
         <constraint name="c" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="Logger.getInstance(&quot;#$c$&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="Logger.getInstance($c$::class.java)">
-        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;&#10;def resolveScope = __context__.getContainingFile().getResolveScope()&#10;def className = c.getText().substring(1)&#10;def psiFacade = JavaPsiFacade.getInstance(__context__.project)&#10;def aClass = psiFacade.findClass(className, resolveScope)&#10;&#10;aClass != null&quot;" target="true" within="" contains="" />
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;&#10;def resolveScope = __context__.getContainingFile().getResolveScope()&#10;def className = c.getText().substring(1)&#10;def psiFacade = JavaPsiFacade.getInstance(__context__.project)&#10;def aClass = psiFacade.findClass(className, resolveScope)&#10;aClass != null&quot;" target="true" within="" contains="" />
         <constraint name="c" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="Logger should be a top-level declaration" uuid="03c8b094-627d-3aaa-8d8b-4a66542826cd" description="Creating a logger for each instance of a class isn't optimized.&#10;The idiomatic way to create a logger is using a top-level declaration." problemDescriptor="Logger should be a top-level declaration." text="class $Class$ { val $logger$ }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
@@ -1210,12 +1211,12 @@
         <constraint name="Class" within="" contains="" />
         <constraint name="logger" nameOfExprType="Logger|libraries\.klogging\.BaseLogger" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="Manual TextRange.substring implementation" description="Reports code pattern like str.substring(range.getStartOffset(), range.getEndOffset()). This code could be replaced with range.substring(str)" problemDescriptor="TextRange.substring() could be used" text="$str$.substring($range$.getStartOffset(), $range$.getEndOffset())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$range$.substring($str$)">
+      <replaceConfiguration name="Manual TextRange.substring() implementation" uuid="7eb9e6b2-16c6-3c0e-aa15-b8c0a54a6aee" description="Reports code pattern like str.substring(range.getStartOffset(), range.getEndOffset()). This code could be replaced with range.substring(str)" problemDescriptor="TextRange.substring() could be used" text="$str$.substring($range$.getStartOffset(), $range$.getEndOffset())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$range$.substring($str$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="str" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Manual TextRange.substring implementation" text="$str$.substring($range$.startOffset, $range$.endOffset)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$range$.substring($str$)">
+      <replaceConfiguration name="Manual TextRange.substring() implementation" uuid="7eb9e6b2-16c6-3c0e-aa15-b8c0a54a6aee" text="$str$.substring($range$.startOffset, $range$.endOffset)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$range$.substring($str$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="str" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" within="" contains="" />
@@ -1231,11 +1232,11 @@
         <constraint name="b" nameOfExprType="ByteArray|Array&lt;Byte&gt;" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="non-static JamAnnotationMeta" created="1523014327447" text="class $Class$ {&#10;  $Type$ $Variable$ = $Init$;&#10;}" recursive="false" caseInsensitive="true" type="JAVA">
+      <searchConfiguration name="non-static JamAnnotationMeta" text="class $Class$ {&#10;  $Type$ $Variable$ = $Init$;&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
         <constraint name="Type" regexp="JamAnnotationMeta" within="" contains="" />
         <constraint name="Variable" script="&quot;!__context__.hasModifierProperty(&quot;static&quot;)&quot;" maxCount="2147483647" target="true" within="" contains="" />
-        <constraint name="Init" within="" contains="" />
+        <constraint name="Init" minCount="0" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="non-static JamAnnotationMeta" text="class $Class$ {&#10;  val $Variable$&#10;}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default">
@@ -1289,40 +1290,42 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="a" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="Potential memory leak: don't hold PsiElement inside quick fix, use SmartPsiElementPointer or instead of; also see LocalQuickFixOnPsiElement" text="class $Class$ { &#10;  $FieldType$ $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA">
-        <constraint name="Class" script="&quot;import com.intellij.psi.PsiClass&#10;import com.intellij.psi.util.InheritanceUtil&#10;import com.intellij.psi.util.PsiTreeUtil&#10;&#10;Object c = __context__&#10;return c instanceof PsiClass &amp;&amp; InheritanceUtil.isInheritor(c, &quot;com.intellij.codeInspection.LocalQuickFix&quot;) &#10;&quot;" within="" contains="" />
-        <constraint name="FieldType" script="&quot;import com.intellij.psi.PsiClass&#10;import com.intellij.psi.PsiElement&#10;import com.intellij.psi.PsiField&#10;import com.intellij.psi.util.InheritanceUtil&#10;import com.intellij.psi.util.PsiTreeUtil&#10;&#10;PsiField f = PsiTreeUtil.getParentOfType(__context__, PsiField)&#10;return f != null &amp;&amp; InheritanceUtil.isInheritor(f.getType(), &quot;com.intellij.psi.PsiElement&quot;) &#10;&quot;" maxCount="2147483647" within="" contains="" />
+      <searchConfiguration name="Potential memory leak: don't hold PsiElement inside quick fix, use SmartPsiElementPointer or instead of; also see LocalQuickFixOnPsiElement" text="class $Class$ { &#10;  $FieldType$ $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
+        <constraint name="Class" regexp="com.intellij.codeInspection.LocalQuickFix" withinHierarchy="true" within="" contains="" />
+        <constraint name="FieldType" regexp="com.intellij.psi.PsiElement" withinHierarchy="true" within="" contains="" />
         <constraint name="FieldName" maxCount="2147483647" target="true" within="" contains="" />
-        <constraint name="Init" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Init" minCount="0" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Potential memory leak: don't hold PsiElement inside quick fix, use SmartPsiElementPointer or instead of; also see LocalQuickFixOnPsiElement" text="class $Class$ { &#10;  val $FieldName$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="Class" regexp="com.intellij.codeInspection.LocalQuickFix" withinHierarchy="true" within="" contains="" />
         <constraint name="FieldName" nameOfExprType="PsiElement" exprTypeWithinHierarchy="true" maxCount="2147483647" target="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="Potential non-desired escape from lambda expression" text="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod.class, true, PsiClass.class)" recursive="false" caseInsensitive="false" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class)">
-        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Potential non-desired escape from lambda expression" text="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod::class.java, true, PsiClass::class.java)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod::class.java, true, PsiClass::class.java, PsiLambdaExpression::class.java)">
-        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      <replaceConfiguration name="Potential non-desired escape from lambda expression" text="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod.class, true, PsiClass.class)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class)">
+        <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Presentation setEnabledAndVisible" text="$Var1$.setEnabled($Var2$);&#10;$Var1$.setVisible($Var2$);&#10;" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.setEnabledAndVisible($Var2$);">
+      <replaceConfiguration name="Potential non-desired escape from lambda expression" text="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod::class.java, true, PsiClass::class.java)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" useStaticImport="true" replacement="PsiTreeUtil.getParentOfType($Parameter$, PsiMethod::class.java, true, PsiClass::class.java, PsiLambdaExpression::class.java)">
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation setEnabledAndVisible()" uuid="b8a50e24-ab96-3281-a6f3-ef3ee515af02" text="$Var1$.setEnabled($Var2$);&#10;$Var1$.setVisible($Var2$);&#10;" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.setEnabledAndVisible($Var2$);">
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" within="" contains="" />
         <constraint name="Var1" nameOfExprType="Presentation" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Presentation setEnabledAndVisible" text="$Var1$.setVisible($Var2$);&#10;$Var1$.setEnabled($Var2$);&#10;" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.setEnabledAndVisible($Var2$);">
+      <replaceConfiguration name="Presentation setEnabledAndVisible()" uuid="b8a50e24-ab96-3281-a6f3-ef3ee515af02" text="$Var1$.setVisible($Var2$);&#10;$Var1$.setEnabled($Var2$);&#10;" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.setEnabledAndVisible($Var2$);">
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" within="" contains="" />
         <constraint name="Var1" nameOfExprType="Presentation" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Presentation setEnabledAndVisible" text="$Var1$.isEnabled = $Var2$&#10;$Var1$.isVisible = $Var2$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.isEnabledAndVisible = $Var2$">
+      <replaceConfiguration name="Presentation setEnabledAndVisible()" uuid="b8a50e24-ab96-3281-a6f3-ef3ee515af02" text="$Var1$.isEnabled = $Var2$&#10;$Var1$.isVisible = $Var2$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.isEnabledAndVisible = $Var2$">
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" within="" contains="" />
         <constraint name="Var1" nameOfExprType="Presentation" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Presentation setEnabledAndVisible" text="$Var1$.isVisible = $Var2$&#10;$Var1$.isEnabled = $Var2$&#10;" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.isEnabledAndVisible = $Var2$">
+      <replaceConfiguration name="Presentation setEnabledAndVisible()" uuid="b8a50e24-ab96-3281-a6f3-ef3ee515af02" text="$Var1$.isVisible = $Var2$&#10;$Var1$.isEnabled = $Var2$&#10;" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Var1$.isEnabledAndVisible = $Var2$">
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" within="" contains="" />
         <constraint name="Var1" nameOfExprType="Presentation" within="" contains="" />
@@ -1334,7 +1337,7 @@
         <constraint name="psiElement" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
         <constraint name="APP2" within="" contains="" />
@@ -1342,7 +1345,7 @@
         <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
         <constraint name="DO" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests" text="if (!$APP$.isUnitTestMode()) {&#10;  $APP2$.$INV$($ARGS$);&#10;} else {&#10;  $DO$;&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="if (!$APP$.isUnitTestMode()) {&#10;  $APP2$.$INV$($ARGS$);&#10;} else {&#10;  $DO$;&#10;}">
+      <replaceConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if (!$APP$.isUnitTestMode()) {&#10;  $APP2$.$INV$($ARGS$);&#10;} else {&#10;  $DO$;&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="if (!$APP$.isUnitTestMode()) {&#10;  $APP2$.$INV$($ARGS$);&#10;} else {&#10;  $DO$;&#10;}">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
         <constraint name="APP2" within="" contains="" />
@@ -1350,7 +1353,7 @@
         <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
         <constraint name="DO" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$&#10;} else {&#10;  $APP2$.$INV$($ARGS$)&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$&#10;} else {&#10;  $APP2$.$INV$($ARGS$)&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
         <constraint name="APP2" within="" contains="" />
@@ -1358,7 +1361,7 @@
         <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
         <constraint name="DO" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests" text="if (!$APP$.isUnitTestMode()) {&#10;  $APP2$.$INV$($ARGS$)&#10;} else {&#10;  $DO$&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if (!$APP$.isUnitTestMode()) {&#10;  $APP2$.$INV$($ARGS$)&#10;} else {&#10;  $DO$&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
         <constraint name="APP2" within="" contains="" />
@@ -1366,11 +1369,11 @@
         <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
         <constraint name="DO" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="Replace explicit RExpression#getType with RTypeUtil#getType" text="((RExpression)$foo$).getType()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtil.getType($foo$)">
+      <replaceConfiguration name="Replace explicit RExpression#getType() with RTypeUtil#getType()" uuid="260bf7ef-989c-3b5b-b926-edbfeb9271cc" text="((RExpression)$foo$).getType()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtil.getType($foo$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Replace explicit RExpression#getType with RTypeUtil#getType" text="($foo$ as RExpression).type" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtil.getType($foo$)">
+      <replaceConfiguration name="Replace explicit RExpression#getType() with RTypeUtil#getType()" uuid="260bf7ef-989c-3b5b-b926-edbfeb9271cc" text="($foo$ as RExpression).type" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtil.getType($foo$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />
       </replaceConfiguration>
@@ -1378,7 +1381,7 @@
         <constraint name="Class" target="true" within="" contains="" />
         <constraint name="FieldType" regexp="javax.swing.JComponent" withinHierarchy="true" formalTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="FieldName" maxCount="2147483647" within="" contains="" />
-        <constraint name="Init" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Init" minCount="0" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="searchable configurable should not contain JComponent fields" text="class $Class$: SearchableConfigurable { &#10;  @Modifier(&quot;Instance&quot;) val $FieldName$ = $Init$&#10;  fun disposeUIResources() {}&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
@@ -1399,29 +1402,21 @@
         <constraint name="a" within="" contains="" />
         <constraint name="b" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="$result$ = new boolean[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $a$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$result$ = $a$.clone();">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="result" within="" contains="" />
-        <constraint name="a" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="$result$ = new int[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $a$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$result$ = $a$.clone();">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="result" within="" contains="" />
-        <constraint name="a" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="int[] $result$ = new int[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $a$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="int[] $result$ = $a$.clone();">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="result" within="" contains="" />
-        <constraint name="a" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="int[] $result$ = new int[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $result$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="int[] $result$ = $a$.clone();">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="result" within="" contains="" />
-        <constraint name="a" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="java.util.Arrays.copyOf($original$, $original$.length)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$original$.clone()">
         <constraint name="__context__" within="" contains="" />
         <constraint name="original" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="$result$ = new $b$[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $result$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$result$ = $a$.clone();">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="result" within="" contains="" />
+        <constraint name="a" within="" contains="" />
+        <constraint name="b" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Simplify array copy" uuid="659d106f-8fba-3493-bc68-22b1511378b7" text="$b$[] $result$ = new $b$[$a$.length];&#10;System.arraycopy($a$, 0, $result$, 0, $result$.length);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$b$[] $result$ = $a$.clone();">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="result" within="" contains="" />
+        <constraint name="a" within="" contains="" />
+        <constraint name="b" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="Storing localized strings in static fields prevents dynamic loading of language bundles" text="$bundle$.$message$(&quot;$s$&quot;, $p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" script="&quot;import com.intellij.psi.*;&#10;import com.intellij.psi.util.*;&#10;PsiElement member = PsiTreeUtil.getParentOfType(__context__, PsiMember.class, PsiLambdaExpression.class)&#10;return member instanceof PsiField &amp;&amp; member.hasModifierProperty(PsiModifier.STATIC)&quot;" within="" contains="" />
@@ -1636,10 +1631,10 @@
         <constraint name="c" nameOfExprType="char" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="StringUtil.stripQuotesAroundValue" text="com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.unquoteString($Parameter$)">
+      <replaceConfiguration name="StringUtil.stripQuotesAroundValue()" uuid="c6a8c3bf-5d86-3fd2-875a-ddbd9c98648a" text="com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.unquoteString($Parameter$)">
         <constraint name="Parameter" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="StringUtil.stripQuotesAroundValue" text="com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.unquoteString($Parameter$)">
+      <replaceConfiguration name="StringUtil.stripQuotesAroundValue()" uuid="c6a8c3bf-5d86-3fd2-875a-ddbd9c98648a" text="com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.unquoteString($Parameter$)">
         <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
@@ -1653,9 +1648,9 @@
         <constraint name="e" nameOfExprType="java\.util\.concurrent\.ExecutorService" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="d" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="super.update() in AnAction subclass" text="$super$.update($e$);" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="">
+      <replaceConfiguration name="super.update() in AnAction subclass" text="$super$.update($e$);" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="">
         <constraint name="__context__" target="true" within="" contains="" />
-        <constraint name="super" regexp="super" nameOfExprType="AnAction" within="" contains="" />
+        <constraint name="super" regexp="super" nameOfExprType="AnAction|DumbAwareAction" within="" contains="" />
         <constraint name="e" nameOfExprType="AnActionEvent" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="super.update() in AnAction subclass" text="$super$.update($e$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="">
@@ -1716,9 +1711,9 @@
       </searchConfiguration>
       <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
-        <constraint name="FieldType" regexp="Collection" withinHierarchy="true" maxCount="2147483647" target="true" wholeWordsOnly="true" within="" contains="" />
+        <constraint name="FieldType" regexp="Collection" withinHierarchy="true" target="true" within="" contains="" />
         <constraint name="FieldName" maxCount="2147483647" within="" contains="" />
-        <constraint name="Init" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Init" minCount="0" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Use RecursionManager?" text="class $Class$ {&#10;  val $FieldName$: ThreadLocal&lt;$FieldType$&gt;&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
