@@ -43,47 +43,63 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     allLibraryLicenses.addAll(AndroidStudioLibraryLicenses.LICENSES_LIST)
 
-    productLayout.productApiModules = JAVA_IDE_API_MODULES +
-                                                  [
-                                                    // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
-                                                    "intellij.cidr.common.testFramework.core"
-                                                  ]
+    productLayout.productApiModules = JAVA_IDE_API_MODULES
     productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
-                                                  [
-                                                    // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
-                                                    "intellij.c.clangd",
-                                                    "intellij.c.testing",
-                                                    "intellij.cidr.common",
-                                                    "intellij.cidr.debugger",
-                                                    "intellij.cidr.debugger.backend",
-                                                    "intellij.cidr.debugger.commandInterpreterLang",
-                                                    "intellij.c",
-                                                    "intellij.c.debugger",
-                                                    "intellij.c.dfa",
-                                                    "intellij.cidr.util",
-                                                    "intellij.c.doxygen",
-                                                    "intellij.cidr.core",
-                                                    "intellij.cidr.execution",
-                                                    "intellij.cidr.lang.base",
-                                                    "intellij.cidr.modulemap.language",
-                                                    "intellij.cidr.projectModel",
-                                                    "intellij.cidr.resources",
-                                                    "intellij.cidr.util.serializer",
-                                                    "intellij.cidr.workspaceModel",
-                                                    "intellij.cidr.workspaceModel.ide",
-                                                    "intellij.cmake.psi",
-                                                  ] +
                                                   ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main"] -
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
     productLayout.additionalPlatformJars.putAll("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
 
-    productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES
+    productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES + [
+      // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
+      // and the structure of CIDR plugins.
+      "intellij.c.clangd",
+      "intellij.c.plugin",
+      "intellij.cidr.base.plugin"
+    ]
     productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin([]),
+      // Android Studio: declare dependencies for non-trivial CIDR plugins. This list is constructed referencing
+      // /tools/vendor/intellij/cidr/clion-build/groovy/org/jetbrains/intellij/build/clion/CLionProperties.groovy
+      plugin("intellij.cidr.base.plugin") {
+        withModule("intellij.cidr.base", mainJarName)
+        withModule("intellij.cidr.projectModel", mainJarName)
+        withModule("intellij.cidr.workspaceModel", mainJarName)
+        withModule("intellij.cidr.lang.base", mainJarName)
+        withModule("intellij.cidr.debugger", mainJarName)
+        withModule("intellij.cidr.debugger.backend", mainJarName)
+        withModule("intellij.cidr.debugger.commandInterpreterLang", mainJarName)
+        withModule("intellij.cidr.core", mainJarName)
+        withModule("intellij.cidr.util", mainJarName)
+        withModule("intellij.cidr.util.serializer", mainJarName)
+        withModule("intellij.cidr.util.ui", mainJarName)
+        withModule("intellij.cidr.execution", mainJarName)
+        // Note the following are in CLionProperties.groovy but we don't include them since
+        // they were never shipped with Android Studio before.
+        //   * intellij.cidr.toolchains
+        //   * intellij.platform.ssh.nio
+        //   * intellij.apple.sdk
+        // The following are not in CLionProperties.groovy for this plugin. Instead they
+        // are put under plugin "intellij.clion" or IDE implementation. We put them under
+        // this base plugin so that they will still be shipped.
+        withModule("intellij.cidr.resources", mainJarName)
+        withModule("intellij.cidr.common", mainJarName)
+        withModule("intellij.cmake.psi", mainJarName)
+        // The cidr test framework is included in the IDE base in Clion. But we
+        // include it here to support writing tests in plugins.
+        withModule("intellij.cidr.common.testFramework.core", mainJarName)
+      },
+      plugin("intellij.c.plugin") {
+        withModule("intellij.c", mainJarName)
+        withModule("intellij.c.debugger", mainJarName)
+        withModule("intellij.c.dfa", mainJarName)
+        withModule("intellij.c.doxygen", mainJarName)
+        withModule("intellij.c.testing", mainJarName)
+        withModule("intellij.cidr.modulemap.language", mainJarName)
+      },
     ]
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
   }
@@ -106,6 +122,17 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
     buildContext.ant.copy(todir: "$targetDirectory/bin/helpers") {
       fileset(dir: "$root/tools/vendor/intellij/cidr/cidr-debugger/bin/helpers")
+    }
+
+    // Android Studio: copy CIDR license to CIRR plugins
+    buildContext.ant.copy(tofile: "$targetDirectory/plugins/c-clangd/lib/LICENSE.txt") {
+      fileset(file: "$buildContext.paths.communityHome/CIDR_LICENSE.txt")
+    }
+    buildContext.ant.copy(tofile: "$targetDirectory/plugins/c-plugin/lib/LICENSE.txt") {
+      fileset(file: "$buildContext.paths.communityHome/CIDR_LICENSE.txt")
+    }
+    buildContext.ant.copy(tofile: "$targetDirectory/plugins/cidr-base-plugin/lib/LICENSE.txt") {
+      fileset(file: "$buildContext.paths.communityHome/CIDR_LICENSE.txt")
     }
   }
 

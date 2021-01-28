@@ -1,0 +1,7 @@
+Android Studio, including the binaries in this folder, is licensed to
+you under the Android Software Development Kit License Agreement
+(available at https://developer.android.com/studio/terms) and you may
+not copy (except for backup purposes), modify, adapt, redistribute,
+decompile, reverse engineer, disassemble, or create derivative works
+of the binaries or use the binaries separately from your use of
+Android Studio.
