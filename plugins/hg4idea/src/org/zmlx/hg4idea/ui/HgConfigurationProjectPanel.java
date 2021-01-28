@@ -58,7 +58,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     myIgnoredWhitespacesInAnnotationsCbx = new JBCheckBox(HgBundle.message("hg4idea.configuration.ignore.whitespace.in.annotate"));
     panel.add(UI.PanelFactory.panel(myIgnoredWhitespacesInAnnotationsCbx).createPanel());
 
-    mySyncControl = new JBCheckBox(DvcsBundle.getString("sync.setting"));
+    mySyncControl = new JBCheckBox(DvcsBundle.message("sync.setting"));
     JPanel mySyncControlPanel = Objects.requireNonNull(UI.PanelFactory.panel(mySyncControl)
                                                          .withTooltip(DvcsBundle.message("sync.setting.description", HgVcs.DISPLAY_NAME.get()))
                                                          .createPanel());

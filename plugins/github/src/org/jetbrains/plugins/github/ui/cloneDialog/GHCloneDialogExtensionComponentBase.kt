@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
-import com.intellij.dvcs.ui.DvcsBundle.getString
+import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -107,8 +107,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     fcd.isShowFileSystemRoots = true
     fcd.isHideIgnored = false
-    addBrowseFolderListener(getString("clone.destination.directory.browser.title"),
-                            getString("clone.destination.directory.browser.description"),
+    addBrowseFolderListener(message("clone.destination.directory.browser.title"),
+                            message("clone.destination.directory.browser.description"),
                             project,
                             fcd)
   }

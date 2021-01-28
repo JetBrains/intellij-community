@@ -87,7 +87,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     setOKButtonText(DvcsBundle.message("action.push"));
     String title = allRepos.size() == 1
                    ? DvcsBundle.message("push.dialog.push.commits.to.title", DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)))
-                   : DvcsBundle.getString("push.dialog.push.commits.title");
+                   : DvcsBundle.message("push.dialog.push.commits.title");
     setTitle(title);
   }
 
@@ -248,7 +248,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @Override
   @RequiresEdt
   public void push(boolean forcePush) {
-    executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, DvcsBundle.getString("push.process.pushing"), true) {
+    executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, DvcsBundle.message("push.process.pushing"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         myController.push(forcePush);
@@ -276,7 +276,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   public PrePushHandler.Result runPrePushHandlersInModalTask() {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
-    new Task.Modal(myController.getProject(), DvcsBundle.getString("push.process.checking.commits"), true) {
+    new Task.Modal(myController.getProject(), DvcsBundle.message("push.process.checking.commits"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         result.set(myController.executeHandlers(indicator));
@@ -314,14 +314,14 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       @Override
       public void onCancel() {
         super.onCancel();
-        suggestToSkipOrPush(DvcsBundle.getString("push.dialog.skip.all.steps.confirmation"));
+        suggestToSkipOrPush(DvcsBundle.message("push.dialog.skip.all.steps.confirmation"));
       }
 
       private void suggestToSkipOrPush(@Nls @NotNull String message) {
         if (Messages.showOkCancelDialog(myProject,
                                         message,
-                                        DvcsBundle.getString("action.push"),
-                                        DvcsBundle.getString("action.push.anyway"),
+                                        DvcsBundle.message("action.push"),
+                                        DvcsBundle.message("action.push.anyway"),
                                         IdeBundle.message("button.cancel"),
                                         UIUtil.getWarningIcon()) == Messages.OK) {
           result.set(PrePushHandler.Result.OK);

@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.openapi.ui.ValidationInfo;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -39,15 +37,15 @@ public final class CloneDvcsValidationUtils {
         Files.createDirectories(directoryPath);
       }
       else if (!directoryPath.toFile().isDirectory()) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
+        return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.access")).withOKEnabled();
       }
       return null;
     }
     catch (InvalidPathException e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
+      return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.invalid"));
     }
     catch (Exception e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
+      return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.access")).withOKEnabled();
     }
   }
 
@@ -68,14 +66,14 @@ public final class CloneDvcsValidationUtils {
         return null;
       }
       else if (!path.toFile().isDirectory()) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.not.directory"), component);
+        return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.not.directory"), component);
       }
       else if (!isDirectoryEmpty(path)) {
         return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.exists"), component);
       }
     }
     catch (InvalidPathException | IOException e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"), component);
+      return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.invalid"), component);
     }
     return null;
   }
@@ -93,7 +91,7 @@ public final class CloneDvcsValidationUtils {
   @Nullable
   public static ValidationInfo checkRepositoryURL(JComponent component, String repository) {
     if (repository.length() == 0) {
-      return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.empty"), component);
+      return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.empty"), component);
     }
 
     repository = sanitizeCloneUrl(repository);
@@ -119,7 +117,7 @@ public final class CloneDvcsValidationUtils {
 
       if (path.toFile().exists()) {
         if (!path.toFile().isDirectory()) {
-          return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.not.directory"), component);
+          return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.not.directory"), component);
         }
         return null;
       }
@@ -128,7 +126,7 @@ public final class CloneDvcsValidationUtils {
       // do nothing
     }
 
-    return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.invalid"), component);
+    return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.invalid"), component);
   }
 
   @NotNull

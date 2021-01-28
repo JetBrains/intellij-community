@@ -3,15 +3,12 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 @ApiStatus.Internal
 public final class SimplePushAction extends PushActionBase {
   SimplePushAction() {
-    super(DvcsBundle.getString("action.complex.push"));
+    super(DvcsBundle.message("action.complex.push"));
   }
 
   @Override
