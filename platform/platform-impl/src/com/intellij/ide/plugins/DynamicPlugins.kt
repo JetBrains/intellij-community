@@ -10,6 +10,7 @@ import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
@@ -33,6 +34,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -596,7 +598,22 @@ object DynamicPlugins {
         focusCycleRoot = focusCycleRoot.parent
       }
       if (focusCycleRoot is IdeFrameImpl) {
+        LOG.info("Focus cycle root reset to IdeFrame (from parent hierarchy)")
         focusManager.setGlobalCurrentFocusCycleRoot(focusCycleRoot)
+      }
+      else {
+        val dataContext = DataManager.getInstance().getDataContext(focusCycleRoot)
+        val project = CommonDataKeys.PROJECT.getData(dataContext)
+        if (project != null) {
+          val projectFrame = WindowManager.getInstance().getFrame(project)
+          if (projectFrame != null) {
+            LOG.info("Focus cycle root reset to IdeFrame (from DataContext)")
+            focusManager.setGlobalCurrentFocusCycleRoot(focusCycleRoot)
+          }
+          else {
+            LOG.info("Can't find new focus cycle root; old root is $focusCycleRoot")
+          }
+        }
       }
     }
   }
