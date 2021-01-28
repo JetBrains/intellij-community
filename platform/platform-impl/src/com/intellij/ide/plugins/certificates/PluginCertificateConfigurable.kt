@@ -26,7 +26,10 @@ import javax.swing.JPanel
 import javax.swing.tree.TreeSelectionModel
 
 class PluginCertificateConfigurable :
-  BoundConfigurable(UIBundle.message("plugins.certificates.display.name"), "plugin.certificates"), Configurable.NoScroll, CertificateListener {
+  BoundConfigurable(
+    UIBundle.message("plugins.certificates.display.name"),
+    "plugin.certificates"
+  ), Configurable.NoScroll, CertificateListener {
 
   private val myTree: Tree = Tree()
 
@@ -38,21 +41,27 @@ class PluginCertificateConfigurable :
           FileChooser.chooseFile(CERTIFICATE_DESCRIPTOR, null, null) { file: VirtualFile ->
             val path = file.path
             val certificate = CertificateUtil.loadX509Certificate(path)
-            if (certificate == null) {
-              Messages.showErrorDialog(myRootPanel,
-                                       IdeBundle.message("settings.certificate.malformed.x509.server.certificate"),
-                                       IdeBundle.message("settings.certificate.not.imported"))
-            }
-            else if (myCertificates.contains(certificate)) {
-              Messages.showWarningDialog(myRootPanel,
-                                         IdeBundle.message("settings.certificate.certificate.already.exists"),
-                                         IdeBundle.message("settings.certificate.not.imported"))
-            }
-            else {
-              myCertificates.add(certificate)
-              myTreeBuilder.addCertificate(certificate)
-              addCertificatePanel(certificate)
-              myTreeBuilder.selectCertificate(certificate)
+            when {
+              certificate == null -> {
+                Messages.showErrorDialog(
+                  myRootPanel,
+                  IdeBundle.message("settings.certificate.malformed.x509.server.certificate"),
+                  IdeBundle.message("settings.certificate.not.imported")
+                )
+              }
+              myCertificates.contains(certificate) -> {
+                Messages.showWarningDialog(
+                  myRootPanel,
+                  IdeBundle.message("settings.certificate.certificate.already.exists"),
+                  IdeBundle.message("settings.certificate.not.imported")
+                )
+              }
+              else -> {
+                myCertificates.add(certificate)
+                myTreeBuilder.addCertificate(certificate)
+                addCertificatePanel(certificate)
+                myTreeBuilder.selectCertificate(certificate)
+              }
             }
           }
         }
