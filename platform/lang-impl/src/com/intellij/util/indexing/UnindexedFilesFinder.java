@@ -183,8 +183,8 @@ final class UnindexedFilesFinder {
         }
         IndexingStamp.flushCache(inputId);
 
-        if (!shouldIndex.get() && file instanceof VirtualFileSystemEntry) {
-          ((VirtualFileSystemEntry)file).setFileIndexed(true);
+        if (!shouldIndex.get()) {
+          IndexingFlag.setFileIndexed(file);
         }
       });
       return new UnindexedFileStatus(shouldIndex.get(),

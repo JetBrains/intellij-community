@@ -65,7 +65,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   @Override
   protected void buildIndicesForFileRecursively(@NotNull VirtualFile file, boolean contentChange) {
-    FileBasedIndexImpl.cleanProcessedFlagRecursively(file);
+    IndexingFlag.cleanProcessedFlagRecursively(file);
     if (!contentChange) {
       myUpdatingFiles.incrementAndGet();
     }
@@ -183,7 +183,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       if (!extensions.isEmpty()) {
         myManager.removeDataFromIndicesForFile(fileId, file);
       }
-      FileBasedIndexImpl.cleanProcessingFlag(file);
+      IndexingFlag.cleanProcessingFlag(file);
     }
     else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
       checkNotIndexedByContentBasedIndexes(file, fileId);

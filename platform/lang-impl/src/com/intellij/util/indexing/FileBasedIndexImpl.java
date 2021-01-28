@@ -81,6 +81,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.util.indexing.IndexingFlag.cleanProcessingFlag;
+import static com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag;
+
 public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   private static final ThreadLocal<VirtualFile> ourFileToBeIndexed = new ThreadLocal<>();
@@ -1200,8 +1203,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         indexingStatistics = pair.second;
       }
 
-      if (setIndexedStatus && file instanceof VirtualFileSystemEntry) {
-        ((VirtualFileSystemEntry)file).setFileIndexed(true);
+      if (setIndexedStatus) {
+        IndexingFlag.setFileIndexed(file);
       }
       if (VfsEventsMerger.LOG != null) {
         VfsEventsMerger.LOG.info("File " + file +
@@ -1552,7 +1555,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
     waitUntilIndicesAreInitialized();
-    cleanProcessedFlagRecursively(file);
+    IndexingFlag.cleanProcessedFlagRecursively(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
     Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRegisteredIndexes.getRequiringContentIndices());
@@ -1649,8 +1652,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
               IndexingStamp.flushCache(fileId);
               getChangedFilesCollector().scheduleForUpdate(file);
             }
-            else if (file instanceof VirtualFileSystemEntry) {
-              ((VirtualFileSystemEntry)file).setFileIndexed(true);
+            else {
+              IndexingFlag.setFileIndexed(file);
             }
           });
         } finally {
@@ -1658,8 +1661,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
       }
     }
-    else if (file instanceof VirtualFileSystemEntry) {
-      ((VirtualFileSystemEntry)file).setFileIndexed(true);
+    else {
+      IndexingFlag.setFileIndexed(file);
     }
   }
 
@@ -1759,32 +1762,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Nullable
   private static PsiFile findLatestKnownPsiForUncomittedDocument(@NotNull Document doc, @NotNull Project project) {
     return PsiDocumentManager.getInstance(project).getCachedPsiFile(doc);
-  }
-
-  @VisibleForTesting
-  public static void cleanupProcessedFlag() {
-    final VirtualFile[] roots = ManagingFS.getInstance().getRoots();
-    for (VirtualFile root : roots) {
-      cleanProcessedFlagRecursively(root);
-    }
-  }
-
-  public static void cleanProcessedFlagRecursively(@NotNull VirtualFile file) {
-    if (!(file instanceof VirtualFileSystemEntry)) return;
-
-    final VirtualFileSystemEntry nvf = (VirtualFileSystemEntry)file;
-    cleanProcessingFlag(nvf);
-    if (file.isDirectory()) {
-      for (VirtualFile child : nvf.getCachedChildren()) {
-        cleanProcessedFlagRecursively(child);
-      }
-    }
-  }
-
-  public static void cleanProcessingFlag(@NotNull VirtualFile file) {
-    if (file instanceof VirtualFileSystemEntry) {
-      ((VirtualFileSystemEntry)file).setFileIndexed(false);
-    }
   }
 
   void setUpFlusher() {

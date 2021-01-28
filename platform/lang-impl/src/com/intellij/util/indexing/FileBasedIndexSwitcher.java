@@ -99,7 +99,7 @@ public final class FileBasedIndexSwitcher {
         beforeIndexTasksStarted.run();
       }
 
-      FileBasedIndexImpl.cleanupProcessedFlag();
+      IndexingFlag.cleanupProcessedFlag();
       for (Project project : ProjectUtil.getOpenProjects()) {
         DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
       }
