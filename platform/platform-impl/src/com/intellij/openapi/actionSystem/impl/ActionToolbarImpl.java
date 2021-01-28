@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -1300,6 +1300,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         return toClose;
       })
       .setCancelOnMouseOutCallback(event -> {
+        Window window = UIUtil.getWindow(popupToolbar);
+        if (window != null && Window.Type.POPUP == window.getType()) {
+          Component parent = UIUtil.uiParents(event.getComponent(), false).find(window::equals);
+          if (parent != null) return false; // mouse over a child popup
+        }
         return myAutoPopupRec != null &&
                actionManager.isActionPopupStackEmpty() &&
                !new RelativeRectangle(this, myAutoPopupRec).contains(new RelativePoint(event));
