@@ -184,6 +184,9 @@ final class WslDistributionDescriptor {
   }
 
   @Nullable String getEnvironmentVariable(String name) {
-    return readWslOutputLine(new WSLCommandLineOptions(), List.of("printenv", name));
+    return readWslOutputLine(new WSLCommandLineOptions()
+                               .setExecuteCommandInInteractiveShell(true)
+                               .setExecuteCommandInLoginShell(true),
+                             List.of("printenv", name));
   }
 }

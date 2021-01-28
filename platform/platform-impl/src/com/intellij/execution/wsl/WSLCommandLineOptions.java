@@ -11,6 +11,8 @@ import java.util.List;
 public final class WSLCommandLineOptions {
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
+  private boolean myExecuteCommandInInteractiveShell = false;
+  private boolean myExecuteCommandInLoginShell = false;
   private boolean mySudo = false;
   private String myRemoteWorkingDirectory;
   private boolean myPassEnvVarsUsingInterop = false;
@@ -38,6 +40,34 @@ public final class WSLCommandLineOptions {
    */
   public @NotNull WSLCommandLineOptions setExecuteCommandInShell(boolean executeCommandInShell) {
     myExecuteCommandInShell = executeCommandInShell;
+    return this;
+  }
+
+
+  public boolean isExecuteCommandInInteractiveShell() {
+    return myExecuteCommandInInteractiveShell;
+  }
+
+  /**
+   * runs wsl command in interactive shell (-i) parameter
+   */
+  public @NotNull WSLCommandLineOptions setExecuteCommandInInteractiveShell(boolean executeCommandInInteractiveShell) {
+    myExecuteCommandInInteractiveShell = executeCommandInInteractiveShell;
+    if (myExecuteCommandInInteractiveShell) myExecuteCommandInShell = true;
+    return this;
+  }
+
+
+  public boolean isExecuteCommandInLoginShell() {
+    return myExecuteCommandInLoginShell;
+  }
+
+  /**
+   * runs wsl command in login shell (-l) parameter
+   */
+  public @NotNull WSLCommandLineOptions setExecuteCommandInLoginShell(boolean executeCommandInLoginShell) {
+    myExecuteCommandInLoginShell = executeCommandInLoginShell;
+    if (myExecuteCommandInLoginShell) myExecuteCommandInShell = true;
     return this;
   }
 
