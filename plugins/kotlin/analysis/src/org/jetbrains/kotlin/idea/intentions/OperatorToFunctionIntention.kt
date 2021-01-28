@@ -155,7 +155,7 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
                 KtTokens.NOT_IN -> "!$1.contains($0)"
                 KtTokens.PLUSEQ -> if (functionName == "plusAssign") "$0.plusAssign($1)" else "$0 = $0.plus($1)"
                 KtTokens.MINUSEQ -> if (functionName == "minusAssign") "$0.minusAssign($1)" else "$0 = $0.minus($1)"
-                KtTokens.MULTEQ -> if (functionName == "multAssign") "$0.multAssign($1)" else "$0 = $0.mult($1)"
+                KtTokens.MULTEQ -> if (functionName == "timesAssign") "$0.timesAssign($1)" else "$0 = $0.times($1)"
                 KtTokens.DIVEQ -> if (functionName == "divAssign") "$0.divAssign($1)" else "$0 = $0.div($1)"
                 KtTokens.PERCEQ -> {
                     val remSupported = element.languageVersionSettings.supportsFeature(LanguageFeature.OperatorRem)
