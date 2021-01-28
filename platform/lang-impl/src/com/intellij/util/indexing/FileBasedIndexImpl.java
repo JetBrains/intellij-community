@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
@@ -551,6 +550,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     if (!states.isEmpty()) {
       ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(states, fileId, originalFile));
+    }
+    if (file.isValid() && file instanceof VirtualFileSystemEntry) {
+      cleanProcessingFlag(file);
     }
   }
 
@@ -1550,7 +1552,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
     waitUntilIndicesAreInitialized();
-    cleanProcessedFlag(file);
+    cleanProcessedFlagRecursively(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
     Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRegisteredIndexes.getRequiringContentIndices());
@@ -1763,19 +1765,25 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public static void cleanupProcessedFlag() {
     final VirtualFile[] roots = ManagingFS.getInstance().getRoots();
     for (VirtualFile root : roots) {
-      cleanProcessedFlag(root);
+      cleanProcessedFlagRecursively(root);
     }
   }
 
-  public static void cleanProcessedFlag(@NotNull final VirtualFile file) {
+  public static void cleanProcessedFlagRecursively(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileSystemEntry)) return;
 
     final VirtualFileSystemEntry nvf = (VirtualFileSystemEntry)file;
-    nvf.setFileIndexed(false);
+    cleanProcessingFlag(nvf);
     if (file.isDirectory()) {
       for (VirtualFile child : nvf.getCachedChildren()) {
-        cleanProcessedFlag(child);
+        cleanProcessedFlagRecursively(child);
       }
+    }
+  }
+
+  public static void cleanProcessingFlag(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileSystemEntry) {
+      ((VirtualFileSystemEntry)file).setFileIndexed(false);
     }
   }
 
