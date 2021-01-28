@@ -707,6 +707,7 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/lvcs-api/intellij.platform.lvcs.iml" filepath="$PROJECT_DIR$/intellij/platform/lvcs-api/intellij.platform.lvcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" filepath="$PROJECT_DIR$/intellij/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/platform-main/intellij.platform.main.iml" filepath="$PROJECT_DIR$/intellij/platform/platform-main/intellij.platform.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/platform/ml-impl/intellij.platform.ml.impl.iml" filepath="$PROJECT_DIR$/intellij/platform/ml-impl/intellij.platform.ml.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/object-serializer/intellij.platform.objectSerializer.iml" filepath="$PROJECT_DIR$/intellij/platform/object-serializer/intellij.platform.objectSerializer.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" filepath="$PROJECT_DIR$/intellij/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" filepath="$PROJECT_DIR$/intellij/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" />
