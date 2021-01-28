@@ -41,11 +41,14 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
+    if (ourAllowedFlag) {
+      return;
+    }
     if (Registry.is("ide.enable.slow.operations.in.edt")) {
       return;
     }
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || !application.isDispatchThread() || application.isWriteAccessAllowed() || ourAllowedFlag) {
+    if (application.isUnitTestMode() || !application.isDispatchThread() || application.isWriteAccessAllowed()) {
       return;
     }
     String stackTrace = ExceptionUtil.currentStackTrace();
@@ -56,7 +59,7 @@ public final class SlowOperations {
   }
 
   public static <T, E extends Throwable> T allowSlowOperations(@NotNull ThrowableComputable<T, E> computable) throws E {
-    if (!ApplicationManager.getApplication().isDispatchThread() || ourAllowedFlag) {
+    if (ourAllowedFlag || !ApplicationManager.getApplication().isDispatchThread()) {
       return computable.compute();
     }
     ourAllowedFlag = true;
