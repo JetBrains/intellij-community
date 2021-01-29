@@ -61,6 +61,7 @@ find "$APP_DIRECTORY" -name '*.jar' \
     find jarfolder \
       -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "*.tbd" -o -name "jattach" \) \
       -exec codesign --timestamp \
+      --force \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;
 
