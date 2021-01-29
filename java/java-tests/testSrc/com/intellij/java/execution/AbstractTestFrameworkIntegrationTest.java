@@ -20,6 +20,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.sm.runner.OutputEventSplitter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -74,6 +75,35 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
 
     ProcessOutput processOutput = new ProcessOutput();
     process.addProcessListener(new ProcessAdapter() {
+      final OutputEventSplitter splitter = new OutputEventSplitter() {
+        @Override
+        public void onTextAvailable(@NotNull String text, @NotNull Key<?> outputType) {
+          if (StringUtil.isEmptyOrSpaces(text)) return;
+          try {
+            if (outputType == ProcessOutputTypes.STDOUT) {
+              ServiceMessage serviceMessage = ServiceMessage.parse(text.trim());
+              if (serviceMessage == null) {
+                processOutput.out.add(text);
+              }
+              else {
+                processOutput.messages.add(serviceMessage);
+              }
+            }
+
+            if (outputType == ProcessOutputTypes.SYSTEM) {
+              processOutput.sys.add(text);
+            }
+
+            if (outputType == ProcessOutputTypes.STDERR) {
+              processOutput.err.add(text);
+            }
+          }
+          catch (ParseException e) {
+            e.printStackTrace();
+            System.err.println(text);
+          }
+        }
+      };
       @Override
       public void startNotified(@NotNull ProcessEvent event) {
         if (searchForTestsTask != null) {
@@ -82,32 +112,13 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
       }
 
       @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        splitter.flush();
+      }
+
+      @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        String text = event.getText().trim();
-        if (StringUtil.isEmptyOrSpaces(text)) return;
-        try {
-          if (outputType == ProcessOutputTypes.STDOUT) {
-            ServiceMessage serviceMessage = ServiceMessage.parse(text.trim());
-            if (serviceMessage == null) {
-              processOutput.out.add(text);
-            }
-            else {
-              processOutput.messages.add(serviceMessage);
-            }
-          }
-
-          if (outputType == ProcessOutputTypes.SYSTEM) {
-            processOutput.sys.add(text);
-          }
-
-          if (outputType == ProcessOutputTypes.STDERR) {
-            processOutput.err.add(text);
-          }
-        }
-        catch (ParseException e) {
-          e.printStackTrace();
-          System.err.println(text);
-        }
+        splitter.process(event.getText(), outputType);
       }
     });
     process.startNotify();
