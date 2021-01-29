@@ -52,6 +52,7 @@ import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
+import com.intellij.util.indexing.events.IndexedFilesListener;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.storage.*;
@@ -349,14 +350,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @ApiStatus.Internal
-  public void requestReindex(@NotNull VirtualFile file, boolean forceRebuildRequest) {
+  public void requestReindex(@NotNull VirtualFile file, boolean forceRebuild) {
     GistManager.getInstance().invalidateData(file);
     // todo: this is the same vfs event handling sequence that is produces after events of FileContentUtilCore.reparseFiles
     // but it is more costly than current code, see IDEA-192192
     //myChangedFilesCollector.invalidateIndicesRecursively(file, false);
     //myChangedFilesCollector.buildIndicesForFileRecursively(file, false);
+    IndexedFilesListener.InvalidationCause cause =
+      forceRebuild ? IndexedFilesListener.InvalidationCause.FORCE_REBUILD : IndexedFilesListener.InvalidationCause.CHANGED;
     ChangedFilesCollector changedFilesCollector = getChangedFilesCollector();
-    changedFilesCollector.invalidateIndicesRecursively(file, true, forceRebuildRequest, changedFilesCollector.getEventMerger());
+    changedFilesCollector.invalidateIndicesRecursively(file, cause, changedFilesCollector.getEventMerger());
     if (myRegisteredIndexes.isInitialized()) {
       changedFilesCollector.ensureUpToDateAsync();
     }
