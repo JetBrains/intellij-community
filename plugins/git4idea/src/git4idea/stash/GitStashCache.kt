@@ -37,7 +37,7 @@ class GitStashCache(val project: Project) : Disposable {
     val future = executor.submit(Callable {
       try {
         LOG.debug("Loading stash at '${commitId.hash}' in '${commitId.root}'")
-        return@Callable StashData.ChangeList(GitStashOperations.loadStashedChanges(project, commitId.root, commitId.hash))
+        return@Callable StashData.ChangeList(GitStashOperations.loadStashedChanges(project, commitId.root, commitId.hash, false))
       }
       catch (e: VcsException) {
         LOG.warn("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
