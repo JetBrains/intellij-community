@@ -73,10 +73,14 @@ class WrapWithSafeLetCallFix(
             else -> element
         }
         val wrapped = when (name) {
-            "it" -> factory.createExpressionByPattern("$0?.let { $1 }", nullableText, underLetExpression)
-            else -> factory.createExpressionByPattern("$0?.let { $1 -> $2 }", nullableText, name, underLetExpression)
+            "it" -> factory.createExpressionByPattern("($0)?.let { $1 }", nullableText, underLetExpression)
+            else -> factory.createExpressionByPattern("($0)?.let { $1 -> $2 }", nullableText, name, underLetExpression)
         }
-        (qualifiedExpression ?: element).replace(wrapped)
+        val replaced = (qualifiedExpression ?: element).replace(wrapped) as KtSafeQualifiedExpression
+        val receiver = replaced.receiverExpression
+        if (receiver is KtParenthesizedExpression && KtPsiUtil.areParenthesesUseless(receiver)) {
+            receiver.replace(KtPsiUtil.safeDeparenthesize(receiver))
+        }
     }
 
     object UnsafeFactory : KotlinSingleIntentionActionFactory() {

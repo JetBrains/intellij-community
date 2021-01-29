@@ -14302,6 +14302,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/wrapWithSafeLetCall/chainedUnsafeCall.kt");
         }
 
+        @TestMetadata("elvisArgument.kt")
+        public void testElvisArgument() throws Exception {
+            runTest("testData/quickfix/wrapWithSafeLetCall/elvisArgument.kt");
+        }
+
         @TestMetadata("expressionUnsafeCall.kt")
         public void testExpressionUnsafeCall() throws Exception {
             runTest("testData/quickfix/wrapWithSafeLetCall/expressionUnsafeCall.kt");
