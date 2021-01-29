@@ -10,6 +10,7 @@ import com.intellij.execution.console.IdeConsoleRootType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -76,8 +77,8 @@ class LoadScriptDefinitionsStartupActivity : StartupActivity {
     }
 }
 
-class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider() {
-    private var definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
+class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
+    private val definitionsBySource = mutableMapOf<ScriptDefinitionsSource, List<ScriptDefinition>>()
 
     @Volatile
     private var definitions: List<ScriptDefinition>? = null
@@ -89,19 +90,18 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     // cache service as it's getter is on the hot path
     // it is safe, since both services are in same plugin
-    val configurations = ScriptConfigurationManager.getInstance(project) as CompositeScriptConfigurationManager
+    @Volatile
+    private var configurations: CompositeScriptConfigurationManager? = ScriptConfigurationManager.getInstance(project) as CompositeScriptConfigurationManager
 
     override fun findDefinition(script: SourceCode): ScriptDefinition? {
         val locationId = script.locationId ?: return null
         if (nonScriptId(locationId)) return null
 
-        val fastPath = configurations.tryGetScriptDefinitionFast(locationId)
-        if (fastPath != null) return fastPath
+        configurations?.tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
 
         if (!isReady()) return null
 
-        val cached = scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }
-        if (cached != null) return cached
+        scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
         val definition =
             if (isScratchFile(script)) {
@@ -157,7 +157,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         @Suppress("DEPRECATION")
         val fromDeprecatedEP = Extensions.getArea(project).getExtensionPoint(ScriptTemplatesProvider.EP_NAME).extensions.toList()
             .map { ScriptTemplatesProviderAdapter(it).asSource() }
-        val fromNewEp = Extensions.getArea(project).getExtensionPoint(ScriptDefinitionContributor.EP_NAME).extensions.toList()
+        val fromNewEp = project.extensionArea.getExtensionPoint(ScriptDefinitionContributor.EP_NAME).extensions.toList()
             .map { it.asSource() }
         return fromNewEp.dropLast(1) + fromDeprecatedEP + fromNewEp.last()
     }
@@ -171,7 +171,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     private fun loadScriptDefinitions() {
         if (project.isDisposed) return
 
-        val newDefinitionsBySource = getSources().map { it to it.safeGetDefinitions() }.toMap()
+        val newDefinitionsBySource = getSources().associateWith { it.safeGetDefinitions() }
 
         lock.write {
             definitionsBySource.putAll(newDefinitionsBySource)
@@ -266,6 +266,16 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         return emptyList()
     }
 
+    override fun dispose() {
+        clearCache()
+
+        definitionsBySource.clear()
+        definitions = null
+        failedContributorsHashes.clear()
+        scriptDefinitionsCache.clear()
+        configurations = null
+    }
+
     companion object {
         fun getInstance(project: Project): ScriptDefinitionsManager =
             project.getServiceSafe<ScriptDefinitionProvider>() as ScriptDefinitionsManager
@@ -349,7 +359,7 @@ interface ScriptDefinitionContributor {
             ExtensionPointName.create<ScriptDefinitionContributor>("org.jetbrains.kotlin.scriptDefinitionContributor")
 
         inline fun <reified T> find(project: Project) =
-            Extensions.getArea(project).getExtensionPoint(EP_NAME).extensions.filterIsInstance<T>().firstOrNull()
+            project.extensionArea.getExtensionPoint(EP_NAME).extensionList.filterIsInstance<T>().firstOrNull()
     }
 }
 

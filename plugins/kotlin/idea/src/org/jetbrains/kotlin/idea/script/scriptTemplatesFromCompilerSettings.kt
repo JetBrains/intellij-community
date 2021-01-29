@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplates
@@ -35,15 +36,17 @@ class ScriptTemplatesFromCompilerSettingsProvider(
 ) : ScriptDefinitionSourceAsContributor {
 
     init {
-        project.messageBus.connect().subscribe(KotlinCompilerSettingsListener.TOPIC, object : KotlinCompilerSettingsListener {
-            override fun <T> settingsChanged(newSettings: T) {
-                if (newSettings !is CompilerSettings) return
+        project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
+            .subscribe(KotlinCompilerSettingsListener.TOPIC, object : KotlinCompilerSettingsListener {
+                override fun <T> settingsChanged(newSettings: T) {
+                    if (newSettings !is CompilerSettings) return
 
-                executeOnPooledThread {
-                    ScriptDefinitionsManager.getInstance(project).reloadDefinitionsBy(this@ScriptTemplatesFromCompilerSettingsProvider)
+                    executeOnPooledThread {
+                        if (project.isDefault || project.isDisposed) return@executeOnPooledThread
+                        ScriptDefinitionsManager.getInstance(project).reloadDefinitionsBy(this@ScriptTemplatesFromCompilerSettingsProvider)
+                    }
                 }
-            }
-        })
+            })
     }
 
     override val definitions: Sequence<ScriptDefinition>
