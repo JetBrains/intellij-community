@@ -5,7 +5,7 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -125,7 +125,7 @@ class MethodExtractor {
   }
 
   fun replaceElements(sourceElements: List<PsiElement>, callElements: List<PsiElement>, anchor: PsiMember, method: PsiMethod): ExtractedElements {
-    return ApplicationManager.getApplication().runWriteAction<ExtractedElements> {
+    return WriteAction.compute<ExtractedElements, Throwable> {
       val addedMethod = anchor.addSiblingAfter(method) as PsiMethod
       val replacedCallElements = replace(sourceElements, callElements)
       ExtractedElements(replacedCallElements, addedMethod)
