@@ -84,11 +84,11 @@ object GitStashOperations {
   }
 
   @JvmStatic
-  fun viewStash(project: Project, stash: StashInfo) {
+  fun viewStash(project: Project, stash: StashInfo, compareWithLocal: Boolean) {
     val emptyChangeList = CommittedChangeListImpl(stash.stash, stash.message, "", -1, Date(0), emptyList())
     val dialog = ChangeListViewerDialog(project, emptyChangeList, null)
     dialog.loadChangesInBackground {
-      ChangelistData(loadStashedChanges(project, stash.root, stash.hash), null)
+      ChangelistData(loadStashedChanges(project, stash.root, stash.hash, compareWithLocal), null)
     }
     dialog.title = GitBundle.message("unstash.view.dialog.title", stash.stash)
     dialog.show()
@@ -96,9 +96,9 @@ object GitStashOperations {
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  fun loadStashedChanges(project: Project, root: VirtualFile, hash: Hash): GitCommittedChangeList {
+  fun loadStashedChanges(project: Project, root: VirtualFile, hash: Hash, compareWithLocal: Boolean): GitCommittedChangeList {
     return GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, root), hash.asString(),
-                                             true, false, false)
+                                             true, compareWithLocal, false)
   }
 
   @JvmStatic
