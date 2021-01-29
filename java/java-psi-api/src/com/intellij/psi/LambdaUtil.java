@@ -1023,8 +1023,13 @@ public final class LambdaUtil {
   private static PsiExpression createExpressionFromText(String exprText, PsiElement context) {
     PsiExpression expr = JavaPsiFacade.getElementFactory(context.getProject())
                                       .createExpressionFromText(exprText, context);
+    boolean needToShortRefs = !PsiTreeUtil.processElements(expr, PsiJavaCodeReferenceElement.class, ref -> {
+      PsiElement target = ref.resolve();
+      boolean hasInnerClassReference = target instanceof PsiClass && ((PsiClass)target).getContainingClass() != null;
+      return !hasInnerClassReference;
+    });
     //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
-    return (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);
+    return needToShortRefs ? (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr) : expr;
   }
 
   /**
