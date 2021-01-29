@@ -558,6 +558,15 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final ActionToolbar historyToolbar = actionManager.createActionToolbar("StructuralSearchDialog", historyActionGroup, true);
 
     final CheckboxAction injected = new CheckboxAction(SSRBundle.message("search.in.injected.checkbox")) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (myEditConfigOnly) {
+          e.getPresentation().setVisible(false);
+        }
+        super.update(e);
+      }
+
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myConfiguration.getMatchOptions().isSearchInjectedCode();
