@@ -77,15 +77,17 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     private fun getBaseInjection(ktHost: KtElement, support: LanguageInjectionSupport): Injection {
         if (!ProjectRootsUtil.isInProjectOrLibSource(ktHost.containingFile.originalFile)) return absentKotlinInjection
 
-        val needImmediateAnswer = with(ApplicationManager.getApplication()) { isDispatchThread && !isUnitTestMode }
+        val needImmediateAnswer = with(ApplicationManager.getApplication()) { isDispatchThread }
         val kotlinCachedInjection = ktHost.cachedInjectionWithModification
+
+        if (needImmediateAnswer) {
+            // Can't afford long counting or typing will be laggy. Force cache reuse even if it's outdated.
+            kotlinCachedInjection?.baseInjection?.let { return it }
+        }
+
         val modificationCount = PsiManager.getInstance(ktHost.project).modificationTracker.modificationCount
 
         return when {
-            needImmediateAnswer -> {
-                // Can't afford long counting or typing will be laggy. Force cache reuse even if it's outdated.
-                kotlinCachedInjection?.baseInjection ?: absentKotlinInjection
-            }
             kotlinCachedInjection != null && (modificationCount == kotlinCachedInjection.modificationCount) ->
                 // Cache is up-to-date
                 kotlinCachedInjection.baseInjection
@@ -96,7 +98,8 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
                     return computedInjection
                 }
 
-                if (ApplicationManager.getApplication().isReadAccessAllowed && ProgressManager.getInstance().progressIndicator == null) {
+                if (ApplicationManager.getApplication().run { !isDispatchThread && isReadAccessAllowed }
+                    && ProgressManager.getInstance().progressIndicator == null) {
                     // The action cannot be canceled by caller and by internal checkCanceled() calls.
                     // Force creating new indicator that is canceled on write action start, otherwise there might be lags in typing.
                     runInReadActionWithWriteActionPriority(::computeAndCache) ?: kotlinCachedInjection?.baseInjection
