@@ -363,6 +363,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private void doUpdateTrafficLightVisibility() {
     if (trafficLightVisible) {
       if (showToolbar && myEditor.myView != null) {
+        statusToolbar.setTargetComponent(myEditor.getContentComponent());
         VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
         Point point = myEditor.visualPositionToXY(pos);
         point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
