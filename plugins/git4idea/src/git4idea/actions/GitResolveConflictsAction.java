@@ -69,7 +69,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
       return;
     }
 
-    presentation.setEnabled(isEnabled(project));
+    presentation.setEnabledAndVisible(isEnabled(project));
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(e.getPresentation().isEnabled());
     }

@@ -83,14 +83,12 @@
     </group>
 
     <group id="Git.MainMenu.RebaseActions" class="git4idea.actions.GitRepositoryStateActionGroup$Rebase" popup="true">
-      <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction"/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip"/>
     </group>
 
     <group id="Git.MainMenu.MergeActions" class="git4idea.actions.GitRepositoryStateActionGroup$Merge" popup="true">
-      <reference ref="Git.ResolveConflicts"/>
       <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge"/>
     </group>
 
@@ -115,6 +113,7 @@
       <reference ref="Git.MainMenu.MergeActions"/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase"/>
       <reference ref="Git.MainMenu.RebaseActions"/>
+      <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction"/>
       <separator/>
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default" />
