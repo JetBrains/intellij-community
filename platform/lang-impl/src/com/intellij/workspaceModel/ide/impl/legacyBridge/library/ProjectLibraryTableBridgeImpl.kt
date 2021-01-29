@@ -72,7 +72,6 @@ internal class ProjectLibraryTableBridgeImpl(
                 val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as LibraryBridgeImpl?
                 val library = if (alreadyCreatedLibrary != null) {
                   alreadyCreatedLibrary.entityStorage = entityStorage
-                  alreadyCreatedLibrary.modifiableModelFactory = null
                   alreadyCreatedLibrary
                 }
                 else {

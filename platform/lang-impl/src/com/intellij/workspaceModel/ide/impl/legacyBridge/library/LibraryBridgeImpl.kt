@@ -62,9 +62,6 @@ internal class LibraryBridgeImpl(
 
   private var disposed = false
 
-  // null to update project model via ProjectModelUpdater
-  internal var modifiableModelFactory: ((LibraryStateSnapshot, WorkspaceEntityStorageBuilder) -> LibraryModifiableModelBridgeImpl)? = null
-
   internal fun cleanCachedValue() {
     entityStorage.clearCachedValue(librarySnapshotCached)
   }
