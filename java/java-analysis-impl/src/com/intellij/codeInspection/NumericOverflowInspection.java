@@ -48,7 +48,19 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
     return new JavaElementVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitExpression(expression);
+        if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
+          visitExpression(expression);
+        }
+      }
+
+      @Override
+      public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+        // never constant
+      }
+
+      @Override
+      public void visitCallExpression(PsiCallExpression callExpression) {
+        // never constant
       }
 
       @Override
