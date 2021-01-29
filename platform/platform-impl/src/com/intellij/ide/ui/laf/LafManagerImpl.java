@@ -52,6 +52,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.Lazy;
 import org.intellij.lang.annotations.JdkConstants;
@@ -85,6 +86,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
 
   private static final String DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme";
+  private static final String HIGH_CONTAST_THEME_ID = "JetBrainsHighContrastTheme";
   private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme";
   private static final String DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme";
 
@@ -531,8 +533,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find app L&F: " + appLafName);
     }
 
+    // Use HighContrast theme for IDE in Windows if HighContrast desktop mode is set.
+    UIManager.LookAndFeelInfo laf;
+    if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == Boolean.TRUE) {
+      laf = ContainerUtil.find(myLaFs.getValue(), l -> l instanceof UIThemeBasedLookAndFeelInfo &&
+                                                 HIGH_CONTAST_THEME_ID.equals(((UIThemeBasedLookAndFeelInfo)l).getTheme().getId()));
+      if (laf != null) {
+        return laf;
+      }
+    }
+
     String defaultLafName = DarculaLaf.class.getName();
-    UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
+    laf = findLaf(defaultLafName);
     if (laf != null) {
       return laf;
     }
