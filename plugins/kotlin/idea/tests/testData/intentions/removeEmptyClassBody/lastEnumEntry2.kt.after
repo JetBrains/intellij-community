@@ -1,4 +1,4 @@
 enum class Foo {
     FOO,
-    BAR
+    BAR<caret>
 }

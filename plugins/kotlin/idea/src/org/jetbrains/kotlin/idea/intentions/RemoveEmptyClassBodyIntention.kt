@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 @Suppress("DEPRECATION")
 class RemoveEmptyClassBodyInspection : IntentionBasedInspection<KtClassBody>(RemoveEmptyClassBodyIntention::class),
-    CleanupLocalInspectionTool {
+                                       CleanupLocalInspectionTool {
     override fun problemHighlightType(element: KtClassBody): ProblemHighlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
 }
 
@@ -41,17 +41,20 @@ class RemoveEmptyClassBodyIntention : SelfTargetingOffsetIndependentIntention<Kt
                 if (!element.isCompanion() || element.nameIdentifier != null) return
                 val firstChildNode = next.firstChild?.node ?: return
                 if (firstChildNode.elementType in KtTokens.KEYWORDS) return
-                element.addSemicolon()
-                editor?.caretModel?.moveToOffset(element.endOffset + 1)
             }
+
             is KtEnumEntry -> {
                 val children = element.parent.children
-                val isLastChild = element === children.lastOrNull()
-                val isLastEnumEntry = element == children.filterIsInstance<KtEnumEntry>().lastOrNull()
+                val isLastChild = element == children.lastOrNull()
+                val isLastEnumEntry = element == children.lastOrNull { it is KtEnumEntry }
                 if (isLastChild || !isLastEnumEntry) return
-                element.addSemicolon()
             }
+
+            else -> return
         }
+
+        element.addSemicolon()
+        editor?.caretModel?.moveToOffset(element.endOffset + 1)
     }
 
     private fun PsiElement.addSemicolon() {
