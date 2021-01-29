@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -21,6 +22,9 @@ import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBBorderQuickFix;
  * @author Konstantin Bulenkov
  */
 public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
+  private static final CallMatcher JBUI_BORDERS_EMPTY = 
+    CallMatcher.staticCall("com.intellij.util.ui.JBUI.Borders", "empty");
+  
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -47,11 +51,8 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
   private static ProblemDescriptor checkMethodCallCanBeSimplified(PsiMethodCallExpression expression,
                                                                   InspectionManager manager,
                                                                   boolean isOnTheFly) {
-    PsiType type = expression.getType();
-    if (type != null
-        && JBEmptyBorder.class.getName().equals(type.getCanonicalText())
-        && expression.getText().contains("empty(")
-        && ConvertToJBBorderQuickFix.canSimplify(expression)) {
+    if (!JBUI_BORDERS_EMPTY.test(expression)) return null;
+    if (ConvertToJBBorderQuickFix.canSimplify(expression)) {
       return manager.createProblemDescriptor(expression,
                                              DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify"),
                                              new ConvertToJBBorderQuickFix() {
