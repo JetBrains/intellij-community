@@ -16312,7 +16312,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @TestMetadata("nullableReceiver.kt")
         public void testNullableReceiver() throws Exception {
-            runTest("idea/testData/intentions/swapStringEqualsIgnoreCase/nullableReceiver.kt");
+            runTest("testData/intentions/swapStringEqualsIgnoreCase/nullableReceiver.kt");
         }
     }
 
