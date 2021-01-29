@@ -778,6 +778,13 @@
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.CommandLineWaitingManager$MyNotification"/>
 
+    <getDataRule key="copyProvider" implementationClass="com.intellij.ide.impl.dataRules.CopyProviderRule"/>
+    <getDataRule key="cutProvider" implementationClass="com.intellij.ide.impl.dataRules.CutProviderRule"/>
+    <getDataRule key="pasteProvider" implementationClass="com.intellij.ide.impl.dataRules.PasteProviderRule"/>
+    <getDataRule key="fileText" implementationClass="com.intellij.ide.impl.dataRules.FileTextRule"/>
+    <getDataRule key="fileEditor" implementationClass="com.intellij.ide.impl.dataRules.FileEditorRule"/>
+    <getDataRule key="NavigatableArray" implementationClass="com.intellij.ide.impl.dataRules.NavigatableArrayRule"/>
+    <getDataRule key="editor.even.if.inactive" implementationClass="com.intellij.ide.impl.dataRules.InactiveEditorRule"/>
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
 
     <localInspection shortName="InconsistentLineSeparators" bundle="messages.LangBundle" key="inconsistent.line.separators"
