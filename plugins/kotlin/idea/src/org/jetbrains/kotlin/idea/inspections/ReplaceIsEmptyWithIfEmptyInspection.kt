@@ -18,8 +18,10 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -73,6 +75,15 @@ class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
             if (selfValueExpression.text != condition.receiverExpression.text) return
         } else {
             if (selfValueExpression !is KtThisExpression) return
+        }
+
+        val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
+        if (loop != null) {
+            val defaultValueExpression = (if (replacement.negativeCondition) elseExpression else thenExpression)
+            if (defaultValueExpression.anyDescendantOfType<KtExpression> {
+                    (it is KtContinueExpression || it is KtBreakExpression) && it.getStrictParentOfType<KtLoopExpression>() == loop
+                }
+            ) return
         }
 
         holder.registerProblem(

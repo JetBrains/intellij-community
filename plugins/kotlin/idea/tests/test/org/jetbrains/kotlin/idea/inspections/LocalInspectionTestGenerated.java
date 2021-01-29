@@ -10596,6 +10596,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("defaultValueBlockHasBreak.kt")
+        public void testDefaultValueBlockHasBreak() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasBreak.kt");
+        }
+
+        @TestMetadata("defaultValueBlockHasContinue.kt")
+        public void testDefaultValueBlockHasContinue() throws Exception {
+            runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasContinue.kt");
+        }
+
         @TestMetadata("defaultValueBlockHasMultiStatement.kt")
         public void testDefaultValueBlockHasMultiStatement() throws Exception {
             runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/defaultValueBlockHasMultiStatement.kt");
