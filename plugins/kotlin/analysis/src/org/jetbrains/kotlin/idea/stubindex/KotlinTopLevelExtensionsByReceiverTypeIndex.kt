@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.idea.stubindex
 class KotlinTopLevelExtensionsByReceiverTypeIndex private constructor() : KotlinExtensionsByReceiverTypeIndex() {
     override fun getKey() = KEY
 
+    override fun getVersion(): Int = super.getVersion() + 1
+
     companion object {
         private val KEY = KotlinIndexUtil.createIndexKey(KotlinTopLevelExtensionsByReceiverTypeIndex::class.java)
 

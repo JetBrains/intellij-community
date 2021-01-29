@@ -143,6 +143,10 @@ public class IdeStubIndexService extends StubIndexService {
         if (name != null) {
             sink.occurrence(KotlinFunctionShortNameIndex.getInstance().getKey(), name);
 
+            if (IndexUtilsKt.isDeclaredInObject(stub)) {
+                IndexUtilsKt.indexExtensionInObject(stub, sink);
+            }
+
             if (TypeIndexUtilKt.isProbablyNothing(stub.getPsi().getTypeReference())) {
                 sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.getInstance().getKey(), name);
             }
@@ -188,6 +192,10 @@ public class IdeStubIndexService extends StubIndexService {
         String name = stub.getName();
         if (name != null) {
             sink.occurrence(KotlinPropertyShortNameIndex.getInstance().getKey(), name);
+
+            if (IndexUtilsKt.isDeclaredInObject(stub)) {
+                IndexUtilsKt.indexExtensionInObject(stub, sink);
+            }
 
             if (TypeIndexUtilKt.isProbablyNothing(stub.getPsi().getTypeReference())) {
                 sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.getInstance().getKey(), name);

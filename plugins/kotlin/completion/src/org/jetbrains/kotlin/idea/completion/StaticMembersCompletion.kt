@@ -16,7 +16,8 @@ import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallType
-import org.jetbrains.kotlin.idea.util.substituteExtensionIfCallable
+import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -108,19 +109,6 @@ class StaticMembersCompletion(
         }
     }
 
-    private fun processObjectMemberExtensions(indicesHelper: KotlinIndicesHelper, processor: (CallableDescriptor) -> Unit) {
-        val descriptorKindFilter = DescriptorKindFilter.CALLABLES exclude DescriptorKindExclude.NonExtensions
-        val nameFilter: (String) -> Boolean = { prefixMatcher.prefixMatches(it) }
-
-        val filter = { _: KtNamedDeclaration, _: KtObjectDeclaration -> true }
-
-        indicesHelper.processObjectMembers(descriptorKindFilter, nameFilter, filter) {
-            if (it is CallableDescriptor && it !in alreadyAdded) {
-                processor(it)
-            }
-        }
-    }
-
     fun completeFromImports(file: KtFile, collector: LookupElementsCollector) {
         val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER_FROM_IMPORTS)
         membersFromImports(file).flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
@@ -141,20 +129,23 @@ class StaticMembersCompletion(
     fun completeObjectMemberExtensionsFromIndices(
         indicesHelper: KotlinIndicesHelper,
         receiverTypes: Collection<KotlinType>,
-        callType: CallType<*>,
+        callTypeAndReceiver: CallTypeAndReceiver<*, CallType<out KtElement?>>,
         collector: LookupElementsCollector
     ) {
         val factory = decoratedLookupElementFactory(ItemPriority.STATIC_MEMBER)
-        processObjectMemberExtensions(indicesHelper) { objectMemberDescriptor ->
-            val substitutedExtensions = objectMemberDescriptor.substituteExtensionIfCallable(receiverTypes, callType)
 
-            for (substituted in substitutedExtensions) {
-                val lookups = factory.createStandardLookupElementsForDescriptor(substituted, useReceiverTypes = true)
-                lookups.forEach { collector.addElement(it) }
-            }
+        val extensionsFromObjects = indicesHelper.getCallableExtensionsDeclaredInObjects(
+            callTypeAndReceiver,
+            receiverTypes,
+            nameFilter = { prefixMatcher.prefixMatches(it) }
+        )
 
-            collector.flushToResultSet()
-        }
+        extensionsFromObjects.asSequence()
+            .filter { it !in alreadyAdded }
+            .flatMap { factory.createStandardLookupElementsForDescriptor(it, useReceiverTypes = true) }
+            .forEach { collector.addElement(it) }
+
+        collector.flushToResultSet()
     }
 
     fun completeFromIndices(indicesHelper: KotlinIndicesHelper, collector: LookupElementsCollector) {

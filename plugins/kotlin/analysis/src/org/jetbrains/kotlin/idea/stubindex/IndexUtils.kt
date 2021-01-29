@@ -19,6 +19,10 @@ fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCa
     KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
 }
 
+fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
+    KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
+}
+
 private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeIndex.indexExtension(
     stub: KotlinCallableStubBase<TDeclaration>,
     sink: IndexSink
@@ -117,3 +121,10 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
 
 private val KotlinStubWithFqName<*>.modifierList: KotlinModifierListStub?
     get() = findChildStubByType(KtStubElementTypes.MODIFIER_LIST)
+
+fun <TDeclaration : KtCallableDeclaration> KotlinCallableStubBase<TDeclaration>.isDeclaredInObject(): Boolean {
+    if (isTopLevel()) return false
+    val containingDeclaration = parentStub?.parentStub?.psi
+
+    return containingDeclaration is KtObjectDeclaration && !containingDeclaration.isObjectLiteral()
+}

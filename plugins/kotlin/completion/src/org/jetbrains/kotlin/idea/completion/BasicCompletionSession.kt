@@ -348,7 +348,7 @@ class BasicCompletionSession(
                         staticMembersCompletion.completeObjectMemberExtensionsFromIndices(
                             indicesHelper(false),
                             receiverTypes.map { it.type },
-                            callTypeAndReceiver.callType,
+                            callTypeAndReceiver,
                             collector
                         )
                     }

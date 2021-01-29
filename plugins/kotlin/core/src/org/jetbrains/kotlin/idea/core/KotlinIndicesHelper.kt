@@ -177,6 +177,24 @@ class KotlinIndicesHelper(
             suitableTopLevelExtensions
     }
 
+    fun getCallableExtensionsDeclaredInObjects(
+        callTypeAndReceiver: CallTypeAndReceiver<*, *>,
+        receiverTypes: Collection<KotlinType>,
+        nameFilter: (String) -> Boolean,
+        declarationFilter: (KtDeclaration) -> Boolean = { true }
+    ): Collection<CallableDescriptor> {
+        if (receiverTypes.isEmpty()) return emptyList()
+
+        val extensionsInObjectsIndex = KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE
+
+        return extensionsInObjectsIndex.getSuitableExtensions(
+            receiverTypes,
+            nameFilter,
+            declarationFilter,
+            callTypeAndReceiver
+        )
+    }
+
     fun resolveTypeAliasesUsingIndex(type: KotlinType, originalTypeName: String): Set<TypeAliasDescriptor> {
         val typeConstructor = type.constructor
 
