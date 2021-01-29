@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,11 +72,12 @@ public class FormBuilder {
 
   @NotNull
   private static JLabel createLabelForComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
-    JLabel label = new JLabel(UIUtil.removeMnemonic(labelText));
-    final int index = UIUtil.getDisplayMnemonicIndex(labelText);
-    if (index != -1) {
-      label.setDisplayedMnemonic(labelText.charAt(index + 1));
-      label.setDisplayedMnemonicIndex(index);
+    TextWithMnemonic mnemonic = TextWithMnemonic.parse(labelText);
+    JLabel label = new JLabel(mnemonic.getText());
+    final int mnemonicIndex = mnemonic.getMnemonicIndex();
+    if (mnemonicIndex != -1) {
+      label.setDisplayedMnemonic(mnemonic.getMnemonic());
+      label.setDisplayedMnemonicIndex(mnemonicIndex);
     }
     label.setLabelFor(component);
     return label;
