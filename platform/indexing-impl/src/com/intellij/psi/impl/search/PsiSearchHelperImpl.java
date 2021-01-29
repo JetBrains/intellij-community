@@ -539,7 +539,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     })) {
       throw ApplicationUtil.CannotRunReadActionException.create();
-    };
+    }
   }
 
   private void getFilesWithText(@NotNull GlobalSearchScope scope,
