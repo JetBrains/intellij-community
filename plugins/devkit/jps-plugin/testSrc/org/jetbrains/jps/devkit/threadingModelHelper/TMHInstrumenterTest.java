@@ -12,13 +12,10 @@ import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
-import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -117,7 +114,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
         if (instrumentedClassData != null) {
           testClass = new TestClass(classLoader.doDefineClass(null, instrumentedClassData), true);
           if (printClassFiles) {
-            printDebugInfo(classData, instrumentedClassData);
+            TMHTestUtil.printDebugInfo(classData, instrumentedClassData);
           }
         }
         else {
@@ -185,19 +182,6 @@ public class TMHInstrumenterTest extends UsefulTestCase {
       fail("Failed to invoke constructor: " + e.getMessage());
     }
     return null;
-  }
-
-  private static void printDebugInfo(byte[] classData, byte[] instrumentedClassData) {
-    printClass(classData);
-    System.out.println();
-    printClass(instrumentedClassData);
-  }
-
-  public static void printClass(byte[] data) {
-    @SuppressWarnings("ImplicitDefaultCharsetUsage")
-    PrintWriter printWriter = new PrintWriter(System.out);
-    TraceClassVisitor visitor = new TraceClassVisitor(printWriter);
-    new ClassReader(data).accept(visitor, 0);
   }
 
   private static class MyClassLoader extends ClassLoader {
