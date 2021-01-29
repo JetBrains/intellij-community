@@ -9,6 +9,7 @@ import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.Closeable
 
 class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
@@ -31,6 +32,12 @@ class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
       .also {
         System.err.println("Started server on port ${it.port}")
       }
+
+    quotaManager.asJob().invokeOnCompletion {
+      coroutineScope.launch {
+        requestShutdown()
+      }
+    }
   }
 
   override fun close() {

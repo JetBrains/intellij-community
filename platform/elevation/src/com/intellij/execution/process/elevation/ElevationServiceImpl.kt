@@ -16,6 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.RejectedExecutionException
 import kotlin.coroutines.EmptyCoroutineContext
 
 class ElevationServiceImpl : ElevationService, Disposable {
@@ -62,8 +63,10 @@ class ElevationServiceImpl : ElevationService, Disposable {
       try {
         return block(connection.client)
       }
-      catch (e: QuotaExceededException) {
-        if (attempt > 1) ElevationLogger.LOG.warn("Repeated quota exceeded error after $attempt attempts; " +
+      catch (e: Exception) {
+        if (e !is RejectedExecutionException &&
+            e !is QuotaExceededException) throw e
+        if (attempt > 1) ElevationLogger.LOG.warn("Repeated launch error after $attempt attempts; " +
                                                   "quota options: ${ElevationSettings.getInstance().quotaOptions}", e)
         connectionManager.parkConnection(connection)
       }
