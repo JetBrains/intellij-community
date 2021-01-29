@@ -20,10 +20,8 @@ object StorageUtil {
     return GSON.fromJson(infoFile.readText(), StorageInfo::class.java)
   }
 
-  fun storagePath(project: Project, language: Language): Path = PathManager.getIndexRoot().toPath()
-    .resolve("ml.local.models")
-    .resolve(project.locationHash)
-    .resolve(language.id)
+  fun storagePath(project: Project, language: Language): Path =
+    Path.of(PathManager.getSystemPath(), "ml.local.models", project.locationHash, language.id)
 
   fun saveInfo(version: Int, isValid: Boolean, storageDirectory: Path) {
     val infoFile = storageDirectory.resolve(STORAGE_INFO_FILE)
