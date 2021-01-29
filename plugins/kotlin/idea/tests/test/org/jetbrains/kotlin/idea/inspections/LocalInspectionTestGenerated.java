@@ -6463,7 +6463,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("typeParameter2.kt")
         public void testTypeParameter2() throws Exception {
-            runTest("idea/testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter2.kt");
+            runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter2.kt");
         }
     }
 
