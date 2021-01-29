@@ -6135,6 +6135,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertPropertyInitializerToGetter/onPropertyName.kt");
         }
 
+        @TestMetadata("otherPackageType.kt")
+        public void testOtherPackageType() throws Exception {
+            runTest("testData/intentions/convertPropertyInitializerToGetter/otherPackageType.kt");
+        }
+
         @TestMetadata("propertyWithInitializerWithSetter.kt")
         public void testPropertyWithInitializerWithSetter() throws Exception {
             runTest("testData/intentions/convertPropertyInitializerToGetter/propertyWithInitializerWithSetter.kt");

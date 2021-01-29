@@ -48,11 +48,6 @@ class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<
         }
 
         fun convertPropertyInitializerToGetter(property: KtProperty, editor: Editor?) {
-            val type = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(property)
-            if (!type.isError) {
-                SpecifyTypeExplicitlyIntention.addTypeAnnotation(editor, property, type)
-            }
-
             val initializer = property.initializer!!
             val getter = KtPsiFactory(property).createPropertyGetter(initializer)
             val setter = property.setter
@@ -69,6 +64,11 @@ class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<
             }
 
             property.initializer = null
+
+            val type = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(property)
+            if (!type.isError) {
+                SpecifyTypeExplicitlyIntention.addTypeAnnotation(editor, property, type)
+            }
         }
     }
 }
