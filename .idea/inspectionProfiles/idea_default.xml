@@ -1176,6 +1176,22 @@
         <constraint name="t" within="" contains="" />
         <constraint name="e" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Lambda can be replaced with Pair.comparingByFirst()" text="java.util.Comparator.comparing((com.intellij.openapi.util.Pair $p$) -&gt; $p$.first)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Pair.comparingByFirst()">
+        <constraint name="__context__" script="&quot;__context__.parent instanceof com.intellij.psi.PsiExpressionList&quot;" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Lambda can be replaced with Pair.comparingByFirst()" text="java.util.Comparator.comparing((com.intellij.openapi.util.Pair $p$) -&gt; $p$.getFirst())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Pair.comparingByFirst()">
+        <constraint name="__context__" script="&quot;__context__.parent instanceof com.intellij.psi.PsiExpressionList&quot;" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Lambda can be replaced with Pair.comparingBySecond()" text="java.util.Comparator.comparing((com.intellij.openapi.util.Pair $p$) -&gt; $p$.second)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Pair.comparingBySecond()">
+        <constraint name="__context__" script="&quot;__context__.parent instanceof com.intellij.psi.PsiExpressionList&quot;" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Lambda can be replaced with Pair.comparingBySecond()" text="java.util.Comparator.comparing((com.intellij.openapi.util.Pair $p$) -&gt; $p$.getSecond())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Pair.comparingBySecond()">
+        <constraint name="__context__" script="&quot;__context__.parent instanceof com.intellij.psi.PsiExpressionList&quot;" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Logger.getInstance(unknown class)" text="Logger.getInstance(&quot;#$c$&quot;)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def fqn = c.getValue().substring(1);&#10;if (fqn.indexOf('.') == -1) return false;&#10;def shortName = com.intellij.openapi.util.text.StringUtil.getShortName(fqn);&#10;if (!shortName.equals(com.intellij.openapi.util.text.StringUtil.capitalize(shortName))) return false;&#10;&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));&#10; cClass == null&#10;&quot;" within="" contains="" />
         <constraint name="c" target="true" within="" contains="" />
