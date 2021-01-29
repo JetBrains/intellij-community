@@ -8,14 +8,12 @@ import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.BaseOutputReader
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import org.gradle.initialization.BuildEventConsumer
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
@@ -30,6 +28,7 @@ import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import java.net.InetAddress
+import java.util.concurrent.Future
 
 class GradleServerRunner(project: Project,
                          private val consumerOperationParameters: ConsumerOperationParameters) {
@@ -39,7 +38,7 @@ class GradleServerRunner(project: Project,
           targetBuildParametersBuilder: TargetBuildParameters.Builder,
           progressIndicator: TargetProgressIndicator,
           resultHandler: ResultHandler<Any?>) {
-  val commandLine = serverEnvironmentSetup.prepareEnvironment(environmentConfiguration, targetBuildParametersBuilder,
+    val commandLine = serverEnvironmentSetup.prepareEnvironment(environmentConfiguration, targetBuildParametersBuilder,
                                                                 consumerOperationParameters, progressIndicator)
     runTargetProcess(commandLine, serverEnvironmentSetup.targetEnvironment, progressIndicator, resultHandler)
   }
@@ -65,13 +64,12 @@ class GradleServerRunner(project: Project,
 
 
   private class GradleServerEventsListener(private val targetBuildParameters: TargetBuildParameters,
-                          //                 private val targetHostIp: String?,
                                            private val buildEventConsumer: BuildEventConsumer) {
-    private lateinit var job: Job
+    private lateinit var listenerTask: Future<*>
     fun start(hostName: String, port: Int, resultHandler: ResultHandler<Any?>) {
-      check(!::job.isInitialized) { "Gradle server events listener has already been started" }
-      job = GlobalScope.launch {
-        val inetAddress = /*if (targetHostIp != null) InetAddress.getByName(targetHostIp) else */InetAddress.getByName(hostName)
+      check(!::listenerTask.isInitialized) { "Gradle server events listener has already been started" }
+      listenerTask = ApplicationManager.getApplication().executeOnPooledThread {
+        val inetAddress = InetAddress.getByName(hostName)
         val connectCompletion = TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, port))
         val serializer = DaemonMessageSerializer.create(BuildActionSerializer.create())
         val connection = connectCompletion.create(Serializers.stateful(serializer))
@@ -82,20 +80,42 @@ class GradleServerRunner(project: Project,
           val message = connection.receive()
           if (message == null) break
           when (message) {
-            is Success -> resultHandler.onComplete(message.value)
+            is Success -> {
+              resultHandler.onComplete(message.value)
+              break@loop
+            }
             is Failure -> {
               resultHandler.onFailure(message.value as? GradleConnectionException ?: GradleConnectionException(message.value.message))
+              break@loop
             }
-            !is BuildEvent -> break@loop
-            else -> buildEventConsumer.dispatch(message.payload)
+            !is BuildEvent -> {
+              break@loop
+            }
+            else -> {
+              buildEventConsumer.dispatch(message.payload)
+            }
           }
         }
       }
     }
 
     fun stop() {
-      if (::job.isInitialized && job.isActive) {
-        job.cancel()
+      if (::listenerTask.isInitialized && !listenerTask.isDone) {
+        listenerTask.cancel(true)
+      }
+    }
+
+    fun waitForResult(handler: () -> Boolean) {
+      val startTime = System.currentTimeMillis()
+      while (!handler.invoke() || ::listenerTask.isInitialized && listenerTask.isDone && (System.currentTimeMillis() - startTime) < 10000) {
+        val lock = Object()
+        synchronized(lock) {
+          try {
+            lock.wait(100)
+          }
+          catch (ignore: InterruptedException) {
+          }
+        }
       }
     }
   }
@@ -103,8 +123,12 @@ class GradleServerRunner(project: Project,
   private class GradleServerProcessListener(private val targetProgressIndicator: TargetProgressIndicator,
                                             private val resultHandler: ResultHandler<Any?>,
                                             private val gradleServerEventsListener: GradleServerEventsListener) : ProcessListener {
-    @Volatile private var connectionAddressReceived = false
-    @Volatile var resultReceived = false
+    @Volatile
+    private var connectionAddressReceived = false
+
+    @Volatile
+    var resultReceived = false
+
     val resultHandlerWrapper: ResultHandler<Any?> = object : ResultHandler<Any?> {
       override fun onComplete(result: Any?) {
         resultReceived = true
@@ -120,13 +144,15 @@ class GradleServerRunner(project: Project,
     override fun startNotified(event: ProcessEvent) {}
     override fun processTerminated(event: ProcessEvent) {
       if (!resultReceived) {
+        gradleServerEventsListener.waitForResult { resultReceived }
+      }
+      if (!resultReceived) {
         resultHandler.onFailure(GradleConnectionException("Operation result has not been received."))
       }
       gradleServerEventsListener.stop()
     }
 
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-      // tooling proxy process output
       targetProgressIndicator.addText(event.text, outputType)
       if (connectionAddressReceived) return
       val prefix = "Gradle target server hostName: "
