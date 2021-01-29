@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -43,8 +44,6 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
-  public static final int NEXT_STEP_AREA_WIDTH = 20;
-
   private static final Logger LOG = Logger.getInstance(ListPopupImpl.class);
 
   private MyList myList;
@@ -477,14 +476,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.addListSelectionListener(listSelectionListener);
   }
 
-  private enum ExtendMode {
-    NO_EXTEND, EXTEND_ON_HOVER, EXTEND_ON_BUTTON
-  }
-
   private class MyMouseMotionListener extends MouseMotionAdapter {
-
     private int myLastSelectedIndex = -2;
-    private ExtendMode myExtendMode = ExtendMode.NO_EXTEND;
     private Point myLastMouseLocation;
     private Timer myShowSubmenuTimer;
 
@@ -510,31 +503,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 
-      myList.setNextStepButtonSelected(false);
       if (isSelectableAt(index)) {
         if (index != myLastSelectedIndex && !isMovingToSubmenu(lastPoint, e.getLocationOnScreen())) {
-          myExtendMode = calcExtendMode(index);
           if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
             myList.setSelectedIndex(index);
-            if (myExtendMode == ExtendMode.EXTEND_ON_HOVER && myShowSubmenuOnHover) {
-              showSubMenu(index, true);
-            }
-            else if (getIndexForShowingChild() != -1) {
-              disposeChildren();
-            }
+            showSubMenu(index);
           }
           restartTimer();
           myLastSelectedIndex = index;
-        }
-
-        if (myExtendMode == ExtendMode.EXTEND_ON_BUTTON) {
-          if (isOnNextStepButton(e)) {
-            showSubMenu(index, false);
-            myList.setNextStepButtonSelected(true);
-          }
-          else {
-            disposeChildren();
-          }
         }
       }
       else {
@@ -543,16 +519,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
 
       notifyParentOnChildSelection();
-    }
-
-    @NotNull
-    private ExtendMode calcExtendMode(int index) {
-      ListPopupStep<Object> listStep = getListStep();
-      Object selectedValue = myListModel.getElementAt(index);
-      if (selectedValue == null || !listStep.hasSubstep(selectedValue)) return ExtendMode.NO_EXTEND;
-
-      PopupStep<?> step = listStep.onChosen(selectedValue, true);
-      return step == PopupStep.FINAL_CHOICE ? ExtendMode.EXTEND_ON_BUTTON : ExtendMode.EXTEND_ON_HOVER;
     }
 
     private boolean isMovingToSubmenu(Point prevPoint, Point newPoint) {
@@ -572,8 +538,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       return triangle.contains(newPoint);
     }
 
-    private void showSubMenu(int forIndex, boolean withTimer) {
-      if (getIndexForShowingChild() == forIndex) return;
+    private void showSubMenu(int forIndex) {
+      if (!myShowSubmenuOnHover) return;
 
       disposeChildren();
 
@@ -584,16 +550,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(forIndex);
-      PopupStep<?> step = listStep.onChosen(selectedValue, false);
-      if (withTimer) {
+      if (!listStep.hasSubstep(selectedValue)) return;
+
+      PopupStep<?> step = listStep.onChosen(selectedValue, true);
+      if (step != PopupStep.FINAL_CHOICE) {
         myShowSubmenuTimer = new Timer(250, e -> {
-          if (!isDisposed() && myLastSelectedIndex == forIndex) showNextStepPopup(step, selectedValue);
+          showNextStepPopup(step, selectedValue);
         });
         myShowSubmenuTimer.setRepeats(false);
         myShowSubmenuTimer.start();
-      }
-      else {
-        showNextStepPopup(step, selectedValue);
       }
     }
   }
@@ -630,7 +595,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       JBInsets.removeFrom(bounds, UIUtil.getListCellPadding());
     }
     final Point point = e.getPoint();
-    return bounds != null && point.getX() > bounds.width + bounds.getX() - NEXT_STEP_AREA_WIDTH;
+    return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
   }
 
   @Override
@@ -646,26 +611,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  public interface NestedList {
-    boolean isNextStepButtonSelected();
-  }
-
-  private class MyList extends JBList implements DataProvider, NestedList {
-
-    private boolean myNextStepButtonSelected;
-
+  private class MyList extends JBList implements DataProvider {
     MyList() {
       super(myListModel);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
-    }
-
-    public void setNextStepButtonSelected(boolean nextStepButtonSelected) {
-      myNextStepButtonSelected = nextStepButtonSelected;
-    }
-
-    @Override
-    public boolean isNextStepButtonSelected() {
-      return myNextStepButtonSelected || getIndexForShowingChild() > -1;
     }
 
     @Override
@@ -704,7 +653,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
           return mySpeedSearchPatternField;
         }
       }
-
       return null;
     }
   }

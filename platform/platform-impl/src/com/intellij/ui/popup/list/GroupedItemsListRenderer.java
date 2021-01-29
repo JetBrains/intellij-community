@@ -21,7 +21,6 @@ import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +47,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
     if (hasSeparator) setSeparatorFont(list.getFont());
 
-    Icon icon = getItemIcon(value, isSelected);
+    Icon icon = isSelected ? IconUtil.wrapToSelectionAwareIcon(myDescriptor.getSelectedIconFor(value)) : myDescriptor.getIconFor(value);
     final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
                                                  icon, icon, isSelected, hasSeparator,
                                                  caption, -1);
@@ -58,10 +57,6 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     return result;
   }
 
-  @Nullable
-  protected Icon getItemIcon(E value, boolean isSelected) {
-    return isSelected ? IconUtil.wrapToSelectionAwareIcon(myDescriptor.getSelectedIconFor(value)) : myDescriptor.getIconFor(value);
-  }
 
   @Override
   protected JComponent createItemComponent() {
@@ -75,7 +70,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     myTextLabel.setOpaque(true);
   }
 
-  protected JComponent layoutComponent(JComponent middleItemComponent) {
+  protected final JComponent layoutComponent(JComponent middleItemComponent) {
     myNextStepLabel = new JLabel();
     myNextStepLabel.setOpaque(false);
     return JBUI.Panels.simplePanel(middleItemComponent)

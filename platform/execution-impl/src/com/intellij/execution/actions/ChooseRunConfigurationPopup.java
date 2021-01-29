@@ -694,14 +694,14 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    protected JComponent layoutComponent(JComponent middleItemComponent) {
+    protected JComponent createItemComponent() {
       if (myLabel == null) {
         myLabel = new JLabel();
         myLabel.setPreferredSize(new JLabel("8.").getPreferredSize());
       }
 
-      JComponent result = super.layoutComponent(middleItemComponent);
-      myLeftPart.add(myLabel, BorderLayout.WEST);
+      final JComponent result = super.createItemComponent();
+      result.add(myLabel, BorderLayout.WEST);
       return result;
     }
 
