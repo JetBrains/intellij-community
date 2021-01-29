@@ -4077,4 +4077,17 @@ public enum LevelCode {
       }
       """.trimIndent())
   }
+
+  fun testIdea252167() {
+    doTextTest("""      
+      @Ann record R(String str) {
+      }
+      """.trimIndent(),
+
+      """
+      @Ann
+      record R(String str) {
+      }
+      """.trimIndent())
+  }
 }
