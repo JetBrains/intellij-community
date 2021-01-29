@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.win;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -55,6 +57,15 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
       .ifDialog(dialogConsumer)
       .ifFrame(frameConsumer)
       .ifNull(frameConsumer);
+    initLocalization();
+  }
+
+  private void initLocalization() {
+    if (myFileDialog == null) return;
+    JdkEx.trySetCommonFileDialogLocalization(
+      myFileDialog,
+      IdeBundle.message("windows.native.common.dialog.open"),
+      IdeBundle.message("windows.native.common.dialog.select.folder"));
   }
 
   private static @NlsContexts.DialogTitle String getChooserTitle(final FileChooserDescriptor descriptor) {
