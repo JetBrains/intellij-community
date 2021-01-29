@@ -137,7 +137,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
         val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
         val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
 
-        val bindingContext = analyze(resolutionFacade)
+        val bindingContext = analyze(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
         if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
             val resolvedCall = getResolvedCall(bindingContext)
             if (resolvedCall != null) {
