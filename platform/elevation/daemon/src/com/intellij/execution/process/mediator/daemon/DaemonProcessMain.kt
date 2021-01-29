@@ -7,7 +7,7 @@ import com.intellij.execution.process.mediator.rpc.Handshake
 import com.intellij.execution.process.mediator.util.MachUtil
 import com.intellij.execution.process.mediator.util.UnixUtil
 import com.intellij.execution.process.mediator.util.rsaEncrypt
-import io.grpc.ServerBuilder
+import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.io.IOException
@@ -110,7 +110,11 @@ fun main(args: Array<String>) {
   openHandshakeOutputStream(launchOptions.handshakeOption).use { handshakeWriter ->
     val coroutineScope = CoroutineScope(EmptyCoroutineContext)
     val credentials = DaemonClientCredentials.generate()
-    daemon = ProcessMediatorServerDaemon(coroutineScope, ServerBuilder.forPort(0), credentials)
+    val serverBuilder = NettyServerBuilder.forPort(0)
+      .permitKeepAliveTime(10, TimeUnit.SECONDS)
+      .keepAliveTime(90, TimeUnit.SECONDS)
+      .keepAliveTimeout(90, TimeUnit.SECONDS)
+    daemon = ProcessMediatorServerDaemon(coroutineScope, serverBuilder, credentials)
     try {
       val token = credentials.token.let {
         when (val publicKey = launchOptions.tokenEncryptionOption?.publicKey) {
