@@ -565,21 +565,20 @@ public final class DiffUtil {
   private static JComponent createTitleWithNotifications(@Nullable DiffViewer viewer,
                                                          @Nullable JComponent title,
                                                          @NotNull DiffContent content) {
-    List<JComponent> notifications = new ArrayList<>(createCustomNotifications(viewer, content));
+    List<JComponent> components = new ArrayList<>();
+    if (title != null) components.add(title);
+
+    components.addAll(createCustomNotifications(viewer, content));
 
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        notifications.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
+        components.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
       }
     }
 
-    if (notifications.isEmpty()) return title;
-
-    JPanel panel = new JPanel(new BorderLayout(0, TITLE_GAP));
-    if (title != null) panel.add(title, BorderLayout.NORTH);
-    panel.add(createStackedComponents(notifications, TITLE_GAP), BorderLayout.SOUTH);
-    return panel;
+    if (components.isEmpty()) return null;
+    return createStackedComponents(components, TITLE_GAP);
   }
 
   @Nullable
@@ -689,21 +688,18 @@ public final class DiffUtil {
     if (!ContainerUtil.exists(components, Conditions.notNull())) return components;
     List<JComponent> result = new ArrayList<>();
     for (int i = 0; i < components.size(); i++) {
-      result.add(new SyncHeightComponent(components, i));
+      JComponent component = components.get(i);
+      result.add(new SyncHeightComponent(components, component));
     }
     return result;
   }
 
   @NotNull
-  public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, int gap) {
-    JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-    for (int i = 0; i < components.size(); i++) {
-      if (i != 0) panel.add(Box.createVerticalStrut(JBUIScale.scale(gap)));
-      panel.add(components.get(i));
+  public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, int vGap) {
+    JPanel panel = new JPanel(new VerticalStackLayout(vGap));
+    for (JComponent component : components) {
+      panel.add(component);
     }
-
     return panel;
   }
 
