@@ -104,6 +104,7 @@ public final class RegisteredIndexes {
   void ensureLoadedIndexesUpToDate() {
     myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(() -> {
       if (!myShutdownPerformed.get()) {
+        myFileBasedIndex.ensureStaleIdsDeleted();
         myFileBasedIndex.getChangedFilesCollector().ensureUpToDateAsync();
       }
       return null;

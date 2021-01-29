@@ -153,12 +153,10 @@ class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfigu
         }
       }
 
-      //StaleIndexesChecker.clearStaleIndexes(myStaleIds);
-
       return myState;
     }
     finally {
-
+      myFileBasedIndex.addStaleIds(myStaleIds);
       myFileBasedIndex.setUpFlusher();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads

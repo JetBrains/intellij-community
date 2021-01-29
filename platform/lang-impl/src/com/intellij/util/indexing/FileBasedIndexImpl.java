@@ -60,9 +60,7 @@ import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,6 +115,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
   private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
+  private final IntSet myStaleIds = new IntOpenHashSet();
 
   private final Lock myReadLock;
   public final Lock myWriteLock;
@@ -307,6 +306,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }).filter(Objects::nonNull).collect(Collectors.joining(", "));
     if (!statistics.isEmpty()) {
       LOG.info(statistics);
+    }
+  }
+
+  void addStaleIds(@NotNull IntSet staleIds) {
+    synchronized (myStaleIds) {
+      myStaleIds.addAll(staleIds);
     }
   }
 
@@ -748,9 +753,26 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void filesUpdateStarted(Project project) {
+    ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     myProjectsBeingUpdated.add(project);
     incrementFilesModCount();
+  }
+
+  void ensureStaleIdsDeleted() {
+    waitUntilIndicesAreInitialized();
+    synchronized (myStaleIds) {
+      if (myStaleIds.isEmpty()) return;
+      try {
+        StaleIndexesChecker.clearStaleIndexes(myStaleIds);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      finally {
+        myStaleIds.clear();
+      }
+    }
   }
 
   void filesUpdateFinished(@NotNull Project project) {
