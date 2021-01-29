@@ -246,6 +246,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         public boolean isInSet(@NotNull VirtualFile file) {
           return contributorsPredicate.test(file);
         }
+
+        @Override
+        public String toString() {
+          return "IndexableFileSet[" + extension + "]";
+        }
       }, project);
     }
   }
