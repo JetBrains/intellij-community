@@ -68,7 +68,7 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     return ValidationResultType.REJECTED;
   }
 
-  private static boolean hasPluginField(@NotNull EventContext context) {
+  protected static boolean hasPluginField(@NotNull EventContext context) {
     if (context.eventData.containsKey("plugin")) {
       final Object plugin = context.eventData.get("plugin");
       return plugin instanceof String && StringUtil.isNotEmpty((String)plugin);

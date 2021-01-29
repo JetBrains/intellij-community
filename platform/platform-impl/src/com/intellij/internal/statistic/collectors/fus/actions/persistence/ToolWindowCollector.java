@@ -184,11 +184,16 @@ public final class ToolWindowCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
-      return acceptWhenReportedByJetBrainsPlugin(context);
+
+      if (hasPluginField(context)) {
+        return acceptWhenReportedByJetBrainsPlugin(context);
+      }
+      ToolWindowInfo info = getToolWindowInfo(data);
+      return info.myPluginInfo.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
   }
 
-  private static final class ToolWindowInfo {
+  public static final class ToolWindowInfo {
     private final String myRecordedId;
     private final PluginInfo myPluginInfo;
 
