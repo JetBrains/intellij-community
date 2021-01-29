@@ -94,7 +94,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
   private static LocalQuickFix[] filterFixes(LocalQuickFix[] fixes, boolean onTheFly) {
     if (onTheFly || fixes == null) return fixes;
-    return Stream.of(fixes).filter(fix -> fix != null && !(fix instanceof OnTheFlyFix)).toArray(LocalQuickFix[]::new);
+    return Stream.of(fixes).filter(fix -> fix != null && fix.availableInBatchMode()).toArray(LocalQuickFix[]::new);
   }
 
   public boolean isOnTheFly() {

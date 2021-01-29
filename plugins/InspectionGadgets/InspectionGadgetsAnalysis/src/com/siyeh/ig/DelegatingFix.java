@@ -52,6 +52,11 @@ public class DelegatingFix extends InspectionGadgetsFix implements Iconable, Pri
   }
 
   @Override
+  public boolean availableInBatchMode() {
+    return delegate.availableInBatchMode();
+  }
+
+  @Override
   public Icon getIcon(int flags) {
     return delegate instanceof Iconable ? ((Iconable)delegate).getIcon(flags) : null;
   }

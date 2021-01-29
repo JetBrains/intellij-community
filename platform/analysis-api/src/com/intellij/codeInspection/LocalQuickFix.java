@@ -24,4 +24,13 @@ import com.intellij.codeInsight.intention.FileModifier;
  */
 public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier {
   LocalQuickFix[] EMPTY_ARRAY = new LocalQuickFix[0];
+
+  /**
+   * @return true if this quick-fix should not be automatically filtered out when running inspections in the batch mode.
+   * Fixes that require editor or display UI should return false. It's not harmful to return true if the fix is never
+   * registered in the batch mode (e.g. {@link ProblemsHolder#isOnTheFly()} is checked at the fix creation site).
+   */
+  default boolean availableInBatchMode() {
+    return true;
+  }
 }

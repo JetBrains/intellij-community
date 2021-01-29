@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
-import com.intellij.codeInspection.OnTheFlyFix;
+import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class FindDfaProblemCauseFix implements OnTheFlyFix, LowPriorityAction {
+public final class FindDfaProblemCauseFix implements OnTheFlyLocalFix, LowPriorityAction {
   private final boolean myUnknownMembersAsNullable;
   private final boolean myIgnoreAssertStatements;
   private final SmartPsiElementPointer<PsiExpression> myAnchor;

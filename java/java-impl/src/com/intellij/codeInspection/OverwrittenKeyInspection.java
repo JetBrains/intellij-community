@@ -160,7 +160,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
   }
 
-  private static class NavigateToDuplicateFix implements OnTheFlyFix {
+  private static class NavigateToDuplicateFix implements OnTheFlyLocalFix {
     private final SmartPsiElementPointer<PsiExpression> myPointer;
 
     NavigateToDuplicateFix(PsiExpression arg) {
