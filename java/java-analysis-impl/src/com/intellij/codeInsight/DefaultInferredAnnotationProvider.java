@@ -78,7 +78,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
       if (listOwner instanceof PsiParameter) {
         anno = getInferredNullabilityAnnotation((PsiParameter)listOwner);
       }
-      return anno == null ? null : annotationFQN.equals(anno.getQualifiedName()) ? anno : null;
+      return anno == null ? null : anno.hasQualifiedName(annotationFQN) ? anno : null;
     }
 
     if (Mutability.UNMODIFIABLE_ANNOTATION.equals(annotationFQN) || Mutability.UNMODIFIABLE_VIEW_ANNOTATION.equals(annotationFQN)) {

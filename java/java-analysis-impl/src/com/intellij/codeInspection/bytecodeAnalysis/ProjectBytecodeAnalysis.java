@@ -82,7 +82,7 @@ public class ProjectBytecodeAnalysis {
         annotationFQN.equals(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
       PsiAnnotation[] annotations = findInferredAnnotations(listOwner);
       for (PsiAnnotation annotation : annotations) {
-        if (annotationFQN.equals(annotation.getQualifiedName())) {
+        if (annotation.hasQualifiedName(annotationFQN)) {
           return annotation;
         }
       }
