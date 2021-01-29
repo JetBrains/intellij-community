@@ -100,10 +100,9 @@ public final class Switcher extends AnAction implements DumbAware {
   private static final Color ON_MOUSE_OVER_BG_COLOR = JBUI.CurrentTheme.List.Hover.background(true);
   private static int CTRL_KEY;
   @Nullable public static final Runnable CHECKER = () -> {
-    synchronized (Switcher.class) {
-      if (SWITCHER != null) {
-        SWITCHER.navigate(null);
-      }
+    SwitcherPanel switcher = SWITCHER;
+    if (switcher != null) {
+      switcher.navigate(null);
     }
   };
   @NotNull private static final CustomShortcutSet TW_SHORTCUT;
@@ -125,7 +124,8 @@ public final class Switcher extends AnAction implements DumbAware {
       @Override
       public boolean dispatch(@NotNull AWTEvent event) {
         ToolWindow tw;
-        if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
+        SwitcherPanel switcher = SWITCHER;
+        if (switcher != null && event instanceof KeyEvent && !switcher.isPinnedMode()) {
           final KeyEvent keyEvent = (KeyEvent)event;
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
             keyEvent.consume();
@@ -133,9 +133,9 @@ public final class Switcher extends AnAction implements DumbAware {
             return true; // because the key event is actually processed
           }
           else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
-                   && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
+                   && (tw = switcher.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
             keyEvent.consume();
-            SWITCHER.myPopup.closeOk(null);
+            switcher.myPopup.closeOk(null);
             tw.activate(null, true, true);
             return true; // because the key event is actually processed
           }
@@ -158,30 +158,29 @@ public final class Switcher extends AnAction implements DumbAware {
     if (project == null) return;
 
     boolean isNewSwitcher = false;
-    synchronized (Switcher.class) {
-      INIT_EVENT = e.getInputEvent();
-      if (SWITCHER != null && SWITCHER.isPinnedMode()) {
-        SWITCHER.cancel();
-        SWITCHER = null;
-      }
-      if (SWITCHER == null) {
-        isNewSwitcher = true;
-        // Assigns SWITCHER field
-        boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-        createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), IdeActions.ACTION_SWITCHER, false, false, !moveBack);
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
-      }
+
+    INIT_EVENT = e.getInputEvent();
+    SwitcherPanel switcher = SWITCHER_KEY.get(project);
+    if (switcher != null && switcher.isPinnedMode()) {
+      switcher.cancel();
+      switcher = null;
+    }
+    if (switcher == null) {
+      isNewSwitcher = true;
+      // Assigns SWITCHER field
+      boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
+      switcher = createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), IdeActions.ACTION_SWITCHER, false, false, !moveBack);
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
 
-    assert SWITCHER != null;
-    if (!SWITCHER.isPinnedMode()) {
+    if (!switcher.isPinnedMode()) {
       if (isNewSwitcher && !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
-        SWITCHER.files.setSelectedIndex(0);
+        switcher.files.setSelectedIndex(0);
       }
 
       if (!isNewSwitcher) {
-        if (e.getInputEvent() != null && e.getInputEvent().isShiftDown()) SWITCHER.goBack();
-        else SWITCHER.goForward();
+        if (e.getInputEvent() != null && e.getInputEvent().isShiftDown()) switcher.goBack();
+        else switcher.goForward();
       }
     }
   }
@@ -197,28 +196,25 @@ public final class Switcher extends AnAction implements DumbAware {
   }
 
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
-    if (SWITCHER != null && Objects.equals(SWITCHER.myTitle, title)) return null;
-
     Project project = e.getProject();
+    if (project == null) return null;
+    SwitcherPanel switcher = SWITCHER_KEY.get(project);
+    if (switcher != null && Objects.equals(switcher.myTitle, title)) return null;
     boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-    return project == null ? null : createAndShowSwitcher(project, title, actionId, onlyEdited, pinned, !moveBack);
+    return createAndShowSwitcher(project, title, actionId, onlyEdited, pinned, !moveBack);
   }
 
-  @Nullable
-  private static SwitcherPanel createAndShowSwitcher(@NotNull Project project,
-                                                     @NotNull @Nls String title,
-                                                     @NotNull String actionId,
-                                                     boolean onlyEdited,
-                                                     boolean pinned,
-                                                     boolean moveForward) {
-    synchronized (Switcher.class) {
-      if (SWITCHER != null) {
-        SWITCHER.cancel();
-      }
-      SWITCHER = new SwitcherPanel(project, title, actionId, onlyEdited, pinned, moveForward);
-      project.putUserData(SWITCHER_KEY, SWITCHER);
-      return SWITCHER;
-    }
+  private static @NotNull SwitcherPanel createAndShowSwitcher(@NotNull Project project,
+                                                              @NotNull @Nls String title,
+                                                              @NotNull String actionId,
+                                                              boolean onlyEdited,
+                                                              boolean pinned,
+                                                              boolean moveForward) {
+    SwitcherPanel old = SWITCHER_KEY.get(project);
+    if (old != null) old.cancel();
+    SwitcherPanel switcher = new SwitcherPanel(project, title, actionId, onlyEdited, pinned, moveForward);
+    setSwitcher(project, switcher);
+    return switcher;
   }
 
   public static class ToggleCheckBoxAction extends DumbAwareAction implements DumbAware, LightEditCompatible {
@@ -613,7 +609,7 @@ public final class Switcher extends AnAction implements DumbAware {
         .setCancelCallback(() -> {
           Container popupFocusAncestor = getPopupFocusAncestor();
           if (popupFocusAncestor != null) popupFocusAncestor.setFocusTraversalPolicy(null);
-          SWITCHER = null;
+          setSwitcher(project, null);
           return true;
         }).createPopup();
       Disposer.register(myPopup, this);
@@ -664,10 +660,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
     @Override
     public void dispose() {
-      synchronized (Switcher.class) {
-        SWITCHER = null;
-        project.putUserData(SWITCHER_KEY, null);
-      }
+      setSwitcher(project, null);
     }
 
     @NotNull
@@ -1305,7 +1298,7 @@ public final class Switcher extends AnAction implements DumbAware {
       protected void processKeyEvent(@NotNull KeyEvent e) {
         int keyCode = e.getKeyCode();
         if (keyCode == VK_ENTER) {
-          SWITCHER.navigate(e);
+          getComponent().navigate(e);
           e.consume();
           return;
         }
@@ -1474,5 +1467,10 @@ public final class Switcher extends AnAction implements DumbAware {
       }
       return myNameForRendering;
     }
+  }
+
+  private static void setSwitcher(@NotNull Project project, @Nullable SwitcherPanel switcher) {
+    project.putUserData(SWITCHER_KEY, switcher);
+    SWITCHER = switcher;
   }
 }
