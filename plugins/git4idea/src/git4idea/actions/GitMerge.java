@@ -17,6 +17,7 @@ package git4idea.actions;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
@@ -95,8 +96,12 @@ public class GitMerge extends GitMergeAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getProject();
+    Presentation presentation = e.getPresentation();
     if (project != null && !GitUtil.getRepositoriesInState(project, Repository.State.MERGING).isEmpty()) {
-      e.getPresentation().setEnabledAndVisible(false);
+      presentation.setEnabledAndVisible(false);
+    }
+    else if (project != null && GitUtil.getRepositoriesInState(project, Repository.State.NORMAL).isEmpty()) {
+      presentation.setEnabled(false);
     }
   }
 }
