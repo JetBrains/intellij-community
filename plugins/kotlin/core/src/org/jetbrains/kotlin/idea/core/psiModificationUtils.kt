@@ -15,7 +15,6 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
@@ -278,7 +277,7 @@ private fun <T : PsiElement> deleteChildlessElement(element: PsiElement, childCl
 
 // Delete given element and all the elements separating it from the neighboring elements of the same class
 private fun deleteElementWithDelimiters(element: PsiElement) {
-    val paramBefore = PsiTreeUtil.getPrevSiblingOfType<PsiElement>(element, element.javaClass)
+    val paramBefore = PsiTreeUtil.getPrevSiblingOfType(element, element.javaClass)
 
     val from: PsiElement
     val to: PsiElement
@@ -286,7 +285,7 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
         from = paramBefore.nextSibling
         to = element
     } else {
-        val paramAfter = PsiTreeUtil.getNextSiblingOfType<PsiElement>(element, element.javaClass)
+        val paramAfter = PsiTreeUtil.getNextSiblingOfType(element, element.javaClass)
 
         from = element
         to = if (paramAfter != null) paramAfter.prevSibling else element
@@ -562,7 +561,7 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
     ShortenReferences.DEFAULT.process(receiverTypeReference!!)
 }
 
-fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement? {
+fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
     defaultValue?.let { return it.replaced(newDefaultValue) }
 
     val psiFactory = KtPsiFactory(this)
