@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * A stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
-@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class FileUtilRt {
   private static final int KILOBYTE = 1024;
   private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
@@ -37,21 +36,15 @@ public class FileUtilRt {
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
   public static final FileFilter ALL_FILES = new FileFilter() {
+    @Override
     public boolean accept(File file) {
       return true;
     }
   };
   public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
+    @Override
     public boolean accept(File file) {
       return file.isDirectory();
-    }
-  };
-
-  public static final int THREAD_LOCAL_BUFFER_LENGTH = 1024 * 20;
-  protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
-    @Override
-    protected byte[] initialValue() {
-      return new byte[THREAD_LOCAL_BUFFER_LENGTH];
     }
   };
 
@@ -153,6 +146,7 @@ public class FileUtilRt {
         final Object Result_Skip = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("SKIP_SUBTREE").get(null);
 
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
+          @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (args.length == 2) {
               String methodName = method.getName();
@@ -185,6 +179,7 @@ public class FileUtilRt {
 
           private void performDelete(final Object fileObject) throws IOException {
             Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
+              @Override
               public Boolean execute(boolean lastAttempt) {
                 try {
                   //Files.deleteIfExists(file);
@@ -748,19 +743,6 @@ public class FileUtilRt {
     return normalizeFile(file);
   }
 
-  /** @deprecated not needed in 'util-rt'; use {@link com.intellij.openapi.util.io.FileUtil} or {@link File} methods; for removal in IDEA 2020 */
-  @Deprecated
-  public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
-    try {
-      File file = new File(path);
-      //noinspection Since15
-      if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
-        logger().warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
-      }
-    }
-    catch (LinkageError ignored) { }
-  }
-
   @NotNull
   public static String loadFile(@NotNull File file) throws IOException {
     return loadFile(file, null, false);
@@ -790,7 +772,7 @@ public class FileUtilRt {
   @NotNull
   public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(file);
-    Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+    Reader reader = encoding == null ? new InputStreamReader(stream, Charset.defaultCharset()) : new InputStreamReader(stream, encoding);
     try {
       return loadText(reader, (int)file.length());
     }
@@ -845,18 +827,13 @@ public class FileUtilRt {
   @NotNull
   public static List<String> loadLines(@NotNull String path, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(path);
+    BufferedReader reader =
+      new BufferedReader(encoding == null ? new InputStreamReader(stream, Charset.defaultCharset()) : new InputStreamReader(stream, encoding));
     try {
-      BufferedReader reader =
-        new BufferedReader(encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding));
-      try {
-        return loadLines(reader);
-      }
-      finally {
-        reader.close();
-      }
+      return loadLines(reader);
     }
     finally {
-      stream.close();
+      reader.close();
     }
   }
 
@@ -990,7 +967,6 @@ public class FileUtilRt {
       if (result != null) return result;
 
       try {
-        //noinspection BusyWait
         Thread.sleep(10);
       }
       catch (InterruptedException ignored) { }
@@ -1000,6 +976,7 @@ public class FileUtilRt {
 
   protected static boolean deleteFile(@NotNull final File file) {
     Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
+      @Override
       public Boolean execute(boolean lastAttempt) {
         if (file.delete() || !file.exists()) return Boolean.TRUE;
         else if (lastAttempt) return Boolean.FALSE;
@@ -1069,9 +1046,9 @@ public class FileUtilRt {
 
   public static void copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
     if (USE_FILE_CHANNELS && inputStream instanceof FileInputStream && outputStream instanceof FileOutputStream) {
-      final FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
+      FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
       try {
-        final FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
+        FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
         try {
           fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
         }
@@ -1084,7 +1061,7 @@ public class FileUtilRt {
       }
     }
     else {
-      final byte[] buffer = getThreadLocalBuffer();
+      byte[] buffer = new byte[8192];
       while (true) {
         int read = inputStream.read(buffer);
         if (read < 0) break;
@@ -1092,12 +1069,6 @@ public class FileUtilRt {
       }
     }
   }
-
-  @NotNull
-  public static byte[] getThreadLocalBuffer() {
-    return BUFFER.get();
-  }
-
 
   public static int getUserFileSizeLimit() {
     return parseKilobyteProperty("idea.max.intellisense.filesize", DEFAULT_INTELLISENSE_LIMIT);
@@ -1124,11 +1095,13 @@ public class FileUtilRt {
 
   private interface CharComparingStrategy {
     CharComparingStrategy IDENTITY = new CharComparingStrategy() {
+      @Override
       public boolean charsEqual(char ch1, char ch2) {
         return ch1 == ch2;
       }
     };
     CharComparingStrategy CASE_INSENSITIVE = new CharComparingStrategy() {
+      @Override
       public boolean charsEqual(char ch1, char ch2) {
         return StringUtilRt.charsEqualIgnoreCase(ch1, ch2);
       }

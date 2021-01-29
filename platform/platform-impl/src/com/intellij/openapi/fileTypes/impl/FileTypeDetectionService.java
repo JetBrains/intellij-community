@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -15,10 +15,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.util.io.ByteSequence;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
@@ -563,22 +560,16 @@ final class FileTypeDetectionService implements Disposable {
         if (toLog()) {
           log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
         }
-
         int fileLength = (int)file.getLength();
         int bufferLength = getDetectFileBufferSize(file);
-        content = fileLength <= FileUtilRt.THREAD_LOCAL_BUFFER_LENGTH
-                  ? FileUtilRt.getThreadLocalBuffer()
-                  : new byte[Math.min(fileLength, bufferLength)];
+        content = new byte[Math.min(fileLength, bufferLength)];
         n = readSafely(inputStream, content, content.length);
       }
     }
     else {
       n = content.length;
     }
-    if (n <= 0) {
-      return ByteArraySequence.EMPTY;
-    }
-    return new ByteArraySequence(content, 0, n);
+    return n > 0 ? new ByteArraySequence(content, 0, n) : ByteArraySequence.EMPTY;
   }
 
   private @NotNull FileType detect(@NotNull VirtualFile file,

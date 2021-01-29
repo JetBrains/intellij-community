@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,14 +15,19 @@ public final class StreamUtil {
   private StreamUtil() { }
 
   /**
-   * Copy stream. Use {@link com.intellij.util.net.NetUtils#copyStreamContent(com.intellij.openapi.progress.ProgressIndicator, InputStream, OutputStream, int)} if you want use ProgressIndicator.
+   * Buffers up to this size allow to avoid native memory allocation in stream implementations.
+   */
+  public static final int BUFFER_SIZE = 8192;
+
+  /**
+   * Use {@link com.intellij.util.net.NetUtils#copyStreamContent NetUtils.copyStreamContent()} if you want a progress indicator.
    *
    * @param inputStream source stream
    * @param outputStream destination stream
    * @return bytes copied
    */
   public static int copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
-    byte[] buffer = new byte[8 * 1024];
+    byte[] buffer = new byte[BUFFER_SIZE];
     int read;
     int total = 0;
     while ((read = inputStream.read(buffer)) > 0) {
@@ -53,7 +58,7 @@ public final class StreamUtil {
     return convertSeparators(chars.toCharArray());
   }
 
-  private static char @NotNull [] convertSeparators(char @NotNull [] buffer) {
+  private static char[] convertSeparators(char[] buffer) {
     int dst = 0;
     char prev = ' ';
     for (char c : buffer) {
