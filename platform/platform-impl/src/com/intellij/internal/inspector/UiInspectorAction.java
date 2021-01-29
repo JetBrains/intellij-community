@@ -41,12 +41,14 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -773,8 +775,23 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           Component comp = table.getCellRenderer(row, column).getTableCellRendererComponent(table, value, false, false, row, column);
+          Object realValue = table.getModel().getValueAt(row, column);
           if (comp instanceof JLabel) {
             value = ((JLabel)comp).getText();
+          }
+          if (realValue instanceof Color) {
+            Rectangle cellRect = table.getCellRect(row, column, true);
+            ColorPicker.showColorPickerPopup(null, (Color)realValue, new ColorListener() {
+              @Override
+              public void colorChanged(Color color, Object source) {
+                if (component != null) {
+                  component.setBackground(color);
+                  String name = myModel.myProperties.get(row).propertyName;
+                  myModel.myProperties.set(row, new PropertyBean(name, color));
+                }
+              }
+            }, new RelativePoint(table, new Point(cellRect.x + JBUI.scale(6), cellRect.y + cellRect.height)));
+            return null;
           }
           Component result = super.getTableCellEditorComponent(table, value, isSelected, row, column);
           ((JComponent)result).setBorder(BorderFactory.createLineBorder(JBColor.GRAY, 1));
