@@ -27,7 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("RedundantArrayCreation")  // using arrays to allow trailing comma
+@SuppressWarnings({"RedundantArrayCreation", "KotlinInternalInJava", "UnnecessaryFullyQualifiedName"})
 public class DaemonProcessRuntimeClasspath {
 
   private static final List<Class<?>> CLASSPATH_CLASSES = List.of(new Class<?>[]{
@@ -36,6 +36,8 @@ public class DaemonProcessRuntimeClasspath {
     ProcessMediatorProto.class,
 
     KotlinVersion.class, // kotlin-stdlib
+    kotlin.internal.jdk8.JDK8PlatformImplementations.class, // kotlin-stdlib-jdk8
+    kotlin.internal.jdk7.JDK7PlatformImplementations.class, // kotlin-stdlib-jdk7
     CoroutineScope.class, // kotlinx-coroutines-core
     FutureKt.class, // kotlinx-coroutines-jdk8
 
