@@ -51,10 +51,12 @@ object MessageFactory {
 
 
   fun convert(@Language("HTML") text: String): List<MessagePart> {
-    val wrappedText = "<root><text>$text</text></root>"
-    val textAsElement = SAXBuilder().build(wrappedText.byteInputStream()).rootElement.getChild("text")
-                        ?: throw IllegalStateException("Can't parse as XML:\n$text")
-    return convert(textAsElement)
+    return text.split("\n").map { paragraph ->
+      val wrappedText = "<root><text>$paragraph</text></root>"
+      val textAsElement = SAXBuilder().build(wrappedText.byteInputStream()).rootElement.getChild("text")
+                          ?: throw IllegalStateException("Can't parse as XML:\n$paragraph")
+      convert(textAsElement)
+    }.reduce { acc, item -> acc + MessagePart("\n", MessagePart.MessageType.LINE_BREAK) + item }
   }
 
   private fun convert(element: Element?): List<MessagePart> {

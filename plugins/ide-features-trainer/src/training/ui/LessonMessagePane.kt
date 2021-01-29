@@ -42,6 +42,8 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
   private var insertOffset: Int = 0
 
+  private var paragraphStyle = SimpleAttributeSet()
+
   private fun allLessonMessages() = activeMessages + restoreMessages + inactiveMessages
 
   //, fontFace, check_width + check_right_indent
@@ -120,6 +122,12 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     StyleConstants.setSpaceBelow(TASK_PARAGRAPH_STYLE, 0.0f)
     StyleConstants.setLineSpacing(TASK_PARAGRAPH_STYLE, 0.2f)
 
+    StyleConstants.setLeftIndent(INTERNAL_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
+    StyleConstants.setRightIndent(INTERNAL_PARAGRAPH_STYLE, 0f)
+    StyleConstants.setSpaceAbove(INTERNAL_PARAGRAPH_STYLE, 8.0f)
+    StyleConstants.setSpaceBelow(INTERNAL_PARAGRAPH_STYLE, 0.0f)
+    StyleConstants.setLineSpacing(INTERNAL_PARAGRAPH_STYLE, 0.2f)
+
     StyleConstants.setLineSpacing(BALLOON_STYLE, 0.2f)
 
     StyleConstants.setForeground(REGULAR, UISettings.instance.defaultTextColor)
@@ -159,8 +167,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
   private fun insertText(text: String, attributeSet: AttributeSet) {
     document.insertString(insertOffset, text, attributeSet)
-    val style = if (panelMode) TASK_PARAGRAPH_STYLE else BALLOON_STYLE
-    styledDocument.setParagraphAttributes(insertOffset, insertOffset + text.length - 1, style, true)
+    styledDocument.setParagraphAttributes(insertOffset, text.length - 1, paragraphStyle, true)
     insertOffset += text.length
   }
 
@@ -184,6 +191,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     text = ""
     insertOffset = 0
     for (lessonMessage in allLessonMessages()) {
+      paragraphStyle = if (panelMode) TASK_PARAGRAPH_STYLE else BALLOON_STYLE
       val messageParts: List<MessagePart> = lessonMessage.messageParts
       lessonMessage.start = insertOffset
       if (insertOffset != 0)
@@ -200,6 +208,10 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
           MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[part.text]?.let { addPlaceholderForIcon(it) }
           MessagePart.MessageType.PROPOSE_RESTORE -> insertText(part.text, BOLD)
+          MessagePart.MessageType.LINE_BREAK -> {
+            insertText("\n", REGULAR)
+            paragraphStyle = INTERNAL_PARAGRAPH_STYLE
+          }
         }
         part.endOffset = insertOffset
       }
@@ -404,6 +416,7 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     private val LINK = SimpleAttributeSet()
 
     private val TASK_PARAGRAPH_STYLE = SimpleAttributeSet()
+    private val INTERNAL_PARAGRAPH_STYLE = SimpleAttributeSet()
     private val BALLOON_STYLE = SimpleAttributeSet()
 
     //arc & indent for shortcut back plate
