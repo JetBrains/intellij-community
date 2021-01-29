@@ -88,8 +88,8 @@
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip"/>
     </group>
 
-    <group id="Git.MainMenu.MergeActions" class="git4idea.actions.GitRepositoryStateActionGroup$Merge" popup="true">
-      <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge"/>
+    <group id="Git.MainMenu.MergeActions" class="git4idea.actions.GitRepositoryStateActionGroup$Merge" icon="AllIcons.Vcs.Merge">
+      <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge" icon="AllIcons.Vcs.Merge"/>
     </group>
 
     <group id="Git.MainMenu.LocalChanges" popup="true">
