@@ -74,13 +74,13 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
       if (ignoreVariables) {
         return;
       }
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement == null || typeElement.isInferredType()) {
+        return; // Could be true for enum constants or lambda parameters
+      }
       final PsiType declaredType = variable.getType();
       if (declaredType.getArrayDimensions() == 0) {
         return;
-      }
-      final PsiTypeElement typeElement = variable.getTypeElement();
-      if (typeElement == null) {
-        return; // Could be true for enum constants.
       }
       final PsiType elementType = typeElement.getType();
       if (elementType.equals(declaredType)) {
