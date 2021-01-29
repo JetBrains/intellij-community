@@ -3,14 +3,11 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.externalSystem.autoimport.settings.AsyncOperation
 import com.intellij.openapi.vfs.VirtualFileManager
-import java.util.concurrent.Executor
 
-class AsyncFilesChangesProviderImpl(
-  private val backgroundExecutor: Executor,
-  private val collectRelevantFiles: () -> Set<String>
-) : FilesChangesProvider {
+
+class AsyncFilesChangesProviderImpl(private val filesProvider: AsyncOperation<Set<String>>) : FilesChangesProvider {
   override fun subscribe(listener: FilesChangesListener, parentDisposable: Disposable) {
     subscribeAsAsyncVirtualFilesChangesProvider(true, listener, parentDisposable)
     subscribeAsAsyncDocumentChangesProvider(listener, parentDisposable)
@@ -37,16 +34,9 @@ class AsyncFilesChangesProviderImpl(
   }
 
   private fun FilesChangesProvider.subscribeAsAsync(listener: FilesChangesListener, parentDisposable: Disposable) {
-    val asyncFilesChangesProvider = buildProvider()
-    Disposer.register(parentDisposable, asyncFilesChangesProvider)
+    val asyncFilesChangesProvider = AsyncFilesChangesProviderBase(filesProvider)
     asyncFilesChangesProvider.subscribe(listener, parentDisposable)
 
     subscribe(asyncFilesChangesProvider, parentDisposable)
-  }
-
-  private fun buildProvider(): AsyncFilesChangesProviderBase {
-    return object : AsyncFilesChangesProviderBase(backgroundExecutor) {
-      override fun collectRelevantFiles() = this@AsyncFilesChangesProviderImpl.collectRelevantFiles()
-    }
   }
 }
