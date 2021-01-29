@@ -64,16 +64,19 @@ internal object LessonExecutorUtil {
     val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 2)) + 16
     balloonPanel.add(messagesPane)
     val gotItCallBack = balloonConfig.gotItCallBack
-    if (gotItCallBack != null) {
-      val stopButton = JButton()
-      balloonPanel.add(stopButton)
-      stopButton.action = object : AbstractAction(UIBundle.message("got.it")) {
+    val gotItButton = if (gotItCallBack != null) JButton().also {
+      balloonPanel.add(it)
+      it.action = object : AbstractAction(UIBundle.message("got.it")) {
         override fun actionPerformed(e: ActionEvent?) {
           gotItCallBack()
         }
       }
-      height += stopButton.preferredSize.height
+      it.isSelected = true
+      it.isFocusable = true
+      height += it.preferredSize.height
     }
+    else null
+    gotItButton?.isSelected = true
 
     balloonPanel.preferredSize = Dimension(width, height)
 
@@ -109,6 +112,7 @@ internal object LessonExecutorUtil {
       }
     })
     balloon.show(getPosition(ui, balloonConfig.side), balloonConfig.side)
+    gotItButton?.requestFocus()
   }
 
   private fun getPosition(component: JComponent, side: Balloon.Position): RelativePoint {
