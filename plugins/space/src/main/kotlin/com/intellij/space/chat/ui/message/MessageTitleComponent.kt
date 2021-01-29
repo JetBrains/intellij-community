@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.link
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.ui.SpaceAutoUpdatableComponentService
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
@@ -46,10 +47,12 @@ internal class MessageTitleComponent(
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       setBody(createMessageAuthorChunk(message.author).bold().toString())
     }
-    val timePanel = HtmlEditorPane().apply {
-      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-      foreground = UIUtil.getContextHelpForeground()
-      setBody(HtmlChunk.text(message.created.formatPrettyDateTime()).toString()) // NON-NLS
+    val timePanel = SpaceAutoUpdatableComponentService.createAutoUpdatableComponent {
+      HtmlEditorPane().apply {
+        putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+        foreground = UIUtil.getContextHelpForeground()
+        setBody(HtmlChunk.text(message.created.formatPrettyDateTime()).toString()) // NON-NLS
+      }
     }
 
     isOpaque = false
