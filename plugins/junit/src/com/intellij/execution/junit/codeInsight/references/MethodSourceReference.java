@@ -63,11 +63,18 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLanguageInjection
   public boolean isReferenceTo(@NotNull PsiElement element) {
     UExpression myLiteral = UastContextKt.toUElement(getElement(), UExpression.class);
     if (myLiteral == null) return false;
+    UMethod uMethod = UastContextKt.toUElement(element, UMethod.class);
+    if (uMethod == null) return false;
+    PsiMethod method = uMethod.getJavaPsi();
+    String methodName = (String)myLiteral.evaluate();
+    if (methodName == null) return false;
+    methodName = StringUtil.getShortName(methodName, '#');
+    if (!methodName.equals(method.getName())) return false;
     PsiClass psiClazz = getPsiClazz(myLiteral);
     if (psiClazz == null) return false;
-    PsiClass elementClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (elementClass == null) return false;
-    if (psiClazz.isInheritor(elementClass, false) || elementClass.isInheritor(psiClazz, false)) {
+    PsiClass methodClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
+    if (methodClass == null) return false;
+    if (psiClazz.isInheritor(methodClass, false) || methodClass.isInheritor(psiClazz, false)) {
       return true;
     }
     return false;
