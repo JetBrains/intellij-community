@@ -64,13 +64,22 @@ internal class InstallPluginService : RestService() {
     pluginIds: List<String>
   ): Nothing? {
     //check if there is an update for this IDE with this ID.
-    val compatibleUpdateExists = pluginIds.all { MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(it) != null }
     val out = BufferExposingByteArrayOutputStream()
 
     val writer = createJsonWriter(out)
-    writer.beginObject()
-    writer.name("compatible").value(compatibleUpdateExists)
-    writer.endObject()
+    if (pluginIds.size == 1) {
+      val compatibleUpdateExists = pluginIds.all { MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(it) != null }
+      writer.beginObject()
+      writer.name("compatible").value(compatibleUpdateExists)
+      writer.endObject()
+    } else {
+      val compatibleUpdatesInfo = pluginIds.map { it to (MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(it) != null) }
+      writer.beginObject()
+      compatibleUpdatesInfo.forEach {
+        writer.name(it.first).value(it.second)
+      }
+      writer.endObject()
+    }
     writer.close()
 
     send(out, request, context)
