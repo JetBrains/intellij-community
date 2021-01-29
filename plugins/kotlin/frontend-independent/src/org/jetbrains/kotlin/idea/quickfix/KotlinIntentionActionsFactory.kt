@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.psi.KtCodeFragment
 
-abstract class KotlinIntentionActionsFactory {
+abstract class KotlinIntentionActionsFactory: QuickFixFactory {
     protected open fun isApplicableForCodeFragment(): Boolean = false
 
     protected abstract fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction>
