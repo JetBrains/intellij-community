@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -42,6 +41,8 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
+import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
 
 /**
  * @author Anton Katilin
@@ -367,7 +368,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private void doUpdateMenuActions(boolean forceRebuild, @NotNull ActionManager manager) {
     myNewVisibleActions.clear();
 
-    DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest(this);
+    Component targetComponent = getFocusedComponentInWindowOrSelf(this);
+    DataContext dataContext = DataManager.getInstance().getDataContext(targetComponent);
     expandActionGroup(dataContext, myNewVisibleActions, manager);
 
     if (!forceRebuild && myNewVisibleActions.equals(myVisibleActions)) {

@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
@@ -49,6 +48,8 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
@@ -112,7 +113,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myAdjustTheSameSize;
 
   private final ActionButtonLook myMinimalButtonLook = ActionButtonLook.INPLACE_LOOK;
-  private final DataManager myDataManager;
 
   private Rectangle myAutoPopupRec;
 
@@ -167,7 +167,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myPlace = place;
     myActionGroup = actionGroup;
     myVisibleActions = new ArrayList<>();
-    myDataManager = DataManager.getInstance();
     myDecorateButtons = decorateButtons;
     myUpdater = new ToolbarUpdater(this) {
       @Override
@@ -1208,7 +1207,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected @NotNull DataContext getDataContext() {
-    return myTargetComponent != null ? myDataManager.getDataContext(myTargetComponent) : ((DataManagerImpl)myDataManager).getDataContextTest(this);
+    Component target = myTargetComponent != null ? myTargetComponent : getFocusedComponentInWindowOrSelf(this);
+    return DataManager.getInstance().getDataContext(target);
   }
 
   @Override

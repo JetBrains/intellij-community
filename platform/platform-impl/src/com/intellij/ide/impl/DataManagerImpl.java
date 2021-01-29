@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.UserDataHolder;
@@ -196,22 +195,6 @@ public class DataManagerImpl extends DataManager {
     IdeFocusManager.getGlobalInstance()
                    .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.any());
     return result;
-  }
-
-  public @NotNull DataContext getDataContextTest(Component component) {
-    DataContext dataContext = getDataContext(component);
-
-    WindowManager windowManager = WindowManager.getInstance();
-    if (!(windowManager instanceof WindowManagerEx)) {
-      return dataContext;
-    }
-
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Component focusedComponent = ((WindowManagerEx)windowManager).getFocusedComponent(project);
-    if (focusedComponent != null) {
-      dataContext = getDataContext(focusedComponent);
-    }
-    return dataContext;
   }
 
   private static @Nullable Component getFocusedComponent() {
