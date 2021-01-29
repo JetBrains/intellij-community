@@ -332,18 +332,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     checkDirDoesNotExist();
   }
 
-  @NotNull
-  protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
-    try {
-      return WriteAction.computeAndWait(() ->
-                                          // requestor must be notnull
-                                          dir.createChildDirectory(dir, name));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   public void testUndoRenameDirectoryWithFile() {
     final VirtualFile[] dir = new VirtualFile[1];
     final VirtualFile[] file = new VirtualFile[1];

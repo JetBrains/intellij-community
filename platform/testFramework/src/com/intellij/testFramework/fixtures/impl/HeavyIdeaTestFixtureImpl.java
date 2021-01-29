@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -21,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -172,14 +176,21 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void setUpProject() throws Exception {
-    myProject = HeavyTestHelper.openHeavyTestFixtureProject(generateProjectPath(), new ModuleListener() {
-      @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        if (myModule == null) {
-          myModule = module;
+    OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true).withBeforeOpenCallback(project -> {
+      project.getMessageBus().simpleConnect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
+        @Override
+        public void moduleAdded(@NotNull Project __, @NotNull Module module) {
+          if (myModule == null) {
+            myModule = module;
+          }
         }
-      }
+      });
+      return true;
     });
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
+    myProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(generateProjectPath(), options));
 
     EdtTestUtil.runInEdtAndWait(() -> {
       for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {

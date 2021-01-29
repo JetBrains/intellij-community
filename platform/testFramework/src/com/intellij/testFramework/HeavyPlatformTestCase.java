@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.mock.MockApplication;
@@ -361,16 +362,16 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return doCreateRealModuleIn(moduleName, myProject, getModuleType());
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   protected final @NotNull Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType<?> moduleType) {
-    return HeavyTestHelper.createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath());
+    return createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath());
   }
 
   protected final @NotNull Module createModuleAt(@NotNull String moduleName,
                                                  @NotNull Project project,
                                                  @NotNull ModuleType<?> moduleType,
                                                  @NotNull Path path) {
-    return HeavyTestHelper.createModuleAt(moduleName, project, moduleType, path);
+    Path moduleFile = path.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    return WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
   }
 
   protected @NotNull ModuleType<?> getModuleType() {
@@ -712,7 +713,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   @NotNull
   protected static VirtualFile getVirtualFile(@NotNull File file) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
   protected final @NotNull File createTempDirectory() throws IOException {
@@ -748,6 +749,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected static @NotNull VirtualFile createChildData(@NotNull VirtualFile dir, @NotNull String name) {
     try {
+      // requestor must be notnull (for GlobalUndoTest)
+
       return WriteAction.computeAndWait(() -> dir.createChildData(null, name));
     }
     catch (IOException e) {
@@ -756,7 +759,12 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static @NotNull VirtualFile createChildDirectory(@NotNull VirtualFile dir, @NotNull String name) {
-    return HeavyTestHelper.createChildDirectory(dir, name);
+    try {
+      return WriteAction.computeAndWait(() -> dir.createChildDirectory(dir, name));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected static void rename(@NotNull VirtualFile vFile1, @NotNull String newName) {
