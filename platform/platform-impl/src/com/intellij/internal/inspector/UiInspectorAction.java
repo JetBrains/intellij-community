@@ -17,25 +17,22 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.InternalActionsBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -91,58 +88,31 @@ import java.util.function.Supplier;
 import static com.intellij.internal.inspector.UiInspectorUtil.collectAnActionInfo;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
-public class UiInspectorAction extends ToggleAction implements DumbAware, LightEditCompatible {
+public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible {
   private static final String CLICK_INFO = "CLICK_INFO";
   private static final String CLICK_INFO_POINT = "CLICK_INFO_POINT";
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
-  private UiInspector myInspector;
 
   public UiInspectorAction() {
-    if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> setSelected((Project)null, true));
-    }
+    setEnabledInModalContext(true);
   }
 
   @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    return myInspector != null;
-  }
-
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    setSelected(e.getProject(), state);
-  }
-
-  void setSelected(@Nullable Project project, boolean state) {
-    if (state) {
-      if (myInspector == null) {
-        myInspector = new UiInspector(project);
-      }
-
-      UiInspectorNotification[] existing =
-        NotificationsManager.getNotificationsManager().getNotificationsOfType(UiInspectorNotification.class, null);
-      if (existing.length == 0 && !Boolean.getBoolean("idea.ui.debug.mode")) {
-        Notifications.Bus.notify(new UiInspectorNotification(), null);
-      }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    InputEvent event = e.getInputEvent();
+    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    if (event instanceof MouseEvent && event.getComponent() != null) {
+      component = event.getComponent();
     }
-    else {
-      UiInspector inspector = myInspector;
-      myInspector = null;
-      if (inspector != null) {
-        Disposer.dispose(inspector);
-      }
+    if (component == null) {
+      component = IdeFocusManager.getInstance(e.getProject()).getFocusOwner();
     }
+    assert component != null;
+    new UiInspector(e.getProject()).showInspector(e.getProject(), component);
   }
 
-  private static final class UiInspectorNotification extends Notification {
-    private UiInspectorNotification() {
-      super(Notifications.SYSTEM_MESSAGES_GROUP_ID, "UI Inspector", "Control-Alt-Click to view component info!",
-            NotificationType.INFORMATION);
-    }
-  }
-
-  private static final class InspectorWindow extends JDialog {
+  private static final class InspectorWindow extends JDialog implements Disposable {
     private InspectorTable myInspectorTable;
     @NotNull private final List<Component> myComponents = new ArrayList<>();
     private List<? extends PropertyBean> myInfo;
@@ -341,6 +311,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
       super.dispose();
       DialogWrapper.cleanupRootPane(rootPane);
       DialogWrapper.cleanupWindowListeners(this);
+      Disposer.dispose(this);
     }
 
     public void close() {
@@ -1918,7 +1889,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
 
     UiInspector(@Nullable Project project) {
       myProject = project;
-      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
+      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.CONTAINER_EVENT_MASK);
     }
 
     @Override
@@ -1932,7 +1903,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
     }
 
     public void showInspector(@Nullable Project project, @NotNull Component c) {
-      Window window = new InspectorWindow(project, c);
+      InspectorWindow window = new InspectorWindow(project, c);
+      Disposer.register(window, this);
       if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey()) == null) {
         window.pack();
       }
