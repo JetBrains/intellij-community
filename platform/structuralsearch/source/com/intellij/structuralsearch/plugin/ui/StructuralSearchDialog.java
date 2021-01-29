@@ -676,6 +676,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
           }
           final Configuration[] configurations = dialog.getSelectedConfigurations();
           if (configurations.length == 1) {
+            final MatchOptions source = myConfiguration.getMatchOptions();
+            final MatchOptions sink = configurations[0].getMatchOptions();
+            sink.setSearchInjectedCode(source.isSearchInjectedCode());
+            sink.setRecursiveSearch(source.isRecursiveSearch());
+            sink.setCaseSensitiveMatch(source.isCaseSensitiveMatch());
             loadConfiguration(configurations[0]);
           }
         }
