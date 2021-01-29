@@ -69,10 +69,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.table.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.TextAttribute;
@@ -168,6 +165,34 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         @Override
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(!myComponents.isEmpty());
+        }
+      });
+
+      actions.addSeparator();
+
+      actions.add(new MyTextAction(InternalActionsBundle.messagePointer("action.Anonymous.text.Accessible")) {
+        private boolean isAccessibleEnable = false;
+
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          switchHierarchy();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setText(isAccessibleEnable ? InternalActionsBundle.message("action.Anonymous.text.Visible") : InternalActionsBundle.message("action.Anonymous.text.Accessible"));
+        }
+
+        private void switchHierarchy() {
+          TreePath path = myHierarchyTree.getLeadSelectionPath();
+          Object node = path == null ? null : path.getLastPathComponent();
+          if (node == null) return;
+          Component c = ((HierarchyTree.ComponentNode) node).getComponent();
+          if (c != null) {
+            isAccessibleEnable = !isAccessibleEnable;
+            myHierarchyTree.setModel(buildModel(c, isAccessibleEnable));
+            myHierarchyTree.expandPath();
+          }
         }
       });
 
@@ -438,31 +463,46 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
             background = new Color(31, 128, 8, 58);
           }
         }
-        append(getComponentName(component));
-        Pair<Class, String> class2field = getClassAndFieldName(component);
-        if (class2field!= null) {
-          append("(" + class2field.second + "@" + class2field.first.getSimpleName() + ")");
-        }
 
-        append(": " + RectangleRenderer.toString(component.getBounds()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        if (component.isOpaque()) {
-          append(", opaque", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        if (componentNode.isAccessibleNode) {
+          AccessibleContext ac = null;
+          if (component != null) {
+            ac = component.getAccessibleContext();
+          } else {
+            ac = componentNode.getAccessible().getAccessibleContext();
+          }
+          append(ac.getClass().getSimpleName());
+          String axName = ac.getAccessibleName();
+          if (axName != null) {
+            append(" " + axName);
+          }
         }
-        if (component.isDoubleBuffered()) {
-          append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-        if (DataManagerImpl.getDataProviderEx(component) != null) {
-          append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
-        componentNode.setText(toString());
-        setIcon(UiInspectorIcons.findIconFor(component));
-      }
-      if (value instanceof HierarchyTree.ClickInfoNode) {
-        append(value.toString());
-        setIcon(AllIcons.Ide.Rating);
-      }
+        else {
+          append(getComponentName(component));
+          Pair<Class, String> class2field = getClassAndFieldName(component);
+          if (class2field != null) {
+            append("(" + class2field.second + "@" + class2field.first.getSimpleName() + ")");
+          }
 
+          append(": " + RectangleRenderer.toString(component.getBounds()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          if (component.isOpaque()) {
+            append(", opaque", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+          if (component.isDoubleBuffered()) {
+            append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+          if (DataManagerImpl.getDataProviderEx(component) != null) {
+            append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
+          componentNode.setText(toString());
+          setIcon(UiInspectorIcons.findIconFor(component));
+        }
+        if (value instanceof HierarchyTree.ClickInfoNode) {
+          append(value.toString());
+          setIcon(AllIcons.Ide.Rating);
+        }
+      }
       setForeground(foreground);
       setBackground(background);
 
@@ -513,12 +553,34 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   }
 
   private static TreeModel buildModel(Component c) {
-    Component parent = c.getParent();
+    return buildModel(c, false);
+  }
+
+  private static TreeModel buildModel(Component c, boolean accessibleModel) {
+    Component parent = null;
+    if (accessibleModel && (c instanceof Accessible)) {
+      Accessible axComponent = c.getAccessibleContext().getAccessibleParent();
+      if (axComponent instanceof Component) {
+        parent = ((Component) axComponent);
+      }
+    } else {
+      parent = c.getParent();
+    }
     while (parent != null) {
       c = parent;
-      parent = c.getParent();//Find root window
+      //Find root window
+      if (accessibleModel && (c instanceof Accessible)) {
+        Accessible axComponent = c.getAccessibleContext().getAccessibleParent();
+        if (axComponent instanceof Component) {
+          parent = ((Component) axComponent);
+        } else {
+          parent = null;
+        }
+      } else {
+        parent = c.getParent();
+      }
     }
-    return new DefaultTreeModel(new UiInspectorAction.HierarchyTree.ComponentNode(c));
+    return new DefaultTreeModel(new UiInspectorAction.HierarchyTree.ComponentNode(c, accessibleModel));
   }
 
 
@@ -597,15 +659,57 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     private static final class ComponentNode extends DefaultMutableTreeNode  {
       private final Component myComponent;
       String myText;
+      private final Accessible myAccessible;
+      private final boolean isAccessibleNode;
 
       private ComponentNode(@NotNull Component component) {
+         this(component, false);
+      }
+
+      private ComponentNode(@NotNull Component component, boolean isAccessibleComponent) {
         super(component);
         myComponent = component;
-        children = prepareChildren(myComponent);
+        myAccessible = (Accessible)component;
+        isAccessibleNode = isAccessibleComponent;
+          children = prepareChildren(myComponent, isAccessibleComponent);
+      }
+
+      private ComponentNode(@NotNull Accessible a) {
+        super(a);
+        myComponent = null;
+        myAccessible= a;
+        isAccessibleNode = true;
+        children = prepareChildren(a);
+      }
+
+      @SuppressWarnings("UseOfObsoleteCollectionType")
+      private static Vector prepareChildren(@NotNull Accessible a) {
+        Vector<DefaultMutableTreeNode> result = new Vector<>();
+        AccessibleContext ac = a.getAccessibleContext();
+        if (ac != null) {
+          int count = ac.getAccessibleChildrenCount();
+          for (int i = 0; i < count; i++) {
+            Accessible axComponent = a.getAccessibleContext().getAccessibleChild(i);
+            if (axComponent instanceof Component) {
+              result.add(new ComponentNode(((Component) axComponent), true));
+            } else {
+              result.add(new ComponentNode(axComponent));
+            }
+          }
+        }
+        return result;
       }
 
       Component getComponent() {
         return myComponent;
+      }
+
+      private Accessible getAccessible() {
+        return myAccessible;
+      }
+
+      private boolean isAccessibleNode() {
+        return isAccessibleNode;
       }
 
       @Override
@@ -623,8 +727,23 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
 
       @SuppressWarnings("UseOfObsoleteCollectionType")
-      private static Vector prepareChildren(Component parent) {
+      private static Vector prepareChildren(Component parent, boolean isAccessibleComponent) {
         Vector<DefaultMutableTreeNode> result = new Vector<>();
+        if (isAccessibleComponent) {
+          if (parent instanceof Accessible) {
+            for (int i = 0; i < parent.getAccessibleContext().getAccessibleChildrenCount(); i++) {
+              Accessible axComponent = parent.getAccessibleContext().getAccessibleChild(i);
+              if (axComponent instanceof Component) {
+                result.add(new ComponentNode(((Component)axComponent), true));
+              }
+              else {
+                result.add(new ComponentNode(axComponent));
+              }
+            }
+          }
+          return result;
+        }
+
         if (parent instanceof JComponent) {
           Object o = ((JComponent)parent).getClientProperty(CLICK_INFO);
           if (o instanceof List) {
@@ -641,7 +760,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           Window[] children = ((Window)parent).getOwnedWindows();
           for (Window child : children) {
             if (child instanceof InspectorWindow) continue;
-            result.add(new ComponentNode(child));
+            result.add(new ComponentNode(child, false));
           }
         }
 
