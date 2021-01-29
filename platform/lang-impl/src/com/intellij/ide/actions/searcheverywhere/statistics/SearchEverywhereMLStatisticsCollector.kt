@@ -153,11 +153,11 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     )
 
     element.actionText?.let {
-      data[TEXT_LENGTH_KEY] = it.length
+      data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
     }
 
     element.groupName?.let {
-      data[GROUP_LENGTH_KEY] = it.length
+      data[GROUP_LENGTH_KEY] = withUpperBound(it.length)
     }
 
     val presentation = if (element.hasPresentation()) element.presentation else action.templatePresentation
@@ -236,7 +236,12 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val USERS_RATIO_DATA_KEY = "usersRatio"
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
 
-    fun roundDouble(value: Double): Double {
+    private fun withUpperBound(value: Int): Int {
+      if (value > 100) return 101
+      return value
+    }
+
+    private fun roundDouble(value: Double): Double {
       if (!value.isFinite()) return -1.0
       return round(value * 100000) / 100000
     }
