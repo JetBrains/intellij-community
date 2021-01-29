@@ -112,6 +112,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl alt RIGHT",     "MoveElementRight", "Terminal.MoveToolWindowTabRight"},
     { "SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview"},
     { "ctrl L",                   "FindNext", "Terminal.ClearBuffer"},
+    { "control alt button1",      "GotoImplementation", "UiInspector"},
     });
     put("Mac OS X 10.5+", new String[][] {
     { "F1",                       "QuickJavaDoc", "org.jetbrains.r.actions.REditorHelpAction"},
@@ -412,6 +413,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
     { "meta L",                   "EditorSelectWord", "Terminal.ClearBuffer"},
     { "meta K",                   "SECOND_STROKE_SHORTCUT", "Terminal.ClearBuffer"},
+    { "meta alt button1",         "EditorAddRectangularSelectionOnMouseDrag", "UiInspector"},
     });
     put("macOS System Shortcuts", new String[][] {
       { "ctrl C",                   "Vcs.QuickListPopupAction", "org.jetbrains.r.console.RConsoleView.RInterruptAction"},
