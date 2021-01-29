@@ -1099,11 +1099,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                   null;
     if (!PsiTreeUtil.isAncestor(topExpression, element, false)) return false;
 
-    return StreamEx.ofTree(topExpression, e -> {
-      if (e instanceof PsiParenthesizedExpression) return StreamEx.ofNullable(((PsiParenthesizedExpression)e).getExpression());
-      if (e instanceof PsiPolyadicExpression) return StreamEx.of(((PsiPolyadicExpression)e).getOperands());
-      return StreamEx.empty();
-    }).anyMatch(DataFlowInspectionBase::isCompileTimeFlagCheck);
+    return StreamEx.<PsiElement>ofTree(topExpression, e -> StreamEx.of(e.getChildren()))
+      .anyMatch(DataFlowInspectionBase::isCompileTimeFlagCheck);
   }
 
   private static boolean isCompileTimeFlagCheck(PsiElement element) {
