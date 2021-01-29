@@ -83,8 +83,8 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         self.process_stderr.close()
 
     def tearDownForFailedTest(self):
-        print("Launched processes stdout:\n" + self.process_stdout.getvalue() + '-' * 80, file=sys.stdout)
-        print("Launched processes stderr:\n" + self.process_stderr.getvalue() + '-' * 80, file=sys.stderr)
+        print("\nLaunched processes stdout:\n" + self.process_stdout.getvalue() + '-' * 80)
+        print("\nLaunched processes stderr:\n" + self.process_stderr.getvalue() + '-' * 80)
 
     def get_test_data_path(self, rel_path):
         return os.path.join(self.test_data_dir, rel_path)
