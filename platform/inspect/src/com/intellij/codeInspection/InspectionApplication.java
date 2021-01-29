@@ -250,14 +250,15 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
     loadQodanaConfig(projectPath);
-    myInspectionProfile = loadInspectionProfile(project);
+    if (myInspectionProfile == null) {
+      myInspectionProfile = loadInspectionProfile(project);
+    }
 
-    if (myInspectionProfile == null) return;
     myQodanaConfig.updateToolsScopes(myInspectionProfile, project);
 
     AnalysisScope scope = getAnalysisScope(project);
     if (scope == null) return;
-    LOG.info("Used scope: " + scope.toString());
+    LOG.info("Used scope: " + scope);
     if (myQodanaRun) {
       runAnalysisByQodana(this, projectPath, project, myInspectionProfile, scope);
     } else {
