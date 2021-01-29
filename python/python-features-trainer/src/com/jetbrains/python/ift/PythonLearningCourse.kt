@@ -36,9 +36,8 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
   override fun modules() = (if (switchOnExperimentalLessons) experimentalModules() else emptyList()) + stableModules()
 
   private fun experimentalModules() = listOf(
-    @Suppress("HardCodedStringLiteral")
-    LearningModule(name = "Onboarding Tour",
-                   description = "A brief overview of the main ${LessonUtil.productName} features.",
+    LearningModule(name = PythonLessonsBundle.message("python.onboarding.module.name"),
+                   description = PythonLessonsBundle.message("python.onboarding.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
       listOf(
