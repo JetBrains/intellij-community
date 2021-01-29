@@ -492,11 +492,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           checkNotNullable(memState, arg, NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.problem(methodRef, null));
         }
       }
-      if (instruction.getMutationSignature().mutatesArg(paramIndex) && Mutability.fromDfType(memState.getDfType(arg)).isUnmodifiable()) {
-        reportMutabilityViolation(false, anchor);
+      if (instruction.getMutationSignature().mutatesArg(paramIndex)) {
         DfType dfType = memState.getDfType(arg);
-        if (dfType instanceof DfReferenceType) {
-          memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
+        if (Mutability.fromDfType(dfType).isUnmodifiable() &&
+            // Empty array cannot be modified at all    
+            !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(factory, arg)).equals(intValue(0))) {
+          reportMutabilityViolation(false, anchor);
+          if (dfType instanceof DfReferenceType) {
+            memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
+          }
         }
       }
       if (argValues != null && (paramIndex < argValues.length - 1 || !varargCall)) {

@@ -2,6 +2,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.jetbrains.annotations.Contract;
+
 public class CollectionToArray {
   void test(List<Object> obj) {
     if (obj.isEmpty()) return;
@@ -61,5 +63,16 @@ public class CollectionToArray {
 
   void testRaw(java.util.List l) {  
     final String[][] ss = (<warning descr="Casting 'l.toArray(...)' to 'String[][]' will produce 'ClassCastException' for any non-null value">String[][]</warning>) l.toArray(new Number[l.size()]);
+  }
+
+  @Contract(pure = true)
+  String[] testAnyArray(List<String> list, String[] arr) {
+    return list.toArray(<warning descr="Immutable object is passed where mutable is expected">arr</warning>);
+  }
+
+  @Contract(pure = true)
+  String[] testEmptyArray(List<String> list, String[] arr) {
+    assert arr.length == 0;
+    return list.toArray(arr);
   }
 }
