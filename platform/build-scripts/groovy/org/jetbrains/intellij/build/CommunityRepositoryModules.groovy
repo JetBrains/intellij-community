@@ -263,6 +263,9 @@ final class CommunityRepositoryModules {
     plugin("intellij.statsCollector") {
       bundlingRestrictions.includeInEapOnly = true
     },
+    plugin("intellij.ml.models.local") {
+      bundlingRestrictions.includeInEapOnly = true
+    },
     plugin("intellij.jps.cache"),
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")

@@ -67,6 +67,7 @@ class JavaPluginLayout {
         "intellij.java.structuralSearch",
         "intellij.java.typeMigration",
         "intellij.java.featuresTrainer",
+        "intellij.java.ml.models.local"
       ].each {
         withModule(it, "java-impl.jar", "java_resources_en.jar")
       }

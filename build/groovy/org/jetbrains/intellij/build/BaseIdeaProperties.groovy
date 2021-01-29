@@ -76,6 +76,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.completionMlRanking",
     "intellij.completionMlRankingModels",
     "intellij.statsCollector",
+    "intellij.ml.models.local",
     "intellij.sh",
     "intellij.vcs.changeReminder",
     "intellij.filePrediction",

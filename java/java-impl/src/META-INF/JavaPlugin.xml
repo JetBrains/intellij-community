@@ -17,7 +17,6 @@
   <module value="com.intellij.modules.java"/>
 
   <depends optional="true" config-file="images-integration.xml">com.intellij.platform.images</depends>
-  <depends optional="true" config-file="java-ml-local-models.xml">com.intellij.ml.local.models</depends>
 
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
