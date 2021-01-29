@@ -50,6 +50,8 @@ class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   void testMultipleSuperMethodsThroughGenerics() { doTest(true) }
 
   void testDoNotImplementExtensionMethods() { doTest(true) }
+  
+  void testExtensionMethods1() { doTest(true) }
 
   void testSkipUnknownAnnotations() { doTest(true) }
 

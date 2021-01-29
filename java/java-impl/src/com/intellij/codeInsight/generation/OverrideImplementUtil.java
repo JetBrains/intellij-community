@@ -300,19 +300,22 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @NotNull
-  private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding) {
-    return callSuper(superMethod, overriding, true);
+  private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding, PsiClass targetClass) {
+    return callSuper(superMethod, overriding, targetClass, true);
   }
 
   @NotNull
-  private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding, boolean prependReturn) {
+  private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding, PsiClass targetClass, boolean prependReturn) {
     @NonNls StringBuilder buffer = new StringBuilder();
     if (prependReturn && !superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     PsiClass aClass = superMethod.getContainingClass();
     if (aClass != null && aClass.isInterface()) {
-      buffer.append(aClass.getName()).append(".");
+      PsiClass superQualifier = getSuperQualifier(aClass, targetClass);
+      if (superQualifier != null) {
+        buffer.append(superQualifier.getName()).append(".");
+      }
     }
     buffer.append("super");
     PsiParameter[] parameters = overriding.getParameterList().getParameters();
@@ -328,6 +331,22 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
     buffer.append(")");
     return buffer.toString();
+  }
+
+  private static PsiClass getSuperQualifier(PsiClass aClass, PsiClass targetClass) {
+    if (targetClass != null) {
+      if (targetClass.isInheritor(aClass, false)) {
+        return aClass;
+      }
+
+      for (PsiClassType type : targetClass.getSuperTypes()) {
+        PsiClass superClass = type.resolve();
+        if (InheritanceUtil.isInheritorOrSelf(superClass, aClass, true)) {
+          return superClass;
+        }
+      }
+    }
+    return null;
   }
 
   public static void setupMethodBody(@NotNull PsiMethod result, @NotNull PsiMethod originalMethod, @NotNull PsiClass targetClass) throws IncorrectOperationException {
@@ -358,8 +377,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType, true));
-    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
-    properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, false));
+    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result, targetClass));
+    properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, targetClass, false));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
