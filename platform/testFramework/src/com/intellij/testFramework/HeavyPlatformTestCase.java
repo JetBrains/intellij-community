@@ -755,7 +755,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected static @NotNull VirtualFile createChildDirectory(@NotNull VirtualFile dir, @NotNull String name) {
+  public static @NotNull VirtualFile createChildDirectory(@NotNull VirtualFile dir, @NotNull String name) {
     return HeavyTestHelper.createChildDirectory(dir, name);
   }
 
