@@ -7,7 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 
 class FSRecordsCacheInvalidator : CachesInvalidator() {
-  override fun getDescription(): String = IdeBundle.message("checkbox.invalidateCaches.local.history")
+  override fun getDescription(): String = IdeBundle.message("checkbox.invalidate.caches.invalidates.vfs")
 
   override fun optionalCheckboxDefaultValue() = Registry.`is`("idea.invalidate.caches.invalidates.vfs")
 
