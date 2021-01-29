@@ -954,7 +954,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Hive = load("providers/hive.svg", 4145120119652405940L, 2);
     /** 16x16 */ public static final @NotNull Icon Hsqldb = load("providers/hsqldb.svg", -517631853275388229L, 0);
     /** 16x16 */ public static final @NotNull Icon Ibm = load("providers/ibm.svg", 8643999117649454663L, 2);
-    /** 16x16 */ public static final @NotNull Icon Impala = load("providers/impala.svg", 6560420563072259766L, 2);
+    /** 16x16 */ public static final @NotNull Icon Impala = load("providers/impala.svg", 7023351534974100583L, 2);
     /** 16x16 */ public static final @NotNull Icon Informix = load("providers/informix.svg", -8615543225570285214L, 0);
     /** 16x16 */ public static final @NotNull Icon IntersystemCache = load("providers/intersystemCache.svg", 5464778334378267767L, 2);
     /** 16x16 */ public static final @NotNull Icon Mariadb = load("providers/mariadb.svg", 3897094340920354305L, 2);
