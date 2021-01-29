@@ -24,7 +24,8 @@ public class GotoActionOrderStrategy {
 
   public GotoActionOrderStrategy() {
     myExperimentGroup =
-      EventLogConfiguration.INSTANCE.getBucket() % NUMBER_OF_GROUPS == EXPERIMENT_GROUP && StatisticsUploadAssistant.isSendAllowed();
+      EventLogConfiguration.INSTANCE.getBucket() % NUMBER_OF_GROUPS == EXPERIMENT_GROUP &&
+      StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
   }
 
   public int compare(@NotNull AnAction first, @NotNull AnAction second) {

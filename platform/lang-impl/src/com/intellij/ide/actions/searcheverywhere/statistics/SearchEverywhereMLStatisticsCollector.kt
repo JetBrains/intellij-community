@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionServi
 import com.intellij.internal.statistic.local.ActionSummary
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
@@ -29,8 +30,15 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
   private val myIsReporting: Boolean
 
   init {
-    val percentage = Registry.get("statistics.mlse.report.percentage").asInteger() / 100.0
-    myIsReporting = percentage >= 1 || Math.random() < percentage // only report a part of cases
+    myIsReporting = isEnabled()
+  }
+
+  private fun isEnabled(): Boolean {
+    if (isExperimentModeEnabled) {
+      val percentage = Registry.get("statistics.mlse.report.percentage").asInteger() / 100.0
+      return percentage >= 1 || Math.random() < percentage // only report a part of cases
+    }
+    return false;
   }
 
   private fun isActionOrAllTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId ||
@@ -195,6 +203,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
   }
 
   companion object {
+    private val isExperimentModeEnabled: Boolean = ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()
+
     private val EMPTY: IntArray = IntArray(0)
 
     private const val REPORTED_ITEMS_LIMIT = 50
