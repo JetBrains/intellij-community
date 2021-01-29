@@ -12,6 +12,7 @@ interface LocalModelFactory {
       return EP_NAME.allForLanguage(language)
     }
   }
+  val id: String
 
   fun modelBuilder(project: Project, language: Language): LocalModelBuilder
 }

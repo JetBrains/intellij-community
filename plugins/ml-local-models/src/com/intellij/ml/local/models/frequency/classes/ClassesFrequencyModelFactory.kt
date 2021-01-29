@@ -4,11 +4,12 @@ import com.intellij.ml.local.models.api.LocalModelBuilder
 import com.intellij.ml.local.models.frequency.FrequencyModelFactory
 import com.intellij.ml.local.util.StorageUtil
 import com.intellij.lang.Language
-import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 
 abstract class ClassesFrequencyModelFactory : FrequencyModelFactory<ClassesUsagesTracker>() {
+
+  override val id: String = ClassesFrequencyLocalModel.ID
 
   abstract override fun fileVisitor(usagesTracker: ClassesUsagesTracker): PsiElementVisitor
 

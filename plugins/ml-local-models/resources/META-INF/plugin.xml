@@ -23,6 +23,5 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.ml.local.models.LocalModelsManager"/>
-    <postStartupActivity implementation="com.intellij.ml.local.models.LocalModelsStartupActivity"/>
   </extensions>
 </idea-plugin>

@@ -10,6 +10,8 @@ import com.intellij.psi.PsiElementVisitor
 
 abstract class MethodsFrequencyModelFactory : FrequencyModelFactory<MethodsUsagesTracker>() {
 
+  override val id: String = MethodsFrequencyLocalModel.ID
+
   abstract override fun fileVisitor(usagesTracker: MethodsUsagesTracker): PsiElementVisitor
 
   override fun modelBuilder(project: Project, language: Language): LocalModelBuilder {
