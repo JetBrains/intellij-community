@@ -124,7 +124,7 @@ class SpaceChatCodeDiscussionComponentFactory(
 
     thread.mvms.forEachWithPrevious(lifetime) { prev, new ->
       val messages = new.messages
-      val comment = messages.first()
+      val comment = messages.firstOrNull() ?: return@forEachWithPrevious
       reviewCommentComponent.setMarkdownText(comment.message.text, comment.message.edited != null)
       reviewCommentComponent.repaint()
       if (!collapseModel.value) {
