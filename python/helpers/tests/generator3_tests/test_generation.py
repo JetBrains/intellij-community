@@ -184,8 +184,8 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
                     yield indent + child_name
 
         formatted_dir_tree = '\n'.join(format_dir(dir_path))
-        expected = textwrap.dedent(expected_layout).strip()
-        actual = formatted_dir_tree.strip()
+        expected = textwrap.dedent(expected_layout).strip() + '\n'
+        actual = formatted_dir_tree.strip() + '\n'
         self.assertMultiLineEqual(expected, actual)
 
 
