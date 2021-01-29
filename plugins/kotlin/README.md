@@ -10,8 +10,8 @@ Kotlin plugin is an IntelliJ IDEA plugin for the [Kotlin programming language](h
 ## 1. Set up instructions
 
 ### 1.1. Requirements
-- [IntelliJ IDEA](https://jetbrains.com/idea/download) Community or Ultimate, 2020.2 or later
-- [Kotlin Plugin](https://plugins.jetbrains.com/plugin/6954-kotlin), 1.4.0 or later
+- [IntelliJ IDEA](https://jetbrains.com/idea/download) Community or Ultimate, 2020.3 or later
+- [Kotlin Plugin](https://plugins.jetbrains.com/plugin/6954-kotlin), 1.4.21 or later
 
 ### 1.2. Clone required repositories
 
