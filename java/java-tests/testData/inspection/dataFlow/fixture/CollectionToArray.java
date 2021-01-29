@@ -58,4 +58,8 @@ public class CollectionToArray {
       if (<warning descr="Condition 'data.length == 10' is always 'true'">data.length == 10</warning>) {}
     }
   }
+
+  void testRaw(java.util.List l) {  
+    final String[][] ss = (<warning descr="Casting 'l.toArray(...)' to 'String[][]' will produce 'ClassCastException' for any non-null value">String[][]</warning>) l.toArray(new Number[l.size()]);
+  }
 }

@@ -90,6 +90,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       if (argument == null) return;
 
       final PsiClassType classType = (PsiClassType)type;
+      if (classType.isRaw()) return;
       final PsiClass aClass = classType.resolve();
       if (aClass == null) {
         return;
@@ -136,18 +137,6 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                                                        PsiType itemType) {
       itemType = GenericsUtil.getVariableTypeByExpressionType(itemType);
       final PsiType componentType = arrayType.getComponentType();
-      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-      if (parent instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;
-        final PsiTypeElement castTypeElement = castExpression.getCastType();
-        if (castTypeElement == null) return null;
-        final PsiType castType = castTypeElement.getType();
-        if (castType.equals(arrayType) || !(castType instanceof PsiArrayType)) return null;
-        final PsiArrayType castArrayType = (PsiArrayType)castType;
-        PsiType type = castArrayType.getComponentType();
-        if (JavaGenericsUtil.isReifiableType(type)) return type;
-        return null;
-      }
       if (itemType == null || componentType.isAssignableFrom(itemType)) return null;
       if (itemType instanceof PsiClassType) {
         final PsiClass aClass = ((PsiClassType)itemType).resolve();
