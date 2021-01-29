@@ -44,19 +44,17 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   }
 
   @Override
-  public void resize(Dimension termSize, Dimension pixelSize) {
-    if (termSize != null && pixelSize != null) {
-      if (myPtyProcess instanceof PtyProcess) {
-        PtyProcess ptyProcess = (PtyProcess)myPtyProcess;
-        if (ptyProcess.isRunning()) {
-          ptyProcess.setWinSize(new WinSize(termSize.width, termSize.height));
-        }
+  public void resize(@NotNull Dimension termSize) {
+    if (myPtyProcess instanceof PtyProcess) {
+      PtyProcess ptyProcess = (PtyProcess)myPtyProcess;
+      if (ptyProcess.isRunning()) {
+        ptyProcess.setWinSize(new WinSize(termSize.width, termSize.height));
       }
-      else {
-        //noinspection InstanceofIncompatibleInterface
-        assert myPtyProcess instanceof PtyBasedProcess;
-        ((PtyBasedProcess)myPtyProcess).setWindowSize(termSize.width, termSize.height);
-      }
+    }
+    else {
+      //noinspection InstanceofIncompatibleInterface
+      assert myPtyProcess instanceof PtyBasedProcess;
+      ((PtyBasedProcess)myPtyProcess).setWindowSize(termSize.width, termSize.height);
     }
   }
 
