@@ -36,7 +36,7 @@
       "rules": {
         "event_id": ["{enum:value}"],
         "event_data": {
-          "data_1": ["{util#existing_rule}", "enum:AAA|BBB|CCC"]
+          "data_1": ["{util#existing_rule}", "AAA", "BBB", "CCC"]
         }
       }
     },
@@ -46,7 +46,7 @@
       "rules": {
         "event_id": ["{enum:value}"],
         "event_data": {
-          "data_1": ["{util#unknown_rule}", "enum:AAA|BBB|CCC"]
+          "data_1": ["{util#unknown_rule}", "AAA", "BBB", "CCC"]
         }
       }
     },
@@ -56,7 +56,7 @@
       "rules": {
         "event_id": ["{enum:value}"],
         "event_data": {
-          "data_1": ["{util#third_party_rule}", "{enum:AAA|BBB|CCC}"]
+          "data_1": ["{util#third_party_rule}", "AAA", "BBB", "CCC"]
         }
       }
     }

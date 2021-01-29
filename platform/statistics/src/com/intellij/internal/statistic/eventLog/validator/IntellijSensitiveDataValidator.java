@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -138,8 +139,7 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
       return context.eventData;
     }
 
-    Map<String, Object> validatedData =
-      new ConcurrentHashMap<>(); // TODO: don't create validatedData map if all keys are accepted (just return context.eventData)
+    Map<String, Object> validatedData = new HashMap<>();
     for (Map.Entry<String, Object> entry : context.eventData.entrySet()) {
       String key = entry.getKey();
       Object entryValue = entry.getValue();

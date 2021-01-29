@@ -48,10 +48,11 @@ public final class ValidationSimpleRuleFactory {
   }
 
   private static @NotNull Comparator<FUSRule> getRulesComparator() {
-    // todo: do it better )))
     return (o1, o2) -> {
-      if (o1 instanceof EnumValidationRule) return o2 instanceof EnumValidationRule ? -1 : 0;
-      return o2 instanceof EnumValidationRule ? 0 : 1;
+      if (o1 instanceof EnumValidationRule) {
+        return o2 instanceof EnumValidationRule ? 0 : -1;
+      }
+      return o2 instanceof EnumValidationRule ? 1 : 0;
     };
   }
 

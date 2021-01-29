@@ -328,7 +328,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     doTestWithRuleList("test_rules_list_event_id.json") { validator ->
       val elg = EventLogGroup("existing.util.rule.and.enum", 1)
 
-      assertSize(2, validator.getEventRules(elg))
+      assertSize(4, validator.getEventRules(elg))
 
       assertEventAccepted(validator, elg, "AAA")
       assertEventAccepted(validator, elg, "BBB")
@@ -343,7 +343,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     doTestWithRuleList("test_rules_list_event_id.json") { validator ->
       val elg = EventLogGroup("not.existing.util.rule.and.enum", 1)
 
-      assertSize(2, validator.getEventRules(elg))
+      assertSize(4, validator.getEventRules(elg))
 
       assertEventAccepted(validator, elg, "AAA")
       assertEventAccepted(validator, elg, "BBB")
@@ -358,7 +358,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     doTestWithRuleList("test_rules_list_event_id.json") { validator ->
       val elg = EventLogGroup("third.party.util.rule.and.enum", 1)
 
-      assertSize(2, validator.getEventRules(elg))
+      assertSize(4, validator.getEventRules(elg))
 
       assertEventAccepted(validator, elg, "AAA")
       assertEventAccepted(validator, elg, "BBB")
@@ -424,7 +424,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       val elg = EventLogGroup("existing.util.rule.and.enum", 1)
 
       val dataRules = validator.getEventDataRules(elg)
-      assertSize(2, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
+      assertSize(4, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
 
       assertEventDataAccepted(validator, elg, "data_1", "AAA")
       assertEventDataAccepted(validator, elg, "data_1", "BBB")
@@ -440,7 +440,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       val elg = EventLogGroup("not.existing.util.rule.and.enum", 1)
 
       val dataRules = validator.getEventDataRules(elg)
-      assertSize(2, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
+      assertSize(4, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
 
       assertEventDataAccepted(validator, elg, "data_1", "AAA")
       assertEventDataAccepted(validator, elg, "data_1", "BBB")
@@ -456,7 +456,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       val elg = EventLogGroup("third.party.util.rule.and.enum", 1)
 
       val dataRules = validator.getEventDataRules(elg)
-      assertSize(2, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
+      assertSize(4, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
 
       assertEventDataAccepted(validator, elg, "data_1", "AAA")
       assertEventDataAccepted(validator, elg, "data_1", "BBB")
