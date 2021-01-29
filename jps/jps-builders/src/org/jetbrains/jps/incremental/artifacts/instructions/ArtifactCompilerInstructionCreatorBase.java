@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.Condition;
@@ -30,7 +30,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   @Override
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
-    addDirectoryCopyInstructions(directory, filter, FileCopyingHandler.DEFAULT);
+    addDirectoryCopyInstructions(directory, filter, FilterCopyHandler.DEFAULT);
   }
 
   @Override
@@ -82,10 +82,9 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     return current;
   }
 
-
   @Override
   public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
-    addFileCopyInstruction(file, outputFileName, FileCopyingHandler.DEFAULT);
+    addFileCopyInstruction(file, outputFileName, FilterCopyHandler.DEFAULT);
   }
 
   @Override

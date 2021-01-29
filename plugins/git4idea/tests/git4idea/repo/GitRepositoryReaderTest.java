@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -42,7 +42,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   public static Collection<Object[]> data() {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
     File dataDir = new File(new File(pluginRoot, "testData"), "repo");
-    File[] testCases = dataDir.listFiles(FileUtilRt.ALL_DIRECTORIES);
+    File[] testCases = dataDir.listFiles(FileFilters.DIRECTORIES);
     return ContainerUtil.map(testCases, file -> new Object[] { file.getName(), file });
   }
 

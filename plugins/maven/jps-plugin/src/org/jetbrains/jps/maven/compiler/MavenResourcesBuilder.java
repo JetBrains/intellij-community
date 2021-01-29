@@ -1,8 +1,9 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -106,7 +107,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         File outputFile = new File(outputDir, relPath);
         String sourcePath = file.getPath();
         try {
-          fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileUtilRt.ALL_FILES);
+          fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileFilters.EVERYTHING);
           outputConsumer.registerOutputFile(outputFile, Collections.singleton(sourcePath));
         }
         catch (UnsupportedEncodingException e) {

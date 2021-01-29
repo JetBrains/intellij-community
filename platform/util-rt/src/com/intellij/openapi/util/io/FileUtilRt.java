@@ -35,19 +35,6 @@ public class FileUtilRt {
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
-  public static final FileFilter ALL_FILES = new FileFilter() {
-    @Override
-    public boolean accept(File file) {
-      return true;
-    }
-  };
-  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
-    @Override
-    public boolean accept(File file) {
-      return file.isDirectory();
-    }
-  };
-
   private static String ourCanonicalTempPathCache;
 
   public static boolean isJarOrZip(@NotNull File file) {
@@ -1110,7 +1097,6 @@ public class FileUtilRt {
     boolean charsEqual(char ch1, char ch2);
   }
 
-  @NotNull
   private static LoggerRt logger() {
     return LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilRt");
   }
