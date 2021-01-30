@@ -62,7 +62,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
 
     List<GlobalSearchScope> scopes = new ArrayList<>(additionalScopes.keySet());
     scopes.add(mainScope);
-    new AnalyzeDependenciesOnSpecifiedTargetHandler(myPanel.getProject(), new AnalysisScope(myPanel.getModuleConfigurationState().getRootModel().getModule()),
+    new AnalyzeDependenciesOnSpecifiedTargetHandler(myPanel.getProject(), new AnalysisScope(myPanel.getModuleConfigurationState().getCurrentRootModel().getModule()),
                                                     GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY))) {
       @Override
       protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {

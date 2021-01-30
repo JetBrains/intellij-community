@@ -18,7 +18,7 @@ import java.util.List;
 public class PythonModuleConfigurationEditorProvider implements ModuleConfigurationEditorProvider {
   @Override
   public ModuleConfigurationEditor[] createEditors(final ModuleConfigurationState state) {
-    final Module module = state.getRootModel().getModule();
+    final Module module = state.getCurrentRootModel().getModule();
     if (!(ModuleType.get(module) instanceof PythonModuleType)) return ModuleConfigurationEditor.EMPTY;
     final DefaultModuleConfigurationEditorFactory editorFactory = DefaultModuleConfigurationEditorFactory.getInstance();
     final List<ModuleConfigurationEditor> editors = new ArrayList<>();

@@ -513,7 +513,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   @Override
   public ModifiableRootModel getRootModel() {
-    return myState.getRootModel();
+    return myState.getModifiableRootModel();
   }
 
   @Override

@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -106,12 +105,8 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     return new RowSorter.SortKey(1, SortOrder.UNSORTED);
   }
 
-  private ModifiableRootModel getModel() {
-    return myState.getRootModel();
-  }
-
   public void init() {
-    final OrderEntry[] orderEntries = getModel().getOrderEntries();
+    final OrderEntry[] orderEntries = myState.getCurrentRootModel().getOrderEntries();
     boolean hasJdkOrderEntry = false;
     List<ClasspathTableItem<?>> items = new ArrayList<>();
     for (final OrderEntry orderEntry : orderEntries) {
@@ -130,7 +125,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   public void exchangeRows(int idx1, int idx2) {
     super.exchangeRows(idx1, idx2);
     List<OrderEntry> entries = getEntries();
-    myState.getRootModel().rearrangeOrderEntries(entries.toArray(OrderEntry.EMPTY_ARRAY));
+    myState.getModifiableRootModel().rearrangeOrderEntries(entries.toArray(OrderEntry.EMPTY_ARRAY));
   }
 
   public void clear() {

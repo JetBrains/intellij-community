@@ -218,8 +218,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   public ModuleConfigurationState createModuleConfigurationState() {
     return new ModuleConfigurationStateImpl(myProject, myModulesProvider) {
       @Override
-      public ModifiableRootModel getRootModel() {
+      public ModifiableRootModel getModifiableRootModel() {
         return getModifiableRootModelProxy();
+      }
+
+      @Override
+      public ModuleRootModel getCurrentRootModel() {
+        return ModuleEditor.this.getRootModel();
       }
 
       @Override

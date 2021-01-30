@@ -59,7 +59,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   }
 
   protected ModifiableRootModel getModel() {
-    return myState.getRootModel();
+    return myState.getModifiableRootModel();
   }
 
   @NotNull
