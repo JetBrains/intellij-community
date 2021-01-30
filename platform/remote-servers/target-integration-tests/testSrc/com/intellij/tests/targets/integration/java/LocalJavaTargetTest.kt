@@ -5,7 +5,7 @@ import com.intellij.tests.targets.java.JavaTargetTestBase
 import com.intellij.util.io.write
 import java.util.*
 
-class LocalJavaTargetTest : JavaTargetTestBase() {
+class LocalJavaTargetTest(executionMode: ExecutionMode) : JavaTargetTestBase(executionMode) {
   override val targetName: String? = null
 
   override lateinit var targetFilePath: String

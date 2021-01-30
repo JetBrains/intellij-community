@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AlsoTest {
   @Test
   public void testShouldFail() {
+    // Breakpoint! suspendPolicy(SuspendNone) LogExpression("Debugger: testShouldFail() reached")
     assertEquals(2 * 2, 5);
   }
 }

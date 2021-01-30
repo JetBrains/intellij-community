@@ -9,6 +9,7 @@ public class SomeTest {
   @Tag("selected")
   @Test
   public void testSomething() {
+    // Breakpoint! suspendPolicy(SuspendNone) LogExpression("Debugger: testSomething() reached")
     assertEquals(2 * 2, 4);
   }
 }
