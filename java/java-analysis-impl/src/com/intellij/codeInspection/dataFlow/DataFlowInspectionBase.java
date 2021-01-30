@@ -1139,9 +1139,15 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   private static boolean isConstantOfType(PsiElement element, PsiPrimitiveType... types) {
     PsiElement resolved = element instanceof PsiReferenceExpression ? ((PsiReferenceExpression)element).resolve() : null;
     if (!(resolved instanceof PsiField)) return false;
-    PsiVariable field = (PsiVariable)resolved;
-    return field.hasModifierProperty(PsiModifier.STATIC) && PsiUtil.isCompileTimeConstant(field) &&
-           ArrayUtil.contains(field.getType(), types);
+    PsiField field = (PsiField)resolved;
+    PsiModifierList modifierList = field.getModifierList();
+    if (modifierList == null ||
+        !modifierList.hasModifierProperty(PsiModifier.STATIC) ||
+        !modifierList.hasModifierProperty(PsiModifier.FINAL)) {
+      return false;
+    }
+    if (!ArrayUtil.contains(field.getType(), types)) return false;
+    return field.hasInitializer() && PsiUtil.isConstantExpression(field.getInitializer());
   }
 
   private static boolean isNullLiteralExpression(PsiElement expr) {
