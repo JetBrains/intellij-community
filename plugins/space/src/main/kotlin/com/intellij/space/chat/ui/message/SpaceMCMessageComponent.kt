@@ -3,10 +3,12 @@ package com.intellij.space.chat.ui.message
 
 import circlet.client.api.AttachmentInfo
 import circlet.client.api.UnfurlAttachment
-import circlet.client.api.mc.*
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.space.chat.model.api.SpaceMCMessageContent
+import com.intellij.space.chat.model.api.SpaceMCMessageElement
+import com.intellij.space.chat.model.api.SpaceMCMessageSection
 import com.intellij.space.chat.ui.SpaceChatMarkdownTextComponent
 import com.intellij.space.chat.ui.getGrayTextHtml
 import com.intellij.ui.IdeBorderFactory
@@ -19,7 +21,7 @@ import javax.swing.JPanel
 
 internal class SpaceMCMessageComponent(
   @NonNls private val server: String,
-  message: ChatMessage.Block,
+  message: SpaceMCMessageContent,
   attachments: List<AttachmentInfo>
 ) : BorderLayoutPanel() {
   companion object {
@@ -36,35 +38,31 @@ internal class SpaceMCMessageComponent(
       addToTop(SpaceChatMarkdownTextComponent(server, outline.text, initialUnfurls = unfurls).withSmallFont())
     }
 
-    val sectionsComponent = message.sections.mapNotNull { it.createComponent() }.wrapToSingleComponent()
-    addToCenter(SpaceStyledMessageComponent(sectionsComponent, style = message.style ?: MessageStyle.PRIMARY))
+    val sectionsComponent = message.sections.map { it.createComponent() }.wrapToSingleComponent()
+    addToCenter(SpaceStyledMessageComponent(sectionsComponent, style = message.style))
   }
 
-  private fun MessageSectionElement.createComponent(): JComponent? =
+  private fun SpaceMCMessageSection.createComponent(): JComponent =
     when (this) {
-      is MessageDivider -> createDividerPanel()
-      is MessageSection -> createComponent()
-      else -> null
+      is SpaceMCMessageSection.Divider -> createDividerPanel()
+      is SpaceMCMessageSection.Section -> createComponent()
     }
 
-  private fun MessageSection.createComponent(): JComponent = JPanel(VerticalLayout(JBUI.scale(10))).apply {
+  private fun SpaceMCMessageSection.Section.createComponent(): JComponent = JPanel(VerticalLayout(JBUI.scale(10))).apply {
     isOpaque = false
 
     header?.let { add(createHeaderComponent(it), VerticalLayout.FILL_HORIZONTAL) }
 
-    val elementsComponent = elements.mapNotNull { it.createComponent() }.wrapToSingleComponent()
+    val elementsComponent = elements.map { it.createComponent() }.wrapToSingleComponent()
     add(elementsComponent, VerticalLayout.FILL_HORIZONTAL)
 
     footer?.let { add(createFooterComponent(it), VerticalLayout.FILL_HORIZONTAL) }
   }
 
-  private fun MessageElement.createComponent(): JComponent? =
+  private fun SpaceMCMessageElement.createComponent(): JComponent =
     when (this) {
-      is MessageDivider -> createDividerPanel()
-      is MessageText -> SpaceChatMarkdownTextComponent(server, content, initialUnfurls = unfurls)
-      is MessageFields -> null
-      is MessageControlGroup -> null
-      else -> null
+      is SpaceMCMessageElement.Text -> SpaceChatMarkdownTextComponent(server, content, initialUnfurls = unfurls)
+      is SpaceMCMessageElement.MessageDivider -> createDividerPanel()
     }
 
   private fun createHeaderComponent(@NlsSafe text: String) = SpaceChatMarkdownTextComponent(server, text, initialUnfurls = unfurls).apply {

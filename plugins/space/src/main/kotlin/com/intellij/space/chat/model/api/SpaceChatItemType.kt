@@ -9,6 +9,7 @@ import circlet.client.api.mc.toMessage
 import circlet.code.api.*
 import circlet.platform.api.Ref
 import com.intellij.space.chat.model.api.SpaceChatItemType.*
+import com.intellij.space.chat.model.impl.toMCMessageContent
 
 internal fun M2ItemContentDetails?.toType(): SpaceChatItemType = when (this) {
   is CodeDiscussionAddedFeedEvent -> CodeDiscussion(codeDiscussion)
@@ -20,7 +21,7 @@ internal fun M2ItemContentDetails?.toType(): SpaceChatItemType = when (this) {
   is ReviewTitleChangedEvent -> ReviewTitleChanged(oldTitle, newTitle)
   is circlet.client.api.mc.MCMessage -> when (val chatMessage = toMessage()) {
     is ChatMessage.Text -> SimpleText
-    is ChatMessage.Block -> MCMessage(chatMessage)
+    is ChatMessage.Block -> MCMessage(chatMessage.toMCMessageContent())
   }
   else -> Unknown
 }
@@ -40,7 +41,7 @@ internal sealed class SpaceChatItemType {
 
   class ReviewTitleChanged(val oldTitle: String, val newTitle: String) : SpaceChatItemType()
 
-  class MCMessage(val block: ChatMessage.Block) : SpaceChatItemType()
+  class MCMessage(val content: SpaceMCMessageContent) : SpaceChatItemType()
 
   object Unknown : SpaceChatItemType()
 }

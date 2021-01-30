@@ -106,7 +106,7 @@ internal class SpaceChatItemComponentFactory(
             ).wrapWith(html()).toString()
           )
         )
-        is MCMessage -> SpaceMCMessageComponent(server, type.block, item.attachments)
+        is MCMessage -> SpaceMCMessageComponent(server, type.content, item.attachments)
         is Unknown -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
