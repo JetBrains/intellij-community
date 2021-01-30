@@ -230,7 +230,7 @@ public class JavaHomeFinderBasic {
     }
 
     // finally, try the usual location in UNIX
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfo.isWindows || this instanceof JavaHomeFinderWsl) {
       Path candidates = getPathInUserHome(".sdkman/candidates");
       if (candidates != null && isDirectory(candidates)) {
         return candidates;
