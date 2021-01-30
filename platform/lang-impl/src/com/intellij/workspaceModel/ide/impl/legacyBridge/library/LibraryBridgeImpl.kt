@@ -43,7 +43,7 @@ interface LibraryBridge : LibraryEx {
 
 @ApiStatus.Internal
 internal class LibraryBridgeImpl(
-  private val libraryTable: LibraryTable,
+  internal var libraryTable: LibraryTable,
   val project: Project,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,

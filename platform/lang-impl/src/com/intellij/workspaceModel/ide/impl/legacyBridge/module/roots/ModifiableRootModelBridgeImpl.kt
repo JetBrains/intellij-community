@@ -510,7 +510,7 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun postCommit() {
-    moduleLibraryTable.disposeOriginalLibraries()
+    moduleLibraryTable.disposeOriginalLibrariesAndUpdateCopies()
   }
 
   override fun dispose() {
