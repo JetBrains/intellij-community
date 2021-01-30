@@ -3,7 +3,6 @@ package com.intellij.space.chat.model.api
 
 import circlet.client.api.AttachmentInfo
 import circlet.client.api.CPrincipal
-import circlet.client.api.M2ItemContentDetails
 import circlet.m2.M2MessageEditingVm
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.KDateTime
@@ -23,7 +22,7 @@ internal interface SpaceChatItem : TimelineItem {
 
   val created: KDateTime
 
-  val details: M2ItemContentDetails?
+  val type: SpaceChatItemType
 
   val thread: M2ChannelVm?
 

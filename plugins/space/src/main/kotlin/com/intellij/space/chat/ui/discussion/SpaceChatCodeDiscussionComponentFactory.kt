@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.discussion
 
-import circlet.code.api.CodeDiscussionAddedFeedEvent
+import circlet.code.api.CodeDiscussionRecord
 import circlet.code.api.CodeDiscussionSnippet
 import circlet.m2.channel.M2ChannelVm
+import circlet.platform.api.Ref
 import circlet.platform.client.property
 import circlet.platform.client.resolve
 import com.intellij.icons.AllIcons
@@ -43,9 +44,9 @@ class SpaceChatCodeDiscussionComponentFactory(
   private val lifetime: Lifetime,
   private val server: String,
 ) {
-  fun createComponent(event: CodeDiscussionAddedFeedEvent, thread: M2ChannelVm): JComponent? {
-    val discussion = event.codeDiscussion.resolve()
-    val discussionProperty = event.codeDiscussion.property()
+  fun createComponent(codeDiscussion: Ref<CodeDiscussionRecord>, thread: M2ChannelVm): JComponent? {
+    val discussion = codeDiscussion.resolve()
+    val discussionProperty = codeDiscussion.property()
     val resolved = lifetime.map(discussionProperty) { it.resolved }
     val collapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover)
     val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover)

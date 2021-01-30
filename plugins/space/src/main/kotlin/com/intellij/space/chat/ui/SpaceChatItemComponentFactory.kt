@@ -1,11 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui
 
-import circlet.client.api.M2TextItemContent
-import circlet.client.api.mc.ChatMessage
-import circlet.client.api.mc.MCMessage
-import circlet.client.api.mc.toMessage
-import circlet.code.api.*
+import circlet.code.api.ReviewerChangedType
 import circlet.platform.client.resolve
 import circlet.principals.asUser
 import com.intellij.icons.AllIcons
@@ -15,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.space.chat.model.api.SpaceChatItem
+import com.intellij.space.chat.model.api.SpaceChatItemType.*
 import com.intellij.space.chat.ui.discussion.SpaceChatCodeDiscussionComponentFactory
 import com.intellij.space.chat.ui.message.MessageTitleComponent
 import com.intellij.space.chat.ui.message.SpaceChatMessagePendingHeader
@@ -64,56 +61,53 @@ internal class SpaceChatItemComponentFactory(
    */
   override fun createComponent(item: SpaceChatItem): HoverableJPanel {
     val component =
-      when (val details = item.details) {
-        is CodeDiscussionAddedFeedEvent ->
-          codeDiscussionComponentFactory.createComponent(details, item.thread!!) ?: createUnsupportedMessageTypePanel(item.link)
-        is M2TextItemContent -> createSimpleMessageComponent(item)
-        is ReviewCompletionStateChangedEvent -> SpaceStyledMessageComponent(createSimpleMessageComponent(item))
-        is ReviewerChangedEvent -> {
-          val user = details.uid.resolve().link()
-          val text = when (details.changeType) {
+      when (val type = item.type) {
+        is CodeDiscussion ->
+          codeDiscussionComponentFactory.createComponent(type.discussion, item.thread!!) ?: createUnsupportedMessageTypePanel(item.link)
+        is SimpleText -> createSimpleMessageComponent(item)
+        is ReviewCompletionStateChanged -> SpaceStyledMessageComponent(createSimpleMessageComponent(item))
+        is ReviewerChanged -> {
+          val user = type.uid.resolve().link()
+          val text = when (type.changeType) {
             ReviewerChangedType.Joined -> SpaceBundle.message("chat.reviewer.added", user)
             ReviewerChangedType.Left -> SpaceBundle.message("chat.reviewer.removed", user)
           }
           SpaceStyledMessageComponent(SpaceChatMarkdownTextComponent(server, text))
         }
-        is MergeRequestMergedEvent -> SpaceStyledMessageComponent(
+        is MergeRequestMerged -> SpaceStyledMessageComponent(
           SpaceChatMarkdownTextComponent(
             server,
             HtmlChunk.raw(
               SpaceBundle.message(
                 "chat.review.merged",
-                HtmlChunk.text(details.sourceBranch).bold(), // NON-NLS
-                HtmlChunk.text(details.targetBranch).bold() // NON-NLS
+                HtmlChunk.text(type.sourceBranch).bold(), // NON-NLS
+                HtmlChunk.text(type.targetBranch).bold() // NON-NLS
               )
             ).wrapWith(html()).toString()
           )
         )
-        is MergeRequestBranchDeletedEvent -> SpaceStyledMessageComponent(
+        is MergeRequestBranchDeleted -> SpaceStyledMessageComponent(
           SpaceChatMarkdownTextComponent(
             server,
             HtmlChunk.raw(
-              SpaceBundle.message("chat.review.deleted.branch", HtmlChunk.text(details.branch).bold()) // NON-NLS
+              SpaceBundle.message("chat.review.deleted.branch", HtmlChunk.text(type.branch).bold()) // NON-NLS
             ).wrapWith(html()).toString()
           )
         )
-        is ReviewTitleChangedEvent -> SpaceStyledMessageComponent(
+        is ReviewTitleChanged -> SpaceStyledMessageComponent(
           SpaceChatMarkdownTextComponent(
             server,
             HtmlChunk.raw(
               SpaceBundle.message(
                 "chat.review.title.changed",
-                HtmlChunk.text(details.oldTitle).bold(), // NON-NLS
-                HtmlChunk.text(details.newTitle).bold()  // NON-NLS
+                HtmlChunk.text(type.oldTitle).bold(), // NON-NLS
+                HtmlChunk.text(type.newTitle).bold()  // NON-NLS
               )
             ).wrapWith(html()).toString()
           )
         )
-        is MCMessage -> when (val chatMessage = details.toMessage()) {
-          is ChatMessage.Text -> SpaceChatMarkdownTextComponent(server, item.text)
-          is ChatMessage.Block -> SpaceMCMessageComponent(server, chatMessage, item.attachments)
-        }
-        else -> createUnsupportedMessageTypePanel(item.link)
+        is MCMessage -> SpaceMCMessageComponent(server, type.block, item.attachments)
+        is Unknown -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
       item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
@@ -135,7 +129,7 @@ internal class SpaceChatItemComponentFactory(
 
   private fun JComponent.addThreadComponentIfNeeded(message: SpaceChatItem): JComponent {
     val thread = message.thread
-    return if (thread == null || message.details is CodeDiscussionAddedFeedEvent) {
+    return if (thread == null || message.type is CodeDiscussion) {
       this
     }
     else {

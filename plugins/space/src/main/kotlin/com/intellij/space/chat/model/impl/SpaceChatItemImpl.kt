@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.model.impl
 
-import circlet.client.api.CPrincipal
-import circlet.client.api.M2ItemContentDetails
 import circlet.code.api.CodeDiscussionAddedFeedEvent
 import circlet.m2.ChannelsVm
 import circlet.m2.M2ChannelMode
@@ -11,6 +9,7 @@ import circlet.m2.channel.M2ChannelVm
 import circlet.platform.client.resolve
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.space.chat.model.api.SpaceChatItem
+import com.intellij.space.chat.model.api.toType
 import com.intellij.space.chat.ui.awaitFullLoad
 import libraries.coroutines.extra.Lifetime
 
@@ -20,17 +19,25 @@ internal class SpaceChatItemImpl private constructor(
   override val thread: M2ChannelVm? = null
 ) : SpaceChatItem {
   private val record = messageVm.message
+
   override val id = record.id
+
   override val chat = messageVm.channelVm
-  override val author: CPrincipal = record.author
-  override val created: circlet.platform.api.KDateTime = record.created
-  override val details: M2ItemContentDetails? = record.details
-  override val delivered: Boolean = messageVm.delivered
-  override val canDelete: Boolean = messageVm.canDelete
+
+  override val author = record.author
+
+  override val created = record.created
+
+  override val type = record.details.toType()
+
+  override val delivered = messageVm.delivered
+
+  override val canDelete = messageVm.canDelete
 
   override val text: @NlsSafe String = record.text
 
   override val editingVm = messageVm.editingVm
+
   override val isEditing = messageVm.isEditing
 
   override val canEdit = messageVm.canEdit
