@@ -866,22 +866,19 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action) {
-    return new SelectionBasedPluginModelAction.EnableDisableAction<>(
-      null,
-      myPluginModel,
-      action,
-      List.of(this),
-      PluginDetailsPageComponent::getPlugin
-    );
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel,
+                                                                     action,
+                                                                     false,
+                                                                     List.of(this),
+                                                                     PluginDetailsPageComponent::getPlugin);
   }
 
   private @NotNull SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> createUninstallAction() {
-    return new SelectionBasedPluginModelAction.UninstallAction<>(
-      null,
-      myPluginModel,
-      this,
-      List.of(this),
-      PluginDetailsPageComponent::getPlugin
+    return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel,
+                                                                 false,
+                                                                 this,
+                                                                 List.of(this),
+                                                                 PluginDetailsPageComponent::getPlugin
     );
   }
 }

@@ -6,10 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginEnableDisableAction;
 import com.intellij.ide.plugins.PluginEnabledState;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.registry.Registry;
@@ -19,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -29,20 +27,26 @@ import static com.intellij.util.containers.ContainerUtil.*;
 abstract class SelectionBasedPluginModelAction<C extends JComponent> extends DumbAwareAction {
 
   protected final @NotNull MyPluginModel myPluginModel;
+  protected final boolean myShowShortcut;
   protected final @NotNull List<C> mySelection;
   private final @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> myPluginDescriptor;
 
   protected SelectionBasedPluginModelAction(@NotNull @Nls String text,
-                                            @Nullable ShortcutSet shortcutSet,
                                             @NotNull MyPluginModel pluginModel,
+                                            boolean showShortcut,
                                             @NotNull List<C> selection,
                                             @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
     super(text);
-    setShortcutSet(shortcutSet == null ? CustomShortcutSet.EMPTY : shortcutSet);
 
     myPluginModel = pluginModel;
+    myShowShortcut = showShortcut;
     mySelection = selection;
     myPluginDescriptor = pluginDescriptor;
+  }
+
+  protected final void setShortcutSet(@NotNull ShortcutSet shortcutSet,
+                                      boolean show) {
+    setShortcutSet(show ? shortcutSet : CustomShortcutSet.EMPTY);
   }
 
   protected final @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull C component) {
@@ -55,20 +59,20 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
   static final class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
+    private static final CustomShortcutSet SHORTCUT_SET = new CustomShortcutSet(KeyEvent.VK_SPACE);
+
     private final @NotNull PluginEnableDisableAction myAction;
 
-    EnableDisableAction(@Nullable ShortcutSet shortcutSet,
-                        @NotNull MyPluginModel pluginModel,
+    EnableDisableAction(@NotNull MyPluginModel pluginModel,
                         @NotNull PluginEnableDisableAction action,
+                        boolean showShortcut,
                         @NotNull List<C> selection,
                         @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
-      super(
-        action.toString(),
-        isCheckboxesEnabled() ? shortcutSet : null,
-        pluginModel,
-        selection,
-        pluginDescriptor
-      );
+      super(action.toString(),
+            pluginModel,
+            showShortcut,
+            selection,
+            pluginDescriptor);
 
       myAction = action;
     }
@@ -89,7 +93,12 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
                                                      exists(pluginIds, EnableDisableAction::isPluginExcluded) ||
                                                      exists(descriptors, myPluginModel::requiresRestart));
 
-      e.getPresentation().setEnabledAndVisible(isForceEnableAll || !disabled);
+      boolean enabled = !disabled;
+      e.getPresentation().setEnabledAndVisible(isForceEnableAll || enabled);
+
+      boolean show = myShowShortcut &&
+                     (isForceEnableAll || myAction == PluginEnableDisableAction.DISABLE_GLOBALLY && enabled);
+      setShortcutSet(SHORTCUT_SET, show);
     }
 
     @Override
@@ -98,10 +107,6 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
         getAllDescriptors(),
         myAction
       );
-    }
-
-    private static boolean isCheckboxesEnabled() {
-      return Registry.is("ide.plugins.per.project.use.checkboxes", false);
     }
 
     private static boolean isPerProjectEnabled() {
@@ -116,20 +121,27 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
   static final class UninstallAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
+    private static final ShortcutSet SHORTCUT_SET;
+
+    static {
+      ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
+      SHORTCUT_SET = deleteShortcutSet != null ?
+                     deleteShortcutSet :
+                     new CustomShortcutSet(EventHandler.DELETE_CODE);
+    }
+
     private final @NotNull JComponent myUiParent;
 
-    UninstallAction(@Nullable ShortcutSet shortcutSet,
-                    @NotNull MyPluginModel pluginModel,
+    UninstallAction(@NotNull MyPluginModel pluginModel,
+                    boolean showShortcut,
                     @NotNull JComponent uiParent,
                     @NotNull List<C> selection,
                     @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
-      super(
-        IdeBundle.message("plugins.configurable.uninstall.button"),
-        shortcutSet,
-        pluginModel,
-        selection,
-        pluginDescriptor
-      );
+      super(IdeBundle.message("plugins.configurable.uninstall.button"),
+            pluginModel,
+            showShortcut,
+            selection,
+            pluginDescriptor);
 
       myUiParent = uiParent;
     }
@@ -142,6 +154,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
                          exists(descriptors, IdeaPluginDescriptor::isBundled) ||
                          exists(descriptors, myPluginModel::isUninstalled);
       e.getPresentation().setEnabledAndVisible(!disabled);
+
+      setShortcutSet(SHORTCUT_SET, myShowShortcut);
     }
 
     @Override
