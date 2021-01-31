@@ -33,7 +33,7 @@ public class OpenLogAction extends DumbAwareAction {
     File log = new File(PathManager.getLogPath(), "idea.log");
     VirtualFile file = VfsUtil.findFileByIoFile(log, true);
     if (file != null) {
-      file.refresh(true, false);
+      VfsUtil.markDirtyAndRefresh(true, false, false, file);
       FileEditorManager.getInstance(project).openFile(file, true);
     }
     else {
