@@ -34,6 +34,7 @@ import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
 import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModelBase
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
+import icons.VcsCodeReviewIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import runtime.Ui
@@ -107,15 +108,36 @@ internal class SpaceChatItemComponentFactory(
           )
         )
         is MCMessage -> SpaceMCMessageComponent(server, type.content, item.attachments)
+        is Deleted -> SpaceChatMarkdownTextComponent(server, getGrayTextHtml(SpaceBundle.message("chat.message.removed.text")))
         is Unknown -> createUnsupportedMessageTypePanel(item.link)
       }
     return Item(
-      item.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarProvider.iconSize.get()),
-      MessageTitleComponent(lifetime, item),
+      createAvatarIcon(item),
+      createTitleComponent(item),
       SpaceChatMessagePendingHeader(item),
       createEditableContent(component.addThreadComponentIfNeeded(item).addStartThreadField(item), item)
     )
   }
+
+  private fun createTitleComponent(item: SpaceChatItem): MessageTitleComponent? {
+    if (item.type == Deleted) {
+      return null
+    }
+    return MessageTitleComponent(lifetime, item)
+  }
+
+  private fun createAvatarIcon(item: SpaceChatItem): Icon {
+    val user = item.author.asUser
+    if (user != null) {
+      return avatarProvider.getIcon(user)
+    }
+    if (item.type == Deleted) {
+      return resizeIcon(VcsCodeReviewIcons.Delete)
+    }
+    return resizeIcon(SpaceIcons.Main)
+  }
+
+  private fun resizeIcon(icon: Icon) = resizeIcon(icon, avatarProvider.iconSize.get())
 
   private fun createUnsupportedMessageTypePanel(messageLink: String?): JComponent {
     val description = if (messageLink != null) {
@@ -221,7 +243,7 @@ internal class SpaceChatItemComponentFactory(
 
   internal class Item(
     avatar: Icon,
-    private val title: MessageTitleComponent,
+    private val title: MessageTitleComponent?,
     header: JComponent,
     content: JComponent
   ) : HoverableJPanel() {
@@ -245,8 +267,15 @@ internal class SpaceChatItemComponentFactory(
       val rightPart = JPanel(VerticalLayout(JBUI.scale(5))).apply {
         isOpaque = false
         border = JBUI.Borders.emptyLeft(AVATAR_GAP)
-        add(title, VerticalLayout.FILL_HORIZONTAL)
-        add(content, VerticalLayout.FILL_HORIZONTAL)
+        title?.let { add(it, VerticalLayout.FILL_HORIZONTAL) }
+        val contentWrapper = BorderLayoutPanel().apply {
+          isOpaque = false
+          if (title == null) {
+            border = JBUI.Borders.emptyTop(avatar.iconHeight / 4)
+          }
+          addToCenter(content)
+        }
+        add(contentWrapper, VerticalLayout.FILL_HORIZONTAL)
       }
       val messagePanel = BorderLayoutPanel().apply {
         isOpaque = false
@@ -265,6 +294,7 @@ internal class SpaceChatItemComponentFactory(
     private fun userAvatar(avatar: Icon) = LinkLabel<Any>("", avatar)
 
     override fun hoverStateChanged(isHovered: Boolean) {
+      title ?: return
       title.actionsPanel.isVisible = isHovered
       title.revalidate()
       title.repaint()

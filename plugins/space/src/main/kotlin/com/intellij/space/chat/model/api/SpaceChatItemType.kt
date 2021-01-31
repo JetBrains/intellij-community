@@ -23,6 +23,7 @@ internal fun M2ItemContentDetails?.toType(): SpaceChatItemType = when (this) {
     is ChatMessage.Text -> SimpleText
     is ChatMessage.Block -> MCMessage(chatMessage.toMCMessageContent())
   }
+  null -> Deleted
   else -> Unknown
 }
 
@@ -42,6 +43,8 @@ internal sealed class SpaceChatItemType {
   class ReviewTitleChanged(val oldTitle: String, val newTitle: String) : SpaceChatItemType()
 
   class MCMessage(val content: SpaceMCMessageContent) : SpaceChatItemType()
+
+  object Deleted : SpaceChatItemType()
 
   object Unknown : SpaceChatItemType()
 }
