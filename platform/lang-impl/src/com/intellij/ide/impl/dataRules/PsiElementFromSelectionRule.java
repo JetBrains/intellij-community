@@ -41,7 +41,8 @@ public class PsiElementFromSelectionRule implements GetDataRule {
     }
     if (item instanceof VirtualFile) {
       Project project = CommonDataKeys.PROJECT.getData(dataProvider);
-      PsiElement element = project == null ? null : PsiManager.getInstance(project).findFile((VirtualFile)item);
+      PsiElement element = project == null || !((VirtualFile)item).isValid() ? null :
+                           PsiManager.getInstance(project).findFile((VirtualFile)item);
       return element != null && element.isValid() ? element : null;
     }
     return null;
