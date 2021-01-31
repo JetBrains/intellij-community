@@ -48,36 +48,15 @@ import java.util.function.Consumer;
 public final class PsiTestUtil {
   @NotNull
   public static VirtualFile createTestProjectStructure(@NotNull Project project,
-                                                       @NotNull Module module,
-                                                       String rootPath,
-                                                       @NotNull Collection<Path> filesToDelete) {
-    return createTestProjectStructure(project, module, rootPath, filesToDelete, true);
-  }
-
-  @NotNull
-  public static VirtualFile createTestProjectStructure(@NotNull Project project, @NotNull Module module, @NotNull Collection<Path> filesToDelete) {
-    return createTestProjectStructure(project, module, null, filesToDelete, true);
-  }
-
-  @NotNull
-  public static VirtualFile createTestProjectStructure(@NotNull Project project,
                                                        @Nullable Module module,
                                                        String rootPath,
-                                                       @NotNull Collection<Path> filesToDelete,
+                                                       @NotNull Collection<? super Path> filesToDelete,
                                                        boolean addProjectRoots) {
-    VirtualFile vDir = createTestProjectStructure("unitTest", module, rootPath, filesToDelete, addProjectRoots);
+    Path dir = HeavyTestHelper.createTempDirectoryForTempDirTestFixture(null, "unitTest");
+    filesToDelete.add(dir);
+    VirtualFile vDir = HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     return vDir;
-  }
-
-  public static @NotNull VirtualFile createTestProjectStructure(@NotNull String tempName,
-                                                                @Nullable Module module,
-                                                                String rootPath,
-                                                                @NotNull Collection<Path> filesToDelete,
-                                                                boolean addProjectRoots) {
-    Path dir = HeavyTestHelper.createTempDirectoryForTempDirTestFixture(null, tempName);
-    filesToDelete.add(dir);
-    return HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
   }
 
   public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
