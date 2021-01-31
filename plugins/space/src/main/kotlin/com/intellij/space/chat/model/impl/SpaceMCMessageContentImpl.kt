@@ -2,9 +2,11 @@
 package com.intellij.space.chat.model.impl
 
 import circlet.client.api.mc.*
+import com.intellij.icons.AllIcons
 import com.intellij.space.chat.model.api.SpaceMCMessageContent
 import com.intellij.space.chat.model.api.SpaceMCMessageElement
 import com.intellij.space.chat.model.api.SpaceMCMessageSection
+import javax.swing.Icon
 
 internal fun ChatMessage.Block.toMCMessageContent(): SpaceMCMessageContent =
   SpaceMCMessageContentImpl(outline, sections.mapNotNull { it.convert() }, style ?: MessageStyle.PRIMARY)
@@ -16,8 +18,16 @@ private fun MessageSectionElement.convert(): SpaceMCMessageSection? = when (this
 }
 
 private fun MessageElement.convert(): SpaceMCMessageElement? = when (this) {
-  is MessageText -> SpaceMCMessageElement.Text(content)
+  is MessageText -> {
+    val icon = (accessory as? MessageIcon)?.icon?.toIcon()
+    SpaceMCMessageElement.Text(icon, content)
+  }
   is MessageDivider -> SpaceMCMessageElement.MessageDivider
+  else -> null
+}
+
+private fun ApiIcon.toIcon(): Icon? = when (icon) {
+  "commits", "commits-small" -> AllIcons.Vcs.CommitNode
   else -> null
 }
 

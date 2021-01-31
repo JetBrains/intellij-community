@@ -3,6 +3,7 @@ package com.intellij.space.chat.model.api
 
 import circlet.client.api.mc.MessageOutline
 import circlet.client.api.mc.MessageStyle
+import javax.swing.Icon
 
 internal interface SpaceMCMessageContent {
   val outline: MessageOutline?
@@ -18,6 +19,6 @@ internal sealed class SpaceMCMessageSection {
 }
 
 internal sealed class SpaceMCMessageElement {
-  class Text(val content: String) : SpaceMCMessageElement()
+  class Text(val icon: Icon?, val content: String) : SpaceMCMessageElement()
   object MessageDivider : SpaceMCMessageElement()
 }

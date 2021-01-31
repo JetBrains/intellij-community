@@ -13,6 +13,7 @@ import com.intellij.space.chat.ui.SpaceChatMarkdownTextComponent
 import com.intellij.space.chat.ui.getGrayTextHtml
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.NonNls
@@ -61,9 +62,29 @@ internal class SpaceMCMessageComponent(
 
   private fun SpaceMCMessageElement.createComponent(): JComponent =
     when (this) {
-      is SpaceMCMessageElement.Text -> SpaceChatMarkdownTextComponent(server, content, initialUnfurls = unfurls)
+      is SpaceMCMessageElement.Text -> createComponent()
       is SpaceMCMessageElement.MessageDivider -> createDividerPanel()
     }
+
+  private fun SpaceMCMessageElement.Text.createComponent(): JComponent {
+    val textComponent = SpaceChatMarkdownTextComponent(server, content, initialUnfurls = unfurls)
+
+    return BorderLayoutPanel().apply {
+      isOpaque = false
+      createIconComponent()?.let { iconComponent ->
+        addToLeft(
+          BorderLayoutPanel().apply {
+            isOpaque = false
+            border = JBUI.Borders.emptyRight(3)
+            addToTop(iconComponent)
+          }
+        )
+      }
+      addToCenter(textComponent)
+    }
+  }
+
+  private fun SpaceMCMessageElement.Text.createIconComponent(): JComponent? = icon?.let { JBLabel(icon) }
 
   private fun createHeaderComponent(@NlsSafe text: String) = SpaceChatMarkdownTextComponent(server, text, initialUnfurls = unfurls).apply {
     scaleFont(HEADER_FONT_SCALING)
