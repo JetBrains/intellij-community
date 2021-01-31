@@ -455,6 +455,14 @@ public class Splitter extends JPanel implements Splittable {
     return myProportion;
   }
 
+  public float getMinimumProportion() {
+    return myMinProp;
+  }
+
+  public float getMaximumProportion() {
+    return myMaxProp;
+  }
+
   @Override
   public void setProportion(float proportion) {
     if (myProportion == proportion) {

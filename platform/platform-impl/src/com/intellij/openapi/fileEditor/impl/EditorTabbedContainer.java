@@ -414,7 +414,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         if (!(deepestComponent instanceof InplaceButton)) {
           myActionClickCount++;
         }
-        if (myActionClickCount > 1 && !isFloating()) {
+        if (myActionClickCount > 1) {
           doHideAll(e);
         }
       }
