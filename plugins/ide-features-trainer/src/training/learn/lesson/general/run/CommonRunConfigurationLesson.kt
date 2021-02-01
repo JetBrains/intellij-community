@@ -16,6 +16,7 @@ import training.learn.LessonsBundle
 import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.ui.LearningUiHighlightingManager
+import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 
 abstract class CommonRunConfigurationLesson(module: Module, id: String, languageId: String)
@@ -48,8 +49,19 @@ abstract class CommonRunConfigurationLesson(module: Module, id: String, language
       }
 
       task {
+        val configurationsShown = CompletableFuture<Boolean>()
         triggerByUiComponentAndHighlight<JButton> { ui ->
-          ui.text == demoConfigurationName
+          if (ui.text == demoConfigurationName) {
+            configurationsShown.complete(true)
+            true
+          }
+          else false
+        }
+        showWarning(LessonsBundle.message("run.configuration.list.not.shown.warning",
+                                          strong(ActionsBundle.message("action.ViewNavigationBar.text").dropMnemonic()),
+                                          strong(ActionsBundle.message("group.ViewMenu.text").dropMnemonic()),
+                                          strong(ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic()))) {
+          !configurationsShown.getNow(false)
         }
       }
 
