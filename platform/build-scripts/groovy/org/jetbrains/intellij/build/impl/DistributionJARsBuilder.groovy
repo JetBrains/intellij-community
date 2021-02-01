@@ -611,6 +611,7 @@ final class DistributionJARsBuilder {
           .map({ String line -> StringUtil.split(line, "#", true, false)[0] } as Function<String, String>)
           .map({ String line -> line.trim() } as Function<String, String>)
           .filter({ String line -> !line.isEmpty() } as Predicate<String>)
+          .map({ String line -> line.toString() /*make sure there is no GString involved */} as Function<String, String>)
           .collect(Collectors.toCollection({ new TreeSet<String>(String.CASE_INSENSITIVE_ORDER) } as Supplier<Collection<String>>))
       }
 
@@ -625,12 +626,15 @@ final class DistributionJARsBuilder {
         //   -<product code>:<plugin main module name> ## exclude the plugin
 
         String module = plugin.mainModule
-        if (config.contains("-${productCode}:${module}")) {
+        String excludeRule = "-${productCode}:${module}"
+        String includeRule = "+${productCode}:${module}"
+
+        if (config.contains(excludeRule)) {
           //the exclude rule is the most powerful
           return false
         }
 
-        return config.contains(module) || config.contains("+${productCode}:${module}")
+        return config.contains(module) || config.contains(includeRule.toString())
       }
     }
   }
