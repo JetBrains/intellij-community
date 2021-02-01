@@ -8,18 +8,11 @@ import com.intellij.util.net.ssl.ConfirmingTrustManager
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import java.io.File
 
-interface CertificateStore {
-  val cacertsPath: String
-  val customTrustManager: MutableTrustManager
-}
-
-class PluginCertificateStore : CertificateStore {
+class PluginCertificateStore {
   private val myTrustManager = NotNullLazyValue.atomicLazy {
     ConfirmingTrustManager.createForStorage(DEFAULT_PATH, DEFAULT_PASSWORD)
   }
-
-  override val cacertsPath: String = DEFAULT_PATH
-  override val customTrustManager: MutableTrustManager = myTrustManager.value.customManager
+  val customTrustManager: MutableTrustManager = myTrustManager.value.customManager
 
   companion object {
     private val DEFAULT_PATH: String = java.lang.String.join(File.separator, PathManager.getConfigPath(), "plugins", "cacerts")
