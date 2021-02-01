@@ -34,6 +34,7 @@ public interface LombokClassNames {
   @NonNls String LOG_4_J = "lombok.extern.log4j.Log4j";
   @NonNls String LOG_4_J_2 = "lombok.extern.log4j.Log4j2";
   @NonNls String NON_FINAL = "lombok.experimental.NonFinal";
+  @NonNls String NON_NULL = "lombok.NonNull";
   @NonNls String NO_ARGS_CONSTRUCTOR = "lombok.NoArgsConstructor";
   @NonNls String PACKAGE_PRIVATE = "lombok.experimental.PackagePrivate";
   @NonNls String REQUIRED_ARGS_CONSTRUCTOR = "lombok.RequiredArgsConstructor";
