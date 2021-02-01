@@ -1,19 +1,25 @@
 package com.intellij.externalSystem;
 
+import com.intellij.buildsystem.model.DeclaredDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependency;
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository;
+import com.intellij.psi.xml.XmlTag;
 
 import java.io.IOException;
 import java.util.List;
 
 public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
 
-  public void testGetDependencies(){
-    List<UnifiedDependency> dependencies = myModifierService.declaredDependencies(getModule("project"));
+  public void testGetDependencies() {
+    List<DeclaredDependency> dependencies = myModifierService.declaredDependencies(getModule("project"));
     assertNotNull(dependencies);
     assertEquals(2, dependencies.size());
-    assertEquals(new UnifiedDependency("somegroup", "someartifact", "1.0", null), dependencies.get(0));
-    assertEquals(new UnifiedDependency("anothergroup", "anotherArtifact", "2.0", null), dependencies.get(1));
+
+    XmlTag someArtifact = findDependencyTag("somegroup", "someartifact", "1.0");
+    XmlTag another = findDependencyTag("anothergroup", "anotherArtifact", "2.0");
+
+    assertEquals(new DeclaredDependency("somegroup", "someartifact", "1.0", null, someArtifact), dependencies.get(0));
+    assertEquals(new DeclaredDependency("anothergroup", "anotherArtifact", "2.0", null, another), dependencies.get(1));
   }
 
   public void testAddDependency() throws IOException {

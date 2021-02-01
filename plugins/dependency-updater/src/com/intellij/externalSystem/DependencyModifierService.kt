@@ -1,5 +1,6 @@
 package com.intellij.externalSystem
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.openapi.module.Module
@@ -18,7 +19,7 @@ class DependencyModifierService(private val myProject: Project) {
     it.deleteRepository(module, repository)
   }
 
-  fun declaredDependencies(module: Module): List<UnifiedDependency> = read(module) {
+  fun declaredDependencies(module: Module): List<DeclaredDependency> = read(module) {
     it.declaredDependencies(module);
   }
 

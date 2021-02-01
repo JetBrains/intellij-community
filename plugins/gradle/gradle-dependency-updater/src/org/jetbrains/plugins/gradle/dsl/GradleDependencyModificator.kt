@@ -8,14 +8,15 @@ import com.android.tools.idea.gradle.dsl.api.dependencies.DependenciesModel
 import com.android.tools.idea.gradle.dsl.api.ext.PropertyType
 import com.android.tools.idea.gradle.dsl.api.ext.ResolvedPropertyModel
 import com.android.tools.idea.gradle.dsl.model.repositories.UrlBasedRepositoryModelImpl
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.ExternalDependencyModificator
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -126,10 +127,11 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
     applyChanges(model)
   }
 
-  override fun declaredDependencies(module: Module): List<UnifiedDependency> {
+  override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency> {
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
     return model.dependencies().artifacts().map {
-      UnifiedDependency(it.group().valueAsString(), it.name().valueAsString(), it.version().valueAsString(), it.configurationName())
+      DeclaredDependency(it.group().valueAsString(), it.name().valueAsString(), it.version().valueAsString(), it.configurationName(),
+                         it.psiElement)
     }
   }
 

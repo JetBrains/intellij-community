@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.dependencyUpdater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.psi" scope="TEST" />
   </component>
 </module>

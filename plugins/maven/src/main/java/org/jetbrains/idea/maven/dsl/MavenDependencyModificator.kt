@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dsl
 
+import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
@@ -288,17 +289,17 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   }
 
 
-  override fun declaredDependencies(module: Module): List<UnifiedDependency> {
+  override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency>? {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
 
 
-    return ReadAction.compute<List<UnifiedDependency>, Throwable> {
+    return ReadAction.compute<List<DeclaredDependency>, Throwable> {
       val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.getFile()) ?: throw IllegalStateException(
         MavenProjectBundle.message("maven.model.error", module.name))
       model.dependencies.dependencies.map {
         var scope = it.scope.stringValue;
         if (scope == SCOPE_COMPILE) scope = null
-        UnifiedDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.stringValue, scope)
+        DeclaredDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.stringValue, scope, it.xmlElement)
       }
     }
 
