@@ -58,7 +58,7 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
 
   val createdAt: Property<Long> = cellProperty { review.live.createdAt }
 
-  val createdBy: Property<TD_MemberProfile> = cellProperty { review.live.createdBy!!.resolve() }
+  val createdBy: Property<TD_MemberProfile?> = cellProperty { review.live.createdBy?.resolve() }
 
   val turnBased: Property<Boolean?> = cellProperty { review.live.turnBased }
 

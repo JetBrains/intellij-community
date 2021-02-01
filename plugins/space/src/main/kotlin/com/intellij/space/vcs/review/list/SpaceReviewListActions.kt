@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
 import circlet.client.api.TD_MemberProfile
@@ -45,11 +45,17 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
   override fun isDumbAware(): Boolean = true
 
   override fun update(e: AnActionEvent) {
-    val data = e.getData(SELECTED_REVIEW) ?: return
+    val data = e.getData(SELECTED_REVIEW) ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     val review = data.review.resolve()
 
-    // TODO: fix review created by Space service
-    val profile = review.createdBy!!.resolve()
+    val profile = review.createdBy?.resolve() ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabledAndVisible = true
     e.presentation.text = profile.englishFullName() // NON-NLS
   }
 
@@ -59,7 +65,9 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
     val server = SpaceWorkspaceComponent.getInstance().workspace.value!!.client.server
 
     val actions: MutableList<ActionGroup> = mutableListOf()
-    actions += UserActionGroup(review.createdBy!!.resolve(), server)
+    review.createdBy?.resolve()?.let { author ->
+      actions += UserActionGroup(author, server)
+    }
     actions += review.participants.map { it.user.resolve() }
       .map { UserActionGroup(it, server) }.toList()
     return actions.toTypedArray()

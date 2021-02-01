@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.list
 
 import circlet.client.api.TD_MemberProfile
@@ -155,10 +155,11 @@ internal class SpaceReviewListCellRenderer(
 
     val review = value.review.resolve()
     val title = review.title
-    val author = review.createdBy!!.resolve()
+    val author = review.createdBy?.resolve()
     val key = review.key ?: ""
     val createdAt = review.createdAt.formatPrettyDateTime()
-    val info = SpaceBundle.message("review.by.author.at.time", key, author.englishFullName(), createdAt)
+    val info = author?.let { SpaceBundle.message("review.by.author.at.time", key, it.englishFullName(), createdAt) }
+               ?: SpaceBundle.message("review.at.time", key, createdAt)
 
     val fullToolTipText = StringBuilder().apply {
       append(title).append(BR)

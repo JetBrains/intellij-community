@@ -51,12 +51,18 @@ internal object SpaceReviewInfoPanelFactory {
       setCopyable(true)
     }
 
-    detailsVm.createdBy.forEach(detailsVm.lifetime) {
-      createdByComponent.text = SpaceBundle.message(
-        "review.label.created.by.user.at.time",
-        it.englishFullName(),
-        detailsVm.createdAt.value.formatPrettyDateTime()
-      )
+    detailsVm.createdBy.forEach(detailsVm.lifetime) { author ->
+      val createdAt = detailsVm.createdAt.value.formatPrettyDateTime()
+      createdByComponent.text = if (author != null) {
+        SpaceBundle.message(
+          "review.label.created.by.user.at.time",
+          author.englishFullName(),
+          createdAt
+        )
+      }
+      else {
+        SpaceBundle.message("review.label.created.at.time", createdAt)
+      }
     }
 
     detailsVm.title.forEach(detailsVm.lifetime) {
