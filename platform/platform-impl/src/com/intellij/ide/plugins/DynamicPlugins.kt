@@ -479,7 +479,7 @@ object DynamicPlugins {
           unloadLoadedOptionalDependenciesOnPlugin(pluginDescriptor, classLoaders)
 
           pluginDescriptor.pluginDependencies?.let { unloadDependencyDescriptors(it, PluginStateChecker(), classLoaders) }
-          unloadPluginDescriptorNotRecursively(pluginDescriptor)
+          unloadPluginDescriptorNotRecursively(pluginDescriptor, true)
 
           clearPluginClassLoaderParentListCache()
 
@@ -632,7 +632,7 @@ object DynamicPlugins {
       val ok = processLoadedOptionalDependenciesOnPlugin(dependencyPluginDescriptor.pluginId, descriptor) { mainDescriptor, subDescriptor ->
         val classLoader = (subDescriptor ?: mainDescriptor).pluginClassLoader
         if (subDescriptor != null) {
-          unloadPluginDescriptorNotRecursively(subDescriptor)
+          unloadPluginDescriptorNotRecursively(subDescriptor, false)
         }
 
         // this additional code is required because in unit tests PluginClassLoader is not used
@@ -676,7 +676,7 @@ object DynamicPlugins {
       subDescriptor.pluginDependencies?.let {
         unloadDependencyDescriptors(it, pluginStateChecker, classLoaders)
       }
-      unloadPluginDescriptorNotRecursively(subDescriptor)
+      unloadPluginDescriptorNotRecursively(subDescriptor, true)
       subDescriptor.classLoader = null
     }
   }
@@ -691,7 +691,7 @@ object DynamicPlugins {
 
   // PluginId cannot be used to unload related resources because one plugin descriptor may consist of several sub descriptors, each of them depends on presense of another plugin,
   // here not the whole plugin is unloaded, but only one part.
-  private fun unloadPluginDescriptorNotRecursively(pluginDescriptor: IdeaPluginDescriptorImpl) {
+  private fun unloadPluginDescriptorNotRecursively(pluginDescriptor: IdeaPluginDescriptorImpl, clearExtensionPoints: Boolean) {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
 
@@ -727,9 +727,13 @@ object DynamicPlugins {
     // unregister plugin extension points
     processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.unregisterExtensionPoints(points) }
 
-    pluginDescriptor.app.extensionPoints = null
-    pluginDescriptor.project.extensionPoints = null
-    pluginDescriptor.module.extensionPoints = null
+    // Sub-descriptors remain in memory when the dependent plugin is unloaded, and the EP declarations will be needed again when
+    // we load the dependent plugin back, so we can't clear the EPs in this situation
+    if (clearExtensionPoints) {
+      pluginDescriptor.app.extensionPoints = null
+      pluginDescriptor.project.extensionPoints = null
+      pluginDescriptor.module.extensionPoints = null
+    }
 
     val pluginId = pluginDescriptor.pluginId
     app.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
@@ -1148,6 +1152,10 @@ private class PluginStateChecker(private val loadedIdMap: MutableMap<PluginId, I
       else -> loadedPlugins.any { it.pluginId == pluginId }
     }
   }
+
+  fun findDescriptor(pluginId: PluginId): IdeaPluginDescriptorImpl? {
+    return loadedPlugins.find { it.pluginId == pluginId }
+  }
 }
 
 private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
@@ -1237,11 +1245,15 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
   val anyModule = openedProjects.firstOrNull()?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
   for (epName in extensions.keys) {
-    val pluginExtensionPoint = findPluginExtensionPointRecursive(baseDescriptor ?: descriptor, epName, pluginStateChecker)
-    if (pluginExtensionPoint != null) {
+    val result = findPluginExtensionPointRecursive(baseDescriptor ?: descriptor, epName, pluginStateChecker, context)
+    if (result != null) {
+      val (pluginExtensionPoint, foundInDependencies) = result
       // descriptor.pluginId is null when we check the optional dependencies of the plugin which is being loaded
       // if an optional dependency of a plugin extends a non-dynamic EP of that plugin, it shouldn't prevent plugin loading
-      if (baseDescriptor != null && !isSubDescriptor && !pluginExtensionPoint.isDynamic) {
+      if (baseDescriptor != null && (!isSubDescriptor || foundInDependencies) && !pluginExtensionPoint.isDynamic) {
+        if (foundInDependencies) {
+          return "Plugin ${descriptor.pluginId ?: baseDescriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
+        }
         return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName" +
                " in optional dependency on it: ${descriptor.pluginId}"
       }
@@ -1310,13 +1322,17 @@ private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl,
 
 private fun findPluginExtensionPointRecursive(pluginDescriptor: IdeaPluginDescriptorImpl,
                                               epName: String,
-                                              pluginStateChecker: PluginStateChecker): ExtensionPointImpl<*>? {
-  findPluginExtensionPoint(pluginDescriptor, epName)?.let { return it }
+                                              pluginStateChecker: PluginStateChecker,
+                                              context: List<IdeaPluginDescriptorImpl>): Pair<ExtensionPointImpl<*>, Boolean>? {
+  findPluginExtensionPoint(pluginDescriptor, epName)?.let { return it to false }
   pluginDescriptor.pluginDependencies?.let { pluginDependencies ->
     for (dependency in pluginDependencies) {
-      if (pluginStateChecker.isPluginOrModuleLoaded(dependency.id)) {
+      if (pluginStateChecker.isPluginOrModuleLoaded(dependency.id) || context.any { it.id == dependency.id }) {
         dependency.subDescriptor?.let { subDescriptor ->
-          findPluginExtensionPointRecursive(subDescriptor, epName, pluginStateChecker)?.let { return it }
+          findPluginExtensionPointRecursive(subDescriptor, epName, pluginStateChecker, context)?.let { return it }
+        }
+        pluginStateChecker.findDescriptor(dependency.id)?.let { dependencyDescriptor ->
+          findPluginExtensionPointRecursive(dependencyDescriptor, epName, pluginStateChecker, context)?.let { return it.first to true }
         }
       }
     }
