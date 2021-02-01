@@ -2106,27 +2106,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  private fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
-    val classLoader = pluginDescriptor.pluginClassLoader
-    val bundleName = when (pluginDescriptor.pluginId) {
-      PluginManagerCore.CORE_ID -> IdeBundle.BUNDLE
-      else -> pluginDescriptor.resourceBundleBaseName ?: return null
-    }
-
-    try {
-      val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
-      val key = "toolwindow.stripe.${id}".replace(" ", "_")
-      @Suppress("HardCodedStringLiteral", "UnnecessaryVariable")
-      val fallback = id
-      val label = BundleBase.messageOrDefault(bundle, key, fallback)
-      return Supplier { label }
-    }
-    catch (e: MissingResourceException) {
-      LOG.warn("Missing bundle $bundleName at $classLoader", e)
-    }
-    return null
-  }
-
   private inline fun processDescriptors(crossinline handler: (bean: ToolWindowEP, pluginDescriptor: PluginDescriptor) -> Unit) {
     ToolWindowEP.EP_NAME.processWithPluginDescriptor { bean, pluginDescriptor ->
       try {
@@ -2219,7 +2198,7 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   return source != null
 }
 
-private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescriptor: PluginDescriptor): Icon? {
+fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescriptor: PluginDescriptor): Icon? {
   try {
     return IconLoader.findIcon(bean.icon ?: return null, factory.javaClass, pluginDescriptor.pluginClassLoader, null, true)
   }
@@ -2227,6 +2206,28 @@ private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory, plu
     LOG.error(e)
     return EmptyIcon.ICON_13
   }
+}
+
+fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
+  val classLoader = pluginDescriptor.pluginClassLoader
+  val bundleName = when (pluginDescriptor.pluginId) {
+    PluginManagerCore.CORE_ID -> IdeBundle.BUNDLE
+    else -> pluginDescriptor.resourceBundleBaseName ?: return null
+  }
+
+  try {
+    val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
+    val key = "toolwindow.stripe.${id}".replace(" ", "_")
+
+    @Suppress("HardCodedStringLiteral", "UnnecessaryVariable")
+    val fallback = id
+    val label = BundleBase.messageOrDefault(bundle, key, fallback)
+    return Supplier { label }
+  }
+  catch (e: MissingResourceException) {
+    LOG.warn("Missing bundle $bundleName at $classLoader", e)
+  }
+  return null
 }
 
 private fun addStripeButton(button: StripeButton, stripe: Stripe) {
