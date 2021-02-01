@@ -8,9 +8,6 @@ from testing import HelpersTestCase
 python3_only = unittest.skipUnless(six.PY3, 'Python 3 only test')
 python2_only = unittest.skipUnless(six.PY2, 'Python 2 only test')
 
-_test_root = os.path.dirname(os.path.abspath(__file__))
-_test_data_root = os.path.join(_test_root, 'data')
-
 
 def test_data_dir(name):
     """
@@ -47,4 +44,4 @@ class GeneratorTestCase(HelpersTestCase):
 
     @property
     def test_data_root(self):
-        return _test_data_root
+        return os.path.join(super(GeneratorTestCase, self).test_data_root, 'generator3')
