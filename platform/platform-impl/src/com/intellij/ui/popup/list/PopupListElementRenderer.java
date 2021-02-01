@@ -6,14 +6,12 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
-import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.ui.popup.ListPopupStepEx;
-import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +21,14 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
+
   protected final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
   private @Nullable JLabel myValueLabel;
+
+  private JComponent myRightPart;
+  private JComponent myLeftPart;
+  private JComponent mySeparator;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
@@ -93,6 +96,56 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   }
 
   @Override
+  protected JComponent layoutComponent(JComponent middleItemComponent) {
+    myNextStepLabel = new JLabel();
+    myNextStepLabel.setOpaque(false);
+
+    JPanel left = new JPanel(new BorderLayout());
+    left.setBorder(JBUI.Borders.empty());
+    left.add(middleItemComponent, BorderLayout.WEST);
+
+    JPanel right = new JPanel(new BorderLayout());
+    int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.NextStep.getIconWidth()) / 2;
+    right.setBorder(JBUI.Borders.empty(0, leftRightInset));
+    right.add(myNextStepLabel, BorderLayout.CENTER);
+
+    mySeparator = new JSeparator(SwingConstants.VERTICAL);
+
+    JPanel result = new JPanel();
+    result.setLayout(new GridBagLayout());
+    result.setBorder(JBUI.Borders.empty());
+
+    GridBag gbc = new GridBag()
+      .setDefaultAnchor(0, GridBagConstraints.WEST)
+      .setDefaultWeightX(0, 1)
+      .setDefaultAnchor(GridBagConstraints.CENTER)
+      .setDefaultWeightX(0)
+      .setDefaultWeightY(1)
+      .setDefaultPaddingX(0)
+      .setDefaultPaddingY(0)
+      .setDefaultInsets(0, 0, 0, 0)
+      .setDefaultFill(GridBagConstraints.BOTH);
+
+    result.add(left, gbc.next());
+    result.add(mySeparator, gbc.next().insets(2, 0, 2, 0));
+    result.add(right, gbc.next());
+
+    myLeftPart = left;
+    myRightPart = right;
+
+    return result;
+  }
+
+  @Nullable
+  @Override
+  protected Icon getItemIcon(E value, boolean isSelected) {
+    ListPopupStep<Object> step = myPopup.getListStep();
+    return step.hasSubstep(value) && step.onChosen(value, true) == PopupStep.FINAL_CHOICE && isNextStepButtonSelected(myPopup.getList())
+           ? myDescriptor.getIconFor(value)
+           : super.getItemIcon(value, isSelected);
+  }
+
+  @Override
   protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
@@ -100,7 +153,33 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     setSelected(myComponent, isSelected && isSelectable);
     setSelected(myTextLabel, isSelected && isSelectable);
-    setSelected(myNextStepLabel, isSelected && isSelectable);
+    myLeftPart.setOpaque(false);
+    myRightPart.setOpaque(false);
+    mySeparator.setVisible(false);
+
+    boolean nextStepButtonSelected = false;
+    if (step.hasSubstep(value)) {
+      myNextStepLabel.setVisible(isSelectable);
+
+      if (step.onChosen(value, true) == PopupStep.FINAL_CHOICE) {
+        myLeftPart.setOpaque(true);
+        myRightPart.setOpaque(true);
+        setSelected(myComponent, false);
+
+        nextStepButtonSelected = isNextStepButtonSelected(list);
+        setSelected(myLeftPart, isSelected && !nextStepButtonSelected);
+        setSelected(myTextLabel, isSelected && !nextStepButtonSelected);
+        setSelected(myRightPart, isSelected && nextStepButtonSelected);
+        myNextStepLabel.setIcon(isSelectable & isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+        mySeparator.setVisible(true);
+      }
+      else {
+        myNextStepLabel.setIcon(isSelectable & isSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+      }
+    }
+    else {
+      myNextStepLabel.setVisible(false);
+    }
 
     if (step instanceof BaseListPopupStep) {
       Color bg = ((BaseListPopupStep<E>)step).getBackgroundFor(value);
@@ -130,14 +209,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myTextLabel.setDisplayedMnemonicIndex(-1);
     }
 
-    if (step.hasSubstep(value) && isSelectable) {
-      myNextStepLabel.setVisible(true);
-      myNextStepLabel.setIcon(isSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
-    }
-    else {
-      myNextStepLabel.setVisible(false);
-    }
-
     if (myShortcutLabel != null) {
       myShortcutLabel.setEnabled(isSelectable);
       myShortcutLabel.setText("");
@@ -150,13 +221,19 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
           }
         }
       }
-      setSelected(myShortcutLabel, isSelected && isSelectable);
-      myShortcutLabel.setForeground(isSelected && isSelectable ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
+      setSelected(myShortcutLabel, isSelected && isSelectable && !nextStepButtonSelected);
+      myShortcutLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected
+                                    ? UIManager.getColor("MenuItem.acceleratorSelectionForeground")
+                                    : UIManager.getColor("MenuItem.acceleratorForeground"));
     }
 
     if (myValueLabel != null) {
       myValueLabel.setText(step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getValueFor(value) : null);
-      setSelected(myValueLabel, isSelected && isSelectable);
+      setSelected(myValueLabel, isSelected && isSelectable  && !nextStepButtonSelected);
     }
+  }
+
+  private boolean isNextStepButtonSelected(JList<? extends E> list) {
+    return list instanceof ListPopupImpl.NestedList && ((ListPopupImpl.NestedList)list).isNextStepButtonSelected();
   }
 }
