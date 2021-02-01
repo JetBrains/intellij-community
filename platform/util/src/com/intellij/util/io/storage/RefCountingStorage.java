@@ -4,47 +4,42 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
-public class RefCountingStorage extends AbstractStorage {
+@ApiStatus.Internal
+public final class RefCountingStorage extends AbstractStorage {
   private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<>();
   private int myPendingWriteRequestsSize;
-  private final ExecutorService myPendingWriteRequestsExecutor = createExecutor();
-
-  protected @NotNull ExecutorService createExecutor() {
-    return new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<>(), ConcurrencyUtil
-      .newNamedThreadFactory("RefCountingStorage write content helper"));
-  }
+  private final ExecutorService myWriteRequestExecutor;
 
   private final boolean myDoNotZipCaches;
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
 
-  public RefCountingStorage(@NotNull Path path) throws IOException {
-    this(path, CapacityAllocationPolicy.DEFAULT);
-  }
-
-  public RefCountingStorage(@NotNull Path path, CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
-    this(path, capacityAllocationPolicy, Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue());
-  }
-
-  public RefCountingStorage(@NotNull Path path, CapacityAllocationPolicy capacityAllocationPolicy, boolean doNotZipCaches) throws IOException {
+  public RefCountingStorage(@NotNull Path path,
+                            @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
+                            @NotNull ExecutorService writeRequestExecutor,
+                            boolean doNotZipCaches) throws IOException {
     super(path, capacityAllocationPolicy, true);
 
     myDoNotZipCaches = doNotZipCaches;
+    myWriteRequestExecutor = writeRequestExecutor;
   }
 
   @Override
@@ -125,7 +120,7 @@ public class RefCountingStorage extends AbstractStorage {
       if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
         zipAndWrite(bytes, record, fixedSize);
       } else {
-        myPendingWriteRequests.put(record, myPendingWriteRequestsExecutor.submit(() -> {
+        myPendingWriteRequests.put(record, myWriteRequestExecutor.submit(() -> {
           zipAndWrite(bytes, record, fixedSize);
           return null;
         }));

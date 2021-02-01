@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.ExecutorService;
 
 class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
@@ -91,13 +90,10 @@ class PersistentFSConnector {
         }
       };
 
-      contents = new RefCountingStorage(contentsFile, CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, FSRecords.useCompressionUtil) {
-        @NotNull
-        @Override
-        protected ExecutorService createExecutor() {
-          return SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Pool");
-        }
-      };
+      contents = new RefCountingStorage(contentsFile,
+                                        CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
+                                        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
+                                        FSRecords.useCompressionUtil);
 
       // sources usually zipped with 4x ratio
       contentHashesEnumerator = useContentHashes ? new ContentHashEnumerator(contentsHashesFile, storageLockContext) : null;
