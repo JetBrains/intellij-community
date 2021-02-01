@@ -3,9 +3,8 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -117,7 +116,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return WS_PATTERN.matcher(docCommentData.getText()).matches();
   }
 
-  private static void addNewLineToTag(CompositeElement tag, Project project, PsiManager manager) {
+  private static void addNewLineToTag(CompositeElement tag, PsiFile psiFile, PsiManager manager) {
     LOG.assertTrue(tag != null && tag.getElementType() == DOC_TAG);
     ASTNode current = tag.getLastChildNode();
     while (current != null && current.getElementType() == DOC_COMMENT_DATA && isWhitespaceCommentData(current)) {
@@ -126,7 +125,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) return;
 
     CharTable charTable = SharedImplUtil.findCharTableByTree(tag);
-    if (JavaCodeStyleSettingsFacade.getInstance(project).isJavaDocLeadingAsterisksEnabled()) {
+    if (JavaFileCodeStyleFacade.forContext(psiFile).isJavaDocLeadingAsterisksEnabled()) {
       tag.addChild(Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, manager));
       tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", charTable, manager));
       tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", charTable, manager));
@@ -160,7 +159,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
           CharTable charTable = SharedImplUtil.findCharTableByTree(this);
           PsiManager psiManager = getManager();
 
-          if (JavaCodeStyleSettingsFacade.getInstance(getProject()).isJavaDocLeadingAsterisksEnabled()) {
+          if (JavaFileCodeStyleFacade.forContext(getContainingFile()).isJavaDocLeadingAsterisksEnabled()) {
             TreeElement newLine = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, psiManager);
             TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", charTable, psiManager);
             TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", charTable, psiManager);
@@ -190,10 +189,10 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
 
     if (needToAddNewline) {
       if (first.getTreePrev() != null && first.getTreePrev().getElementType() == DOC_TAG) {
-        addNewLineToTag((CompositeElement)first.getTreePrev(), getProject(), getManager());
+        addNewLineToTag((CompositeElement)first.getTreePrev(), getContainingFile(), getManager());
       }
       if (first.getTreeNext() != null && first.getTreeNext().getElementType() == DOC_TAG) {
-        addNewLineToTag((CompositeElement)first, getProject(), getManager());
+        addNewLineToTag((CompositeElement)first, getContainingFile(), getManager());
       }
       else {
         removeEndingAsterisksFromTag((CompositeElement)first);
