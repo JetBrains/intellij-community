@@ -55,7 +55,7 @@ public class CommonCodeStyleSettings {
 
   @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
 
-  private final @NotNull Language myLanguage;
+  private final @NotNull String myLangId;
 
   private ArrangementSettings myArrangementSettings;
   private CodeStyleSettings   myRootSettings;
@@ -69,7 +69,11 @@ public class CommonCodeStyleSettings {
   private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
   public CommonCodeStyleSettings(@Nullable Language language) {
-    myLanguage = ObjectUtils.notNull(language, Language.ANY);
+    this(ObjectUtils.notNull(language, Language.ANY).getID());
+  }
+
+  private CommonCodeStyleSettings(@NotNull String langId) {
+    myLangId = langId;
   }
 
   void setRootSettings(@NotNull CodeStyleSettings rootSettings) {
@@ -78,7 +82,12 @@ public class CommonCodeStyleSettings {
 
   @NotNull
   public Language getLanguage() {
-    return myLanguage;
+    Language language = Language.findLanguageByID(myLangId);
+    if (language == null) {
+      LOG.error("Can't find the language with ID " + myLangId);
+      return Language.ANY;
+    }
+    return language;
   }
 
   @NotNull
@@ -115,7 +124,7 @@ public class CommonCodeStyleSettings {
   }
 
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
-    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage);
+    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLangId);
     copyPublicFields(this, commonSettings);
     commonSettings.setRootSettings(rootSettings);
     commonSettings.myForceArrangeMenuAvailable = myForceArrangeMenuAvailable;
@@ -148,7 +157,7 @@ public class CommonCodeStyleSettings {
 
   @Nullable
   private CommonCodeStyleSettings getDefaultSettings() {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(myLanguage);
+    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
     return provider == null ? null : provider.getDefaultCommonSettings();
   }
 
@@ -163,10 +172,10 @@ public class CommonCodeStyleSettings {
     }
     Element arrangementRulesContainer = element.getChild(ARRANGEMENT_ELEMENT_NAME);
     if (arrangementRulesContainer != null) {
-      myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage);
+      myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, getLanguage());
     }
     mySoftMargins.deserializeFrom(element);
-    LOG.info("Loaded " + myLanguage.getDisplayName() + " common code style settings");
+    LOG.info("Loaded " + getLanguage().getDisplayName() + " common code style settings");
   }
 
   public void writeExternal(Element element) {
@@ -192,7 +201,7 @@ public class CommonCodeStyleSettings {
 
     if (myArrangementSettings != null) {
       Element container = new Element(ARRANGEMENT_ELEMENT_NAME);
-      ArrangementUtil.writeExternal(container, myArrangementSettings, myLanguage);
+      ArrangementUtil.writeExternal(container, myArrangementSettings, getLanguage());
       if (!container.getChildren().isEmpty()) {
         element.addContent(container);
       }
@@ -201,7 +210,7 @@ public class CommonCodeStyleSettings {
 
   @Nullable
   private Set<String> getSupportedFields() {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(myLanguage);
+    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
     return provider == null ? null : provider.getSupportedFields();
   }
 
@@ -1169,7 +1178,7 @@ public class CommonCodeStyleSettings {
     ArrangementSettings theseSettings = myArrangementSettings;
     ArrangementSettings otherSettings = obj.getArrangementSettings();
     if (theseSettings == null && otherSettings != null) {
-      Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(myLanguage);
+      Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(getLanguage());
       if (rearranger instanceof ArrangementStandardSettingsAware) {
         theseSettings = ((ArrangementStandardSettingsAware)rearranger).getDefaultSettings();
       }

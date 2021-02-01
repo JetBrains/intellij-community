@@ -208,7 +208,7 @@ public class SpacingBuilder {
    *                                  return null!
    */
   public SpacingBuilder(@NotNull CommonCodeStyleSettings languageCodeStyleSettings) {
-    assert languageCodeStyleSettings.getLanguage() != null : "Only language code style settings are accepted (getLanguage() != null)";
+    assert !Language.ANY.equals(languageCodeStyleSettings.getLanguage()) : "Only language code style settings are accepted (getLanguage() != null)";
     myCodeStyleSettings = languageCodeStyleSettings;
   }
 
