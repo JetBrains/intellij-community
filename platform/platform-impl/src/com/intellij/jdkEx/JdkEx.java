@@ -168,21 +168,6 @@ public final class JdkEx {
     return false;
   }
 
-  public static boolean trySetCommonFileDialogLocalization(@NotNull FileDialog fileDialog,
-                                                           @Nullable @Nls String openButtonText,
-                                                           @Nullable @Nls String selectFolderButtonText) {
-    MethodInvocator setLocalizationStrings = getFileDialogLocalizationStringsMethod();
-    if (setLocalizationStrings == null) return false;
-    try {
-      setLocalizationStrings.invoke(fileDialog, openButtonText, selectFolderButtonText);
-      return true;
-    }
-    catch (Throwable t) {
-      Logger.getInstance(JdkEx.class).error(t);
-      return false;
-    }
-  }
-
   private static MethodInvocator ourSetFileDialogLocalizationStringsMethod;
 
   @Nullable
@@ -205,4 +190,55 @@ public final class JdkEx {
 
     return ourSetFileDialogLocalizationStringsMethod.isAvailable() ? ourSetFileDialogLocalizationStringsMethod : null;
   }
+
+  public static boolean trySetCommonFileDialogLocalization(@NotNull FileDialog fileDialog,
+                                                           @Nullable @Nls String openButtonText,
+                                                           @Nullable @Nls String selectFolderButtonText) {
+    MethodInvocator setLocalizationStrings = getFileDialogLocalizationStringsMethod();
+    if (setLocalizationStrings == null) return false;
+    try {
+      setLocalizationStrings.invoke(fileDialog, openButtonText, selectFolderButtonText);
+      return true;
+    }
+    catch (Throwable t) {
+      Logger.getInstance(JdkEx.class).error(t);
+      return false;
+    }
+  }
+
+  private static MethodInvocator ourSetFolderPickerModeMethod;
+
+  @Nullable
+  private static MethodInvocator getSetFolderPickerModeMethod() {
+    if (!SystemInfo.isJetBrainsJvm || !SystemInfo.isWindows || !Registry.is("ide.win.file.chooser.native", false) || !SystemPropertyUtil.getBoolean("sun.awt.windows.useCommonItemDialog", false)) {
+      return null;
+    }
+    if (ourSetFolderPickerModeMethod == null) {
+      ourSetFolderPickerModeMethod = new MethodInvocator(
+        false,
+        FileDialog.class,
+        "setFolderPickerMode",
+        boolean.class);
+      if (ourSetFolderPickerModeMethod.isAvailable()) {
+        return ourSetFolderPickerModeMethod;
+      }
+      return null;
+    }
+
+    return ourSetFolderPickerModeMethod.isAvailable() ? ourSetFolderPickerModeMethod : null;
+  }
+
+  public static boolean trySetSetFolderPickerMode(@NotNull FileDialog fileDialog, boolean folderPickerMode) {
+    MethodInvocator setFolderPickerMode = getSetFolderPickerModeMethod();
+    if (setFolderPickerMode == null) return false;
+    try {
+      setFolderPickerMode.invoke(fileDialog, folderPickerMode);
+      return true;
+    }
+    catch (Throwable t) {
+      Logger.getInstance(JdkEx.class).error(t);
+      return false;
+    }
+  }
+
 }
