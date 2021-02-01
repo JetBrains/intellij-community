@@ -22,7 +22,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jdom.Element;
@@ -59,6 +58,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testAssignmentAndReassignmentWithCall() { doTest(); }
 
   public void testIfChain() { doTest(); }
+  public void testIfChainCorrectIndent() { doTest(); }
   public void testIfChainPolyadic() { doTest(); }
   public void testIfChainNoBraces() { doTest(); }
   public void testIfChainElse() { doTest(); }
