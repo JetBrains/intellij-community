@@ -4,10 +4,13 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -15,8 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -117,14 +120,24 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   private void updateBreakpointInFile(final VirtualFile file) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      for (XBreakpointBase breakpoint : getAllBreakpoints()) {
-        XSourcePosition position = SlowOperations.allowSlowOperations(() -> breakpoint.getSourcePosition());
-        if (position != null && Comparing.equal(position.getFile(), file)) {
-          fireBreakpointChanged(breakpoint);
-        }
+    ReadAction
+      .nonBlocking(() -> changedBreakpoints(file))
+      .coalesceBy(file)
+      .expireWith(myProject)
+      .finishOnUiThread(ModalityState.defaultModalityState(), this::fireBreakpointsChanged)
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  private @NotNull Collection<? extends XBreakpointBase<?, ?, ?>> changedBreakpoints(VirtualFile file) {
+    Collection<XBreakpointBase<?, ?, ?>> result = new ArrayList<>();
+    for (XBreakpointBase<?, ?, ?> breakpoint : getAllBreakpoints()) {
+      ProgressManager.checkCanceled();
+      XSourcePosition position = breakpoint.getSourcePosition();
+      if (position != null && Comparing.equal(position.getFile(), file)) {
+        result.add(breakpoint);
       }
-    }, myProject.getDisposed());
+    }
+    return result;
   }
 
   public XLineBreakpointManager getLineBreakpointManager() {
@@ -197,6 +210,12 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private XBreakpointListener<XBreakpoint<?>> getBreakpointDispatcherMulticaster() {
     //noinspection unchecked
     return myProject.getMessageBus().syncPublisher(XBreakpointListener.TOPIC);
+  }
+
+  private void fireBreakpointsChanged(Collection<? extends XBreakpointBase<?, ?, ?>> breakpoints) {
+    for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
+      fireBreakpointChanged(breakpoint);
+    }
   }
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
