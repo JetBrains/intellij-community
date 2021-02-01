@@ -32,11 +32,7 @@ import java.nio.file.StandardCopyOption
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
@@ -123,7 +119,8 @@ final class BuildTasksImpl extends BuildTasks {
                                     List<String> arguments,
                                     Map<String, Object> systemProperties = Collections.emptyMap(),
                                     List<String> vmOptions = List.of("-Xmx512m"),
-                                    List<String> pluginsToDisable = Collections.emptyList()) {
+                                    List<String> pluginsToDisable = Collections.emptyList(),
+                                    long timeoutMillis = TimeUnit.MINUTES.toMillis(10L)) {
     Files.createDirectories(tempDir)
 
     Set<String> ideClasspath = new LinkedHashSet<String>()
@@ -166,7 +163,8 @@ final class BuildTasksImpl extends BuildTasks {
       "com.intellij.idea.Main",
       arguments,
       jvmArgs,
-      ideClasspath)
+      ideClasspath,
+      timeoutMillis)
   }
 
   private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context,
