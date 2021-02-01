@@ -8,6 +8,7 @@ import com.intellij.ide.errorTreeView.*;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -98,7 +99,7 @@ public class ExternalSystemNotificationManager implements Disposable {
                                                        @NotNull Throwable error,
                                                        @NotNull ProjectSystemId externalSystemId,
                                                        @NotNull Project project,
-                                                       @NotNull DataProvider dataProvider) {
+                                                       @NotNull DataContext dataContext) {
     if (isInternalError(error, externalSystemId)) {
       return null;
     }
@@ -126,7 +127,7 @@ public class ExternalSystemNotificationManager implements Disposable {
       BuildIssue buildIssue = ((BuildIssueException)unwrapped).getBuildIssue();
       for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
         notificationData.setListener(quickFix.getId(), (notification, event) -> {
-          quickFix.runQuickFix(project, dataProvider);
+          quickFix.runQuickFix(project, dataContext);
         });
       }
       notificationData.setNavigatable(buildIssue.getNavigatable(project));

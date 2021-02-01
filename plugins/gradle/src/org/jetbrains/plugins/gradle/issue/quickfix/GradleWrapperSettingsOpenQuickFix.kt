@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.issue.quickfix
 
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.build.issue.quickfix.OpenFileQuickFix
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleUtil
@@ -18,7 +18,7 @@ class GradleWrapperSettingsOpenQuickFix(private val myProjectPath: String, priva
 
   override val id: String = "open_gradle_wrapper_settings"
 
-  override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     showWrapperPropertiesFile(project, myProjectPath, mySearch)
     return completedFuture<Any>(null)
   }

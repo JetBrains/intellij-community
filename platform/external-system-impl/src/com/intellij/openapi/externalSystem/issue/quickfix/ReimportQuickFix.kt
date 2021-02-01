@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.issue.quickfix
 
 import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -19,7 +20,7 @@ import java.util.concurrent.CompletableFuture
 @ApiStatus.Experimental
 class ReimportQuickFix(private val myProjectPath: String, private val systemId: ProjectSystemId) : BuildIssueQuickFix {
   override val id: String = "reimport"
-  override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> = requestImport(
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> = requestImport(
     project, myProjectPath, systemId)
 
   companion object {

@@ -26,10 +26,7 @@ import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
@@ -498,9 +495,9 @@ public final class ExternalSystemUtil {
             public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
               String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
                                                           externalSystemId.getReadableName(), projectName);
-              DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, syncViewManager);
+              DataContext dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
               com.intellij.build.events.FailureResult failureResult =
-                createFailureResult(title, e, externalSystemId, project, dataProvider);
+                createFailureResult(title, e, externalSystemId, project, dataContext);
               finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                          BuildBundle.message("build.status.failed"), failureResult));
               processHandler.notifyProcessTerminated(1);
@@ -671,10 +668,10 @@ public final class ExternalSystemUtil {
                                                       @NotNull Exception exception,
                                                       @NotNull ProjectSystemId externalSystemId,
                                                       @NotNull Project project,
-                                                      @NotNull DataProvider dataProvider) {
+                                                      @NotNull DataContext dataContext) {
     ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
     NotificationData notificationData =
-      notificationManager.createNotification(title, exception, externalSystemId, project, dataProvider);
+      notificationManager.createNotification(title, exception, externalSystemId, project, dataContext);
     if (notificationData == null) {
       return new FailureResultImpl();
     }
