@@ -2068,6 +2068,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            null : myInputMethodRequestsHandler.composedTextRange;
   }
 
+  public boolean composedTextExists() {
+    return myInputMethodRequestsHandler != null &&
+           myInputMethodRequestsHandler.composedText != null;
+  }
+
   @Override
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     return myView.getMaxWidthInRange(startOffset, endOffset);
@@ -3709,6 +3714,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         });
       }
 
+      boolean isCaretMoved = false;
+      int caretPositionToRestore = 0;
+
       int commitCount = e.getCommittedCharacterCount();
       AttributedCharacterIterator text = e.getText();
 
@@ -3724,6 +3732,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               doc.deleteString(range.getStartOffset(), range.getEndOffset());
             }
           });
+          isCaretMoved = getCaretModel().getOffset() != composedTextRange.getStartOffset();
+          if (isCaretMoved) {
+            caretPositionToRestore = getCaretModel().getCurrentCaret().getOffset();
+            // if caret set furter in the doc, we should add commitCount
+            if (caretPositionToRestore > composedTextRange.getStartOffset()) {
+              caretPositionToRestore += commitCount;
+            }
+            getCaretModel().moveToOffset(composedTextRange.getStartOffset());
+          }
         }
         composedText = null;
       }
@@ -3751,6 +3768,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
           }
         }
+      }
+
+      if (isCaretMoved) {
+        getCaretModel().moveToOffset(caretPositionToRestore);
       }
     }
   }
@@ -3827,6 +3848,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       finally {
         myExpectedCaretOffset = -1;
+      }
+
+      if (composedTextExists()) {
+        myEditorComponent.getInputContext().endComposition();
       }
 
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA ||
