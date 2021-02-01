@@ -88,7 +88,11 @@ internal class MessageTitleComponent(
     if (!message.canDelete) {
       return null
     }
-    return InlineIconButton(VcsCodeReviewIcons.Delete, VcsCodeReviewIcons.DeleteHovered).apply {
+    return InlineIconButton(
+      VcsCodeReviewIcons.Delete,
+      VcsCodeReviewIcons.DeleteHovered,
+      tooltip = SpaceBundle.message("chat.message.action.delete.tooltip")
+    ).apply {
       actionListener = ActionListener {
         if (
           MessageDialogBuilder.yesNo(
@@ -108,7 +112,11 @@ internal class MessageTitleComponent(
     if (!message.canEdit) {
       return null
     }
-    return InlineIconButton(AllIcons.General.Inline_edit, AllIcons.General.Inline_edit_hovered).apply {
+    return InlineIconButton(
+      AllIcons.General.Inline_edit,
+      AllIcons.General.Inline_edit_hovered,
+      tooltip = SpaceBundle.message("chat.message.action.edit.tooltip")
+    ).apply {
       actionListener = ActionListener {
         message.startEditing()
       }
@@ -117,7 +125,11 @@ internal class MessageTitleComponent(
 
   private fun createStartThreadButton(message: SpaceChatItem): JComponent {
     val startThreadVm = message.startThreadVm
-    val button = InlineIconButton(VcsCodeReviewIcons.Comment, VcsCodeReviewIcons.CommentHovered).apply {
+    val button = InlineIconButton(
+      VcsCodeReviewIcons.Comment,
+      VcsCodeReviewIcons.CommentHovered,
+      tooltip = SpaceBundle.message("chat.message.action.start.thread.tooltip")
+    ).apply {
       actionListener = ActionListener {
         startThreadVm.startWritingFirstMessage()
       }
