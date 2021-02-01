@@ -529,10 +529,14 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
+  protected @NotNull TreeState createTreeState(@NotNull JTree tree) {
+    return TreeState.createOn(tree);
+  }
+
   protected void saveExpandedPaths() {
     myTreeStateRestored.set(false);
     if (myTree != null) {
-      TreeState treeState = TreeState.createOn(myTree);
+      TreeState treeState = createTreeState(myTree);
       if (!treeState.isEmpty()) {
         myReadTreeState.put(getSubId(), treeState);
       }
