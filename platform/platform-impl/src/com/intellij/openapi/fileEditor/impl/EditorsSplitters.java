@@ -139,6 +139,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     ApplicationManager.getApplication().getMessageBus().connect(myManager).subscribe(LafManagerListener.TOPIC, laf -> {
       colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     });
+
+    Disposer.register(parentDisposable, () -> setDropTarget(null));
   }
 
   @NotNull
