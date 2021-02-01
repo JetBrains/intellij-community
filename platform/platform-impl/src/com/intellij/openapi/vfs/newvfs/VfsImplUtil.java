@@ -178,9 +178,8 @@ public final class VfsImplUtil {
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
-  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap();
-    // guarded by ourLock
-  private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap();
+  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap(); // guarded by ourLock
+  private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock
 
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
@@ -273,6 +272,7 @@ public final class VfsImplUtil {
     });
   }
 
+  // must be called under ourLock
   @Nullable
   private static InvalidationState invalidate(@Nullable InvalidationState state, @NotNull String path) {
     Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.remove(path);
@@ -390,7 +390,10 @@ public final class VfsImplUtil {
       local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
       path = local == null ? ((ArchiveFileSystem)entryFileSystem).extractLocalPath(path) : local.getPath();
     }
-    Collection<String> jarPaths = ourDominatorsMap.get(path);
+    Collection<String> jarPaths;
+    synchronized (ourLock) {
+      jarPaths = ourDominatorsMap.get(path);
+    }
     if (jarPaths == null) {
       jarPaths = Collections.singletonList(path);
     }
@@ -409,12 +412,14 @@ public final class VfsImplUtil {
             Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
             if (pair != null) {
               pair.second.dispose();
-              forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
-                Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-                if (handlers != null && handlers.remove(jarPath) && handlers.isEmpty()) {
-                  ourDominatorsMap.remove(containingDirectoryPath);
-                }
-              });
+              synchronized (ourLock) {
+                forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
+                  Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+                  if (handlers != null && handlers.remove(jarPath) && handlers.isEmpty()) {
+                    ourDominatorsMap.remove(containingDirectoryPath);
+                  }
+                });
+              }
             }
           };
           events.add(jarDeleteEvent);
