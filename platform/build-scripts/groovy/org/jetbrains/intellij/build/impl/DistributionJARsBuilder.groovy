@@ -596,6 +596,41 @@ final class DistributionJARsBuilder {
     }
   }
 
+  /**
+   * @return predicate to test if a given plugin should ne auto-published
+   */
+  @NotNull
+  private Predicate<PluginLayout> loadPluginsAutoPublishList() {
+    Collection<String> config = Files.lines(buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt"))
+      .withCloseable { Stream<String> lines ->
+        lines.map({ String line -> line.split("//|#").first().trim() } as Function<String, String>)
+          .filter({ String line -> !line.isEmpty() } as Predicate<String>)
+          .collect(Collectors.toCollection({ new TreeSet<String>(String.CASE_INSENSITIVE_ORDER) } as Supplier<Collection<String>>))
+      }
+
+    return new Predicate<PluginLayout>() {
+      @Override
+      boolean test(PluginLayout plugin) {
+        if (plugin == null) return false
+
+        //see the specification in the plugins-autoupload.txt. Supported rules:
+        //   <plugin main module name> ## include the plugin
+        //   +<product code>:<plugin main module name> ## include the plugin
+        //   -<product code>:<plugin main module name> ## exclude the plugin
+
+        String module = plugin.mainModule
+        String productCode = buildContext.applicationInfo.productCode
+
+        if (config.contains("-${productCode}:${module}")) {
+          //the exclude rule is the most powerful
+          return false
+        }
+
+        return config.contains(module) || config.contains("+${productCode}:${module}")
+      }
+    }
+  }
+
   void buildNonBundledPlugins(boolean compressPluginArchive) {
     if (pluginsToPublish.isEmpty()) {
       return
@@ -613,19 +648,14 @@ final class DistributionJARsBuilder {
       String pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
       Path nonBundledPluginsArtifacts = Paths.get(buildContext.paths.artifacts, pluginsDirectoryName)
       List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
-      Set<String> whiteList = Files.lines(buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload-whitelist.txt"))
-        .withCloseable { Stream<String> lines ->
-          lines.map({ String line -> line.trim() } as Function<String, String>)
-            .filter({ String line -> !line.isEmpty() && !line.startsWith("//") } as Predicate<String>)
-            .collect(Collectors.toSet())
-        }
+      Predicate<PluginLayout> autoPublishPluginChecker = loadPluginsAutoPublishList()
 
       Path autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
       Path patchedPluginXmlDir = buildContext.paths.tempDir.resolve("patched-plugin-xml")
       List<Map.Entry<String, Path>> toArchive = new ArrayList<>()
       for (plugin in pluginsToPublish) {
         String directory = getActualPluginDirectoryName(plugin, buildContext)
-        Path targetDirectory = whiteList.contains(plugin.mainModule) ? autoUploadingDir : nonBundledPluginsArtifacts
+        Path targetDirectory = autoPublishPluginChecker.test(plugin) ? autoUploadingDir : nonBundledPluginsArtifacts
         Path destFile = targetDirectory.resolve("$directory-${pluginVersion}.zip")
 
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
