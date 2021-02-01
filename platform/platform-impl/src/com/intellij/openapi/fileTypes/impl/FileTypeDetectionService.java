@@ -560,7 +560,7 @@ final class FileTypeDetectionService implements Disposable {
         if (toLog()) {
           log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
         }
-        int fileLength = (int)file.getLength();
+        int fileLength = (int)Math.min(file.getLength(), Integer.MAX_VALUE);
         int bufferLength = getDetectFileBufferSize(file);
         content = new byte[Math.min(fileLength, bufferLength)];
         n = readSafely(inputStream, content, content.length);
