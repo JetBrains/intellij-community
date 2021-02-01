@@ -3,22 +3,16 @@ package com.intellij.ui.debugger.extensions;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.fileTypes.FileType;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 public final class UiScriptFileType implements FileType {
   private static UiScriptFileType myInstance;
 
   private UiScriptFileType() {
-  }
-
-  @Override
-  public @NotNull CharsetHint getCharsetHint() {
-    return new CharsetHint.ForcedCharset(StandardCharsets.UTF_8);
   }
 
   public static UiScriptFileType getInstance() {
@@ -56,5 +50,10 @@ public final class UiScriptFileType implements FileType {
   @Override
   public boolean isBinary() {
     return false;
+  }
+
+  @Override
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
+    return CharsetToolkit.UTF8;
   }
 }

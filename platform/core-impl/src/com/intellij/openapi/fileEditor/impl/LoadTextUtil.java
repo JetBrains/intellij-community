@@ -6,7 +6,6 @@ import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileType.CharsetHint.ForcedCharset;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -245,15 +244,8 @@ public final class LoadTextUtil {
                                                 byte @NotNull [] content,
                                                 int length,
                                                 @NotNull FileType fileType) {
-    Charset charset;
-    FileType.CharsetHint charsetHint = fileType.getCharsetHint();
-    if (charsetHint instanceof ForcedCharset) {
-      charset = ((ForcedCharset)charsetHint).getCharset();
-    }
-    else {
-      String charsetName = fileType.getCharset(virtualFile, content);
-      charset = charsetName == null ? null : CharsetToolkit.forName(charsetName);
-    }
+    String charsetName = fileType.getCharset(virtualFile, content);
+    Charset charset = charsetName == null ? null : CharsetToolkit.forName(charsetName);
     DetectResult guessed = guessFromContent(virtualFile, content, length);
     Charset hardCodedCharset = charset == null ? guessed.hardCodedCharset : charset;
 
