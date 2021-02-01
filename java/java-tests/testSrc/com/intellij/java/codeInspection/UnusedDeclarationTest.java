@@ -120,8 +120,8 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
     }
   }
 
-  public void testAnnotationInterface() {
-    doTest5();
+  public void testAnnotation() {
+    doTest();
   }
 
   public void testUnusedEnum() {

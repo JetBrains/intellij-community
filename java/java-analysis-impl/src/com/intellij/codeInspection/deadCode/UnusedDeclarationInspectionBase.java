@@ -4,6 +4,7 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -23,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -419,7 +421,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                 queryQualifiedNameUsages(ownerClass);
               }
               UMethod uMethod = (UMethod)refMethod.getUastElement();
-              if (uMethod != null && isSerializablePatternMethod(uMethod, refMethod.getOwnerClass())) {
+              if (uMethod != null && (isSerializablePatternMethod(uMethod, refMethod.getOwnerClass()) ||
+                                      belongsToRepeatableAnnotationContainer(uMethod, refMethod.getOwnerClass()))) {
                 getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
               }
               else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
@@ -489,6 +492,23 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   private static boolean isSerializablePatternMethod(@NotNull UMethod psiMethod, RefClass refClass) {
     return isReadObjectMethod(psiMethod, refClass) || isWriteObjectMethod(psiMethod, refClass) || isReadResolveMethod(psiMethod, refClass) ||
            isWriteReplaceMethod(psiMethod, refClass) || isExternalizableNoParameterConstructor(psiMethod, refClass);
+  }
+
+  private static boolean belongsToRepeatableAnnotationContainer(@NotNull UMethod uMethod, @Nullable RefClass ownerRefClass) {
+    if (ownerRefClass == null) return false;
+    if (!PsiUtil.isLanguageLevel8OrHigher(uMethod.getJavaPsi())) return false;
+    if (!"value".equals(uMethod.getName())) return false;
+    UClass ownerUClass = ownerRefClass.getUastElement();
+    if (ownerUClass == null || !ownerUClass.isAnnotationType()) return false;
+    PsiType returnType = uMethod.getReturnType();
+    if (!(returnType instanceof PsiArrayType)) return false;
+    PsiClass returnTypeClass = PsiUtil.resolveClassInType(returnType);
+    if (returnTypeClass == null || !returnTypeClass.isAnnotationType()) return false;
+    RefElement repeatableAnn = ownerRefClass.getRefManager().getReference(returnTypeClass);
+    if (repeatableAnn == null || !repeatableAnn.isReferenced()) return false;
+    PsiAnnotation repeatableAnnContainer = returnTypeClass.getAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE);
+    if (repeatableAnnContainer == null) return false;
+    return AnnotationsHighlightUtil.doCheckRepeatableAnnotation(repeatableAnnContainer) == null;
   }
 
   private static void enqueueMethodUsages(GlobalInspectionContext globalContext, final RefMethod refMethod) {
