@@ -444,6 +444,11 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     }
 
     @Override
+    public boolean isDumbAware() {
+      return false;
+    }
+
+    @Override
     @Nullable
     public String getPromptText() {
       return null;
