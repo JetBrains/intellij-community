@@ -505,6 +505,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TodoDefault = load("general/todoDefault.svg", -6679998985908400939L, 0);
     /** 16x16 */ public static final @NotNull Icon TodoImportant = load("general/todoImportant.svg", 4071827613157420132L, 0);
     /** 16x16 */ public static final @NotNull Icon TodoQuestion = load("general/todoQuestion.svg", -998896081257651016L, 0);
+    /** 16x16 */ public static final @NotNull Icon Tree = load("general/tree.svg", -2075024216113450683L, 0);
+    /** 16x16 */ public static final @NotNull Icon TreeHovered = load("general/treeHovered.svg", -3207966685029359517L, 0);
+    /** 16x16 */ public static final @NotNull Icon TreeSelected = load("general/treeSelected.svg", 1034377141145894224L, 0);
     /** 16x16 */ public static final @NotNull Icon User = load("general/user.svg", -4532685924149411001L, 0);
     /** 16x16 */ public static final @NotNull Icon Warning = load("general/warning.svg", 3745461258866722132L, 2);
     /** 16x16 */ public static final @NotNull Icon WarningDecorator = load("general/warningDecorator.svg", -203970029791479627L, 2);
