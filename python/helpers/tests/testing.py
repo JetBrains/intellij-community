@@ -1,11 +1,19 @@
+from __future__ import unicode_literals
+
 import logging
 import os
 import shutil
 import sys
 import tempfile
+import textwrap
 import unittest
+import zipfile
 from contextlib import contextmanager
-from io import open
+
+import six
+
+if six.PY2:
+    from io import open
 
 _test_root = os.path.dirname(os.path.abspath(__file__))
 _test_data_root = os.path.join(_test_root, 'data')
@@ -34,7 +42,8 @@ class HelpersTestCase(unittest.TestCase):
         super(HelpersTestCase, cls).tearDownClass()
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp(prefix='{}_{}__'.format(self.test_class_name, self.test_name))
+        self.temp_dir = tempfile.mkdtemp(
+            prefix='{}_{}__'.format(self.test_class_name, self.test_name))
 
     def tearDown(self):
         if self._test_has_failed():
@@ -90,23 +99,27 @@ class HelpersTestCase(unittest.TestCase):
             expected_child = os.path.join(expected_dir, expected_child)
             if os.path.isdir(actual_child) and os.path.isdir(expected_child):
                 self.assertDirsEqual(actual_child, expected_child)
-            elif os.path.isfile(actual_child) and os.path.isfile(
-                    expected_child):
-                with open(actual_child) as f:
-                    actual_child_content = f.read()
-                with open(expected_child) as f:
-                    expected_child_content = f.read()
+            elif zipfile.is_zipfile(actual_child) and zipfile.is_zipfile(expected_child):
+                self.assertZipFilesEqual(actual_child, expected_child)
+            elif os.path.isfile(actual_child) and os.path.isfile(expected_child):
                 try:
-                    self.assertMultiLineEqual(expected_child_content, actual_child_content,
-                                              'Different content at {!r}'.format(actual_child))
+                    try:
+                        with open(actual_child) as f:
+                            actual_text = f.read()
+                        with open(expected_child) as f:
+                            expected_text = f.read()
+                    except UnicodeDecodeError:
+                        self.assertBinaryFilesEqual(actual_child, expected_child)
+                    else:
+                        self.assertMultiLineEqual(expected_text, actual_text,
+                                                  'Different content at {!r}'.format(actual_child))
                 except AssertionError:
                     if _override_test_data:
                         with open(expected_child, 'w') as f:
-                            f.write(actual_child_content)
+                            f.write(actual_text)
                     raise
             else:
-                raise AssertionError(
-                    '%r != %r' % (actual_child, expected_child))
+                raise AssertionError('%r != %r' % (actual_child, expected_child))
 
     def assertNonEmptyFile(self, path):
         with open(path) as f:
@@ -144,6 +157,50 @@ class HelpersTestCase(unittest.TestCase):
                     index = actual_list.index(item)
                     if index <= prev_index:
                         raise AssertionError(
-                            'Item {!r} is expected after {!r} in {!r}'.format(item, prev_item, actual_list))
+                            'Item {!r} is expected after {!r} in {!r}'.format(item, prev_item,
+                                                                              actual_list))
                 except ValueError:
                     raise AssertionError('Item {!r} not found in {!r}'.format(item, actual_list))
+
+    def assertDirLayoutEquals(self, dir_path, expected_layout):
+        def format_dir(dir_path, indent=''):
+            for child_name in sorted(os.listdir(dir_path)):
+                child_path = os.path.join(dir_path, child_name)
+                if os.path.isdir(child_path):
+                    yield indent + child_name + '/'
+                    for line in format_dir(child_path, indent + '    '):
+                        yield line
+                else:
+                    yield indent + child_name
+
+        formatted_dir_tree = '\n'.join(format_dir(dir_path))
+        expected = textwrap.dedent(expected_layout).strip() + '\n'
+        actual = formatted_dir_tree.strip() + '\n'
+        self.assertMultiLineEqual(expected, actual)
+
+    def assertBinaryFilesEqual(self, path1, path2):
+        self.assertEqual(os.stat(path1).st_size, os.stat(path2).st_size,
+                         'Sizes of {!r} and {!r} differ'.format(path1, path2))
+
+        with open(path1, 'rb') as f1:
+            content1 = f1.read()
+        with open(path2, 'rb') as f2:
+            content2 = f2.read()
+        self.assertEqual(content1, content2,
+                         'Binary content of {!r} and {!r} differs'.format(path1, path2))
+
+    def assertZipFilesEqual(self, path1, path2):
+        entries = self.read_zip_entries(path1)
+        self.assertEqual(entries, self.read_zip_entries(path2),
+                         'Entries of ZIP files {!r} and {!r} differ'.format(path1, path2))
+        with zipfile.ZipFile(path1) as zf1, zipfile.ZipFile(path2) as zf2:
+            for entry in entries:
+                content1 = zf1.open(entry).read()
+                content2 = zf2.open(entry).read()
+                self.assertEqual(content1, content2,
+                                 'ZIP files {!r} and {!r} differ at entry {!r}'
+                                 .format(path1, path2, entry))
+
+    def read_zip_entries(self, path):
+        with zipfile.ZipFile(path, 'r') as zf:
+            return sorted(zf.namelist())

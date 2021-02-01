@@ -173,22 +173,6 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
             result = self.run_generator(mod_name, mod_path=mod_path, **kwargs)
             self.assertEqual(success, result.exit_code == 0)
 
-    def assertDirLayoutEquals(self, dir_path, expected_layout):
-        def format_dir(dir_path, indent=''):
-            for child_name in sorted(os.listdir(dir_path)):
-                child_path = os.path.join(dir_path, child_name)
-                if os.path.isdir(child_path):
-                    yield indent + child_name + '/'
-                    for line in format_dir(child_path, indent + '    '):
-                        yield line
-                else:
-                    yield indent + child_name
-
-        formatted_dir_tree = '\n'.join(format_dir(dir_path))
-        expected = textwrap.dedent(expected_layout).strip() + '\n'
-        actual = formatted_dir_tree.strip() + '\n'
-        self.assertMultiLineEqual(expected, actual)
-
 
 class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     def test_layout_for_builtin_module(self):
