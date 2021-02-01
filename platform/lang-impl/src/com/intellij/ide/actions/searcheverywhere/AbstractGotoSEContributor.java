@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -58,7 +58,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -598,7 +597,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         @Override
         public PopupStep<?> onChosen(ScopeDescriptor selectedValue, boolean finalChoice) {
           onScopeSelected(selectedValue);
-          ActionToolbar toolbar = UIUtil.uiParents(button, true).filter(ActionToolbar.class).first();
+          ActionToolbar toolbar = ActionToolbar.findToolbarBy(button);
           if (toolbar != null) toolbar.updateActionsImmediately();
           return FINAL_CHOICE;
         }

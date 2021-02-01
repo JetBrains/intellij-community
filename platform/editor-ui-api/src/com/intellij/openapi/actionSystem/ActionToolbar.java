@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -148,5 +151,23 @@ public interface ActionToolbar {
    * Enables showing titles of separators as labels in the toolbar (off by default).
    */
   default void setShowSeparatorTitles(boolean showSeparatorTitles) {
+  }
+
+
+  /**
+   * @return {@link ActionToolbar} that contains the specified {@code component},
+   * or {@code null} if it is not placed on any toolbar
+   */
+  static @Nullable ActionToolbar findToolbarBy(@Nullable Component component) {
+    return ComponentUtil.getParentOfType(ActionToolbar.class, component);
+  }
+
+  /**
+   * @return {@link DataContext} constructed for the specified {@code component}
+   * that can be placed on an action toolbar
+   */
+  static @NotNull DataContext getDataContextFor(@Nullable Component component) {
+    ActionToolbar toolbar = findToolbarBy(component);
+    return toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(component);
   }
 }

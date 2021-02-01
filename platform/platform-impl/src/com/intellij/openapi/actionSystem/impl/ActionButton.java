@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
@@ -178,7 +176,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace, e, dataContext);
       }
-      ActionToolbar toolbar = getActionToolbar();
+      ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
         toolbar.updateActionsImmediately();
       }
@@ -186,12 +184,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected DataContext getDataContext() {
-    ActionToolbar actionToolbar = getActionToolbar();
-    return actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext();
-  }
-
-  private ActionToolbar getActionToolbar() {
-    return ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, (Component)this);
+    return ActionToolbar.getDataContextFor(this);
   }
 
   protected void actionPerformed(final AnActionEvent event) {

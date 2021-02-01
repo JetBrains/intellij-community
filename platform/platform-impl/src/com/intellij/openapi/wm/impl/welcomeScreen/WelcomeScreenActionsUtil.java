@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -9,7 +8,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Couple;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -93,8 +91,7 @@ public class WelcomeScreenActionsUtil {
   }
 
   static void performAnActionForComponent(@NotNull AnAction action, @NotNull Component component) {
-    ActionToolbar toolbar = ComponentUtil.getParentOfType(ActionToolbar.class, component);
-    DataContext context = toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(component);
+    DataContext context = ActionToolbar.getDataContextFor(component);
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, context);
     ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent, context);
   }

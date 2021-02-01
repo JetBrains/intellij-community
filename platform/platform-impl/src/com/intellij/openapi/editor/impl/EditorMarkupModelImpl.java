@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.LafManagerListener;
@@ -1555,7 +1554,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             manager.queueActionPerformedEvent(action, context, event);
             ActionsCollector.getInstance().record(event.getProject(), action, event, null);
 
-            ActionToolbar toolbar = getActionToolbar();
+            ActionToolbar toolbar = ActionToolbar.findToolbarBy(StatusButton.this);
             if (toolbar != null) {
               toolbar.updateActionsImmediately();
             }
@@ -1638,12 +1637,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     private DataContext getDataContext() {
-      ActionToolbar actionToolbar = getActionToolbar();
-      return actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(this);
-    }
-
-    private ActionToolbar getActionToolbar() {
-      return ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, this);
+      return ActionToolbar.getDataContextFor(this);
     }
 
     private void updateContents(@NotNull List<StatusItem> status) {
