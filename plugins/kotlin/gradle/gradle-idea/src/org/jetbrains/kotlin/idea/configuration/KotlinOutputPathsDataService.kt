@@ -27,7 +27,7 @@ class KotlinOutputPathsDataService : AbstractProjectDataService<KotlinOutputPath
     override fun getTargetDataKey() = KotlinOutputPathsData.KEY
 
     override fun importData(
-        toImport: MutableCollection<DataNode<KotlinOutputPathsData>>, projectData: ProjectData?, project: Project,
+        toImport: MutableCollection<out DataNode<KotlinOutputPathsData>>, projectData: ProjectData?, project: Project,
         modelsProvider: IdeModifiableModelsProvider
     ) {
     }

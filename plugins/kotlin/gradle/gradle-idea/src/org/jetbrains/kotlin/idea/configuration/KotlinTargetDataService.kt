@@ -20,7 +20,7 @@ class KotlinTargetDataService : AbstractProjectDataService<KotlinTargetData, Voi
     override fun getTargetDataKey() = KotlinTargetData.KEY
 
     override fun importData(
-        toImport: MutableCollection<DataNode<KotlinTargetData>>,
+        toImport: MutableCollection<out DataNode<KotlinTargetData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider

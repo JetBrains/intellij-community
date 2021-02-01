@@ -27,7 +27,7 @@ class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourc
         toImport.firstOrNull { it.data.internalName == id }?.kotlinSourceSet?.isTestModule ?: false
 
     override fun postProcess(
-        toImport: MutableCollection<DataNode<GradleSourceSetData>>,
+        toImport: MutableCollection<out DataNode<GradleSourceSetData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
