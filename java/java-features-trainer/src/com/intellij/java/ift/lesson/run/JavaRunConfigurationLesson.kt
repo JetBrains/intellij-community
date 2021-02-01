@@ -11,8 +11,8 @@ import training.learn.interfaces.Module
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
+import training.learn.lesson.kimpl.checkToolWindowState
 import training.learn.lesson.kimpl.dropMnemonic
-import training.learn.lesson.kimpl.toolWindowShowed
 import java.awt.Rectangle
 
 class JavaRunConfigurationLesson(module: Module) : CommonRunConfigurationLesson(module, "java.run.configuration", "JAVA") {
@@ -32,7 +32,7 @@ class JavaRunConfigurationLesson(module: Module) : CommonRunConfigurationLesson(
       text(JavaLessonsBundle.message("java.run.configuration.lets.run", icon(AllIcons.Actions.Execute), action(it),
                                      strong(ExecutionBundle.message("default.runner.start.action.text").dropMnemonic())))
       //Wait toolwindow
-      toolWindowShowed("Run")
+      checkToolWindowState("Run", true)
       stateCheck {
         configurations().isNotEmpty()
       }

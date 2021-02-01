@@ -6,7 +6,7 @@ import training.learn.interfaces.Module
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.toolWindowShowed
+import training.learn.lesson.kimpl.checkToolWindowState
 
 class PythonRunConfigurationLesson(module: Module) : CommonRunConfigurationLesson(module, "python.run.configuration", "Python") {
   override val sample: LessonSample = PythonRunLessonsUtils.demoSample
@@ -16,7 +16,7 @@ class PythonRunConfigurationLesson(module: Module) : CommonRunConfigurationLesso
     task("RunClass") {
       text(PythonLessonsBundle.message("python.run.configuration.lets.run", action(it)))
       //Wait toolwindow
-      toolWindowShowed("Run")
+      checkToolWindowState("Run", true)
       stateCheck {
         configurations().isNotEmpty()
       }

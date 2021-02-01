@@ -40,9 +40,11 @@ abstract class CommonRunConfigurationLesson(module: Module, id: String, language
 
       runTask()
 
-      actionTask("HideActiveWindow") {
+      task("HideActiveWindow") {
         LearningUiHighlightingManager.clearHighlights()
-        LessonsBundle.message("run.configuration.hide.toolwindow", runToolWindow(), action(it))
+        text(LessonsBundle.message("run.configuration.hide.toolwindow", runToolWindow(), action(it)))
+        checkToolWindowState("Run", false)
+        test { actions(it) }
       }
 
       task {
