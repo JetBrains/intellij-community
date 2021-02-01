@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -641,7 +642,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         len = mustReloadLength ? reloadLengthFromDelegate(file, delegate) : storedLength;
         contentStream = delegate.getInputStream(file);
 
-        if (len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
+        if (len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD && !HeavyProcessLatch.INSTANCE.isRunning()) {
           useReplicator = true;
           readOnly = delegate.isReadOnly();
         }
