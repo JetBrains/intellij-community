@@ -53,5 +53,5 @@ internal fun openReviewInEditor(
     val reviewStateProperty = editorLifetime.map(reviewProperty) { it.state }
     SpaceChatReviewHeaderDetails(projectInfo, reviewStateProperty, titleProperty, review.key) // NON-NLS
   }
-  FileEditorManager.getInstance(project).openFile(chatFile, false)
+  FileEditorManager.getInstance(project).openFile(chatFile, true)
 }
