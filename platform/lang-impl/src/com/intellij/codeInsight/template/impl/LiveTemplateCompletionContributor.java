@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
 
@@ -146,12 +147,12 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
                                            CompletionResultSet result,
                                            boolean isAutopopup) {
     if (!templatesShown.getAndSet(true)) {
-      var templateKeys = availableTemplates.stream().map(template -> template.getKey());
+      var templateKeys = ContainerUtil.map(availableTemplates, template -> template.getKey());
 
       result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<>("type after non-identifier") {
         @Override
         public boolean accepts(@NotNull String s, ProcessingContext context) {
-          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) && templateKeys.anyMatch(template -> s.endsWith(template));
+          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) && templateKeys.stream().anyMatch(template -> s.endsWith(template));
         }
       }));
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
