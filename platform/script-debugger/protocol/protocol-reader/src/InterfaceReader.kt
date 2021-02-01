@@ -162,7 +162,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         type.isEnum -> EnumReader(type as Class<Enum<*>>)
         else -> {
           val ref = getTypeRef(type) ?: throw UnsupportedOperationException("Method return type $type (simple class) not supported")
-          ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(JsonField::class.java)?.primitiveValue)
+          ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(JsonField::class.java)?.primitiveValue, member?.returnType?.isMarkedNullable ?: false)
         }
       }
     }

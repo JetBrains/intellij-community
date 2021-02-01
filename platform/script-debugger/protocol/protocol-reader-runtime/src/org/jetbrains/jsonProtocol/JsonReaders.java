@@ -33,6 +33,14 @@ public final class JsonReaders {
     }
   }
 
+  public static boolean readsNull(JsonReaderEx reader) {
+    if (reader.peek() == JsonToken.NULL) {
+      reader.skipValue();
+      return true;
+    }
+    else return false;
+  }
+
   public static String readRawString(JsonReaderEx reader) {
     return reader.nextString(true);
   }
