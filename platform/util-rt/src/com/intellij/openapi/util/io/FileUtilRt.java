@@ -1149,4 +1149,23 @@ public class FileUtilRt {
       return path1.equalsIgnoreCase(path2);
     }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated please use {@code FileFilters#EVERYTHING} instead (to be removed in 2022.1) */
+  @Deprecated
+  public static final FileFilter ALL_FILES = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return true;
+    }
+  };
+  /** @deprecated please use {@code FileFilters#DIRECTORIES} instead (to be removed in 2022.1) */
+  @Deprecated
+  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return file.isDirectory();
+    }
+  };
+  //</editor-fold>
 }
