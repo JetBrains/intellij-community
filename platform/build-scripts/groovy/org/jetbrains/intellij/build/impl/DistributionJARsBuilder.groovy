@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -601,9 +602,14 @@ final class DistributionJARsBuilder {
    */
   @NotNull
   private Predicate<PluginLayout> loadPluginsAutoPublishList() {
-    Collection<String> config = Files.lines(buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt"))
+    Path configFile = buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
+    String productCode = buildContext.applicationInfo.productCode
+    Collection<String> config = Files.lines(configFile)
       .withCloseable { Stream<String> lines ->
-        lines.map({ String line -> line.split("//|#").first().trim() } as Function<String, String>)
+        lines
+          .map({ String line -> StringUtil.split(line, "//", true, false)[0] } as Function<String, String>)
+          .map({ String line -> StringUtil.split(line, "#", true, false)[0] } as Function<String, String>)
+          .map({ String line -> line.trim() } as Function<String, String>)
           .filter({ String line -> !line.isEmpty() } as Predicate<String>)
           .collect(Collectors.toCollection({ new TreeSet<String>(String.CASE_INSENSITIVE_ORDER) } as Supplier<Collection<String>>))
       }
@@ -619,8 +625,6 @@ final class DistributionJARsBuilder {
         //   -<product code>:<plugin main module name> ## exclude the plugin
 
         String module = plugin.mainModule
-        String productCode = buildContext.applicationInfo.productCode
-
         if (config.contains("-${productCode}:${module}")) {
           //the exclude rule is the most powerful
           return false
