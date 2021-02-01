@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
@@ -6,14 +6,15 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class MixedListFactory extends SEResultsListFactory {
 
@@ -73,8 +74,10 @@ class MixedListFactory extends SEResultsListFactory {
           list, value, index, isSelected, cellHasFocus);
         if (component == null) {
           //noinspection ConstantConditions
-          component = contributor.getElementsRenderer().getListCellRendererComponent(
-            list, value, index, isSelected, true);
+          ListCellRenderer<? super Object> renderer = contributor.getElementsRenderer();
+          component = SlowOperations.allowSlowOperations(
+            () -> renderer.getListCellRendererComponent(list, value, index, isSelected, true)
+          );
         }
 
         if (component instanceof JComponent) {
