@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.psi.*;
@@ -14,7 +14,7 @@ import java.util.function.Function;
 
 public final class AssertHint {
   private final int myArgIndex;
-  private final boolean myMessageOnFirstPosition;
+  private final ParameterOrder myParameterOrder;
   private final @Nullable PsiExpression myMessage;
   private final @NotNull PsiMethod myMethod;
   private final @NotNull PsiExpression myOriginalExpression;
@@ -25,14 +25,21 @@ public final class AssertHint {
                      @NotNull PsiMethod method,
                      @NotNull PsiExpression originalExpression) {
     myArgIndex = index;
-    myMessageOnFirstPosition = messageOnFirstPosition;
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null && "org.testng.Assert".equals(containingClass.getQualifiedName())) {
+      // strictly speaking testng fail() has the message on the first position, but we ignore that here
+      myParameterOrder = ParameterOrder.ACTUAL_EXPECTED_MESSAGE;
+    }
+    else {
+      myParameterOrder = messageOnFirstPosition ? ParameterOrder.MESSAGE_EXPECTED_ACTUAL : ParameterOrder.EXPECTED_ACTUAL_MESSAGE;
+    }
     myMessage = message;
     myMethod = method;
     myOriginalExpression = originalExpression;
   }
 
   public boolean isMessageOnFirstPosition() {
-    return myMessageOnFirstPosition;
+    return myParameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL;
   }
 
   /**
@@ -55,11 +62,11 @@ public final class AssertHint {
   }
 
   public @NotNull PsiExpression getExpected() {
-    return isMessageOnFirstPosition() ? getFirstArgument() : getSecondArgument();
+    return myParameterOrder != ParameterOrder.ACTUAL_EXPECTED_MESSAGE ? getFirstArgument() : getSecondArgument();
   }
 
   public @NotNull PsiExpression getActual() {
-    return isMessageOnFirstPosition() ? getSecondArgument() : getFirstArgument();
+    return myParameterOrder == ParameterOrder.ACTUAL_EXPECTED_MESSAGE ? getFirstArgument() : getSecondArgument();
   }
 
   public @NotNull PsiExpression getOriginalExpression() {
@@ -245,6 +252,10 @@ public final class AssertHint {
 
   public boolean isAssertTrue() {
     return "assertTrue".equals(getMethod().getName());
+  }
+
+  enum ParameterOrder {
+    MESSAGE_EXPECTED_ACTUAL, EXPECTED_ACTUAL_MESSAGE, ACTUAL_EXPECTED_MESSAGE
   }
 
   public static final class JUnitCommonAssertNames {

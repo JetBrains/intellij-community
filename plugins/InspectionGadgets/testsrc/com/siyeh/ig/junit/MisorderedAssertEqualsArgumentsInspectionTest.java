@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -10,10 +10,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class MisorderedAssertEqualsParametersInspectionTest extends LightJavaInspectionTestCase {
+public class MisorderedAssertEqualsArgumentsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() { doTest(); }
   public void testThingTest() { doTest(); }
+  public void testTestNGTest() { doTest(); }
 
   @Override
   protected String[] getEnvironmentClasses() {
@@ -26,10 +27,12 @@ public class MisorderedAssertEqualsParametersInspectionTest extends LightJavaIns
       "  static public void assertEquals(Object expected, Object actual){}" +
       "  static public void assertSame(Object expected, Object actual) {}" +
       "}",
+
       "package junit.framework;" +
       "public class Assert {" +
       "  static public void failNotEquals(String message, Object expected, Object actual) {}" +
       "}",
+
       "package org.junit;" +
       "import java.lang.annotation.ElementType;" +
       "import java.lang.annotation.Retention;" +
@@ -37,7 +40,18 @@ public class MisorderedAssertEqualsParametersInspectionTest extends LightJavaIns
       "import java.lang.annotation.Target;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
       "@Target({ElementType.METHOD})" +
-      "public @interface Test {}"
+      "public @interface Test {}",
+
+      "package org.testng.annotations;" +
+      "@Retention(RetentionPolicy.RUNTIME)" +
+      "@Target({ElementType.METHOD, ElementType.TYPE, ElementType.CONSTRUCTOR})" +
+      "public @interface Test {}",
+
+      "package org.testng;" +
+      "public class Assert {" +
+      "      public static void assertEquals(Object actual, Object expected) {}" +
+      "      public static void assertEquals(Object actual, Object expected, String message) {}" +
+      "}"
     };
   }
 
