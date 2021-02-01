@@ -27,7 +27,7 @@ import java.util.HashSet
 import javax.swing.JPanel
 import javax.swing.tree.TreeSelectionModel
 
-class PluginCertificateConfigurable :
+class PluginCertificateManager :
   BoundConfigurable(
     UIBundle.message("plugins.certificates.display.name"),
     "plugin.certificates"

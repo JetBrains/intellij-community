@@ -522,7 +522,7 @@
       bundle="messages.UIBundle"
       key="plugins.certificates.display.name"
       id="plugin.certificates"
-      instance="com.intellij.ide.plugins.certificates.PluginCertificateConfigurable"
+      instance="com.intellij.ide.plugins.certificates.PluginCertificateManager"
     />
 
     <fileType name="ARCHIVE" implementationClass="com.intellij.ide.highlighter.ArchiveFileType" fieldName="INSTANCE"
