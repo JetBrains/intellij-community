@@ -463,9 +463,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
       @Override
       public void run() {
-        for (EditorsSplitters each : getAllSplitters()) {
-          each.updateFileName(file);
-        }
+        SlowOperations.allowSlowOperations(() -> {
+          for (EditorsSplitters each : getAllSplitters()) {
+            each.updateFileName(file);
+          }
+        });
       }
     });
   }

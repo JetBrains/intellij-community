@@ -46,7 +46,10 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -485,7 +488,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
       catch (InvalidPathException ignored) {
       }
-      fileTitle = SlowOperations.allowSlowOperations(() -> FrameTitleBuilder.getInstance().getFileTitle(project, file));
+      fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
     }
     frame.setFileTitle(fileTitle, ioFile);
   }
