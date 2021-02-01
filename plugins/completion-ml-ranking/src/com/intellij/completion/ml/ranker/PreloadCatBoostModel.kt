@@ -2,19 +2,22 @@
 package com.intellij.completion.ml.ranker
 
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
+import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.util.PlatformUtils
 
 class PreloadCatBoostModel : PreloadingActivity() {
   override fun preload(indicator: ProgressIndicator) {
-    if (!PlatformUtils.isIntelliJ() && !PlatformUtils.isPyCharm()) return
-
-    val providers = ExperimentModelProvider.availableProviders().filterIsInstance<CatBoostJarCompletionModelProvider>()
+    val providers = ExperimentModelProvider.availableProviders()
+      .filterIsInstance<CatBoostJarCompletionModelProvider>()
+      .filter { it !is ExperimentModelProvider }
+    val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
     for (provider in providers) {
       // force to load model
-      provider.model
-      indicator.checkCanceled()
+      if (primaryIdeLanguages.any { provider.isLanguageSupported(it) }) {
+        provider.model
+        indicator.checkCanceled()
+      }
     }
   }
 }
