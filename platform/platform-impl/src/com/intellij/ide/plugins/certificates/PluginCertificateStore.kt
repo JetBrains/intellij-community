@@ -22,8 +22,8 @@ class PluginCertificateStore : CertificateStore {
   override val customTrustManager: MutableTrustManager = myTrustManager.value.customManager
 
   companion object {
-    val DEFAULT_PATH: String = java.lang.String.join(File.separator, PathManager.getConfigPath(), "plugins", "cacerts")
-    const val DEFAULT_PASSWORD = "changeit"
+    private val DEFAULT_PATH: String = java.lang.String.join(File.separator, PathManager.getConfigPath(), "plugins", "cacerts")
+    private const val DEFAULT_PASSWORD = "changeit"
     val instance: PluginCertificateStore = ApplicationManager.getApplication()
       .getService(PluginCertificateStore::class.java)
   }
