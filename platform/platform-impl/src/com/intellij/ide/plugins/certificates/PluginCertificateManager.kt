@@ -106,10 +106,8 @@ class PluginCertificateManager :
   @Throws(ConfigurationException::class)
   override fun apply() {
     val existing = myTrustManager.certificates
-    val added: MutableSet<X509Certificate> = HashSet(myCertificates)
-    added.removeAll(existing)
-    val removed: MutableSet<X509Certificate> = HashSet(existing)
-    removed.removeAll(myCertificates)
+    val added = myCertificates - existing
+    val removed = existing - myCertificates
     for (certificate in added) {
       if (!myTrustManager.addCertificate(certificate)) {
         throw ConfigurationException(

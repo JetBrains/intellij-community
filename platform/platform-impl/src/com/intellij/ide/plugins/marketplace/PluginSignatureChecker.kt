@@ -42,7 +42,6 @@ object PluginSignatureChecker {
   fun isSignedByCustomCertificates(pluginName: String, pluginFile: File): Boolean {
     val certificates = certificateStore.customTrustManager.certificates
     if (certificates.isEmpty()) return true
-    // TODO: check required certificates
     return certificates.any { isSignedBy(pluginName, pluginFile, it) }
   }
 
