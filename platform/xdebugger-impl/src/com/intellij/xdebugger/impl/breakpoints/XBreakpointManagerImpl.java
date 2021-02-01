@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.Consumer;
@@ -122,7 +123,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private void updateBreakpointInFile(final VirtualFile file) {
     ReadAction
       .nonBlocking(() -> changedBreakpoints(file))
-      .coalesceBy(file)
+      .coalesceBy(Pair.create(this, file))
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.defaultModalityState(), this::fireBreakpointsChanged)
       .submit(AppExecutorUtil.getAppExecutorService());
