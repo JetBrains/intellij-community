@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.util.PathMapper
 import org.gradle.tooling.*
 import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.gradle.tooling.internal.consumer.PhasedBuildAction.BuildActionWrapper
@@ -11,6 +12,7 @@ import org.gradle.tooling.internal.consumer.ProjectConnectionCloseListener
 import java.nio.file.Path
 
 class TargetProjectConnection(private val environmentConfiguration: TargetEnvironmentConfiguration,
+                              private val targetPathMapper: PathMapper?,
                               private val taskId: ExternalSystemTaskId?,
                               private val taskListener: ExternalSystemTaskNotificationListener?,
                               private val parameters: ConnectionParameters,
@@ -21,7 +23,7 @@ class TargetProjectConnection(private val environmentConfiguration: TargetEnviro
 
   override fun <T : Any?> getModel(modelType: Class<T>): T = model(modelType).get()
   override fun <T : Any?> getModel(modelType: Class<T>, resultHandler: ResultHandler<in T>) = model(modelType).get(resultHandler)
-  override fun newBuild(): BuildLauncher = TargetBuildLauncher(environmentConfiguration, taskId, taskListener, parameters)
+  override fun newBuild(): BuildLauncher = TargetBuildLauncher(environmentConfiguration, targetPathMapper, taskId, taskListener, parameters)
 
   override fun newTestLauncher(): TestLauncher {
     TODO("Not yet implemented")
@@ -29,11 +31,11 @@ class TargetProjectConnection(private val environmentConfiguration: TargetEnviro
 
   override fun <T : Any?> model(modelType: Class<T>): ModelBuilder<T> {
     require(modelType.isInterface) { "Cannot fetch a model of type '${modelType.name}' as this type is not an interface." }
-    return TargetModelBuilder(environmentConfiguration, taskId, taskListener, parameters, modelType)
+    return TargetModelBuilder(environmentConfiguration, targetPathMapper, taskId, taskListener, parameters, modelType)
   }
 
   override fun <T : Any?> action(buildAction: BuildAction<T?>): BuildActionExecuter<T> =
-    TargetBuildActionExecuter(environmentConfiguration, taskId, taskListener, parameters, buildAction)
+    TargetBuildActionExecuter(environmentConfiguration, targetPathMapper, taskId, taskListener, parameters, buildAction)
 
   override fun action(): BuildActionExecuter.Builder {
     return object : BuildActionExecuter.Builder {
@@ -53,6 +55,7 @@ class TargetProjectConnection(private val environmentConfiguration: TargetEnviro
       }
 
       override fun build(): BuildActionExecuter<Void> = TargetPhasedBuildActionExecuter(environmentConfiguration,
+                                                                                        targetPathMapper,
                                                                                         taskId,
                                                                                         taskListener,
                                                                                         parameters,

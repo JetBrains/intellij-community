@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.util.PathMapper
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.AbstractLongRunningOperation
 import org.gradle.tooling.internal.consumer.BlockingResultHandler
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 
 abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>, R : Any?>(
   private val environmentConfiguration: TargetEnvironmentConfiguration,
+  private val targetPathMapper: PathMapper?,
   private val taskId: ExternalSystemTaskId?,
   private val taskListener: ExternalSystemTaskNotificationListener?,
   parameters: ConnectionParameters) : AbstractLongRunningOperation<T>(parameters) {
@@ -46,6 +48,7 @@ abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>, R : Any?
     }
     val gradleProxyRunner = GradleServerRunner(project, consumerOperationParameters)
     gradleProxyRunner.run(environmentConfiguration,
+                          targetPathMapper,
                           targetBuildParametersBuilder,
                           targetProgressIndicator,
                           handler)

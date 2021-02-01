@@ -10,8 +10,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getEnvironmentConfiguration
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getTargetPathMapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathMapper
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
@@ -123,7 +125,8 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     val wrapperPropertyFile: String?,
     val verboseProcessing: Boolean?,
     val ttlMs: Int?,
-    val environmentConfiguration: TargetEnvironmentConfiguration?
+    val environmentConfiguration: TargetEnvironmentConfiguration?,
+    val targetPathMapper: PathMapper?
   )
 
   companion object {
@@ -157,6 +160,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       function: Function<ProjectConnection, R>
     ): R {
       val targetEnvironmentConfiguration = executionSettings?.getEnvironmentConfiguration()
+      val targetPathMapper = executionSettings?.getTargetPathMapper()
       val connectionParams = ConnectorParams(
         projectPath,
         executionSettings?.serviceDirectory,
@@ -166,7 +170,8 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         executionSettings?.wrapperPropertyFile,
         executionSettings?.isVerboseProcessing,
         executionSettings?.remoteProcessIdleTtlInMs?.toInt(),
-        targetEnvironmentConfiguration
+        targetEnvironmentConfiguration,
+        targetPathMapper
       )
       val connectionService = getInstance(projectPath, taskId)
       if (connectionService != null) {
@@ -190,7 +195,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
                                 listener: ExternalSystemTaskNotificationListener?): GradleConnector {
       val connector: GradleConnector
       if (connectorParams.environmentConfiguration != null) {
-        connector = TargetGradleConnector(connectorParams.environmentConfiguration, taskId, listener)
+        connector = TargetGradleConnector(connectorParams.environmentConfiguration, connectorParams.targetPathMapper, taskId, listener)
       }
       else {
         connector = GradleConnector.newConnector()

@@ -60,6 +60,7 @@ object Main {
     val targetPathMapping = System.getenv("target_path_mapping")?.run {
       String(Base64.getDecoder().decode(this.toByteArray(Charsets.UTF_8)), Charsets.UTF_8)
     }
+    val envMap = mutableMapOf<String, String>()
     val pathMappingPath = targetPathMapping?.lines()?.iterator()?.run {
       val map = mutableMapOf<String, String>()
       while (hasNext()) {
@@ -67,12 +68,12 @@ object Main {
         if (hasNext()) {
           val targetPath = next()
           map[targetPath] = localPath
+          envMap["path_mapping: $localPath"] = targetPath
         }
       }
       map
     } ?: emptyMap()
 
-    val envMap = mutableMapOf<String, String>()
     val classpath = System.getProperty("java.class.path")
     for (path in classpath.split(File.pathSeparator)) {
       val s = pathMappingPath[path]

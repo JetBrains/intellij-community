@@ -18,6 +18,8 @@ import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathMapper
+import com.intellij.util.PathMappingSettings
 import com.intellij.util.io.systemIndependentPath
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
@@ -30,7 +32,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.Log4jLoggerFactory
 import java.io.File
-import java.lang.StringBuilder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 import java.util.*
@@ -44,8 +45,10 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
   private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
   private val uploads = mutableListOf<Upload>()
+  private val localPathsToMap = mutableListOf<String>()
 
   fun prepareEnvironment(environmentConfiguration: TargetEnvironmentConfiguration,
+                         targetPathMapper: PathMapper?,
                          targetBuildParametersBuilder: TargetBuildParameters.Builder,
                          consumerOperationParameters: ConsumerOperationParameters,
                          progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator): TargetedCommandLine {
@@ -76,12 +79,22 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
 
     targetBuildParameters = targetBuildParametersBuilder.build(consumerOperationParameters, targetArguments)
 
+    val pathMappingSettings = PathMappingSettings()
     val pathMapperRoots = StringBuilder()
     val entries = targetEnvironment.uploadVolumes.entries
     for ((_, uploadableVolume) in entries) {
       val localRoot = uploadableVolume.localRoot.systemIndependentPath
       val targetRoot = uploadableVolume.targetRoot
       pathMapperRoots.appendLine(localRoot).appendLine(targetRoot)
+      pathMappingSettings.addMappingCheckUnique(localRoot, targetRoot)
+    }
+    for (localPath in localPathsToMap) {
+      if (targetPathMapper != null && targetPathMapper.canReplaceLocal(localPath)) {
+        pathMapperRoots.appendLine(localPath).appendLine(targetPathMapper.convertToRemote(localPath))
+      }
+      else if (pathMappingSettings.canReplaceLocal(localPath)) {
+        pathMapperRoots.appendLine(localPath).appendLine(pathMappingSettings.convertToRemote(localPath))
+      }
     }
     val variableValue = Base64.getEncoder().encodeToString(pathMapperRoots.toString().toByteArray(Charsets.UTF_8))
     targetedCommandLineBuilder.addEnvironmentVariable("target_path_mapping", variableValue)
@@ -124,8 +137,9 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
         val path = iterator.next()
         targetBuildArguments.add(arg to requestUploadIntoTarget(path, this, environmentConfiguration))
         val file = File(path)
-        if (file.name.startsWith("ijinit") && file.extension == GradleConstants.EXTENSION) {
-          val fileContent = FileUtil.loadFile(file, StandardCharsets.UTF_8)
+        if (file.extension != GradleConstants.EXTENSION) continue
+        val fileContent = FileUtil.loadFile(file, StandardCharsets.UTF_8)
+        if (file.name.startsWith("ijinit")) {
           // based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle` file
           val toolingExtensionsPaths = fileContent.substringAfter("initscript {\n" +
                                                                   "  dependencies {\n" +
@@ -134,7 +148,14 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
             .drop(10).dropLast(3).split("\"),mapPath(\"")
           for (toolingExtensionsPath in toolingExtensionsPaths) {
             javaParameters.classPath.add(toolingExtensionsPath)
+            localPathsToMap += toolingExtensionsPath
           }
+        }
+        else if (!file.name.startsWith("ijmapper")) {
+          val regex = Regex("mapPath\\(['|\"](.{2,})['|\"][)]")
+          val matches = regex.findAll(fileContent)
+          val elements = matches.map { it.groupValues[1] }
+          localPathsToMap.addAll(elements)
         }
       }
       else {

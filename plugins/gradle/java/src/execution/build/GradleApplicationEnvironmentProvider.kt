@@ -163,7 +163,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
       var intelliJRtPath: String? = null
       if (useClasspathFile) {
         try {
-          intelliJRtPath = PathUtil.getCanonicalPath(
+          intelliJRtPath = FileUtil.toCanonicalPath(
             PathManager.getJarPathForClass(Class.forName("com.intellij.rt.execution.CommandLineWrapper")))
         }
         catch (t: Throwable) {
@@ -180,13 +180,13 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     def gradlePath = '$gradlePath'
     def runAppTaskName = '$runAppTaskName'
     def mainClass = '${mainClass.qualifiedName}'
-    def javaExePath = '$javaExePath'
-    def _workingDir = ${if (workingDir.isNullOrEmpty()) "null\n" else "'$workingDir'\n"}
+    def javaExePath = mapPath('$javaExePath')
+    def _workingDir = ${if (workingDir.isNullOrEmpty()) "null\n" else "mapPath('$workingDir')\n"}
     def sourceSetName = '$sourceSetName'
     def javaModuleName = ${if (javaModuleName == null) "null\n" else "'$javaModuleName'\n"}
     ${if (useManifestJar) "gradle.addListener(new ManifestTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useArgsFile) "gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" else ""}
-    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, '$intelliJRtPath'))\n " else ""}
+    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, mapPath('$intelliJRtPath')))\n " else ""}
 
     allprojects {
       afterEvaluate { project ->

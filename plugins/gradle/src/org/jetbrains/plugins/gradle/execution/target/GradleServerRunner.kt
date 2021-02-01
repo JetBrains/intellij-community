@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.util.PathMapper
 import com.intellij.util.io.BaseOutputReader
 import org.gradle.initialization.BuildEventConsumer
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
@@ -35,10 +36,11 @@ class GradleServerRunner(project: Project,
   private val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project)
 
   fun run(environmentConfiguration: TargetEnvironmentConfiguration,
+          targetPathMapper: PathMapper?,
           targetBuildParametersBuilder: TargetBuildParameters.Builder,
           progressIndicator: TargetProgressIndicator,
           resultHandler: ResultHandler<Any?>) {
-    val commandLine = serverEnvironmentSetup.prepareEnvironment(environmentConfiguration, targetBuildParametersBuilder,
+    val commandLine = serverEnvironmentSetup.prepareEnvironment(environmentConfiguration, targetPathMapper, targetBuildParametersBuilder,
                                                                 consumerOperationParameters, progressIndicator)
     runTargetProcess(commandLine, serverEnvironmentSetup.targetEnvironment, progressIndicator, resultHandler)
   }

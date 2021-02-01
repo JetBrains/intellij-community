@@ -4,17 +4,19 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.util.PathMapper
 import org.gradle.tooling.ModelBuilder
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 
 class TargetModelBuilder<T>(environmentConfiguration: TargetEnvironmentConfiguration,
+                            targetPathMapper: PathMapper?,
                             taskId: ExternalSystemTaskId?,
                             taskListener: ExternalSystemTaskNotificationListener?,
                             parameters: ConnectionParameters,
                             private val modelType: Class<T>) :
-  TargetBuildExecuter<TargetModelBuilder<T>, T?>(environmentConfiguration, taskId, taskListener, parameters), ModelBuilder<T> {
+  TargetBuildExecuter<TargetModelBuilder<T>, T?>(environmentConfiguration, targetPathMapper, taskId, taskListener, parameters), ModelBuilder<T> {
 
   override val targetBuildParametersBuilder: TargetBuildParameters.Builder
     get() = TargetBuildParameters.ModelBuilderParametersBuilder(modelType)

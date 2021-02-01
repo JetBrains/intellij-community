@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.util.PathMapper
 import org.gradle.tooling.BuildActionExecuter
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.ConnectionParameters
@@ -12,13 +13,14 @@ import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.PhasedBuildActionParametersBuilder
 
 class TargetPhasedBuildActionExecuter(environmentConfiguration: TargetEnvironmentConfiguration,
+                                      targetPathMapper: PathMapper?,
                                       taskId: ExternalSystemTaskId?,
                                       taskListener: ExternalSystemTaskNotificationListener?,
                                       parameters: ConnectionParameters,
                                       private val projectsLoadedAction: PhasedBuildAction.BuildActionWrapper<Any>?,
                                       private val buildFinishedAction: PhasedBuildAction.BuildActionWrapper<Any>?) :
-  TargetBuildExecuter<TargetPhasedBuildActionExecuter, Void>(environmentConfiguration, taskId, taskListener,
-                                                             parameters), BuildActionExecuter<Void> {
+  TargetBuildExecuter<TargetPhasedBuildActionExecuter, Void>(environmentConfiguration, targetPathMapper, taskId, taskListener, parameters),
+  BuildActionExecuter<Void> {
 
   override val targetBuildParametersBuilder: TargetBuildParameters.Builder
     get() = PhasedBuildActionParametersBuilder(projectsLoadedAction?.action, buildFinishedAction?.action)

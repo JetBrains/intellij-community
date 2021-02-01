@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.util.PathMapper
 import org.gradle.internal.time.Time
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
@@ -14,9 +15,10 @@ import java.net.URI
 import java.util.concurrent.TimeUnit
 
 class TargetGradleConnector(environmentConfiguration: TargetEnvironmentConfiguration,
+                            targetPathMapper: PathMapper?,
                             taskId: ExternalSystemTaskId?,
                             taskListener: ExternalSystemTaskNotificationListener?) : GradleConnector(), ProjectConnectionCloseListener {
-  private val connectionFactory: ConnectionFactory = TargetConnectionFactory(environmentConfiguration, taskId, taskListener)
+  private val connectionFactory: ConnectionFactory = TargetConnectionFactory(environmentConfiguration, targetPathMapper, taskId, taskListener)
   private val distributionFactory: DistributionFactory = DistributionFactory(Time.clock())
   private var distribution: Distribution? = null
   private val connections = mutableListOf<TargetProjectConnection>()
