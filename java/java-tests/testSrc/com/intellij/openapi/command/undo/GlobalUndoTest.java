@@ -14,10 +14,8 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
@@ -30,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ObjectUtils;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +49,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   private VirtualFile myDirToRename;
   private static final String DIR_TO_RENAME_NAME = "dirToRename.txt";
   private static final String NEW_NAME = "NewName";
-  private boolean myConfirmationWasRequested = false;
+  private boolean myConfirmationWasRequested;
   private static final String DIR_NAME = "dir.txt";
   private PsiJavaFile myContainingFile;
 
@@ -172,7 +171,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   private void renameClassTo(final String newClassName) {
-    executeCommand((Command)() -> new RenameProcessor(myProject, myClass, newClassName, true, true).run(), "Rename Class");
+    executeCommand("Rename Class", () -> new RenameProcessor(myProject, myClass, newClassName, true, true).run());
   }
 
   public void testUndoAfterEmptyReformat() {
@@ -255,30 +254,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     redo(getEditor(f[0]));
 
     assertEquals("foofoo", getDocumentText(f[0]));
-  }
-
-  @NotNull
-  protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
-    try {
-      return WriteAction.computeAndWait(() ->
-                                          // requestor must be notnull
-                                          dir.createChildData(dir, name));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  protected static void delete(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      try {
-        // requestor must be notnull
-        file.delete(file);
-      }
-      catch (IOException e) {
-        throw new RuntimeException();
-      }
-    });
   }
 
   public void testDoNotConfuseRecreatedFilesWithDeleted() {
@@ -489,6 +464,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertEquals("doc", getDocumentText(f));
     redo(editor);
     assertEquals("external", getDocumentText(f));
+    ObjectUtils.reachabilityFence(doc);
   }
 
   public void testCanUndoAfterFileWasDeletedAndWhenCreatedExternally() throws IOException {
@@ -540,10 +516,10 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     assertGlobalUndoNotAvailable();
     assertUndoNotAvailable(getEditor(f));
+    ObjectUtils.reachabilityFence(d);
   }
 
-  public void testGlobalUndoIsAvaliableWhenFileChangedExternallyWithForceFlag() {
-
+  public void testGlobalUndoIsAvailableWhenFileChangedExternallyWithForceFlag() {
     String fileName = "f.txt";
     String projectFileName = "proj.txt";
     VirtualFile f = createChildData(myRoot, projectFileName);
@@ -914,7 +890,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     PsiDocumentManager instance = PsiDocumentManager.getInstance(myProject);
     instance.commitAllDocuments();
     PsiFile file = instance.getPsiFile(editor.getDocument());
-    PsiClass aaaClass = (PsiClass)(file.getViewProvider().findElementAt(41).getParent());
+    PsiClass aaaClass = (PsiClass)file.getViewProvider().findElementAt(41).getParent();
 
     IntentionAction fix = QuickFixFactory.getInstance().createMoveClassToSeparateFileFix(aaaClass);
     WriteAction.runAndWait(() -> executeCommand(() -> fix.invoke(myProject, editor, file)));
@@ -1123,7 +1099,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   private void deleteInCommand(final VirtualFile f) {
-    executeCommand((Command)() -> delete(f), "Delete file");
+    executeCommand("Delete file", () -> delete(f));
   }
 
   private void checkDirDoesNotExist() {
@@ -1137,12 +1113,12 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   private void createDirectory(final String name) {
-    executeCommand((Command)() -> myDir = createChildDirectory(myRoot, name), "Create Directory");
+    executeCommand("Create Directory", () -> myDir = createChildDirectory(myRoot, name));
   }
 
   private void deleteDirectory() {
     Command command = () -> delete(myDir);
-    executeCommand(command, "Delete Directory");
+    executeCommand("Delete Directory", command);
   }
 
   private void moveClassTo(final VirtualFile dirTo) {
@@ -1150,19 +1126,14 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       VirtualFile file = myClass.getContainingFile().getVirtualFile();
       move(file, dirTo);
     };
-    executeCommand(command, "Move class to a new dir");
+    executeCommand("Move class to a new dir", command);
   }
 
   public void testSCR5784() throws Exception {
     myFile = createFile("Test.java", "abcd efgh ijk");
     myEditor = createEditor(myFile.getVirtualFile());
 
-    myManager.setEditorProvider(new CurrentEditorProvider() {
-      @Override
-      public FileEditor getCurrentEditor() {
-        return TextEditorProvider.getInstance().getTextEditor(myEditor);
-      }
-    });
+    myManager.setEditorProvider(() -> TextEditorProvider.getInstance().getTextEditor(myEditor));
 
     final SelectionModel selectionModel = myEditor.getSelectionModel();
     final CaretModel caretModel = myEditor.getCaretModel();
@@ -1308,11 +1279,11 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     files[1] = createChildData(myRoot, "f2.txt");
     files[2] = createChildData(myRoot, "f3.txt");
 
-    executeCommand(() -> setDocumentText(files[0], "text1"), "command", "ID");
+    executeCommand("command", "ID", () -> setDocumentText(files[0], "text1"));
 
-    executeCommand(() -> setDocumentText(files[1], "text2"), "command", "ID");
+    executeCommand("command", "ID", () -> setDocumentText(files[1], "text2"));
 
-    executeCommand(() -> setDocumentText(files[2], "text3"), "command", "ID");
+    executeCommand("command", "ID", () -> setDocumentText(files[2], "text3"));
 
     //assertGlobalUndoIsAvailable();
 
@@ -1398,33 +1369,33 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       .runWriteAction(() -> document1.replaceString(0, document1.getTextLength(), text)), "test_command", groupId, policy);
   }
 
-  protected void assertFileExists(String fileName, String content) {
+  private void assertFileExists(String fileName, String content) {
     assertFileExists(myRoot, fileName, content);
   }
 
-  private void assertFileExists(VirtualFile dir, String fileName, String content) {
+  private static void assertFileExists(VirtualFile dir, String fileName, String content) {
     assertFileExists(dir, fileName);
     assertEquals(content, getDocumentText(findFile(fileName, dir)));
   }
 
-  private void assertFileDoesNotExist(String fileName, VirtualFile dir) {
+  private static void assertFileDoesNotExist(String fileName, VirtualFile dir) {
     assertNull(findFile(fileName, dir));
   }
 
-  private void assertFileExists(VirtualFile dir, String fileName) {
+  private static void assertFileExists(VirtualFile dir, String fileName) {
     StoreUtil.saveDocumentsAndProjectsAndApp(false);
     assertNotNull(findFile(fileName, dir));
   }
 
-  protected VirtualFile findFile(String className, VirtualFile dir) {
+  protected static VirtualFile findFile(String className, VirtualFile dir) {
     return dir.findChild(className + ".java");
   }
 
-  public void setDocumentText(final VirtualFile f, final String text) {
+  private static void setDocumentText(final VirtualFile f, final String text) {
     ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().getDocument(f).setText(text));
   }
 
-  public String getDocumentText(VirtualFile f) {
+  private static String getDocumentText(VirtualFile f) {
     return FileDocumentManager.getInstance().getDocument(f).getText();
   }
 
@@ -1442,7 +1413,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   protected void deleteClass() {
-    executeCommand((Command)() -> ApplicationManager.getApplication().runWriteAction(() -> myClass.delete()), "Delete Class");
+    executeCommand("Delete Class", () -> ApplicationManager.getApplication().runWriteAction(() -> myClass.delete()));
   }
 
   protected void createClass(@NonNls final String name) {
@@ -1450,14 +1421,14 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   protected PsiJavaFile createClass(final String name, final VirtualFile dir) {
-    executeCommand((Command)() -> {
+    executeCommand("Create Class" + name, () -> {
       ApplicationManager.getApplication().runWriteAction(() -> {
         myClass = JavaDirectoryService.getInstance().createClass(myPsiManager.findDirectory(dir), name);
         myClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myClass);
       });
 
       myContainingFile = (PsiJavaFile)myClass.getContainingFile();
-    }, "Create Class" + name);
+    });
     return myContainingFile;
   }
 }

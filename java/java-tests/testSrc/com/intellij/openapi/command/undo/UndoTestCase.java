@@ -74,13 +74,9 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     myRoot = createTestProjectStructure();
   }
 
-  protected void typeInChar(Editor e, char c) {
-    getActionManager();
+  void typeInChar(Editor e, char c) {
+    EditorActionManager.getInstance();
     TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
-  }
-
-  private static EditorActionManager getActionManager() {
-    return EditorActionManager.getInstance();
   }
 
   protected void typeInText(Editor editor, String text) {
@@ -90,11 +86,11 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     }
   }
 
-  protected void moveCaret(final Editor e, final String dir, final boolean selection) {
+  protected static void moveCaret(final Editor e, final String dir, final boolean selection) {
     executeEditorAction(e, "Editor" + dir + (selection ? "WithSelection" : ""));
   }
 
-  protected void enter(final Editor e) {
+  protected static void enter(final Editor e) {
     executeEditorAction(e, IdeActions.ACTION_EDITOR_ENTER);
   }
 
@@ -108,11 +104,11 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     executeEditorAction(e, IdeActions.ACTION_EDITOR_DELETE);
   }
 
-  protected void executeEditorAction(@NotNull Editor editor, @NotNull String actionId) {
+  static void executeEditorAction(@NotNull Editor editor, @NotNull String actionId) {
     EditorTestUtil.executeAction(editor, actionId);
   }
 
-  protected VirtualFile createFileInCommand(final String name) {
+  VirtualFile createFileInCommand(final String name) {
     try {
       return WriteCommandAction
         .runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> myRoot.createChildData(this, name));
@@ -138,7 +134,7 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     };
   }
 
-  protected boolean isUndoAvailable(Editor e) {
+  boolean isUndoAvailable(Editor e) {
     return myManager.isUndoAvailable(getFileEditor(e));
   }
 
@@ -148,21 +144,21 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     myManager.undo(fe);
   }
 
-  protected boolean isRedoAvailable(Editor e) {
+  boolean isRedoAvailable(Editor e) {
     return myManager.isRedoAvailable(getFileEditor(e));
   }
 
-  protected void redo(Editor e) {
+  void redo(Editor e) {
     FileEditor fe = getFileEditor(e);
     assertTrue("redo is not available", myManager.isRedoAvailable(fe));
     myManager.redo(fe);
   }
 
-  protected void globalUndo() {
+  void globalUndo() {
     undo(null);
   }
 
-  protected void globalRedo() {
+  void globalRedo() {
     redo(null);
   }
 
@@ -170,55 +166,55 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     return FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
   }
 
-  public void assertStartsWith(String prefix, String text) {
+  static void assertStartsWith(String prefix, String text) {
     assertTrue(text, text.startsWith(prefix));
   }
 
-  protected void assertGlobalUndoIsAvailable() {
+  void assertGlobalUndoIsAvailable() {
     assertUndoIsAvailable(null);
   }
 
-  protected void assertGlobalUndoNotAvailable() {
+  void assertGlobalUndoNotAvailable() {
     assertUndoNotAvailable(null);
   }
 
-  protected void assertGlobalRedoIsAvailable() {
+  void assertGlobalRedoIsAvailable() {
     assertRedoIsAvailable(null);
   }
 
-  protected void assertGlobalRedoNotAvailable() {
+  void assertGlobalRedoNotAvailable() {
     assertRedoNotAvailable(null);
   }
 
-  protected void assertRedoNotAvailable(Editor e) {
+  void assertRedoNotAvailable(Editor e) {
     assertFalse(myManager.isRedoAvailable(getFileEditor(e)));
   }
 
-  protected void assertUndoIsAvailable(Editor e) {
+  void assertUndoIsAvailable(Editor e) {
     assertTrue(myManager.isUndoAvailable(getFileEditor(e)));
   }
 
-  protected void assertUndoNotAvailable(Editor e) {
+  void assertUndoNotAvailable(Editor e) {
     assertFalse(myManager.isUndoAvailable(getFileEditor(e)));
   }
 
-  protected void assertRedoIsAvailable(Editor e) {
+  void assertRedoIsAvailable(Editor e) {
     assertTrue(myManager.isRedoAvailable(getFileEditor(e)));
   }
 
-  protected FileEditor getFileEditor(Editor e) {
+  protected static FileEditor getFileEditor(Editor e) {
     return e == null ? null : TextEditorProvider.getInstance().getTextEditor(e);
   }
 
   protected void executeCommand(Command c) {
-    executeCommand(c, "");
+    executeCommand("", c);
   }
 
-  protected void executeCommand(Command command, String name) {
-    executeCommand(command, name, null);
+  protected void executeCommand(String name, Command command) {
+    executeCommand(name, null, command);
   }
 
-  protected void executeCommand(final Command command, final String name, final Object groupId) {
+  protected void executeCommand(final String name, final Object groupId, final Command command) {
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       try {
         command.run();
@@ -229,7 +225,7 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     }, name, groupId);
   }
 
-  protected void executeTransparently(final Command r) {
+  static void executeTransparently(final Command r) {
     DocumentUtil.writeInRunUndoTransparentAction(() -> {
       try {
         r.run();

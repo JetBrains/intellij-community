@@ -98,7 +98,8 @@ public final class VfsTestUtil {
 
   public static void deleteFile(@NotNull VirtualFile file) {
     try {
-      WriteAction.runAndWait(() -> file.delete(null));
+      // requestor must be notnull (for GlobalUndoTest)
+      WriteAction.runAndWait(() -> file.delete(file));
     }
     catch (Throwable throwable) {
       ExceptionUtil.rethrow(throwable);

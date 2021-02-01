@@ -750,8 +750,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected static @NotNull VirtualFile createChildData(@NotNull VirtualFile dir, @NotNull String name) {
     try {
       // requestor must be notnull (for GlobalUndoTest)
-
-      return WriteAction.computeAndWait(() -> dir.createChildData(null, name));
+      return WriteAction.computeAndWait(() -> dir.createChildData(dir, name));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -776,8 +775,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected static void delete(@NotNull VirtualFile vFile1) {
-    VfsTestUtil.deleteFile(vFile1);
+  protected static void delete(@NotNull VirtualFile file) {
+    VfsTestUtil.deleteFile(file);
   }
 
   public static void move(final @NotNull VirtualFile vFile1, final @NotNull VirtualFile newFile) {
