@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
@@ -81,20 +81,24 @@ private val cdStripTrailingSpacesEnabled                               get() = C
 // @formatter:on
 
 internal val optionDescriptors: List<OptionDescription>
-  get() = listOf(
-    myCbHonorCamelHumpsWhenSelectingByClicking,
-    enableWheelFontChange,
-    enableDnD,
-    virtualSpace,
-    caretInsideTabs,
-    virtualPageAtBottom,
-    highlightBraces,
-    highlightScope,
-    highlightIdentifierUnderCaret,
-    renameLocalVariablesInplace,
-    preselectCheckBox,
-    showInlineDialogForCheckBox
-  ).map(CheckboxDescriptor::asUiOptionDescriptor)
+  get() {
+    return sequenceOf(
+      myCbHonorCamelHumpsWhenSelectingByClicking,
+      enableWheelFontChange,
+      enableDnD,
+      virtualSpace,
+      caretInsideTabs,
+      virtualPageAtBottom,
+      highlightBraces,
+      highlightScope,
+      highlightIdentifierUnderCaret,
+      renameLocalVariablesInplace,
+      preselectCheckBox,
+      showInlineDialogForCheckBox
+    )
+      .map(CheckboxDescriptor::asUiOptionDescriptor)
+      .toList()
+  }
 
 private val EP_NAME = ExtensionPointName<GeneralEditorOptionsProviderEP>("com.intellij.generalEditorOptionsExtension")
 
@@ -120,8 +124,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
 
     @JvmStatic
     fun restartDaemons() {
-      val projects = ProjectManager.getInstance().openProjects
-      for (project in projects) {
+      for (project in ProjectManager.getInstance().openProjects) {
         DaemonCodeAnalyzer.getInstance(project).settingsChanged()
       }
     }

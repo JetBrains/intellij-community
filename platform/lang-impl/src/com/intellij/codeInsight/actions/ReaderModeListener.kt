@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
@@ -69,7 +69,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
   override fun modeChanged(project: Project) = applyToAllEditors(project)
 }
 
-class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
+internal class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
   override fun runActivity(project: Project) {
     val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {
@@ -79,8 +79,7 @@ class ReaderModeEditorSettingsListener : StartupActivity, DumbAware {
         }
       }
     }
-    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(propertyChangeListener)
-    Disposer.register(project) { EditorSettingsExternalizable.getInstance().removePropertyChangeListener(propertyChangeListener) }
+    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(propertyChangeListener, project)
 
     val fontPreferences = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
     fontPreferences.changeListener = Runnable {
