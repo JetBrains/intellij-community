@@ -422,6 +422,12 @@ public final class PerformanceWatcher implements Disposable {
            Objects.equals(el1.getFileName(), el2.getFileName());
   }
 
+  public void clearFreezeStacktraces() {
+    if (myCurrentEDTEventChecker != null) {
+      myCurrentEDTEventChecker.stopDumping();
+    }
+  }
+
   public final class Snapshot {
     private final ApdexData myStartGeneralSnapshot = myGeneralApdex;
     private final ApdexData myStartSwingSnapshot = mySwingApdex;
@@ -527,16 +533,21 @@ public final class PerformanceWatcher implements Disposable {
       getPublisher().uiFreezeFinished(durationMs, reportDir);
     }
 
-    private void stopDumping() {
+    void stopDumping() {
       SamplingTask task = myDumpTask;
       if (task != null) {
         task.stop();
+        myDumpTask = null;
       }
     }
 
     private String getFreezePlaceSuffix() {
       List<StackTraceElement> stacktraceCommonPart = null;
-      for (ThreadInfo[] info : myDumpTask.getThreadInfos()) {
+      SamplingTask task = myDumpTask;
+      if (task == null) {
+        return "";
+      }
+      for (ThreadInfo[] info : task.getThreadInfos()) {
         ThreadInfo edt = ContainerUtil.find(info, ThreadDumper::isEDT);
         if (edt != null) {
           StackTraceElement[] edtStack = edt.getStackTrace();

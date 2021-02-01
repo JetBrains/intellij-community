@@ -7,6 +7,7 @@ import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProje
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.diagnostic.MessagePool
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
@@ -497,6 +498,7 @@ object DynamicPlugins {
           LaterInvocator.purgeExpiredItems()
           FileAttribute.resetRegisteredIds()
           resetFocusCycleRoot()
+          PerformanceWatcher.getInstance().clearFreezeStacktraces()
 
           for (classLoader in classLoaders) {
             IconLoader.detachClassLoader(classLoader)
