@@ -70,7 +70,8 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
                                                                 @NotNull Function<@NotNull ProjectPluginTrackerState, @NotNull Set<String>> countProducer) {
     return ProjectPluginTrackerManager
       .getInstance()
-      .getStatesByProject()
+      .getState()
+      .getTrackers()
       .values()
       .stream()
       .map(countProducer)

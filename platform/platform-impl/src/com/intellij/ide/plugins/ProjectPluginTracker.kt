@@ -49,30 +49,6 @@ class ProjectPluginTracker(
 
   private val disabledPlugins get() = state.disabledPlugins
 
-  fun startTrackingPerProject(
-    pluginIds: Iterable<PluginId>,
-    enable: Boolean,
-  ) {
-    val (setToRemoveFrom, setToAddTo) = if (enable)
-      Pair(disabledPlugins, enabledPlugins)
-    else
-      Pair(enabledPlugins, disabledPlugins)
-
-    pluginIds
-      .map { it.idString }
-      .forEach {
-        setToRemoveFrom.remove(it)
-        setToAddTo.add(it)
-      }
-  }
-
-  fun stopTrackingPerProject(pluginIds: Iterable<PluginId>) {
-    pluginIds
-      .map { it.idString }
-      .filterNot { enabledPlugins.remove(it) }
-      .forEach { disabledPlugins.remove(it) }
-  }
-
   fun isEnabled(pluginId: PluginId) = enabledPlugins.contains(pluginId.idString)
 
   fun isDisabled(pluginId: PluginId) = disabledPlugins.contains(pluginId.idString)
@@ -100,4 +76,45 @@ class ProjectPluginTrackerState : BaseState() {
 
   @get:XCollection
   var disabledPlugins by stringSet()
+
+  fun startTracking(
+    pluginIds: Iterable<PluginId>,
+    enable: Boolean,
+  ): Boolean {
+    val (setToRemoveFrom, setToAddTo) = if (enable)
+      Pair(disabledPlugins, enabledPlugins)
+    else
+      Pair(enabledPlugins, disabledPlugins)
+
+    var updated = false
+
+    pluginIds
+      .map { it.idString }
+      .forEach {
+        setToRemoveFrom.remove(it)
+        setToAddTo.add(it)
+        updated = true
+      }
+
+    if (updated) incrementModificationCount()
+    return updated
+  }
+
+  fun stopTracking(pluginIds: Iterable<PluginId>): Boolean {
+    var updated = false
+
+    pluginIds
+      .map { it.idString }
+      .filterNot {
+        val removed = enabledPlugins.remove(it)
+        updated = removed || updated
+        removed
+      }.forEach {
+        disabledPlugins.remove(it)
+        updated = true
+      }
+
+    if (updated) incrementModificationCount()
+    return updated
+  }
 }

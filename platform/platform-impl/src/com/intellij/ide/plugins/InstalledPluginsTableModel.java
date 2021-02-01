@@ -60,10 +60,6 @@ public class InstalledPluginsTableModel {
     return myProject;
   }
 
-  protected final @Nullable ProjectPluginTracker getPluginTracker() {
-    return myPluginTracker;
-  }
-
   protected @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
     return new ArrayList<>(view);
   }
