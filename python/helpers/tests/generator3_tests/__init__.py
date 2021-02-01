@@ -39,13 +39,13 @@ def test_data_dir(name):
     return decorator
 
 
-class GeneratorTestCase(unittest.TestCase):
+class HelpersTestCase(unittest.TestCase):
     longMessage = True
     maxDiff = None
 
     @classmethod
     def setUpClass(cls):
-        super(GeneratorTestCase, cls).setUpClass()
+        super(HelpersTestCase, cls).setUpClass()
         # Logger cannot be initialized beforehand (say, on top-level), because,
         # otherwise, it won't take into account buffered sys.stderr needed by
         # teamcity-messages
@@ -55,14 +55,10 @@ class GeneratorTestCase(unittest.TestCase):
         cls.log.addHandler(handler)
         cls.log.setLevel(logging.WARN)
 
-        os.environ[ENV_TEST_MODE_FLAG] = 'True'
-
     @classmethod
     def tearDownClass(cls):
-        os.environ.pop(ENV_TEST_MODE_FLAG)
-
         delattr(cls, 'log')
-        super(GeneratorTestCase, cls).tearDownClass()
+        super(HelpersTestCase, cls).tearDownClass()
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp(prefix='{}_{}__'.format(self.test_class_name, self.test_name))
@@ -174,3 +170,15 @@ class GeneratorTestCase(unittest.TestCase):
                             'Item {!r} is expected after {!r} in {!r}'.format(item, prev_item, actual_list))
                 except ValueError:
                     raise AssertionError('Item {!r} not found in {!r}'.format(item, actual_list))
+
+
+class GeneratorTestCase(HelpersTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(GeneratorTestCase, cls).setUpClass()
+        os.environ[ENV_TEST_MODE_FLAG] = 'True'
+
+    @classmethod
+    def tearDownClass(cls):
+        os.environ.pop(ENV_TEST_MODE_FLAG)
+        super(GeneratorTestCase, cls).tearDownClass()
