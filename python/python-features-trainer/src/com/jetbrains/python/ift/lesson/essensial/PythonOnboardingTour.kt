@@ -212,7 +212,7 @@ class PythonOnboardingTour(module: Module) :
       }
     }
     task {
-      text(PythonLessonsBundle.message("python.onboarding.balloon.run.sample", strong(runItem), action("RunClass")))
+      text(PythonLessonsBundle.message("python.onboarding.run.sample", strong(runItem), action("RunClass")))
       toolWindowShowed("Run")
       stateCheck {
         configurations().isNotEmpty()
