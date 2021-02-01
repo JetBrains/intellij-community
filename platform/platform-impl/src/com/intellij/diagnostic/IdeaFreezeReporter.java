@@ -267,10 +267,11 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static boolean isWithReadLock(ThreadInfo thread) {
     boolean read = false;
     for (StackTraceElement s : thread.getStackTrace()) {
-      if ("runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) {
+      String methodName = s.getMethodName();
+      if ("runReadAction".equals(methodName) || "tryRunReadAction".equals(methodName) || "insideReadAction".equals(methodName)) {
         read = true;
       }
-      if ("waitABit".equals(s.getMethodName())) {
+      if ("waitABit".equals(methodName)) {
         return false;
       }
     }
