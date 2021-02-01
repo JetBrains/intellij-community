@@ -549,8 +549,7 @@ public final class PathManager {
             }
           }
         }
-        catch (NoSuchFileException | AccessDeniedException ignore) {
-        }
+        catch (NoSuchFileException | AccessDeniedException ignore) { }
         catch (IOException e) {
           log("Can't read property file '" + path + "': " + e.getMessage());
         }

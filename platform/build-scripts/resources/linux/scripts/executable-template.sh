@@ -56,7 +56,7 @@ IDE_BIN_HOME=$(pwd)
 IDE_HOME=$("$DIRNAME" "$IDE_BIN_HOME")
 cd "${OLDPWD}" || exit 2
 
-CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 PRODUCT_VENDOR="__product_vendor__"
 PATHS_SELECTOR="__system_selector__"
 

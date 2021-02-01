@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.cds
 
 import com.intellij.diagnostic.VMOptions
@@ -125,7 +125,7 @@ object CDSManager {
 
           override var text2: String?
             get() = indicator.text2
-            set(@NlsContexts.ProgressText value: String?) {
+            set(@NlsContexts.ProgressText value) {
               indicator.text2 = value
             }
         }
