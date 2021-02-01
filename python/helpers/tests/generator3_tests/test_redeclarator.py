@@ -257,34 +257,6 @@ if not IS_CLI and VERSION < (3, 0):
             result = restore_by_inspect(target)
             self.assertEqual(result, "(a, (b, c), d, e=1)")
 
-class _DiffPrintingTestCase(unittest.TestCase):
-    def assertEqual(self, etalon, specimen, msg=None):
-        if type(etalon) == str and type(specimen) == str and etalon != specimen:
-            print("%s" % "\n")
-            # print side by side
-            ei = iter(etalon.split("\n"))
-            si = iter(specimen.split("\n"))
-            if VERSION < (3, 0):
-                si_next = si.next
-            else:
-                si_next = si.__next__
-            for el in ei:
-                try: sl = si_next()
-                except StopIteration: break # I wish the exception would just work as break
-                if el != sl:
-                    print("!%s" % el)
-                    print("?%s" % sl)
-                else:
-                    print(">%s" % sl)
-                    # one of the iters might not end yet
-            for el in ei:
-                print("!%s" % el)
-            for sl in si:
-                print("?%s" % sl)
-            raise self.failureException(msg)
-        else:
-            unittest.TestCase.assertEqual(self, etalon, specimen, msg)
-
 
 class TestSpecialCases(GeneratorTestCase):
     """
@@ -331,7 +303,7 @@ class TestSpecialCases(GeneratorTestCase):
 
         # we could want to test a class without __dict__, but it takes a C extension to really create one,
 
-class TestDataOutput(GeneratorTestCase, _DiffPrintingTestCase):
+class TestDataOutput(GeneratorTestCase):
     """
     Tests for sanity of output of data members
     """
@@ -344,7 +316,7 @@ class TestDataOutput(GeneratorTestCase, _DiffPrintingTestCase):
         buf = Buf(self.m)
         self.m.fmt_value(buf.out, data, 0)
         result = "".join(buf.data).strip()
-        self.assertEqual(expected, result)
+        self.assertMultiLineEqual(expected, result)
 
     def testRecursiveDict(self):
         data = {'a': 1}
