@@ -4,11 +4,9 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.io.FileUtil;
@@ -74,28 +72,6 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
       if (scheme != null) {
         cm.setGlobalScheme(scheme);
       }
-    }
-    else { // Offer a new Theme based EditorColorScheme for the first time after update.
-      ApplicationManager.getApplication().invokeLater(() -> {
-        String themeName = myTheme.getEditorSchemeName();
-        if (StringUtil.isNotEmpty(themeName)) {
-          EditorColorsManager cm = EditorColorsManager.getInstance();
-          EditorColorsScheme globalScheme = cm.getGlobalScheme();
-          PropertiesComponent properties = PropertiesComponent.getInstance();
-
-          EditorColorsScheme baseScheme = cm.getScheme(Scheme.getBaseName(globalScheme.getName()));
-
-          if (!properties.getBoolean(RELAUNCH_PROPERTY) &&
-              !Scheme.getBaseName(globalScheme.getName()).equals(themeName) &&
-              EditorColorsScheme.DEFAULT_SCHEME_NAME.equals(baseScheme.getName())) { // is default based
-            EditorColorsScheme scheme = cm.getScheme(themeName);
-            if (scheme != null) {
-              cm.setGlobalScheme(scheme);
-            }
-          }
-          properties.setValue(RELAUNCH_PROPERTY, true);
-        }
-      });
     }
   }
 

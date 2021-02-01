@@ -273,7 +273,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       if (currentLaf != null) {
         if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
           if (!((UIThemeBasedLookAndFeelInfo)currentLaf).isInitialised()) {
-            setLookAndFeelImpl(myCurrentLaf, false, false);
+            setLookAndFeelImpl(myCurrentLaf, true, false);
           }
         }
         else {
