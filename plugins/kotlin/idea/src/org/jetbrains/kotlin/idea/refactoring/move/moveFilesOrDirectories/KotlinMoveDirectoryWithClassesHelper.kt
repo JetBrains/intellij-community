@@ -115,7 +115,7 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
 
     }
 
-    override fun postProcessUsages(usages: Array<out UsageInfo>, newDirMapper: Function<PsiDirectory, PsiDirectory>) {
+    override fun postProcessUsages(usages: Array<out UsageInfo>, newDirMapper: Function<in PsiDirectory, out PsiDirectory>) {
         val fileToMoveContext = fileToMoveContext ?: return
         try {
             val usagesToProcess = ArrayList<FileUsagesWrapper>()

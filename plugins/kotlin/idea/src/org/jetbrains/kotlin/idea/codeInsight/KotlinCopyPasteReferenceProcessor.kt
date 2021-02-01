@@ -270,7 +270,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         editor: Editor,
         bounds: RangeMarker,
         caretOffset: Int,
-        indented: Ref<Boolean>,
+        indented: Ref<in Boolean>,
         values: List<BasicKotlinReferenceTransferableData>
     ) {
         if (DumbService.getInstance(project).isDumb ||

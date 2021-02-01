@@ -92,7 +92,7 @@ class MoveDeclarationsCopyPasteProcessor : CopyPastePostProcessor<MoveDeclaratio
         editor: Editor,
         bounds: RangeMarker,
         caretOffset: Int,
-        indented: Ref<Boolean>,
+        indented: Ref<in Boolean>,
         values: List<MoveDeclarationsTransferableData>
     ) {
         val data = values.single()

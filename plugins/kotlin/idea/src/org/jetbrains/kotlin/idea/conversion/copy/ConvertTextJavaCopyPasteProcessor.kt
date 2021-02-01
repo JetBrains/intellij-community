@@ -105,7 +105,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         editor: Editor,
         bounds: RangeMarker,
         caretOffset: Int,
-        indented: Ref<Boolean>,
+        indented: Ref<in Boolean>,
         values: List<TextBlockTransferableData>
     ) {
         if (DumbService.getInstance(project).isDumb) return

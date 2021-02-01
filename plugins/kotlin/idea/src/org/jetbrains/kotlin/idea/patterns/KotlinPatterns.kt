@@ -95,7 +95,7 @@ class KtParameterPattern : PsiElementPattern<KtParameter, KtParameterPattern>(Kt
             override fun processValues(
                 ktParameter: KtParameter,
                 context: ProcessingContext,
-                processor: PairProcessor<KtFunction, ProcessingContext>
+                processor: PairProcessor<in KtFunction, in ProcessingContext>
             ): Boolean {
                 val function = ktParameter.ownerFunction as? KtFunction ?: return true
                 return processor.process(function, context)
@@ -131,7 +131,7 @@ class KotlinReceiverPattern : PsiElementPattern<KtTypeReference, KotlinReceiverP
             override fun processValues(
                 typeReference: KtTypeReference,
                 context: ProcessingContext?,
-                processor: PairProcessor<KtFunction, ProcessingContext>
+                processor: PairProcessor<in KtFunction, in ProcessingContext>
             ): Boolean = processor.process(typeReference.parent as? KtFunction, context)
 
             override fun accepts(typeReference: KtTypeReference, context: ProcessingContext?): Boolean {
