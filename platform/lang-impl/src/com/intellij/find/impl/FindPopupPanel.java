@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -287,9 +288,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       panelSize.width += JBUIScale.scale(24);//hidden 'loading' icon
       panelSize.height *= 2;
       if (prev != null && prev.height < panelSize.height) prev.height = panelSize.height;
-      Window w = myDialog.getPeer().getWindow();
+      Window dialogWindow = myDialog.getPeer().getWindow();
       final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-      JRootPane root = ((RootPaneContainer)w).getRootPane();
+      JRootPane root = ((RootPaneContainer)dialogWindow).getRootPane();
 
       IdeGlassPaneImpl glass = (IdeGlassPaneImpl)myDialog.getRootPane().getGlassPane();
       int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
@@ -319,41 +320,46 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);
       root.setWindowDecorationStyle(JRootPane.NONE);
       root.setBorder(PopupBorder.Factory.create(true, true));
-      UIUtil.markAsPossibleOwner((Dialog)w);
-      w.setBackground(UIUtil.getPanelBackground());
-      w.setMinimumSize(panelSize);
+      UIUtil.markAsPossibleOwner((Dialog)dialogWindow);
+      dialogWindow.setBackground(UIUtil.getPanelBackground());
+      dialogWindow.setMinimumSize(panelSize);
       if (prev == null) {
         panelSize.height *= 1.5;
         panelSize.width *= 1.15;
       }
-      w.setSize(prev != null ? prev : panelSize);
+      dialogWindow.setSize(prev != null ? prev : panelSize);
 
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       if (showPoint != null) {
         myDialog.setLocation(showPoint.getScreenPoint());
       }
       else {
-        w.setLocationRelativeTo(null);
+        dialogWindow.setLocationRelativeTo(null);
       }
       mySuggestRegexHintForEmptyResults = true;
       myDialog.show();
 
-      w.addWindowListener(new WindowAdapter() {
+      WindowAdapter focusListener = new WindowAdapter() {
+        @Override
+        public void windowGainedFocus(WindowEvent e) {
+          super.windowGainedFocus(e);
+          if (canBeClosed() && !myIsPinned.get()) {
+            //closeImmediately();
+            myDialog.doCancelAction();
+          }
+        }
+      };
+
+      dialogWindow.addWindowListener(new WindowAdapter() {
         @Override
         public void windowOpened(WindowEvent e) {
-          w.addWindowFocusListener(new WindowAdapter() {
-            @Override
-            public void windowLostFocus(WindowEvent e) {
-              Window oppositeWindow = e.getOppositeWindow();
-              if (oppositeWindow == w || oppositeWindow != null && oppositeWindow.getOwner() == w) {
-                return;
-              }
-              if (canBeClosed() || !myIsPinned.get() && oppositeWindow != null) {
-                //closeImmediately();
-                myDialog.doCancelAction();
-              }
-            }
-          });
+          Arrays.stream(Frame.getFrames())
+            .filter(f -> f != null && f != dialogWindow && f.getOwner() != dialogWindow
+                         && f instanceof IdeFrame && ((IdeFrame)f).getProject() == myProject)
+            .forEach(win -> {
+              win.addWindowFocusListener(focusListener);
+              Disposer.register(myDisposable, () -> win.removeWindowFocusListener(focusListener));
+            });
         }
       });
 
