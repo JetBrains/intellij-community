@@ -18,10 +18,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.reference.SoftReference;
@@ -664,6 +661,26 @@ public final class PluginManagerCore {
       }
       String pluginsString = component.stream().map(it -> "'" + it.getName() + "'").collect(Collectors.joining(", "));
       errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString));
+
+      StringBuilder detailedMessage = new StringBuilder();
+      Function<IdeaPluginDescriptorImpl, String> pluginToString = plugin -> "id = " + plugin.getPluginId().getIdString() + " (" + plugin.getName() + ")";
+
+      detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n");
+      component.stream()
+        .map(p -> Pair.create(p, pluginToString.apply(p)))
+        .sorted(Comparator.comparing(p -> p.second, String.CASE_INSENSITIVE_ORDER))
+        .forEach(p -> {
+          detailedMessage.append("  ").append(p.getSecond()).append(" depends on:\n");
+
+          ContainerUtil.toCollection(() -> graph.getIn(p.first))
+            .stream()
+            .filter(dep -> component.contains(dep))
+            .map(pluginToString)
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .forEach(dep -> detailedMessage.append("    ").append(dep).append("\n"));
+        });
+
+      getLogger().info(detailedMessage.toString());
     }
   }
 
