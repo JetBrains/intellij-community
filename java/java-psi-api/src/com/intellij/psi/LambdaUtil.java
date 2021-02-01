@@ -1005,31 +1005,21 @@ public final class LambdaUtil {
     String canonicalText = type.getCanonicalText();
     if (!PsiUtil.isLanguageLevel8OrHigher(expression)) {
       final String arrayInitializer = "new " + canonicalText + "[]{0}";
-      PsiNewExpression newExpr = (PsiNewExpression)createExpressionFromText(arrayInitializer, expression);
+      PsiNewExpression newExpr = (PsiNewExpression)JavaPsiFacade.getElementFactory(expression.getProject())
+        .createExpressionFromText(arrayInitializer, expression);
       final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
       LOG.assertTrue(initializer != null);
       return initializer.getInitializers()[0].replace(expression);
     }
 
     final String callableWithExpectedType = "(java.util.concurrent.Callable<" + canonicalText + ">)() -> x";
-    PsiTypeCastExpression typeCastExpr = (PsiTypeCastExpression)createExpressionFromText(callableWithExpectedType, expression);
+    PsiTypeCastExpression typeCastExpr = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expression.getProject())
+                                      .createExpressionFromText(callableWithExpectedType, expression);
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)typeCastExpr.getOperand();
     LOG.assertTrue(lambdaExpression != null);
     PsiElement body = lambdaExpression.getBody();
     LOG.assertTrue(body instanceof PsiExpression);
     return body.replace(expression);
-  }
-
-  private static PsiExpression createExpressionFromText(String exprText, PsiElement context) {
-    PsiExpression expr = JavaPsiFacade.getElementFactory(context.getProject())
-                                      .createExpressionFromText(exprText, context);
-    boolean needToShortRefs = !PsiTreeUtil.processElements(expr, PsiJavaCodeReferenceElement.class, ref -> {
-      PsiElement target = ref.resolve();
-      boolean hasInnerClassReference = target instanceof PsiClass && ((PsiClass)target).getContainingClass() != null;
-      return !hasInnerClassReference;
-    });
-    //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
-    return needToShortRefs ? (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr) : expr;
   }
 
   /**
