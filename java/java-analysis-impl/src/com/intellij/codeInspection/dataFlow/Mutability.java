@@ -15,7 +15,10 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiMethodImpl;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +42,11 @@ public enum Mutability {
    * A value is known to be mutable (e.g. elements are sometimes added to the collection)
    */
   MUTABLE("mutability.modifiable", null),
+  /**
+   * A value that could be mutable, but must not be modified due to contract
+   * (e.g. a parameter of pure method)
+   */
+  MUST_NOT_MODIFY("mutability.must.not.modify", null),
   /**
    * A value is known to be an immutable view over a possibly mutable value: it cannot be mutated directly using this
    * reference; however subsequent reads (e.g. {@link java.util.Collection#size}) may return different results if the
@@ -74,12 +82,17 @@ public enum Mutability {
   public boolean isUnmodifiable() {
     return this == UNMODIFIABLE || this == UNMODIFIABLE_VIEW;
   }
+  
+  public boolean canBeModified() {
+    return this == MUTABLE || this == UNKNOWN;
+  }
 
   @NotNull
   public Mutability unite(Mutability other) {
     if (this == other) return this;
     if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
     if (this == MUTABLE || other == MUTABLE) return MUTABLE;
+    if (this == MUST_NOT_MODIFY || other == MUST_NOT_MODIFY) return MUST_NOT_MODIFY;
     if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
     return UNMODIFIABLE;
   }
@@ -89,6 +102,7 @@ public enum Mutability {
     if (this == other) return this;
     if (this == UNMODIFIABLE || other == UNMODIFIABLE) return UNMODIFIABLE;
     if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
+    if (this == MUST_NOT_MODIFY || other == MUST_NOT_MODIFY) return MUST_NOT_MODIFY;
     if (this == MUTABLE || other == MUTABLE) return MUTABLE;
     return UNKNOWN;
   }
@@ -131,11 +145,8 @@ public enum Mutability {
           MutationSignature signature = contractInfo.getMutationSignature();
           if (signature.mutatesArg(index)) {
             return MUTABLE;
-          } else if (signature.preservesArg(index) &&
-                     PsiTreeUtil.findChildOfAnyType(method.getBody(), PsiLambdaExpression.class, PsiClass.class) == null) {
-            // If method preserves argument, it still may return a lambda which captures an argument and changes it
-            // TODO: more precise check (at least differentiate parameters which are captured by lambdas or not)
-            return UNMODIFIABLE_VIEW;
+          } else if (signature.preservesArg(index)) {
+            return MUST_NOT_MODIFY;
           }
         }
         return UNKNOWN;
