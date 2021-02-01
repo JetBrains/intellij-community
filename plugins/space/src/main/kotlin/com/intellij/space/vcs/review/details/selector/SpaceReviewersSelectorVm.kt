@@ -6,10 +6,8 @@ import circlet.client.pr
 import circlet.code.api.CodeReviewRecord
 import circlet.code.api.CodeReviewService
 import circlet.code.codeReview
-import circlet.platform.api.BatchInfo
 import circlet.platform.api.Ref
 import circlet.platform.api.TID
-import circlet.platform.api.map
 import circlet.platform.client.KCircletClient
 import circlet.platform.client.XPagedListOnFlux
 import circlet.platform.client.resolveAll
@@ -20,6 +18,8 @@ import com.intellij.space.vcs.review.details.SpaceReviewDetailsVm
 import com.intellij.space.vcs.review.details.SpaceReviewParticipantsVm
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
+import runtime.batch.BatchInfo
+import runtime.batch.map
 import runtime.reactive.MutableProperty
 import runtime.reactive.Property
 import runtime.reactive.flatten

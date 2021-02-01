@@ -5,8 +5,6 @@ import circlet.client.api.PR_Project
 import circlet.client.api.Projects
 import circlet.client.pr
 import circlet.common.permissions.VcsAdmin
-import circlet.platform.api.batchAll
-import circlet.platform.api.map
 import circlet.platform.client.ConnectionStatus
 import circlet.platform.client.resolve
 import com.intellij.space.components.SpaceWorkspaceComponent
@@ -14,6 +12,8 @@ import com.intellij.space.messages.SpaceBundle
 import kotlinx.coroutines.CancellationException
 import libraries.coroutines.extra.LifetimeSource
 import org.jetbrains.annotations.Nls
+import runtime.batch.batchAll
+import runtime.batch.map
 import runtime.reactive.MutableProperty
 import runtime.reactive.awaitFirst
 import runtime.reactive.filter
