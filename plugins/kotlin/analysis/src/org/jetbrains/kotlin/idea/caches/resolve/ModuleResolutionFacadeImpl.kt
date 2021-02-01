@@ -59,14 +59,7 @@ internal class ModuleResolutionFacadeImpl(
     override fun analyze(elements: Collection<KtElement>, bodyResolveMode: BodyResolveMode): BindingContext {
         ResolveInDispatchThreadManager.assertNoResolveInDispatchThread()
 
-        when (elements.size) {
-            0 -> return BindingContext.EMPTY
-            1 -> {
-                runWithCancellationCheck {
-                    projectFacade.fetchAnalysisResultsForElement(elements.first())?.bindingContext
-                }?.let { return it }
-            }
-        }
+        if (elements.isEmpty()) return BindingContext.EMPTY
 
         @OptIn(FrontendInternals::class)
         val resolveElementCache = getFrontendService(elements.first(), ResolveElementCache::class.java)
