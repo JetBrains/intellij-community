@@ -19,6 +19,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
@@ -292,7 +293,7 @@ public final class LaterInvocator {
 
   @NotNull
   public static ModalityStateEx getCurrentModalityState() {
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       ApplicationManager.getApplication().assertIsWriteThread();
     }
     synchronized (ourModalityStack) {
