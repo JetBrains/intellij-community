@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
@@ -251,21 +250,17 @@ public class MacWinTabsHandler {
       if (cPlatformWindow != null) {
         Class<?> windowClass = cPlatformWindow.getClass();
 
-        Field boundsField = ReflectionUtil.getDeclaredField(windowClass, "nativeBounds");
-        if (boundsField == null) {
-          return;
-        }
-
-        Rectangle nativeBound = (Rectangle)boundsField.get(cPlatformWindow);
         Method deliverMoveResize = ReflectionUtil
           .getDeclaredMethod(windowClass, "deliverMoveResizeEvent", int.class, int.class, int.class, int.class, boolean.class);
         if (deliverMoveResize == null) {
           return;
         }
 
+        DisplayMode displayMode = window.getGraphicsConfiguration().getDevice().getDisplayMode();
+
         Foundation.executeOnMainThread(true, false, () -> {
           try {
-            deliverMoveResize.invoke(cPlatformWindow, 0, 0, nativeBound.x + nativeBound.width, nativeBound.y + nativeBound.height, true);
+            deliverMoveResize.invoke(cPlatformWindow, 0, 0, displayMode.getWidth(), displayMode.getHeight(), true);
           }
           catch (Throwable e) {
             Logger.getInstance(MacWinTabsHandler.class).error(e);
