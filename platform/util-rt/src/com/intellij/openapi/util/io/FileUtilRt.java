@@ -1151,16 +1151,19 @@ public class FileUtilRt {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@code FileFilters#EVERYTHING} instead (to be removed in 2022.1) */
+  /** @deprecated please use {@code FileFilters#EVERYTHING} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static final FileFilter ALL_FILES = new FileFilter() {
     @Override
     public boolean accept(File file) {
       return true;
     }
   };
-  /** @deprecated please use {@code FileFilters#DIRECTORIES} instead (to be removed in 2022.1) */
+
+  /** @deprecated please use {@code FileFilters#DIRECTORIES} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
     @Override
     public boolean accept(File file) {
