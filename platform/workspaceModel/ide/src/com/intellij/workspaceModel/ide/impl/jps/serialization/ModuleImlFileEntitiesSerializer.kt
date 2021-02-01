@@ -592,6 +592,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override val additionalEntityTypes: List<Class<out WorkspaceEntity>>
     get() = listOf(SourceRootOrderEntity::class.java)
 
+  override fun toString(): String = "ModuleImlFileEntitiesSerializer($fileUrl)"
+
   companion object {
     private val LOG = logger<ModuleImlFileEntitiesSerializer>()
 
@@ -705,6 +707,8 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
 
   private fun getModuleFileUrl(source: JpsFileEntitySource.FileInDirectory,
                                module: ModuleEntity) = source.directory.url + "/" + module.name + ".iml"
+
+  override fun toString(): String = "ModuleListSerializerImpl($fileUrl)"
 }
 
 fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,

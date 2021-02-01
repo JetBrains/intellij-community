@@ -254,4 +254,6 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     }
     return tag
   }
+
+  override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
 }

@@ -102,6 +102,8 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override fun getBaseDirPath(): String? {
     return modulePath.path
   }
+
+  override fun toString(): String = "ExternalModuleImlFileEntitiesSerializer($fileUrl)"
 }
 
 internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl,
@@ -145,4 +147,6 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
       writer.saveComponent(fileUrl, "DeprecatedModuleOptionManager", null)
     }
   }
+
+  override fun toString(): String = "ExternalModuleListSerializer($fileUrl)"
 }

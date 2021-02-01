@@ -123,6 +123,8 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   }
 
   protected open fun getExternalSystemId(libraryEntity: LibraryEntity): String? = null
+
+  override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
 }
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"
