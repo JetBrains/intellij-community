@@ -7,23 +7,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
 
 public interface InputRedirectAware extends RunConfiguration {
-  List<String> TYPES_WITH_REDIRECT_AWARE_UI = ContainerUtil.immutableList("Application", "Java Scratch", "JUnit", "JarApplication");
-
   @NotNull
   InputRedirectOptions getInputRedirectOptions();
 
   @Nullable
   static InputRedirectOptions getInputRedirectOptions(@NotNull RunConfiguration runConfiguration) {
-    return TYPES_WITH_REDIRECT_AWARE_UI.contains(runConfiguration.getType().getId())
+    return (runConfiguration instanceof InputRedirectAware)
            ? ((InputRedirectAware)runConfiguration).getInputRedirectOptions()
            : null;
   }
