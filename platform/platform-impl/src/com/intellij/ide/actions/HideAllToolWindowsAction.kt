@@ -167,7 +167,7 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
       return
     }
     val window = event.getData(EditorWindow.DATA_KEY)
-    if (window != null && !window.owner.isFloating) {
+    if (window == null || !window.owner.isFloating) {
       if (getIDsToHide(toolWindowManager).isNotEmpty()) {
         presentation.setText(IdeBundle.message("action.hide.all.windows"), true)
         return
