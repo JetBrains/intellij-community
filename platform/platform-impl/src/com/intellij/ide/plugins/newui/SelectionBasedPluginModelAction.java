@@ -83,8 +83,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       List<PluginId> pluginIds = mapNotNull(descriptors, IdeaPluginDescriptor::getPluginId);
       List<PluginEnabledState> states = map(pluginIds, myPluginModel::getState);
 
+      boolean allEnabled = all(states, PluginEnabledState.ENABLED::equals);
       boolean isForceEnableAll = myAction == PluginEnableDisableAction.ENABLE_GLOBALLY &&
-                                 !all(states, PluginEnabledState.ENABLED::equals);
+                                 !allEnabled;
+
       boolean disabled = pluginIds.isEmpty() ||
                          !all(states, myAction::isApplicable) ||
                          myAction.isDisable() && exists(pluginIds, myPluginModel::isRequiredPluginForProject) ||
@@ -96,9 +98,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       boolean enabled = !disabled;
       e.getPresentation().setEnabledAndVisible(isForceEnableAll || enabled);
 
-      boolean show = myShowShortcut &&
-                     (isForceEnableAll || myAction == PluginEnableDisableAction.DISABLE_GLOBALLY && enabled);
-      setShortcutSet(SHORTCUT_SET, show);
+      boolean isForceDisableAll = myAction == PluginEnableDisableAction.DISABLE_GLOBALLY &&
+                                  allEnabled;
+      setShortcutSet(SHORTCUT_SET,
+                     myShowShortcut && (isForceEnableAll || isForceDisableAll));
     }
 
     @Override
