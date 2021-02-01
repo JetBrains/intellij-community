@@ -567,21 +567,23 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final LanguageFileType fileType = matchOptions.getFileType();
     final Language dialect = matchOptions.getDialect();
     final PatternContext patternContext = matchOptions.getPatternContext();
-    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, false);
-    final PsiElement targetNode = compiledPattern.getTargetNode();
-    final boolean searchIsExpression = targetNode != null
-                                       ? getPresentableElement(targetNode) instanceof PsiExpression
-                                       : isExpressionTemplate(compiledPattern.getVariableNodes(Configuration.CONTEXT_VAR_NAME));
 
     final PsiElement[] statements =
       createPatternTree(options.getReplacement(), PatternTreeContext.Block, fileType, dialect, patternContext.getId(), project, false);
-    final boolean replaceIsExpression = isExpressionTemplate(Arrays.asList(statements));
-
     final ValidatingVisitor visitor = new ValidatingVisitor();
     for (PsiElement statement : statements) {
       statement.accept(visitor);
     }
+    final boolean replaceIsExpression = isExpressionTemplate(Arrays.asList(statements));
 
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, false);
+    if (compiledPattern == null) {
+      return;
+    }
+    final PsiElement targetNode = compiledPattern.getTargetNode();
+    final boolean searchIsExpression = targetNode != null
+                                       ? getPresentableElement(targetNode) instanceof PsiExpression
+                                       : isExpressionTemplate(compiledPattern.getVariableNodes(Configuration.CONTEXT_VAR_NAME));
     if (searchIsExpression != replaceIsExpression) {
       throw new UnsupportedPatternException(
         searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
