@@ -86,7 +86,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private void initModuleModel() {
     ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     if (moduleManager instanceof ModuleManagerComponentBridge) {
-      myWorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.Companion.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
+      myWorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
       myModuleModel = ((ModuleManagerComponentBridge)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
     }
     else {

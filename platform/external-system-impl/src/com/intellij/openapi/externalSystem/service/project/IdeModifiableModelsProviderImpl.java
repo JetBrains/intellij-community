@@ -219,7 +219,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   public WorkspaceEntityStorageBuilder getActualStorageBuilder() {
     if (diff != null) return diff;
     initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
-    return diff = WorkspaceEntityStorageBuilder.Companion.from(initialStorage);
+    return diff = WorkspaceEntityStorageBuilder.from(initialStorage);
   }
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {

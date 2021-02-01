@@ -1223,7 +1223,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public List<Module> importProjects() {
     if (MavenUtil.newModelEnabled(myProject)) {
-      WorkspaceEntityStorageBuilder builder = WorkspaceEntityStorageBuilder.Companion.create();
+      WorkspaceEntityStorageBuilder builder = WorkspaceEntityStorageBuilder.create();
       return importProjects(new IdeModifiableModelsProviderBridge(myProject, builder));
     }
     else {

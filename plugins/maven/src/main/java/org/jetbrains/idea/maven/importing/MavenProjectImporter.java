@@ -154,7 +154,7 @@ public class MavenProjectImporter {
 
 
     WorkspaceEntityStorageBuilder facetDiff =
-      WorkspaceEntityStorageBuilder.Companion.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
+      WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
     IdeModifiableModelsProviderBridge providerForFacets = new IdeModifiableModelsProviderBridge(myProject, facetDiff);
 
     List<Module> modulesToMavenize = new ArrayList<>();
