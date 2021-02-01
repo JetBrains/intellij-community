@@ -30,131 +30,119 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JUnit5ParameterizedReferencesTest extends JUnit5CodeInsightTest {
   @Test
   void resolveToSourceMethod() {
-    doTest(() -> {
-      myFixture.configureByText("ResolveToSourceMethod.java",
-                                "import org.junit.jupiter.params.ParameterizedTest;\n" +
-                                "import org.junit.jupiter.params.provider.MethodSource;\n" +
-                                "class ParameterizedTestsDemo {\n" +
-                                "    @MethodSource(value = {\"cde\", \"ab<caret>c\"})\n" +
-                                "    void testWithProvider(String abc) {}\n" +
-                                "     private static void abc() {}\n" +
-                                "    private static void cde() {}\n" +
-                                "}\n");
-      PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
-      assertNotNull(reference);
-      PsiElement resolved = reference.resolve();
-      assertNotNull(resolved);
-      assertTrue(resolved instanceof PsiMethod);
-      assertEquals("abc", ((PsiMethod)resolved).getName());
-      String[] variants = Arrays.stream(reference.getVariants())
-        .map(o -> o instanceof LookupElement ? ((LookupElement)o).getLookupString() : null).toArray(String[]::new);
-      assertTrue(ArrayUtil.contains("abc", variants) && ArrayUtil.contains("cde", variants),
-                 "Completion variants: " + Arrays.toString(variants));
-    });
+    myFixture.configureByText("ResolveToSourceMethod.java",
+                              "import org.junit.jupiter.params.ParameterizedTest;\n" +
+                              "import org.junit.jupiter.params.provider.MethodSource;\n" +
+                              "class ParameterizedTestsDemo {\n" +
+                              "    @MethodSource(value = {\"cde\", \"ab<caret>c\"})\n" +
+                              "    void testWithProvider(String abc) {}\n" +
+                              "     private static void abc() {}\n" +
+                              "    private static void cde() {}\n" +
+                              "}\n");
+    PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+    assertNotNull(reference);
+    PsiElement resolved = reference.resolve();
+    assertNotNull(resolved);
+    assertTrue(resolved instanceof PsiMethod);
+    assertEquals("abc", ((PsiMethod)resolved).getName());
+    String[] variants = Arrays.stream(reference.getVariants())
+      .map(o -> o instanceof LookupElement ? ((LookupElement)o).getLookupString() : null).toArray(String[]::new);
+    assertTrue(ArrayUtil.contains("abc", variants) && ArrayUtil.contains("cde", variants),
+               "Completion variants: " + Arrays.toString(variants));
   }
 
   @Test
   void resolveEnumSource() {
-    doTest(() -> {
-      addEnumSourceClass();
-      addFooEnum();
+    addEnumSourceClass();
+    addFooEnum();
 
-      myFixture.configureByText("ResolveEnumSource.java",
-                                "import org.junit.jupiter.params.ParameterizedTest; " +
-                                "import org.junit.jupiter.params.provider.EnumSource; " +
-                                "class ResolveEnumSource { " +
-                                "    @ParameterizedTest " +
-                                "    @EnumSource(value = Foo.class, names = \"AA<caret>A\", mode = EnumSource.Mode.EXCLUDE) " +
-                                "    void single() {} " +
-                                "}");
-      PsiReference reference = myFixture.getReferenceAtCaretPosition();
-      assertReference(reference);
-    });
+    myFixture.configureByText("ResolveEnumSource.java",
+                              "import org.junit.jupiter.params.ParameterizedTest; " +
+                              "import org.junit.jupiter.params.provider.EnumSource; " +
+                              "class ResolveEnumSource { " +
+                              "    @ParameterizedTest " +
+                              "    @EnumSource(value = Foo.class, names = \"AA<caret>A\", mode = EnumSource.Mode.EXCLUDE) " +
+                              "    void single() {} " +
+                              "}");
+    PsiReference reference = myFixture.getReferenceAtCaretPosition();
+    assertReference(reference);
   }
 
   @Test
   void resolveEnumSourceWithUnsupportedMode() {
-    doTest(() -> {
-      addEnumSourceClass();
-      addFooEnum();
+    addEnumSourceClass();
+    addFooEnum();
 
-      myFixture.configureByText("ResolveEnumSource.java",
-                                "import org.junit.jupiter.params.ParameterizedTest; " +
-                                "import org.junit.jupiter.params.provider.EnumSource; " +
-                                "class ResolveEnumSource { " +
-                                "    @ParameterizedTest " +
-                                "    @EnumSource(value = Foo.class, names = \"AA<caret>A\", mode = EnumSource.Mode.MATCH_ALL) " +
-                                "    void single() {} " +
-                                "}");
-      PsiReference reference = myFixture.getReferenceAtCaretPosition();
-      assertNotNull(reference);
-      PsiElement resolved = reference.resolve();
-      assertNull(resolved);
-      assertVariants(reference, false);
-    });
+    myFixture.configureByText("ResolveEnumSource.java",
+                              "import org.junit.jupiter.params.ParameterizedTest; " +
+                              "import org.junit.jupiter.params.provider.EnumSource; " +
+                              "class ResolveEnumSource { " +
+                              "    @ParameterizedTest " +
+                              "    @EnumSource(value = Foo.class, names = \"AA<caret>A\", mode = EnumSource.Mode.MATCH_ALL) " +
+                              "    void single() {} " +
+                              "}");
+    PsiReference reference = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(reference);
+    PsiElement resolved = reference.resolve();
+    assertNull(resolved);
+    assertVariants(reference, false);
   }
 
   @Test
   void resolveEnumSourceWithDefaultMode() {
-    doTest(() -> {
-      addEnumSourceClass();
-      addFooEnum();
+    addEnumSourceClass();
+    addFooEnum();
 
-      myFixture.configureByText("ResolveEnumSource.java",
-                                "import org.junit.jupiter.params.ParameterizedTest; " +
-                                "import org.junit.jupiter.params.provider.EnumSource; " +
-                                "class ResolveEnumSource { " +
-                                "    @ParameterizedTest " +
-                                "    @EnumSource(value = Foo.class, names = \"AA<caret>A\") " +
-                                "    void single() {} " +
-                                "}");
-      PsiReference reference = myFixture.getReferenceAtCaretPosition();
-      assertReference(reference);
-    });
+    myFixture.configureByText("ResolveEnumSource.java",
+                              "import org.junit.jupiter.params.ParameterizedTest; " +
+                              "import org.junit.jupiter.params.provider.EnumSource; " +
+                              "class ResolveEnumSource { " +
+                              "    @ParameterizedTest " +
+                              "    @EnumSource(value = Foo.class, names = \"AA<caret>A\") " +
+                              "    void single() {} " +
+                              "}");
+    PsiReference reference = myFixture.getReferenceAtCaretPosition();
+    assertReference(reference);
   }
 
   @Test
   void resolveEnumSourceWithoutMode() {
-    doTest(() -> {
-      addEnumSourceClassWithoutMode();
-      addFooEnum();
+    addEnumSourceClassWithoutMode();
+    addFooEnum();
 
-      myFixture.configureByText("ResolveEnumSourceWithoutMode.java",
-                                "import org.junit.jupiter.params.ParameterizedTest; " +
-                                "import org.junit.jupiter.params.provider.EnumSource; " +
-                                "class ResolveEnumSource { " +
-                                "    @ParameterizedTest " +
-                                "    @EnumSource(value = Foo.class, names = \"AA<caret>A\") " +
-                                "    void single() {} " +
-                                "}");
-      PsiReference reference = myFixture.getReferenceAtCaretPosition();
-      assertNotNull(reference);
-      PsiElement resolved = reference.resolve();
-      assertNull(resolved);
-      assertVariants(reference, false);
-    });
+    myFixture.configureByText("ResolveEnumSourceWithoutMode.java",
+                              "import org.junit.jupiter.params.ParameterizedTest; " +
+                              "import org.junit.jupiter.params.provider.EnumSource; " +
+                              "class ResolveEnumSource { " +
+                              "    @ParameterizedTest " +
+                              "    @EnumSource(value = Foo.class, names = \"AA<caret>A\") " +
+                              "    void single() {} " +
+                              "}");
+    PsiReference reference = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(reference);
+    PsiElement resolved = reference.resolve();
+    assertNull(resolved);
+    assertVariants(reference, false);
   }
 
   @Test
   void resolveEnumSourceInvalidValue() {
-    doTest(() -> {
-      addEnumSourceClass();
-      addFooEnum();
+    addEnumSourceClass();
+    addFooEnum();
 
-      myFixture.configureByText("ResolveEnumSourceInvalidValue.java",
-                                "import org.junit.jupiter.params.ParameterizedTest; " +
-                                "import org.junit.jupiter.params.provider.EnumSource; " +
-                                "class ResolveEnumSourceInvalidValue { " +
-                                "    @ParameterizedTest " +
-                                "    @EnumSource(value = Foo.class, names = \"invalid<caret>value\") " +
-                                "    void single() {} " +
-                                "}");
-      PsiReference reference = myFixture.getReferenceAtCaretPosition();
-      assertNotNull(reference);
-      PsiElement resolved = reference.resolve();
-      assertNull(resolved);
-      assertVariants(reference, true);
-    });
+    myFixture.configureByText("ResolveEnumSourceInvalidValue.java",
+                              "import org.junit.jupiter.params.ParameterizedTest; " +
+                              "import org.junit.jupiter.params.provider.EnumSource; " +
+                              "class ResolveEnumSourceInvalidValue { " +
+                              "    @ParameterizedTest " +
+                              "    @EnumSource(value = Foo.class, names = \"invalid<caret>value\") " +
+                              "    void single() {} " +
+                              "}");
+    PsiReference reference = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(reference);
+    PsiElement resolved = reference.resolve();
+    assertNull(resolved);
+    assertVariants(reference, true);
   }
 
   private void assertReference(PsiReference reference) {

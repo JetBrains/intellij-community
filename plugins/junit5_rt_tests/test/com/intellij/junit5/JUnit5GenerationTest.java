@@ -47,14 +47,10 @@ class JUnit5GenerationTest extends JUnit5CodeInsightTest {
   }
 
   private void doTest(String text, String expected) {
-    doTest(() -> {
-             myFixture.configureByText("MyTest.java", text);
+    myFixture.configureByText("MyTest.java", text);
 
-             new BaseGenerateTestSupportMethodAction.MyHandler(TestIntegrationUtils.MethodKind.TEST).invoke(myFixture.getProject(),
-                                                                                                            myFixture.getEditor(),
-                                                                                                            myFixture.getFile());
-             myFixture.checkResult(expected);
-           }
-    );
+    new BaseGenerateTestSupportMethodAction.MyHandler(TestIntegrationUtils.MethodKind.TEST)
+      .invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    myFixture.checkResult(expected);
   }
 }
