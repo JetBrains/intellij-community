@@ -154,11 +154,11 @@ object DynamicPlugins {
     plugins: Collection<IdeaPluginDescriptor>,
     load: Boolean,
   ): List<IdeaPluginDescriptorImpl>? {
-    val loadedPlugins = PluginManagerCore.getLoadedPlugins()
+    val loadedPlugins = PluginManagerCore.getLoadedPlugins().map { it.pluginId }
     val descriptors = plugins
       .asSequence()
       .filterIsInstance<IdeaPluginDescriptorImpl>()
-      .filterNot { loadedPlugins.contains(it) == load }
+      .filterNot { loadedPlugins.contains(it.pluginId) == load }
       .map { PluginDescriptorLoader.loadFullDescriptor(it) }
       .toList()
 
