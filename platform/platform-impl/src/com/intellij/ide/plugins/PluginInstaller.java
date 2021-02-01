@@ -248,7 +248,8 @@ public final class PluginInstaller {
         return false;
       }
       if (Registry.is("marketplace.certificate.signature.check")) {
-        if (!PluginSignatureChecker.isSignedByJetBrains(pluginDescriptor.name, file.toFile())){
+        boolean isSignedByJetBrains = PluginSignatureChecker.isSignedByJetBrains(pluginDescriptor.name, file.toFile());
+        if (!isSignedByJetBrains || !PluginSignatureChecker.isSignedByCustomCertificates(pluginDescriptor.name, file.toFile())) {
           return false;
         }
       }
