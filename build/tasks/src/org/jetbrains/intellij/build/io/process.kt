@@ -167,7 +167,7 @@ internal class ProcessRunTimedOut(msg: String) : RuntimeException(msg)
 
 internal class Timeout(private val millis: Long) {
   companion object {
-    val DEFAULT = TimeUnit.MINUTES.toMillis(30L)
+    val DEFAULT = TimeUnit.MINUTES.toMillis(10L)
   }
 
   private val start = System.currentTimeMillis()
