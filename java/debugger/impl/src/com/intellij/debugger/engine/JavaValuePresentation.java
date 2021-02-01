@@ -55,36 +55,11 @@ public class JavaValuePresentation extends XValueExtendedPresentation implements
       renderer.renderError(errorMessage);
     }
     else {
-      if (compact && node.getValueContainer() instanceof JavaValue) {
-        final JavaValue container = (JavaValue)node.getValueContainer();
-
-        if (container.getDescriptor().isArray()) {
-          final ArrayReference value = (ArrayReference)container.getDescriptor().getValue();
-          final ArrayType type = (ArrayType)container.getDescriptor().getType();
-          if (type != null) {
-            final String typeName = type.componentTypeName();
-            if (TypeConversionUtil.isPrimitive(typeName) || CommonClassNames.JAVA_LANG_STRING.equals(typeName)) {
-              int size = value.length();
-              int max = Math.min(size, CommonClassNames.JAVA_LANG_STRING.equals(typeName) ? 5 : 10);
-              //TODO [eu]: this is a quick fix for IDEA-136606, need to move this away from EDT!!!
-              final List<Value> values = value.getValues(0, max);
-              int i = 0;
-              final List<String> vals = new ArrayList<>(max);
-              while (i < values.size()) {
-                Value v = values.get(i);
-                String text = v != null ? v.toString() : "null";
-                vals.add(StringUtil.first(text, 15, true));
-                i++;
-              }
-              String more = "";
-              if (vals.size() < size) {
-                more = ", + " + (size - vals.size()) + " more";
-              }
-
-              renderer.renderValue("{" + StringUtil.join(vals, ", ") + more + "}");
-              return;
-            }
-          }
+      if (compact) {
+        String text = myValueDescriptor.getCompactValueText();
+        if (text != null) {
+          renderer.renderValue(text);
+          return;
         }
       }
 

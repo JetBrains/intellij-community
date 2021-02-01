@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -62,6 +62,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   private String myIdLabel;
   private String myValueText;
+  private String myCompactValueText;
   private boolean myFullValue = false;
 
   @Nullable
@@ -445,6 +446,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   @Override
   public void setValueLabel(@NotNull String label) {
     myValueText = myFullValue ? label : DebuggerUtilsEx.truncateString(label);
+  }
+
+  public void setCompactValueLabel(String label) {
+    myCompactValueText = label;
+  }
+
+  @Nullable
+  public String getCompactValueText() {
+    return myCompactValueText;
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -268,9 +269,12 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   static class VariableValue {
-   private @NlsSafe String actual;
-   private @NlsSafe String old;
-   private int valueNodeHashCode;
+    // TODO: this have to be specified somewhere in XValuePresentation
+    private static final List<Couple<String>> ARRAYS_WRAPPERS = List.of(Couple.of("[", "]"), Couple.of("{", "}"));
+    private static final String ARRAY_DELIMITER = ", ";
+    private @NlsSafe String actual;
+    private @NlsSafe String old;
+    private int valueNodeHashCode;
 
     VariableValue(String actual, String old, int valueNodeHashCode) {
       this.actual = actual;
@@ -283,10 +287,12 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
 
     void produceChangedParts(List<? super LineExtensionInfo> result) {
-      if (isArray(actual) && isArray(old)) {
+      Couple<String> wrapperActual = getArrayWrapper(actual);
+      if (wrapperActual != null && getArrayWrapper(old) != null) {
         List<String> actualParts = getArrayParts(actual);
         List<String> oldParts = getArrayParts(old);
-        result.add(new LineExtensionInfo("{", getNormalAttributes()));
+        //noinspection HardCodedStringLiteral
+        result.add(new LineExtensionInfo(wrapperActual.first, getNormalAttributes()));
         for (int i = 0; i < actualParts.size(); i++) {
           if (i < oldParts.size() && StringUtil.equals(actualParts.get(i), oldParts.get(i))) {
             result.add(new LineExtensionInfo(actualParts.get(i), getNormalAttributes()));
@@ -294,22 +300,27 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
             result.add(new LineExtensionInfo(actualParts.get(i), getChangedAttributes()));
           }
           if (i != actualParts.size() - 1) {
-            result.add(new LineExtensionInfo(", ", getNormalAttributes()));
+            result.add(new LineExtensionInfo(ARRAY_DELIMITER, getNormalAttributes()));
           }
         }
-        result.add(new LineExtensionInfo("}", getNormalAttributes()));
+        //noinspection HardCodedStringLiteral
+        result.add(new LineExtensionInfo(wrapperActual.second, getNormalAttributes()));
         return;
       }
 
       result.add(new LineExtensionInfo(actual, getChangedAttributes()));
     }
 
-    private static boolean isArray(String s) {
-      return s != null && s.startsWith("{") && s.endsWith("}");
+    @Nullable
+    private static Couple<String> getArrayWrapper(@Nullable String s) {
+      if (s == null) {
+        return null;
+      }
+      return ContainerUtil.find(ARRAYS_WRAPPERS, w -> s.startsWith(w.first) && s.endsWith(w.second));
     }
 
     private static List<String> getArrayParts(String array) {
-      return StringUtil.split(array.substring(1, array.length() - 1), ", ");
+      return StringUtil.split(array.substring(1, array.length() - 1), ARRAY_DELIMITER);
     }
   }
 

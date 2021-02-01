@@ -20,6 +20,7 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
@@ -115,14 +116,16 @@ public class ArrayRenderer extends NodeRendererImpl{
               int shownLength = Math.min(length, Registry.intValue(
                 isString ? "debugger.renderers.arrays.max.strings" : "debugger.renderers.arrays.max.primitives"));
               return DebuggerUtilsAsync.getValues(arrValue, 0, shownLength).thenCompose(values -> {
-                CompletableFuture[] futures = StreamEx.of(values).map(ArrayRenderer::getElementAsString).toArray(CompletableFuture[]::new);
+                CompletableFuture<String>[] futures = StreamEx.of(values).map(ArrayRenderer::getElementAsString).toArray(CompletableFuture[]::new);
                 return CompletableFuture.allOf(futures).thenApply(__ -> {
-                  StreamEx<Object> strings = StreamEx.of(futures).map(CompletableFuture::join);
-                  int remaining = length - values.size();
-                  if (remaining > 0) {
-                    strings = strings.append(JavaDebuggerBundle.message("message.node.array.elements.more", remaining));
+                  List<String> elements = StreamEx.of(futures).map(CompletableFuture::join).toList();
+                  if (descriptor instanceof ValueDescriptorImpl) {
+                    int compactLength = Math.min(shownLength, isString ? 5 : 10);
+                    String compact =
+                      createLabel(elements.subList(0, compactLength), length - values.size() + (shownLength - compactLength));
+                    ((ValueDescriptorImpl)descriptor).setCompactValueLabel(compact);
                   }
-                  return strings.joining(", ", "[", "]");
+                  return createLabel(elements, length - values.size());
                 });
               });
             }
@@ -141,6 +144,14 @@ public class ArrayRenderer extends NodeRendererImpl{
       return "";
     }
     return JavaDebuggerBundle.message("label.undefined");
+  }
+
+  private static String createLabel(List<String> elements, int remaining) {
+    StreamEx<String> strings = StreamEx.of(elements);
+    if (remaining > 0) {
+      strings = strings.append(JavaDebuggerBundle.message("message.node.array.elements.more", remaining));
+    }
+    return strings.joining(", ", "[", "]");
   }
 
   private static CompletableFuture<String> getElementAsString(Value value) {
