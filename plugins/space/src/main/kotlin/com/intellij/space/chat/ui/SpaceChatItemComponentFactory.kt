@@ -186,12 +186,17 @@ internal class SpaceChatItemComponentFactory(
           }
         }
       }
-      SpaceChatNewMessageWithAvatarComponent(
+      val newMessageComponent = SpaceChatNewMessageWithAvatarComponent(
         lifetime,
         SpaceChatAvatarType.THREAD,
         submittableModel,
         onCancel = { startThreadVm.stopWritingFirstMessage() }
       )
+      BorderLayoutPanel().apply {
+        isOpaque = false
+        border = JBUI.Borders.emptyTop(10)
+        addToCenter(newMessageComponent)
+      }
     })
     return JPanel(VerticalLayout(0)).apply {
       isOpaque = false
@@ -286,7 +291,7 @@ internal class SpaceChatItemComponentFactory(
 
       layout = VerticalLayout(JBUI.scale(3))
       isOpaque = false
-      border = JBUI.Borders.empty(10, 0)
+      border = JBUI.Borders.emptyTop(15)
 
       add(headerPart, VerticalLayout.FILL_HORIZONTAL)
       add(messagePanel, VerticalLayout.FILL_HORIZONTAL)

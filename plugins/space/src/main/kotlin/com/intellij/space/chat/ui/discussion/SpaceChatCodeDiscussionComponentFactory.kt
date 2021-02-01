@@ -91,7 +91,7 @@ class SpaceChatCodeDiscussionComponentFactory(
     val threadComponent = createThreadComponent(project, lifetime, thread, threadActionsFactory, withFirst = false)
     val outerActionsPanel = BorderLayoutPanel().apply {
       isOpaque = false
-      border = JBUI.Borders.emptyTop(JBUIScale.scale(4))
+      border = JBUI.Borders.emptyTop(10)
       val outerActionsFactory = SpaceChatDiscussionActionsFactory(
         discussionProperty,
         withOffset = false,
