@@ -18,12 +18,3 @@ val Module.baseDir: VirtualFile?
 
 val Module.basePath: String?
   get() = baseDir?.path
-
-val Module.modulePath: String?
-  get() {
-    var moduleDirectory = File(moduleFilePath).parentFile
-    if (moduleDirectory.name == ".idea") {
-      moduleDirectory = moduleDirectory.parentFile
-    }
-    return moduleDirectory?.path
-  }
