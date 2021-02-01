@@ -50,7 +50,7 @@ intellij {
 
 patchPluginXml {
     sinceBuild '193'
-    untilBuild '203.*'
+    untilBuild '211.*'
 }
 
 buildSearchableOptions {
@@ -58,5 +58,5 @@ buildSearchableOptions {
 }
 
 group 'ru.adelf'
-version '2020.3' // Plugin version
+version '2021.1' // Plugin version
 sourceCompatibility = 1.8

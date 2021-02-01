@@ -1,4 +1,5 @@
 <idea-plugin>
+    <idea-version since-build="193"/>
     <id>ru.adelf.idea.dotenv</id>
     <name>.env files support</name>
     <version>2020.1</version>
@@ -32,6 +33,14 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      2021.1
+      <ul>
+        <li>Single quotes for environment variable values support</li>
+        <li>Completions for $_ENV[] and $_SERVER[] PHP variables</li>
+        <li>PHP file type for `.env.local.php` files</li>
+        <li>Case insensitive completions</li>
+        <li>Optimizations</li>
+      </ul>
       2020.3
       <ul>
         <li>phpunit.xml environment variables completion</li>
