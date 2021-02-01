@@ -54,9 +54,10 @@ import java.util.zip.ZipFile;
 
 public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static final Logger LOG = Logger.getInstance(IdeaJdk.class);
-  @NonNls private static final String LIB_DIR_NAME = "lib";
-  @NonNls private static final String SRC_DIR_NAME = "src";
-  @NonNls private static final String PLUGINS_DIR = "plugins";
+
+  private static final String LIB_DIR_NAME = "lib";
+  private static final String LIB_SRC_DIR_NAME = "lib/src";
+  private static final String PLUGINS_DIR = "plugins";
 
   public IdeaJdk() {
     super("IDEA JDK");
@@ -405,22 +406,18 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static void addSources(File file, SdkModificator sdkModificator) {
-    final File src = new File(new File(file, LIB_DIR_NAME), SRC_DIR_NAME);
-    if (!src.exists()) return;
-    File[] srcs = src.listFiles(pathname -> {
-      @NonNls final String path = pathname.getPath();
-      //noinspection SimplifiableIfStatement
-      if (path.contains("generics")) return false;
-      return path.endsWith(".jar") || path.endsWith(".zip");
-    });
-    for (int i = 0; srcs != null && i < srcs.length; i++) {
-      File jarFile = srcs[i];
-      if (jarFile.exists()) {
-        JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-        String path = jarFile.getAbsolutePath();
-        jarFileSystem.setNoCopyJarForPath(path);
-        VirtualFile vFile = jarFileSystem.findFileByPath(path);
-        sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
+    File[] files = new File(file, LIB_SRC_DIR_NAME).listFiles();
+    if (files != null) {
+      JarFileSystem fs = JarFileSystem.getInstance();
+      for (File child : files) {
+        String path = child.getAbsolutePath();
+        if (!path.contains("generics") && (path.endsWith(".jar") || path.endsWith(".zip"))) {
+          fs.setNoCopyJarForPath(path);
+          VirtualFile vFile = fs.refreshAndFindFileByPath(path + JarFileSystem.JAR_SEPARATOR);
+          if (vFile != null) {
+            sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
+          }
+        }
       }
     }
   }
@@ -456,14 +453,15 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         else {
           String homePath = javaSdk.getHomePath();
           if (homePath == null) return;
-          final File jdkHome = new File(homePath).getParentFile();
-          @NonNls final String srcZip = "src.zip";
-          final File jarFile = new File(jdkHome, srcZip);
-          if (jarFile.exists()){
+          File jarFile = new File(new File(homePath).getParentFile(), "src.zip");
+          if (jarFile.exists()) {
             JarFileSystem jarFileSystem = JarFileSystem.getInstance();
             String path = jarFile.getAbsolutePath();
             jarFileSystem.setNoCopyJarForPath(path);
-            sdkModificator.addRoot(jarFileSystem.findFileByPath(path), OrderRootType.SOURCES);
+            VirtualFile vFile = jarFileSystem.refreshAndFindFileByPath(path + JarFileSystem.JAR_SEPARATOR);
+            if (vFile != null) {
+              sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
+            }
           }
         }
       }
