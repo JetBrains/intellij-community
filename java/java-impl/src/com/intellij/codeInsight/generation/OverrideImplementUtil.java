@@ -342,7 +342,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       for (PsiClassType type : targetClass.getSuperTypes()) {
         PsiClass superClass = type.resolve();
         if (InheritanceUtil.isInheritorOrSelf(superClass, aClass, true)) {
-          return superClass;
+          return superClass.isInterface() ? superClass : null;
         }
       }
     }
