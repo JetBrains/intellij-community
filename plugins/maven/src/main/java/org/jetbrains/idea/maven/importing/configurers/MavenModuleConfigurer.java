@@ -41,8 +41,8 @@ public abstract class MavenModuleConfigurer {
         new MavenCompilerConfigurer(),
         new MavenEncodingConfigurer(),
         new MavenAnnotationProcessorConfigurer(),
-
-        new MavenIdeaPluginConfigurer()
+        new MavenIdeaPluginConfigurer(),
+        new MavenWslTargetConfigurer()
       }) {
 
         if (!Boolean.parseBoolean(System.getProperty("idea.maven.disable." + configurer.getClass().getSimpleName()))) {

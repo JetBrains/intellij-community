@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,10 +14,12 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import org.apache.commons.lang.SystemUtils;
@@ -374,18 +375,21 @@ public final class MavenServerManager implements Disposable {
   }
 
   public MavenIndexerWrapper createIndexer(@NotNull Project project) {
-    if(project.getBasePath() != null && WslDistributionManager.isWslPath(project.getBasePath())) {
-      throw new UnsupportedOperationException("indexing for WSL is not supported yet");
+    String path = project.getBasePath();
+    if (path == null) {
+      path = new File(".").getPath();
     }
+    String finalPath = path;
     return new MavenIndexerWrapper(null, project) {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
         MavenServerConnector connector = null;
         synchronized (myMultimoduleDirToConnectorMap) {
-          connector = myMultimoduleDirToConnectorMap.values().stream().findFirst().orElse(null);
+          connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> FileUtil
+            .isAncestor(finalPath, c.getMultimoduleDirectory(), false));
         }
-        if(connector!=null){
+        if (connector != null) {
           return connector.createIndexer();
         }
         return MavenServerManager.this.getConnector(project,
