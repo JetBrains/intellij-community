@@ -614,7 +614,13 @@ object DynamicPlugins {
             LOG.info("Can't find new focus cycle root; old root is $focusCycleRoot")
           }
         }
+        else {
+          LOG.info("No project in data context of $focusCycleRoot")
+        }
       }
+    }
+    else {
+      LOG.info("No current focus cycle root")
     }
   }
 
