@@ -53,6 +53,7 @@
                         serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="notLightEdit"/>
     <vfs.asyncListener implementation="com.intellij.util.indexing.events.ChangedFilesCollector"/>
     <applicationInitializedListener implementation="com.intellij.util.indexing.FileBasedIndexLoader"/>
+    <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper" preload="notLightEdit"/>
 
     <!-- required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload -->
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"

@@ -412,7 +412,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     finally {
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
-      IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
+      IndexDiagnosticDumper.getInstance().dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
     }
   }
 

@@ -4,8 +4,10 @@ package com.intellij.util.indexing.diagnostic
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.getProjectCachePath
@@ -28,40 +30,48 @@ import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.streams.asSequence
 
-object IndexDiagnosticDumper {
+class IndexDiagnosticDumper : Disposable {
 
-  @JvmStatic
-  private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean get() =
-    SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
+  companion object {
+    @JvmStatic
+    fun getInstance(): IndexDiagnosticDumper = service<IndexDiagnosticDumper>()
 
-  @JvmStatic
-  private val indexingDiagnosticsLimitOfFiles: Int get() =
-    SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
+    private val diagnosticDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
 
-  @JvmStatic
-  val shouldDumpPathsOfIndexedFiles: Boolean get() =
-    SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+    private const val fileNamePrefix = "diagnostic-"
 
-  @JvmStatic
-  @TestOnly
-  var shouldDumpInUnitTestMode: Boolean = false
+    @JvmStatic
+    private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean get() =
+      SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
 
-  val indexingDiagnosticDir: Path by lazy {
-    val logPath = PathManager.getLogPath()
-    Paths.get(logPath).resolve("indexing-diagnostic")
+    @JvmStatic
+    private val indexingDiagnosticsLimitOfFiles: Int get() =
+      SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
+
+    @JvmStatic
+    val shouldDumpPathsOfIndexedFiles: Boolean get() =
+      SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+
+    @JvmStatic
+    @TestOnly
+    var shouldDumpInUnitTestMode: Boolean = false
+
+    private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
+
+    private val jacksonMapper: ObjectMapper by lazy {
+      jacksonObjectMapper().registerKotlinModule()
+    }
+
+    fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
+      jacksonMapper.readValue(file.toFile(), JsonIndexDiagnostic::class.java)
+
+    val indexingDiagnosticDir: Path by lazy {
+      val logPath = PathManager.getLogPath()
+      Paths.get(logPath).resolve("indexing-diagnostic")
+    }
   }
 
-  private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
-
-  private val jacksonMapper: ObjectMapper by lazy {
-    jacksonObjectMapper().registerKotlinModule()
-  }
-
-  private val diagnosticDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
-
-  private const val fileNamePrefix = "diagnostic-"
-
-  private var lastTime: LocalDateTime = LocalDateTime.MIN
+  private var isDisposed = false
 
   interface ProjectIndexingHistoryListener {
     companion object {
@@ -85,69 +95,85 @@ object IndexDiagnosticDumper {
     }
   }
 
-  fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
-    jacksonMapper.readValue(file.toFile(), JsonIndexDiagnostic::class.java)
-
   @Synchronized
   private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
     try {
+      check(!isDisposed)
+
       val indexDiagnosticDirectory = projectIndexingHistory.project.getProjectCachePath(indexingDiagnosticDir)
       indexDiagnosticDirectory.createDirectories()
 
-      var nowTime = LocalDateTime.now()
-      if (lastTime == nowTime) {
-        // Ensure that the generated diagnostic file does not overwrite an existing file.
-        nowTime = nowTime.plusNanos(TimeUnit.MILLISECONDS.toNanos(1))
-        lastTime = nowTime
-      }
-
-      val timestamp = nowTime.format(diagnosticDateTimeFormatter)
-      val diagnosticJson = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.json")
-      val diagnosticHtml = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.html")
+      val (diagnosticJson: Path, diagnosticHtml: Path) = getFilesForNewJsonAndHtmlDiagnostics(indexDiagnosticDirectory)
 
       val jsonIndexDiagnostic = JsonIndexDiagnostic.generateForHistory(projectIndexingHistory)
       jacksonMapper.writerWithDefaultPrettyPrinter().writeValue(diagnosticJson.toFile(), jsonIndexDiagnostic)
       diagnosticHtml.write(jsonIndexDiagnostic.generateHtml())
 
-      data class ExistingDiagnostic(val timestamp: LocalDateTime, val jsonFile: Path, val htmlFile: Path)
-
-      val existingDiagnostics = Files.list(indexDiagnosticDirectory).use { files ->
-        files.asSequence()
-          .filter { file -> file.fileName.toString().startsWith(fileNamePrefix) && file.extension == "json" }
-          .mapNotNull { jsonFile ->
-            val timeStampString = jsonFile.fileName.toString().substringAfter(fileNamePrefix).substringBefore(".json")
-            val timeStamp = try {
-              LocalDateTime.parse(timeStampString, diagnosticDateTimeFormatter)
-            }
-            catch (e: Exception) {
-              return@mapNotNull null
-            }
-            val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
-            if (!htmlFile.exists()) {
-              return@mapNotNull null
-            }
-            ExistingDiagnostic(timeStamp, jsonFile, htmlFile)
-          }
-          .toList()
-      }
-
-      val survivedDiagnostics = existingDiagnostics
-        .sortedByDescending { it.timestamp }
-        .take(indexingDiagnosticsLimitOfFiles)
-
-      Files
-        .list(indexDiagnosticDirectory)
-        .use { files ->
-          files
-            .asSequence()
-            .filter { it.extension == "json" || it.extension == "html" }
-            .filter { file -> survivedDiagnostics.none { diagnostic -> file == diagnostic.htmlFile || file == diagnostic.jsonFile } }
-            .forEach { it.delete() }
-        }
+      cleanupOldDiagnostics(indexDiagnosticDirectory)
     }
     catch (e: Exception) {
       LOG.warn("Failed to dump index diagnostic", e)
     }
+  }
+
+  private fun getFilesForNewJsonAndHtmlDiagnostics(indexDiagnosticDirectory: Path): Pair<Path, Path> {
+    var diagnosticJson: Path
+    var diagnosticHtml: Path
+    var nowTime = LocalDateTime.now()
+    while (true) {
+      val timestamp = nowTime.format(diagnosticDateTimeFormatter)
+      diagnosticJson = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.json")
+      diagnosticHtml = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.html")
+      if (!diagnosticJson.exists() && !diagnosticHtml.exists()) {
+        break
+      }
+      nowTime = nowTime.plusNanos(TimeUnit.MILLISECONDS.toNanos(1))
+    }
+    return diagnosticJson to diagnosticHtml
+  }
+
+  private fun cleanupOldDiagnostics(indexDiagnosticDirectory: Path) {
+    data class ExistingDiagnostic(val timestamp: LocalDateTime, val jsonFile: Path, val htmlFile: Path)
+
+    val existingDiagnostics = Files.list(indexDiagnosticDirectory).use { files ->
+      files.asSequence()
+        .filter { file -> file.fileName.toString().startsWith(fileNamePrefix) && file.extension == "json" }
+        .mapNotNull { jsonFile ->
+          val timeStampString = jsonFile.fileName.toString().substringAfter(fileNamePrefix).substringBefore(".json")
+          val timeStamp = try {
+            LocalDateTime.parse(timeStampString, diagnosticDateTimeFormatter)
+          }
+          catch (e: Exception) {
+            return@mapNotNull null
+          }
+          val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
+          if (!htmlFile.exists()) {
+            return@mapNotNull null
+          }
+          ExistingDiagnostic(timeStamp, jsonFile, htmlFile)
+        }
+        .toList()
+    }
+
+    val survivedDiagnostics = existingDiagnostics
+      .sortedByDescending { it.timestamp }
+      .take(indexingDiagnosticsLimitOfFiles)
+
+    Files
+      .list(indexDiagnosticDirectory)
+      .use { files ->
+        files
+          .asSequence()
+          .filter { it.extension == "json" || it.extension == "html" }
+          .filter { file -> survivedDiagnostics.none { diagnostic -> file == diagnostic.htmlFile || file == diagnostic.jsonFile } }
+          .forEach { it.delete() }
+      }
+  }
+
+  @Synchronized
+  override fun dispose() {
+    // The synchronized block allows to wait for unfinished background dumpers.
+    isDisposed = true
   }
 
 }

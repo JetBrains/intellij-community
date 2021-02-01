@@ -134,7 +134,7 @@ public final class FileBasedIndexProjectHandler {
       scanningStatistics.setNumberOfFilesForIndexing(files.size());
       projectIndexingHistory.addScanningStatistics(scanningStatistics);
       projectIndexingHistory.addProviderStatistics(statistics);
-      IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
+      IndexDiagnosticDumper.getInstance().dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
       if (interruptedException != null) {
         ExceptionUtil.rethrow(interruptedException.getCause());
       }

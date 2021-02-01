@@ -218,7 +218,7 @@ public final class VfsEventsMerger {
     private final RollingFileAppender myAppender;
 
     MyLoggerFactory() throws IOException {
-      Path logPath = IndexDiagnosticDumper.INSTANCE.getIndexingDiagnosticDir().resolve("index-vfs-events.log");
+      Path logPath = IndexDiagnosticDumper.Companion.getIndexingDiagnosticDir().resolve("index-vfs-events.log");
       PatternLayout pattern = new PatternLayout("%d [%7r] %6p - %m\n");
       myAppender = new RollingFileAppender(pattern, logPath.toFile().getAbsolutePath());
       myAppender.setMaxFileSize("20MB");
