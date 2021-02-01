@@ -22,6 +22,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   private boolean m_inInitializer;
   private int m_inSynchronizedContextCount;
   private final Stack<Integer> contextStack = new Stack<>();
-  private final Stack<Boolean> contextInitializerStack = new Stack<>();
+  private final BooleanStack contextInitializerStack = new BooleanStack();
   private boolean privateMethodUsagesCalculated;
   private final boolean countGettersAndSetters;
 

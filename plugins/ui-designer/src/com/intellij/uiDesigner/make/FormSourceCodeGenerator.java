@@ -32,6 +32,7 @@ import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.BooleanStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +47,7 @@ public final class FormSourceCodeGenerator {
   private static final Logger LOG = Logger.getInstance(FormSourceCodeGenerator.class);
 
   @NonNls private StringBuffer myBuffer;
-  private Stack<Boolean> myIsFirstParameterStack;
+  private BooleanStack myIsFirstParameterStack;
   private final Project myProject;
   private final ArrayList<FormErrorInfo> myErrors;
   private boolean myNeedLoadLabelText;
@@ -183,7 +184,7 @@ public final class FormSourceCodeGenerator {
 
   private void _generate(final LwRootContainer rootContainer, final Module module) throws CodeGenerationException, IncorrectOperationException{
     myBuffer = new StringBuffer();
-    myIsFirstParameterStack = new Stack<>();
+    myIsFirstParameterStack = new BooleanStack();
 
     final HashMap<LwComponent,String> component2variable = new HashMap<>();
     final Object2IntOpenHashMap<String> class2variableIndex = new Object2IntOpenHashMap<>();
@@ -1301,7 +1302,7 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(methodName);
     myBuffer.append('(');
 
-    myIsFirstParameterStack.push(Boolean.TRUE);
+    myIsFirstParameterStack.push(true);
   }
 
   private void startStaticMethodCall(final String fullClassName, @NonNls final String methodName) {
@@ -1312,7 +1313,7 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(methodName);
     myBuffer.append('(');
 
-    myIsFirstParameterStack.push(Boolean.TRUE);
+    myIsFirstParameterStack.push(true);
   }
 
   private void startStaticMethodCall(final Class aClass, @NonNls final String methodName) {
@@ -1324,7 +1325,7 @@ public final class FormSourceCodeGenerator {
 
     myIsFirstParameterStack.pop();
 
-    if (myIsFirstParameterStack.empty()) {
+    if (myIsFirstParameterStack.isEmpty()) {
       myBuffer.append(";\n");
     }
   }
@@ -1336,7 +1337,7 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(className);
     myBuffer.append('(');
 
-    myIsFirstParameterStack.push(Boolean.TRUE);
+    myIsFirstParameterStack.push(true);
   }
 
   void endConstructor() {
@@ -1446,12 +1447,12 @@ public final class FormSourceCodeGenerator {
   }
 
   void checkParameter() {
-    if (!myIsFirstParameterStack.empty()) {
-      final Boolean b = myIsFirstParameterStack.pop();
-      if (b.equals(Boolean.FALSE)) {
+    if (!myIsFirstParameterStack.isEmpty()) {
+      final boolean b = myIsFirstParameterStack.pop();
+      if (!b) {
         myBuffer.append(',');
       }
-      myIsFirstParameterStack.push(Boolean.FALSE);
+      myIsFirstParameterStack.push(false);
     }
   }
 }

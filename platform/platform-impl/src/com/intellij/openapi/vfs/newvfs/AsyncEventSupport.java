@@ -15,8 +15,8 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,17 +32,12 @@ public final class AsyncEventSupport {
 
   @ApiStatus.Internal
   public static final ExtensionPointName<AsyncFileListener> EP_NAME = new ExtensionPointName<>("com.intellij.vfs.asyncListener");
-  private static final Stack<Boolean> ourSuppressAppliers = new Stack<>();
+  private static final BooleanStack ourSuppressAppliers = new BooleanStack();
 
   static boolean shouldSuppressAppliers() {
     ApplicationManager.getApplication().assertIsWriteThread();
     if (ourSuppressAppliers.isEmpty()) return false;
-    Boolean shouldSuppressAppliers = ourSuppressAppliers.peek();
-    if (shouldSuppressAppliers == null) {
-      LOG.error("Should not be called outside VFS event processing");
-      return true;
-    }
-    return shouldSuppressAppliers.booleanValue();
+    return ourSuppressAppliers.peek();
   }
 
   public static void startListening() {
@@ -137,10 +132,10 @@ public final class AsyncEventSupport {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (appliers != null) {
       beforeVfsChange(appliers);
-      ourSuppressAppliers.push(Boolean.TRUE);
+      ourSuppressAppliers.push(true);
     }
     else {
-      ourSuppressAppliers.push(Boolean.FALSE);
+      ourSuppressAppliers.push(false);
     }
     try {
       ((PersistentFSImpl) PersistentFS.getInstance()).processEventsImpl(events);
