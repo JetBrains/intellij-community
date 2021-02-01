@@ -95,21 +95,26 @@ class SpaceChatCodeDiscussionComponentFactory(
       val outerActionsFactory = SpaceChatDiscussionActionsFactory(
         discussionProperty,
         withOffset = false,
-        avatarType = SpaceChatAvatarType.THREAD
+        avatarType = SpaceChatAvatarType.THREAD,
+        closeOnSend = true
       )
       addToCenter(outerActionsFactory.createActionsComponent(thread))
     }
     val collapseModel = SingleValueModelImpl(true)
 
+    val threadWithActionsComponent = JPanel(VerticalLayout(0)).apply {
+      isOpaque = false
+      add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
+      add(outerActionsPanel, VerticalLayout.FILL_HORIZONTAL)
+    }
     val component = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       add(panel, VerticalLayout.FILL_HORIZONTAL)
-      add(threadComponent, VerticalLayout.FILL_HORIZONTAL)
-      add(outerActionsPanel, VerticalLayout.FILL_HORIZONTAL)
+      add(threadWithActionsComponent, VerticalLayout.FILL_HORIZONTAL)
       addDiscussionExpandCollapseHandling(
         this,
         collapseModel,
-        listOf(threadComponent, reviewCommentComponent, diffEditorComponent, outerActionsPanel),
+        listOf(threadWithActionsComponent, reviewCommentComponent, diffEditorComponent),
         collapseButton,
         expandButton,
         resolved
@@ -119,7 +124,7 @@ class SpaceChatCodeDiscussionComponentFactory(
     collapseModel.addValueUpdatedListener { collapsed ->
       if (!collapsed) {
         val messagesCount = thread.mvms.value.messages.size
-        updateActionsComponentsVisibility(threadComponent, outerActionsPanel, component, null, messagesCount)
+        updateActionsComponentVisibility(outerActionsPanel, null, messagesCount)
       }
     }
 
@@ -129,34 +134,24 @@ class SpaceChatCodeDiscussionComponentFactory(
       reviewCommentComponent.setMarkdownText(comment.message.text, comment.message.edited != null)
       reviewCommentComponent.repaint()
       if (!collapseModel.value) {
-        updateActionsComponentsVisibility(threadComponent, outerActionsPanel, component, prev?.messages?.size, messages.size)
+        updateActionsComponentVisibility(outerActionsPanel, prev?.messages?.size, messages.size)
       }
     }
 
     return component
   }
 
-  private fun updateActionsComponentsVisibility(
-    threadComponent: JComponent,
+  private fun updateActionsComponentVisibility(
     outerActionsPanel: JComponent,
-    parent: JComponent,
     prevMessagesCount: Int?,
     newMessagesCount: Int
   ) {
     if (newMessagesCount == 1) {
-      threadComponent.isVisible = false
       outerActionsPanel.isVisible = true
-      parent.revalidate()
-      parent.repaint()
     }
-    else {
-      if (prevMessagesCount == null || prevMessagesCount == 1) {
-        // update only for 1 -> 1+ messages count change
-        threadComponent.isVisible = true
-        outerActionsPanel.isVisible = false
-        parent.revalidate()
-        parent.repaint()
-      }
+    else if (prevMessagesCount == null || prevMessagesCount == 1) {
+      // update only for 1 -> 1+ messages count change
+      outerActionsPanel.isVisible = false
     }
   }
 

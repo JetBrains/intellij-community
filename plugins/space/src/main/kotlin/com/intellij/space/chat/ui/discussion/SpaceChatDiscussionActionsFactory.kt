@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.discussion
 
 import circlet.code.api.CodeDiscussionRecord
@@ -28,6 +28,7 @@ internal class SpaceChatDiscussionActionsFactory(
   private val discussion: Property<CodeDiscussionRecord>,
   private val avatarType: SpaceChatAvatarType,
   private val withOffset: Boolean = true,
+  private val closeOnSend: Boolean = false,
   private val pendingStateProvider: () -> Boolean = { false }
 ) : SpaceChatThreadActionsFactory {
   override fun createActionsComponent(chatVm: M2ChannelVm): JComponent {
@@ -74,6 +75,11 @@ internal class SpaceChatDiscussionActionsFactory(
         createNewMessageField(
           chatVm,
           onCancel = { newMessageStateModel.value = false },
+          onSend = {
+            if (closeOnSend) {
+              newMessageStateModel.value = false
+            }
+          },
           pendingStateProvider = pendingStateProvider,
           avatarType = SpaceChatAvatarType.THREAD
         )

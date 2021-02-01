@@ -33,12 +33,13 @@ internal fun createThreadComponent(
   val itemsListModel = SpaceChatItemListModel()
 
   thread.mvms.forEach(lifetime) { messageList ->
+    val messages = messageList.messages
     itemsListModel.messageListUpdated(
-      messageList.messages
+      messages
         .drop(if (withFirst) 0 else 1)
         .map { it.convertToChatItem(it.getLink()) }
     )
-    threadComponent.isVisible = messageList.messages.isNotEmpty()
+    threadComponent.isVisible = messages.size > if (withFirst) 0 else 1
   }
 
   val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
