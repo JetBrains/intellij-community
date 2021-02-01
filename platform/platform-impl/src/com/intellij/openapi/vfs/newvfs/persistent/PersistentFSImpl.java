@@ -596,8 +596,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if ((!delegate.isReadOnly() ||
            // do not cache archive content unless asked
            cacheContent && !application.isInternal() && !application.isUnitTestMode()) &&
-          content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD &&
-          !HeavyProcessLatch.INSTANCE.isRunning()) {
+          shouldCache(content.length)) {
 
         myInputLock.writeLock().lock();
         try {
@@ -643,7 +642,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         len = mustReloadLength ? reloadLengthFromDelegate(file, delegate) : storedLength;
         contentStream = delegate.getInputStream(file);
 
-        if (len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD && !HeavyProcessLatch.INSTANCE.isRunning()) {
+        if (shouldCache(len)) {
           useReplicator = true;
           readOnly = delegate.isReadOnly();
         }
@@ -658,6 +657,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     return contentStream;
+  }
+
+  private static boolean shouldCache(long len) {
+    return len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD && !HeavyProcessLatch.INSTANCE.isRunning();
   }
 
   private static boolean mustReloadContent(@NotNull VirtualFile file) {
