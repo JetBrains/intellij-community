@@ -7,8 +7,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -335,10 +335,10 @@ public final class FSRecords {
       String symlinkTarget = info.getSymlinkTarget();
       storeSymlinkTarget(id, symlinkTarget);
       CharSequence name = info.getName();
-      LocalFileSystem fs = LocalFileSystem.getInstance();
+      VirtualFile parent = PersistentFS.getInstance().findFileById(parentId);
+      assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
+      VirtualFileSystem fs = parent.getFileSystem();
       if (fs instanceof LocalFileSystemImpl) {
-        VirtualFile parent = PersistentFS.getInstance().findFileById(parentId);
-        assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
         String linkPath = parent.getPath() + '/' + name;
         ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, name, linkPath, symlinkTarget);
       }
