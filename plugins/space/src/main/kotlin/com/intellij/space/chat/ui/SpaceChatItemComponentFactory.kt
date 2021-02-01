@@ -166,15 +166,6 @@ internal class SpaceChatItemComponentFactory(
 
   private fun JComponent.addStartThreadField(message: SpaceChatItem): JComponent {
     val startThreadVm = message.startThreadVm
-    val submittableModel = object : SubmittableTextFieldModelBase("") {
-      override fun submit() {
-        isBusy = true
-        launch(lifetime, Ui) {
-          startThreadVm.startThread(document.text)
-          // keep model busy because message will be fully redrawn with new thread
-        }
-      }
-    }
 
     val isWritingFirstMessageModel = SingleValueModelImpl(false)
     startThreadVm.isWritingFirstMessage.forEach(lifetime) {
@@ -185,6 +176,16 @@ internal class SpaceChatItemComponentFactory(
       border = JBUI.Borders.empty()
     }
     val firstThreadMessageField = ToggleableContainer.create(isWritingFirstMessageModel, { emptyPanel }, {
+      val submittableModel = object : SubmittableTextFieldModelBase("") {
+        override fun submit() {
+          isBusy = true
+          launch(lifetime, Ui) {
+            startThreadVm.startThread(document.text)
+            // keep model busy because message will be fully redrawn with new thread
+            // or hidden if thread already is existed
+          }
+        }
+      }
       SpaceChatNewMessageWithAvatarComponent(
         lifetime,
         SpaceChatAvatarType.THREAD,
