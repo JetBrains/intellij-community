@@ -596,7 +596,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if ((!delegate.isReadOnly() ||
            // do not cache archive content unless asked
            cacheContent && !application.isInternal() && !application.isUnitTestMode()) &&
-          content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
+          content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD &&
+          !HeavyProcessLatch.INSTANCE.isRunning()) {
 
         myInputLock.writeLock().lock();
         try {
