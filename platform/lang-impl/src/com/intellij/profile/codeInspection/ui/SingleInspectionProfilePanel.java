@@ -247,9 +247,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
 
     if (myOptionsLabel != null)
-      myOptionsLabel.setText(state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
-                           ? AnalysisBundle.message("inspections.settings.options.title.all.scopes")
-                           : AnalysisBundle.message("inspections.settings.options.title", state.getScopeName()));
+      myOptionsLabel.setText(
+        AnalysisBundle.message("inspections.settings.options.title.specific.scope",
+                               state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
+                                 ? LangBundle.message("scopes.table.everywhere.else")
+                                 : state.getScopeName()));
   }
 
   private static InspectionConfigTreeNode getGroupNode(InspectionConfigTreeNode root, String[] groupPath) {
@@ -770,7 +772,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       final double severityPanelWeightY;
       ScopesAndSeveritiesTable scopesAndScopesAndSeveritiesTable;
-      myOptionsLabel = new JBLabel(AnalysisBundle.message("inspections.settings.options.title.all.scopes"));
+      myOptionsLabel = new JBLabel(AnalysisBundle.message("inspections.settings.options.title"));
       if (scopesNames.isEmpty()) {
 
         final LevelChooserAction severityLevelChooser =
@@ -845,6 +847,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
 
           setConfigPanel(configPanelAnchor, toolState);
+          myOptionsLabel.setText(AnalysisBundle.message("inspections.settings.options.title"));
         }
         scopesAndScopesAndSeveritiesTable = null;
       }
