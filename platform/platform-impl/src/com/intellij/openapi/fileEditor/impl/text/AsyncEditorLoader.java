@@ -40,6 +40,7 @@ public final class AsyncEditorLoader {
   @NotNull private final TextEditorImpl myTextEditor;
   @NotNull private final TextEditorComponent myEditorComponent;
   @NotNull private final TextEditorProvider myProvider;
+  @NotNull private final Logger myLogger = Logger.getInstance(AsyncEditorLoader.class);
   private final List<Runnable> myDelayedActions = new ArrayList<>();
   private TextEditorState myDelayedState;
   private final AtomicBoolean myLoadingFinished = new AtomicBoolean();
@@ -168,7 +169,12 @@ public final class AsyncEditorLoader {
     }
 
     if (continuation != null) {
-      continuation.run();
+      try {
+        continuation.run();
+      }
+      catch (Throwable e) {
+        myLogger.error(e);
+      }
     }
 
     myEditorComponent.loadingFinished();
