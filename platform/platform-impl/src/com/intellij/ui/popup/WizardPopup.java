@@ -356,7 +356,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     if (event.getID() == KeyEvent.KEY_RELEASED) {
-      myKeyPressedReceived = false;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), true);
       return proceedKeyEvent(event, stroke);
     }
