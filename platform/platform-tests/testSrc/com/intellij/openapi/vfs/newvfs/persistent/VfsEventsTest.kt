@@ -8,15 +8,14 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.impl.ZipHandlerBase
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.zip.JBZipFile
-import com.intellij.util.ui.UIUtil
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -27,13 +26,10 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import kotlin.io.path.moveTo
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 @RunsInEdt
 class VfsEventsTest : BareTestFixtureTestCase() {
@@ -262,21 +258,9 @@ class VfsEventsTest : BareTestFixtureTestCase() {
   }
 
   private fun VirtualFile.forceAsyncRefresh() {
-    val future = ApplicationManager.getApplication().executeOnPooledThread {
-      this.refresh(false, true)
-    }
-    var attempts = 0
-    while (!future.isDone) {
-      try {
-        future.get(1, TimeUnit.SECONDS)
-      }
-      catch (e: TimeoutException) {
-        if (attempts++ > 30) {
-          fail("Too long async refresh")
-        }
-      }
-      UIUtil.dispatchAllInvocationEvents()
-    }
+    PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread {
+      refresh(false, true)
+    }, 30_000)
   }
 
   private class AllVfsListeners(project: Project) {
