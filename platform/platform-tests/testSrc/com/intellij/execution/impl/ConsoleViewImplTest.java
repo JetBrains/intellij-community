@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -288,8 +289,6 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   private void withCycleConsoleNoFolding(int capacityKB, Consumer<? super ConsoleViewImpl> runnable) {
-    ExtensionPoint<ConsoleFolding> point = ConsoleFolding.EP_NAME.getPoint();
-
     UISettings uiSettings = UISettings.getInstance();
     boolean oldUse = uiSettings.getOverrideConsoleCycleBufferSize();
     int oldSize = uiSettings.getConsoleCycleBufferSizeKb();
@@ -298,6 +297,11 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     uiSettings.setConsoleCycleBufferSizeKb(capacityKB);
     // create new to reflect changed buffer size
     ConsoleViewImpl console = createConsole(true, getProject());
+
+    ExtensionPoint<ConsoleFolding> point = ConsoleFolding.EP_NAME.getPoint();
+    ((ExtensionPointImpl<ConsoleFolding>)point).maskAll(Collections.emptyList(), console, false);
+    assertEmpty(point.getExtensions());
+
     try {
       runnable.consume(console);
     }
@@ -305,11 +309,6 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       Disposer.dispose(console);
       uiSettings.setOverrideConsoleCycleBufferSize(oldUse);
       uiSettings.setConsoleCycleBufferSizeKb(oldSize);
-
-
-      for (ConsoleFolding extension : point.getExtensions()) {
-        point.registerExtension(extension, getTestRootDisposable());
-      }
     }
   }
 
