@@ -37,7 +37,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
         moduleStorage.remove(module.name)
       }
 
-      override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
+      override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
         for (module in modules) {
           moduleStorage.rename(oldNameProvider.`fun`(module), module.name)
         }

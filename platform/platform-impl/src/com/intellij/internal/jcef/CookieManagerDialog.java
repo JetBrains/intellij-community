@@ -57,7 +57,7 @@ class CookieManagerDialog extends JDialog {
     add(controlPanel, BorderLayout.SOUTH);
   }
 
-  public void update(List<JBCefCookie> cefCookies) {
+  public void update(List<? extends JBCefCookie> cefCookies) {
     myTableModel.clear();
     myTableModel.show(cefCookies);
   }
@@ -67,7 +67,7 @@ class CookieManagerDialog extends JDialog {
       new String[]{"Name", "Value", "Domain", "Path", "Secure", "HTTP only", "Created", "Last Access", "Expires"};
     private final ArrayList<Object[]> rowData = new ArrayList<>();
 
-    private void show(@NotNull List<JBCefCookie> cefCookies) {
+    private void show(@NotNull List<? extends JBCefCookie> cefCookies) {
       for (JBCefCookie cookie : cefCookies) {
         Object[] entry = {
           cookie.getName(),

@@ -136,8 +136,8 @@ public class JarLoader extends Loader {
 
   @Override
   void processResources(@NotNull String dir,
-                        @NotNull Predicate<String> fileNameFilter,
-                        @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+                        @NotNull Predicate<? super String> fileNameFilter,
+                        @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     zipFile.processResources(dir, fileNameFilter, consumer);
   }
 

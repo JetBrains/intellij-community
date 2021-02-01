@@ -98,7 +98,7 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
       return result;
     }
 
-    private static void collectFontNames(@NotNull Set<String> result,
+    private static void collectFontNames(@NotNull Set<? super String> result,
                                          @NotNull CharSequence text,
                                          int startOffset,
                                          int endOffset,

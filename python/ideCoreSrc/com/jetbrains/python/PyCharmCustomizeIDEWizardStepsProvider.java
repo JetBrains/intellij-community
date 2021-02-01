@@ -10,10 +10,10 @@ import java.util.Map;
 
 public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizardStepsProvider {
   @Override
-  public void initSteps(CustomizeIDEWizardDialog wizardDialog, List<AbstractCustomizeWizardStep> steps) {
+  public void initSteps(CustomizeIDEWizardDialog wizardDialog, @NotNull List<? super AbstractCustomizeWizardStep> steps) {
     PluginGroups groups = new PluginGroups() {
       @Override
-      protected void initGroups(@NotNull List<Group> tree, @NotNull Map<String, String> featuredPlugins) {
+      protected void initGroups(@NotNull List<? super Group> tree, @NotNull Map<String, String> featuredPlugins) {
         addVimPlugin(featuredPlugins);
         addRPlugin(featuredPlugins);
         addAwsPlugin(featuredPlugins);

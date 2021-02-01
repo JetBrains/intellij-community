@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardStepsProvider {
   @Override
-  public void initSteps(@NotNull CustomizeIDEWizardDialog dialog, @NotNull List<AbstractCustomizeWizardStep> steps) {
+  public void initSteps(@NotNull CustomizeIDEWizardDialog dialog, @NotNull List<? super AbstractCustomizeWizardStep> steps) {
     steps.add(new CustomizeUIThemeStepPanel());
 
     if (CustomizeDesktopEntryStep.isAvailable()) {

@@ -430,7 +430,7 @@ public final class ExternalSystemUtil {
           Disposer.register(project, processHandler);
         }
 
-        Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
+        Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
         SyncViewManager syncViewManager = ServiceManager.getService(project, SyncViewManager.class);
         try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(resolveProjectTask.getId(), syncViewManager, false)) {
           ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
@@ -543,7 +543,7 @@ public final class ExternalSystemUtil {
 
       private void handExecutionResult(@NotNull ExternalSystemTaskActivator externalSystemTaskActivator,
                                        @NotNull BuildEventDispatcher eventDispatcher,
-                                       @NotNull Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
+                                       @NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
         if (project.isDisposed()) return;
 
         try {
@@ -597,9 +597,9 @@ public final class ExternalSystemUtil {
       }
 
       @NotNull
-      private FinishBuildEvent getSyncFinishEvent(@NotNull Ref<? extends Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
+      private FinishBuildEvent getSyncFinishEvent(@NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
         Exception exception = null;
-        Supplier<FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
+        Supplier<? extends FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
         if (finishBuildEventSupplier != null) {
           try {
             return finishBuildEventSupplier.get();

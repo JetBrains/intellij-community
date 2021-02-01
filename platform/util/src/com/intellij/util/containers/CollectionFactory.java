@@ -90,7 +90,7 @@ public final class CollectionFactory {
     return new ObjectOpenCustomHashSet<>(expectedSize, loadFactor, FastUtilHashingStrategies.getCharSequenceStrategy(caseSensitive));
   }
 
-  public static @NotNull Set<CharSequence> createCharSequenceSet(List<CharSequence> items) {
+  public static @NotNull Set<CharSequence> createCharSequenceSet(List<? extends CharSequence> items) {
     return new ObjectOpenCustomHashSet<>(items, FastUtilHashingStrategies.getCharSequenceStrategy(true));
   }
 

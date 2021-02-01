@@ -48,7 +48,7 @@ public class FileTargetContext {
     return myPathToCreate;
   }
 
-  public static Collection<FileTargetContext> toTargetContexts(Collection<PsiFileSystemItem> items) {
+  public static Collection<FileTargetContext> toTargetContexts(Collection<? extends PsiFileSystemItem> items) {
     return ContainerUtil.map(items, FileTargetContext::new);
   }
 

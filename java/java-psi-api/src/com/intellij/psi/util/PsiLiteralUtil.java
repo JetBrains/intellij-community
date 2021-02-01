@@ -531,7 +531,7 @@ public final class PsiLiteralUtil {
     return nBackSlashes;
   }
 
-  private static int parseUnicodeEscapeBackwards(@NotNull String s, int index, @NotNull Predicate<Character> charPredicate) {
+  private static int parseUnicodeEscapeBackwards(@NotNull String s, int index, @NotNull Predicate<? super Character> charPredicate) {
     // \u1234 needs at least 6 positions
     if (index - 5 < 0) return -1;
     try {

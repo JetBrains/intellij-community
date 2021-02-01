@@ -82,7 +82,7 @@ public class GradleExtensionsSettings {
     public Map<String, GradleProject> projects = new HashMap<>();
 
     public void add(@NotNull String rootPath,
-                    @NotNull Collection<DataNode<GradleExtensions>> extensionsData) {
+                    @NotNull Collection<? extends DataNode<GradleExtensions>> extensionsData) {
       Map<String, GradleExtensions> extensionMap = new HashMap<>();
       for (DataNode<GradleExtensions> node : extensionsData) {
         DataNode<?> parent = node.getParent();

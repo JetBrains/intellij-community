@@ -91,7 +91,7 @@ public final class StartupUtil {
   }
 
   // called by the app after startup
-  public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
+  public static synchronized void addExternalInstanceListener(@Nullable Function<? super List<String>, ? extends Future<CliResult>> processor) {
     if (ourSocketLock == null) throw new AssertionError("Not initialized yet");
     ourSocketLock.setCommandProcessor(processor);
   }
@@ -245,7 +245,7 @@ public final class StartupUtil {
     startApp(args, initUiTask, log, configImportNeeded, appStarterFuture, euaDocument);
   }
 
-  private static @NotNull AppStarter getAppStarter(@NotNull Future<AppStarter> mainStartFuture)
+  private static @NotNull AppStarter getAppStarter(@NotNull Future<? extends AppStarter> mainStartFuture)
     throws InterruptedException, ExecutionException {
     Activity activity = mainStartFuture.isDone() ? null : StartUpMeasurer.startMainActivity("main class loading waiting");
     AppStarter result = mainStartFuture.get();
@@ -259,7 +259,7 @@ public final class StartupUtil {
                                @NotNull CompletableFuture<?> initUiTask,
                                @NotNull Logger log,
                                boolean configImportNeeded,
-                               @NotNull Future<AppStarter> appStarterFuture,
+                               @NotNull Future<? extends AppStarter> appStarterFuture,
                                @NotNull Future<@Nullable Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("eua showing");

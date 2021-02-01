@@ -423,7 +423,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   private void showUsageView(@NotNull UsageViewDescriptor viewDescriptor,
-                             @NotNull Factory<UsageSearcher> factory,
+                             @NotNull Factory<? extends UsageSearcher> factory,
                              UsageInfo @NotNull [] usageInfos) {
     UsageViewManager viewManager = UsageViewManager.getInstance(myProject);
 

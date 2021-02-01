@@ -61,7 +61,7 @@ public class UnknownSdkTracker {
 
   @NotNull
   private UnknownSdkTrackerTask newUpdateTask(@NotNull ShowStatusCallback showStatus,
-                                              @NotNull Predicate<UnknownSdkSnapshot> shouldProcessSnapshot) {
+                                              @NotNull Predicate<? super UnknownSdkSnapshot> shouldProcessSnapshot) {
     return new UnknownSdkTrackerTask() {
       @Nullable
       @Override
@@ -127,7 +127,7 @@ public class UnknownSdkTracker {
   }
 
   @NotNull
-  private static List<Sdk> filterOnlyAllowedSdkEntries(@NotNull List<Sdk> input) {
+  private static List<Sdk> filterOnlyAllowedSdkEntries(@NotNull List<? extends Sdk> input) {
     List<Sdk> copy = new ArrayList<>();
     for (Sdk item : input) {
       SdkTypeId type = item.getSdkType();
@@ -241,7 +241,7 @@ public class UnknownSdkTracker {
   }
 
   public interface ShowStatusCallback {
-    void showStatus(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator);
+    void showStatus(@NotNull List<? extends UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator);
 
     default void showInterruptedStatus() {
       showStatus(Collections.emptyList(), new EmptyProgressIndicator());
@@ -254,14 +254,14 @@ public class UnknownSdkTracker {
 
   private class DefaultShowStatusCallbackAdapter implements ShowStatusCallback {
     @Override
-    public void showStatus(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
+    public void showStatus(@NotNull List<? extends UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
       fixes = applyAutoFixesAndNotify(fixes, indicator);
       UnknownSdkEditorNotification.getInstance(myProject).showNotifications(fixes);
     }
   }
 
   @NotNull
-  public List<UnknownSdkFix> applyAutoFixesAndNotify(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
+  public List<UnknownSdkFix> applyAutoFixesAndNotify(@NotNull List<? extends UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
     List<UnknownSdkFix> otherFixes = new ArrayList<>();
     List<UnknownMissingSdkFixLocal> localFixes = new ArrayList<>();
 
@@ -330,8 +330,8 @@ public class UnknownSdkTracker {
   @NotNull
   private static <R> Map<UnknownSdk, R> findFixesAndRemoveFixable(@NotNull ProgressIndicator indicator,
                                                                   @NotNull List<UnknownSdk> infos,
-                                                                  @NotNull List<UnknownSdkLookup> lookups,
-                                                                  @NotNull TripleFunction<UnknownSdkLookup, UnknownSdk, ProgressIndicator, R> fun) {
+                                                                  @NotNull List<? extends UnknownSdkLookup> lookups,
+                                                                  @NotNull TripleFunction<? super UnknownSdkLookup, ? super UnknownSdk, ? super ProgressIndicator, ? extends R> fun) {
     indicator.pushState();
 
     Map<UnknownSdk, R> result = new LinkedHashMap<>();

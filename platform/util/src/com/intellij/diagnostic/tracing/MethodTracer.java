@@ -179,7 +179,7 @@ public class MethodTracer {
             return myReference.get().values();
         }
 
-        public <T> List<T> map(BiFunction<? super K, ? super V, T> function) {
+        public <T> List<T> map(BiFunction<? super K, ? super V, ? extends T> function) {
             Map<K, V> map = myReference.get();
             ArrayList<T> result = new ArrayList<>(map.size());
 

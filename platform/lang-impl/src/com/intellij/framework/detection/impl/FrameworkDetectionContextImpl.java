@@ -53,7 +53,7 @@ public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase
   @NotNull
   @Override
   public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
-                                                                                                                                      @NotNull Collection<VirtualFile> files) {
+                                                                                                                                      @NotNull Collection<? extends VirtualFile> files) {
     MultiMap<Module, VirtualFile> filesByModule = MultiMap.createSet();
     for (VirtualFile file : files) {
       final Module module = ModuleUtilCore.findModuleForFile(file, myProject);

@@ -34,7 +34,7 @@ public abstract class TableHoverListener extends HoverListener {
   private final AtomicInteger rowHolder = new AtomicInteger(-1);
   private final AtomicInteger columnHolder = new AtomicInteger(-1);
 
-  private void update(@NotNull Component component, @NotNull ToIntFunction<JTable> rowFunc, @NotNull ToIntFunction<JTable> columnFunc) {
+  private void update(@NotNull Component component, @NotNull ToIntFunction<? super JTable> rowFunc, @NotNull ToIntFunction<? super JTable> columnFunc) {
     if (component instanceof JTable) {
       JTable table = (JTable)component;
       int rowNew = rowFunc.applyAsInt(table);

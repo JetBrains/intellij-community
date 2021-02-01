@@ -207,7 +207,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static List<InspectionToolWrapper<?, ?>> findReportingTools(@NotNull List<InspectionToolWrapper<?, ?>> toolWrappers,
+  private static List<InspectionToolWrapper<?, ?>> findReportingTools(@NotNull List<? extends InspectionToolWrapper<?, ?>> toolWrappers,
                                                                       String suppressedId,
                                                                       Language language) {
     List<InspectionToolWrapper<?, ?>> wrappers = Collections.emptyList();

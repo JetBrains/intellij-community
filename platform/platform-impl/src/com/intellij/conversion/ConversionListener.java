@@ -14,6 +14,6 @@ public interface ConversionListener {
 
   void error(@NotNull String message);
 
-  default void cannotWriteToFiles(@NotNull List<Path> readonlyFiles) {
+  default void cannotWriteToFiles(@NotNull List<? extends Path> readonlyFiles) {
   }
 }

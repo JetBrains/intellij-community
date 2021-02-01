@@ -55,7 +55,7 @@ public final class UnknownSdkEditorNotification {
     return List.copyOf(myNotifications.get());
   }
 
-  public void showNotifications(@NotNull List<UnknownSdkFix> notifications) {
+  public void showNotifications(@NotNull List<? extends UnknownSdkFix> notifications) {
     if (!Registry.is("unknown.sdk.show.editor.actions")) {
       notifications = Collections.emptyList();
     }

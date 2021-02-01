@@ -150,7 +150,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     return ConversionRunner.getReadOnlyFiles(myAffectedFiles);
   }
 
-  private static void unlockFiles(@NotNull List<Path> files) {
+  private static void unlockFiles(@NotNull List<? extends Path> files) {
     for (Path file : files) {
       FileUtil.setReadOnlyAttribute(file.toAbsolutePath().toString(), false);
     }

@@ -14,14 +14,14 @@ import java.util.function.Predicate;
 public abstract class RunConfigurationEditorFragment<Settings, C extends JComponent> extends SettingsEditorFragment<Settings, C> {
 
   private RunnerAndConfigurationSettingsImpl mySettings;
-  private final Predicate<RunnerAndConfigurationSettingsImpl> myInitialVisibility;
+  private final Predicate<? super RunnerAndConfigurationSettingsImpl> myInitialVisibility;
 
   public RunConfigurationEditorFragment(String id,
                                         @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                         @Nls(capitalization = Nls.Capitalization.Title) String group,
                                         C component,
                                         int commandLinePosition,
-                                        Predicate<RunnerAndConfigurationSettingsImpl> initialVisibility) {
+                                        Predicate<? super RunnerAndConfigurationSettingsImpl> initialVisibility) {
     super(id, name, group, component, commandLinePosition, (settings, c) -> {}, (settings, c) -> {}, settings -> false);
     myInitialVisibility = initialVisibility;
   }
@@ -41,8 +41,8 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
   }
 
   public static <Settings> SettingsEditorFragment<Settings, ?> createSettingsTag(String id, @Nls String name, @Nls String group,
-                                                                                 @NotNull Predicate<RunnerAndConfigurationSettingsImpl> getter,
-                                                                                 @NotNull BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter,
+                                                                                 @NotNull Predicate<? super RunnerAndConfigurationSettingsImpl> getter,
+                                                                                 @NotNull BiConsumer<? super RunnerAndConfigurationSettingsImpl, ? super Boolean> setter,
                                                                                  int menuPosition) {
     Ref<SettingsEditorFragment<?, ?>> ref = new Ref<>();
     TagButton button = new TagButton(name, (e) -> {

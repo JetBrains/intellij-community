@@ -384,7 +384,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     ourSettingsPagesProviders.get().remove(provider);
   }
 
-  private static void registerSettingsPageProvider(@NotNull Set<LanguageCodeStyleSettingsProvider> settingsPagesProviders,
+  private static void registerSettingsPageProvider(@NotNull Set<? super LanguageCodeStyleSettingsProvider> settingsPagesProviders,
                                                    @NotNull LanguageCodeStyleSettingsProvider provider) {
     try {
       Method

@@ -93,7 +93,7 @@ public final class PluginManagerMain {
                                         boolean allowInstallWithoutRestart,
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
-                                        @Nullable Function<Boolean, Void> function) throws IOException {
+                                        @Nullable Function<? super Boolean, Void> function) throws IOException {
     boolean[] result = new boolean[1];
     try {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {

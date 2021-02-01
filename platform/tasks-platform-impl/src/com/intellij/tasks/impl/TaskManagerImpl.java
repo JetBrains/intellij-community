@@ -31,7 +31,6 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -613,7 +612,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   @Override
   @NotNull
   public Config getState() {
-    myConfig.tasks = ContainerUtil.map(myTasks.values(), (Function<Task, LocalTaskImpl>)task -> new LocalTaskImpl(task));
+    myConfig.tasks = ContainerUtil.map(myTasks.values(), task -> new LocalTaskImpl(task));
     myConfig.servers = XmlSerializer.serialize(getAllRepositories());
     return myConfig;
   }

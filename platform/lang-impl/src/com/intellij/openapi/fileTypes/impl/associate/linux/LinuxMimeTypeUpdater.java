@@ -53,7 +53,7 @@ class LinuxMimeTypeUpdater {
   private LinuxMimeTypeUpdater() {
   }
 
-  static void updateMimeTypes(@NotNull List<MimeTypeDescription> mimeTypeDescriptions) throws OSFileAssociationException {
+  static void updateMimeTypes(@NotNull List<? extends MimeTypeDescription> mimeTypeDescriptions) throws OSFileAssociationException {
     try {
       createMimeFile(mimeTypeDescriptions);
       runCommand(OS_MIME_UTIL,
@@ -72,7 +72,7 @@ class LinuxMimeTypeUpdater {
   }
 
 
-  static void createMimeFile(@NotNull List<MimeTypeDescription> mimeTypeDescriptions)
+  static void createMimeFile(@NotNull List<? extends MimeTypeDescription> mimeTypeDescriptions)
     throws IOException, XMLStreamException, OSFileAssociationException {
     XMLOutputFactory outputFactory =  XMLOutputFactory.newInstance();
     String mimePackagesPath = System.getProperty("user.home") + File.separator + LOCAL_MIME_PACKAGES_PATH;

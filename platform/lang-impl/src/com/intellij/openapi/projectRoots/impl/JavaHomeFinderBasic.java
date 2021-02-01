@@ -146,7 +146,7 @@ public class JavaHomeFinderBasic {
     return scanAll(Collections.singleton(file), includeNestDirs);
   }
 
-  protected @NotNull Set<String> scanAll(@NotNull Collection<Path> files, boolean includeNestDirs) {
+  protected @NotNull Set<String> scanAll(@NotNull Collection<? extends Path> files, boolean includeNestDirs) {
     Set<String> result = new HashSet<>();
     for (Path root : new HashSet<>(files)) {
       scanFolder(root, includeNestDirs, result);

@@ -113,7 +113,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   public SearchEverywhereUI(@Nullable Project project,
                             Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
-                            @NotNull Function<String, String> shortcutSupplier) {
+                            @NotNull Function<? super String, String> shortcutSupplier) {
     super(project);
     myListFactory = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
                     ? new MixedListFactory()
@@ -1068,7 +1068,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final SearchListener mySearchListener = new SearchListener();
 
   private class SearchListener implements SESearcher.Listener {
-    private Consumer<List<Object>> testCallback;
+    private @Nullable Consumer<? super List<Object>> testCallback;
 
     @Override
     public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
@@ -1161,7 +1161,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     @TestOnly
-    void setTestCallback(@Nullable Consumer<List<Object>> callback) {
+    void setTestCallback(@Nullable Consumer<? super List<Object>> callback) {
       testCallback = callback;
     }
   }

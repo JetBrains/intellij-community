@@ -78,7 +78,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     return ObjectUtils.doIfCast(getSelectedItem(), Item.class, i -> i.getDisplayName());
   }
 
-  public void addTargets(List<TargetEnvironmentConfiguration> configs) {
+  public void addTargets(List<? extends TargetEnvironmentConfiguration> configs) {
     int index = 2;
     for (TargetEnvironmentConfiguration config : configs) {
       addTarget(config, index);

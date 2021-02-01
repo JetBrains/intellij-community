@@ -273,7 +273,7 @@ public final class ProjectUtil {
     return projectFuture.thenApply(ProjectUtil::postProcess);
   }
 
-  private static @NotNull List<ProjectOpenProcessor> computeProcessors(@NotNull Path file, @NotNull NullableLazyValue<VirtualFile> lazyVirtualFile) {
+  private static @NotNull List<ProjectOpenProcessor> computeProcessors(@NotNull Path file, @NotNull NullableLazyValue<? extends VirtualFile> lazyVirtualFile) {
     List<ProjectOpenProcessor> processors = new SmartList<>();
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe(processor -> {
       if (processor instanceof PlatformProjectOpenProcessor) {
@@ -307,7 +307,7 @@ public final class ProjectUtil {
     return project;
   }
 
-  private static @Nullable Project chooseProcessorAndOpen(@NotNull List<ProjectOpenProcessor> processors,
+  private static @Nullable Project chooseProcessorAndOpen(@NotNull List<? extends ProjectOpenProcessor> processors,
                                                           @NotNull VirtualFile virtualFile,
                                                           @NotNull OpenProjectTask options) {
     ProjectOpenProcessor processor;
@@ -647,7 +647,7 @@ public final class ProjectUtil {
     return tryOpenFiles(project, ContainerUtil.map(list, file -> file.toPath()), location);
   }
 
-  public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<Path> list, String location) {
+  public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
     Project result = null;
 
     for (Path file : list) {

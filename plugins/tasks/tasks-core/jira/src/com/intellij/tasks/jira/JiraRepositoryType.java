@@ -47,7 +47,7 @@ public class JiraRepositoryType extends BaseRepositoryType<JiraRepository> {
   @Override
   public TaskRepositoryEditor createEditor(JiraRepository repository,
                                            Project project,
-                                           Consumer<JiraRepository> changeListener) {
+                                           Consumer<? super JiraRepository> changeListener) {
     return new JiraRepositoryEditor(project, repository, changeListener);
   }
 

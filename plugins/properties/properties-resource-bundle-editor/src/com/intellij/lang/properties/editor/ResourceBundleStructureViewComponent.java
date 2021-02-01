@@ -24,7 +24,6 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +121,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
       }
       else {
         return ContainerUtil.toArray(ContainerUtil.flatten(
-          ContainerUtil.mapNotNull(selectedElements, (NullableFunction<ResourceBundleEditorViewElement, List<IProperty>>)element -> {
+          ContainerUtil.mapNotNull(selectedElements, element -> {
             final IProperty[] properties = element.getProperties();
             return properties == null ? null : ContainerUtil.newArrayList(properties);
           })), IProperty[]::new);

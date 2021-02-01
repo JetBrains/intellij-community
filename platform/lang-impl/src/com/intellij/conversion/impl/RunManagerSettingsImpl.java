@@ -63,7 +63,7 @@ final class RunManagerSettingsImpl implements RunManagerSettings {
     return result;
   }
 
-  public void collectAffectedFiles(@NotNull Collection<Path> files) {
+  public void collectAffectedFiles(@NotNull Collection<? super Path> files) {
     files.add(myWorkspaceFile.getFile());
     if (myProjectFile != null) {
       files.add(myProjectFile.getFile());

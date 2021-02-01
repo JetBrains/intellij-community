@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public class TreeIntToIntMapTest extends UpdatableIntToIntMapTest {
 
   @Override
-  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
+  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize) {
     return TreeIntToIntMap.newInstance(thisIsVisible, longSize);
   }
 }

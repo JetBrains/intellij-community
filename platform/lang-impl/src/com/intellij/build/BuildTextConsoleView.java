@@ -2,11 +2,9 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
-import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.LazyFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -27,7 +25,7 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView, AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
-  public BuildTextConsoleView(@NotNull Project project, boolean viewer, @NotNull List<Filter> executionFilters) {
+  public BuildTextConsoleView(@NotNull Project project, boolean viewer, @NotNull List<? extends Filter> executionFilters) {
     super(project, GlobalSearchScope.allScope(project), viewer, true);
     executionFilters.forEach(this::addMessageFilter);
   }

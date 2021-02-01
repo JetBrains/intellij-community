@@ -519,7 +519,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  private static @NlsSafe String formatDescription(@NotNull CharSequence text, TextRange textRange, List<TextRange> additionalRanges) {
+  private static @NlsSafe String formatDescription(@NotNull CharSequence text, TextRange textRange, List<? extends TextRange> additionalRanges) {
     StringJoiner joiner = new StringJoiner("\n");
     JBIterable.of(textRange).append(additionalRanges).forEach(
       range -> joiner.add(text.subSequence(range.getStartOffset(), range.getEndOffset()))

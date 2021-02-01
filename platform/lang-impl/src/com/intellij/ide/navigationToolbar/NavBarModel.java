@@ -288,7 +288,7 @@ public class NavBarModel {
     return processChildrenWithExtensions(object, (o, ext) -> processor.process(o));
   }
 
-  private boolean processChildrenWithExtensions(Object object, @NotNull PairProcessor<Object, NavBarModelExtension> pairProcessor) {
+  private boolean processChildrenWithExtensions(Object object, @NotNull PairProcessor<Object, ? super NavBarModelExtension> pairProcessor) {
     if (!isValid(object)) return true;
     final Object rootElement = size() > 1 ? getElement(1) : null;
     if (rootElement != null && !isValid(rootElement)) return true;

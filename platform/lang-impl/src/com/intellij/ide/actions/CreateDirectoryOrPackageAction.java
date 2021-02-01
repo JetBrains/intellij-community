@@ -255,7 +255,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  private static List<PsiElement> createDirectories(List<Pair<String, JpsModuleSourceRootType<?>>> toCreate,
+  private static List<PsiElement> createDirectories(List<? extends Pair<String, JpsModuleSourceRootType<?>>> toCreate,
                                                     CreateGroupHandler validator) {
     List<PsiElement> createdDirectories = new ArrayList<>(toCreate.size());
 

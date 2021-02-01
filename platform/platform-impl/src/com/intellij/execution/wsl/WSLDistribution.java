@@ -482,7 +482,7 @@ public class WSLDistribution {
     return "WSLDistribution{myDescriptor=" + myDescriptor + '}';
   }
 
-  private static void prependCommand(@NotNull List<String> command, String @NotNull ... commandToPrepend) {
+  private static void prependCommand(@NotNull List<? super String> command, String @NotNull ... commandToPrepend) {
     command.addAll(0, Arrays.asList(commandToPrepend));
   }
 

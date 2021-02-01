@@ -51,7 +51,7 @@ public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData
   }
 
   public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, int caretOffset,
-                                      Ref<Boolean> indented, final List<T> values) {
+                                      Ref<? super Boolean> indented, final List<? extends T> values) {
   }
 
   //For performance optimization implementations can return false in case when they dont have access to any other documents(psi file)

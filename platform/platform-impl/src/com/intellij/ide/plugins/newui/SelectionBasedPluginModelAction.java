@@ -167,7 +167,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   }
 
   static <C extends JComponent> void addActionsTo(@NotNull DefaultActionGroup group,
-                                                  @NotNull Function<@NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
+                                                  @NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
                                                   @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
     PluginEnableDisableAction[] actions = PluginEnableDisableAction.values();
     for (int i = 0; i < actions.length; i++) {

@@ -79,7 +79,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     }, ApplicationManager.getApplication());
   }
 
-  private static void collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> files) {
+  private static void collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<? super VirtualFile> files) {
     if (!(f instanceof NewVirtualFile)) return;
 
     ProgressManager.checkCanceled();

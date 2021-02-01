@@ -166,7 +166,7 @@ public final class PluginDescriptorLoader {
     return descriptor;
   }
 
-  static boolean collectPluginDirectoryContents(@NotNull Path file, @NotNull List<Path> pluginJarFiles, @NotNull List<Path> dirs) {
+  static boolean collectPluginDirectoryContents(@NotNull Path file, @NotNull List<Path> pluginJarFiles, @NotNull List<? super Path> dirs) {
     try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
       for (Path childFile : s) {
         if (Files.isDirectory(childFile)) {
@@ -197,7 +197,7 @@ public final class PluginDescriptorLoader {
    * c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before all-open-XXX.jar
    * d) shorter name, e.g. android.jar is before android-base-common.jar
    */
-  private static void putMoreLikelyPluginJarsFirst(@NotNull Path pluginDir, @NotNull List<Path> filesInLibUnderPluginDir) {
+  private static void putMoreLikelyPluginJarsFirst(@NotNull Path pluginDir, @NotNull List<? extends Path> filesInLibUnderPluginDir) {
     String pluginDirName = pluginDir.getFileName().toString();
 
     filesInLibUnderPluginDir.sort((o1, o2) -> {

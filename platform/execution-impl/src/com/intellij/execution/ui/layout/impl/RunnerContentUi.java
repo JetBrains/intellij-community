@@ -1135,7 +1135,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         title = name;
       }
       else {
-        title = StringUtil.join(contents, (NotNullFunction<Content, String>)Content::getTabName, " | ");
+        title = StringUtil.join(contents, Content::getTabName, " | ");
       }
     }
     usedNames.add(title);

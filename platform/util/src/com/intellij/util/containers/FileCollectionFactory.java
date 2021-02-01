@@ -76,11 +76,11 @@ public final class FileCollectionFactory {
     return new ObjectOpenCustomHashSet<>(FILE_HASH_STRATEGY);
   }
 
-  public static @NotNull Set<File> createCanonicalFileSet(@NotNull Collection<File> files) {
+  public static @NotNull Set<File> createCanonicalFileSet(@NotNull Collection<? extends File> files) {
     return new ObjectOpenCustomHashSet<>(files, FILE_HASH_STRATEGY);
   }
 
-  public static @NotNull Set<Path> createCanonicalPathSet(@NotNull Collection<Path> files) {
+  public static @NotNull Set<Path> createCanonicalPathSet(@NotNull Collection<? extends Path> files) {
     return new ObjectOpenCustomHashSet<>(files, new SerializableHashStrategy<Path>() {
       @Override
       public int hashCode(@Nullable Path o) {

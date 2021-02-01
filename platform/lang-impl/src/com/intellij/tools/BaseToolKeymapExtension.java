@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class BaseToolKeymapExtension implements KeymapExtension {
 
   @Override
-  public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
+  public KeymapGroup createGroup(final Condition<? super AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     Group rootGroup = new Group(getRootGroupName(), getRootGroupId(), AllIcons.Nodes.KeymapTools);
     List<ToolsGroup<Tool>> groups = ToolManager.getInstance().getGroups();

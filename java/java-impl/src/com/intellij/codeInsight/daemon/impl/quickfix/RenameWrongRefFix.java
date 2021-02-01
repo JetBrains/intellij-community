@@ -131,7 +131,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
   }
 
   @NotNull
-  private static <T extends PsiElement> LookupElementBuilder createLookupElement(T variant, Function<T, String> toPresentableElement) {
+  private static <T extends PsiElement> LookupElementBuilder createLookupElement(T variant, Function<? super T, String> toPresentableElement) {
     return LookupElementBuilder.create(variant, toPresentableElement.apply(variant));
   }
 

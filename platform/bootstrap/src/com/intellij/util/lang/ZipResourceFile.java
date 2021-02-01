@@ -45,8 +45,8 @@ public final class ZipResourceFile implements ResourceFile {
 
   @Override
   public void processResources(@NotNull String dir,
-                               @NotNull Predicate<String> nameFilter,
-                               @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+                               @NotNull Predicate<? super String> nameFilter,
+                               @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     int minNameLength = dir.length() + 2;
     for (ImmutableZipEntry entry : zipFile.getEntries()) {
       String name = entry.getName();

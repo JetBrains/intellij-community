@@ -182,7 +182,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return super.processKeyBinding(ks, e, condition, pressed);
   }
 
-  public void setTitleActions(@NotNull List<AnAction> actions) {
+  public void setTitleActions(@NotNull List<? extends AnAction> actions) {
     header.setAdditionalTitleActions(actions);
   }
 

@@ -860,7 +860,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
 
       @Override
-      public void cannotWriteToFiles(@NotNull List<Path> readonlyFiles) {
+      public void cannotWriteToFiles(@NotNull List<? extends Path> readonlyFiles) {
         StringBuilder files = new StringBuilder();
         for (Path file : readonlyFiles) {
           files.append(file.toString()).append("; ");

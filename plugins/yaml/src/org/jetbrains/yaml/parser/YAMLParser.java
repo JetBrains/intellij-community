@@ -608,7 +608,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     return type == INDENT || type == EOL;
   }
 
-  private static int findLeftRange(@NotNull List<IElementType> tokens) {
+  private static int findLeftRange(@NotNull List<? extends IElementType> tokens) {
     int i = tokens.indexOf(COMMENT);
     return i != -1 ? i : tokens.size();
   }

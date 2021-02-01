@@ -198,7 +198,7 @@ public final class RunContentBuilder extends RunTab {
     }
 
     @Override
-    public void contentAdded(@NotNull Collection<ConsoleViewContentType> types) {
+    public void contentAdded(@NotNull Collection<? extends ConsoleViewContentType> types) {
       if (myProject.isDisposed() || myUi.isDisposed())
         return;
       for (ConsoleViewContentType type : types) {

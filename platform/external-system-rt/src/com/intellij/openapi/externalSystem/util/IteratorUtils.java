@@ -8,8 +8,8 @@ import java.util.*;
 
 @ApiStatus.Experimental
 public final class IteratorUtils {
-  public static <T> boolean match(@NotNull Iterator<T> iterator1,
-                                  @NotNull Iterator<T> iterator2,
+  public static <T> boolean match(@NotNull Iterator<? extends T> iterator1,
+                                  @NotNull Iterator<? extends T> iterator2,
                                   @NotNull BooleanBiFunction<? super T, ? super T> condition) {
     while (iterator2.hasNext()) {
       if (!iterator1.hasNext() || !condition.fun(iterator1.next(), iterator2.next())) {
@@ -19,8 +19,8 @@ public final class IteratorUtils {
     return !iterator1.hasNext();
   }
 
-  public static <T> boolean match(@NotNull AbstractObjectGraphIterator<T> iterator1,
-                                  @NotNull AbstractObjectGraphIterator<T> iterator2,
+  public static <T> boolean match(@NotNull AbstractObjectGraphIterator<? extends T> iterator1,
+                                  @NotNull AbstractObjectGraphIterator<? extends T> iterator2,
                                   @NotNull BooleanBiFunction<? super T, ? super T> condition) {
     while (iterator2.hasNext()) {
       if (!iterator1.hasNext() ||

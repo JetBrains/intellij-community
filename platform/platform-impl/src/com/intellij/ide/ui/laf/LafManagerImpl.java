@@ -236,7 +236,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return lafList;
   }
 
-  private static void sortThemes(@NotNull List<UIManager.LookAndFeelInfo> list) {
+  private static void sortThemes(@NotNull List<? extends UIManager.LookAndFeelInfo> list) {
     list.sort((t1, t2) -> {
       String n1 = t1.getName();
       String n2 = t2.getName();
@@ -1463,7 +1463,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     private @NotNull Collection<AnAction> createThemeActions(@NotNull @NlsContexts.Separator String separatorText,
-                                                             @NotNull List<UIManager.LookAndFeelInfo> lafs,
+                                                             @NotNull List<? extends UIManager.LookAndFeelInfo> lafs,
                                                              boolean isDark) {
       List<AnAction> result = new ArrayList<>();
       if (!lafs.isEmpty()) {

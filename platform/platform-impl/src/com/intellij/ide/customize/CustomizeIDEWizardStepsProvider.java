@@ -15,7 +15,7 @@ public interface CustomizeIDEWizardStepsProvider {
    * and thus can change the list of enabled plugins.
    * If no steps are provided, the dialog is not shown, and loading proceeds to the splash screen.
    */
-  void initSteps(CustomizeIDEWizardDialog wizardDialog, List<AbstractCustomizeWizardStep> steps);
+  void initSteps(CustomizeIDEWizardDialog wizardDialog, @NotNull List<? super AbstractCustomizeWizardStep> steps);
 
   /**
    * Called for an optional secondary customization dialog shown after the splash screen, right before the welcome screen.

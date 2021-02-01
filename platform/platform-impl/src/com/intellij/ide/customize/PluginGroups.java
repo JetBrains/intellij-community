@@ -126,7 +126,7 @@ public class PluginGroups {
     initGroups(myTree, myFeaturedPlugins);
   }
 
-  protected void initGroups(@NotNull List<Group> groups, @NotNull Map<String, String> featuredPlugins) {
+  protected void initGroups(@NotNull List<? super Group> groups, @NotNull Map<String, String> featuredPlugins) {
     groups.add(
       new Group(CORE, IdeBundle.message("label.plugin.group.name.core"), null, null,
                 Arrays.asList(
@@ -287,7 +287,7 @@ public class PluginGroups {
   }
 
 
-  protected static void addVcsGroup(@NotNull List<Group> groups) {
+  protected static void addVcsGroup(@NotNull List<? super Group> groups) {
     groups.add(new Group("Version Controls", IdeBundle.message("label.plugin.group.name.version.controls"), PlatformImplIcons.VersionControls, null, Arrays.asList(
       "CVS",
       "Git4Idea",
@@ -489,7 +489,7 @@ public class PluginGroups {
 
   private void collectInvolvedIds(@NotNull PluginId pluginId,
                                   boolean toEnable,
-                                  @NotNull Set<PluginId> ids,
+                                  @NotNull Set<? super PluginId> ids,
                                   @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptor) {
     ids.add(pluginId);
     if (toEnable) {

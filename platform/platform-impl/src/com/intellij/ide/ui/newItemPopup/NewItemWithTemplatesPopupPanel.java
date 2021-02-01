@@ -66,7 +66,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     }
   }
 
-  protected void updateTemplatesList(List<T> templatesList) {
+  protected void updateTemplatesList(List<? extends T> templatesList) {
     myTemplatesListModel.update(templatesList);
   }
 
@@ -98,11 +98,11 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
 
     private final List<T> myItems = new ArrayList<>();
 
-    private MyListModel(List<T> items) {
+    private MyListModel(List<? extends T> items) {
       myItems.addAll(items);
     }
 
-    public void update(List<T> newItems) {
+    public void update(List<? extends T> newItems) {
       if (!myItems.isEmpty()) {
         int end = myItems.size() - 1;
         myItems.clear();

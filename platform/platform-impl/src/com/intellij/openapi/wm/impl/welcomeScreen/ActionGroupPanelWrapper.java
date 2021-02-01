@@ -17,7 +17,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Function;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -218,7 +217,7 @@ public class ActionGroupPanelWrapper {
   }
 
   public static void installQuickSearch(JBList<? extends AnAction> list) {
-    new ListSpeedSearch<>(list, (Function<AnAction, String>)o -> {
+    new ListSpeedSearch<>(list, o -> {
       if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
         return o.getTemplatePresentation().getText();
       }

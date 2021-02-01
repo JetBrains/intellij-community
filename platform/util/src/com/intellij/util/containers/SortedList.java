@@ -25,16 +25,16 @@ import java.util.*;
  */
 public class SortedList<T> extends AbstractList<T>{
   private final SortedMap<T, List<T>> myMap;
-  private final Comparator<T> myComparator;
+  private final Comparator<? super T> myComparator;
   private List<T> myDelegate;
 
-  public SortedList(@NotNull Comparator<T> comparator) {
+  public SortedList(@NotNull Comparator<? super T> comparator) {
     myComparator = comparator;
     myMap = new TreeMap<>(comparator);
   }
 
   @NotNull
-  public Comparator<T> getComparator() {
+  public Comparator<? super T> getComparator() {
     return myComparator;
   }
 

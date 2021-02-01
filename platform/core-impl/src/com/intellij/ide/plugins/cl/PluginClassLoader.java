@@ -492,10 +492,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   private static final class DeepEnumeration implements Enumeration<URL> {
-    private final List<Enumeration<URL>> list;
+    private final @NotNull List<? extends Enumeration<URL>> list;
     private int myIndex;
 
-    DeepEnumeration(@NotNull List<Enumeration<URL>> enumerations) {
+    DeepEnumeration(@NotNull List<? extends Enumeration<URL>> enumerations) {
       list = enumerations;
     }
 

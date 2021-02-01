@@ -631,7 +631,7 @@ public class PyStubsTest extends PyTestCase {
     );
   }
 
-  private void doTestUnsupportedNT(@NotNull BiConsumer<PyType, TypeEvalContext> typeFromAstChecker) {
+  private void doTestUnsupportedNT(@NotNull BiConsumer<? super PyType, ? super TypeEvalContext> typeFromAstChecker) {
     final PyFile file = getTestFile();
 
     final PyTargetExpression attribute = file.findTopLevelAttribute("nt");

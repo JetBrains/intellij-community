@@ -356,7 +356,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     return ApplicationImpl.class.getName().equals(e.getClassName()) && "runEdtProgressWriteAction".equals(e.getMethodName());
   }
 
-  private static int countClassLoading(List<ThreadInfo> causeThreads) {
+  private static int countClassLoading(List<? extends ThreadInfo> causeThreads) {
     return (int)causeThreads.stream().filter(t -> Arrays.stream(t.getStackTrace()).anyMatch(IdeaFreezeReporter::isClassLoading)).count();
   }
 
@@ -382,7 +382,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       myThreadInfo = info;
     }
 
-    public static @NotNull CallTreeNode buildTree(List<ThreadInfo> threadInfos, long time) {
+    public static @NotNull CallTreeNode buildTree(List<? extends ThreadInfo> threadInfos, long time) {
       CallTreeNode root = new CallTreeNode(null, null, 0, null);
       for (ThreadInfo thread : threadInfos) {
         CallTreeNode node = root;

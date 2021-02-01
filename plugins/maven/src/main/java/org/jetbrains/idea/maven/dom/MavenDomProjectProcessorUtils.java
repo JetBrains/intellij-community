@@ -378,7 +378,7 @@ public final class MavenDomProjectProcessorUtils {
   }
 
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
-                                    @NotNull final Processor<T> processor,
+                                    @NotNull final Processor<? super T> processor,
                                     @NotNull final Project project,
                                     @NotNull final Function<? super MavenDomProfile , T> domProfileFunction,
                                     @NotNull final Function<? super MavenDomProjectModel, T> projectDomFunction) {
@@ -388,7 +388,7 @@ public final class MavenDomProjectProcessorUtils {
 
 
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
-                                    @NotNull final Processor<T> processor,
+                                    @NotNull final Processor<? super T> processor,
                                     @NotNull final Project project,
                                     @NotNull final Function<? super MavenDomProfile, T> domProfileFunction,
                                     @NotNull final Function<? super MavenDomProjectModel, T> projectDomFunction,
@@ -405,7 +405,7 @@ public final class MavenDomProjectProcessorUtils {
   }
 
   private static <T> boolean processParentProjectFile(MavenDomProjectModel projectDom,
-                                                      final Processor<T> processor,
+                                                      final Processor<? super T> processor,
                                                       final Project project,
                                                       final Function<? super MavenDomProfile, T> domProfileFunction,
                                                       final Function<? super MavenDomProjectModel, T> projectDomFunction,

@@ -412,7 +412,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   private static void loadAdditionalTextAttributesForScheme(@NotNull AbstractColorsScheme scheme,
-                                                            @NotNull Collection<AdditionalTextAttributesEP> attributesEPs) {
+                                                            @NotNull Collection<? extends AdditionalTextAttributesEP> attributesEPs) {
     for (AdditionalTextAttributesEP attributesEP : attributesEPs) {
       InputStream resourceStream = attributesEP.getLoaderForClass().getResourceAsStream(StringUtil.trimStart(attributesEP.file, "/"));
       if (resourceStream == null) {

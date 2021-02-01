@@ -341,9 +341,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     return new PydevCompletionVariant(option.name, option.documentation, args, option.type.getValue());
   }
 
-  private <T> void executeBackgroundTaskSuppressException(Callable<T> task,
-                                                          @NlsContexts.ProgressTitle String userVisibleMessage,
-                                                          String errorLogMessage) {
+  private void executeBackgroundTaskSuppressException(Callable<?> task,
+                                                      @NlsContexts.ProgressTitle String userVisibleMessage,
+                                                      String errorLogMessage) {
     try {
       executeBackgroundTask(task, false, userVisibleMessage, errorLogMessage);
     }

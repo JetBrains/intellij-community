@@ -288,8 +288,8 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   public final void processResources(@NotNull String dir,
-                                     @NotNull Predicate<String> fileNameFilter,
-                                     @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+                                     @NotNull Predicate<? super String> fileNameFilter,
+                                     @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     classPath.processResources(dir, fileNameFilter, consumer);
   }
 
@@ -527,12 +527,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     boolean isBootstrapResourcesAllowed;
     boolean errorOnMissingJar = true;
     @Nullable CachePoolImpl cachePool;
-    @Nullable Predicate<Path> cachingCondition;
+    Predicate<? super Path> cachingCondition;
 
     Builder() { }
 
     /**
-     * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@lin Path}.
+     * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@link Path}.
      */
     @Deprecated
     public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {
@@ -606,7 +606,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * @param pool      cache pool
      * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
      */
-    public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<Path> condition) {
+    public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<? super Path> condition) {
       useCache = true;
       cachePool = (CachePoolImpl)pool;
       cachingCondition = condition;

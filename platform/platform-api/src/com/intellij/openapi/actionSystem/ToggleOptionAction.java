@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public class ToggleOptionAction extends ToggleAction {
-  private final Function<AnActionEvent, Option> optionSupplier;
+  private final @NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier;
 
   @SuppressWarnings("unused")
   public ToggleOptionAction(@NotNull Option option) {
@@ -23,11 +23,11 @@ public class ToggleOptionAction extends ToggleAction {
   }
 
   @SuppressWarnings("unused")
-  public ToggleOptionAction(@NotNull Function<AnActionEvent, Option> optionSupplier) {
+  public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier) {
     this(optionSupplier, null);
   }
 
-  public ToggleOptionAction(@NotNull Function<AnActionEvent, Option> optionSupplier, @Nullable Icon icon) {
+  public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier, @Nullable Icon icon) {
     super(() -> null, () -> null, icon);
     this.optionSupplier = optionSupplier;
   }

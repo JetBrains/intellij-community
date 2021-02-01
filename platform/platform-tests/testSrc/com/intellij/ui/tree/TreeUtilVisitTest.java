@@ -758,7 +758,7 @@ public final class TreeUtilVisitTest {
     });
   }
 
-  private static void testCollectExpandedPaths(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<TreePath>> getter) {
+  private static void testCollectExpandedPaths(@NotNull Set<String> expected, @NotNull Function<? super TreeTest, ? extends List<TreePath>> getter) {
     testCollectSelection(test -> {
       List<TreePath> paths = getter.apply(test);
       Assert.assertEquals(expected.size(), paths.size());
@@ -799,7 +799,7 @@ public final class TreeUtilVisitTest {
     });
   }
 
-  private static void testCollectExpandedUserObjects(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<Object>> getter) {
+  private static void testCollectExpandedUserObjects(@NotNull Set<String> expected, @NotNull Function<? super TreeTest, ? extends List<Object>> getter) {
     testCollectSelection(test -> {
       List<Object> objects = getter.apply(test);
       Assert.assertEquals(expected.size(), objects.size());
@@ -840,7 +840,7 @@ public final class TreeUtilVisitTest {
     });
   }
 
-  private static void testCollectSelectedPaths(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<TreePath>> getter) {
+  private static void testCollectSelectedPaths(@NotNull Set<String> expected, @NotNull Function<? super TreeTest, ? extends List<TreePath>> getter) {
     testCollectSelection(test -> {
       List<TreePath> paths = getter.apply(test);
       Assert.assertEquals(expected.size(), paths.size());
@@ -882,7 +882,7 @@ public final class TreeUtilVisitTest {
     });
   }
 
-  private static void testCollectSelectedUserObjects(@NotNull Set<String> expected, @NotNull Function<TreeTest, List<Object>> getter) {
+  private static void testCollectSelectedUserObjects(@NotNull Set<String> expected, @NotNull Function<? super TreeTest, ? extends List<Object>> getter) {
     testCollectSelection(test -> {
       List<Object> objects = getter.apply(test);
       Assert.assertEquals(expected.size(), objects.size());
@@ -1084,7 +1084,7 @@ public final class TreeUtilVisitTest {
     testNonExistent(expected, test -> TreeUtil.promiseExpand(test.getTree(), visitor));
   }
 
-  private static void testNonExistent(String expected, Function<TreeTest, Promise<TreePath>> function) {
+  private static void testNonExistent(String expected, Function<? super TreeTest, ? extends Promise<TreePath>> function) {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test -> function.apply(test)
       .onSuccess(path -> test.invokeSafely(() -> Assert.fail("found unexpected path: " + path)))
       .onError(error -> test.invokeSafely(() -> {

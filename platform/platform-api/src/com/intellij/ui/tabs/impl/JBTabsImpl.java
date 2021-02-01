@@ -1942,7 +1942,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  private static List<TabInfo> groupPinnedFirst(List<TabInfo> infos, @Nullable Comparator<TabInfo> comparator) {
+  private static List<TabInfo> groupPinnedFirst(List<TabInfo> infos, @Nullable Comparator<? super TabInfo> comparator) {
     int firstNotPinned = -1;
     for (int i = 0; i < infos.size(); i++) {
       TabInfo info = infos.get(i);

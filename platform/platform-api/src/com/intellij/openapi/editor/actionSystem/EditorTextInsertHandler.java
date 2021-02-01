@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
@@ -29,5 +30,5 @@ import java.awt.datatransfer.Transferable;
  */
 public interface EditorTextInsertHandler {
   
-  void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> producer);  
+  void execute(final Editor editor, final DataContext dataContext, @Nullable Producer<? extends Transferable> producer);
 }

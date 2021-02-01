@@ -43,7 +43,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
   }
 
   @Override
-  protected Map<OrderEntry, OrderAware> importData(@NotNull final Collection<DataNode<LibraryDependencyData>> nodesToImport,
+  protected Map<OrderEntry, OrderAware> importData(final @NotNull Collection<? extends DataNode<LibraryDependencyData>> nodesToImport,
                                                    @NotNull final Module module,
                                                    @NotNull final IdeModifiableModelsProvider modelsProvider) {
     // The general idea is to import all external project library dependencies and module libraries which don't present at the

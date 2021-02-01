@@ -326,7 +326,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
 
   private static boolean processModifiedFilesInScope(GlobalSearchScope scope,
                                                      Processor<? super VirtualFile> processor,
-                                                     Collection<ModelBranch> branches) {
+                                                     Collection<? extends ModelBranch> branches) {
     for (ModelBranch branch : branches) {
       for (VirtualFile file : ((ModelBranchImpl)branch).myAffectedFiles) {
         if (scope.contains(file) && !processor.process(file)) {

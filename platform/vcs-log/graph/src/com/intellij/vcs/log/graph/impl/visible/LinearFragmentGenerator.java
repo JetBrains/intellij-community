@@ -146,8 +146,8 @@ public class LinearFragmentGenerator {
 
   @Nullable
   private static GraphFragment getFragment(int startNode,
-                                           Function<Integer, List<Integer>> getNextNodes,
-                                           Function<Integer, List<Integer>> getPrevNodes,
+                                           Function<? super Integer, ? extends List<Integer>> getNextNodes,
+                                           Function<? super Integer, ? extends List<Integer>> getPrevNodes,
                                            Set<Integer> thisNodeCantBeInMiddle, boolean isDown) {
     Set<Integer> blackNodes = new HashSet<>();
     blackNodes.add(startNode);

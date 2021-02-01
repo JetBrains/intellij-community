@@ -315,7 +315,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     asyncUpdateTabs(Collections.singletonList(Pair.createNonNull(tabInfo, editorInfo)));
   }
 
-  private void asyncUpdateTabs(@NotNull List<Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs) {
+  private void asyncUpdateTabs(@NotNull List<? extends Pair.NonNull<TabInfo, LightEditorInfo>> tabEditorPairs) {
     myTabUpdateExecutor.execute(() -> {
       List<Pair.NonNull<TabInfo, TextAttributes>> tabAttributesPairs = ContainerUtil.map(tabEditorPairs, pair -> {
         return Pair.createNonNull(pair.first, calcAttributes(pair.second));

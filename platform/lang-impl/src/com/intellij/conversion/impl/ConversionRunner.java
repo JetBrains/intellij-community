@@ -219,7 +219,7 @@ public final class ConversionRunner {
     return myProvider;
   }
 
-  public static @NotNull List<Path> getReadOnlyFiles(@NotNull Collection<Path> affectedFiles) {
+  public static @NotNull List<Path> getReadOnlyFiles(@NotNull Collection<? extends Path> affectedFiles) {
     List<Path> result = new ArrayList<>();
     for (Path file : affectedFiles) {
       try {

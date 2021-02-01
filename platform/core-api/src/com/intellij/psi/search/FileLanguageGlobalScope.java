@@ -18,11 +18,11 @@ import java.util.Collections;
 class FileLanguageGlobalScope extends DelegatingGlobalSearchScope {
 
   private final Project myProject;
-  private final Collection<LanguageMatcher> myLanguageMatchers;
+  private final @NotNull Collection<? extends LanguageMatcher> myLanguageMatchers;
 
   FileLanguageGlobalScope(@NotNull Project project,
                           @NotNull GlobalSearchScope baseScope,
-                          @NotNull Collection<LanguageMatcher> languageMatchers) {
+                          @NotNull Collection<? extends LanguageMatcher> languageMatchers) {
     super(baseScope);
     myProject = project;
     myLanguageMatchers = languageMatchers;

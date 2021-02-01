@@ -154,7 +154,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   }
 
   @NotNull
-  private String getAnchor(@NotNull StatusBarWidgetFactory factory, @NotNull List<StatusBarWidgetFactory> availableFactories) {
+  private String getAnchor(@NotNull StatusBarWidgetFactory factory, @NotNull List<? extends StatusBarWidgetFactory> availableFactories) {
     if (factory instanceof StatusBarWidgetProviderToFactoryAdapter) {
       return ((StatusBarWidgetProviderToFactoryAdapter)factory).getAnchor();
     }

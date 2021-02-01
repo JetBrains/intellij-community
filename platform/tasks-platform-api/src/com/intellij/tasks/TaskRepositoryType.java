@@ -48,7 +48,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
   public @Nls String getAdvertiser() { return null; }
 
   @NotNull
-  public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<T> changeListener);
+  public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<? super T> changeListener);
 
   public List<TaskRepositorySubtype> getAvailableSubtypes() {
     return Collections.singletonList(this);

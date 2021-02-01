@@ -191,7 +191,7 @@ public final class LiveVariablesAnalyzer {
   /**
    * @return true if completed, false if "too complex"
    */
-  private boolean runDfa(boolean forward, BiFunction<Instruction, BitSet, BitSet> handleState) {
+  private boolean runDfa(boolean forward, BiFunction<? super Instruction, ? super BitSet, ? extends BitSet> handleState) {
     Set<Instruction> entryPoints = new HashSet<>();
     if (forward) {
       entryPoints.add(myInstructions[0]);

@@ -12,13 +12,13 @@ public final class WhitespacesBinders {
 
   public static final WhitespacesAndCommentsBinder DEFAULT_LEFT_BINDER = new WhitespacesAndCommentsBinder() {
     @Override
-    public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+    public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
       return tokens.size();
     }
   };
   public static final WhitespacesAndCommentsBinder DEFAULT_RIGHT_BINDER = new WhitespacesAndCommentsBinder() {
     @Override
-    public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+    public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
       return 0;
     }
   };
@@ -29,7 +29,7 @@ public final class WhitespacesBinders {
   public static WhitespacesAndCommentsBinder leadingCommentsBinder(@NotNull TokenSet commentTypes) {
     return new WhitespacesAndCommentsBinder() {
       @Override
-      public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+      public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int i = 0;
         while (i < tokens.size() && !commentTypes.contains(tokens.get(i))) {
           i++;
@@ -42,7 +42,7 @@ public final class WhitespacesBinders {
   public static WhitespacesAndCommentsBinder trailingCommentsBinder(@NotNull TokenSet commentTypes) {
     return new WhitespacesAndCommentsBinder() {
       @Override
-      public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+      public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int i = tokens.size() - 1;
         while (i >= 0 && !commentTypes.contains(tokens.get(i))) {
           i--;

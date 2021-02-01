@@ -20,9 +20,9 @@ public class TextMateScopeComparator<T> implements Comparator<T> {
 
   @NotNull
   private final CharSequence myScope;
-  private final @NotNull Function<T, CharSequence> myScopeSupplier;
+  private final @NotNull Function<? super T, ? extends CharSequence> myScopeSupplier;
 
-  public TextMateScopeComparator(@NotNull CharSequence scope, @NotNull Function<T, CharSequence> scopeSupplier) {
+  public TextMateScopeComparator(@NotNull CharSequence scope, @NotNull Function<? super T, ? extends CharSequence> scopeSupplier) {
     myScope = scope;
     myScopeSupplier = scopeSupplier;
   }

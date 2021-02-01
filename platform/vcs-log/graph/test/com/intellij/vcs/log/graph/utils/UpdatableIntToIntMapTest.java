@@ -84,7 +84,7 @@ public abstract class UpdatableIntToIntMapTest {
   }
 
 
-  protected abstract UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize);
+  protected abstract UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize);
 
   public Tester getTest(int longSize, String initVisibility) {
     final Set<Integer> visibleNodes = parseSet(initVisibility);

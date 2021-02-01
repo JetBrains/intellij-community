@@ -59,7 +59,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     execute(editor, dataContext, null);
   }
 
-  private static Transferable getContentsToPasteToEditor(@Nullable Producer<Transferable> producer) {
+  private static Transferable getContentsToPasteToEditor(@Nullable Producer<? extends Transferable> producer) {
     if (producer == null) {
       return CopyPasteManager.getInstance().getContents();
     }
@@ -69,7 +69,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext, @Nullable Producer<Transferable> producer) {
+  public void execute(Editor editor, DataContext dataContext, @Nullable Producer<? extends Transferable> producer) {
     final Transferable transferable = getContentsToPasteToEditor(producer);
     if (transferable == null) return;
 

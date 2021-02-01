@@ -197,7 +197,7 @@ final class ExportToHTMLManager {
   }
 
   private static void addToPsiFileList(@NotNull PsiDirectory psiDirectory,
-                                       @NotNull List<PsiFile> fileList,
+                                       @NotNull List<? super PsiFile> fileList,
                                        boolean isRecursive,
                                        @NotNull Path outputDirectoryName) throws IOException {
     if (!psiDirectory.isValid()) {

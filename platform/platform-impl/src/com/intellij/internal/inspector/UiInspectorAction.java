@@ -179,7 +179,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       myInspectorTable = new InspectorTable(component);
       myHierarchyTree = new HierarchyTree(component) {
         @Override
-        public void onComponentsChanged(List<Component> components) {
+        public void onComponentsChanged(List<? extends Component> components) {
           switchComponentsInfo(components);
           updateHighlighting();
         }
@@ -286,7 +286,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       return myInspectorTable;
     }
 
-    private void switchComponentsInfo(@NotNull List<Component> components) {
+    private void switchComponentsInfo(@NotNull List<? extends Component> components) {
       if (components.isEmpty()) return;
       myComponents.clear();
       myComponents.addAll(components);
@@ -592,7 +592,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     public abstract void onClickInfoChanged(List<? extends PropertyBean> info);
 
-    public abstract void onComponentsChanged(List<Component> components);
+    public abstract void onComponentsChanged(List<? extends Component> components);
 
     private static final class ComponentNode extends DefaultMutableTreeNode  {
       private final Component myComponent;

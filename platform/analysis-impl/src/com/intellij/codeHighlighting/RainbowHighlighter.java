@@ -255,7 +255,7 @@ public class RainbowHighlighter {
     return rainbowColors.toArray(new Color[0]);
   }
 
-  private static Color resolveConflict(@NotNull final List<Pair<Color, Double>> colorCircles, @NotNull final Color sampleColor, int nestLevel) {
+  private static Color resolveConflict(final @NotNull List<? extends Pair<Color, Double>> colorCircles, @NotNull final Color sampleColor, int nestLevel) {
     if (nestLevel > 4) {
       return sampleColor;
     }

@@ -60,7 +60,7 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
 
   @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,
-                  @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter,
+                  @NotNull PairFunction<? super GraphTableModel, ? super T, Integer> rowGetter,
                   @NotNull SettableFuture<? super Boolean> future,
                   boolean silently);
 }

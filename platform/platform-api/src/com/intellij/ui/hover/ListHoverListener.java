@@ -35,7 +35,7 @@ public abstract class ListHoverListener extends HoverListener {
 
   private final AtomicInteger indexHolder = new AtomicInteger(-1);
 
-  private void update(@NotNull Component component, @NotNull ToIntFunction<JList<?>> indexFunc) {
+  private void update(@NotNull Component component, @NotNull ToIntFunction<? super JList<?>> indexFunc) {
     if (component instanceof JList) {
       JList<?> list = (JList<?>)component;
       int indexNew = indexFunc.applyAsInt(list);

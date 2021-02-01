@@ -104,8 +104,8 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     module.getProject().getMessageBus().connect(module).subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void modulesRenamed(@NotNull Project project,
-                                 @NotNull List<Module> modules,
-                                 @NotNull Function<Module, String> oldNameProvider) {
+                                 @NotNull List<? extends Module> modules,
+                                 @NotNull Function<? super Module, String> oldNameProvider) {
         for (Module renamedModule : modules) {
           if (renamedModule.equals(module)) {
             ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
@@ -194,7 +194,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeeded(@NotNull Set<String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeeded(@NotNull Set<? super String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
     getStorageDataRef().set(false);

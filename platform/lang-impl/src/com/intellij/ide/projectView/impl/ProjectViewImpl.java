@@ -2116,7 +2116,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   static class Action extends ToggleOptionAction implements DumbAware {
-    private Action(@NotNull Function<ProjectViewImpl, Option> optionSupplier) {
+    private Action(@NotNull Function<? super ProjectViewImpl, ? extends Option> optionSupplier) {
       super(event -> {
         Project project = event.getProject();
         ProjectView view = project == null || project.isDisposed() ? null : getInstance(project);

@@ -17,7 +17,7 @@ import com.intellij.util.ArrayUtil;
  */
 public class DebuggerKeymapExtension implements KeymapExtension {
   @Override
-  public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
+  public KeymapGroup createGroup(final Condition<? super AnAction> filtered, final Project project) {
     AnAction[] xDebuggerActions = ActionsTreeUtil.getActions("XDebugger.Actions");
     AnAction[] javaDebuggerActions = ActionsTreeUtil.getActions("JavaDebuggerActions");
 

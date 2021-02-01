@@ -190,7 +190,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   @ApiStatus.Internal
   public static void showUsages(@NotNull Project project,
                                 @NotNull DataContext dataContext,
-                                @NotNull List<@NotNull TargetVariant> targetVariants) {
+                                @NotNull List<? extends @NotNull TargetVariant> targetVariants) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
     SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());

@@ -182,10 +182,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
 
   private static final class Template {
     private final VarargEventId myEventId;
-    private final List<EventPair> myEventPairs;
+    private final List<? super EventPair> myEventPairs;
 
     private Template(VarargEventId id,
-                     List<EventPair> pairs) {
+                     List<? super EventPair> pairs) {
       myEventId = id;
       myEventPairs = pairs;
     }

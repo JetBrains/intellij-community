@@ -75,7 +75,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return list;
   }
 
-  private static void collect(@NotNull List<Configurable> list, Configurable @NotNull [] configurables) {
+  private static void collect(@NotNull List<? super Configurable> list, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       list.add(configurable);
       if (configurable instanceof Configurable.Composite) {

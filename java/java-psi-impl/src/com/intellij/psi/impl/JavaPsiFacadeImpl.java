@@ -166,7 +166,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null ? Collections.emptyList() : result;
   }
 
-  private static Predicate<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<PsiElementFinder> finders) {
+  private static Predicate<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<? extends PsiElementFinder> finders) {
     Predicate<PsiClass> filter = null;
     for (PsiElementFinder finder : finders) {
       Predicate<PsiClass> finderFilter = finder.getClassesFilter(scope);

@@ -44,7 +44,7 @@ final class RunDashboardActionUtils {
   }
 
   private static boolean getLeaves(Project project, AnActionEvent e, List<Object> items, List<Object> valueSubPath,
-                                   Set<RunDashboardRunConfigurationNode> result) {
+                                   Set<? super RunDashboardRunConfigurationNode> result) {
     for (Object item : items) {
       if (item instanceof RunDashboardServiceViewContributor || item instanceof GroupingNode) {
         List<Object> itemSubPath = new ArrayList<>(valueSubPath);

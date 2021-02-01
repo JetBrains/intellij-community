@@ -54,8 +54,8 @@ public class ToolwindowSwitcher extends DumbAwareAction {
   }
 
   public static void invokePopup(Project project,
-                                 @NotNull Comparator<ToolWindow> comparator,
-                                 @Nullable Predicate<ToolWindow> filter,
+                                 @NotNull Comparator<? super ToolWindow> comparator,
+                                 @Nullable Predicate<? super ToolWindow> filter,
                                  @Nullable RelativePoint point) {
     if (filter == null) filter = window -> true;
 
@@ -95,7 +95,7 @@ public class ToolwindowSwitcher extends DumbAwareAction {
   }
 
   @NotNull
-  public static List<ToolWindow> getToolWindows(@NotNull Project project, @NotNull Predicate<ToolWindow> filter) {
+  public static List<ToolWindow> getToolWindows(@NotNull Project project, @NotNull Predicate<? super ToolWindow> filter) {
     final ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
     return Arrays.stream(toolWindowManager.getToolWindowIds()).map(toolWindowManager::getToolWindow)
       .filter(tw -> tw != null && tw.isAvailable() && tw.isShowStripeButton() && filter.test(tw)).collect(Collectors.toList());

@@ -10,9 +10,9 @@ import java.awt.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 class CancelProgressOnScrolling implements VisibleAreaListener {
-    private final AtomicReference<CancellablePromise<?>> myCancellablePromiseRef;
+    private final AtomicReference<? extends CancellablePromise<?>> myCancellablePromiseRef;
 
-    CancelProgressOnScrolling(AtomicReference<CancellablePromise<?>> cancellablePromiseRef) {
+    CancelProgressOnScrolling(AtomicReference<? extends CancellablePromise<?>> cancellablePromiseRef) {
         myCancellablePromiseRef = cancellablePromiseRef;
     }
 

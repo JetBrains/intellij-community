@@ -63,7 +63,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private final JComponent myHeaderPanel;
 
   protected T[] myElements;
-  protected Comparator<ElementNode> myComparator = new OrderComparator();
+  protected Comparator<? super ElementNode> myComparator = new OrderComparator();
 
   protected final HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<>();
   protected final HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<>();
@@ -136,12 +136,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     resetElements(elements, null, false);
   }
 
-  @SuppressWarnings("unchecked")
-  public void resetElements(T[] elements, final @Nullable Comparator<T> sortComparator, final boolean restoreSelectedElements) {
+  public void resetElements(T[] elements, final @Nullable Comparator<? super T> sortComparator, final boolean restoreSelectedElements) {
     final List<T> selectedElements  = restoreSelectedElements && mySelectedElements != null ? new ArrayList<>(mySelectedElements) : null;
     myElements = elements;
     if (sortComparator != null) {
-      myComparator = new ElementNodeComparatorWrapper(sortComparator);
+      myComparator = new ElementNodeComparatorWrapper<>(sortComparator);
     }
     mySelectedNodes.clear();
     myNodeToParentMap.clear();
@@ -495,12 +494,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return myAlphabeticallySorted;
   }
 
-  @SuppressWarnings("unchecked")
-  protected void changeSortComparator(final Comparator<T> comparator) {
-    setSortComparator(new ElementNodeComparatorWrapper(comparator));
+  protected void changeSortComparator(final Comparator<? super T> comparator) {
+    setSortComparator(new ElementNodeComparatorWrapper<>(comparator));
   }
 
-  private void setSortComparator(Comparator<ElementNode> sortComparator) {
+  private void setSortComparator(Comparator<? super ElementNode> sortComparator) {
     if (myComparator.equals(sortComparator)) return;
     myComparator = sortComparator;
     doSort();

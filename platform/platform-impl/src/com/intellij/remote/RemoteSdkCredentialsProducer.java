@@ -35,18 +35,18 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
    * @deprecated use {@link #produceRemoteSdkCredentials(Project, boolean, Consumer)}
    */
   @Deprecated
-  void produceRemoteSdkCredentials(boolean allowSynchronousInteraction, Consumer<T> remoteSdkCredentialsConsumer);
+  void produceRemoteSdkCredentials(boolean allowSynchronousInteraction, Consumer<? super T> remoteSdkCredentialsConsumer);
 
   void produceRemoteSdkCredentials(@Nullable Project project,
                                    boolean allowSynchronousInteraction,
-                                   Consumer<T> remoteSdkCredentialsConsumer);
+                                   Consumer<? super T> remoteSdkCredentialsConsumer);
 
   /**
    * @param remoteSdkCredentialsConsumer
    * @deprecated use {@link #produceRemoteSdkCredentials(Project, boolean, Consumer)}
    */
   @Deprecated
-  void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
+  void produceRemoteSdkCredentials(Consumer<? super T> remoteSdkCredentialsConsumer);
 
   Object getRemoteSdkDataKey();
 }

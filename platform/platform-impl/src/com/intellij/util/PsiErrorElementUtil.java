@@ -49,7 +49,7 @@ public final class PsiErrorElementUtil {
     return false;
   }
 
-  private static boolean shouldHighlightErrorElement(@NotNull PsiErrorElement error, @NotNull List<HighlightErrorFilter> filters) {
+  private static boolean shouldHighlightErrorElement(@NotNull PsiErrorElement error, @NotNull List<? extends HighlightErrorFilter> filters) {
     for (HighlightErrorFilter filter : filters) {
       if (!filter.shouldHighlightErrorElement(error)) {
         return false;

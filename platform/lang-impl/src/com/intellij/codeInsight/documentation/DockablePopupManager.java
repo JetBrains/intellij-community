@@ -68,11 +68,11 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract T createComponent();
 
-  protected void doUpdateComponent(@NotNull CompletableFuture<PsiElement> elementFuture, PsiElement originalElement, T component) {
+  protected void doUpdateComponent(@NotNull CompletableFuture<? extends PsiElement> elementFuture, PsiElement originalElement, T component) {
     doUpdateComponent(elementFuture, originalElement, component, false);
   }
 
-  protected void doUpdateComponent(@NotNull CompletableFuture<PsiElement> elementFuture,
+  protected void doUpdateComponent(@NotNull CompletableFuture<? extends PsiElement> elementFuture,
                                    PsiElement originalElement,
                                    T component,
                                    boolean onAutoUpdate) {

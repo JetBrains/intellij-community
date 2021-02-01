@@ -259,11 +259,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  public void saveDocuments(@NotNull Predicate<Document> filter) {
+  public void saveDocuments(@NotNull Predicate<? super Document> filter) {
     saveDocuments(filter, true);
   }
 
-  private void saveDocuments(@Nullable Predicate<Document> filter, boolean isExplicit) {
+  private void saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 

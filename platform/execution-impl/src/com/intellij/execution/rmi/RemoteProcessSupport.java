@@ -4,7 +4,6 @@ package com.intellij.execution.rmi;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -230,7 +229,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     });
   }
 
-  private static void destroyProcessesImpl(@NotNull List<Info> infos) {
+  private static void destroyProcessesImpl(@NotNull List<? extends Info> infos) {
     for (Info o : infos) {
       LOG.info("Terminating: " + o);
       o.handler.destroyProcess();

@@ -84,7 +84,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
         }
 
         @Override
-        public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+        public void modulesRenamed(@NotNull Project project, @NotNull List<? extends Module> modules, @NotNull Function<? super Module, String> oldNameProvider) {
           reloadModules();
         }
       });

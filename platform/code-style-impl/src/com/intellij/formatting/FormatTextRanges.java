@@ -46,7 +46,7 @@ public class FormatTextRanges implements FormattingRangesInfo {
     add(range, processHeadingWhitespace);
   }
 
-  public FormatTextRanges(@NotNull ChangedRangesInfo changedRangesInfo, @NotNull List<TextRange> contextRanges) {
+  public FormatTextRanges(@NotNull ChangedRangesInfo changedRangesInfo, @NotNull List<? extends TextRange> contextRanges) {
     myInsertedRanges = changedRangesInfo.insertedRanges;
     boolean processHeadingWhitespace = false;
     for (TextRange range : contextRanges) {
@@ -111,7 +111,7 @@ public class FormatTextRanges implements FormattingRangesInfo {
     return ranges;
   }
 
-  public void setExtendedRanges(@NotNull List<TextRange> extendedRanges) {
+  public void setExtendedRanges(@NotNull List<? extends TextRange> extendedRanges) {
     myExtendedRanges.addAll(extendedRanges);
   }
   
@@ -139,7 +139,7 @@ public class FormatTextRanges implements FormattingRangesInfo {
     myExtendToContext = extendToContext;
   }
 
-  public void setDisabledRanges(@NotNull Collection<TextRange> disabledRanges) {
+  public void setDisabledRanges(@NotNull Collection<? extends TextRange> disabledRanges) {
     myDisabledRanges.clear();
     myDisabledRanges.addAll(ContainerUtil.sorted(disabledRanges, Segment.BY_START_OFFSET_THEN_END_OFFSET));
   }

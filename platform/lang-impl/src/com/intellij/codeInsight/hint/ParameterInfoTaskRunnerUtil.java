@@ -82,7 +82,7 @@ public final class ParameterInfoTaskRunnerUtil {
   @NotNull
   private static Consumer<Boolean> startProgressAndCreateStopAction(Project project,
                                                                     @NlsContexts.ProgressTitle String progressTitle,
-                                                                    AtomicReference<CancellablePromise<?>> promiseRef,
+                                                                    AtomicReference<? extends CancellablePromise<?>> promiseRef,
                                                                     Editor editor) {
     AtomicReference<Consumer<Boolean>> stopActionRef = new AtomicReference<>();
 

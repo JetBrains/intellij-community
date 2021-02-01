@@ -30,7 +30,7 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   public Self inClass(final ElementPattern pattern) {
     return with(new PatternConditionPlus<T, PsiClass>("inClass", pattern) {
       @Override
-      public boolean processValues(T t, ProcessingContext context, PairProcessor<PsiClass, ProcessingContext> processor) {
+      public boolean processValues(T t, ProcessingContext context, PairProcessor<? super PsiClass, ? super ProcessingContext> processor) {
         return processor.process(t.getContainingClass(), context);
       }
     });

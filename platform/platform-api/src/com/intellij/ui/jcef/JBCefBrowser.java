@@ -136,7 +136,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       }
     }
 
-    private static Pair<String, AnAction> createAction(String shortcut, Consumer<CefFrame> action) {
+    private static Pair<String, AnAction> createAction(String shortcut, Consumer<? super CefFrame> action) {
       return Pair.create(
         shortcut,
         LightEditActionFactory.create(event -> {

@@ -285,7 +285,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }, project);
   }
 
-  private static void dumbUnawarePostActivitiesPassed(@NotNull AtomicReference<Activity> edtActivity, int count) {
+  private static void dumbUnawarePostActivitiesPassed(@NotNull AtomicReference<? extends Activity> edtActivity, int count) {
     if (count != 0) {
       return;
     }

@@ -82,7 +82,7 @@ public final class HtmlBuilder {
    * @return this builder
    */
   @Contract("_, _ -> this")
-  public HtmlBuilder appendWithSeparators(@NotNull HtmlChunk separator, @NotNull Iterable<HtmlChunk> children) {
+  public HtmlBuilder appendWithSeparators(@NotNull HtmlChunk separator, @NotNull Iterable<? extends HtmlChunk> children) {
     boolean first = true;
     for (HtmlChunk child : children) {
       if (!first) {

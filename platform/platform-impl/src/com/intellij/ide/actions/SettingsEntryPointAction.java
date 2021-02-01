@@ -270,11 +270,11 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
   }
 
   private static CheckForUpdateResult myPlatformUpdateInfo;
-  private static Collection<IdeaPluginDescriptor> myIncompatiblePlugins;
+  private static @Nullable Collection<? extends IdeaPluginDescriptor> myIncompatiblePlugins;
   private static boolean myShowPlatformUpdateIcon;
 
-  private static Collection<PluginDownloader> myUpdatedPlugins;
-  private static Collection<IdeaPluginDescriptor> myCustomRepositoryPlugins;
+  private static Collection<? extends PluginDownloader> myUpdatedPlugins;
+  private static Collection<? extends IdeaPluginDescriptor> myCustomRepositoryPlugins;
   private static boolean myShowPluginsUpdateIcon;
   private static boolean myEnableUpdateAction = true;
 
@@ -283,22 +283,22 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
   }
 
   public static void newPlatformUpdate(@Nullable CheckForUpdateResult platformUpdateInfo,
-                                       @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
+                                       @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     myPlatformUpdateInfo = platformUpdateInfo;
     myIncompatiblePlugins = incompatiblePlugins;
     myShowPlatformUpdateIcon = platformUpdateInfo != null;
     updateAction();
   }
 
-  public static void newPluginsUpdate(@Nullable Collection<PluginDownloader> updatedPlugins,
-                                      @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
+  public static void newPluginsUpdate(@Nullable Collection<? extends PluginDownloader> updatedPlugins,
+                                      @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins) {
     myUpdatedPlugins = updatedPlugins;
     myCustomRepositoryPlugins = customRepositoryPlugins;
     myShowPluginsUpdateIcon = updatedPlugins != null;
     updateAction();
   }
 
-  public static void removePluginsUpdate(@NotNull Collection<IdeaPluginDescriptor> descriptors) {
+  public static void removePluginsUpdate(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     if (myUpdatedPlugins != null) {
       List<PluginDownloader> updatedPlugins =
         ContainerUtil.filter(myUpdatedPlugins, downloader -> {

@@ -53,7 +53,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
   }
 
   @Override
-  public void importData(@NotNull final Collection<DataNode<LibraryData>> toImport,
+  public void importData(final @NotNull Collection<? extends DataNode<LibraryData>> toImport,
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
@@ -170,7 +170,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
    * Remove orphan project libraries during postprocess phase (after execution of LibraryDependencyDataService#import)
    */
   @Override
-  public void postProcess(@NotNull Collection<DataNode<LibraryData>> toImport,
+  public void postProcess(@NotNull Collection<? extends DataNode<LibraryData>> toImport,
                           @Nullable ProjectData projectData,
                           @NotNull Project project,
                           @NotNull IdeModifiableModelsProvider modelsProvider) {

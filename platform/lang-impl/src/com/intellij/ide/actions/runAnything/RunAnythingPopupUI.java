@@ -519,7 +519,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   public static void adjustEmptyText(@NotNull JBTextField textEditor,
-                                     @NotNull BooleanFunction<JBTextField> function,
+                                     @NotNull BooleanFunction<? super JBTextField> function,
                                      @NotNull @NlsContexts.StatusText String leftText,
                                      @NotNull @NlsContexts.StatusText String rightText) {
 

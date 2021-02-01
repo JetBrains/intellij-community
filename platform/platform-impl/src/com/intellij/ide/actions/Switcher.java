@@ -746,7 +746,7 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    static List<FileInfo> getFilesToShow(@NotNull Project project, @NotNull List<VirtualFile> filesForInit,
+    static List<FileInfo> getFilesToShow(@NotNull Project project, @NotNull List<? extends VirtualFile> filesForInit,
                                          int toolWindowsCount, boolean pinned) {
       FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       List<FileInfo> filesData = new ArrayList<>();
@@ -893,7 +893,7 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private static Map<String, ToolWindow> createShortcuts(@NotNull List<ToolWindow> windows) {
+    private static Map<String, ToolWindow> createShortcuts(@NotNull List<? extends ToolWindow> windows) {
       final Map<String, ToolWindow> keymap = new HashMap<>(windows.size());
       final List<ToolWindow> otherTW = new ArrayList<>();
       for (ToolWindow window : windows) {

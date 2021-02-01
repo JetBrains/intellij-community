@@ -116,6 +116,6 @@ private class ReadOnlyStorage(val configurationSchemaKey: String, val componentC
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<String>) {
+  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
   }
 }

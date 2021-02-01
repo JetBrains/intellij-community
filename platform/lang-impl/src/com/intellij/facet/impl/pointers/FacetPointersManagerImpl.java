@@ -75,7 +75,7 @@ public final class FacetPointersManagerImpl extends FacetPointersManager {
       }
 
       @Override
-      public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+      public void modulesRenamed(@NotNull Project project, @NotNull List<? extends Module> modules, @NotNull Function<? super Module, String> oldNameProvider) {
         for (Module module : modules) {
           refreshPointers(module);
         }

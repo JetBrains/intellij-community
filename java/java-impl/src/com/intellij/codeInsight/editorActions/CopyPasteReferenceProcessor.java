@@ -110,7 +110,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
                                       final Editor editor,
                                       final RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<Boolean> indented, final List<ReferenceTransferableData> values) {
+                                      Ref<? super Boolean> indented, final List<? extends ReferenceTransferableData> values) {
     if (DumbService.getInstance(project).isDumb()) {
       return;
     }

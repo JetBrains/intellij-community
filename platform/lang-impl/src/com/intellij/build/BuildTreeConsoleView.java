@@ -564,7 +564,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                  @NotNull Failure failure,
                                                  @NotNull String defaultFailureMessage,
                                                  long eventTime,
-                                                 @NotNull Set<ExecutionNode> structureChanged) {
+                                                 @NotNull Set<? super ExecutionNode> structureChanged) {
     String message = chooseNotNull(failure.getMessage(), failure.getDescription());
     if (message == null && failure.getError() != null) {
       message = failure.getError().getMessage();
@@ -618,7 +618,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return showErrorIfFirst(failureNode, failureNavigatable);
   }
 
-  private static void finishChildren(@NotNull SmartHashSet<ExecutionNode> structureChanged,
+  private static void finishChildren(@NotNull Set<? super ExecutionNode> structureChanged,
                                      @NotNull ExecutionNode node,
                                      @NotNull EventResult result) {
     List<ExecutionNode> childList = node.getChildList();

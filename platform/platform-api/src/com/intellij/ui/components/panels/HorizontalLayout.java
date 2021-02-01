@@ -4,13 +4,10 @@ package com.intellij.ui.components.panels;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.SwingConstants;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.LayoutManager2;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is intended to lay out added components horizontally.
@@ -179,7 +176,7 @@ public final class HorizontalLayout implements LayoutManager2 {
     }
   }
 
-  private int layout(ArrayList<Component> list, int x, int height, Insets insets) {
+  private int layout(List<? extends Component> list, int x, int height, Insets insets) {
     int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
     for (Component component : list) {
       if (component.isVisible()) {
@@ -215,7 +212,7 @@ public final class HorizontalLayout implements LayoutManager2 {
     return result;
   }
 
-  private Dimension getPreferredSize(ArrayList<Component> list) {
+  private Dimension getPreferredSize(List<? extends Component> list) {
     int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
     Dimension result = null;
     for (Component component : list) {

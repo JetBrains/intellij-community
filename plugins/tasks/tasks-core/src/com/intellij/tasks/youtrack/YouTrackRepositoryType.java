@@ -55,7 +55,7 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
 
   @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(YouTrackRepository repository, Project project, Consumer<YouTrackRepository> changeListener) {
+  public TaskRepositoryEditor createEditor(YouTrackRepository repository, Project project, Consumer<? super YouTrackRepository> changeListener) {
     return new YouTrackRepositoryEditor(project, repository, changeListener);
   }
 

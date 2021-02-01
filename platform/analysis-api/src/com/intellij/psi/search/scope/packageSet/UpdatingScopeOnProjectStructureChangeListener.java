@@ -20,8 +20,8 @@ final class UpdatingScopeOnProjectStructureChangeListener implements ModuleListe
 
   @Override
   public void modulesRenamed(@NotNull Project project,
-                             @NotNull List<Module> modules,
-                             @NotNull Function<Module, String> oldNameProvider) {
+                             @NotNull List<? extends Module> modules,
+                             @NotNull Function<? super Module, String> oldNameProvider) {
     Map<String, String> moduleMap = modules.stream().collect(Collectors.toMap(oldNameProvider::fun, Module::getName));
     for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       NamedScope[] oldScopes = holder.getEditableScopes();

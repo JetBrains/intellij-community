@@ -28,7 +28,7 @@ public class LeadingCommentsBinder implements WhitespacesAndCommentsBinder {
   public static final LeadingCommentsBinder INSTANCE = new LeadingCommentsBinder();
 
   @Override
-  public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+  public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
     if (tokens.size() > 1) {
       boolean seenLF = false;
       for (int i = 0; i < tokens.size(); i++) {

@@ -22,7 +22,7 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
       @Override
       public boolean processValues(PsiParameter t,
                                    ProcessingContext context,
-                                   PairProcessor<PsiMethod, ProcessingContext> processor) {
+                                   PairProcessor<? super PsiMethod, ? super ProcessingContext> processor) {
         PsiElement scope = t.getDeclarationScope();
         if (!(scope instanceof PsiMethod)) return true;
         return processor.process((PsiMethod)scope, context);
@@ -45,7 +45,7 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
       @Override
       public boolean processValues(PsiParameter t,
                                    ProcessingContext context,
-                                   PairProcessor<PsiMethod, ProcessingContext> processor) {
+                                   PairProcessor<? super PsiMethod, ? super ProcessingContext> processor) {
         PsiElement scope = t.getDeclarationScope();
         if (!(scope instanceof PsiMethod)) return true;
         return processor.process((PsiMethod)scope, context);

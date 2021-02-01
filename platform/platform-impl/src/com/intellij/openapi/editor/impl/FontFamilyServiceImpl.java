@@ -273,11 +273,11 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
       super(new TreeMap<>());
     }
 
-    private void forEach(BiConsumer<Integer, String> action) {
+    private void forEach(BiConsumer<? super Integer, ? super String> action) {
       myMap.forEach((weight, list) -> list.forEach(subFamily -> action.accept(weight, subFamily)));
     }
 
-    private void forEachDescending(BiConsumer<Integer, String> action) {
+    private void forEachDescending(BiConsumer<? super Integer, ? super String> action) {
       ((TreeMap<Integer, Collection<String>>)myMap).descendingMap().forEach((weight, list) -> {
         list.forEach(subFamily -> action.accept(weight, subFamily));
       });

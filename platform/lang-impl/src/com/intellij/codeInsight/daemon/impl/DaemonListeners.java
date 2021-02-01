@@ -165,7 +165,7 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(EditorTrackerListener.TOPIC, new EditorTrackerListener() {
       @Override
-      public void activeEditorsChanged(@NotNull List<Editor> activeEditors) {
+      public void activeEditorsChanged(@NotNull List<? extends Editor> activeEditors) {
         if (myActiveEditors.equals(activeEditors)) {
           return;
         }

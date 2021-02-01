@@ -20,7 +20,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.SwingHelper;
@@ -111,7 +110,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         });
       }
     };
-    myListSpeedSearch = new ListSpeedSearch(myPackages, (Function<Object, String>)o -> {
+    myListSpeedSearch = new ListSpeedSearch(myPackages, o -> {
       if (o instanceof RepoPackage)
         return ((RepoPackage)o).getName();
       return "";

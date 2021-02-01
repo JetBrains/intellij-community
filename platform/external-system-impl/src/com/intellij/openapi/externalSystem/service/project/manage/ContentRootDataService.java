@@ -71,7 +71,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
   }
 
   @Override
-  public void importData(@NotNull Collection<DataNode<ContentRootData>> toImport,
+  public void importData(@NotNull Collection<? extends DataNode<ContentRootData>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {

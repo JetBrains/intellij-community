@@ -329,7 +329,7 @@ public final class FindManagerImpl extends FindManager {
     private static void addRanges(VirtualFile file,
                                   FindModel model,
                                   CharSequence text,
-                                  TreeMap<Integer, Integer> result,
+                                  Map<Integer, Integer> result,
                                   FindModel.SearchContext searchContext,
                                   FindManagerImpl manager) {
       FindModel clonedModel = model.clone();

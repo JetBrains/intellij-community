@@ -218,7 +218,7 @@ public class DialogBuilder implements Disposable {
     return get(getActionDescriptors(), OkActionDescriptor.class);
   }
 
-  private static CustomizableAction get(final ArrayList<ActionDescriptor> actionDescriptors, final Class aClass) {
+  private static CustomizableAction get(final java.util.List<? extends ActionDescriptor> actionDescriptors, final Class aClass) {
     for (ActionDescriptor actionDescriptor : actionDescriptors) {
       if (actionDescriptor.getClass().isAssignableFrom(aClass)) return (CustomizableAction)actionDescriptor;
     }

@@ -406,10 +406,10 @@ public final class ConfigImportHelper {
   }
 
   static class ConfigDirsSearchResult {
-    private final List<Pair<Path, FileTime>> directories;
+    private final @NotNull List<? extends Pair<Path, FileTime>> directories;
     private final boolean fromSameProduct;
 
-    ConfigDirsSearchResult(@NotNull List<Pair<Path, FileTime>> directories, boolean fromSameProduct) {
+    ConfigDirsSearchResult(@NotNull List<? extends Pair<Path, FileTime>> directories, boolean fromSameProduct) {
       this.directories = directories;
       this.fromSameProduct = fromSameProduct;
     }
@@ -795,7 +795,7 @@ public final class ConfigImportHelper {
 
   private static void migratePlugins(Path oldPluginsDir,
                                      Path newPluginsDir,
-                                     List<StartupActionScriptManager.ActionCommand> actionCommands,
+                                     List<? extends StartupActionScriptManager.ActionCommand> actionCommands,
                                      ConfigImportOptions options) throws IOException {
     Logger log = options.log;
     try {
@@ -838,7 +838,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static List<PluginId> collectPendingPluginUpdates(List<StartupActionScriptManager.ActionCommand> commands,
+  private static List<PluginId> collectPendingPluginUpdates(List<? extends StartupActionScriptManager.ActionCommand> commands,
                                                             ConfigImportOptions options) {
     List<PluginId> result = new ArrayList<>();
     for (StartupActionScriptManager.ActionCommand command : commands) {

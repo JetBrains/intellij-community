@@ -149,8 +149,8 @@ public final class JdkZipResourceFile implements ResourceFile {
 
   @Override
   public void processResources(@NotNull String dir,
-                               @NotNull Predicate<String> filter,
-                               @NotNull BiConsumer<String, InputStream> consumer) {
+                               @NotNull Predicate<? super String> filter,
+                               @NotNull BiConsumer<? super String, ? super InputStream> consumer) {
   }
 
   @Override

@@ -52,7 +52,7 @@ public final class DefaultJDOMExternalizer {
 
   public static void write(@NotNull Object data,
                            @NotNull Element parentNode,
-                           @Nullable("null means all elements are accepted") Predicate<Field> filter) throws WriteExternalException {
+                           @Nullable("null means all elements are accepted") Predicate<? super Field> filter) throws WriteExternalException {
     for (Field field : fieldCache.get(data.getClass()).values()) {
       if (filter != null && !filter.test(field)) {
         continue;

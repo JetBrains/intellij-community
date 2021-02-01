@@ -168,7 +168,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
 
   private void showOptionsPopup(@NotNull Project project,
                                 @NotNull Editor editor,
-                                List<TargetDirectory> directories) {
+                                List<? extends TargetDirectory> directories) {
     List<TargetDirectoryListItem> items = getTargetDirectoryListItems(directories);
 
     String filePath = myNewFileName;
@@ -214,7 +214,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   }
 
   @NotNull
-  private static List<TargetDirectoryListItem> getTargetDirectoryListItems(List<TargetDirectory> directories) {
+  private static List<TargetDirectoryListItem> getTargetDirectoryListItems(List<? extends TargetDirectory> directories) {
     return ContainerUtil.map(directories, targetDirectory -> {
       PsiDirectory d = targetDirectory.getDirectory();
       assert d != null : "Invalid PsiDirectory instances found";

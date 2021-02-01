@@ -386,7 +386,7 @@ final class ActionUpdater {
     return hasChildrenWithState(group, true, false, strategy, new LinkedHashSet<>());
   }
 
-  private boolean hasChildrenWithState(ActionGroup group, boolean checkVisible, boolean checkEnabled, UpdateStrategy strategy, LinkedHashSet<ActionGroup> visited) {
+  private boolean hasChildrenWithState(ActionGroup group, boolean checkVisible, boolean checkEnabled, UpdateStrategy strategy, Set<? super ActionGroup> visited) {
     if (group instanceof AlwaysVisibleActionGroup) {
       return true;
     }
@@ -492,13 +492,13 @@ final class ActionUpdater {
   }
 
   private static class UpdateStrategy {
-    final NullableFunction<AnAction, Presentation> update;
-    final NotNullFunction<ActionGroup, AnAction[]> getChildren;
-    final Predicate<ActionGroup> canBePerformed;
+    final NullableFunction<? super AnAction, ? extends Presentation> update;
+    final NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren;
+    final Predicate<? super ActionGroup> canBePerformed;
 
-    UpdateStrategy(NullableFunction<AnAction, Presentation> update,
-                   NotNullFunction<ActionGroup, AnAction[]> getChildren,
-                   Predicate<ActionGroup> canBePerformed) {
+    UpdateStrategy(NullableFunction<? super AnAction, ? extends Presentation> update,
+                   NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren,
+                   Predicate<? super ActionGroup> canBePerformed) {
       this.update = update;
       this.getChildren = getChildren;
       this.canBePerformed = canBePerformed;

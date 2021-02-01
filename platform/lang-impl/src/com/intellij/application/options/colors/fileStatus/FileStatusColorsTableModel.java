@@ -30,9 +30,9 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
 
   private static class ColumnInfo {
     Class<?> columnClass;
-    Function<FileStatusColorDescriptor,Object> dataFunction;
+    Function<? super FileStatusColorDescriptor, Object> dataFunction;
 
-    ColumnInfo(Class<?> columnClass, Function<FileStatusColorDescriptor, Object> dataFunction) {
+    ColumnInfo(Class<?> columnClass, Function<? super FileStatusColorDescriptor, Object> dataFunction) {
       this.columnClass = columnClass;
       this.dataFunction = dataFunction;
     }

@@ -73,8 +73,8 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
                                       Editor editor,
                                       RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<Boolean> indented,
-                                      List<TextBlockTransferableData> values) {
+                                      Ref<? super Boolean> indented,
+                                      List<? extends TextBlockTransferableData> values) {
     fixCommasOnPaste(project, editor, bounds);
   }
 

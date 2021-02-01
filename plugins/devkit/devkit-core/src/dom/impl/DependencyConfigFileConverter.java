@@ -40,7 +40,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
     public boolean createReferences(@NotNull final PsiElement psiElement,
                                     int offset,
                                     String text,
-                                    @NotNull List<PsiReference> references,
+                                    @NotNull List<? super PsiReference> references,
                                     boolean soft) {
       FileReferenceSet set = new FileReferenceSet(text, psiElement, offset, null,
                                                   true, true,

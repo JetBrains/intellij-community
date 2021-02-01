@@ -25,7 +25,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -119,7 +118,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
         final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
         if (path != null) {
           return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(),
-                                                                               (NullableFunction<Object, String>)o -> o == path.getPath()[0] ? null : o.toString()), " | "));
+                                                                               o -> o == path.getPath()[0] ? null : o.toString()), " | "));
         }
         return null;
       }

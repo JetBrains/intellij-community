@@ -1211,7 +1211,7 @@ public final class EditorPainter implements TextDrawingCallback {
     @NotNull
     private TextAttributes getBetweenLinesAttributes(int bottomVisualLine,
                                                      int bottomVisualLineStartOffset,
-                                                     PeekableIterator<Caret> caretIterator) {
+                                                     PeekableIterator<? extends Caret> caretIterator) {
       boolean selection = false;
       while (caretIterator.hasNext() && caretIterator.peek().getSelectionEnd() < bottomVisualLineStartOffset) caretIterator.next();
       if (caretIterator.hasNext()) {

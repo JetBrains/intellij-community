@@ -71,8 +71,8 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
                                       final Editor editor,
                                       final RangeMarker bounds,
                                       final int caretOffset,
-                                      final Ref<Boolean> indented,
-                                      final List<IndentTransferableData> values) {
+                                      final Ref<? super Boolean> indented,
+                                      final List<? extends IndentTransferableData> values) {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return;
     }

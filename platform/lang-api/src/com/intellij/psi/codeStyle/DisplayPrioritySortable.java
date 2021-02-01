@@ -47,7 +47,7 @@ public interface DisplayPrioritySortable {
    * @return a negative integer if {@code o1} should go first (less then {@code o2}), 0 if the order doesn't matter or a
    * positive integer if {@code o1} goes after {@code o2}
    */
-  static <T> int compare(@NotNull T o1, @NotNull T o2, @NotNull Function<T, String> nameExtractor) {
+  static <T> int compare(@NotNull T o1, @NotNull T o2, @NotNull Function<? super T, String> nameExtractor) {
     if (o1 instanceof DisplayPrioritySortable) {
       if (o2 instanceof DisplayPrioritySortable) {
         DisplayPrioritySortable d1 = (DisplayPrioritySortable)o1;

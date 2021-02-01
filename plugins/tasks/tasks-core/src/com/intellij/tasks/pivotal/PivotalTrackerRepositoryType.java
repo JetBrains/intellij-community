@@ -49,7 +49,7 @@ public class PivotalTrackerRepositoryType extends BaseRepositoryType<PivotalTrac
   @Override
   public TaskRepositoryEditor createEditor(PivotalTrackerRepository repository,
                                            Project project,
-                                           Consumer<PivotalTrackerRepository> changeListener) {
+                                           Consumer<? super PivotalTrackerRepository> changeListener) {
     return new PivotalTrackerRepositoryEditor(project, repository, changeListener);
   }
 }

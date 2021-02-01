@@ -38,7 +38,7 @@ public abstract class EditorFacade {
                                                 @NotNull Document document,
                                                 int startOffset,
                                                 int endOffset,
-                                                List<TextRange> enabledRanges,
+                                                List<? extends TextRange> enabledRanges,
                                                 int rightMargin);
 
   public abstract void doWrapLongLinesIfNecessary(@NotNull final Editor editor,

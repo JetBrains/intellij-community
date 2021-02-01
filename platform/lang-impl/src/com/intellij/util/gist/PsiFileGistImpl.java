@@ -49,7 +49,7 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   PsiFileGistImpl(@NotNull String id,
                   int version,
                   @NotNull DataExternalizer<Data> externalizer,
-                  @NotNull NullableFunction<PsiFile, Data> calculator) {
+                  @NotNull NullableFunction<? super PsiFile, ? extends Data> calculator) {
     myCalculator = (project, file) -> {
       PsiFile psiFile = getPsiFile(project, file);
       return psiFile == null ? null : calculator.fun(psiFile);

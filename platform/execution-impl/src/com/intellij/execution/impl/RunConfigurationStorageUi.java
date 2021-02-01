@@ -416,7 +416,7 @@ public class RunConfigurationStorageUi {
 
     RunConfigurationStoragePopup(@NotNull Project project,
                                  @NotNull String dotIdeaStoragePath,
-                                 @NotNull Function<String, @NlsContexts.DialogMessage String> pathToErrorMessage,
+                                 @NotNull Function<? super String, @NlsContexts.DialogMessage String> pathToErrorMessage,
                                  @NotNull Disposable uiDisposable,
                                  boolean showCompatibilityHint) {
       myDotIdeaStoragePath = dotIdeaStoragePath;

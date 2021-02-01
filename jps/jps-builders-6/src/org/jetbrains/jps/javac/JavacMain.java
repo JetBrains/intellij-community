@@ -447,7 +447,7 @@ public final class JavacMain {
     }) != null;
   }
 
-  private static Field findField(final Class<?> aClass, final BooleanFunction<Field> cond) {
+  private static Field findField(final Class<?> aClass, final BooleanFunction<? super Field> cond) {
     final Field[] res = new Field[]{null};
     forEachField(aClass, new BooleanFunction<Field>() {
       @Override
@@ -462,7 +462,7 @@ public final class JavacMain {
     return res[0];
   }
 
-  private static void forEachField(final Class<?> aClass, final BooleanFunction<Field> func) {
+  private static void forEachField(final Class<?> aClass, final BooleanFunction<? super Field> func) {
     for (Class<?> from = aClass; from != null && !Object.class.equals(from); from = from.getSuperclass()) {
       for (Field field : from.getDeclaredFields()) {
         try {

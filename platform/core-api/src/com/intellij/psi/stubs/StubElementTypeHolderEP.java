@@ -56,7 +56,7 @@ public final class StubElementTypeHolderEP {
   public String externalIdPrefix;
 
   void initializeOptimized(@NotNull PluginDescriptor pluginDescriptor,
-                           @NotNull List<StubFieldAccessor> result) {
+                           @NotNull List<? super StubFieldAccessor> result) {
     int resultSizeBefore = result.size();
     try {
       Class<?> aClass = ApplicationManager.getApplication().loadClass(holderClass, pluginDescriptor);

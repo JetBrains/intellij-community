@@ -315,7 +315,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public static <T> void deleteAfterAllowedMaximum(@NotNull LinkedListWithSum<T> data, int maxCount, int maxMemory,
-                                                   @NotNull Function<T, T> purgedItemFactory) {
+                                                   @NotNull Function<? super T, ? extends T> purgedItemFactory) {
     int smallItemSizeLimit = maxMemory / maxCount / 10;
 
     if (data.size() > maxCount) {

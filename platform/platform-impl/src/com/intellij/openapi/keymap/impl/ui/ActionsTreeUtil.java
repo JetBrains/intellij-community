@@ -264,8 +264,8 @@ public final class ActionsTreeUtil {
   @NotNull
   public static Group createCorrectedGroup(@NotNull ActionGroup actionGroup,
                                            @NotNull @NlsActions.ActionText String groupName,
-                                           @NotNull List<String> path,
-                                           @NotNull List<ActionUrl> actionUrls) {
+                                           @NotNull List<? super String> path,
+                                           @NotNull List<? extends ActionUrl> actionUrls) {
     path.add(groupName);
 
     ActionManager actionManager = ActionManager.getInstance();
@@ -366,7 +366,7 @@ public final class ActionsTreeUtil {
     }
   }
 
-  private static Group createExtensionGroup(Condition<AnAction> filtered, final Project project, KeymapExtension provider) {
+  private static Group createExtensionGroup(Condition<? super AnAction> filtered, final Project project, KeymapExtension provider) {
     return (Group) provider.createGroup(filtered, project);
   }
 

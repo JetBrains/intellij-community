@@ -127,7 +127,7 @@ public final class TreeState implements JDOMExternalizable {
     readExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void readExternal(@NotNull Element root, List<List<PathElement>> list, @NotNull String name) {
+  private static void readExternal(@NotNull Element root, List<? super List<PathElement>> list, @NotNull String name) {
     list.clear();
     for (Element element : root.getChildren(name)) {
       for (Element child : element.getChildren(PATH_TAG)) {

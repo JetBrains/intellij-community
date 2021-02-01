@@ -381,7 +381,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     return group;
   }
 
-  private TreeModel buildTreeModel(Set<PsiFile> deps, Marker marker) {
+  private TreeModel buildTreeModel(Set<? extends PsiFile> deps, Marker marker) {
     return Objects.requireNonNull(PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE)).createTreeModel(myProject, deps, marker,
                                                                                                              mySettings);
   }

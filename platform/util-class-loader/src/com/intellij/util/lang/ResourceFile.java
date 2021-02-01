@@ -20,6 +20,6 @@ public interface ResourceFile {
   @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException;
 
-  void processResources(@NotNull String dir, @NotNull Predicate<String> nameFilter, @NotNull BiConsumer<String, InputStream> consumer)
+  void processResources(@NotNull String dir, @NotNull Predicate<? super String> nameFilter, @NotNull BiConsumer<? super String, ? super InputStream> consumer)
     throws IOException;
 }

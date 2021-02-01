@@ -16,12 +16,12 @@ class MixedSearchListModel extends SearchListModel {
 
   private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors = new HashMap<>();
 
-  private Comparator<SearchEverywhereFoundElementInfo> myElementsComparator = SearchEverywhereFoundElementInfo.COMPARATOR.reversed();
+  private Comparator<? super SearchEverywhereFoundElementInfo> myElementsComparator = SearchEverywhereFoundElementInfo.COMPARATOR.reversed();
 
   // new elements cannot be added before this index when "more..." elements are loaded
   private int myMaxFrozenIndex;
 
-  public void setElementsComparator(Comparator<SearchEverywhereFoundElementInfo> elementsComparator) {
+  public void setElementsComparator(Comparator<? super SearchEverywhereFoundElementInfo> elementsComparator) {
     myElementsComparator = elementsComparator;
   }
 

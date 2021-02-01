@@ -576,7 +576,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    */
   @TestOnly
   @ApiStatus.Internal
-  public final synchronized void maskAll(@NotNull List<? extends T> list, @NotNull Disposable parentDisposable, boolean fireEvents) {
+  public final synchronized void maskAll(@NotNull List<? extends T> newList, @NotNull Disposable parentDisposable, boolean fireEvents) {
     if (POINTS_IN_READONLY_MODE == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       POINTS_IN_READONLY_MODE = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -588,8 +588,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     List<T> oldList = myExtensionsCache;
     T[] oldArray = myExtensionsCacheAsArray;
 
-    myExtensionsCache = ContainerUtil.immutableList(list);
-    myExtensionsCacheAsArray = list.toArray(ArrayUtil.newArray(getExtensionClass(), 0));
+    myExtensionsCache = ContainerUtil.immutableList(newList);
+    myExtensionsCacheAsArray = newList.toArray(ArrayUtil.newArray(getExtensionClass(), 0));
     POINTS_IN_READONLY_MODE.add(this);
 
     ExtensionPointListener<T>[] listeners = myListeners;
@@ -597,7 +597,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       if (oldList != null) {
         doNotifyListeners(true, oldList, listeners);
       }
-      doNotifyListeners(false, list, myListeners);
+      doNotifyListeners(false, newList, myListeners);
     }
 
     clearUserCache();
@@ -612,7 +612,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
           ExtensionPointListener<T>[] listeners = myListeners;
           if (fireEvents && listeners.length > 0) {
-            doNotifyListeners(true, list, listeners);
+            doNotifyListeners(true, newList, listeners);
             if (oldList != null) {
               doNotifyListeners(false, oldList, listeners);
             }
@@ -775,7 +775,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
                                      @NotNull List<Runnable> listenerCallbacks);
 
   private void notifyListeners(boolean isRemoved,
-                               @NotNull List<ExtensionComponentAdapter> adapters,
+                               @NotNull List<? extends ExtensionComponentAdapter> adapters,
                                @NotNull ExtensionPointListener<T> @NotNull [] listeners) {
     for (ExtensionPointListener<T> listener : listeners) {
       if (listener instanceof ExtensionPointAdapter) {

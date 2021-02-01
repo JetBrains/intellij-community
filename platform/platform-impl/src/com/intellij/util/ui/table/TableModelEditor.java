@@ -152,7 +152,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   }
 
   public interface DialogItemEditor<T> extends CollectionItemEditor<T> {
-    void edit(@NotNull T item, @NotNull Function<T, T> mutator, boolean isAdd);
+    void edit(@NotNull T item, @NotNull Function<? super T, ? extends T> mutator, boolean isAdd);
 
     void applyEdited(@NotNull T oldItem, @NotNull T newItem);
 

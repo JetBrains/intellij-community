@@ -15,7 +15,7 @@ import java.util.List;
 
 public class MarkdownAnchorPathReferenceProvider implements PathReferenceProvider {
   @Override
-  public boolean createReferences(@NotNull final PsiElement psiElement, @NotNull final List<PsiReference> references, final boolean soft) {
+  public boolean createReferences(@NotNull final PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
     if (!(psiElement instanceof MarkdownPsiElement)) return false;
 
     final TextRange range = ElementManipulators.getValueTextRange(psiElement);

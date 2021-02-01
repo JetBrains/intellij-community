@@ -42,7 +42,7 @@ public class RedmineRepositoryType extends BaseRepositoryType<RedmineRepository>
   @Override
   public TaskRepositoryEditor createEditor(RedmineRepository repository,
                                            Project project,
-                                           Consumer<RedmineRepository> changeListener) {
+                                           Consumer<? super RedmineRepository> changeListener) {
     return new RedmineRepositoryEditor(project, repository, changeListener);
   }
 }

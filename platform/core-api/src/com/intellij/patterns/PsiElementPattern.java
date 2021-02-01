@@ -247,7 +247,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
       @Override
       public boolean processValues(T t,
                                    ProcessingContext context,
-                                   PairProcessor<Integer, ProcessingContext> integerProcessingContextPairProcessor) {
+                                   PairProcessor<? super Integer, ? super ProcessingContext> integerProcessingContextPairProcessor) {
         return integerProcessingContextPairProcessor.process(t.getTextLength(), context);
       }
     });
@@ -279,7 +279,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
       @Override
       public boolean processValues(T t,
                                    ProcessingContext context,
-                                   PairProcessor<String, ProcessingContext> processor) {
+                                   PairProcessor<? super String, ? super ProcessingContext> processor) {
         return processor.process(t.getText(), context);
       }
     };

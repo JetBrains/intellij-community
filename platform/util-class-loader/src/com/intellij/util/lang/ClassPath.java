@@ -59,7 +59,7 @@ public final class ClassPath {
   final boolean preloadJarContents;
   final boolean isClassPathIndexEnabled;
   private final @Nullable CachePoolImpl cachePool;
-  private final @Nullable Predicate<Path> cachingCondition;
+  private final @Nullable Predicate<? super Path> cachingCondition;
   final boolean errorOnMissingJar;
 
   private final @NotNull ClassPath.ClassDataConsumer classDataConsumer;
@@ -119,7 +119,7 @@ public final class ClassPath {
     ResourceFile create(Path file) throws IOException;
   }
 
-  public synchronized void reset(@NotNull List<Path> paths) {
+  public synchronized void reset(@NotNull List<? extends Path> paths) {
     lastLoaderProcessed.set(0);
     allUrlsWereProcessed = false;
     loaders.clear();
@@ -148,7 +148,7 @@ public final class ClassPath {
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
   @ApiStatus.Internal
-  synchronized void addFiles(@NotNull List<Path> files) {
+  synchronized void addFiles(@NotNull List<? extends Path> files) {
     for (int i = files.size() - 1; i >= 0; i--) {
       this.files.add(files.get(i));
     }
@@ -156,7 +156,7 @@ public final class ClassPath {
   }
 
   // think twice before use
-  public synchronized void appendFiles(@NotNull List<Path> newList) {
+  public synchronized void appendFiles(@NotNull List<? extends Path> newList) {
     Set<Path> existing = new HashSet<>(files);
     for (int i = newList.size() - 1; i >= 0; i--) {
       Path file = newList.get(i);
@@ -294,8 +294,8 @@ public final class ClassPath {
   }
 
   void processResources(@NotNull String dir,
-                        @NotNull Predicate<String> fileNameFilter,
-                        @NotNull BiConsumer<String, InputStream> consumer) throws IOException {
+                        @NotNull Predicate<? super String> fileNameFilter,
+                        @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     if (useCache && allUrlsWereProcessed) {
       // getLoadersByName compute package name by name, so, add ending slash
       Loader[] loaders = cache.getLoadersByName(dir + '/');

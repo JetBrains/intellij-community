@@ -52,7 +52,7 @@ public abstract class AbstractPainter2DTest {
     compare(image, loadImage(getGoldenImagePath(scale)), comparator, scale);
   }
 
-  protected BufferedImage supplyGraphics(double scale, int width, int height, Function<Graphics2D, Void> consumeGraphics) {
+  protected BufferedImage supplyGraphics(double scale, int width, int height, Function<? super Graphics2D, Void> consumeGraphics) {
     @SuppressWarnings("UndesirableClassUsage")
     BufferedImage image = new BufferedImage((int)ceil(width * scale), (int)ceil(height * scale), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();

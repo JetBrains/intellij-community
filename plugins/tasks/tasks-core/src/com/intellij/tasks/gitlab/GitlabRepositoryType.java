@@ -36,7 +36,7 @@ public class GitlabRepositoryType extends BaseRepositoryType<GitlabRepository>{
   @Override
   public TaskRepositoryEditor createEditor(GitlabRepository repository,
                                            Project project,
-                                           Consumer<GitlabRepository> changeListener) {
+                                           Consumer<? super GitlabRepository> changeListener) {
     return new GitlabRepositoryEditor(project, repository, changeListener);
   }
 

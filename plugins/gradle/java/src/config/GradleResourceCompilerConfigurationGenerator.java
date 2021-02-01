@@ -68,8 +68,8 @@ public class GradleResourceCompilerConfigurationGenerator {
 
       @Override
       public void modulesRenamed(@NotNull Project project,
-                                 @NotNull List<Module> modules,
-                                 @NotNull Function<Module, String> oldNameProvider) {
+                                 @NotNull List<? extends Module> modules,
+                                 @NotNull Function<? super Module, String> oldNameProvider) {
         for (Module module : modules) {
           moduleRemoved(project, module);
         }

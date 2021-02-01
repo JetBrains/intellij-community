@@ -59,11 +59,11 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   };
   private final GridBagConstraints myConstraints =
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(TOP_INSET), 0, 0);
-  private final Collection<SettingsEditorFragment<Settings, ?>> myFragments;
+  private final Collection<? extends SettingsEditorFragment<Settings, ?>> myFragments;
   private final SettingsEditorFragment<Settings, ?> myMain;
   private DropDownLink<String> myLinkLabel;
 
-  FragmentedSettingsBuilder(Collection<SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
+  FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
     myFragments = fragments;
     myMain = main;
   }
@@ -130,7 +130,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     addLine(component, TOP_INSET, 0, 0);
   }
 
-  private void buildBeforeRun(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
+  private void buildBeforeRun(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
     SettingsEditorFragment<Settings, ?> beforeRun = ContainerUtil.find(fragments, fragment -> fragment.getCommandLinePosition() == -2);
     if (beforeRun != null) {
       addLine(beforeRun.getComponent(), TOP_INSET, 0, TOP_INSET * 2);
@@ -138,7 +138,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     }
   }
 
-  private JComponent buildHeader(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
+  private JComponent buildHeader(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(5, 0));
     SettingsEditorFragment<Settings, ?> label = ContainerUtil.find(fragments, fragment -> fragment.getCommandLinePosition() == -1);
@@ -217,8 +217,8 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   }
 
   @NotNull
-  private DefaultActionGroup buildGroup(List<SettingsEditorFragment<Settings, ?>> fragments,
-                                        Ref<JComponent> lastSelected) {
+  private DefaultActionGroup buildGroup(List<? extends SettingsEditorFragment<Settings, ?>> fragments,
+                                        Ref<? super JComponent> lastSelected) {
     fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getMenuPosition));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;
@@ -249,7 +249,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return actionGroup;
   }
 
-  private DefaultActionGroup buildGroup(Ref<JComponent> lastSelected) {
+  private DefaultActionGroup buildGroup(Ref<? super JComponent> lastSelected) {
     DefaultActionGroup group = buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
     if (myMain != null) {
       group.add(Separator.create(), Constraints.FIRST);
@@ -258,7 +258,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return group;
   }
 
-  private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<SettingsEditorFragment<Settings, ?>> fragments) {
+  private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<? extends SettingsEditorFragment<Settings, ?>> fragments) {
     ArrayList<SettingsEditorFragment<Settings, ?>> result = new ArrayList<>();
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       String group = fragment.getGroup();
@@ -268,7 +268,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return result;
   }
 
-  private void buildCommandLinePanel(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
+  private void buildCommandLinePanel(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments) {
     List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
     if (list.isEmpty()) return;
     fragments.removeAll(list);
@@ -286,9 +286,9 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   private static final class ToggleFragmentAction extends ToggleAction implements DumbAware {
     private final SettingsEditorFragment<?, ?> myFragment;
-    private final Ref<JComponent> myLastSelected;
+    private final Ref<? super JComponent> myLastSelected;
 
-    private ToggleFragmentAction(SettingsEditorFragment<?, ?> fragment, Ref<JComponent> lastSelected) {
+    private ToggleFragmentAction(SettingsEditorFragment<?, ?> fragment, Ref<? super JComponent> lastSelected) {
       super(fragment.getName());
       myFragment = fragment;
       myLastSelected = lastSelected;

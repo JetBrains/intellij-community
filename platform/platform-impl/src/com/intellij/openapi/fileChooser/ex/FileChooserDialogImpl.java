@@ -398,7 +398,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
 
       @Override
-      public void dropFiles(final List<VirtualFile> files) {
+      public void dropFiles(final List<? extends VirtualFile> files) {
         if (!myChooserDescriptor.isChooseMultiple() && !files.isEmpty()) {
           selectInTree(new VirtualFile[]{files.get(0)}, true, true);
         }

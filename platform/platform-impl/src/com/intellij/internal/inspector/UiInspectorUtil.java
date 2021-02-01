@@ -80,7 +80,7 @@ public final class UiInspectorUtil {
     return result;
   }
 
-  private static void recursiveCollectGroupIds(@NotNull ActionGroup group, @NotNull Set<String> result) {
+  private static void recursiveCollectGroupIds(@NotNull ActionGroup group, @NotNull Set<? super String> result) {
     for (AnAction action : group.getChildren(null)) {
       if (action instanceof ActionGroup) {
         ActionGroup child = (ActionGroup)action;

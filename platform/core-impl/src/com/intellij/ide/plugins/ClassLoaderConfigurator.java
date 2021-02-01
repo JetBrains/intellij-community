@@ -325,12 +325,12 @@ final class ClassLoaderConfigurator {
   }
 
   private static final class ContentPredicateBasedPluginClassLoader extends PluginClassLoader {
-    private final Predicate<String> contentBasedPredicate;
+    private final @NotNull Predicate<? super String> contentBasedPredicate;
 
     private ContentPredicateBasedPluginClassLoader(@NotNull UrlClassLoader.Builder builder,
                                                    @NotNull ClassLoader @NotNull [] parentLoaders,
                                                    @NotNull IdeaPluginDescriptorImpl descriptor,
-                                                   @NotNull Predicate<String> contentBasedPredicate,
+                                                   @NotNull Predicate<? super String> contentBasedPredicate,
                                                    @NotNull ClassLoader coreLoader,
                                                    @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
       super(builder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory);
@@ -352,12 +352,12 @@ final class ClassLoaderConfigurator {
   }
 
   private static final class FilteringPluginClassLoader extends PluginClassLoader {
-    private @NotNull final Predicate<String> dependencyBasedPredicate;
+    private final @NotNull Predicate<? super String> dependencyBasedPredicate;
 
     private FilteringPluginClassLoader(@NotNull UrlClassLoader.Builder builder,
                                        @NotNull ClassLoader @NotNull [] parentLoaders,
                                        @NotNull IdeaPluginDescriptorImpl descriptor,
-                                       @NotNull Predicate<String> dependencyBasedPredicate,
+                                       @NotNull Predicate<? super String> dependencyBasedPredicate,
                                        @NotNull ClassLoader coreLoader,
                                        @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
       super(builder, parentLoaders, descriptor, descriptor.getPluginPath(), coreLoader, descriptor.packagePrefix, resourceFileFactory);
@@ -616,7 +616,7 @@ final class ClassLoaderConfigurator {
     }
   }
 
-  private @NotNull static ClassLoader configureUsingIdeaClassloader(@NotNull List<Path> classPath, @NotNull IdeaPluginDescriptorImpl descriptor) {
+  private @NotNull static ClassLoader configureUsingIdeaClassloader(@NotNull List<? extends Path> classPath, @NotNull IdeaPluginDescriptorImpl descriptor) {
     getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
     ClassLoader loader = ClassLoaderConfigurator.class.getClassLoader();
     try {
@@ -632,7 +632,7 @@ final class ClassLoaderConfigurator {
 
   private void addLoaderOrLogError(@NotNull IdeaPluginDescriptorImpl dependent,
                                    @NotNull IdeaPluginDescriptorImpl dependency,
-                                   @NotNull Collection<ClassLoader> loaders) {
+                                   @NotNull Collection<? super ClassLoader> loaders) {
     ClassLoader loader = dependency.getClassLoader();
     if (loader == null) {
       getLogger().error(PluginLoadingError.formatErrorMessage(dependent,

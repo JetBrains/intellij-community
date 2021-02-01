@@ -11,5 +11,5 @@ import org.jetbrains.annotations.Nullable;
 public interface KeymapExtension {
   @NonNls ExtensionPointName<KeymapExtension> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.keymapExtension");
 
-  @Nullable KeymapGroup createGroup(Condition<AnAction> filtered, @Nullable Project project);
+  @Nullable KeymapGroup createGroup(Condition<? super AnAction> filtered, @Nullable Project project);
 }

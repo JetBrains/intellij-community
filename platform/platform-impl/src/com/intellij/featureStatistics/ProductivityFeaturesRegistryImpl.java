@@ -80,7 +80,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     loadFeaturesFromProviders(ProductivityFeaturesProvider.EP_NAME.getExtensionList());
   }
 
-  private void loadFeaturesFromProviders(@NotNull List<ProductivityFeaturesProvider> providers) {
+  private void loadFeaturesFromProviders(@NotNull List<? extends ProductivityFeaturesProvider> providers) {
     for (ProductivityFeaturesProvider provider : providers) {
       for (String xmlUrl : provider.getXmlFilesUrls()) {
         try {

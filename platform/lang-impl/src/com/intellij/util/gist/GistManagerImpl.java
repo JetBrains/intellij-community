@@ -64,7 +64,7 @@ public final class GistManagerImpl extends GistManager {
   public <Data> PsiFileGist<Data> newPsiFileGist(@NotNull String id,
                                                  int version,
                                                  @NotNull DataExternalizer<Data> externalizer,
-                                                 @NotNull NullableFunction<PsiFile, Data> calculator) {
+                                                 @NotNull NullableFunction<? super PsiFile, ? extends Data> calculator) {
     return new PsiFileGistImpl<>(id, version, externalizer, calculator);
   }
 

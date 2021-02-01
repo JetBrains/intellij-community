@@ -3,7 +3,6 @@
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
@@ -31,7 +30,7 @@ public final class PermanentCommitsInfoImpl<CommitId> implements PermanentCommit
       commitIdIndex = (List<CommitId>)createCompressedIntList((List<? extends GraphCommit<Integer>>)graphCommits);
     }
     else {
-      commitIdIndex = ContainerUtil.map(graphCommits, (Function<GraphCommit<CommitId>, CommitId>)GraphCommit::getId);
+      commitIdIndex = ContainerUtil.map(graphCommits, GraphCommit::getId);
     }
     return new PermanentCommitsInfoImpl<>(timestampGetter, commitIdIndex, notLoadedCommits);
   }

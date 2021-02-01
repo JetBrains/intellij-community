@@ -358,7 +358,7 @@ public final class StubIndexImpl extends StubIndexEx {
   private static <Key, Psi extends PsiElement> boolean processInMemoryStubs(StubIndexKey<Key, Psi> indexKey,
                                                                             Key key,
                                                                             Project project,
-                                                                            PairProcessor<VirtualFile, StubIdList> stubProcessor,
+                                                                            PairProcessor<? super VirtualFile, ? super StubIdList> stubProcessor,
                                                                             VirtualFile file) {
     Map<Integer, SerializedStubTree> data = FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, file, project);
     if (data.size() == 1) {
@@ -611,8 +611,8 @@ public final class StubIndexImpl extends StubIndexEx {
 
   public <K> void updateIndex(@NotNull StubIndexKey<K, ?> stubIndexKey,
                               int fileId,
-                              @NotNull Set<K> oldKeys,
-                              @NotNull Set<K> newKeys) {
+                              @NotNull Set<? extends K> oldKeys,
+                              @NotNull Set<? extends K> newKeys) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       try {
         if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {

@@ -21,10 +21,10 @@ import java.util.List;
 final class PluginXmlPathResolver extends BasePathResolver {
   private static final Logger LOG = Logger.getInstance(PluginXmlPathResolver.class);
 
-  private final List<Path> pluginJarFiles;
+  private final @NotNull List<? extends Path> pluginJarFiles;
   private final DescriptorLoadingContext context;
 
-  PluginXmlPathResolver(@NotNull List<Path> pluginJarFiles, @NotNull DescriptorLoadingContext context) {
+  PluginXmlPathResolver(@NotNull List<? extends Path> pluginJarFiles, @NotNull DescriptorLoadingContext context) {
     this.pluginJarFiles = pluginJarFiles;
     this.context = context;
   }

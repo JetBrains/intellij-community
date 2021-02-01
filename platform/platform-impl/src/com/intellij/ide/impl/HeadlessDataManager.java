@@ -134,7 +134,7 @@ public class HeadlessDataManager extends DataManagerImpl {
   }
 
   @Nullable
-  private DataContext productionDataContext(@NotNull Supplier<@NotNull DataContext> dataContextSupplier) {
+  private DataContext productionDataContext(@NotNull Supplier<? extends @NotNull DataContext> dataContextSupplier) {
     return myUseProductionDataManager ? dataContextSupplier.get() : null;
   }
 }

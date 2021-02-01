@@ -52,9 +52,9 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
   }
 
   @Override
-  protected Map<OrderEntry, OrderAware> importData(@NotNull final Collection<DataNode<ModuleDependencyData>> toImport,
-                                                 @NotNull final Module module,
-                                                 @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  protected Map<OrderEntry, OrderAware> importData(final @NotNull Collection<? extends DataNode<ModuleDependencyData>> toImport,
+                                                   @NotNull final Module module,
+                                                   @NotNull final IdeModifiableModelsProvider modelsProvider) {
     final Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
       new HashMap<>();
     final Map<OrderEntry, OrderAware> orderEntryDataMap = new LinkedHashMap<>();

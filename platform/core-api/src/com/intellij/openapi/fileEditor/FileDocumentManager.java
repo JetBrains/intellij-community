@@ -83,7 +83,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * Should be invoked on the event dispatch thread.
    * @param filter the filter for documents to save. If it returns `true`, the document will be saved.
    */
-  public abstract void saveDocuments(@NotNull Predicate<Document> filter);
+  public abstract void saveDocuments(@NotNull Predicate<? super Document> filter);
 
   /**
    * Saves the specified document to disk. This operation can modify the document (due to 'Strip

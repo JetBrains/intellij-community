@@ -27,13 +27,13 @@ public final class ProjectConversionUtil {
     return backup;
   }
 
-  public static @NotNull Path backupFiles(@NotNull Collection<Path> files, @NotNull Path parentDir) throws IOException {
+  public static @NotNull Path backupFiles(@NotNull Collection<? extends Path> files, @NotNull Path parentDir) throws IOException {
     Path backupDir = getBackupDir(parentDir);
     backupFiles(files, parentDir, backupDir);
     return backupDir;
   }
 
-  public static void backupFiles(@NotNull Collection<Path> files, @NotNull Path parentDir, @NotNull Path backupDir) throws IOException {
+  public static void backupFiles(@NotNull Collection<? extends Path> files, @NotNull Path parentDir, @NotNull Path backupDir) throws IOException {
     Files.createDirectories(backupDir);
     for (Path sourceFile : files) {
       Path targetFile;

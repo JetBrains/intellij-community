@@ -418,7 +418,7 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  private static void checkOption(List<String> chosenOptions, boolean state, String key) {
+  private static void checkOption(List<? super String> chosenOptions, boolean state, String key) {
     if (state) chosenOptions.add(StringUtil.toLowerCase(FindBundle.message(key).replace(BundleBase.MNEMONIC_STRING, "")));
   }
 

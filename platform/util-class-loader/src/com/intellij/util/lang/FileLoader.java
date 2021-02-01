@@ -55,7 +55,7 @@ final class FileLoader extends Loader {
   }
 
   @Override
-  void processResources(@NotNull String dir, @NotNull Predicate<String> fileNameFilter, @NotNull BiConsumer<String, InputStream> consumer)
+  void processResources(@NotNull String dir, @NotNull Predicate<? super String> fileNameFilter, @NotNull BiConsumer<? super String, ? super InputStream> consumer)
     throws IOException {
     try (DirectoryStream<Path> paths = Files.newDirectoryStream(path.resolve(dir))) {
       for (Path childPath : paths) {

@@ -241,7 +241,7 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor postProcessor(@Nullable Consumer<Path> consumer) {
+  public Decompressor postProcessor(@Nullable Consumer<? super Path> consumer) {
     myPostProcessor = consumer;
     return this;
   }
