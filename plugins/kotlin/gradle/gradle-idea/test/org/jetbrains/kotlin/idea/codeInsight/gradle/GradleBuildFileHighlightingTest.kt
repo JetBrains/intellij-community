@@ -45,6 +45,16 @@ class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
         checkHighlighting(buildGradleKts)
     }
 
+    @Test
+    @TargetVersions("6.0.1+")
+    fun testJavaLibraryPlugin() {
+        val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
+        importProject()
+
+        checkHighlighting(buildGradleKts)
+    }
+
+
     private fun List<VirtualFile>.findBuildGradleKtsFile(): VirtualFile {
         return singleOrNull { it.name == GradleConstants.KOTLIN_DSL_SCRIPT_NAME }
             ?: error("Couldn't find any build.gradle.kts file")

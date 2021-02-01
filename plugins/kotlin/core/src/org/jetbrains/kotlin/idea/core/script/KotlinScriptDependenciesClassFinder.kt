@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootModificationTracker
@@ -49,13 +50,26 @@ class KotlinScriptDependenciesClassFinder(
     }
 
     private fun findClassInternal(qualifiedName: String, scope: GlobalSearchScope): PsiClass? {
-        val classByFileName = super.findClass(qualifiedName, scope)
-        if (classByFileName != null) {
+        super.findClass(qualifiedName, scope)?.let { classByFileName ->
             return classByFileName.isInScope(scope)
         }
 
         // Following code is needed because NonClasspathClassFinder cannot find inner classes
         // JavaFullClassNameIndex cannot be used directly, because it filter only classes in source roots
+
+        val packageNameCandidate = StringUtil.getPackageName(StringUtil.getPackageName(qualifiedName))
+        if (packageNameCandidate.isNotEmpty() && getCache(scope).getDirectoriesByPackageName(packageNameCandidate).isNotEmpty()) {
+            val endIndex = qualifiedName.indexOf('.', packageNameCandidate.length + 1)
+            if (endIndex > 0) {
+                val outerCandidateClassName = qualifiedName.substring(0, endIndex)
+                super.findClass(outerCandidateClassName, scope)?.let { outerClass ->
+                    outerClass.findInnerClassByName(StringUtil.getShortName(qualifiedName), false)?.let {
+                        return it
+                    }
+                }
+            }
+        }
+
         val classes = StubIndex.getElements(
             JavaFullClassNameIndex.getInstance().key,
             qualifiedName.hashCode(),
