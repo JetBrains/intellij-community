@@ -3,8 +3,13 @@ package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.OpenSourceUtil
 import git4idea.index.*
 import git4idea.index.vfs.GitIndexFileSystemRefresher
@@ -27,14 +32,30 @@ abstract class GitStageShowVersionAction(private val showStaged: Boolean) : Dumb
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
-    val root = getRoot(project, file) ?: return
-    val virtualFile = if (showStaged) {
-      GitIndexFileSystemRefresher.getInstance(project).getFile(root, file.filePath())
-    } else {
-      file.filePath().virtualFile
+    val sourceFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
+    val root = getRoot(project, sourceFile) ?: return
+    val targetFile = if (showStaged) {
+      GitIndexFileSystemRefresher.getInstance(project).getFile(root, sourceFile.filePath())
+    }
+    else {
+      sourceFile.filePath().virtualFile
     } ?: return
-    OpenSourceUtil.navigate(OpenFileDescriptor(project, virtualFile))
+    val targetPosition = getTargetPosition(project, sourceFile, targetFile, e.getData(CommonDataKeys.CARET))
+    OpenSourceUtil.navigate(OpenFileDescriptor(project, targetFile, targetPosition.line, targetPosition.column))
+  }
+
+  private fun getTargetPosition(project: Project, sourceFile: VirtualFile, targetFile: VirtualFile, caret: Caret?): LogicalPosition {
+    if (caret == null) return LogicalPosition(-1, -1)
+    val lst = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(if (showStaged) sourceFile else targetFile)
+              ?: return caret.logicalPosition
+    if (lst !is GitStageLineStatusTracker) return caret.logicalPosition
+    val line = if (showStaged) {
+      lst.transferLineFromLocalToStaged(caret.logicalPosition.line, true)
+    }
+    else {
+      lst.transferLineFromStagedToLocal(caret.logicalPosition.line, true)
+    }
+    return LogicalPosition(line, caret.logicalPosition.column)
   }
 }
 
