@@ -53,8 +53,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public final class ProjectUtil {
@@ -626,7 +626,7 @@ public final class ProjectUtil {
     }
   }
 
-  public static String getBaseDir() {
+  public static @NotNull String getBaseDir() {
     String defaultDirectory = GeneralSettings.getInstance().getDefaultProjectDirectory();
     if (Strings.isNotEmpty(defaultDirectory)) {
       return defaultDirectory.replace('/', File.separatorChar);
