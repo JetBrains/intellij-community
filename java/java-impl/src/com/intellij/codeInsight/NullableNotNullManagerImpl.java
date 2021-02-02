@@ -5,6 +5,8 @@ import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
 import com.intellij.codeInsight.annoPackages.Jsr305Support;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
@@ -38,23 +40,45 @@ import static com.intellij.codeInsight.AnnotationUtil.NULLABLE;
 public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element>, ModificationTracker {
   private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
-  private final AnnotationPackageSupport[] myAnnotationSupports = AnnotationPackageSupport.getAnnotationPackages(this);
+  private AnnotationPackageSupport[] myAnnotationSupports;
 
-  private final List<String> myDefaultNullables =
-    StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NULLABLE));
-  private final List<String> myDefaultNotNulls =
-    StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NOT_NULL));
-  private final List<String> myDefaultAll = StreamEx.of(myAnnotationSupports)
-    .flatCollection(s -> s.getNullabilityAnnotations(Nullability.UNKNOWN)).prepend(myDefaultNotNulls).prepend(myDefaultNullables).toList();
+  private List<String> myDefaultNullables;
+  private List<String> myDefaultNotNulls;
+  private List<String> myDefaultAll;
   public String myDefaultNullable = NULLABLE;
   public String myDefaultNotNull = NOT_NULL;
-  public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList(myDefaultNullables);
-  public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList(myDefaultNotNulls);
+  public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
+  public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
   private List<String> myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
   private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
 
   public NullableNotNullManagerImpl(Project project) {
     super(project);
+    project.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        updateDefaults();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        updateDefaults();
+      }
+    });
+    updateDefaults();
+  }
+
+  private void updateDefaults() {
+    boolean initial = myAnnotationSupports == null;
+    myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensions();
+    myDefaultNullables = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NULLABLE));
+    myDefaultNotNulls = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NOT_NULL));
+    myDefaultAll = StreamEx.of(myAnnotationSupports).flatCollection(s -> s.getNullabilityAnnotations(Nullability.UNKNOWN))
+      .prepend(myDefaultNotNulls).prepend(myDefaultNullables).toList();
+    if (initial) {
+      myNullables.addAll(myDefaultNullables);
+      myNotNulls.addAll(myDefaultNotNulls);
+    }
   }
 
   @Override

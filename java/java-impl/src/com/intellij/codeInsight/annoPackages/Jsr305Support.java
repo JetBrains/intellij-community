@@ -16,11 +16,6 @@ public class Jsr305Support implements AnnotationPackageSupport {
   public static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
   public static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
   public static final String TYPE_QUALIFIER_NICKNAME = "javax.annotation.meta.TypeQualifierNickname";
-  private final NullableNotNullManager myManager;
-
-  Jsr305Support(NullableNotNullManager manager) {
-    myManager = manager;
-  }
 
   @Nullable
   @Override
@@ -48,11 +43,14 @@ public class Jsr305Support implements AnnotationPackageSupport {
   }
 
   @Nullable
-  private Nullability getJsr305QualifierNullability(@NotNull PsiAnnotation qualifier) {
+  private static Nullability getJsr305QualifierNullability(@NotNull PsiAnnotation qualifier) {
     String qName = qualifier.getQualifiedName();
     if (qName == null || !qName.startsWith("javax.annotation.")) return null;
 
-    if (qName.equals(JAVAX_ANNOTATION_NULLABLE) && myManager.getNullables().contains(qName)) return Nullability.NULLABLE;
+    if (qName.equals(JAVAX_ANNOTATION_NULLABLE) &&
+        NullableNotNullManager.getInstance(qualifier.getProject()).getNullables().contains(qName)) {
+      return Nullability.NULLABLE;
+    }
     if (qName.equals(JAVAX_ANNOTATION_NONNULL)) return extractNullityFromWhenValue(qualifier);
     return null;
   }

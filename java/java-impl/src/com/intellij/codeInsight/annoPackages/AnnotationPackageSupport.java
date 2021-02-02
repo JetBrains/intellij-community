@@ -3,7 +3,7 @@ package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +15,8 @@ import java.util.List;
  * Support for custom annotation packages
  */
 public interface AnnotationPackageSupport {
+  ExtensionPointName<AnnotationPackageSupport> EP_NAME = ExtensionPointName.create("com.intellij.lang.jvm.annotationPackageSupport");
+  
   /**
    * Returns nullability by a container annotation
    *
@@ -35,17 +37,5 @@ public interface AnnotationPackageSupport {
    */
   default @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return Collections.emptyList();
-  }
-
-  /**
-   * @param manager manager which wants to register annotations
-   * @return array of available annotation packages
-   */
-  static AnnotationPackageSupport @NotNull [] getAnnotationPackages(@NotNull NullableNotNullManager manager) {
-    return new AnnotationPackageSupport[]{
-      new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
-      new Jsr305Support(manager), new CheckerFrameworkSupport(), new EclipseAnnotationSupport(),
-      new JSpecifyAnnotationSupport(), new RxJavaAnnotationSupport(), new LombokAnnotationSupport()
-    };
   }
 }
