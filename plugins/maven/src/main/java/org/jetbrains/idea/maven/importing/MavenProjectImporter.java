@@ -366,20 +366,22 @@ public class MavenProjectImporter {
 
     if (incompatibleNotMavenized.isEmpty()) return changed;
 
-    final int[] result = new int[1];
-    MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), () -> {
-      String message = MavenProjectBundle.message("maven.import.incompatible.modules",
-                                                  incompatibleNotMavenized.size(),
-                                                  formatProjectsWithModules(incompatibleNotMavenized));
-      String[] options = {
-        MavenProjectBundle.message("maven.import.incompatible.modules.recreate"),
-        MavenProjectBundle.message("maven.import.incompatible.modules.ignore")
-      };
+    final int[] result = new int[]{Messages.OK};
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), () -> {
+        String message = MavenProjectBundle.message("maven.import.incompatible.modules",
+                                                    incompatibleNotMavenized.size(),
+                                                    formatProjectsWithModules(incompatibleNotMavenized));
+        String[] options = {
+          MavenProjectBundle.message("maven.import.incompatible.modules.recreate"),
+          MavenProjectBundle.message("maven.import.incompatible.modules.ignore")
+        };
 
-      result[0] = Messages.showOkCancelDialog(myProject, message,
-                                              MavenProjectBundle.message("maven.project.import.title"),
-                                              options[0], options[1], Messages.getQuestionIcon());
-    });
+        result[0] = Messages.showOkCancelDialog(myProject, message,
+                                                MavenProjectBundle.message("maven.project.import.title"),
+                                                options[0], options[1], Messages.getQuestionIcon());
+      });
+    }
 
     if (result[0] == Messages.OK) {
       for (Pair<MavenProject, Module> each : incompatibleNotMavenized) {
