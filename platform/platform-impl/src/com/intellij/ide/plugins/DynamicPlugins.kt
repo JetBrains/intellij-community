@@ -92,6 +92,7 @@ import java.util.*
 import java.util.function.Function
 import java.util.function.Predicate
 import javax.swing.JComponent
+import javax.swing.ToolTipManager
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -498,6 +499,7 @@ object DynamicPlugins {
           LaterInvocator.purgeExpiredItems()
           FileAttribute.resetRegisteredIds()
           resetFocusCycleRoot()
+          hideTooltip()
           PerformanceWatcher.getInstance().clearFreezeStacktraces()
 
           for (classLoader in classLoaders) {
@@ -927,6 +929,21 @@ object DynamicPlugins {
     }
     catch (e: Throwable) {
       LOG.info("Failed to clear Window.temporaryLostComponent", e)
+    }
+  }
+
+  private fun hideTooltip() {
+    try {
+      val showMethod = ToolTipManager::class.java.declaredMethods.find { it.name == "show" }
+      if (showMethod == null) {
+        LOG.info("ToolTipManager.show method not found")
+        return
+      }
+      showMethod.isAccessible = true
+      showMethod.invoke(ToolTipManager.sharedInstance(), null)
+    }
+    catch (e: Throwable) {
+      LOG.info("Failed to hide tooltip", e)
     }
   }
 
