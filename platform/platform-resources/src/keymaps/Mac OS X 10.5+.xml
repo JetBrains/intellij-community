@@ -750,4 +750,7 @@
   <action id="ActivateNuGetToolWindow">
     <keyboard-shortcut first-keystroke="meta alt 7"/>
   </action>
+  <action id="UiInspector">
+    <mouse-shortcut keystroke="control alt button1"/>
+  </action>
 </keymap>

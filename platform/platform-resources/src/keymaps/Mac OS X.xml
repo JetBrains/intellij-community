@@ -513,4 +513,7 @@
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="UiInspector">
+    <mouse-shortcut keystroke="control alt button1"/>
+  </action>
 </keymap>
