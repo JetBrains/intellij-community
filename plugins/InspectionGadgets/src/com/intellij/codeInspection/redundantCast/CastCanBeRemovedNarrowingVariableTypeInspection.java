@@ -6,15 +6,12 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.intellij.psi.util.*;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -32,18 +29,40 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         if (castTypeElement == null || castTypeElement.getAnnotations().length > 0) return;
         PsiType castType = cast.getType();
         if (!(castType instanceof PsiClassType) || ((PsiClassType)castType).isRaw()) return;
-        PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable(cast.getOperand());
-        if (variable == null) return;
+        PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(cast.getOperand()), PsiReferenceExpression.class);
+        if (ref == null) return;
+        PsiVariable variable = tryCast(ref.resolve(), PsiVariable.class);
+        if (!PsiUtil.isJvmLocalVariable(variable)) return;
+        PsiForeachStatement forEach = null;
+        if (variable instanceof PsiParameter) {
+          forEach = tryCast(((PsiParameter)variable).getDeclarationScope(), PsiForeachStatement.class);
+          if (forEach == null) return;
+        }
         PsiTypeElement variableTypeElement = variable.getTypeElement();
-        if (variableTypeElement.isInferredType() || variableTypeElement.getAnnotations().length > 0) return;
+        if (variableTypeElement == null || variableTypeElement.isInferredType() || variableTypeElement.getAnnotations().length > 0) return;
         PsiType variableType = variable.getType();
         if (!(variableType instanceof PsiClassType) || ((PsiClassType)variableType).isRaw()) return;
         if (variableType.equals(castType) || !variableType.isAssignableFrom(castType)) return;
 
-        PsiExpression variableInitializer = variable.getInitializer();
-        if (variableInitializer != null) {
-          PsiType initializerType = variableInitializer.getType();
-          if (initializerType == null || !castType.isAssignableFrom(initializerType)) return;
+        if (forEach != null) {
+          PsiExpression collection = forEach.getIteratedValue();
+          if (collection == null) return;
+          PsiType type = collection.getType();
+          PsiType elementType;
+          if (type instanceof PsiArrayType) {
+            elementType = ((PsiArrayType)type).getComponentType();
+          }
+          else {
+            elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
+          }
+          if (elementType == null || !castType.isAssignableFrom(elementType)) return;
+        }
+        else {
+          PsiExpression variableInitializer = variable.getInitializer();
+          if (variableInitializer != null) {
+            PsiType initializerType = variableInitializer.getType();
+            if (initializerType == null || !castType.isAssignableFrom(initializerType)) return;
+          }
         }
         PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
         if (block == null) return;
@@ -108,7 +127,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     private final String myType;
     private final boolean myOnTheFly;
 
-    CastCanBeRemovedNarrowingVariableTypeFix(PsiLocalVariable variable, PsiType type, boolean onTheFly) {
+    CastCanBeRemovedNarrowingVariableTypeFix(PsiVariable variable, PsiType type, boolean onTheFly) {
       myVariableName = variable.getName();
       myType = type.getPresentableText();
       myOnTheFly = onTheFly;
@@ -130,14 +149,15 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiTypeCastExpression cast = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiTypeCastExpression.class);
       if (cast == null) return;
-      PsiLocalVariable var = ExpressionUtils.resolveLocalVariable(cast.getOperand());
+      PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(cast.getOperand()), PsiReferenceExpression.class);
+      if (ref == null) return;
+      PsiVariable var = tryCast(ref.resolve(), PsiVariable.class);
       if (var == null) return;
       PsiTypeElement castType = cast.getCastType();
       if (castType == null) return;
-      PsiElement newTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(var.getTypeElement().replace(castType));
-      if (myOnTheFly) {
-        HighlightUtils.highlightElement(newTypeElement);
-      }
+      PsiTypeElement typeElement = var.getTypeElement();
+      if (typeElement == null) return;
+      PsiElement newTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeElement.replace(castType));
       for (PsiReference reference : ReferencesSearch.search(var).findAll()) {
         if (reference instanceof PsiReferenceExpression) {
           PsiTypeCastExpression castOccurrence =
@@ -145,6 +165,12 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           if (castOccurrence != null && RedundantCastUtil.isCastRedundant(castOccurrence)) {
             RemoveRedundantCastUtil.removeCast(castOccurrence);
           }
+        }
+      }
+      if (myOnTheFly) {
+        Editor editor = PsiEditorUtil.findEditor(newTypeElement);
+        if (editor != null) {
+          HighlightUtils.highlightElement(newTypeElement, editor);
         }
       }
     }
