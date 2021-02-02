@@ -17,7 +17,7 @@ internal class Test {
         val streamOfArray2 = Stream.of(*array)
             .map { x: Int -> x + 1 }
             .collect(Collectors.toList())
-        val streamIterate = Stream.iterate(2, { v: Int -> v * 2 })
+        val streamIterate = Stream.iterate(2) { v: Int -> v * 2 }
             .map { x: Int -> x + 1 }
             .collect(Collectors.toList())
         val streamGenerate = Stream.generate { 42 }

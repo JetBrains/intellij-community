@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.resolve.FunctionImportedFromObject
 import org.jetbrains.kotlin.resolve.PropertyImportedFromObject
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -40,12 +39,7 @@ import org.jetbrains.kotlin.serialization.deserialization.descriptors.Deserializ
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPropertyDescriptor
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedTypeAliasDescriptor
-import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.constant
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import java.util.*
 
 @Deprecated("For binary compatibility with AS, see KT-42061", replaceWith = ReplaceWith("mainReference"))
 @get:JvmName("getMainReference")
@@ -77,7 +71,7 @@ val PsiReference.unwrappedTargets: Set<PsiElement>
         }
 
         return when (this) {
-            is PsiPolyVariantReference -> multiResolve(false).mapNotNullTo(HashSet<PsiElement>()) { it.element?.adjust() }
+            is PsiPolyVariantReference -> multiResolve(false).mapNotNullTo(HashSet()) { it.element?.adjust() }
             else -> listOfNotNull(resolve()?.adjust()).toSet()
         }
     }
@@ -131,7 +125,8 @@ fun PsiReference.matchesTarget(candidateTarget: PsiElement): Boolean {
 
     if (candidateTarget is KtImportAlias &&
         (element is KtSimpleNameExpression && element.getReferencedName() == candidateTarget.name ||
-                this is KDocReference && this.canonicalText == candidateTarget.name)) {
+                this is KDocReference && this.canonicalText == candidateTarget.name)
+    ) {
         val importDirective = candidateTarget.importDirective ?: return false
         val importedFqName = importDirective.importedFqName ?: return false
         val importedDescriptors = importDirective.containingKtFile.resolveImportReference(importedFqName)
@@ -236,6 +231,17 @@ fun AbstractKtReference<out KtExpression>.renameImplicitConventionalCall(newName
     if (newName == null) return expression
 
     val (newExpression, newNameElement) = OperatorToFunctionIntention.convert(expression)
+    if (OperatorNameConventions.INVOKE.asString() == newName && newExpression is KtDotQualifiedExpression) {
+        val canMoveLambda = newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
+        OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
+            newQualifiedExpression.getPossiblyQualifiedCallExpression()
+                ?.takeIf { canMoveLambda }
+                ?.let(KtCallExpression::moveFunctionLiteralOutsideParentheses)
+
+            return newQualifiedExpression
+        }
+    }
+
     newNameElement.mainReference.handleElementRename(newName)
     return newExpression
 }

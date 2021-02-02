@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.core.copied
+import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.ReferenceAccess
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -35,6 +37,35 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
     KotlinIdeaAnalysisBundle.lazyMessage("replace.overloaded.operator.with.function.call"),
 ) {
     companion object {
+        fun replaceExplicitInvokeCallWithImplicit(qualifiedExpression: KtDotQualifiedExpression): KtExpression? {
+            /*
+            * `a.b.invoke<>(){}` -> `a.b<>(){}`
+            * `a.b<>(){}.invoke<>(){}` -> `a.b<>(){}<>(){}`
+            * `b.invoke<>(){}` -> `b<>(){}`
+            * `b<>(){}.invoke<>(){}` -> `b<>(){}<>(){}`
+            * `invoke<>(){}` -> not applicable
+            */
+
+            val callExpression = qualifiedExpression.selectorExpression.safeAs<KtCallExpression>()?.copied() ?: return null
+            val calleExpression = callExpression.calleeExpression as KtNameReferenceExpression
+            val receiverExpression = qualifiedExpression.receiverExpression
+            val selectorInReceiver = receiverExpression.safeAs<KtDotQualifiedExpression>()?.selectorExpression
+            return if (selectorInReceiver is KtNameReferenceExpression) {
+                calleExpression.rawReplace(selectorInReceiver.copied())
+                selectorInReceiver.rawReplace(callExpression)
+                qualifiedExpression.replaced(receiverExpression)
+            } else {
+                if ((receiverExpression is KtCallExpression || receiverExpression is KtDotQualifiedExpression) &&
+                    callExpression.valueArgumentList == null && callExpression.typeArgumentList == null) {
+                    calleExpression.replace(receiverExpression)
+                } else {
+                    calleExpression.rawReplace(receiverExpression)
+                }
+
+                qualifiedExpression.replaced(callExpression)
+            }
+        }
+
         private fun isApplicableUnary(element: KtUnaryExpression, caretOffset: Int): Boolean {
             if (element.baseExpression == null) return false
             val opRef = element.operationReference
