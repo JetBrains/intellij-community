@@ -11,35 +11,41 @@ import com.intellij.util.ui.UIUtil
 
 class ChangeListScopeViewUpdater(private val project: Project) : ChangeListAdapter() {
   override fun changeListAdded(list: ChangeList) {
-    fireListeners()
+    updateAvailableScopesList(project)
   }
 
   override fun changeListRemoved(list: ChangeList) {
-    fireListeners()
+    updateAvailableScopesList(project)
   }
 
   override fun changeListRenamed(list: ChangeList, oldName: String) {
-    fireListeners()
+    updateAvailableScopesList(project)
   }
 
   override fun changeListAvailabilityChanged() {
-    fireListeners()
+    updateAvailableScopesList(project)
   }
 
   override fun changeListsChanged() {
-    UIUtil.invokeLaterIfNeeded {
-      if (project.isDisposed) return@invokeLaterIfNeeded
-      val pane = ProjectView.getInstance(project).getProjectViewPaneById(ScopeViewPane.ID) as? ScopeViewPane ?: return@invokeLaterIfNeeded
-      if (pane.selectedScope is ChangeListScope) {
-        pane.updateSelectedScope()
-      }
-    }
+    updateActiveScope(project)
   }
 
-  private fun fireListeners() {
-    UIUtil.invokeLaterIfNeeded {
-      if (project.isDisposed) return@invokeLaterIfNeeded
-      DependencyValidationManager.getInstance(project).fireScopeListeners()
+  companion object {
+    private fun updateActiveScope(project: Project) {
+      UIUtil.invokeLaterIfNeeded {
+        if (project.isDisposed) return@invokeLaterIfNeeded
+        val pane = ProjectView.getInstance(project).getProjectViewPaneById(ScopeViewPane.ID) as? ScopeViewPane ?: return@invokeLaterIfNeeded
+        if (pane.selectedScope is ChangeListScope) {
+          pane.updateSelectedScope()
+        }
+      }
+    }
+
+    private fun updateAvailableScopesList(project: Project) {
+      UIUtil.invokeLaterIfNeeded {
+        if (project.isDisposed) return@invokeLaterIfNeeded
+        DependencyValidationManager.getInstance(project).fireScopeListeners()
+      }
     }
   }
 }
