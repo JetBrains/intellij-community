@@ -57,8 +57,8 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
       final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
       List<TestExecutionListener> listeners = new ArrayList<>();
       listeners.add(listener);
-      for (Object listenerClassName : myListeners) {
-        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)listenerClassName).newInstance();
+      for (String listenerClassName : myListeners) {
+        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName(listenerClassName).newInstance();
         listeners.add(new MyCustomListenerWrapper(junitListener));
       }
       if (sendTree) {

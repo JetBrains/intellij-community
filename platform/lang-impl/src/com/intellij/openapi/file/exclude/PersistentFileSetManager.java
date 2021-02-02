@@ -77,16 +77,13 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
     Set<VirtualFile> oldFiles = new THashSet<>(myFiles);
     myFiles.clear();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
-    for (Object child : state.getChildren(FILE_ELEMENT)) {
-      if (child instanceof Element) {
-        final Element fileElement = (Element)child;
-        final Attribute filePathAttr = fileElement.getAttribute(PATH_ATTR);
-        if (filePathAttr != null) {
-          final String filePath = filePathAttr.getValue();
-          VirtualFile vf = vfManager.findFileByUrl(filePath);
-          if (vf != null) {
-            myFiles.add(vf);
-          }
+    for (Element fileElement : state.getChildren(FILE_ELEMENT)) {
+      final Attribute filePathAttr = fileElement.getAttribute(PATH_ATTR);
+      if (filePathAttr != null) {
+        final String filePath = filePathAttr.getValue();
+        VirtualFile vf = vfManager.findFileByUrl(filePath);
+        if (vf != null) {
+          myFiles.add(vf);
         }
       }
     }

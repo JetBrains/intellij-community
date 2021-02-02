@@ -167,11 +167,9 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
     }
 
     final List<ArrangementGroupingRule> groupings = new ArrayList<>();
-    for (Object group : groups.getChildren(GROUP_ELEMENT_NAME)) {
-      Element groupElement = (Element)group;
-
+    for (Element group : groups.getChildren(GROUP_ELEMENT_NAME)) {
       // Grouping type.
-      String groupingTypeId = groupElement.getChildText(TYPE_ELEMENT_NAME);
+      String groupingTypeId = group.getChildText(TYPE_ELEMENT_NAME);
       ArrangementSettingsToken groupingType = StdArrangementTokens.byId(groupingTypeId);
       if (groupingType == null) {
         groupingType = myMixin.deserializeToken(groupingTypeId);
@@ -182,7 +180,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       }
 
       // Order type.
-      String orderTypeId = groupElement.getChildText(ORDER_TYPE_ELEMENT_NAME);
+      String orderTypeId = group.getChildText(ORDER_TYPE_ELEMENT_NAME);
       ArrangementSettingsToken orderType = StdArrangementTokens.byId(orderTypeId);
       if (orderType == null) {
         orderType = myMixin.deserializeToken(orderTypeId);
@@ -200,8 +198,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
   private List<ArrangementSectionRule> deserializeSectionRules(@NotNull Element rulesElement,
                                                                @Nullable Set<? extends StdArrangementRuleAliasToken> tokens) {
     final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
-    for (Object o : rulesElement.getChildren(SECTION_ELEMENT_NAME)) {
-      final Element sectionElement = (Element)o;
+    for (Element sectionElement : rulesElement.getChildren(SECTION_ELEMENT_NAME)) {
       final List<StdArrangementMatchRule> rules = deserializeRules(sectionElement, tokens);
       final Attribute start = sectionElement.getAttribute(SECTION_START_ATTRIBUTE);
       final String startComment = start != null ? start.getValue().trim() : null;
@@ -218,16 +215,15 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       ((MutableMixin)myMixin).setMyRuleAliases(aliases);
     }
     final List<StdArrangementMatchRule> rules = new ArrayList<>();
-    for (Object o : element.getChildren(RULE_ELEMENT_NAME)) {
-      Element ruleElement = (Element)o;
+    for (Element ruleElement : element.getChildren(RULE_ELEMENT_NAME)) {
       Element matcherElement = ruleElement.getChild(MATCHER_ELEMENT_NAME);
       if (matcherElement == null) {
         continue;
       }
 
       StdArrangementEntryMatcher matcher = null;
-      for (Object c : matcherElement.getChildren()) {
-        matcher = myMatcherSerializer.deserialize((Element)c);
+      for (Element c : matcherElement.getChildren()) {
+        matcher = myMatcherSerializer.deserialize(c);
         if (matcher != null) {
           break;
         }

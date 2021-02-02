@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -86,13 +85,13 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
       }
     }
 
-    for (PsiAnnotation annotation : baseMethod.getModifierList().getRawAnnotations()) {
+    for (GrAnnotation annotation : baseMethod.getModifierList().getRawAnnotations()) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
         myModifierList.addAnnotation(qualifiedName);
       }
       else {
-        myModifierList.addAnnotation(((GrAnnotation)annotation).getShortName());
+        myModifierList.addAnnotation(annotation.getShortName());
       }
     }
 
@@ -297,13 +296,6 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     else {
       return doCreateReflectedMethods(method, null, method.getParameters());
     }
-  }
-
-  @Nullable
-  private static PsiClassType getCategoryType(GrMethod method) {
-    final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null) return null;
-    return GdkMethodUtil.getCategoryType(containingClass);
   }
 
   @NotNull

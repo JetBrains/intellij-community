@@ -151,8 +151,7 @@ public final class CommandLineWrapper {
     List<URL> classpathUrls = new ArrayList<URL>();
     StringBuilder classpathString = new StringBuilder();
     List<String> pathElements = readLinesAndDeleteFile(classpathFile);
-    for (Object element : pathElements) {
-      String pathElement = (String)element;
+    for (String pathElement : pathElements) {
       classpathUrls.add(toUrl(new File(pathElement)));
       if (classpathString.length() > 0) classpathString.append(File.pathSeparator);
       classpathString.append(pathElement);

@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryEncoder;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +29,7 @@ public final class BinaryPatchWriter {
                                    @NotNull List<BinaryFilePatch> patches,
                                    @NotNull Writer writer) throws IOException {
     String lineSeparator = "\n"; //use it for git headers&binary content, otherwise git won't parse&apply it properly
-    for (FilePatch patch : patches) {
-      BinaryFilePatch filePatch = (BinaryFilePatch)patch;
+    for (BinaryFilePatch filePatch : patches) {
       writeGitHeader(writer, basePath, filePatch, lineSeparator);
       byte[] afterContent = filePatch.getAfterContent();
       writer.write(getIndexHeader(filePatch.isNewFile() ? NOT_COMMITTED_HASH : getSha1ForContent(filePatch.getBeforeContent()),

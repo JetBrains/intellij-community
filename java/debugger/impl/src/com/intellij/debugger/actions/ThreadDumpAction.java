@@ -162,6 +162,7 @@ public final class ThreadDumpAction extends DumbAwareAction implements AnAction.
         if (vmProxy.canGetMonitorFrameInfo()) {
           for (Object m : threadReference.ownedMonitorsAndFrames()) {
             if (m instanceof MonitorInfo) { // see JRE-937
+              //noinspection CastCanBeRemovedNarrowingVariableType
               MonitorInfo info = (MonitorInfo)m;
               final int stackDepth = info.stackDepth();
               List<ObjectReference> monitors;

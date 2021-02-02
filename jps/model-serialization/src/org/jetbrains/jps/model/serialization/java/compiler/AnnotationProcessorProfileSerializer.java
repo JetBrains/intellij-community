@@ -41,18 +41,17 @@ public final class AnnotationProcessorProfileSerializer {
     }
 
     profile.clearProcessorOptions();
-    for (Object optionElement : element.getChildren(OPTION)) {
-      final Element elem = (Element)optionElement;
-      final String key = elem.getAttributeValue(NAME);
-      final String value = elem.getAttributeValue(VALUE);
+    for (Element optionElement : element.getChildren(OPTION)) {
+      final String key = optionElement.getAttributeValue(NAME);
+      final String value = optionElement.getAttributeValue(VALUE);
       if (!StringUtil.isEmptyOrSpaces(key) && value != null) {
         profile.setOption(key, value);
       }
     }
 
     profile.clearProcessors();
-    for (Object procElement : element.getChildren("processor")) {
-      final String name = ((Element)procElement).getAttributeValue(NAME);
+    for (Element procElement : element.getChildren("processor")) {
+      final String name = procElement.getAttributeValue(NAME);
       if (!StringUtil.isEmptyOrSpaces(name)) {
         profile.addProcessor(name);
       }
@@ -63,8 +62,8 @@ public final class AnnotationProcessorProfileSerializer {
       profile.setObtainProcessorsFromClasspath(Boolean.parseBoolean(pathElement.getAttributeValue(USE_CLASSPATH, "true")));
       profile.setUseProcessorModulePath(Boolean.parseBoolean(pathElement.getAttributeValue(USE_PROC_MODULE_PATH, "false")));
       final StringBuilder pathBuilder = new StringBuilder();
-      for (Object entry : pathElement.getChildren(ENTRY)) {
-        final String path = ((Element)entry).getAttributeValue(NAME);
+      for (Element entry : pathElement.getChildren(ENTRY)) {
+        final String path = entry.getAttributeValue(NAME);
         if (!StringUtil.isEmptyOrSpaces(path)) {
           if (pathBuilder.length() > 0) {
             pathBuilder.append(File.pathSeparator);
@@ -76,8 +75,8 @@ public final class AnnotationProcessorProfileSerializer {
     }
 
     profile.clearModuleNames();
-    for (Object moduleElement : element.getChildren(MODULE)) {
-      final String name = ((Element)moduleElement).getAttributeValue(NAME);
+    for (Element moduleElement : element.getChildren(MODULE)) {
+      final String name = moduleElement.getAttributeValue(NAME);
       if (!StringUtil.isEmptyOrSpaces(name)) {
         profile.addModuleName(name);
       }

@@ -96,9 +96,7 @@ public final class MavenEmbedder {
       wagonManager.addProxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), proxy.getUsername(), pass, proxy.getNonProxyHosts());
     }
 
-    for (Object each : mySettings.getServers()) {
-      Server server = (Server)each;
-
+    for (Server server : mySettings.getServers()) {
       String passWord = decrypt(server.getPassword());
       String passPhrase = decrypt(server.getPassphrase());
 
@@ -111,8 +109,7 @@ public final class MavenEmbedder {
       }
     }
 
-    for (Object each : mySettings.getMirrors()) {
-      Mirror mirror = (Mirror)each;
+    for (Mirror mirror : mySettings.getMirrors()) {
       if (mirror.getUrl() == null) continue;
       wagonManager.addMirror(mirror.getId(), mirror.getMirrorOf(), mirror.getUrl());
     }

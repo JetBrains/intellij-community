@@ -133,12 +133,10 @@ public final class XmlWriter{
   public void writeElement(final Element element){
     startElement(element.getName());
     try {
-      for (final Object o1 : element.getAttributes()) {
-        final Attribute attribute = (Attribute)o1;
+      for (final Attribute attribute : element.getAttributes()) {
         addAttribute(attribute.getName(), attribute.getValue());
       }
-      for (final Object o : element.getChildren()) {
-        final Element child = (Element)o;
+      for (final Element child : element.getChildren()) {
         writeElement(child);
       }
     }

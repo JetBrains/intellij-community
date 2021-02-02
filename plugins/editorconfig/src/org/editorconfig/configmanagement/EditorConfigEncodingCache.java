@@ -57,21 +57,18 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
   public void loadState(@NotNull Element state) {
     myCharsetMap.clear();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
-    for (Object child : state.getChildren(ENTRY_ELEMENT)) {
-      if (child instanceof Element) {
-        final Element fileElement = (Element)child;
-        final Attribute urlAttr = fileElement.getAttribute(URL_ATTR);
-        final Attribute charsetAttr =  fileElement.getAttribute(CHARSET_ATTR);
-        if (urlAttr != null && charsetAttr != null) {
-          final String url = urlAttr.getValue();
-          String charsetStr = charsetAttr.getValue();
-          final Charset charset = ConfigEncodingManager.toCharset(charsetStr);
-          final boolean useBom = ConfigEncodingManager.UTF8_BOM_ENCODING.equals(charsetStr);
-          if (charset != null) {
-            VirtualFile vf = vfManager.findFileByUrl(url);
-            if (vf != null) {
-              myCharsetMap.put(url, new CharsetData(charset, useBom));
-            }
+    for (Element fileElement : state.getChildren(ENTRY_ELEMENT)) {
+      final Attribute urlAttr = fileElement.getAttribute(URL_ATTR);
+      final Attribute charsetAttr =  fileElement.getAttribute(CHARSET_ATTR);
+      if (urlAttr != null && charsetAttr != null) {
+        final String url = urlAttr.getValue();
+        String charsetStr = charsetAttr.getValue();
+        final Charset charset = ConfigEncodingManager.toCharset(charsetStr);
+        final boolean useBom = ConfigEncodingManager.UTF8_BOM_ENCODING.equals(charsetStr);
+        if (charset != null) {
+          VirtualFile vf = vfManager.findFileByUrl(url);
+          if (vf != null) {
+            myCharsetMap.put(url, new CharsetData(charset, useBom));
           }
         }
       }

@@ -347,8 +347,7 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
     {
       final Element initialValues = itemElement.getChild(ELEMENT_INITIAL_VALUES);
       if (initialValues != null) {
-        for (final Object o : initialValues.getChildren(ELEMENT_PROPERTY)) {
-          final Element e = (Element)o;
+        for (final Element e : initialValues.getChildren(ELEMENT_PROPERTY)) {
           final String name = LwXmlReader.getRequiredString(e, ATTRIBUTE_NAME);
           // TODO[all] currently all initial values are strings
           final StringDescriptor value = StringDescriptor.create(LwXmlReader.getRequiredString(e, ATTRIBUTE_VALUE));

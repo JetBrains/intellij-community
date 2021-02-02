@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.stubs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -73,11 +72,11 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
     final List<PsiClass> result = new ArrayList<>();
 
-    for (PsiElement psiClass : StubIndex.getElements(GrFullClassNameIndex.KEY, name.hashCode(), myProject,
+    for (PsiClass psiClass : StubIndex.getElements(GrFullClassNameIndex.KEY, name.hashCode(), myProject,
                                                      inSource ? new GrSourceFilterScope(scope) : scope, PsiClass.class)) {
       //hashcode doesn't guarantee equals
-      if (name.equals(((PsiClass)psiClass).getQualifiedName())) {
-        result.add((PsiClass)psiClass);
+      if (name.equals(psiClass.getQualifiedName())) {
+        result.add(psiClass);
       }
     }
     result.addAll(getScriptClassesByFQName(name, scope, inSource));

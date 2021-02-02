@@ -143,8 +143,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
 
   @Override public void readSettings(@NotNull Element node) throws InvalidDataException {
     clearNameGroups();
-    for(Object o: node.getChildren(ELEMENT_GROUPS)) {
-      Element e = (Element) o;
+    for(Element e: node.getChildren(ELEMENT_GROUPS)) {
       addNameGroup(e.getAttributeValue(ATTRIBUTE_NAMES));
     }
     Element ignoredMethods = node.getChild(ELEMENT_IGNORED_METHODS);

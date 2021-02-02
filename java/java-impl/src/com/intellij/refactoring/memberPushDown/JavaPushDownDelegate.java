@@ -192,8 +192,8 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     }
     final PsiClass sourceClass = (PsiClass)pushDownData.getSourceClass();
     final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(sourceClass, targetClass, PsiSubstitutor.EMPTY);
-    for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
-      PsiMember member = (PsiMember)memberInfo.getMember();
+    for (MemberInfo memberInfo : pushDownData.getMembersToMove()) {
+      PsiMember member = memberInfo.getMember();
       final List<PsiReference> refsToRebind = new ArrayList<>();
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
@@ -307,7 +307,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           final PsiClass psiClass = (PsiClass)memberInfo.getMember();
           PsiClassType classType = null;
           if (!targetClass.isInheritor(psiClass, false)) {
-            final PsiClassType[] types = ((MemberInfo)memberInfo).getSourceReferenceList().getReferencedTypes();
+            final PsiClassType[] types = memberInfo.getSourceReferenceList().getReferencedTypes();
             for (PsiClassType type : types) {
               if (type.resolve() == psiClass) {
                 classType = (PsiClassType)substitutor.substitute(type);

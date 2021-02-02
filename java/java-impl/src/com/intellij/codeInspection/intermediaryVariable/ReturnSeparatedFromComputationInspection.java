@@ -226,8 +226,8 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     PsiExpression firstInlined = null;
     boolean isSingleUsage = value != null && usages.size() == 1;
     if (isSimple || isSingleUsage) {
-      for (PsiReference usage : usages) {
-        PsiExpression inlined = InlineUtil.inlineVariable(context.returnedVariable, value, (PsiJavaCodeReferenceElement)usage);
+      for (PsiJavaCodeReferenceElement usage : usages) {
+        PsiExpression inlined = InlineUtil.inlineVariable(context.returnedVariable, value, usage);
         if (firstInlined == null) firstInlined = inlined;
         highlighter.add(inlined);
       }

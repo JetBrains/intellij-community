@@ -98,8 +98,8 @@ public class DefaultArrangementEntryMatcherSerializer {
     String name = matcherElement.getName();
     if (COMPOSITE_CONDITION_NAME.equals(name)) {
       ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition();
-      for (Object child : matcherElement.getChildren()) {
-        ArrangementMatchCondition deserialised = deserializeCondition((Element)child);
+      for (Element child : matcherElement.getChildren()) {
+        ArrangementMatchCondition deserialised = deserializeCondition(child);
         if (deserialised != null) {
           composite.addOperand(deserialised);
         }

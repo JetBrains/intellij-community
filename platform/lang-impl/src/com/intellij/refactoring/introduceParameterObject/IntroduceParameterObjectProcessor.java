@@ -77,18 +77,18 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     methodHierarchy.add(myMethod);
     for (UsageInfo info : ChangeSignatureProcessorBase.findUsages(myChangeInfo)) {
       if (info instanceof OverriderMethodUsageInfo) {
-        methodHierarchy.add(((OverriderMethodUsageInfo)info).getOverridingMethod());
+        methodHierarchy.add(((OverriderMethodUsageInfo<?>)info).getOverridingMethod());
       }
       usages.add(new ChangeSignatureUsageWrapper(info));
     }
 
     final P[] paramsToMerge = myClassDescriptor.getParamsToMerge();
-    for (PsiElement element : methodHierarchy) {
-      final IntroduceParameterObjectDelegate delegate = IntroduceParameterObjectDelegate.findDelegate(element);
+    for (PsiNamedElement element : methodHierarchy) {
+      final var delegate = IntroduceParameterObjectDelegate.findDelegate(element);
       if (delegate != null) {
         for (int i = 0; i < paramsToMerge.length; i++) {
           ReadWriteAccessDetector.Access access =
-            delegate.collectInternalUsages(usages, (PsiNamedElement)element, myClassDescriptor, paramsToMerge[i],
+            delegate.collectInternalUsages(usages, element, myClassDescriptor, paramsToMerge[i],
                                            myMergedParameterInfo.getName());
           if (myAccessors[i] == null || access == ReadWriteAccessDetector.Access.Write) {
             myAccessors[i] = access;

@@ -189,10 +189,10 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                             Element classpathElement, JpsMacroExpander expander) throws IOException {
     LOG.debug("start loading classpath for " + model.getName());
     final HashSet<String> libs = new HashSet<>();
-    for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
+    for (Element o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, new ArrayList<>(), new ArrayList<>(), new HashSet<>(),
-                           testPattern, (Element)o, 0, null, expander.getExpandMacroMap(), libs);
+                           testPattern, o, 0, null, expander.getExpandMacroMap(), libs);
       }
       catch (ConversionException e) {
         throw new IOException(e);
