@@ -364,7 +364,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
 
     Application app = ApplicationManager.getApplication();
-    if (!app.isCommandLine() || CoreProgressManager.shouldRunHeadlessTasksSynchronously()) {
+    if (!app.isCommandLine() || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
       long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
       MessageBusConnection connection = app.getMessageBus().connect();
       connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
