@@ -1122,6 +1122,9 @@ public class PyBlock implements ASTBlock {
   public boolean isIncomplete() {
     // if there's something following us, we're not incomplete
     if (!PsiTreeUtil.hasErrorElements(myNode.getPsi())) {
+      if (myNode.getPsi() instanceof PsiFile) {
+        return false;
+      }
       PsiElement element = myNode.getPsi().getNextSibling();
       while (element instanceof PsiWhiteSpace) {
         element = element.getNextSibling();
