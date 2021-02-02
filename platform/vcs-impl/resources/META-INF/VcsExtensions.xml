@@ -318,6 +318,8 @@
               topic="com.intellij.platform.ModuleAttachListener"/>
     <listener class="com.intellij.vcs.changes.ChangeListScopeViewUpdater"
               topic="com.intellij.openapi.vcs.changes.ChangeListListener"/>
+    <listener class="com.intellij.vcs.changes.ChangeListScopeViewUpdater$InitialRefresh"
+              topic="com.intellij.openapi.vcs.changes.LocalChangeListsLoadedListener"/>
   </projectListeners>
 </idea-plugin>
 
