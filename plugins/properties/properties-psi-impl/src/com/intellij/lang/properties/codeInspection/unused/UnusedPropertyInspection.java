@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -56,7 +57,14 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
   @Override
   public @NotNull JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
+    Disposable disposable = Disposer.newDisposable();
+    JPanel panel = new JPanel(new GridBagLayout()) {
+      @Override
+      public void removeNotify() {
+        super.removeNotify();
+        Disposer.dispose(disposable);
+      }
+    };
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
@@ -68,7 +76,8 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     JBTextField textField = new JBTextField(fileNameMask);
     constraints.gridy++;
     panel.add(textField, constraints);
-    ComponentValidator validator = new ComponentValidator(Disposer.newDisposable()).withValidator(() -> {
+    
+    ComponentValidator validator = new ComponentValidator(disposable).withValidator(() -> {
       String text = textField.getText();
       fileNameMask = text.isEmpty() ? ".*" : text;
       String errorMessage = null;
