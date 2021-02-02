@@ -85,6 +85,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
   private static final Key<Boolean> OPENED_IN_BULK = Key.create("EditorSplitters.opened.in.bulk");
+  @NonNls public static final String SPLITTER_KEY = "EditorsSplitters";
 
   private EditorWindow myCurrentWindow;
   private long myLastFocusGainedTime = 0L;
@@ -1028,6 +1029,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           JPanel panel = new JPanel(new BorderLayout());
           panel.setOpaque(false);
           Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f);
+          splitter.putClientProperty(SPLITTER_KEY, Boolean.TRUE);
           splitter.setHonorComponentsMinimumSize(false);
           panel.add(splitter, BorderLayout.CENTER);
           splitter.setFirstComponent(firstComponent);

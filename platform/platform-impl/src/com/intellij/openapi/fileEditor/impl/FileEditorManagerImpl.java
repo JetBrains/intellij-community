@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.HideAllToolWindowsAction;
 import com.intellij.ide.actions.SplitAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -19,7 +20,12 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
@@ -40,6 +46,7 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -190,6 +197,48 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     });
 
     closeFilesOnFileEditorRemoval();
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    for (Editor editor : editorFactory.getAllEditors()) {
+      registerEditor(editor);
+    }
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
+      @Override
+      public void editorCreated(@NotNull EditorFactoryEvent event) {
+        registerEditor(event.getEditor());
+      }
+    }, myProject);
+  }
+
+  private void registerEditor(Editor editor) {
+    Project project = editor.getProject();
+    if (project == null || project.isDisposed()) {
+      return;
+    }
+    if (editor instanceof EditorEx) {
+      ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
+        @Override
+        public void focusGained(@NotNull Editor editor) {
+          Component comp = editor.getComponent();
+          while (comp != getMainSplitters() && comp != null) {
+            Component parent = comp.getParent();
+            if (parent instanceof Splitter) {
+              Splitter splitter = (Splitter)parent;
+              if ((splitter.getFirstComponent() == comp
+                   && (splitter.getProportion() == splitter.getMinProportion(true) || splitter.getProportion() == splitter.getMinimumProportion())) ||
+                  (splitter.getProportion() == splitter.getMinProportion(false) || splitter.getProportion() == splitter.getMaximumProportion())) {
+                Set<kotlin.Pair<Splitter, Boolean>> pairs = HideAllToolWindowsAction.Companion.getSplittersToMaximize(project, editor);
+                for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
+                  Splitter s = pair.getFirst();
+                  s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
+                }
+                break;
+              }
+            }
+            comp = parent;
+          }
+        }
+      });
+    }
   }
 
   private void closeFilesOnFileEditorRemoval() {

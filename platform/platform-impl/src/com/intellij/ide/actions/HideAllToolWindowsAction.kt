@@ -4,16 +4,22 @@ package com.intellij.ide.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowEventSource
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.ui.ComponentUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nullable
 import java.awt.Component
 
 internal class HideAllToolWindowsAction : DumbAwareAction() {
@@ -83,7 +89,13 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
     fun getSplittersToMaximize(e: AnActionEvent): Set<Pair<Splitter, Boolean>> {
       val project = e.project
       val editor = e.getData(CommonDataKeys.HOST_EDITOR);
-      if (project == null || editor == null) return emptySet()
+      if (project == null || editor == null) {
+        return emptySet()
+      }
+      return getSplittersToMaximize(project, editor)
+    }
+
+    fun getSplittersToMaximize(project: @Nullable Project, editor: @Nullable Editor): Set<Pair<Splitter, Boolean>> {
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return emptySet()
       val set = HashSet<Pair<Splitter, Boolean>>()
       var comp = editor.component as Component?
@@ -109,16 +121,19 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
     fun getSplittersToNormalize(e: AnActionEvent): Set<Splitter> {
       val project = e.project
       val editor = e.getData(CommonDataKeys.HOST_EDITOR);
-      if (project == null || editor == null) return emptySet()
-      val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return emptySet()
+      if (project == null || editor == null) {
+        return emptySet()
+      }
       val set = HashSet<Splitter>()
-      var comp = editor.component as Component?
-      while (comp != editorManager.mainSplitters && comp != null) {
-        val parent = comp.parent
-        if (parent is Splitter) {
-          set.add(parent)
-        }
-        comp = parent
+      var splitters = ComponentUtil.getParentOfType(EditorsSplitters::class.java, editor.component as Component)
+      while (splitters != null) {
+        val candidate = ComponentUtil.getParentOfType(EditorsSplitters::class.java, splitters.parent)
+        splitters = candidate ?: break
+      }
+      if (splitters != null) {
+        val splitterList = UIUtil.findComponentsOfType(splitters, Splitter::class.java)
+        splitterList.removeIf { !UIUtil.isClientPropertyTrue(it, EditorsSplitters.SPLITTER_KEY) }
+        set.addAll(splitterList)
       }
       return set
     }
