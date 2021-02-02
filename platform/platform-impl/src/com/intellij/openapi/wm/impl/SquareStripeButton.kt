@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToggleActionButton
@@ -27,21 +29,10 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   }
 
   private fun showPopup(component: Component?, x: Int, y: Int) {
-    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createPopupGroup())
+    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP,
+                                                                      createPopupGroup(project, button.pane, button.toolWindow))
     popupMenu.component.show(component, x, y)
   }
-
-  private fun createPopupGroup() = DefaultActionGroup()
-    .apply {
-      add(HideAction())
-      addSeparator()
-      add(DefaultActionGroup.createPopupGroup(Supplier { UIBundle.message("tool.window.new.stripe.move.to.action.group.name") })
-            .apply {
-              add(MoveToAction(ToolWindowAnchor.LEFT))
-              add(MoveToAction(ToolWindowAnchor.RIGHT))
-              add(MoveToAction(ToolWindowAnchor.BOTTOM))
-            })
-    }
 
   companion object {
     private fun createPresentation(button: StripeButton) =
@@ -50,24 +41,49 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
         if (icon is ScalableIcon) icon = (icon as ScalableIcon).scale(1.4f)
         isEnabledAndVisible = true
       }
+
+    private fun createPopupGroup(project: Project, toolWindowsPane: ToolWindowsPane, toolWindow: ToolWindow) = DefaultActionGroup()
+      .apply {
+        add(HideAction(toolWindowsPane, toolWindow))
+        addSeparator()
+        add(createMoveGroup(project, toolWindowsPane, toolWindow))
+      }
+
+    @JvmStatic
+    fun createMoveGroup(project: Project, _toolWindowsPane: ToolWindowsPane? = null, toolWindow: ToolWindow): DefaultActionGroup {
+      var toolWindowsPane = _toolWindowsPane
+      if (toolWindowsPane == null) {
+        toolWindowsPane = (WindowManager.getInstance() as? WindowManagerImpl)?.getProjectFrameRootPane(project)?.toolWindowPane
+        if (toolWindowsPane == null) return DefaultActionGroup()
+      }
+
+      return DefaultActionGroup.createPopupGroup(Supplier { UIBundle.message("tool.window.new.stripe.move.to.action.group.name") })
+        .apply {
+          add(MoveToAction(toolWindowsPane, toolWindow, ToolWindowAnchor.LEFT))
+          add(MoveToAction(toolWindowsPane, toolWindow, ToolWindowAnchor.RIGHT))
+          add(MoveToAction(toolWindowsPane, toolWindow, ToolWindowAnchor.BOTTOM))
+        }
+    }
   }
 
-  private inner class MoveToAction(val anchor: ToolWindowAnchor) : AnAction(anchor.capitalizedDisplayName), DumbAware {
+  private class MoveToAction(val toolWindowsPane: ToolWindowsPane, val toolWindow: ToolWindow, val anchor: ToolWindowAnchor) :
+    AnAction(anchor.capitalizedDisplayName), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
-      button.pane.onStripeButtonRemoved(project, button.toolWindow)
-      button.toolWindow.isVisibleOnLargeStripe = true
-      button.pane.onStripeButtonAdded(project, button.toolWindow, anchor, Comparator { _, _ -> 0 })
+      toolWindowsPane.onStripeButtonRemoved(e.project!!, toolWindow)
+      toolWindow.isVisibleOnLargeStripe = true
+      toolWindowsPane.onStripeButtonAdded(e.project!!, toolWindow, anchor, Comparator { _, _ -> 0 })
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = button.toolWindow.largeStripeAnchor != anchor
+      e.presentation.isEnabledAndVisible = toolWindow.largeStripeAnchor != anchor
     }
   }
 
-  private inner class HideAction : AnAction(UIBundle.message("tool.window.new.stripe.hide.action.name")), DumbAware {
+  private class HideAction(val toolWindowsPane: ToolWindowsPane, val toolWindow: ToolWindow) :
+    AnAction(UIBundle.message("tool.window.new.stripe.hide.action.name")), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
-      button.pane.onStripeButtonRemoved(project, button.toolWindow)
-      button.toolWindow.toolWindowManager.hideToolWindow(button.id, false, true, ToolWindowEventSource.SquareStripeButton)
+      toolWindowsPane.onStripeButtonRemoved(e.project!!, toolWindow)
+      (toolWindow as? ToolWindowImpl)?.toolWindowManager?.hideToolWindow(toolWindow.id, false, true, ToolWindowEventSource.SquareStripeButton)
     }
   }
 
