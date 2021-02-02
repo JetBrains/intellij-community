@@ -187,13 +187,21 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
       UISettings uiSettings = UISettings.getInstance();
       if (uiSettings.getHideToolStripes() || uiSettings.getPresentationMode()) {
-        layeredPane.setBounds(0, 0, size.width, size.height);
+        if (isSquareStripeUI()) {
+          updateSquareStripes(false);
+        } else {
+          layeredPane.setBounds(0, 0, size.width, size.height);
+        }
       }
       else {
         int width = size.width - leftSize.width - rightSize.width;
         layeredPane.setBounds(leftSize.width, topSize.height, width, height);
       }
     }
+  }
+
+  private static boolean isSquareStripeUI() {
+    return Registry.is("ide.new.stripes.ui");
   }
 
   @Override
@@ -335,11 +343,20 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     boolean oldVisible = leftStripe.isVisible();
 
     boolean showButtons = !uiSettings.getHideToolStripes() && !uiSettings.getPresentationMode();
-    boolean visible = (showButtons || state.isStripesOverlaid()) && !Registry.is("ide.new.stripes.ui");
+    boolean visible = (showButtons || state.isStripesOverlaid()) && !isSquareStripeUI();
     leftStripe.setVisible(visible);
     rightStripe.setVisible(visible);
     topStripe.setVisible(visible);
     bottomStripe.setVisible(visible);
+
+    boolean oldSquareVisible = myLeftToolbar.isVisible() && myRightToolbar.isVisible();
+    boolean squareStripesVisible = isSquareStripeUI() && showButtons;
+    updateSquareStripes(squareStripesVisible);
+
+    if (isSquareStripeUI() && oldSquareVisible != squareStripesVisible) {
+      revalidate();
+      repaint();
+    }
 
     boolean overlayed = !showButtons && state.isStripesOverlaid();
 
@@ -352,6 +369,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       revalidate();
       repaint();
     }
+  }
+
+  private void updateSquareStripes(boolean squareStripesVisible) {
+    myLeftToolbar.setVisible(squareStripesVisible);
+    myRightToolbar.setVisible(squareStripesVisible);
   }
 
   public int getBottomHeight() {
@@ -556,7 +578,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   void onStripeButtonRemoved(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    if (!Registry.is("ide.new.stripes.ui")) return;
+    if (!isSquareStripeUI()) return;
 
     if (!toolWindow.isAvailable() || toolWindow.getIcon() == null) return;
     toolWindow.setVisibleOnLargeStripe(false);
@@ -576,7 +598,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                            @NotNull ToolWindow toolWindow,
                            @NotNull ToolWindowAnchor actualAnchor,
                            @NotNull Comparator<ToolWindow> comparator) {
-    if (!Registry.is("ide.new.stripes.ui")) return;
+    if (!isSquareStripeUI()) return;
 
     ensureDefaultInitialized(project);
 
