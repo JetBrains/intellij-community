@@ -101,12 +101,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myNextStepLabel.setOpaque(false);
 
     JPanel left = new JPanel(new BorderLayout());
-    left.setBorder(JBUI.Borders.empty());
     left.add(middleItemComponent, BorderLayout.CENTER);
 
     JPanel right = new JPanel(new BorderLayout());
     int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.NextStep.getIconWidth()) / 2;
-    right.setBorder(JBUI.Borders.empty(0, leftRightInset));
     right.add(myNextStepLabel, BorderLayout.CENTER);
 
     mySeparator = new JSeparator(SwingConstants.VERTICAL);
@@ -114,6 +112,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     JPanel result = new JPanel();
     result.setLayout(new GridBagLayout());
     result.setBorder(JBUI.Borders.empty());
+
+    Insets insets = getDefaultItemComponentBorder().getBorderInsets(result);
+    left.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, 0));
+    right.setBorder(JBUI.Borders.empty(insets.top, leftRightInset, insets.bottom, insets.right));
 
     GridBag gbc = new GridBag()
       .setDefaultAnchor(0, GridBagConstraints.WEST)
