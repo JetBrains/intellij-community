@@ -52,9 +52,8 @@ public class TestNGModuleInfoIntegrationTest extends AbstractTestFrameworkCompil
     addMavenLibs(myModule, testNGLib, repoManager);
   }
 
-  public void testEmpty() { }
-  public void _testModuleInfoInSourceRoot() throws ExecutionException {
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("p").getParentPackage();
+  public void testModuleInfoInSourceRoot() throws ExecutionException {
+    PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("p");
     final MapDataContext dataContext = new MapDataContext();
     dataContext.put("myModule", myModule);
     TestNGConfiguration configuration =

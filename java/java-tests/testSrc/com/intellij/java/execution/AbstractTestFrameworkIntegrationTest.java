@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +123,8 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
       }
     });
     process.startNotify();
-    process.waitFor();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    process.waitFor(10000);
     process.destroyProcess();
 
     return processOutput;
