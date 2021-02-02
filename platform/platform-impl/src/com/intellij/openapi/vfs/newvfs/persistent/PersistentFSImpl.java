@@ -177,7 +177,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
     Map<String, ChildInfo> justCreated = new HashMap<>();
     String[] delegateNames = VfsUtil.filterNames(fs.list(file));
-    ListResult saved = FSRecords.update(id, current -> {
+    ListResult saved = FSRecords.update(file, id, current -> {
       List<? extends ChildInfo> currentChildren = current.children;
       if (delegateNames.length == 0 && !currentChildren.isEmpty()) {
         return current;
@@ -428,7 +428,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       return children;
     };
-    FSRecords.update(parentId, convertor);
+    FSRecords.update(parent, parentId, convertor);
     return result.get();
   }
 
@@ -880,6 +880,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             toCreate.put(parent, children);
             createEvents = children;
           }
+          //noinspection unchecked
           Collection<VFileCreateEvent> children = (Collection<VFileCreateEvent>)createEvents;
           if (!children.add(createEvent)) {
             eventsToRemove.add(createEvent);
@@ -1029,6 +1030,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       for (Map.Entry<VirtualDirectoryImpl, Object> entry : created.entrySet()) {
         VirtualDirectoryImpl directory = entry.getKey();
         Object value = entry.getValue();
+        //noinspection unchecked
         Set<VFileCreateEvent> createEvents = value instanceof VFileCreateEvent ? new HashSet<>(Collections.singletonList((VFileCreateEvent)value)) : (Set<VFileCreateEvent>)value;
         directory.validateChildrenToCreate(createEvents);
         hasValidEvents |= !createEvents.isEmpty();
@@ -1037,6 +1039,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
 
       if (hasValidEvents) {
+        //noinspection unchecked
         Map<VirtualDirectoryImpl, Set<VFileCreateEvent>> finalGrouped = (Map)created;
         outApplyActions.add((Runnable)() -> {
           applyCreations(finalGrouped);
@@ -1185,7 +1188,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         deleted.add(new ChildInfoImpl(id, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null));
       }
       deleted.sort(ChildInfo.BY_ID);
-      FSRecords.update(parentId, oldChildren -> oldChildren.subtract(deleted));
+      FSRecords.update(parent, parentId, oldChildren -> oldChildren.subtract(deleted));
       parent.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
     }
   }
@@ -1218,7 +1221,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     childrenAdded.sort(ChildInfo.BY_ID);
     boolean caseSensitive = parent.isCaseSensitive();
-    FSRecords.update(parentId, oldChildren -> oldChildren.merge(childrenAdded, caseSensitive));
+    FSRecords.update(parent, parentId, oldChildren -> oldChildren.merge(childrenAdded, caseSensitive));
     parent.createAndAddChildren(childrenAdded, false, (__,___)->{});
 
     saveScannedChildrenRecursively(createEvents, delegate, parent.isCaseSensitive());
@@ -1251,7 +1254,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
           added.sort(ChildInfo.BY_ID);
-          FSRecords.update(directoryId, oldChildren -> oldChildren.merge(added, isCaseSensitive));
+          FSRecords.update(directory, directoryId, oldChildren -> oldChildren.merge(added, isCaseSensitive));
           setChildrenCached(directoryId);
           // set "all children loaded" because the first "fileCreated" listener (looking at you, local history)
           // will call getChildren() anyway, beyond a shadow of a doubt
@@ -1497,7 +1500,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return;
     }
     ChildInfo childInfo = makeChildRecord(parent, parentId, name, childData, delegate, null);
-    FSRecords.update(parentId, children -> {
+    FSRecords.update(parent, parentId, children -> {
       // check that names are not duplicated
       ChildInfo duplicate = findExistingChildInfo(parent, name, children.children, delegate);
       if (duplicate != null) return children;
@@ -1568,7 +1571,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     else {
-      removeIdFromChildren(parentId, id);
+      removeIdFromChildren(parent, parentId, id);
       VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file.getParent();
       assert directory != null : file;
       directory.removeChild(file);
@@ -1594,9 +1597,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static void removeIdFromChildren(int parentId, int childId) {
+  private static void removeIdFromChildren(@NotNull VirtualFile parent, int parentId, int childId) {
     ChildInfo toRemove = new ChildInfoImpl(childId, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null);
-    FSRecords.update(parentId, list -> list.remove(toRemove));
+    FSRecords.update(parent, parentId, list -> list.remove(toRemove));
   }
 
   private static void executeRename(@NotNull VirtualFile file, @NotNull String newName) {
@@ -1658,15 +1661,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     final int fileId = getFileId(file);
     final int newParentId = getFileId(newParent);
-    final int oldParentId = getFileId(file.getParent());
+    VirtualFile oldParent = file.getParent();
+    final int oldParentId = getFileId(oldParent);
 
     VirtualFileSystemEntry virtualFileSystemEntry = (VirtualFileSystemEntry)file;
     NewVirtualFileSystem fileSystem = virtualFileSystemEntry.getFileSystem();
 
-    removeIdFromChildren(oldParentId, fileId);
+    removeIdFromChildren(oldParent, oldParentId, fileId);
     FSRecords.setParent(fileId, newParentId);
     ChildInfo newChild = new ChildInfoImpl(fileId, virtualFileSystemEntry.getNameId(), null, null, null);
-    FSRecords.update(newParentId, children -> {
+    FSRecords.update(newParent, newParentId, children -> {
       // check that names are not duplicated
       ChildInfo duplicate = findExistingChildInfo(file, file.getName(), children.children, fileSystem);
       if (duplicate != null) return children;
