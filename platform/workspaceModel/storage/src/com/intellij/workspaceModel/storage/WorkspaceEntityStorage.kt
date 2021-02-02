@@ -138,6 +138,14 @@ interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
+
+  /**
+   * Please select a name for your mapping in a form `<product_id>.<mapping_name>`.
+   * E.g.:
+   *  - intellij.modules.bridge
+   *  - intellij.facets.bridge
+   *  - rider.backend.id
+   */
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
   fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
@@ -197,7 +205,15 @@ interface WorkspaceEntityStorageDiffBuilder {
   fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
 
   fun addDiff(diff: WorkspaceEntityStorageDiffBuilder)
+
+  /**
+   * Please see [WorkspaceEntityStorage.getExternalMapping] for naming conventions
+   */
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
+
+  /**
+   * Please see [WorkspaceEntityStorage.getExternalMapping] for naming conventions
+   */
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
   fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex

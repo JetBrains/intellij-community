@@ -3,14 +3,15 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.junit.Assert.*
 import org.junit.Test
 
 class ExternalEntityMappingTest {
   companion object {
-    private const val INDEX_ID = "ExternalEntityIndexTest"
-    private const val ANOTHER_INDEX_ID = "AnotherExternalEntityIndexTest"
+    private const val INDEX_ID = "test.index.id"
+    private const val ANOTHER_INDEX_ID = "test.another.index.id"
   }
 
   @Test

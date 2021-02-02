@@ -12,17 +12,16 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 
 internal class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
@@ -236,12 +235,12 @@ internal class ProjectLibraryTableBridgeImpl(
       override fun getLibraryTableEditorTitle() = ProjectModelBundle.message("library.configure.project.title")
     }
 
-    private const val INDEX_ID = "libraryBridge"
+    private const val LIBRARY_BRIDGE_MAPPING_ID = "intellij.libraries.bridge"
 
     internal val WorkspaceEntityStorage.libraryMap: ExternalEntityMapping<LibraryBridge>
-      get() = getExternalMapping(INDEX_ID)
+      get() = getExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
     internal val WorkspaceEntityStorageDiffBuilder.mutableLibraryMap: MutableExternalEntityMapping<LibraryBridge>
-      get() = getMutableExternalMapping(INDEX_ID)
+      get() = getMutableExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
 
     internal fun WorkspaceEntityStorage.findLibraryEntity(library: LibraryBridge) =
       libraryMap.getEntities(library).firstOrNull() as LibraryEntity?

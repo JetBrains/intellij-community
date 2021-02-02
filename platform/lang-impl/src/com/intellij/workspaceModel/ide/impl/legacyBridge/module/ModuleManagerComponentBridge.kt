@@ -606,12 +606,12 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     internal fun hasModuleGroups(entityStorage: VersionedEntityStorage) =
       entityStorage.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
 
-    private const val INDEX_ID = "moduleBridge"
+    private const val MODULE_BRIDGE_MAPPING_ID = "intellij.modules.bridge"
 
     internal val WorkspaceEntityStorage.moduleMap: ExternalEntityMapping<ModuleBridge>
-      get() = getExternalMapping(INDEX_ID)
+      get() = getExternalMapping(MODULE_BRIDGE_MAPPING_ID)
     internal val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
-      get() = getMutableExternalMapping(INDEX_ID)
+      get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =

@@ -180,19 +180,19 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
   }
 
   companion object {
-    private const val FACET_EXTERNAL_MAPPING_ID = "FACET_EXTERNAL_MAPPING_ID"
+    private const val FACET_BRIDGE_MAPPING_ID = "intellij.facets.bridge"
     private val LOG = logger<FacetModelBridge>()
 
     internal fun WorkspaceEntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
-      return this.getExternalMapping(FACET_EXTERNAL_MAPPING_ID)
+      return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
     internal fun WorkspaceEntityStorageDiffBuilder.facetMapping(): ExternalEntityMapping<Facet<*>> {
-      return this.getExternalMapping(FACET_EXTERNAL_MAPPING_ID)
+      return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
     internal fun WorkspaceEntityStorageDiffBuilder.mutableFacetMapping(): MutableExternalEntityMapping<Facet<*>> {
-      return this.getMutableExternalMapping(FACET_EXTERNAL_MAPPING_ID)
+      return this.getMutableExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
     private val obj = Any()

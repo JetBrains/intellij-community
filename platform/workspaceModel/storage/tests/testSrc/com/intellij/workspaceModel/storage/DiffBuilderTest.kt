@@ -279,13 +279,13 @@ class DiffBuilderTest {
 
     val source = createEmptyBuilder()
     val sourceSample = source.addSampleEntity("Entity at index 1")
-    val mutableExternalMapping = source.getMutableExternalMapping<Any>("Ext")
+    val mutableExternalMapping = source.getMutableExternalMapping<Any>("test.checking.external.mapping")
     val anyObj = Any()
     mutableExternalMapping.addMapping(sourceSample, anyObj)
 
     target.addDiff(source)
 
-    val externalMapping = target.getExternalMapping<Any>("Ext") as ExternalEntityMappingImpl<Any>
+    val externalMapping = target.getExternalMapping<Any>("test.checking.external.mapping") as ExternalEntityMappingImpl<Any>
     assertEquals(1, externalMapping.index.size)
   }
 

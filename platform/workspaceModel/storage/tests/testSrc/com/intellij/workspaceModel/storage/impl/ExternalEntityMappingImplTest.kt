@@ -12,7 +12,7 @@ class ExternalEntityMappingImplTest {
   fun `mapping mutability test`() {
     val initialBuilder = createEmptyBuilder()
     val sampleEntity = initialBuilder.addSampleEntity("123")
-    val mutableMapping = initialBuilder.getMutableExternalMapping<Int>("MyMap")
+    val mutableMapping = initialBuilder.getMutableExternalMapping<Int>("test.my.mapping")
     mutableMapping.addMapping(sampleEntity, 1)
 
     val newBuilder = createBuilderFrom(initialBuilder)
@@ -20,7 +20,7 @@ class ExternalEntityMappingImplTest {
     val anotherEntity = initialBuilder.addSampleEntity("321")
     mutableMapping.addMapping(anotherEntity, 2)
 
-    val anotherMapping = newBuilder.getExternalMapping<Int>("MyMap")
+    val anotherMapping = newBuilder.getExternalMapping<Int>("test.my.mapping")
     assertTrue(anotherMapping.getEntities(2).isEmpty())
   }
 }
