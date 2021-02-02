@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.documentation.mdn.MdnSymbolDocumentation;
@@ -170,10 +170,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return attributeDescriptor;
   }
 
-  private String generateDocForHtml(PsiElement element, PsiElement originalElement, boolean quickDoc) {
+  private String generateDocForHtml(PsiElement element, PsiElement originalElement, boolean docOnHover) {
     MdnSymbolDocumentation documentation = getDocumentation(element, originalElement);
     if (documentation != null) {
-      return documentation.getDocumentation(true, quickDoc, null);
+      return documentation.getDocumentation(true, docOnHover, null);
     }
 
     if (element instanceof XmlEntityDecl) {

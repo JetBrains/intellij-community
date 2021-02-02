@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.documentation.mdn
 
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -137,10 +137,10 @@ interface MdnSymbolDocumentation {
   val isDeprecated: Boolean
 
   fun getDocumentation(withDefinition: Boolean,
-                       quickDoc: Boolean): String
+                       docOnHover: Boolean): String
 
   fun getDocumentation(withDefinition: Boolean,
-                       quickDoc: Boolean,
+                       docOnHover: Boolean,
                        additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String
 }
 
@@ -153,11 +153,13 @@ class MdnSymbolDocumentationAdapter(private val name: String,
   override val isDeprecated: Boolean
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
 
-  override fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean): String =
-    getDocumentation(withDefinition, quickDoc, null)
+  override fun getDocumentation(withDefinition: Boolean, docOnHover: Boolean): String =
+    getDocumentation(withDefinition, docOnHover, null)
 
-  override fun getDocumentation(withDefinition: Boolean, quickDoc: Boolean, additionalSectionsContent: Consumer<java.lang.StringBuilder>?) =
-    buildDoc(doc, name, source.lang, withDefinition, quickDoc, additionalSectionsContent)
+  override fun getDocumentation(withDefinition: Boolean,
+                                docOnHover: Boolean,
+                                additionalSectionsContent: Consumer<java.lang.StringBuilder>?) =
+    buildDoc(doc, name, source.lang, withDefinition, docOnHover, additionalSectionsContent)
 
 }
 
@@ -362,7 +364,7 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
                      name: String,
                      lang: String,
                      withDefinition: Boolean,
-                     quickDoc: Boolean,
+                     docOnHover: Boolean,
                      additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String {
   val buf = StringBuilder()
   if (withDefinition)
@@ -375,7 +377,7 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
     .append(DocumentationMarkup.CONTENT_END)
 
   val sections = doc.sections
-  if (!sections.isNullOrEmpty() && !quickDoc) {
+  if (!sections.isNullOrEmpty() && !docOnHover) {
     buf.append(DocumentationMarkup.SECTIONS_START)
     for (entry in sections) {
       buf.append(DocumentationMarkup.SECTION_HEADER_START).append(entry.key)

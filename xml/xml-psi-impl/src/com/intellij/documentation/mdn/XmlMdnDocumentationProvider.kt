@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.documentation.mdn
 
 import com.intellij.lang.documentation.DocumentationProvider
@@ -25,8 +26,8 @@ class XmlMdnDocumentationProvider : DocumentationProvider {
 
     private val supportedNamespaces = setOf(HtmlUtil.SVG_NAMESPACE, HtmlUtil.MATH_ML_NAMESPACE, XmlUtil.HTML_URI, XmlUtil.XHTML_URI)
 
-    private fun generateDoc(element: PsiElement, originalElement: PsiElement?, quickDoc: Boolean): String? =
-      getMdnDocumentation(element, originalElement)?.getDocumentation(true, quickDoc)
+    private fun generateDoc(element: PsiElement, originalElement: PsiElement?, docOnHover: Boolean): String? =
+      getMdnDocumentation(element, originalElement)?.getDocumentation(true, docOnHover)
 
     private fun getMdnDocumentation(element: PsiElement, originalElement: PsiElement?): MdnSymbolDocumentation? =
       originalElement.takeIf { it is XmlElement || it is XmlToken }
