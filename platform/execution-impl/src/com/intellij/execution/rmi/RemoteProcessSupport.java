@@ -179,11 +179,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     else if (info == null || info.handler == null) {
       throw new ExecutionException(ExecutionBundle.message("dialog.remote.process.unable.to.acquire.remote.proxy.for", getName(target)));
     }
-    publishPort(info.port);
-    if (info.servicePort != -1) {
-      publishPort(info.servicePort);
+    int publishedPort = publishPort(info.port);
+    int publishedServicePort = info.servicePort != -1 ? publishPort(info.servicePort) : info.servicePort;
+    if (publishedPort != info.port || publishedServicePort != info.servicePort) {
+      return acquire(new RunningInfo(info.handler, info.host, publishedPort, info.name, publishedServicePort));
     }
-    return acquire(info);
+    else {
+      return acquire(info);
+    }
   }
 
   private static void checkIndicator(@Nullable ProgressIndicator indicator) {
@@ -195,8 +198,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
-  protected void publishPort(int port) throws ExecutionException {
-
+  protected int publishPort(int port) throws ExecutionException {
+    return port;
   }
 
   @NotNull
