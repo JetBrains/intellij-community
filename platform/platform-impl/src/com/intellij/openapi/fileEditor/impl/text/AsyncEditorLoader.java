@@ -40,7 +40,7 @@ public final class AsyncEditorLoader {
   @NotNull private final TextEditorImpl myTextEditor;
   @NotNull private final TextEditorComponent myEditorComponent;
   @NotNull private final TextEditorProvider myProvider;
-  @NotNull private final Logger myLogger = Logger.getInstance(AsyncEditorLoader.class);
+  @NotNull private static final Logger myLogger = Logger.getInstance(AsyncEditorLoader.class);
   private final List<Runnable> myDelayedActions = new ArrayList<>();
   private TextEditorState myDelayedState;
   private final AtomicBoolean myLoadingFinished = new AtomicBoolean();
@@ -104,12 +104,12 @@ public final class AsyncEditorLoader {
             Attachment filePathAttachment = new Attachment("filePath.txt", myTextEditor.getFile().toString());
             Attachment threadDumpAttachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
             threadDumpAttachment.setIncluded(true);
-            Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e,
+            myLogger.error("Error during async editor loading", e,
                                                               filePathAttachment, threadDumpAttachment);
             return null;
           }
           catch (Exception e) {
-            Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e);
+            myLogger.error("Error during async editor loading", e);
             return null;
           }
         });
