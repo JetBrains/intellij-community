@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
@@ -397,5 +398,14 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
 
 val CallableDescriptor.isInvokeOperator: Boolean
     get() = this is FunctionDescriptor && this !is FunctionInvokeDescriptor && isOperator && name == OperatorNameConventions.INVOKE
+
+fun KtCallExpression.canBeReplacedWithInvokeCall(): Boolean {
+    return resolveToCall()?.canBeReplacedWithInvokeCall() == true
+}
+
+fun ResolvedCall<out CallableDescriptor>.canBeReplacedWithInvokeCall(): Boolean {
+    val descriptor = resultingDescriptor as? SimpleFunctionDescriptor ?: return false
+    return (descriptor is FunctionInvokeDescriptor || descriptor.isInvokeOperator) && !descriptor.isExtension
+}
 
 fun CallableDescriptor.receiverType(): KotlinType? = (dispatchReceiverParameter ?: extensionReceiverParameter)?.type

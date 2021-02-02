@@ -20,16 +20,13 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.builtins.isFunctionType
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.intentions.canBeReplacedWithInvokeCall
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
@@ -51,15 +48,10 @@ class WrapWithSafeLetCallFix(
         val nullableExpression = nullableExpressionPointer.element ?: return
         val qualifiedExpression = element.getQualifiedExpressionForSelector()
         val receiverExpression = qualifiedExpression?.receiverExpression
-        val isInvokingFunctionType = if (nullableExpression.parent is KtCallExpression) {
-            val property = nullableExpression.mainReference?.resolve() as? KtProperty
-            (property?.descriptor as? PropertyDescriptor)?.type?.isFunctionType == true
-        } else {
-            false
-        }
+        val canBeReplacedWithInvokeCall = (nullableExpression.parent as? KtCallExpression)?.canBeReplacedWithInvokeCall() == true
 
         val factory = KtPsiFactory(element)
-        val nullableText = if (receiverExpression != null && isInvokingFunctionType) {
+        val nullableText = if (receiverExpression != null && canBeReplacedWithInvokeCall) {
             "${receiverExpression.text}${qualifiedExpression.operationSign.value}${nullableExpression.text}"
         } else {
             nullableExpression.text
@@ -69,7 +61,8 @@ class WrapWithSafeLetCallFix(
 
         nullableExpression.replace(factory.createExpression(name))
         val underLetExpression = when {
-            receiverExpression != null && !isInvokingFunctionType -> factory.createExpressionByPattern("$0.$1", receiverExpression, element)
+            receiverExpression != null && !canBeReplacedWithInvokeCall ->
+                factory.createExpressionByPattern("$0.$1", receiverExpression, element)
             else -> element
         }
         val wrapped = when (name) {
