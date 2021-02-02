@@ -131,7 +131,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         myPromise = ReadAction.nonBlocking(() -> computeSettings())
                               .expireWith(myProject)
                               .expireWhen(() -> myFileRef.get() == null)
-                              .finishOnUiThread(ModalityState.NON_MODAL, val -> notifyCachedValueComputed())
+                              .finishOnUiThread(ModalityState.any(), val -> notifyCachedValueComputed())
                               .submit(ourExecutorService);
       }
       else {
