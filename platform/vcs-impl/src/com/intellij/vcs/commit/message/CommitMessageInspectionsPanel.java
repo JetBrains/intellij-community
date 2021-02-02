@@ -36,12 +36,11 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 
 public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements Disposable, UnnamedConfigurable {
   @NotNull private final Project myProject;
-  @NotNull private final CommitMessageInspectionProfile myProfile;
   @NotNull private final List<ToolDescriptors> myInitialToolDescriptors = new ArrayList<>();
   @NotNull private final Map<HighlightDisplayKey, CommitMessageInspectionDetails> myToolDetails = new HashMap<>();
   @NotNull private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group("");
   private InspectionProfileModifiableModel myModifiableModel;
-  private InspectionsConfigTreeTable myInspectionsTable;
+  private final InspectionsConfigTreeTable myInspectionsTable;
   private final Wrapper myDetailsPanel = new Wrapper() {
     @Override
     public boolean isNull() {
@@ -53,15 +52,22 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
 
   public CommitMessageInspectionsPanel(@NotNull Project project) {
     myProject = project;
-    myProfile = CommitMessageInspectionProfile.getInstance(myProject);
 
-    resetProfileModel();
-    init();
+    myModifiableModel = createProfileModel();
+    myInspectionsTable = createInspectionsTable();
+
+    JBSplitter splitter = new JBSplitter("CommitMessageInspectionsPanelSplitter", 0.5f);
+    splitter.setShowDividerIcon(false);
+    splitter.setFirstComponent(myInspectionsTable);
+    splitter.setSecondComponent(myDetailsPanel);
+    addToCenter(splitter);
     setPreferredSize(JBUI.size(650, 120));
   }
 
-  private void resetProfileModel() {
-    myModifiableModel = new InspectionProfileModifiableModel(myProfile);
+  @NotNull
+  private InspectionProfileModifiableModel createProfileModel() {
+    CommitMessageInspectionProfile profile = CommitMessageInspectionProfile.getInstance(myProject);
+    return new InspectionProfileModifiableModel(profile);
   }
 
   private void initToolDescriptors() {
@@ -79,20 +85,16 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     TreeUtil.sortRecursively(myRoot, InspectionsConfigTreeComparator.INSTANCE);
   }
 
-  private void init() {
-    myInspectionsTable = InspectionsConfigTreeTable.create(new MyInspectionsTableSettings(myRoot, myProject), this);
-    myInspectionsTable.setRootVisible(false);
-    myInspectionsTable.setTreeCellRenderer(new MyInspectionsTreeRenderer());
-    myInspectionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myInspectionsTable.getTree().getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    myInspectionsTable.getTree().addTreeSelectionListener(e -> updateDetailsPanel());
-    myInspectionsTable.setBorder(IdeBorderFactory.createBorder());
-
-    JBSplitter splitter = new JBSplitter("CommitMessageInspectionsPanelSplitter", 0.5f);
-    splitter.setShowDividerIcon(false);
-    splitter.setFirstComponent(myInspectionsTable);
-    splitter.setSecondComponent(myDetailsPanel);
-    addToCenter(splitter);
+  @NotNull
+  private InspectionsConfigTreeTable createInspectionsTable() {
+    InspectionsConfigTreeTable table = InspectionsConfigTreeTable.create(new MyInspectionsTableSettings(myRoot, myProject), this);
+    table.setRootVisible(false);
+    table.setTreeCellRenderer(new MyInspectionsTreeRenderer());
+    table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    table.getTree().getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    table.getTree().addTreeSelectionListener(e -> updateDetailsPanel());
+    table.setBorder(IdeBorderFactory.createBorder());
+    return table;
   }
 
   private void updateDetailsPanel() {
@@ -143,7 +145,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
   public void reset() {
     myToolDetails.clear();
     myModifiableModel.getAllTools().forEach(ScopeToolState::resetConfigPanel);
-    resetProfileModel();
+    myModifiableModel = createProfileModel();
     initToolDescriptors();
 
     TreeState state = TreeState.createOn(myInspectionsTable.getTree(), myRoot);

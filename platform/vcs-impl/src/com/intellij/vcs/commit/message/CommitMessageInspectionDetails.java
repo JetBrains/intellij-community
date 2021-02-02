@@ -4,7 +4,6 @@ package com.intellij.vcs.commit.message;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -17,12 +16,11 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.EventListener;
 
 import static com.intellij.ui.GuiUtils.enableChildren;
@@ -33,10 +31,9 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
   @NotNull private final InspectionProfileImpl myProfile;
   @NotNull private final Descriptor myDefaultDescriptor;
   @NotNull private final ScopeToolState myToolState;
-  private JPanel mySeverityChooserPanel;
-  private LevelChooserAction mySeverityChooser;
-  private JComponent myMainPanel;
-  private ConfigurableUi<Project> myOptionsConfigurable;
+  private final LevelChooserAction mySeverityChooser;
+  private final ConfigurableUi<Project> myOptionsConfigurable;
+  private final CommitMessageInspectionDetailsPanel myMainPanel;
 
   @NotNull private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
@@ -48,7 +45,15 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
     myDefaultDescriptor = defaultDescriptor;
     myToolState = myDefaultDescriptor.getState();
 
-    init();
+    mySeverityChooser = new MySeverityChooser(myProfile.getProfileManager().getSeverityRegistrar());
+    JComponent severityPanel = mySeverityChooser.createCustomComponent(mySeverityChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
+
+    BaseCommitMessageInspection tool = ObjectUtils.tryCast(myToolState.getTool().getTool(), BaseCommitMessageInspection.class);
+    myOptionsConfigurable = tool != null ? tool.createOptionsConfigurable() : null;
+    JComponent options = myOptionsConfigurable != null ? myOptionsConfigurable.getComponent() : myToolState.getAdditionalConfigPanel();
+
+    myMainPanel = new CommitMessageInspectionDetailsPanel(severityPanel, options);
+
     reset();
   }
 
@@ -59,7 +64,7 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
 
   public void update() {
     mySeverityChooser.setChosen(ScopesAndSeveritiesTable.getSeverity(singletonList(myToolState)));
-    enableChildren(myToolState.isEnabled(), myMainPanel);
+    enableChildren(myToolState.isEnabled(), myMainPanel.getComponent());
   }
 
   public void addListener(@NotNull ChangeListener listener) {
@@ -69,7 +74,7 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
   @NotNull
   @Override
   public JComponent createComponent() {
-    return myMainPanel;
+    return myMainPanel.getComponent();
   }
 
   @Override
@@ -89,36 +94,6 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
     if (myOptionsConfigurable != null) {
       myOptionsConfigurable.reset(myProject);
     }
-  }
-
-  private void init() {
-    mySeverityChooser = new MySeverityChooser(myProfile.getProfileManager().getSeverityRegistrar());
-    mySeverityChooserPanel.add(mySeverityChooser.createCustomComponent(
-      mySeverityChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN), BorderLayout.CENTER);
-
-    InspectionProfileEntry tool = myToolState.getTool().getTool();
-    if (tool instanceof BaseCommitMessageInspection) {
-      myOptionsConfigurable = ((BaseCommitMessageInspection)tool).createOptionsConfigurable();
-    }
-
-    JComponent options = myOptionsConfigurable != null ? myOptionsConfigurable.getComponent() : myToolState.getAdditionalConfigPanel();
-    if (options != null) {
-      myMainPanel.add(options, createOptionsPanelConstraints());
-    }
-  }
-
-  @NotNull
-  private static GridConstraints createOptionsPanelConstraints() {
-    GridConstraints result = new GridConstraints();
-
-    result.setRow(1);
-    result.setColumn(0);
-    result.setRowSpan(1);
-    result.setColSpan(2);
-    result.setAnchor(GridConstraints.ANCHOR_NORTHWEST);
-    result.setUseParentLayout(true);
-
-    return result;
   }
 
   private class MySeverityChooser extends LevelChooserAction {
