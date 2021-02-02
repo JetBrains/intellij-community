@@ -301,6 +301,7 @@ class JBZipOutputStream {
     raf.seek(offset);
     raf.write(ZipLong.getBytes(crc));
     raf.write(ZipLong.getBytes(compressedSize));
+    raf.write(ZipLong.getBytes(ze.getSize()));
 
     raf.seek(extra.offset);
     byte[] extraData = ze.getLocalFileHeaderDataExtra();
