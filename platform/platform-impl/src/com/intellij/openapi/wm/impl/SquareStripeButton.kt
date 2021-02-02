@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ide.HelpTooltip
+import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
@@ -26,6 +28,17 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
         showPopup(component, x, y)
       }
     })
+    updateHelpTooltip(button)
+  }
+
+  private fun updateHelpTooltip(button: StripeButton) {
+    HelpTooltip.dispose(this)
+    HelpTooltip().apply {
+      setTitle(button.toolWindow.stripeTitle)
+      setShortcut(ActionManager.getInstance().getKeyboardShortcut(
+        ActivateToolWindowAction.getActionIdForToolWindow(button.toolWindow.getId())))
+      installOn(this@SquareStripeButton)
+    }
   }
 
   private fun showPopup(component: Component?, x: Int, y: Int) {
