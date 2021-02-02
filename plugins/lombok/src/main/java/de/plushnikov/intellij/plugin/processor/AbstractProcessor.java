@@ -85,10 +85,8 @@ public abstract class AbstractProcessor implements Processor {
       return;
     }
 
-    Collection<String> annotationsToAdd = LombokProcessorUtil.getOnX(processedAnnotation, onXParameterName);
-    for (String annotation : annotationsToAdd) {
-      modifierList.addAnnotation(annotation);
-    }
+    Iterable<String> annotationsToAdd = LombokProcessorUtil.getOnX(processedAnnotation, onXParameterName);
+    annotationsToAdd.forEach(modifierList::addAnnotation);
   }
 
   @Override

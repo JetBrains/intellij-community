@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -114,7 +113,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return this;
   }
 
-  public LombokLightMethodBuilder withAnnotations(Collection<String> annotations) {
+  public LombokLightMethodBuilder withAnnotations(Iterable<String> annotations) {
     final PsiModifierList modifierList = getModifierList();
     annotations.forEach(modifierList::addAnnotation);
     return this;

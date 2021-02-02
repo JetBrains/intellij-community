@@ -315,7 +315,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       }
     }
 
-    constructorBuilder.withAnnotations(LombokProcessorUtil.getOnX(psiAnnotation, "onConstructor"));
+    Iterable<String> annotationsToAdd = LombokProcessorUtil.getOnX(psiAnnotation, "onConstructor");
+    annotationsToAdd.forEach(constructorBuilder::withAnnotation);
 
     if (!useJavaDefaults) {
       final Iterator<String> fieldNameIterator = fieldNames.iterator();
