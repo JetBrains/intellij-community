@@ -9,6 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -51,6 +52,13 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
   @Override
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
     return myModifierList.hasModifierProperty(name);
+  }
+
+  @Nullable
+  @Override
+  public PsiFile getContainingFile() {
+    PsiClass containingClass = getContainingClass();
+    return containingClass != null ? containingClass.getContainingFile() : null;
   }
 
   public LombokLightFieldBuilder withContainingClass(PsiClass psiClass) {
