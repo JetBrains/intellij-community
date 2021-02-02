@@ -25,7 +25,6 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   protected final AtomicLong myModificationStamp = new AtomicLong();
   protected final DataIndexer<Key, Value, Input> myIndexer;
-  private final @Nullable ValueSerializationChecker<Value> myValueSerializationChecker;
+  private final @Nullable ValueSerializationChecker<Value, Input> myValueSerializationChecker;
   private final @NotNull IndexExtension<Key, Value, Input> myExtension;
 
   private final ForwardIndex myForwardIndex;
@@ -312,7 +311,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
     Map<Key, Value> data = mapByIndexer(inputId,  content);
     if (myValueSerializationChecker != null) {
-      myValueSerializationChecker.checkValuesHaveProperEqualsAndHashCode(data);
+      myValueSerializationChecker.checkValuesHaveProperEqualsAndHashCode(data, content);
     }
     checkCanceled();
     return new InputData<>(data);

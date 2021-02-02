@@ -14,7 +14,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Map;
 
-class ValueSerializationChecker<Value> {
+class ValueSerializationChecker<Value, Input> {
   private static final Logger LOG = Logger.getInstance(ValueSerializationChecker.class);
 
   private final @NotNull DataExternalizer<Value> myValueExternalizer;
@@ -25,7 +25,7 @@ class ValueSerializationChecker<Value> {
     myIndexId = extension.getName();
   }
 
-  void checkValuesHaveProperEqualsAndHashCode(@NotNull Map<?, Value> data) {
+  void checkValuesHaveProperEqualsAndHashCode(@NotNull Map<?, Value> data, @NotNull Input input) {
     for (Map.Entry<?, Value> e : data.entrySet()) {
       final Value value = e.getValue();
       if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
@@ -41,7 +41,10 @@ class ValueSerializationChecker<Value> {
           myValueExternalizer.read(new DataInputStream(out.toInputStream()));
 
         if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
-          LOG.error("Index " + myIndexId + " deserialization violates equals / hashCode contract for Value parameter");
+          LOG.error(("Index " + myIndexId + " deserialization violates equals / hashCode contract for Value parameter") +
+                    " while indexing " + input +
+                    ". Original value: '" + value +
+                    "'; Deserialized value: '" + deserializedValue + "'");
         }
       }
       catch (IOException ex) {
