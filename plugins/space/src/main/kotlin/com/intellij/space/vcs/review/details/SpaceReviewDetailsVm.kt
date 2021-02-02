@@ -210,7 +210,7 @@ internal class MergeRequestDetailsVm(
     val allBranches = gitRepository.branches
 
     val remoteBranch = allBranches.remoteBranches
-      .find { remoteBranch -> remoteBranch.nameForRemoteOperations == branch.displayName }
+      .find { remoteBranch -> remoteBranch.nameForRemoteOperations == branch.displayName } ?: return null
 
     return allBranches.localBranches
       .firstOrNull { it.findTrackedBranch(gitRepository) == remoteBranch }
