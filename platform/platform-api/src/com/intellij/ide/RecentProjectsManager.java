@@ -66,4 +66,6 @@ public abstract class RecentProjectsManager {
   public abstract boolean willReopenProjectOnStart();
 
   public abstract boolean reopenLastProjectsOnStart();
+
+  public abstract @NotNull String suggestNewProjectLocation();
 }

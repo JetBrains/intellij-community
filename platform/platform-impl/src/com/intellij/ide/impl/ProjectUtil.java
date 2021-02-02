@@ -509,7 +509,7 @@ public final class ProjectUtil {
     }
   }
 
-  public static String getBaseDir() {
+  public static @NotNull String getBaseDir() {
     String defaultDirectory = GeneralSettings.getInstance().getDefaultProjectDirectory();
     if (Strings.isNotEmpty(defaultDirectory)) {
       return defaultDirectory.replace('/', File.separatorChar);
