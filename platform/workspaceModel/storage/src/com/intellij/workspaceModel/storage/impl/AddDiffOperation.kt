@@ -81,7 +81,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         }
       }
     }
-    target.indexes.applyExternalMappingChanges(diff, replaceMap)
+    target.indexes.applyExternalMappingChanges(diff, replaceMap, target)
 
     // Assert consistency
     target.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, target)
