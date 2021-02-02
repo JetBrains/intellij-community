@@ -47,7 +47,6 @@ class KotlinConfigurationCheckerStartupActivity : StartupActivity {
             notifyOutdatedBundledCompilerIfNecessary(project)
         })
 
-        notifyNewJVMBackendIfNeeded(project)
         KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
     }
 }
