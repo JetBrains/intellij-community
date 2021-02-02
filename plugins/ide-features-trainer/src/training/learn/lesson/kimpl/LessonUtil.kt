@@ -74,6 +74,15 @@ object LessonUtil {
   }
 
   /**
+   * Checks that user edited sample text, moved caret to any place of editor or changed selection
+   */
+  fun TaskContext.restoreIfModified(sample: LessonSample? = null) {
+    proposeRestore {
+      checkExpectedStateOfEditor(sample ?: previous.sample, false)
+    }
+  }
+
+  /**
    * Checks that user edited sample text or moved caret outside of [possibleCaretArea] text
    */
   fun TaskContext.restoreIfModifiedOrMovedIncorrectly(possibleCaretArea: String, sample: LessonSample? = null) {
