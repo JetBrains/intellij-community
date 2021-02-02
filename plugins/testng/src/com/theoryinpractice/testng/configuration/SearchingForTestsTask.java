@@ -8,7 +8,6 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +41,6 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   private static final Logger LOG = Logger.getInstance(SearchingForTestsTask.class);
   protected final Map<PsiClass, Map<PsiMethod, List<String>>> myClasses;
   private final TestData myData;
-  private final Project myProject;
   private final TestNGConfiguration myConfig;
   private final File myTempFile;
 
@@ -51,7 +49,6 @@ public class SearchingForTestsTask extends SearchForTestsTask {
                                File tempFile) {
     super(config.getProject(), serverSocket);
     myData = config.getPersistantData();
-    myProject = config.getProject();
     myConfig = config;
     myTempFile = tempFile;
     myClasses = new LinkedHashMap<>();
@@ -134,8 +131,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         logLevel = Integer.parseInt(verbose);
       }
     }
-    catch (Exception e) { //not a number
-      logLevel = 1;
+    catch (Exception ignore) { //not a number
     }
 
     File xmlFile;
@@ -228,7 +224,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         final String fileId =
           FileUtil.sanitizeFileName(myProject.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml");
         final File suiteFile = new File(PathManager.getSystemPath(), fileId);
-        FileWriter fileWriter = new FileWriter(suiteFile);
+        FileWriter fileWriter = new FileWriter(suiteFile, StandardCharsets.UTF_8);
         try {
           fileWriter.write(suite.toXml());
         }
@@ -246,10 +242,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
 
   protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes)
     throws CantRunException {
-    final TestNGTestObject testObject = TestNGTestObject.fromConfig(myConfig);
-    if (testObject != null) {
-      testObject.fillTestObjects(classes);
-    }
+    TestNGTestObject.fromConfig(myConfig).fillTestObjects(classes);
   }
 
   private Map<String, String> buildTestParameters() {
@@ -263,9 +256,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         Properties properties = new Properties();
         try {
           properties.load(new FileInputStream(propertiesFile));
-          for (Map.Entry entry : properties.entrySet()) {
-            testParams.put((String)entry.getKey(), (String)entry.getValue());
-          }
+          properties.forEach((key, value) -> testParams.put((String)key, (String)value));
 
         }
         catch (IOException e) {
