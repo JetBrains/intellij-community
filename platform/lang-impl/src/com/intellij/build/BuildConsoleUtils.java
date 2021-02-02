@@ -178,17 +178,15 @@ public final class BuildConsoleUtils {
   }
 
   private static class MyDelegatingDataContext implements DataContext {
-    private final AtomicNotNullLazyValue<DataContext> mDelegatedDataContextValue;
-    private final BuildView myBuildView;
+    private final AtomicNotNullLazyValue<DataContext> myDelegatedDataContextValue;
 
     private MyDelegatingDataContext(@NotNull BuildView buildView) {
-      myBuildView = buildView;
-      mDelegatedDataContextValue = AtomicNotNullLazyValue.createValue(() -> DataManager.getInstance().getDataContext(myBuildView));
+      myDelegatedDataContextValue = AtomicNotNullLazyValue.createValue(() -> DataManager.getInstance().getDataContext(buildView));
     }
 
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
-      return mDelegatedDataContextValue.getValue().getData(dataId);
+      return myDelegatedDataContextValue.getValue().getData(dataId);
     }
   }
 }
