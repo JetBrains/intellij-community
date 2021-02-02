@@ -10,27 +10,44 @@ import com.intellij.util.SlowOperations
 /**
  * Creates InlayPresentation for given PsiType.
  * @param myFoldingLevel level at which generics will be shown as placeholders, so they require click to expand it.
+ * @param maxLength length of the text after which everything will be folded
  */
-class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactory, private val myFoldingLevel: Int) {
-  fun typeHint(type: PsiType): InlayPresentation = myFactory.roundWithBackground(hint(type, 0))
+class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactory, private val myFoldingLevel: Int, private val maxLength: Int = DEFAULT_LENGTH) {
+  fun typeHint(type: PsiType): InlayPresentation = myFactory.roundWithBackground(hint(type, 0, Context(maxLength)))
 
-  private fun hint(type: PsiType, level: Int): InlayPresentation = when (type) {
-    is PsiArrayType -> myFactory.seq(hint(type.componentType, level), myFactory.smallText("[]"))
-    is PsiClassType -> classTypeHint(type, level)
-    is PsiCapturedWildcardType -> myFactory.seq(myFactory.smallText("capture of "), hint(type.wildcard, level))
-    is PsiWildcardType -> wildcardHint(type, level)
-    is PsiEllipsisType -> myFactory.seq(hint(type.componentType, level), myFactory.smallText("..."))
-    is PsiDisjunctionType -> join(type.disjunctions.map { hint(it, level) }, " | ")
-    is PsiIntersectionType -> join(type.conjuncts.map { hint(it, level) }, " & ")
-    else -> myFactory.smallText(type.presentableText)
+  private val captureOfLabel = "capture of "
+
+  private fun hint(type: PsiType, level: Int, context: Context): InlayPresentation = when (type) {
+    is PsiArrayType -> {
+      context.lengthAvailable -= 2
+      myFactory.seq(hint(type.componentType, level, context), myFactory.smallText("[]"))
+    }
+    is PsiClassType -> classTypeHint(type, level, context)
+    is PsiCapturedWildcardType -> myFactory.seq(myFactory.smallText(captureOfLabel), hint(type.wildcard, level, context))
+    is PsiWildcardType -> wildcardHint(type, level, context)
+    is PsiEllipsisType -> {
+      context.lengthAvailable -= 3
+      myFactory.seq(hint(type.componentType, level, context), myFactory.smallText("..."))
+    }
+    is PsiDisjunctionType -> {
+      context.lengthAvailable -= 3
+      join(type.disjunctions.map { hint(it, level, context) }, " | ", context)
+    }
+    is PsiIntersectionType -> {
+      context.lengthAvailable -= 3
+      join(type.conjuncts.map { hint(it, level, context) }, " & ", context)
+    }
+    else -> {
+      myFactory.smallText(type.presentableText)
+    }
   }
 
-  private fun classTypeHint(classType: PsiClassType, level: Int): InlayPresentation {
+  private fun classTypeHint(classType: PsiClassType, level: Int, context: Context): InlayPresentation {
     val qualifierPresentation = when (val aClass = classType.resolve()) {
       null -> null
       else -> when (val qualifier = aClass.containingClass) {
         null -> null
-        else -> classHint(qualifier, level)
+        else -> classHint(qualifier, level, context)
       }
     }
 
@@ -42,90 +59,96 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
         return className
       }
       else {
-        return joinWithDot(qualifierPresentation, className)
+        return joinWithDot(qualifierPresentation, className, context)
       }
     }
-    val presentations = mutableListOf(joinWithDot(qualifierPresentation, className))
+    val presentations = mutableListOf(joinWithDot(qualifierPresentation, className, context))
     val collapsible = myFactory.collapsible(
       prefix = myFactory.smallText("<"),
       collapsed = myFactory.smallText(PLACEHOLDER_MARK),
-      expanded = { parametersHint(classType, level) },
+      expanded = { parametersHint(classType, level, context) },
       suffix = myFactory.smallText(">"),
-      startWithPlaceholder = level > myFoldingLevel
+      startWithPlaceholder = level > myFoldingLevel || context.lengthAvailable <= 5
     )
     presentations.add(collapsible)
     return SequencePresentation(presentations)
   }
 
-  private fun parametersHint(classType: PsiClassType, level: Int): InlayPresentation {
+  private fun parametersHint(classType: PsiClassType, level: Int, context: Context): InlayPresentation {
     return SlowOperations.allowSlowOperations<InlayPresentation, Throwable> {
-      join(classType.parameters.map { hint(it, level + 1) }, ", ")
+      context.lengthAvailable -= 2
+      join(classType.parameters.map { hint(it, level + 1, context) }, ", ", context)
     }
   }
 
-  private fun classHint(aClass: PsiClass, level: Int): InlayPresentation? {
+  private fun classHint(aClass: PsiClass, level: Int, context: Context): InlayPresentation? {
     if (aClass.name == null) return null
     val containingClass = aClass.containingClass
     val containingClassPresentation = when {
-      containingClass != null -> classHint(containingClass, level)
+      containingClass != null -> classHint(containingClass, level, context)
       else -> null
     }
 
-    val className = reference(aClass)
+    val className = reference(aClass, context)
     if (!aClass.hasTypeParameters()) {
       return if (containingClassPresentation != null) {
+        context.lengthAvailable -= 1
         myFactory.seq(containingClassPresentation, myFactory.smallText("."), className)
       }
       else {
         className
       }
     }
-    val presentations = mutableListOf(joinWithDot(containingClassPresentation, className))
+    val presentations = mutableListOf(joinWithDot(containingClassPresentation, className, context))
     presentations.add(with(myFactory) {
+      context.lengthAvailable -= 2
       collapsible(
         prefix = smallText("<"),
         collapsed = smallText(PLACEHOLDER_MARK),
-        expanded = { join(aClass.typeParameters.map { reference(it) }, ", ") },
+        expanded = { join(aClass.typeParameters.map { reference(it, context) }, ", ", context) },
         suffix = smallText(">"),
-        startWithPlaceholder = false
+        startWithPlaceholder = level > myFoldingLevel || context.lengthAvailable <= 5
       )
     })
     return SequencePresentation(presentations)
   }
 
-  private fun reference(named: PsiNamedElement): InlayPresentation {
+  private fun reference(named: PsiNamedElement, context: Context): InlayPresentation {
     val pointer = SmartPointerManager.createPointer(named)
-    return myFactory.psiSingleReference(getName(named), resolve = { pointer.element })
+    return myFactory.psiSingleReference(getName(named, context), resolve = { pointer.element })
   }
 
 
-  private fun wildcardHint(wildcardType: PsiWildcardType, level: Int): InlayPresentation {
+  private fun wildcardHint(wildcardType: PsiWildcardType, level: Int, context: Context): InlayPresentation {
     val (type, bound) = when {
       wildcardType.isExtends -> "extends" to wildcardType.extendsBound
       wildcardType.isSuper -> "super" to wildcardType.superBound
       else -> return myFactory.smallText("?")
     }
-    return myFactory.seq(myFactory.smallText("? $type "), hint(bound, level))
+    return myFactory.seq(myFactory.smallText("? $type "), hint(bound, level, context))
   }
 
-  private fun joinWithDot(first: InlayPresentation?, second: InlayPresentation): InlayPresentation {
+  private fun joinWithDot(first: InlayPresentation?, second: InlayPresentation, context: Context): InlayPresentation {
     if (first == null) {
       return second
     }
+    context.lengthAvailable -= 1
     return myFactory.seq(first, myFactory.smallText("."), second)
   }
 
-  private fun getName(element: PsiNamedElement): InlayPresentation {
-    return myFactory.smallText(element.name ?: ANONYMOUS_MARK)
-
+  private fun getName(element: PsiNamedElement, context: Context): InlayPresentation {
+    val text = element.name ?: ANONYMOUS_MARK
+    context.lengthAvailable -= text.length
+    return myFactory.smallText(text)
   }
 
-  private fun join(presentations: Iterable<InlayPresentation>, text: String) : InlayPresentation {
+  private fun join(presentations: Iterable<InlayPresentation>, separator: String, context: Context) : InlayPresentation {
     val seq = mutableListOf<InlayPresentation>()
     var first = true
     for (presentation in presentations) {
       if (!first) {
-        seq.add(myFactory.smallText(text))
+        context.lengthAvailable -= separator.length
+        seq.add(myFactory.smallText(separator))
       }
       seq.add(presentation)
       first = false
@@ -142,11 +165,15 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
 
     @JvmStatic
     fun presentationWithColon(type: PsiType, factory: PresentationFactory): InlayPresentation {
-      val presentations = JavaTypeHintsPresentationFactory(factory, 3).hint(type, 0)
+      val presentations = JavaTypeHintsPresentationFactory(factory, 3).hint(type, 0, Context(DEFAULT_LENGTH))
       return factory.roundWithBackground(factory.seq(factory.smallText(": "), presentations))
     }
 
     private const val ANONYMOUS_MARK = "anonymous"
     private const val PLACEHOLDER_MARK = "..."
+    private const val DEFAULT_LENGTH = 15
   }
+
+  // Quite hacky
+  private class Context(var lengthAvailable: Int)
 }
