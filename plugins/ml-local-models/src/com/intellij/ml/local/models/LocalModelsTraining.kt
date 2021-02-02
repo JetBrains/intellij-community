@@ -6,6 +6,7 @@ import com.intellij.ml.local.models.api.LocalModelBuilder
 import com.intellij.ml.local.models.api.LocalModelFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -25,6 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 
 object LocalModelsTraining {
+  private val LOG = logger<LocalModelsTraining>()
+
   @Volatile private var isTraining = false
 
   fun isTraining(): Boolean = isTraining
@@ -37,13 +40,16 @@ object LocalModelsTraining {
       override fun run(indicator: ProgressIndicator) {
         val files = getFiles(project, fileType)
         val factories = LocalModelFactory.forLanguage(language)
-        val builders = factories.map { it.modelBuilder(project, language) }
-        builders.forEach { it.onStarted() }
-        processFiles(files, builders, project, indicator)
-        builders.forEach { it.onFinished() }
-        builders.forEach {
-          it.build()?.let {
-            modelsManager.registerModel(language, it)
+        val id2builder = factories.associate { it.id to it.modelBuilder(project, language) }
+        id2builder.forEach { it.value.onStarted() }
+        val ids = id2builder.keys.joinToString(", ")
+        LOG.info("Local models training started for language ${language.id} and models: $ids")
+        processFiles(files, id2builder, project, indicator)
+        id2builder.forEach { it.value.onFinished() }
+        LOG.info("Local models training finished for language ${language.id} and models: $ids")
+        id2builder.forEach {
+          it.value.build()?.let { model ->
+            modelsManager.registerModel(language, model)
           }
         }
       }
@@ -55,7 +61,8 @@ object LocalModelsTraining {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
   }
 
-  private fun processFiles(files: List<VirtualFile>, modelBuilders: List<LocalModelBuilder>, project: Project, indicator: ProgressIndicator) {
+  private fun processFiles(files: List<VirtualFile>, modelBuilders: Map<String, LocalModelBuilder>, project: Project,
+                           indicator: ProgressIndicator) {
     val dumbService = DumbService.getInstance(project)
     val psiManager = PsiManager.getInstance(project)
     val executorService = Executors.newFixedThreadPool((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1))
@@ -68,8 +75,12 @@ object LocalModelsTraining {
       executorService.submit {
         dumbService.runReadActionInSmartMode {
           psiManager.findFile(file)?.let { psiFile ->
-            for (model in modelBuilders.map { it.fileVisitor() }) {
-              psiFile.accept(model)
+            for (id2builder in modelBuilders) {
+              try {
+                psiFile.accept(id2builder.value.fileVisitor())
+              } catch (e: Throwable) {
+                LOG.error("Local model training error. Model: ${id2builder.key}. File: ${file.path}.", e)
+              }
             }
           }
           indicator.fraction = processed.incrementAndGet().toDouble() / files.size

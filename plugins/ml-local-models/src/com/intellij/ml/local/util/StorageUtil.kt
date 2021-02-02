@@ -3,12 +3,14 @@ package com.intellij.ml.local.util
 import com.google.gson.Gson
 import com.intellij.lang.Language
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.*
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
 object StorageUtil {
+  private val LOG = logger<StorageUtil>()
   private val GSON by lazy { Gson() }
 
   private const val STORAGE_INFO_FILE = "info.json"
@@ -16,8 +18,12 @@ object StorageUtil {
   private fun readInfo(storageDirectory: Path): StorageInfo? {
     val infoFile = storageDirectory.resolve(STORAGE_INFO_FILE)
     if (!infoFile.exists()) return null
-
-    return GSON.fromJson(infoFile.readText(), StorageInfo::class.java)
+    return try {
+      GSON.fromJson(infoFile.readText(), StorageInfo::class.java)
+    } catch (e: Throwable) {
+      LOG.error(e)
+      null
+    }
   }
 
   fun storagePath(project: Project, language: Language): Path =
