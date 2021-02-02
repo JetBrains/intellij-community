@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.model.SymbolResolveResult;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -14,10 +16,13 @@ import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -180,7 +185,39 @@ public class ResolveCache implements Disposable {
     return results == null ? ResolveResult.EMPTY_ARRAY : results;
   }
 
-  private static <TRef, TResult> TResult resolve(
+  @ApiStatus.Experimental
+  public interface PsiSymbolReferenceResolver<@NotNull R extends PsiSymbolReference> {
+    @NotNull Collection<? extends @NotNull SymbolResolveResult> resolve(R reference);
+  }
+
+  @ApiStatus.Experimental
+  public <@NotNull R extends PsiSymbolReference>
+  @NotNull Collection<? extends @NotNull SymbolResolveResult> resolveWithCaching(
+    R ref,
+    @NotNull PsiSymbolReferenceResolver<? super R> resolver
+  ) {
+    return resolveWithCaching(ref, true, resolver);
+  }
+
+  @ApiStatus.Experimental
+  public <@NotNull R extends PsiSymbolReference>
+  @NotNull Collection<? extends @NotNull SymbolResolveResult> resolveWithCaching(
+    R ref,
+    boolean preventRecursion,
+    @NotNull PsiSymbolReferenceResolver<? super R> resolver
+  ) {
+    ProgressIndicatorProvider.checkCanceled();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    boolean physical = ref.getElement().isPhysical();
+    int index = getIndex(false, true);
+    Collection<? extends SymbolResolveResult> results = resolve(
+      ref, getMap(physical, index), preventRecursion,
+      () -> resolver.resolve(ref)
+    );
+    return results == null ? Collections.emptyList() : results;
+  }
+
+  private static <TRef, TResult> @Nullable TResult resolve(
     @NotNull TRef ref,
     @NotNull Map<TRef, TResult> cache,
     boolean preventRecursion,
