@@ -17,17 +17,18 @@ public interface Injection {
   String getInjectedLanguageId();
 
   /**
-   * @return a the code of the injected language, which is "implied" be a prefix of the code in the host literal
-   *
-   * For instance for the code "{@code String div = "<div>some html</div>";}" the prefix could be "{@code <html><body>}"
+   * @return a string (in the injected language), which is prepended to the code in the host literal to form a parseable code fragment.
+   * For instance, having the code {@code String div = "<div>some html</div>";} we could inject HTML language there
+   * with the prefix = {@code "<html><body>"} and the suffix = {@code "</body></html>"}
+   * to form correct HTML fragment:  {@code <html><body><div>some html</div></body></html>}
+   * @see #getSuffix()
    */
   @NotNull
   String getPrefix();
 
   /**
-   * @return a the code of the injected language, which is "implied" be a suffix of the code in the host literal
-   *
-   * For instance for the code "{@code String div = "<div>some html</div>";}" the prefix could be "{@code </body></html>}"
+   * @return a string (in the injected language), which is appended to the code in the host literal to form a parseable code fragment.
+   * @see #getPrefix()
    */
   @NotNull
   String getSuffix();
