@@ -184,7 +184,13 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   fun addMessages(messageParts: List<MessagePart>, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
     val needToShow = lessonMessagePane.addMessage(messageParts, state)
     adjustMessagesArea()
-    if (scrollToNewMessages && state != LessonMessagePane.MessageState.INACTIVE && needToShow != null) {
+    if (state != LessonMessagePane.MessageState.INACTIVE) {
+      scrollToMessage(needToShow)
+    }
+  }
+
+  private fun scrollToMessage(needToShow: Rectangle?) {
+    if (scrollToNewMessages && needToShow != null) {
       lessonMessagePane.scrollRectToVisible(needToShow)
     }
   }
@@ -201,8 +207,9 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun resetMessagesNumber(number: Int) {
-    lessonMessagePane.resetMessagesNumber(number)
+    val needToShow = lessonMessagePane.resetMessagesNumber(number)
     adjustMessagesArea()
+    scrollToMessage(needToShow)
   }
 
   fun removeInactiveMessages(number: Int) {
@@ -302,7 +309,8 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun clearRestoreMessage() {
-    lessonMessagePane.clearRestoreMessages()
+    val needToShow = lessonMessagePane.clearRestoreMessages()
+    scrollToMessage(needToShow)
   }
 
   class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {

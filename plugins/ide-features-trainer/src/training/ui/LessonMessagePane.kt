@@ -145,9 +145,10 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     list.subList(startIdx, endIdx).clear()
   }
 
-  fun clearRestoreMessages() {
+  fun clearRestoreMessages(): Rectangle? {
     removeMessagesRange(0, restoreMessages.size, restoreMessages)
     redrawMessages()
+    return activeMessages.lastOrNull()?.let { getRectangleToScroll(it) }
   }
 
   fun removeInactiveMessages(number: Int) {
@@ -155,14 +156,14 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     redrawMessages()
   }
 
-  fun resetMessagesNumber(number: Int) {
+  fun resetMessagesNumber(number: Int): Rectangle? {
     val move = activeMessages.subList(number, activeMessages.size)
     move.forEach {
       it.state = MessageState.INACTIVE
     }
     inactiveMessages.addAll(0, move)
     move.clear()
-    clearRestoreMessages()
+    return clearRestoreMessages()
   }
 
   private fun insertText(text: String, attributeSet: AttributeSet) {
@@ -181,9 +182,14 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
 
     redrawMessages()
 
+    return getRectangleToScroll(lessonMessage)
+  }
+
+  private fun getRectangleToScroll(lessonMessage: LessonMessage): Rectangle? {
     val startRect = modelToView(lessonMessage.start) ?: return null
     val endRect = modelToView(lessonMessage.end - 1) ?: return null
-    return Rectangle(startRect.x, startRect.y, endRect.x + endRect.width - startRect.x, endRect.y + endRect.height - startRect.y + activeTaskInset*2)
+    return Rectangle(startRect.x, startRect.y, endRect.x + endRect.width - startRect.x,
+                     endRect.y + endRect.height - startRect.y + activeTaskInset * 2)
   }
 
   fun redrawMessages() {
