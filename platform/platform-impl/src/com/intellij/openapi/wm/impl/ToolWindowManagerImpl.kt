@@ -118,6 +118,17 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   companion object {
+    /**
+     * Setting this [client property][JComponent.putClientProperty] allows to specify 'effective' parent for a component which will be used
+     * to find a tool window to which component belongs (if any). This can prevent tool windows in non-default view modes (e.g. 'Undock')
+     * to close when focus is transferred to a component not in tool window hierarchy, but logically belonging to it (e.g. when component
+     * is added to the window's layered pane).
+     *
+     * @see ComponentUtil.putClientProperty
+     */
+    @JvmField
+    val PARENT_COMPONENT: Key<JComponent> = Key.create("tool.window.parent.component")
+
     @JvmStatic
     @ApiStatus.Internal
     fun getRegisteredMutableInfoOrLogError(decorator: InternalDecorator): WindowInfoImpl {
@@ -2119,7 +2130,7 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   val activeToolWindowComponent = activeToolWindow.getComponentIfInitialized()
   if (activeToolWindowComponent != null) {
     while (source != null && source !== activeToolWindowComponent) {
-      source = if (source.parent != null && source.parent is JComponent) source.parent as JComponent else null
+      source = ComponentUtil.getClientProperty(source, ToolWindowManagerImpl.PARENT_COMPONENT) ?: source.parent as? JComponent
     }
   }
   return source != null
