@@ -8,13 +8,12 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.space.components.SpaceWorkspaceComponent
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.space.vcs.SpaceProjectContext
-import libraries.coroutines.extra.LifetimeSource
 import runtime.reactive.property.mapInit
 
-internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware {
-  private val lifetime: LifetimeSource = LifetimeSource()
-
+internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware, LifetimedDisposable by LifetimedDisposableImpl() {
   override fun init(toolWindow: ToolWindow) {
     super.init(toolWindow)
 
