@@ -12,12 +12,21 @@
   <action id="FindUsages">
     <keyboard-shortcut first-keystroke="shift alt F"/>
   </action>
-  <action id="GotoImplementation">
-    <keyboard-shortcut first-keystroke="alt G"/>
-    <mouse-shortcut keystroke="ctrl alt button1"/>
+    <action id="GotoDeclaration">
+    <mouse-shortcut keystroke="control button1" />
+    <mouse-shortcut keystroke="button2" />
+    <keyboard-shortcut first-keystroke="alt g" />
   </action>
-  <action id="GotoRelated">
-    <keyboard-shortcut first-keystroke="shift alt G"/>
+  <action id="GotoImplementation">
+    <mouse-shortcut keystroke="control alt button1" />
+  </action>
+  <action id="ReSharperNavigateTo">
+    <keyboard-shortcut first-keystroke="alt back_quote" />
+    <keyboard-shortcut first-keystroke="alt dead_grave" />
+    <keyboard-shortcut first-keystroke="shift alt g" />
+  </action>
+  <action id="HighlightUsagesInFile">
+    <keyboard-shortcut first-keystroke="alt k" />
   </action>
   <action id="EditorSelectWord">
     <keyboard-shortcut first-keystroke="ctrl alt right" />
@@ -45,6 +54,11 @@
     <mouse-shortcut keystroke="button5" />
     <keyboard-shortcut first-keystroke="alt right" />
   </action>
+  <action id="RenameElement">
+    <keyboard-shortcut first-keystroke="shift alt r" />
+  </action>
+  <action id="GotoRelated" />
+  <action id="hg4idea.QGotoFromPatches" />
   <action id="NextTab" />
   <action id="PreviousTab" />
   <action id="Diff.NextChange" />
