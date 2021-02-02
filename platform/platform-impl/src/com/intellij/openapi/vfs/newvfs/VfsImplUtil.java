@@ -427,8 +427,8 @@ public final class VfsImplUtil {
         }
       }
       else if (local != null) {
-        // for "delete jar://x.jar!/" generate "delete x.jar", but
-        // for "delete jar://x.jar!/web.xml" generate "changed x.jar"
+        // for "delete jar://x.jar!/" generate "delete file://x.jar", but
+        // for "delete jar://x.jar!/web.xml" generate "changed file://x.jar"
         VFileEvent localJarDeleteEvent = file.getParent() == null ?
            new VFileDeleteEvent(event.getRequestor(), local, event.isFromRefresh()) :
            new VFileContentChangeEvent(event.getRequestor(), local, local.getModificationStamp(), local.getModificationStamp(), event.isFromRefresh());

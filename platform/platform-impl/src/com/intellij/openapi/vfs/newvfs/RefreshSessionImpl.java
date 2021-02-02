@@ -190,7 +190,7 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents(@NotNull List<? extends DisclosedVfsEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  void fireEvents(@NotNull List<? extends CompoundVFileEvent> events, @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers, boolean shouldRunNestedAppliers) {
     try {
       ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
@@ -202,7 +202,7 @@ final class RefreshSessionImpl extends RefreshSession {
             ((ProgressWindow) indicator).setDelayInMillis(progressThresholdMillis);
             long start = System.currentTimeMillis();
 
-            fireEventsInWriteAction(events, appliers);
+            fireEventsInWriteAction(events, appliers, shouldRunNestedAppliers);
 
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > progressThresholdMillis) {
@@ -218,13 +218,13 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  private void fireEventsInWriteAction(@NotNull List<? extends DisclosedVfsEvent> events,
-                                       @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  private void fireEventsInWriteAction(@NotNull List<? extends CompoundVFileEvent> events,
+                                       @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers, boolean shouldRunNestedAppliers) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
     try {
-      AsyncEventSupport.processEventsFromRefresh(events, appliers);
+      AsyncEventSupport.processEventsFromRefresh(events, appliers, shouldRunNestedAppliers);
     }
     catch (AssertionError e) {
       if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING.equals(e.getMessage())) {

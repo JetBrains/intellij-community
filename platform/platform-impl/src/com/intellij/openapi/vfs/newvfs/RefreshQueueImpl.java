@@ -71,7 +71,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private static void fireEventsSync(@NotNull RefreshSessionImpl session) {
-    session.fireEvents(ContainerUtil.map(session.getEvents(), e -> new DisclosedVfsEvent(e)), null);
+    session.fireEvents(ContainerUtil.map(session.getEvents(), e -> new CompoundVFileEvent(e)), Collections.emptyList(), true);
   }
 
   private void queueSessionAsync(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
@@ -99,7 +99,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  static boolean isAsyncEventProcessingEnabled() {
+  private static boolean isAsyncEventProcessingEnabled() {
     return Registry.is("vfs.async.event.processing");
   }
 
@@ -136,22 +136,22 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private static @NotNull Runnable runAsyncListeners(@NotNull RefreshSessionImpl session) {
-    List<DisclosedVfsEvent> events = ContainerUtil.mapNotNull(session.getEvents(), e -> {
+    List<CompoundVFileEvent> events = ContainerUtil.mapNotNull(session.getEvents(), e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
       if (file == null || file.isValid()) {
-        return new DisclosedVfsEvent(e);
+        return new CompoundVFileEvent(e);
       }
       return null;
     });
 
     List<VFileEvent> allEvents = ContainerUtil.flatMap(events, e -> {
-      SmartList<VFileEvent> toMap = new SmartList<>(e.getNestedFsFileEvents());
+      List<VFileEvent> toMap = new SmartList<>(e.getInducedEvents());
       toMap.add(e.getFileEvent());
       return toMap;
     });
 
     List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(allEvents);
-    return () -> session.fireEvents(events, appliers);
+    return () -> session.fireEvents(events, appliers, false);
   }
 
   private void executeRefreshSession(@NotNull RefreshSessionImpl session) {

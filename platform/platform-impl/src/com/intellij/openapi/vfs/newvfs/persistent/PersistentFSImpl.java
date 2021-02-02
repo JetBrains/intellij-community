@@ -847,7 +847,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   // E.g. "change(a/b/c/x.txt)" and "delete(a/b/c)" are conflicting because "a/b/c/x.txt" is under the "a/b/c" directory from the other event.
   //
   // returns index after the last grouped event.
-  private static int groupByPath(List<? extends DisclosedVfsEvent> events,
+  private static int groupByPath(List<? extends CompoundVFileEvent> events,
                                  int startIndex,
                                  @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
                                  @NotNull Set<? super String> middleDirsInvolved,
@@ -990,7 +990,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   // "outApplyActions" will contain handlers for applying the grouped events
   // "outValidatedEvents" will contain events for which VFileEvent.isValid() is true
   // return index after the last processed event
-  private int groupAndValidate(List<? extends DisclosedVfsEvent> events,
+  private int groupAndValidate(@NotNull List<? extends CompoundVFileEvent> events,
                                int startIndex,
                                @NotNull List<? super Runnable> outApplyActions,
                                @NotNull List<? super VFileEvent> outValidatedEvents,
@@ -1007,10 +1007,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     groupOthers(events, startIndex, endIndex, outValidatedEvents, outApplyActions);
 
     for (int i = startIndex; i < endIndex; i++) {
-      DisclosedVfsEvent event = events.get(i);
+      CompoundVFileEvent event = events.get(i);
 
       outApplyActions.addAll(event.getApplyActions());
-      for (VFileEvent jarDeleteEvent : event.getNestedFsFileEvents()) {
+      for (VFileEvent jarDeleteEvent : event.getInducedEvents()) {
         outApplyActions.add((Runnable)() -> applyEvent(jarDeleteEvent));
         outValidatedEvents.add(jarDeleteEvent);
       }
@@ -1051,7 +1051,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // find all VFileDeleteEvent events in [start..end)
   // group them by parent directory (can be null), filter out files which parent dir is to be deleted too, and return "applyDeletions()" runnable
-  private void groupDeletions(List<? extends DisclosedVfsEvent> events,
+  private void groupDeletions(@NotNull List<? extends CompoundVFileEvent> events,
                               int start,
                               int end,
                               @NotNull List<? super VFileEvent> outValidated,
@@ -1084,7 +1084,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // find events other than VFileCreateEvent or VFileDeleteEvent in [start..end)
   // validate and return "applyEvent()" runnable for each event because it's assumed there won't be too many of them
-  private void groupOthers(List<? extends DisclosedVfsEvent> events,
+  private void groupOthers(@NotNull List<? extends CompoundVFileEvent> events,
                            int start,
                            int end,
                            @NotNull List<? super VFileEvent> outValidated,
@@ -1100,10 +1100,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final int INNER_ARRAYS_THRESHOLD = 1024; // max initial size, to avoid OOM on million-events processing
   @Override
   public void processEvents(@NotNull List<? extends VFileEvent> events) {
-    processEventsImpl(ContainerUtil.map(events, e -> new DisclosedVfsEvent(e)));
+    processEventsImpl(ContainerUtil.map(events, e -> new CompoundVFileEvent(e)));
   }
 
-  public void processEventsImpl(@NotNull List<? extends DisclosedVfsEvent> events) {
+  @ApiStatus.Internal
+  public void processEventsImpl(@NotNull List<? extends CompoundVFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     int startIndex = 0;

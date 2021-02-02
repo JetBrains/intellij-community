@@ -19,7 +19,6 @@ import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,12 +31,11 @@ public final class AsyncEventSupport {
 
   @ApiStatus.Internal
   public static final ExtensionPointName<AsyncFileListener> EP_NAME = new ExtensionPointName<>("com.intellij.vfs.asyncListener");
-  private static final BooleanStack ourSuppressAppliers = new BooleanStack();
+  private static final BooleanStack ourRunAppliers = new BooleanStack();
 
-  static boolean shouldSuppressAppliers() {
+  static boolean shouldRunAppliers() {
     ApplicationManager.getApplication().assertIsWriteThread();
-    if (ourSuppressAppliers.isEmpty()) return false;
-    return ourSuppressAppliers.peek();
+    return ourRunAppliers.isEmpty() || ourRunAppliers.peek();
   }
 
   public static void startListening() {
@@ -46,7 +44,7 @@ public final class AsyncEventSupport {
 
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
-        if (shouldSuppressAppliers()) return;
+        if (!shouldRunAppliers()) return;
         List<AsyncFileListener.ChangeApplier> appliers = runAsyncListeners(events);
         appliersFromBefore = Pair.create(events, appliers);
         beforeVfsChange(appliers);
@@ -54,14 +52,13 @@ public final class AsyncEventSupport {
 
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (shouldSuppressAppliers()) return;
+        if (!shouldRunAppliers()) return;
         List<AsyncFileListener.ChangeApplier> appliers;
-        if (appliersFromBefore != null && appliersFromBefore.first.equals(events)) {
-          appliers = appliersFromBefore.second;
-        } else {
-          LOG.error("Unpaired VFS events: 'after' should be preceded by 'before' with the same events");
-          appliers = runAsyncListeners(events);
+        if (appliersFromBefore == null || !appliersFromBefore.first.equals(events)) {
+          LOG.error("Unpaired VFS events: 'after()' must be preceded by 'before()' with the same events");
+          before(events);
         }
+        appliers = appliersFromBefore.second;
         appliersFromBefore = null;
         afterVfsChange(appliers);
       }
@@ -103,7 +100,7 @@ public final class AsyncEventSupport {
     return appliers;
   }
 
-  private static void beforeVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  private static void beforeVfsChange(@NotNull List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       PingProgress.interactWithEdtProgress();
       try {
@@ -127,24 +124,17 @@ public final class AsyncEventSupport {
     }
   }
 
-  static void processEventsFromRefresh(@NotNull List<? extends DisclosedVfsEvent> events,
-                                       @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  static void processEventsFromRefresh(@NotNull List<? extends CompoundVFileEvent> events,
+                                       @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers, boolean shouldRunNestedAppliers) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (appliers != null) {
-      beforeVfsChange(appliers);
-      ourSuppressAppliers.push(true);
-    }
-    else {
-      ourSuppressAppliers.push(false);
-    }
+    beforeVfsChange(appliers);
+    ourRunAppliers.push(shouldRunNestedAppliers);
     try {
       ((PersistentFSImpl) PersistentFS.getInstance()).processEventsImpl(events);
     }
     finally {
-      ourSuppressAppliers.pop();
+      ourRunAppliers.pop();
     }
-    if (appliers != null) {
-      afterVfsChange(appliers);
-    }
+    afterVfsChange(appliers);
   }
 }
