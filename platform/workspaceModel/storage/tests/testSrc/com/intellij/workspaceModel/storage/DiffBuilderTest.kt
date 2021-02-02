@@ -294,7 +294,7 @@ class DiffBuilderTest {
     val target = createEmptyBuilder()
     val sampleEntity = target.addSampleEntity("Prop", MySource)
 
-    val source = WorkspaceEntityStorageBuilder.from(target)
+    val source = createBuilderFrom(target)
     source.changeSource(sampleEntity, AnotherSource)
 
     target.addDiff(source)
@@ -311,7 +311,7 @@ class DiffBuilderTest {
     val target = createEmptyBuilder()
     val sampleEntity = target.addSampleEntity("Prop", MySource)
 
-    val source = WorkspaceEntityStorageBuilder.from(target)
+    val source = createBuilderFrom(target)
     source.changeSource(sampleEntity, AnotherSource)
     source.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
       stringProperty = "Prop2"
@@ -335,7 +335,7 @@ class DiffBuilderTest {
     val target = createEmptyBuilder()
     val sampleEntity = target.addSampleEntity("Prop", MySource)
 
-    val source = WorkspaceEntityStorageBuilder.from(target)
+    val source = createBuilderFrom(target)
     target.changeSource(sampleEntity, AnotherSource)
 
     source.modifyEntity(ModifiableSampleEntity::class.java, sampleEntity) {
