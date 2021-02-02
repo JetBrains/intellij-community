@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNotNull
 import org.junit.Test
@@ -20,7 +19,7 @@ class SoftLinksTest {
     val newId = "MyNewId"
 
     // Setup builder for test
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     builder.addEntity(ModifiableWithSoftLinkEntity::class.java, MySource) {
       this.link = NameId(id)
     }
@@ -29,7 +28,7 @@ class SoftLinksTest {
     }
 
     // Change persistent id in a different builder
-    val newBuilder = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
+    val newBuilder = createBuilderFrom(builder.toStorage())
     val entity = newBuilder.resolve(NameId(id))!!
     newBuilder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
       this.name = newId
@@ -49,7 +48,7 @@ class SoftLinksTest {
     val newId = "MyNewId"
 
     // Setup builder for test
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     builder.addEntity(ModifiableWithSoftLinkEntity::class.java, MySource) {
       this.link = NameId(id)
     }
@@ -58,7 +57,7 @@ class SoftLinksTest {
     }
 
     // Change persistent id in a different builder
-    val newBuilder = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
+    val newBuilder = createBuilderFrom(builder.toStorage())
     val entity = newBuilder.resolve(NameId(id))!!
     newBuilder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
       this.name = newId
@@ -72,7 +71,7 @@ class SoftLinksTest {
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
 
     // Change persistent id to the initial value
-    val anotherNewBuilder = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
+    val anotherNewBuilder = createBuilderFrom(builder.toStorage())
     val anotherEntity = anotherNewBuilder.resolve(NameId(newId))!!
     anotherNewBuilder.modifyEntity(ModifiableNamedEntity::class.java, anotherEntity) {
       this.name = id
@@ -88,7 +87,7 @@ class SoftLinksTest {
 
   @Test
   fun `change persistent id part`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
     builder.addWithSoftLinkEntity(entity.persistentId())
 
@@ -103,7 +102,7 @@ class SoftLinksTest {
 
   @Test
   fun `change persistent id part of composed id entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
     builder.addComposedIdSoftRefEntity("AnotherName", entity.persistentId())
 
@@ -119,7 +118,7 @@ class SoftLinksTest {
 
   @Test
   fun `change persistent id part of composed id entity and with linked entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
     val composedIdEntity = builder.addComposedIdSoftRefEntity("AnotherName", entity.persistentId())
     builder.addWithSoftLinkEntity(composedIdEntity.persistentId())

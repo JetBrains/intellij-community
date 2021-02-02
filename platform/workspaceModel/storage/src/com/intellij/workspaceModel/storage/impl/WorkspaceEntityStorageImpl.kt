@@ -37,8 +37,9 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
 internal class WorkspaceEntityStorageImpl constructor(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
-  override val indexes: StorageIndexes
-) : AbstractEntityStorage() {
+  override val indexes: StorageIndexes,
+  consistencyCheckingMode: ConsistencyCheckingMode
+) : AbstractEntityStorage(consistencyCheckingMode) {
 
   // This cache should not be transferred to other versions of storage
   private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity>()
@@ -51,15 +52,16 @@ internal class WorkspaceEntityStorageImpl constructor(
 
   companion object {
     private val NULl_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
-    val EMPTY = WorkspaceEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
+    val EMPTY = WorkspaceEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY, ConsistencyCheckingMode.default())
   }
 }
 
 internal class WorkspaceEntityStorageBuilderImpl(
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
-  override val indexes: MutableStorageIndexes
-) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
+  override val indexes: MutableStorageIndexes,
+  consistencyCheckingMode: ConsistencyCheckingMode
+) : WorkspaceEntityStorageBuilder, AbstractEntityStorage(consistencyCheckingMode) {
 
   internal val changeLog = WorkspaceBuilderChangeLog()
 
@@ -633,7 +635,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
-    val storage = WorkspaceEntityStorageImpl(newEntities, newRefs, newIndexes)
+    val storage = WorkspaceEntityStorageImpl(newEntities, newRefs, newIndexes, consistencyCheckingMode)
     return storage
   }
 
@@ -719,22 +721,22 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     private val LOG = logger<WorkspaceEntityStorageBuilderImpl>()
 
-    fun create(): WorkspaceEntityStorageBuilderImpl = from(WorkspaceEntityStorageImpl.EMPTY)
+    fun create(consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilderImpl = from(WorkspaceEntityStorageImpl.EMPTY, consistencyCheckingMode)
 
-    fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilderImpl {
+    fun from(storage: WorkspaceEntityStorage, consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilderImpl {
       storage as AbstractEntityStorage
       return when (storage) {
         is WorkspaceEntityStorageImpl -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
           val copiedRefs = MutableRefsTable.from(storage.refs)
           val copiedIndex = storage.indexes.toMutable()
-          WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndex)
+          WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndex, consistencyCheckingMode)
         }
         is WorkspaceEntityStorageBuilderImpl -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
           val copiedIndexes = storage.indexes.toImmutable().toMutable()
-          WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndexes)
+          WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndexes, consistencyCheckingMode)
         }
       }
     }
@@ -775,7 +777,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 }
 
-internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
+internal sealed class AbstractEntityStorage(internal val consistencyCheckingMode: ConsistencyCheckingMode) : WorkspaceEntityStorage {
 
   internal abstract val entitiesByType: EntitiesBarrel
   internal abstract val refs: AbstractRefsTable
@@ -973,14 +975,20 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
                                              sourceFilter: ((EntitySource) -> Boolean)?,
                                              left: WorkspaceEntityStorage?,
                                              right: WorkspaceEntityStorage?) {
-    if (StrictMode.rbsEnabled) {
+    if (consistencyCheckingMode != ConsistencyCheckingMode.DISABLED) {
       try {
         this.assertConsistency()
       }
       catch (e: Throwable) {
         brokenConsistency = true
         val storage = if (this is WorkspaceEntityStorageBuilder) this.toStorage() as AbstractEntityStorage else this
-        consistencyChecker.execute { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
+        val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
+        if (consistencyCheckingMode == ConsistencyCheckingMode.ASYNCHRONOUS) {
+          consistencyChecker.execute(report)
+        }
+        else {
+          report()
+        }
       }
     }
   }

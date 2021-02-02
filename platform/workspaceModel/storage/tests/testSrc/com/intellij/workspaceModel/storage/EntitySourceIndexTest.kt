@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.entities.ModifiableChildSourceEntity
 import com.intellij.workspaceModel.storage.entities.SampleEntitySource
 import com.intellij.workspaceModel.storage.entities.addSourceEntity
@@ -14,7 +13,7 @@ class EntitySourceIndexTest {
   fun `base index test`() {
     val oldSource = SampleEntitySource("oldSource")
     val newSource = SampleEntitySource("newSource")
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val entity = builder.addSourceEntity("hello", oldSource)
     assertEquals(entity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
@@ -31,11 +30,11 @@ class EntitySourceIndexTest {
   fun `base index with diff test`() {
     val oldSource = SampleEntitySource("oldSource")
     val newSource = SampleEntitySource("newSource")
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val firstEntity = builder.addSourceEntity("one", oldSource)
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
-    val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
+    val diff = createBuilderFrom(builder.toStorage())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
     assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
@@ -52,11 +51,11 @@ class EntitySourceIndexTest {
   @Test
   fun `remove from diff test`() {
     val oldSource = SampleEntitySource("oldSource")
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val firstEntity = builder.addSourceEntity("one", oldSource)
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
-    val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
+    val diff = createBuilderFrom(builder.toStorage())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
     diff.removeEntity(firstEntity)
@@ -71,11 +70,11 @@ class EntitySourceIndexTest {
   fun `change source in diff test`() {
     val oldSource = SampleEntitySource("oldSource")
     val newSource = SampleEntitySource("newSource")
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val firstEntity = builder.addSourceEntity("one", oldSource)
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
 
-    val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
+    val diff = createBuilderFrom(builder.toStorage())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.get(0))
     assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
@@ -92,7 +91,7 @@ class EntitySourceIndexTest {
   @Test
   fun `remove entity with child`() {
     val entitySource = SampleEntitySource("oldSource")
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val builder = createEmptyBuilder()
     val firstEntity = builder.addSourceEntity("one", entitySource)
     builder.addEntity(ModifiableChildSourceEntity::class.java, entitySource) {
       this.data = "firstChild"

@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.propertyBased
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.createBuilderFrom
 import com.intellij.workspaceModel.storage.entities.AnotherSource
 import com.intellij.workspaceModel.storage.entities.MySource
 import com.intellij.workspaceModel.storage.impl.RefsTable
@@ -60,7 +61,7 @@ private class AddDiff(private val storage: WorkspaceEntityStorageBuilder) : Impe
   override fun performCommand(env: ImperativeCommand.Environment) {
     env.logMessage("Trying to perform addDiff")
     val backup = storage.toStorage()
-    val another = WorkspaceEntityStorageBuilderImpl.from(backup)
+    val another = createBuilderFrom(backup)
     env.logMessage("Modify diff:")
     env.executeCommands(getEntityManipulation(another))
 
@@ -90,7 +91,7 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
   override fun performCommand(env: ImperativeCommand.Environment) {
     env.logMessage("Trying to perform replaceBySource")
     val backup = storage.toStorage()
-    val another = WorkspaceEntityStorageBuilderImpl.from(backup)
+    val another = createBuilderFrom(backup)
     env.logMessage("Modify original storage:")
     env.executeCommands(getEntityManipulation(another))
 
@@ -120,7 +121,7 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
 }
 
 private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: WorkspaceEntityStorage) {
-  val backupBuilder = WorkspaceEntityStorageBuilderImpl.from(backup)
+  val backupBuilder = createBuilderFrom(backup)
   entitiesByType.entityFamilies.clear()
   entitiesByType.entityFamilies.addAll(backupBuilder.entitiesByType.entityFamilies)
 

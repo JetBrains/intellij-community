@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
 import com.intellij.workspaceModel.storage.entities.ModifiableSecondSampleEntity
@@ -18,13 +17,13 @@ class CollectChangesInBuilderTest {
 
   @Before
   fun setUp() {
-    initialStorage = WorkspaceEntityStorageBuilderImpl.create().apply {
+    initialStorage = createEmptyBuilder().apply {
       addSampleEntity("initial")
       addEntity(ModifiableSecondSampleEntity::class.java, SampleEntitySource("test")) {
         intProperty = 1
       }
     }.toStorage()
-    builder = WorkspaceEntityStorageBuilderImpl.from(initialStorage)
+    builder = createBuilderFrom(initialStorage)
   }
 
   @Test
