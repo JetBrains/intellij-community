@@ -209,6 +209,14 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     }
   }
 
+  @Override
+  public boolean isFinal(PopupFactoryImpl.ActionItem value) {
+    if (!value.isEnabled()) return true;
+    final AnAction action = value.getAction();
+    final DataContext dataContext = myContext.get();
+    return !(action instanceof ActionGroup) || ((ActionGroup)action).canBePerformed(dataContext);
+  }
+
   public void performAction(@NotNull AnAction action, int modifiers) {
     performAction(action, modifiers, null);
   }

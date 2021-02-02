@@ -502,6 +502,13 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
+    public boolean isFinal(ItemWrapper wrapper) {
+      return myAction.myEditConfiguration
+             || wrapper.available(myAction.getExecutor())
+             || wrapper.getNextStep(myProject, myAction) == FINAL_CHOICE;
+    }
+
+    @Override
     public boolean hasSubstep(ItemWrapper selectedValue) {
       return selectedValue.hasActions();
     }
@@ -694,14 +701,14 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    protected JComponent createItemComponent() {
+    protected JComponent layoutComponent(JComponent middleItemComponent) {
       if (myLabel == null) {
         myLabel = new JLabel();
         myLabel.setPreferredSize(new JLabel("8.").getPreferredSize());
       }
 
-      final JComponent result = super.createItemComponent();
-      result.add(myLabel, BorderLayout.WEST);
+      JComponent result = super.layoutComponent(middleItemComponent);
+      myLeftPart.add(myLabel, BorderLayout.WEST);
       return result;
     }
 

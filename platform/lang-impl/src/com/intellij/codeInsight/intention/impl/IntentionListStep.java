@@ -86,6 +86,13 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     return FINAL_CHOICE;
   }
 
+  @Override
+  public boolean isFinal(IntentionActionWithTextCaching value) {
+    IntentionAction a = IntentionActionDelegate.unwrap(value.getAction());
+
+    return  !(a instanceof AbstractEmptyIntentionAction) || !hasSubstep(value);
+  }
+
   private static void closeIntentionPreviewPopup() {
     ApplicationManager.getApplication().invokeLater(() ->
        StackingPopupDispatcher.getInstance().getPopupStream()
