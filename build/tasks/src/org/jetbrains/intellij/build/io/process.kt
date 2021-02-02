@@ -118,21 +118,13 @@ private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger) 
 
 private fun InputStream.consume(process: Process, timeout: Timeout, consumeLine: (String) -> Unit) {
   bufferedReader().use { reader ->
-    var separator = ""
     var lineBuilder = StringBuilder()
     while (!timeout.isElapsed && process.isAlive || reader.ready()) {
       if (reader.ready()) {
         val char = reader.read().takeIf { it != -1 }?.toChar()
-        if (char == '\n' || char == '\r') {
-          separator += char
-        }
-        if (char == null ||
-            separator == "\n" ||
-            separator == "\r" ||
-            separator == "\r\n") {
+        if (char == null || char == '\n' || char == '\r') {
           consumeLine(lineBuilder.toString())
           lineBuilder = StringBuilder()
-          separator = ""
         }
         else {
           lineBuilder.append(char)
