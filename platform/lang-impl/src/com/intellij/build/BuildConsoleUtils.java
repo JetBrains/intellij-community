@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IJSwingUtilities;
@@ -144,7 +145,7 @@ public final class BuildConsoleUtils {
   @NotNull
   public static DataContext getDataContext(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
     BuildView buildView = buildListener.getBuildView(buildId);
-    return (buildView != null) ? DataManager.getInstance().getDataContext(buildView) : DataContext.EMPTY_CONTEXT;
+    return buildView != null ? new MyDelegatingDataContext(buildView) : DataContext.EMPTY_CONTEXT;
   }
 
   @ApiStatus.Experimental
@@ -152,7 +153,7 @@ public final class BuildConsoleUtils {
   public static DataContext getDataContext(@NotNull Object buildId, @NotNull BuildProgressListener buildListener) {
     DataContext dataContext;
     if (buildListener instanceof BuildView) {
-      dataContext = DataManager.getInstance().getDataContext((BuildView)buildListener);
+      dataContext = new MyDelegatingDataContext((BuildView)buildListener);
     }
     else if (buildListener instanceof AbstractViewManager) {
       dataContext = getDataContext(buildId, (AbstractViewManager)buildListener);
@@ -174,5 +175,20 @@ public final class BuildConsoleUtils {
       }
     }
     return null;
+  }
+
+  private static class MyDelegatingDataContext implements DataContext {
+    private final AtomicNotNullLazyValue<DataContext> mDelegatedDataContextValue;
+    private final BuildView myBuildView;
+
+    private MyDelegatingDataContext(@NotNull BuildView buildView) {
+      myBuildView = buildView;
+      mDelegatedDataContextValue = AtomicNotNullLazyValue.createValue(() -> DataManager.getInstance().getDataContext(myBuildView));
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      return mDelegatedDataContextValue.getValue().getData(dataId);
+    }
   }
 }
