@@ -21,6 +21,16 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
+      <library name="completion-ranking-java-exp-no-pos" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.5.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.5.0/completion-ranking-java-0.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="completion-ranking-kotlin-exp" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.1" />
         <CLASSES>

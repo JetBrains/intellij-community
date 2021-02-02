@@ -31,7 +31,14 @@
     },
     {
       "number": 13,
-      "description": "New ML model without arrows",
+      "description": "First experimental model",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 14,
+      "description": "Second experimental model",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
@@ -41,7 +48,7 @@
     {
       "id": "java",
       "experimentBucketsCount": 16,
-      "includeGroups": [ 7, 13, 11, 12, 8 ]
+      "includeGroups": [ 7, 13, 11, 12, 8, 14 ]
     },
     {
       "id": "python",

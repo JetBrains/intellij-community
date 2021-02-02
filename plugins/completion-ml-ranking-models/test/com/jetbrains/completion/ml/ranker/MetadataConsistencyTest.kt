@@ -14,6 +14,9 @@ class MetadataConsistencyTest {
   fun testJavaMetadata() = ExperimentJavaMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
+  fun testJavaNoPositionMetadata() = ExperimentJavaNoPositionMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
   fun testRustMetadata() = ExperimentRustMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
