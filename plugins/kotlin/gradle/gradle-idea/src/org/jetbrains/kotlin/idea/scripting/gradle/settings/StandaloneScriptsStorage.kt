@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(
     name = "StandaloneScriptsStorage",
-    storages = [Storage(StoragePathMacros.CACHE_FILE)]
+    storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
 class StandaloneScriptsStorage : PersistentStateComponent<StandaloneScriptsStorage> {
     var files: MutableSet<String> = hashSetOf()
