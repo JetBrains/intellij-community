@@ -84,7 +84,7 @@ private fun tryRerun(dataContext: DataContext): CompletableFuture<*>? {
   val restartActions = BuildView.RESTART_ACTIONS.getData(dataContext)
   val reimportActionText = ExternalSystemBundle.message("action.refresh.project.text", GradleConstants.SYSTEM_ID.readableName)
   restartActions?.find { it.templateText == reimportActionText }?.let { action ->
-    val actionEvent = AnActionEvent.createFromAnAction(action, null, "BuildView", dataContext::getData)
+    val actionEvent = AnActionEvent.createFromAnAction(action, null, "BuildView", dataContext)
     action.update(actionEvent)
     if (actionEvent.presentation.isEnabledAndVisible) {
       return runAsync { action.actionPerformed(actionEvent) }
