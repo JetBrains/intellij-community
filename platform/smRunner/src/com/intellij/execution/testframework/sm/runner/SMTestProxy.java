@@ -740,7 +740,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
 
     if (myState instanceof CompoundTestFailedState) {
-      return ((CompoundTestFailedState)myState).getHyperlinks().get(0);
+      return ContainerUtil.getFirstItem(((CompoundTestFailedState)myState).getHyperlinks());
     }
 
     return null;
