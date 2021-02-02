@@ -573,7 +573,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     @Override
     public String generate(CommentTracker ct) {
       if (myResultStatements.length == 1) {
-        return ct.textWithComments(myResultStatements[0]);
+        return ct.textWithComments(myResultStatements[0]) + "\n";
       }
       return StreamEx.of(myResultStatements).map(ct::textWithComments).joining("", "{", "\n}");
     }
