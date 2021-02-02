@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.icons.AllIcons;
@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -18,7 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,47 +39,51 @@ public final class NativeIconProvider extends IconProvider implements DumbAware 
 
   private static final Ext CLOSED_DIR = new Ext(null, 0);
 
-  @Nullable
+  private static final NotNullLazyValue<JFileChooser> fileChooser = NotNullLazyValue.volatileLazy(() -> new JFileChooser());
+
   @Override
-  public Icon getIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
+  public @Nullable Icon getIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     if (element instanceof PsiFile) {
       VirtualFile file = ((PsiFile)element).getVirtualFile();
-      if (file != null) return doGetIcon(file, flags);
+      if (file != null) {
+        return doGetIcon(file, flags);
+      }
     }
     return null;
   }
 
-  @Nullable
-  private Icon doGetIcon(@NotNull VirtualFile file, final int flags) {
-    if (!isNativeFileType(file)) return null;
+  private @Nullable Icon doGetIcon(@NotNull VirtualFile virtualFile, int flags) {
+    if (!isNativeFileType(virtualFile)) {
+      return null;
+    }
 
-    final Ext ext = getExtension(file, flags);
-    final String filePath = file.getPath();
+    Ext ext = getExtension(virtualFile, flags);
+    Path ioFile = virtualFile.toNioPath();
 
-    Icon icon;
     synchronized (myIconCache) {
-      if (!myCustomIconExtensions.contains(ext)) {
-        icon = ext != null ? myIconCache.get(ext) : null;
+      Icon icon;
+      if (myCustomIconExtensions.contains(ext)) {
+        icon = myCustomIconCache.get(ioFile.toString());
       }
       else {
-        icon = myCustomIconCache.get(filePath);
+        icon = ext == null ? null : myIconCache.get(ext);
+      }
+      if (icon != null) {
+        return icon;
       }
     }
-    if (icon != null) {
-      return icon;
-    }
 
-    return new DeferredIconImpl<>(AllIcons.Nodes.NodePlaceholder, file, false, virtualFile -> {
-      final File f = new File(filePath);
-      if (!f.exists()) {
+    return DeferredIconImpl.withoutReadAction(AllIcons.Nodes.NodePlaceholder, ioFile, file -> {
+      if (!Files.exists(file)) {
         return null;
       }
 
-      Icon icon1;
+      // we should have no read access here, to avoid deadlock with EDT needed to init component
+      assert !ApplicationManager.getApplication().isReadAccessAllowed();
+
+      Icon icon;
       try {
-        // VM will ensure lock to init -static final field--, note we should have no read access here, to avoid deadlock with EDT needed to init component
-        assert SwingComponentHolder.ourFileChooser != null || !ApplicationManager.getApplication().isReadAccessAllowed();
-        icon1 = getNativeIcon(f);
+        icon = fileChooser.getValue().getIcon(file.toFile());
       }
       catch (Exception e) {
         // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
@@ -86,37 +92,34 @@ public final class NativeIconProvider extends IconProvider implements DumbAware 
 
       if (ext != null) {
         synchronized (myIconCache) {
-          if (!myCustomIconExtensions.contains(ext)) {
-            myIconCache.put(ext, icon1);
+          if (myCustomIconExtensions.contains(ext)) {
+            myCustomIconCache.put(file.toString(), icon);
           }
           else {
-            myCustomIconCache.put(filePath, icon1);
+            myIconCache.put(ext, icon);
           }
         }
       }
-      return icon1;
+      return icon;
     });
   }
 
-  @Nullable
-  public static Icon getNativeIcon(@Nullable File file) {
-    return file == null ? null : SwingComponentHolder.ourFileChooser.getIcon(file);
+  public static @Nullable Icon getNativeIcon(@NotNull Path file) {
+    return fileChooser.getValue().getIcon(file.toFile());
   }
 
-  private static Ext getExtension(final VirtualFile file, final int flags) {
+  private static Ext getExtension(VirtualFile file, int flags) {
     if (file.isDirectory()) {
       if (file.getExtension() == null) {
         return CLOSED_DIR;
-      } else {
+      }
+      else {
         return new Ext(file.getExtension(), flags);
       }
     }
-
-    return file.getExtension() != null ? new Ext(file.getExtension()) : NO_EXT;
-  }
-
-  private static final class SwingComponentHolder {
-    private static final JFileChooser ourFileChooser = new JFileChooser();
+    else {
+      return file.getExtension() != null ? new Ext(file.getExtension()) : NO_EXT;
+    }
   }
 
   private static boolean isNativeFileType(VirtualFile file) {

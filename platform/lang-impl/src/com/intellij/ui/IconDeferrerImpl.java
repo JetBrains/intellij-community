@@ -94,10 +94,11 @@ public final class IconDeferrerImpl extends IconDeferrer {
     return Objects.requireNonNull(iconCache.get(param, param1 -> {
       long started = lastClearTimestamp.get();
       //noinspection unchecked
-      return new DeferredIconImpl<>(base, (T)param1, evaluator, (source, key, r) -> {
+      T key = (T)param1;
+      return new DeferredIconImpl<>(base, key, evaluator, (source, result) -> {
         // check if our results is not outdated yet
         if (started == lastClearTimestamp.get()) {
-          iconCache.put(key, autoUpdatable ? source : r);
+          iconCache.put(key, autoUpdatable ? source : result);
         }
       }, autoUpdatable);
     }));
