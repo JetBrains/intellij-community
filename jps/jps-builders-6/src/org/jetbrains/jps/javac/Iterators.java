@@ -22,7 +22,7 @@ public class Iterators {
     return isEmptyCollection(iterable) || !iterable.iterator().hasNext();
   }
 
-  private static boolean isEmptyCollection(Iterable<?> iterable) {
+  public static boolean isEmptyCollection(Iterable<?> iterable) {
     return iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
   }
 
