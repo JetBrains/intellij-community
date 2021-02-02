@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -880,6 +882,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     if (myMouseOutCanceller != null) {
       myMouseOutCanceller.myEverEntered = targetBounds.equals(original);
+    }
+
+    // prevent hiding of a floating toolbar
+    Point pointOnOwner = new Point(aScreenX, aScreenY);
+    SwingUtilities.convertPointFromScreen(pointOnOwner, owner);
+    if (ActionToolbarImpl.isInPopupToolbar(SwingUtilities.getDeepestComponentAt(owner, pointOnOwner.x, pointOnOwner.y))) {
+      AutoPopupSupportingListener.installOn(this);
     }
 
     myOwner = getFrameOrDialog(owner); // use correct popup owner for non-modal dialogs too
