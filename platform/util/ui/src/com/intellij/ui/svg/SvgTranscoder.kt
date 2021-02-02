@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UndesirableClassUsage")
 
 package com.intellij.ui.svg
@@ -170,14 +170,10 @@ class SvgTranscoder private constructor(private var width: Float, private var he
     logger().debug(message)
   }
 
-  override fun getScriptSecurity(scriptType: String?, scriptPURL: ParsedURL?, docPURL: ParsedURL?) = NoLoadScriptSecurity(scriptType)
+  override fun getScriptSecurity(scriptType: String?, scriptUrl: ParsedURL?, documentUrl: ParsedURL?) = NoLoadScriptSecurity(scriptType)
 
-  override fun getExternalResourceSecurity(resourceURL: ParsedURL?, docURL: ParsedURL?): ExternalResourceSecurity {
-    return ExternalResourceSecurity {
-      val se = SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
-      se.fillInStackTrace()
-      throw se
-    }
+  override fun getExternalResourceSecurity(resourceUrl: ParsedURL, documentUrl: ParsedURL?): ExternalResourceSecurity {
+    return ExternalResourceSecurity { checkLoadExternalResource(resourceUrl, documentUrl) }
   }
 
   override fun showAlert(message: String?) {}
@@ -232,12 +228,21 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
   override fun handleElement(elt: Element?, data: Any?) {}
 
-  override fun checkLoadScript(scriptType: String?, scriptURL: ParsedURL?, docURL: ParsedURL?) {
-    getScriptSecurity(scriptType, scriptURL, docURL).checkLoadScript()
+  override fun checkLoadScript(scriptType: String?, scriptURL: ParsedURL, docURL: ParsedURL?) {
+    throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
   }
 
-  override fun checkLoadExternalResource(resourceURL: ParsedURL?, docURL: ParsedURL?) {
-    getExternalResourceSecurity(resourceURL, docURL).checkLoadExternalResource()
+  override fun checkLoadExternalResource(resourceUrl: ParsedURL, documentUrl: ParsedURL?) {
+    // make sure that the archives comes from the same host as the document itself
+    if (documentUrl == null) {
+      throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
+    }
+
+    val docHost = documentUrl.host
+    val externalResourceHost: String = resourceUrl.host
+    if (docHost != externalResourceHost && (docHost == null || docHost != externalResourceHost) && "data" != resourceUrl.protocol) {
+      throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
+    }
   }
 
   override fun loadDocument(url: String?) {
