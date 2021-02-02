@@ -1336,11 +1336,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Nullable
-  private static JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref) {
+  private JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref) {
     try {
       if (ref instanceof PsiReferenceExpressionImpl) {
         PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
-        JavaResolveResult[] results = JavaResolveUtil.resolveWithContainingFile(ref, resolver, true, true, ref.getContainingFile());
+        JavaResolveResult[] results = JavaResolveUtil.resolveWithContainingFile(ref, resolver, true, true, myFile);
         return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
       }
       else {
@@ -1352,11 +1352,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  private static JavaResolveResult @Nullable [] resolveOptimised(@NotNull PsiReferenceExpression expression) {
+  private JavaResolveResult @Nullable [] resolveOptimised(@NotNull PsiReferenceExpression expression) {
     try {
       if (expression instanceof PsiReferenceExpressionImpl) {
         PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
-        return JavaResolveUtil.resolveWithContainingFile(expression, resolver, true, true, expression.getContainingFile());
+        return JavaResolveUtil.resolveWithContainingFile(expression, resolver, true, true, myFile);
       }
       else {
         return expression.multiResolve(true);
@@ -1988,8 +1988,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
 
-  private static class PreviewFeatureVisitor extends JavaElementVisitor {
-
+  private class PreviewFeatureVisitor extends JavaElementVisitor {
     private final LanguageLevel myLanguageLevel;
     private final HighlightInfoHolder myHolder;
 
@@ -2071,7 +2070,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     @Nullable
-    private static PsiModifierListOwner getTargetElement(PsiReferenceExpression expression) {
+    private PsiModifierListOwner getTargetElement(PsiReferenceExpression expression) {
       final JavaResolveResult[] results = resolveOptimised(expression);
       if (results == null) return null;
 
@@ -2085,7 +2084,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     @Nullable
-    private static PsiMethod getMethod(PsiMethodReferenceExpression expression) {
+    private PsiMethod getMethod(PsiMethodReferenceExpression expression) {
       final JavaResolveResult result;
       try {
         final JavaResolveResult[] results = expression.multiResolve(true);
@@ -2102,7 +2101,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     @Nullable
-    private static PsiModifierListOwner getTargetOfNewExpression(@NotNull final PsiNewExpression expression) {
+    private PsiModifierListOwner getTargetOfNewExpression(@NotNull final PsiNewExpression expression) {
       final PsiMethod method = expression.resolveMethod();
       if (method != null) return method;
 
@@ -2123,7 +2122,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
      */
     @Nullable
     @Contract(value = "null, _, _ -> null; _, null, _ -> null", pure = true)
-    private static HighlightInfo checkPreviewFeatureElement(@Nullable final PsiElement context,
+    private HighlightInfo checkPreviewFeatureElement(@Nullable final PsiElement context,
                                                     @Nullable final PsiModifierListOwner owner,
                                                     @NotNull final LanguageLevel level) {
       if (context == null) return null;
@@ -2137,8 +2136,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     @Nullable
-    private static HighlightInfo checkModulePreviewFeatureAnnotation(@Nullable final PsiStatement statement,
-                                                                    @NotNull final LanguageLevel level) {
+    private HighlightInfo checkModulePreviewFeatureAnnotation(@Nullable final PsiStatement statement, @NotNull final LanguageLevel level) {
       if (statement instanceof PsiRequiresStatement) {
         final PsiRequiresStatement requiresStatement = (PsiRequiresStatement)statement;
         final PsiJavaModule module = requiresStatement.resolve();
