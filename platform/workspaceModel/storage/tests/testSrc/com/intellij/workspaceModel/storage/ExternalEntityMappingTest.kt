@@ -2,11 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntitySource
-import com.intellij.workspaceModel.storage.entities.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.addSourceEntity
+import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.junit.Assert.*
 import org.junit.Test
@@ -501,5 +497,23 @@ class ExternalEntityMappingTest {
     val entity = storage.singleSampleEntity()
     assertEquals("foo1", entity.stringProperty)
     assertEquals(1, storage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
+  }
+
+  @Test
+  fun `remove mapping for removed entity after merge`() {
+    val initialBuilder = createEmptyBuilder()
+    val foo = initialBuilder.addSampleEntity("foo")
+    initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 1)
+    val initialStorage = initialBuilder.toStorage()
+
+    val diff1 = createBuilderFrom(initialStorage)
+    val diff2 = createBuilderFrom(initialStorage)
+    diff1.removeEntity(foo)
+    diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 2)
+    val updatedStorage = diff1.toStorage()
+    val mergeBuilder = createBuilderFrom(updatedStorage)
+    mergeBuilder.addDiff(diff2)
+    val merged = mergeBuilder.toStorage()
+    assertEmpty(merged.entities(SampleEntity::class.java).toList())
   }
 }

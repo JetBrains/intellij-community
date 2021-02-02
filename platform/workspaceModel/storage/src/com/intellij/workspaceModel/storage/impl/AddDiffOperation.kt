@@ -80,7 +80,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         }
       }
     }
-    target.indexes.applyExternalMappingChanges(diff, replaceMap)
+    target.indexes.applyExternalMappingChanges(diff, replaceMap, target)
 
     // Assert consistency
     if (!target.brokenConsistency && !diff.brokenConsistency) {

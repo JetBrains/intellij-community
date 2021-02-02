@@ -101,12 +101,14 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     return removed
   }
 
-  fun applyChanges(other: MutableExternalEntityMappingImpl<*>, replaceMap: HashBiMap<EntityId, EntityId>) {
+  fun applyChanges(other: MutableExternalEntityMappingImpl<*>,
+                   replaceMap: HashBiMap<EntityId, EntityId>,
+                   target: WorkspaceEntityStorageBuilderImpl) {
     val initialData = HashMap<EntityId, T>()
     //todo there will be no need to remember initial data if we merge events like we do in WorkspaceBuilderChangeLog
     other.indexLog.forEach { indexEntry ->
       when (indexEntry) {
-        is IndexLogRecord.Add<*> -> getTargetId(replaceMap, indexEntry.id)?.let { entityId ->
+        is IndexLogRecord.Add<*> -> getTargetId(replaceMap, target, indexEntry.id)?.let { entityId ->
           val oldData = index[entityId]
           if (oldData != null) {
             initialData.putIfAbsent(entityId, oldData)
@@ -114,7 +116,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
           @Suppress("UNCHECKED_CAST")
           add(entityId, indexEntry.data as T)
         }
-        is IndexLogRecord.Remove -> getTargetId(replaceMap, indexEntry.id)?.let { entityId ->
+        is IndexLogRecord.Remove -> getTargetId(replaceMap, target, indexEntry.id)?.let { entityId ->
           val initialValue = initialData.remove(entityId)
           if (initialValue != null) {
             add(entityId, initialValue)
@@ -128,9 +130,11 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     }
   }
 
-  private fun getTargetId(replaceMap: HashBiMap<EntityId, EntityId>, id: EntityId): EntityId? {
+  private fun getTargetId(replaceMap: HashBiMap<EntityId, EntityId>, target: WorkspaceEntityStorageBuilderImpl, id: EntityId): EntityId? {
     val possibleTargetId = replaceMap[id]
     if (possibleTargetId != null) return possibleTargetId
+
+    if (target.entityDataById(id) == null) return null
 
     // It's possible that before addDiff there was a gup in this particular id. If it's so, replaceMap should not have a mapping to it
     val sourceId = replaceMap.inverse()[id]
