@@ -1913,6 +1913,7 @@ public final class ContainerUtil {
   public static <T, V> @NotNull V @NotNull [] mapNotNull(T @NotNull [] array,
                                                          @NotNull Function<? super T, ? extends @Nullable V> mapping,
                                                          V @NotNull [] emptyArray) {
+    assert emptyArray.length == 0 : "You must pass an empty array";
     List<V> result = new ArrayList<>(array.length);
     for (T t : array) {
       V v = mapping.fun(t);
@@ -1921,7 +1922,6 @@ public final class ContainerUtil {
       }
     }
     if (result.isEmpty()) {
-      assert emptyArray.length == 0 : "You must pass an empty array";
       return emptyArray;
     }
     return result.toArray(emptyArray);
