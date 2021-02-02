@@ -12,6 +12,7 @@ import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.server.WslMavenDistribution
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getDefaultMavenDistribution
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveM2Dir
@@ -26,6 +27,7 @@ class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
                           ?: throw IllegalArgumentException("Project $project is not WSL based!")
     //todo: replace this with settings
     val tempDistribution = wslDistribution.getDefaultMavenDistribution() ?: throw IllegalStateException("Maven is not installed on WSL")
+    MavenLog.LOG.info("Use maven distribution at ${tempDistribution.pathToMaven}")
     return WslMavenServerRemoteProcessSupport(wslDistribution, jdk, vmOptions, tempDistribution, project, debugPort)
   }
 

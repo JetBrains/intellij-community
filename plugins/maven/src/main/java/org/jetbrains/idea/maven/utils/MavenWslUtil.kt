@@ -44,24 +44,42 @@ object MavenWslUtil : MavenUtil() {
    */
   @JvmStatic
   fun WSLDistribution.resolveMavenHomeDirectory(overrideMavenHome: String?): File? {
+    MavenLog.LOG.debug("resolving maven home on WSL with override = \"${overrideMavenHome}\"")
     if (overrideMavenHome != null) {
       val home = this.getWindowsPath(overrideMavenHome)?.let(::File)
-      return if (isValidMavenHome(home)) home else null
+      if (isValidMavenHome(home)) {
+        MavenLog.LOG.debug("resolved maven home as ${home}")
+        return home
+      }
+      else {
+        MavenLog.LOG.debug("Maven home ${home} on WSL is invalid")
+        return null
+      }
     }
     val m2home = this.environment[ENV_M2_HOME]
     if (m2home != null && !isEmptyOrSpaces(m2home)) {
       val homeFromEnv = this.getWindowsPath(m2home)?.let(::File)
-      return if (isValidMavenHome(homeFromEnv)) homeFromEnv else null
+      if (isValidMavenHome(homeFromEnv)) {
+        MavenLog.LOG.debug("resolved maven home using \$M2_HOME as ${homeFromEnv}")
+        return homeFromEnv
+      }
+      else {
+        MavenLog.LOG.debug("Maven home using \$M2_HOME is invalid")
+        return null
+      }
     }
     var home = this.getWindowsPath("/usr/share/maven")?.let(::File)
     if (isValidMavenHome(home)) {
+      MavenLog.LOG.debug("Maven home found at /usr/share/maven")
       return home
     }
 
     home = this.getWindowsPath("/usr/share/maven2")?.let(::File)
     if (isValidMavenHome(home)) {
+      MavenLog.LOG.debug("Maven home found at /usr/share/maven2")
       return home
     }
+    MavenLog.LOG.debug("Maven home not found on ${this.presentableName}")
     return null
   }
 

@@ -262,7 +262,8 @@ public final class MavenServerManager implements Disposable {
   //TODO: WSL
   public static List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
     if(!distribution.isValid()) {
-      throw new IllegalArgumentException("Maven distribution is not valid");
+      MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
+      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().getAbsolutePath() + " is not valid");
     }
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final String root = pluginFileOrDir.getParent();
@@ -270,9 +271,11 @@ public final class MavenServerManager implements Disposable {
     final List<File> classpath = new ArrayList<>();
 
     if (pluginFileOrDir.isDirectory()) {
+      MavenLog.LOG.debug("collecting classpath for local run");
       prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath, root);
     }
     else {
+      MavenLog.LOG.debug("collecting classpath for production");
       prepareClassPathForProduction(distribution.getVersion(), classpath, root);
     }
 
