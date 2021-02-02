@@ -8,12 +8,14 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.util.EventDispatcher;
@@ -26,7 +28,7 @@ import java.util.EventListener;
 import static com.intellij.ui.GuiUtils.enableChildren;
 import static java.util.Collections.singletonList;
 
-public class CommitMessageInspectionDetails implements UnnamedConfigurable {
+public class CommitMessageInspectionDetails implements UnnamedConfigurable, Disposable {
   @NotNull private final Project myProject;
   @NotNull private final InspectionProfileImpl myProfile;
   @NotNull private final Descriptor myDefaultDescriptor;
@@ -93,6 +95,13 @@ public class CommitMessageInspectionDetails implements UnnamedConfigurable {
   public void reset() {
     if (myOptionsConfigurable != null) {
       myOptionsConfigurable.reset(myProject);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    if (myOptionsConfigurable instanceof Disposable) {
+      Disposer.dispose((Disposable)myOptionsConfigurable);
     }
   }
 

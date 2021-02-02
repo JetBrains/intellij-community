@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
@@ -133,6 +134,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
 
   @Override
   public void dispose() {
+    clearToolDetails();
   }
 
   @Nullable
@@ -143,7 +145,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
 
   @Override
   public void reset() {
-    myToolDetails.clear();
+    clearToolDetails();
     myModifiableModel.getAllTools().forEach(ScopeToolState::resetConfigPanel);
     myModifiableModel = createProfileModel();
     initToolDescriptors();
@@ -152,6 +154,14 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     buildInspectionsModel();
     ((DefaultTreeModel)myInspectionsTable.getTree().getModel()).reload();
     state.applyTo(myInspectionsTable.getTree(), myRoot);
+  }
+
+  private void clearToolDetails() {
+    for (CommitMessageInspectionDetails details : myToolDetails.values()) {
+      Disposer.dispose(details);
+    }
+    myToolDetails.clear();
+    setDetails(null);
   }
 
   @Override
