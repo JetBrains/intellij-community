@@ -8,15 +8,19 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
+import org.jetbrains.kotlin.idea.intentions.canBeReplacedWithInvokeCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
@@ -53,9 +57,29 @@ class ReplaceInfixOrOperatorCallFix(
                 }
             }
             is KtCallExpression -> {
-                val newExpression = psiFactory.createExpressionByPattern(
-                    "$0?.invoke($1)$elvis", element.calleeExpression ?: return, element.valueArguments.joinToString(", ") { it.text })
-                replacement = element.replace(newExpression)
+                val calleeExpression = element.calleeExpression ?: return
+                val valueArgumentList = element.valueArgumentList?.text ?: return
+                val parentQualified = element.parent as? KtQualifiedExpression
+                val newExpression = psiFactory.buildExpression {
+                    if (parentQualified != null) {
+                        val receiver = parentQualified.receiverExpression
+                        val operationNode = parentQualified.operationTokenNode
+                        val beforeOperationNode = receiver.node.siblings(forward = true)
+                            .takeWhile { it is PsiWhiteSpace || it is PsiComment }.joinToString(separator = "") { it.text }
+                        val afterOperationNode = operationNode.siblings(forward = true)
+                            .takeWhile { it is PsiWhiteSpace || it is PsiComment }.joinToString(separator = "") { it.text }
+                        appendExpression(receiver)
+                        appendFixedText(beforeOperationNode)
+                        appendFixedText(KtTokens.SAFE_ACCESS.value)
+                        appendFixedText(afterOperationNode)
+                    }
+                    appendExpression(calleeExpression)
+                    appendFixedText(KtTokens.SAFE_ACCESS.value)
+                    appendFixedText("invoke")
+                    appendFixedText(valueArgumentList)
+                    appendFixedText(elvis)
+                }
+                replacement = (parentQualified ?: element).replace(newExpression)
             }
             is KtBinaryExpression -> {
                 replacement = if (element.operationToken == KtTokens.IDENTIFIER) {
@@ -89,9 +113,9 @@ class ReplaceInfixOrOperatorCallFix(
                 return ReplaceInfixOrOperatorCallFix(expression, expression.shouldHaveNotNullType())
             }
 
-            return when (val parent = expression.parent) {
+            when (val parent = expression.parent) {
                 is KtBinaryExpression -> {
-                    when {
+                    return when {
                         parent.left == null || parent.right == null -> null
                         parent.operationToken == KtTokens.EQ -> null
                         parent.operationToken in OperatorConventions.COMPARISON_OPERATIONS -> null
@@ -99,14 +123,12 @@ class ReplaceInfixOrOperatorCallFix(
                     }
                 }
                 is KtCallExpression -> {
-                    when {
-                        parent.calleeExpression == null -> null
-                        parent.parent is KtQualifiedExpression -> null
-                        parent.resolveToCall(BodyResolveMode.FULL)?.getImplicitReceiverValue() != null -> null
-                        else -> ReplaceInfixOrOperatorCallFix(parent, parent.shouldHaveNotNullType())
-                    }
+                    if (parent.calleeExpression == null || parent.valueArgumentList == null) return null
+                    val resolvedCall = parent.resolveToCall(BodyResolveMode.FULL) ?: return null
+                    if (!resolvedCall.canBeReplacedWithInvokeCall() || resolvedCall.getImplicitReceiverValue() != null) return null
+                    return ReplaceInfixOrOperatorCallFix(parent, parent.shouldHaveNotNullType())
                 }
-                else -> null
+                else -> return null
             }
         }
     }

@@ -10657,6 +10657,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/callExpression.kt");
         }
 
+        @TestMetadata("callExpressionInSafeQualified.kt")
+        public void testCallExpressionInSafeQualified() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/callExpressionInSafeQualified.kt");
+        }
+
+        @TestMetadata("callExpressionInSafeQualified2.kt")
+        public void testCallExpressionInSafeQualified2() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/callExpressionInSafeQualified2.kt");
+        }
+
         @TestMetadata("hasElvis.kt")
         public void testHasElvis() throws Exception {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/hasElvis.kt");
@@ -10857,6 +10867,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("invokeOperator.kt")
         public void testInvokeOperator() throws Exception {
             runTest("testData/quickfix/replaceWithSafeCall/invokeOperator.kt");
+        }
+
+        @TestMetadata("invokeOperator2.kt")
+        public void testInvokeOperator2() throws Exception {
+            runTest("testData/quickfix/replaceWithSafeCall/invokeOperator2.kt");
         }
 
         @TestMetadata("lastStatementOfLambdaAsArgument.kt")

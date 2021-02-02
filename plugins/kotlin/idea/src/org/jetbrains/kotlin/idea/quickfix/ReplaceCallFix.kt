@@ -23,7 +23,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.idea.intentions.canBeReplacedWithInvokeCall
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -31,6 +34,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 abstract class ReplaceCallFix(
     expression: KtQualifiedExpression,
@@ -100,6 +104,16 @@ class ReplaceWithSafeCallFix(
             val psiElement = diagnostic.psiElement
             val qualifiedExpression = psiElement.parent as? KtDotQualifiedExpression
             if (qualifiedExpression != null) {
+                val call = qualifiedExpression.callExpression
+                if (call != null) {
+                    val context = qualifiedExpression.analyze(BodyResolveMode.PARTIAL)
+                    val safeQualifiedExpression =
+                        KtPsiFactory(psiElement).createExpressionByPattern("$0?.$1", qualifiedExpression.receiverExpression, call)
+                    val newContext = safeQualifiedExpression.analyzeAsReplacement(qualifiedExpression, context)
+                    if (safeQualifiedExpression.getResolvedCall(newContext)?.canBeReplacedWithInvokeCall() == true) {
+                        return ReplaceInfixOrOperatorCallFix(call, call.shouldHaveNotNullType())
+                    }
+                }
                 return ReplaceWithSafeCallFix(qualifiedExpression, qualifiedExpression.shouldHaveNotNullType())
             } else {
                 if (psiElement !is KtNameReferenceExpression) return null
