@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
+import com.jetbrains.python.codeInsight.completion.PyMultipleArgumentsCompletionContributor
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
 import com.jetbrains.python.psi.PyParameter
 
@@ -98,6 +99,10 @@ class PyElementFeatureProvider : ElementFeatureProvider {
           weightEmptyPrevCalls != null -> result["prev_2_calls_weight_empty_prev_calls"] = MLFeatureValue.numerical(weightEmptyPrevCalls!!)
         }
       }}
+    }
+
+    element.getUserData(PyMultipleArgumentsCompletionContributor.MULTIPLE_ARGUMENTS_VARIANT_KEY)?.let {
+      result["is_multiple_arguments"] = MLFeatureValue.binary(true)
     }
 
     return result
