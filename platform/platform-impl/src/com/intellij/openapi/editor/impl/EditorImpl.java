@@ -2068,7 +2068,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            null : myInputMethodRequestsHandler.composedTextRange;
   }
 
-  public boolean composedTextExists() {
+  private boolean composedTextExists() {
     return myInputMethodRequestsHandler != null &&
            myInputMethodRequestsHandler.composedText != null;
   }
