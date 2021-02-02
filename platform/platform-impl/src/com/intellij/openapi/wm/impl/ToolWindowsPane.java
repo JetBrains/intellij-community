@@ -86,8 +86,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private List<String> myDefaultLeftButtons = new ArrayList<>();
   private List<String> myDefaultBottomButtons = new ArrayList<>();
 
-  private final ToolwindowToolbar myLeftToolbar;
-  private final ToolwindowToolbar myRightToolbar;
+  @Nullable private final ToolwindowToolbar myLeftToolbar;
+  @Nullable  private final ToolwindowToolbar myRightToolbar;
 
   ToolWindowsPane(@NotNull JFrame frame,
                   @NotNull Disposable parentDisposable,
@@ -349,13 +349,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     topStripe.setVisible(visible);
     bottomStripe.setVisible(visible);
 
-    boolean oldSquareVisible = myLeftToolbar.isVisible() && myRightToolbar.isVisible();
-    boolean squareStripesVisible = isSquareStripeUI() && showButtons;
-    updateSquareStripes(squareStripesVisible);
+    if (myLeftToolbar != null && myRightToolbar != null) {
+      boolean oldSquareVisible = myLeftToolbar.isVisible() && myRightToolbar.isVisible();
+      boolean squareStripesVisible = isSquareStripeUI() && showButtons;
+      updateSquareStripes(squareStripesVisible);
 
-    if (isSquareStripeUI() && oldSquareVisible != squareStripesVisible) {
-      revalidate();
-      repaint();
+      if (isSquareStripeUI() && oldSquareVisible != squareStripesVisible) {
+        revalidate();
+        repaint();
+      }
     }
 
     boolean overlayed = !showButtons && state.isStripesOverlaid();
@@ -372,8 +374,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private void updateSquareStripes(boolean squareStripesVisible) {
-    myLeftToolbar.setVisible(squareStripesVisible);
-    myRightToolbar.setVisible(squareStripesVisible);
+    if (myLeftToolbar != null && myRightToolbar != null) {
+      myLeftToolbar.setVisible(squareStripesVisible);
+      myRightToolbar.setVisible(squareStripesVisible);
+    }
   }
 
   public int getBottomHeight() {
@@ -579,6 +583,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   void onStripeButtonRemoved(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     if (!isSquareStripeUI()) return;
+    if (myLeftToolbar == null || myRightToolbar == null) return;
 
     if (!toolWindow.isAvailable() || toolWindow.getIcon() == null) return;
     toolWindow.setVisibleOnLargeStripe(false);
@@ -599,6 +604,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                            @NotNull ToolWindowAnchor actualAnchor,
                            @NotNull Comparator<ToolWindow> comparator) {
     if (!isSquareStripeUI()) return;
+    if (myLeftToolbar == null || myRightToolbar == null) return;
 
     ensureDefaultInitialized(project);
 
@@ -637,6 +643,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   void updateToolbars() {
+    if (myLeftToolbar == null || myRightToolbar == null) return;
     myLeftToolbar.updateButtons();
     myLeftToolbar.revalidate();
     myRightToolbar.updateButtons();
