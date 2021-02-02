@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val modifiers = KtQuickFixesListBuilder.register {
@@ -25,7 +26,15 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         )
     }
 
+    private val overrides = KtQuickFixesListBuilder.register {
+        register(ChangeTypeQuickFix.changeFunctionReturnTypeOnOverride)
+        register(ChangeTypeQuickFix.changePropertyReturnTypeOnOverride)
+        register(ChangeTypeQuickFix.changeVariableReturnTypeOnOverride)
+
+    }
+
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         modifiers,
+        overrides,
     )
 }
