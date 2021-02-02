@@ -10,12 +10,12 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -107,6 +107,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   protected JComponent createSouthPanel() {
+    if (useDialogWrapperSouthPanel())
+      return super.createSouthPanel();
+
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
@@ -195,6 +198,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     return panel;
   }
+
+  protected boolean useDialogWrapperSouthPanel() { return false; }
 
   /**
    * Validates the current step. If the current step is valid commits it and moves the wizard to the next step.
@@ -563,6 +568,14 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   protected void helpAction() {
     HelpManager.getInstance().invokeHelp(getHelpID());
+  }
+
+  @Override
+  protected Action @NotNull [] createActions() {
+    if (useDialogWrapperSouthPanel())
+      throw new UnsupportedOperationException("Not implemented");
+
+    return super.createActions();
   }
 
   @Override
