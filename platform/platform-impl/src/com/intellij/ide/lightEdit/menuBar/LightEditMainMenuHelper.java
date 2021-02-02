@@ -5,13 +5,11 @@ import com.intellij.ide.lightEdit.actions.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.wm.impl.IdeMenuBar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public final class LightEditMenuBar extends IdeMenuBar {
-  @Override
+public final class LightEditMainMenuHelper {
   public @NotNull ActionGroup getMainMenuActionGroup() {
     DefaultActionGroup topGroup = new DefaultActionGroup();
     topGroup.add(
