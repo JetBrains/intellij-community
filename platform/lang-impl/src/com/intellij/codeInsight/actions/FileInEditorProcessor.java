@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
@@ -294,14 +294,25 @@ public class FileInEditorProcessor {
 
     @Override
     public @NotNull Runnable getHyperlinkRunnable() {
-      return () -> {
-        AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
-        DataManager manager = DataManager.getInstance();
-        if (manager != null) {
-          DataContext context = manager.getDataContext(myEditor.getContentComponent());
-          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
-        }
-      };
+      return new ShowReformatDialogRunnable(myEditor);
+    }
+  }
+
+  private static class ShowReformatDialogRunnable implements Runnable {
+    private final Editor myEditor;
+
+    private ShowReformatDialogRunnable(Editor editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    public void run() {
+      AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
+      DataManager manager = DataManager.getInstance();
+      if (manager != null) {
+        DataContext context = manager.getDataContext(myEditor.getContentComponent());
+        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
+      }
     }
   }
 
