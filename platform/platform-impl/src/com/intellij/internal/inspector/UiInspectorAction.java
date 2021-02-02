@@ -103,7 +103,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     InputEvent event = e.getInputEvent();
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (event instanceof MouseEvent && event.getComponent() != null) {
-      component = SwingUtilities.getDeepestComponentAt(event.getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY());
+      component = UIUtil.getDeepestComponentAt(event.getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY());
     }
     if (component == null) {
       component = IdeFocusManager.getInstance(e.getProject()).getFocusOwner();
