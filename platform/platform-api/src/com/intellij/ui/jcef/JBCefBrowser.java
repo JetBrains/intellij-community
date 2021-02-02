@@ -42,6 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.intellij.ui.jcef.JBCefEventUtils.convertCefKeyEvent;
 import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
@@ -76,6 +77,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
   @Nullable private final CefLoadHandler myLoadHandler;
 
   @NotNull private static final Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
+
+  @NotNull private static final Dimension DEF_PREF_SIZE = new Dimension(800, 600);
 
   private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
     new LazyInitializer.NotNullValue<>() {
@@ -260,19 +263,32 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   @NotNull
   private JPanel createComponent() {
+    // Preferred size should not be zero, otherwise the content loading is not triggered
+    Function<Dimension, Dimension> adjustPrefSize = size -> size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
+
     Component uiComp = getCefBrowser().getUIComponent();
     JPanel resultPanel = SystemInfoRt.isWindows ?
-                         new JPanel(new BorderLayout()) {
-                           @Override
-                           public void removeNotify() {
-                             if (myCefBrowser.getUIComponent().hasFocus()) {
-                               // pass focus before removal
-                               myCefBrowser.setFocus(false);
-                             }
-                             super.removeNotify();
-                           }
-                         } :
-                         new JPanel(new BorderLayout());
+      new JPanel(new BorderLayout()) {
+        @Override
+        public void removeNotify() {
+         if (myCefBrowser.getUIComponent().hasFocus()) {
+           // pass focus before removal
+           myCefBrowser.setFocus(false);
+         }
+         super.removeNotify();
+        }
+        @Override
+        public Dimension getPreferredSize() {
+         return adjustPrefSize.apply(super.getPreferredSize());
+        }
+      } :
+      new JPanel(new BorderLayout()) {
+        @Override
+        public Dimension getPreferredSize() {
+          return adjustPrefSize.apply(super.getPreferredSize());
+        }
+      };
+
     resultPanel.setBackground(JBColor.background());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
     if (SystemInfoRt.isMac) {
