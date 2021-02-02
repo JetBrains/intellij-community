@@ -17,6 +17,7 @@ public final class CharTableImpl implements CharTable {
   private static final int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
 
   private static final StringHashToCharSequencesMap STATIC_ENTRIES = newStaticSet();
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final StringHashToCharSequencesMap entries = new StringHashToCharSequencesMap(10, 0.9f);
 
   @NotNull
@@ -28,7 +29,10 @@ public final class CharTableImpl implements CharTable {
   @NotNull
   private CharSequence doIntern(@NotNull CharSequence text, int startOffset, int endOffset) {
     int hashCode = subSequenceHashCode(text, startOffset, endOffset);
-    CharSequence interned = STATIC_ENTRIES.getSubSequenceWithHashCode(hashCode, text, startOffset, endOffset);
+    CharSequence interned;
+    synchronized (STATIC_ENTRIES) {
+      interned = STATIC_ENTRIES.getSubSequenceWithHashCode(hashCode, text, startOffset, endOffset);
+    }
     if (interned != null) {
       return interned;
     }
