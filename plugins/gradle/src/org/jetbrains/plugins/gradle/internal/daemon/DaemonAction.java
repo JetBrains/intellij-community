@@ -118,7 +118,8 @@ public abstract class DaemonAction {
       Factory<PatternSet> patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE);
       IdentityFileResolver identityFileResolver = IdentityFileResolver.class.getConstructor().newInstance();
       DefaultFileCollectionFactory collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory);
-      return new DaemonParameters(layout, collectionFactory);
+      //noinspection JavaReflectionMemberAccess
+      return DaemonParameters.class.getConstructor(BuildLayoutParameters.class, FileCollectionFactory.class).newInstance(layout, collectionFactory);
     }
     catch (ClassNotFoundException | NoSuchFieldException | InstantiationException | IllegalAccessException | InvocationTargetException |
       NoSuchMethodException e) {
@@ -132,7 +133,8 @@ public abstract class DaemonAction {
       //noinspection JavaReflectionMemberAccess
       IdentityFileResolver identityFileResolver = IdentityFileResolver.class.getConstructor(Factory.class).newInstance(patternSetFactory);
       DefaultFileCollectionFactory collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory);
-      return new DaemonParameters(layout, collectionFactory);
+      //noinspection JavaReflectionMemberAccess
+      return DaemonParameters.class.getConstructor(BuildLayoutParameters.class, FileCollectionFactory.class).newInstance(layout, collectionFactory);
     }
     catch (ClassNotFoundException | NoSuchFieldException | InstantiationException | IllegalAccessException | InvocationTargetException |
       NoSuchMethodException e) {
@@ -166,7 +168,8 @@ public abstract class DaemonAction {
       DefaultFileCollectionFactory factory = collectionFactoryConstructor.newInstance(
         identityFileResolver, DefaultTaskDependencyFactory.withNoAssociatedProject(),
         new DefaultDirectoryFileTreeFactory(), patternSetFactory);
-      return new DaemonParameters(layout, factory);
+      //noinspection JavaReflectionMemberAccess
+      return DaemonParameters.class.getConstructor(BuildLayoutParameters.class, FileCollectionFactory.class).newInstance(layout, factory);
     }
     catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
       throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
