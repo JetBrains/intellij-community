@@ -3,13 +3,16 @@ package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
 import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -28,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -398,38 +400,91 @@ public class ExceptionWorker {
 
     @Override
     public void onLinkFollowed(@NotNull PsiFile file, @NotNull Editor targetEditor, @Nullable Editor originalEditor) {
-      if (DumbService.isDumb(file.getProject())) return; // may need to resolve refs
+      Project project = file.getProject();
+      if (DumbService.isDumb(project)) return; // may need to resolve refs
       Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
       if (document == null || document.getLineCount() <= myLineNumber) return;
-      if (!PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) return;
+      if (!PsiDocumentManager.getInstance(project).isCommitted(document)) return;
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
-      PsiElement element = file.findElementAt(startOffset);
-      List<PsiElement> candidates = new ArrayList<>();
-      while (element != null && element.getTextRange().getStartOffset() < endOffset) {
-        PsiElement finalElement = element;
-        PsiElement matched = SlowOperations.allowSlowOperations(() -> myElementMatcher.matchElement(finalElement));
-        if (matched != null) {
-          candidates.add(matched);
-          if (candidates.size() > 1) return;
-        }
-        element = PsiTreeUtil.nextLeaf(element);
+      LinkInfo info = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> computeLinkInfo(file, startOffset, endOffset, originalEditor)),
+                                             JavaBundle.message("exception.navigation.fetching.target.position"), true, project);
+      if (info == null) return;
+      TextRange range = info.target.getTextRange();
+      targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
+      if (info.analysisAction != null) {
+        displayAnalysisAction(project, info.target, targetEditor, info.analysisAction);
       }
-      if (candidates.size() == 1) {
-        PsiElement foundElement = candidates.get(0);
-        TextRange range = foundElement.getTextRange();
-        targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
-        SlowOperations.allowSlowOperations(() -> displayAnalysisAction(file.getProject(), foundElement, targetEditor, originalEditor));
+    }
+    
+    private static class LinkInfo {
+      final @NotNull PsiElement target;
+      final @Nullable AnAction analysisAction;
+
+      private LinkInfo(@NotNull PsiElement target, @Nullable AnAction action) {
+        this.target = target;
+        analysisAction = action;
       }
     }
 
-    private void displayAnalysisAction(@NotNull Project project,
-                                       @NotNull PsiElement element,
-                                       @NotNull Editor editor,
-                                       @Nullable Editor originalEditor) {
+    private @Nullable LinkInfo computeLinkInfo(@NotNull PsiFile file, int lineStart, int lineEnd, @Nullable Editor originalEditor) {
+      PsiElement target = getExceptionOrigin(file, lineStart, lineEnd);
+      if (target == null) return null;
+      AnAction action = findAnalysisAction(file.getProject(), target, originalEditor);
+      return new LinkInfo(target, action);
+    }
+
+    private @Nullable PsiElement getExceptionOrigin(@NotNull PsiFile file, int lineStart, int lineEnd) {
+      PsiElement element = file.findElementAt(lineStart);
+      List<PsiElement> candidates = new ArrayList<>();
+      while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
+        PsiElement finalElement = element;
+        PsiElement matched = myElementMatcher.matchElement(finalElement);
+        if (matched != null) {
+          candidates.add(matched);
+          if (candidates.size() > 1) return null;
+        }
+        element = PsiTreeUtil.nextLeaf(element);
+      }
+      return ContainerUtil.getOnlyItem(candidates);
+    }
+
+    private void displayAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @NotNull Editor editor, AnAction action) {
+      String actionName = action.getTemplatePresentation().getDescription();
+      Objects.requireNonNull(actionName);
+      Ref<Balloon> ref = Ref.create();
+      Balloon balloon = JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(HtmlChunk.link("analyze", actionName).toString(), null, 
+                                      MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
+            @Override
+            protected void hyperlinkActivated(HyperlinkEvent e) {
+              if (e.getDescription().equals("analyze")) {
+                Balloon b = ref.get();
+                if (b != null) {
+                  Disposer.dispose(b);
+                }
+                myAnalysisWasActivated = true;
+                ActionsCollector.getInstance().record(project, action, null, element.getLanguage());
+                action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
+              }
+            }
+          })
+        .setDisposable(project)
+        .createBalloon();
+      ref.set(balloon);
+      RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+      balloon.show(point, Balloon.Position.below);
+      editor.getScrollingModel().addVisibleAreaListener(e -> {
+        Disposer.dispose(balloon);
+      }, balloon);
+    }
+
+    @Nullable
+    private AnAction findAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @Nullable Editor originalEditor) {
       if (myAnalysisWasActivated) {
         // Do not show the balloon if analysis was already activated once on this link
-        return;
+        return null;
       }
       Supplier<List<StackLine>> supplier;
       if (originalEditor != null) {
@@ -461,33 +516,7 @@ public class ExceptionWorker {
       } else {
         action = exceptionAnalysisProvider.getAnalysisAction(element, info, supplier);
       }
-      if (action == null) return;
-      String actionName = action.getTemplatePresentation().getDescription();
-      Objects.requireNonNull(actionName);
-      Ref<Balloon> ref = Ref.create();
-      Balloon balloon = JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(HtmlChunk.link("analyze", actionName).toString(), null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
-            @Override
-            protected void hyperlinkActivated(HyperlinkEvent e) {
-              if (e.getDescription().equals("analyze")) {
-                Balloon b = ref.get();
-                if (b != null) {
-                  Disposer.dispose(b);
-                }
-                myAnalysisWasActivated = true;
-                ActionsCollector.getInstance().record(project, action, null, element.getLanguage());
-                action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
-              }
-            }
-          })
-        .setDisposable(project)
-        .createBalloon();
-      ref.set(balloon);
-      RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      balloon.show(point, Balloon.Position.below);
-      editor.getScrollingModel().addVisibleAreaListener(e -> {
-        Disposer.dispose(balloon);
-      }, balloon);
+      return action;
     }
   }
 
