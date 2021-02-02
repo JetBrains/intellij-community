@@ -604,13 +604,14 @@ object DynamicPlugins {
         focusManager.setGlobalCurrentFocusCycleRoot(focusCycleRoot)
       }
       else {
+        focusCycleRoot = focusManager.currentFocusCycleRoot
         val dataContext = DataManager.getInstance().getDataContext(focusCycleRoot)
         val project = CommonDataKeys.PROJECT.getData(dataContext)
         if (project != null) {
           val projectFrame = WindowManager.getInstance().getFrame(project)
           if (projectFrame != null) {
             LOG.info("Focus cycle root reset to IdeFrame (from DataContext)")
-            focusManager.setGlobalCurrentFocusCycleRoot(focusCycleRoot)
+            focusManager.setGlobalCurrentFocusCycleRoot(projectFrame)
           }
           else {
             LOG.info("Can't find new focus cycle root; old root is $focusCycleRoot")
