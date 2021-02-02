@@ -256,7 +256,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 }
             } else {
                 // Action shouldn't be found. Check that other actions are expected and thus tested action isn't there under another name.
-                DirectiveBasedActionUtils.checkAvailableActionsAreExpected(myFixture.file, actions)
+                checkAvailableActionsAreExpected(actions)
             }
         }
     }
@@ -285,4 +285,22 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     private fun checkForUnexpectedErrors() = DirectiveBasedActionUtils.checkForUnexpectedErrors(myFixture.file as KtFile)
+
+    protected open fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
+        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(myFixture.file, actions)
+    }
+
+    protected open fun checkForUnexpectedErrors() = DirectiveBasedActionUtils.checkForUnexpectedErrors(myFixture.file as KtFile)
+
+    override fun getTestDataPath(): String {
+        // Ensure full path is returned. Otherwise FileComparisonFailureException does not provide link to file diff
+        val testDataPath = super.getTestDataPath()
+        return try {
+            File(testDataPath).canonicalPath
+        } catch (e: IOException) {
+            e.printStackTrace()
+            testDataPath
+        }
+
+    }
 }
