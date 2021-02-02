@@ -633,7 +633,8 @@ public final class EditorWindow {
       myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
       if (fileIsSecondaryComponent) {
         splitter.setSecondComponent(res.myPanel);
-      } else {
+      }
+      else {
         splitter.setFirstComponent(res.myPanel);
       }
       // open only selected file in the new splitter instead of opening all tabs
@@ -743,17 +744,6 @@ public final class EditorWindow {
     }
   }
 
-  private void updateFileIconDecoration(@NotNull VirtualFile file) {
-    EditorWithProviderComposite composite = Objects.requireNonNull(findFileComposite(file));
-    int index = findEditorIndex(composite);
-    LOG.assertTrue(index != -1);
-    Icon current = myTabbedPane.getIconAt(index);
-    if (current instanceof DecoratedTabIcon) {
-      current = ((DecoratedTabIcon)current).fileIcon;
-    }
-    myTabbedPane.setIconAt(index, decorateFileIcon(composite, current));
-  }
-
   void updateFileIcon(@NotNull VirtualFile file, @NotNull Icon icon) {
     EditorWithProviderComposite composite = findFileComposite(file);
     if (composite == null) return;
@@ -778,17 +768,17 @@ public final class EditorWindow {
    * @return baseIcon augmented with pin/modification status
    */
   private static Icon decorateFileIcon(@NotNull EditorComposite composite, @NotNull Icon baseIcon) {
-    Icon modifiedIcon;
     UISettings settings = UISettings.getInstance();
-    if (settings.getMarkModifiedTabsWithAsterisk()) {
-      Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
-      modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified() ? crop : new EmptyIcon(7, 7);
-      DecoratedTabIcon result = new DecoratedTabIcon(2, baseIcon);
-      result.setIcon(baseIcon, 0);
-      result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
-      return JBUIScale.scaleIcon(result);
+    if (!settings.getMarkModifiedTabsWithAsterisk()) {
+      return baseIcon;
     }
-    return baseIcon;
+
+    Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
+    Icon modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified() ? crop : EmptyIcon.create(7, 7);
+    DecoratedTabIcon result = new DecoratedTabIcon(2, baseIcon);
+    result.setIcon(baseIcon, 0);
+    result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
+    return JBUIScale.scaleIcon(result);
   }
 
   private static class DecoratedTabIcon extends LayeredIcon {
