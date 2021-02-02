@@ -61,6 +61,7 @@ public final class GitVFSListener extends VcsVFSListener {
 
   @NotNull
   @Override
+  @SuppressWarnings("UnresolvedPropertyKey")
   protected String getSingleFileAddPromptTemplate() {
     return message("vfs.listener.add.single.prompt");
   }
@@ -146,6 +147,7 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
+  @SuppressWarnings("UnresolvedPropertyKey")
   protected String getSingleFileDeletePromptTemplate() {
     return message("vfs.listener.delete.single.prompt");
   }
