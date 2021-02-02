@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSy
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -26,7 +27,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
@@ -1206,7 +1210,9 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void waitForTasksCompletion(MavenProjectsProcessor processor) {
-    FileDocumentManager.getInstance().saveAllDocuments();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
 
     myReadingProcessor.waitForCompletion();
     if (processor != null) processor.waitForCompletion();
@@ -1282,11 +1288,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
     VirtualFileManager fm = VirtualFileManager.getInstance();
-    if (isNormalProject()) {
-      fm.asyncRefresh(null);
+    if (isNoBackgroundMode() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
+      ApplicationManager.getApplication().invokeAndWait(() -> fm.syncRefresh());
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(()->fm.syncRefresh());
+      fm.asyncRefresh(null);
     }
 
     if (postTasks.get() != null /*may be null if importing is cancelled*/) {
