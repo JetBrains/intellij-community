@@ -20,7 +20,7 @@ import org.junit.Ignore
 import org.junit.Test
 
 class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
-    @TargetVersions("4.8+")
+    @TargetVersions("4.8 <=> 6.0")
     @Test
     fun testKtsInJsProject() {
         val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
