@@ -139,7 +139,13 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   @Override
   protected JScrollBar createScrollBar() {
-    JBScrollBar bar = new JBScrollBar();
+    JBScrollBar bar = new JBScrollBar() {
+      @Override
+      public Color getBackground() {
+        return myTerminalPanel.getBackground();
+      }
+    };
+    bar.setOpaque(true);
     bar.putClientProperty(JBScrollPane.Alignment.class, JBScrollPane.Alignment.RIGHT);
     bar.putClientProperty(JBScrollBar.TRACK, (RegionPainter<Object>)(g, x, y, width, height, object) -> {
       SubstringFinder.FindResult result = myTerminalPanel.getFindResult();
