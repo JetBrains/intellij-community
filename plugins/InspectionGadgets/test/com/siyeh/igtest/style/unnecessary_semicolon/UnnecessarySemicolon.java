@@ -42,11 +42,19 @@ enum BuildType {
     public String toString() {
         return super.toString();
     }
+    <warning descr="Unnecessary semicolon ';'">;</warning>
 }
-
+enum E1 {
+  <warning descr="Unnecessary semicolon ';'">;</warning>
+}
+enum E2 {
+  ,<warning descr="Unnecessary semicolon ';'">;</warning>
+}
 class C {
+  <warning descr="Unnecessary semicolon ';'">;</warning>
     void m() throws Exception {
         try (AutoCloseable r1 = null; AutoCloseable r2 = null /*ok*/ ) { }
         try (AutoCloseable r1 = null; AutoCloseable r2 = null<warning descr="Unnecessary semicolon ';'">;</warning> /*warn*/ ) { }
     }
+    <warning descr="Unnecessary semicolon ';'">;</warning>
 }

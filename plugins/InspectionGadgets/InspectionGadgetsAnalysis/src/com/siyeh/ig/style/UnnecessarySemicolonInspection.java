@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -102,23 +101,23 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
   private class UnnecessarySemicolonVisitor extends BaseInspectionVisitor {
     @Override
     public void visitFile(@NotNull PsiFile file) {
-      findTopLevelSemicolons(file);
+      checkTopLevelSemicolons(file);
       super.visitFile(file);
     }
 
     @Override
     public void visitImportList(PsiImportList list) {
-      findTopLevelSemicolons(list);
+      checkTopLevelSemicolons(list);
       super.visitImportList(list);
     }
 
     @Override
     public void visitModule(PsiJavaModule module) {
-      findTopLevelSemicolons(module);
+      checkTopLevelSemicolons(module);
       super.visitModule(module);
     }
 
-    private void findTopLevelSemicolons(PsiElement element) {
+    private void checkTopLevelSemicolons(PsiElement element) {
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(sibling)) {
         if (sibling instanceof PsiErrorElement) return;
         if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
@@ -130,61 +129,26 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
-
-      findUnnecessarySemicolonsAfterEnumConstants(aClass);
-      if (!aClass.isEnum() || ignoreAfterEnumConstants) {
-        return;
-      }
-      final PsiField[] fields = aClass.getFields();
-      final PsiElement element;
-      if (fields.length > 0) {
-        final PsiField lastField = fields[fields.length - 1];
-        if (!(lastField instanceof PsiEnumConstant)) {
-          return;
-        }
-        element = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastField);
+      if (!aClass.isEnum()) {
+        checkTopLevelSemicolons(aClass);
       }
       else {
-        final PsiElement lBrace = aClass.getLBrace();
-        element = PsiTreeUtil.skipWhitespacesAndCommentsForward(lBrace);
-      }
-      if (!(element instanceof PsiJavaToken)) {
-        return;
-      }
-      final PsiJavaToken token = (PsiJavaToken)element;
-      final IElementType tokenType = token.getTokenType();
-      if (!tokenType.equals(JavaTokenType.SEMICOLON)) {
-        return;
-      }
-      final PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
-      if (next == null || !next.equals(aClass.getRBrace())) {
-        return;
-      }
-      registerError(element, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-    }
-
-    private void findUnnecessarySemicolonsAfterEnumConstants(@NotNull PsiClass aClass) {
-      PsiElement child = aClass.getFirstChild();
-      while (child != null) {
-        if (child instanceof PsiJavaToken) {
-          final PsiJavaToken token = (PsiJavaToken)child;
-          final IElementType tokenType = token.getTokenType();
-          if (tokenType.equals(JavaTokenType.SEMICOLON)) {
-            final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesAndCommentsBackward(child);
-            if (!(prevSibling instanceof PsiEnumConstant)) {
-              if (prevSibling instanceof PsiJavaToken) {
-                final IElementType prevTokenType = ((PsiJavaToken)prevSibling).getTokenType();
-                if (!JavaTokenType.COMMA.equals(prevTokenType) && !JavaTokenType.LBRACE.equals(prevTokenType)) {
-                  registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-                }
-              }
-              else {
-                registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        boolean semicolonSeen = false;
+        for (PsiElement sibling = aClass.getFirstChild(); sibling != null; sibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(sibling)) {
+          if (sibling instanceof PsiErrorElement) return;
+          if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
+            if (semicolonSeen) {
+              registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            }
+            else if (!ignoreAfterEnumConstants) {
+              final PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsForward(sibling);
+              if (PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
+                registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
               }
             }
+            semicolonSeen = true;
           }
         }
-        child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
       }
     }
 
