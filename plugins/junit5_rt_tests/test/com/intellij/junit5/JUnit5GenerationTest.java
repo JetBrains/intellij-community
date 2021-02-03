@@ -19,7 +19,7 @@ import com.intellij.testIntegration.BaseGenerateTestSupportMethodAction;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import org.junit.jupiter.api.Test;
 
-class JUnit5GenerationTest extends JUnit5CodeInsightTest {
+public class JUnit5GenerationTest extends JUnit5CodeInsightTest {
   @Test
   void testMethodInTopLevelClass() {
     doTest("import org.junit.jupiter.api.Test; class MyTest {<caret> @Test void m2(){}}",

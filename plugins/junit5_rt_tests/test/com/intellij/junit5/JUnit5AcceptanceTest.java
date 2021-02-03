@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
+public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
 
   @Test
   void testFactoryMethods() {

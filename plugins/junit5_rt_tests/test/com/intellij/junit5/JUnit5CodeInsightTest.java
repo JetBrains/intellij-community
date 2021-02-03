@@ -20,7 +20,10 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
+@RunWith(JUnitPlatform.class)
 @ExtendWith(EdtInterceptor.class)
 abstract class JUnit5CodeInsightTest {
   protected JavaCodeInsightTestFixture myFixture;
