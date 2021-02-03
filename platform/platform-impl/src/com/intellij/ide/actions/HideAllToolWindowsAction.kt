@@ -101,7 +101,7 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
       var comp = editor.component as Component?
       while (comp != editorManager.mainSplitters && comp != null) {
         val parent = comp.parent
-        if (parent is Splitter) {
+        if (parent is Splitter && UIUtil.isClientPropertyTrue(parent, EditorsSplitters.SPLITTER_KEY)) {
           if (parent.firstComponent == comp) {
             if (parent.proportion < parent.maximumProportion) {
               set.add(Pair(parent, true))

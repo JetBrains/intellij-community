@@ -1030,7 +1030,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           panel.setOpaque(false);
           Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f);
           splitter.putClientProperty(SPLITTER_KEY, Boolean.TRUE);
-          splitter.setHonorComponentsMinimumSize(false);
           panel.add(splitter, BorderLayout.CENTER);
           splitter.setFirstComponent(firstComponent);
           splitter.setSecondComponent(secondComponent);
