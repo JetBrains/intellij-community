@@ -19,6 +19,7 @@ package com.intellij.application.options.colors;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -32,21 +33,26 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.function.Supplier;
 
 public class FontEditorPreview implements PreviewPanel{
   private static final String PREVIEW_TEXT_KEY = "FontPreviewText";
 
   private final EditorEx myEditor;
+  private final JPanel myTopPanel;
 
   private final Supplier<? extends EditorColorsScheme> mySchemeSupplier;
 
@@ -58,7 +64,19 @@ public class FontEditorPreview implements PreviewPanel{
     @Nls String text = PropertiesComponent.getInstance().getValue(PREVIEW_TEXT_KEY, getIDEDemoText());
 
     myEditor = (EditorEx)createPreviewEditor(text, mySchemeSupplier.get(), editable);
-    //((JComponent)myEditor.getGutter()).setVisible(false);
+    myEditor.setBorder(JBUI.Borders.empty());
+    myTopPanel = new JPanel(new BorderLayout());
+    myTopPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+
+    JLabel previewLabel = new JLabel(ApplicationBundle.message("settings.editor.font.preview.hint"));
+    previewLabel.setFont(JBUI.Fonts.smallFont());
+    previewLabel.setForeground(UIUtil.getContextHelpForeground());
+    previewLabel.setBorder(JBUI.Borders.empty(10, 15, 10, 0));
+    previewLabel.setBackground(myEditor.getBackgroundColor());
+    myTopPanel.add(previewLabel, BorderLayout.SOUTH);
+    myTopPanel.setBackground(myEditor.getBackgroundColor());
+    myTopPanel.setBorder(JBUI.Borders.customLine(JBColor.border()));
+
     registerRestoreAction(myEditor);
     installTrafficLights(myEditor);
   }
@@ -81,16 +99,22 @@ public class FontEditorPreview implements PreviewPanel{
   private static String getIDEDemoText() {
     return
       ApplicationNamesInfo.getInstance().getFullProductName() +
-      " is a full-featured IDE\n" +
-      "with a high level of usability and outstanding\n" +
-      "advanced code editing and refactoring support.\n" +
+      " is an Integrated \n" +
+      "Development Environment (IDE) designed\n" +
+      "to maximize productivity. It provides\n" +
+      "clever code completion, static code\n" +
+      "analysis, and refactorings, and lets\n" +
+      "you focus on the bright side of\n" +
+      "software development making\n" +
+      "it an enjoyable experience.\n" +
       "\n" +
-      "abcdefghijklmnopqrstuvwxyz 0123456789 (){}[]\n" +
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ +-*/= .,;:!? #&$%@|^\n" +
-      // Create empty lines in order to make the gutter wide enough to display two-digits line numbers (other previews use long text
-      // and we don't want different gutter widths on color pages switching).
+      "abcdefghijklmnopqrstuvwxyz\n" +
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n" +
+      " 0123456789 (){}[]\n" +
+      " +-*/= .,;:!? #&$%@|^\n" +
       "\n" +
-      "<!-- -- != := === >= >- >=> |-> -> <$> </> #[ |||> |= ~@\n" +
+      "<!-- -- != := === >= >- >=> |-> -> <$>\n" +
+      "</> #[ |||> |= ~@\n" +
       "\n";
   }
 
@@ -104,7 +128,7 @@ public class FontEditorPreview implements PreviewPanel{
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument(text);
     // enable editor popup toolbar
-    FileDocumentManagerImpl.registerDocument(editorDocument, new LightVirtualFile());
+    FileDocumentManagerBase.registerDocument(editorDocument, new LightVirtualFile());
     EditorEx editor = (EditorEx) (editable ? editorFactory.createEditor(editorDocument) : editorFactory.createViewer(editorDocument));
     editor.setColorsScheme(scheme);
     EditorSettings settings = editor.getSettings();
@@ -124,7 +148,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   @Override
   public JComponent getPanel() {
-    return myEditor.getComponent();
+    return myTopPanel;
   }
 
   @Override
