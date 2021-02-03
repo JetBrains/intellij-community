@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -15,6 +15,5 @@ public final class SpaceIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, SpaceIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Main = load("icons/main.svg", 9209017643354815561L, 0);
-  /** 13x13 */ public static final @NotNull Icon MainToolwindow = load("icons/mainToolwindow.svg", -6815707641369753444L, 0);
   /** 13x13 */ public static final @NotNull Icon SpaceToolWindow = load("icons/spaceToolWindow.svg", 8758905544079515861L, 2);
 }
