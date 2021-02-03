@@ -71,7 +71,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private static void fireEventsSync(@NotNull RefreshSessionImpl session) {
-    session.fireEvents(ContainerUtil.map(session.getEvents(), e -> new CompoundVFileEvent(e)), Collections.emptyList(), true);
+    session.fireEvents(ContainerUtil.map(session.getEvents(), e -> new CompoundVFileEvent(e)), Collections.emptyList(), false);
   }
 
   private void queueSessionAsync(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
@@ -151,7 +151,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     });
 
     List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(allEvents);
-    return () -> session.fireEvents(events, appliers, false);
+    return () -> session.fireEvents(events, appliers, true);
   }
 
   private void executeRefreshSession(@NotNull RefreshSessionImpl session) {

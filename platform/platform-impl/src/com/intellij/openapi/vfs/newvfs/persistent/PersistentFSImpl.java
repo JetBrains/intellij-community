@@ -838,7 +838,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         outValidatedEvents.add(jarDeleteEvent);
       }
 
-      applyMultipleEvents(publisher, outApplyActions, outValidatedEvents);
+      applyMultipleEvents(publisher, outApplyActions, outValidatedEvents, false);
     }
   }
 
@@ -998,7 +998,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                @NotNull Set<? super String> middleDirsInvolved,
                                @NotNull Map<VirtualDirectoryImpl, Object> toCreate,
                                @NotNull Set<VFileEvent> toIgnore,
-                               @NotNull Set<? super VirtualFile> toDelete) {
+                               @NotNull Set<? super VirtualFile> toDelete,
+                               boolean excludeAsyncListeners) {
     int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved, toDelete, toCreate, toIgnore);
     assert endIndex > startIndex : events.get(startIndex) +"; files: "+filesInvolved+"; middleDirs: "+middleDirsInvolved;
     // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
@@ -1010,6 +1011,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       CompoundVFileEvent event = events.get(i);
 
       outApplyActions.addAll(event.getApplyActions());
+
+      if (excludeAsyncListeners && !event.areInducedEventsCalculated()) {
+        LOG.error("Nested file events must be processed by async file listeners! Event: " + event);
+      }
+
       for (VFileEvent jarDeleteEvent : event.getInducedEvents()) {
         outApplyActions.add((Runnable)() -> applyEvent(jarDeleteEvent));
         outValidatedEvents.add(jarDeleteEvent);
@@ -1100,11 +1106,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final int INNER_ARRAYS_THRESHOLD = 1024; // max initial size, to avoid OOM on million-events processing
   @Override
   public void processEvents(@NotNull List<? extends VFileEvent> events) {
-    processEventsImpl(ContainerUtil.map(events, e -> new CompoundVFileEvent(e)));
+    processEventsImpl(ContainerUtil.map(events, e -> new CompoundVFileEvent(e)), false);
   }
 
   @ApiStatus.Internal
-  public void processEventsImpl(@NotNull List<? extends CompoundVFileEvent> events) {
+  public void processEventsImpl(@NotNull List<? extends CompoundVFileEvent> events, boolean excludeAsyncListeners) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     int startIndex = 0;
@@ -1130,27 +1136,44 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       toCreate.clear();
       toIgnore.clear();
       toDelete.clear();
-      startIndex = groupAndValidate(events, startIndex, applyActions, validated, files, middleDirs, toCreate, toIgnore, toDelete);
+      startIndex = groupAndValidate(events,
+                                    startIndex,
+                                    applyActions,
+                                    validated,
+                                    files,
+                                    middleDirs,
+                                    toCreate,
+                                    toIgnore,
+                                    toDelete,
+                                    excludeAsyncListeners);
 
       if (!validated.isEmpty()) {
-        applyMultipleEvents(publisher, applyActions, validated);
+        applyMultipleEvents(publisher, applyActions, validated, excludeAsyncListeners);
       }
     }
   }
 
   private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
                                           @NotNull List<? extends Runnable> applyActions,
-                                          @NotNull List<? extends VFileEvent> applyEvents) {
+                                          @NotNull List<? extends VFileEvent> applyEvents, boolean excludeAsyncListeners) {
     PingProgress.interactWithEdtProgress();
     // do defensive copy to cope with ill-written listeners that save passed list for later processing
     List<VFileEvent> toSend = ContainerUtil.immutableList(applyEvents.toArray(new VFileEvent[0]));
-    fireBeforeEvents(publisher, toSend);
 
-    PingProgress.interactWithEdtProgress();
-    applyActions.forEach(Runnable::run);
+    try {
+      if (excludeAsyncListeners) AsyncEventSupport.markAsynchronouslyProcessedEvents(toSend);
 
-    PingProgress.interactWithEdtProgress();
-    fireAfterEvents(publisher, toSend);
+      fireBeforeEvents(publisher, toSend);
+
+      PingProgress.interactWithEdtProgress();
+      applyActions.forEach(Runnable::run);
+
+      PingProgress.interactWithEdtProgress();
+      fireAfterEvents(publisher, toSend);
+    }
+    finally {
+      if (excludeAsyncListeners) AsyncEventSupport.unmarkAsynchronouslyProcessedEvents(toSend);
+    }
   }
 
   private static void fireBeforeEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {

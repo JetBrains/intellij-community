@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
@@ -10,12 +9,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * A class represents VFileEvent with possible additional induced file system events (like changed entries in a changed jar file) and corresponding additional actions (like cleaning jar entries cache after change).
+ * A class represents VFileEvent supplied with
+ * possible additional induced file system events (like changed entries in a changed jar file) and
+ * corresponding additional actions (like cleaning jar entries cache after change).
  */
 @ApiStatus.Internal
 public class CompoundVFileEvent {
   private final @NotNull VFileEvent myFileEvent;
-  private boolean myAdditionalEventsCalculated;
+  private boolean myInducedEventsCalculated;
   private final @NotNull List<VFileEvent> myInducedEvents = new SmartList<>();
   private final @NotNull List<Runnable> myApplyActions = new SmartList<>();
 
@@ -26,6 +27,10 @@ public class CompoundVFileEvent {
   @NotNull
   public VFileEvent getFileEvent() {
     return myFileEvent;
+  }
+
+  public boolean areInducedEventsCalculated() {
+    return myInducedEventsCalculated;
   }
 
   @NotNull
@@ -41,17 +46,14 @@ public class CompoundVFileEvent {
   }
 
   private void calculateAdditionalEvents() {
-    if (!myAdditionalEventsCalculated) {
-      if (ApplicationManager.getApplication().isWriteThread()) {
-        assert AsyncEventSupport.shouldRunAppliers() : "Nested file events must be processed by async file listeners!";
-      }
+    if (!myInducedEventsCalculated) {
       myInducedEvents.addAll(VfsImplUtil.getJarInvalidationEvents(myFileEvent, myApplyActions));
-      myAdditionalEventsCalculated = true;
+      myInducedEventsCalculated = true;
     }
   }
 
   @Override
   public String toString() {
-    return String.valueOf(myFileEvent);
+    return "Compound " + myFileEvent;
   }
 }
