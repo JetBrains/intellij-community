@@ -46,12 +46,12 @@ class KotlinVariableInplaceIntroducer(
     editor: Editor,
     private val postProcess: (KtDeclaration) -> Unit
 ) : AbstractKotlinInplaceIntroducer<KtProperty>(
-    addedVariable,
-    originalExpression,
-    occurrencesToReplace,
-    KotlinIntroduceVariableHandler.INTRODUCE_VARIABLE,
-    project,
-    editor
+    localVariable = addedVariable.takeIf { it.isLocal },
+    expression = originalExpression,
+    occurrences = occurrencesToReplace,
+    title = KotlinIntroduceVariableHandler.INTRODUCE_VARIABLE,
+    project = project,
+    editor = editor,
 ) {
     private val suggestedNames = suggestedNames.toTypedArray()
     private var expressionTypeCheckBox: JCheckBox? = null
