@@ -166,9 +166,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     String qName = aClass.getQualifiedName();
     if (qName != null) { //filter local classes
       if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(placeFile.getProject()).isQualifiedName(qName)) return false;
-      if (ImportFilter.shouldImport(placeFile, qName)) {
-        return true;
-      }
+      return ImportFilter.shouldImport(placeFile, qName);
     }
     return false;
   }
@@ -343,8 +341,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
 
     if (allowPopup && canImportHere) {
-      String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
       if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
+        String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
         HintManager.getInstance().showQuestionHint(editor, hintText, getStartOffset(myElement, myRef),
                                                    getEndOffset(myElement, myRef), action);
       }

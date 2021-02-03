@@ -114,6 +114,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       }
     });
     UIUtil.dispatchAllInvocationEvents();
+    //noinspection StatementWithEmptyBody
     while (!insideReadAction.get()) {
 
     }
@@ -395,6 +396,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   private static void waitForPCE() {
+    //noinspection InfiniteLoopStatement
     while (true) {
       ProgressManager.checkCanceled();
     }
@@ -807,13 +809,13 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }));
 
     ProgressIndicatorBase outer = new ProgressIndicatorBase();
-    ProgressManager.getInstance().runProcess(() -> assertThrows(ProcessCanceledException.class, () -> {
+    ProgressManager.getInstance().runProcess(() -> assertThrows(ProcessCanceledException.class, () ->
       ProgressIndicatorUtils.withTimeout(1, () -> {
         outer.cancel();
         ProgressManager.checkCanceled();
         return null;
-      });
-    }), outer);
+      })
+    ), outer);
   }
 
   private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
