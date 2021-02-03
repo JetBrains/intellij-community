@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.util
 
-import java.util.concurrent.ConcurrentHashMap
+import com.intellij.util.containers.CollectionFactory
 import java.util.concurrent.ConcurrentMap
 
 
@@ -24,7 +24,7 @@ private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : Cla
 
   init {
     if (!isSimple)
-      internalMapping = ConcurrentHashMap<Class<out T>, Boolean>().apply {
+      internalMapping = CollectionFactory.createConcurrentWeakMap<Class<out T>, Boolean>().apply {
         for (initialClass in initialClasses)
           this[initialClass] = true
       }
