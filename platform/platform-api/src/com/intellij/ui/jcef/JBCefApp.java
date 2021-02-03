@@ -57,7 +57,7 @@ public final class JBCefApp {
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
   // [tav] todo: retrieve the version at compile time from the "jcef" maven lib
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 77;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 87;
 
   @NotNull private final CefApp myCefApp;
 
