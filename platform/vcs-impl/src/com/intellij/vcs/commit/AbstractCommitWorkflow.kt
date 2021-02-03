@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -204,6 +204,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     val task = Runnable {
       try {
         checks.run()
+        if (result == null) LOG.warn("No commit handlers result. Seems CheckinMetaHandler returned before invoking its callback.")
       }
       catch (ignore: ProcessCanceledException) {
       }
@@ -213,7 +214,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
     doRunBeforeCommitChecks(task)
 
-    return result ?: CheckinHandler.ReturnResult.CANCEL
+    return result ?: CheckinHandler.ReturnResult.CANCEL.also { LOG.debug("No commit handlers result. Cancelling commit.") }
   }
 
   protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
@@ -225,6 +226,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         metaHandler.runCheckinHandlers(task)
       }
       catch (e: ProcessCanceledException) {
+        LOG.debug("CheckinMetaHandler cancelled $metaHandler")
         throw e
       }
       catch (e: Throwable) {
@@ -241,6 +243,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         if (result != CheckinHandler.ReturnResult.COMMIT) return result
       }
       catch (e: ProcessCanceledException) {
+        LOG.debug("CheckinHandler cancelled $handler")
         return CheckinHandler.ReturnResult.CANCEL
       }
     }

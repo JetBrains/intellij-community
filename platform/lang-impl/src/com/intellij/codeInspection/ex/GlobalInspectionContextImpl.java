@@ -31,9 +31,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -59,7 +57,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -791,25 +788,37 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                           @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     String title = LangBundle.message("progress.title.inspect.code");
     Task task = modal ? new Task.Modal(getProject(), title, true) {
+      private CleanupProblems problems;
+
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cleanup(scope, profile, postRunnable, commandName, indicator, shouldApplyFix);
+        problems = findProblems(scope, profile, indicator, shouldApplyFix);
+      }
+
+      @Override
+      public void onSuccess() {
+        applyFixes(scope, problems, commandName, postRunnable);
       }
     } : new Task.Backgroundable(getProject(), title, true) {
+      private CleanupProblems problems;
+
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cleanup(scope, profile, postRunnable, commandName, indicator, shouldApplyFix);
+        problems = findProblems(scope, profile, indicator, shouldApplyFix);
+      }
+
+      @Override
+      public void onSuccess() {
+        applyFixes(scope, problems, commandName, postRunnable);
       }
     };
     ProgressManager.getInstance().run(task);
   }
 
-  private void cleanup(@NotNull AnalysisScope scope,
-                       @NotNull InspectionProfile profile,
-                       @Nullable Runnable postRunnable,
-                       @Nullable String commandName,
-                       @NotNull ProgressIndicator progressIndicator,
-                       @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
+  private @NotNull CleanupProblems findProblems(@NotNull AnalysisScope scope,
+                                                @NotNull InspectionProfile profile,
+                                                @NotNull ProgressIndicator progressIndicator,
+                                                @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     setCurrentScope(scope);
     final int fileCount = scope.getFileCount();
     progressIndicator.setIndeterminate(false);
@@ -899,26 +908,29 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       refManager.inspectionReadActionFinished();
     }
 
-    if (files.isEmpty()) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
-        if (commandName != null) {
-          NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
-        }
-        if (postRunnable != null) {
-          postRunnable.run();
-        }
-      }, ModalityState.defaultModalityState());
-      return;
-    }
+    return new CleanupProblems(files, descriptors, searchScope instanceof GlobalSearchScope);
+  }
 
-    Runnable runnable = () -> {
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
-      CleanupInspectionUtil.getInstance().applyFixesNoSort(getProject(), LangBundle.message("code.cleanup"), descriptors, null, false, searchScope instanceof GlobalSearchScope);
+  private void applyFixes(@NotNull AnalysisScope scope,
+                          @NotNull CleanupProblems problems,
+                          @Nullable String commandName,
+                          @Nullable Runnable postRunnable) {
+    if (problems.files.isEmpty()) {
+      if (commandName != null) {
+        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
+      }
       if (postRunnable != null) {
         postRunnable.run();
       }
-    };
-    TransactionGuard.submitTransaction(getProject(), runnable);
+      return;
+    }
+
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.files)) return;
+    CleanupInspectionUtil.getInstance()
+      .applyFixesNoSort(getProject(), LangBundle.message("code.cleanup"), problems.problemDescriptors, null, false, problems.isGlobalScope);
+    if (postRunnable != null) {
+      postRunnable.run();
+    }
   }
 
   private static boolean isBinary(@NotNull PsiFile file) {
@@ -962,5 +974,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         throw new RuntimeException(e);
       }
     });
+  }
+
+  private static class CleanupProblems {
+    private final @NotNull Set<PsiFile> files;
+    private final @NotNull List<ProblemDescriptor> problemDescriptors;
+    private final boolean isGlobalScope;
+
+    private CleanupProblems(@NotNull Set<PsiFile> files, @NotNull List<ProblemDescriptor> problemDescriptors, boolean isGlobalScope) {
+      this.files = files;
+      this.problemDescriptors = problemDescriptors;
+      this.isGlobalScope = isGlobalScope;
+    }
   }
 }
