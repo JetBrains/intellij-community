@@ -18,8 +18,12 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
     XmlTag someArtifact = findDependencyTag("somegroup", "someartifact", "1.0");
     XmlTag another = findDependencyTag("anothergroup", "anotherArtifact", "2.0");
 
-    assertEquals(new DeclaredDependency("somegroup", "someartifact", "1.0", null, someArtifact), dependencies.get(0));
-    assertEquals(new DeclaredDependency("anothergroup", "anotherArtifact", "2.0", null, another), dependencies.get(1));
+    assertEquals(new UnifiedDependency("somegroup", "someartifact", "1.0", null), dependencies.get(0).getUnifiedDependency());
+    assertEquals(new UnifiedDependency("anothergroup", "anotherArtifact", "2.0", null), dependencies.get(1).getUnifiedDependency());
+
+    assertEquals(someArtifact, dependencies.get(0).getPsiElement());
+    assertEquals(another, dependencies.get(1).getPsiElement());
+
   }
 
   public void testAddDependency() throws IOException {

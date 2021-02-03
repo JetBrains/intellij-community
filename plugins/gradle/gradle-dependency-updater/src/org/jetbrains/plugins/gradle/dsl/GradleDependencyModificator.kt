@@ -12,6 +12,9 @@ import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.ExternalDependencyModificator
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
@@ -130,8 +133,16 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency> {
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module);
     return model.dependencies().artifacts().map {
+      val dataContext = object: DataContext {
+        override fun getData(dataId: String): Any? {
+          if(CommonDataKeys.PSI_ELEMENT.`is`(dataId)){
+            return it.psiElement
+          }
+          return null
+        }
+      }
       DeclaredDependency(it.group().valueAsString(), it.name().valueAsString(), it.version().valueAsString(), it.configurationName(),
-                         it.psiElement)
+                         dataContext)
     }
   }
 

@@ -4,19 +4,25 @@ package com.intellij.buildsystem.model
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.psi.PsiElement
 
-data class DeclaredDependency(
+class DeclaredDependency(
   val unifiedDependency: UnifiedDependency,
-  val psiElement: PsiElement?
+  val dataContext: DataContext
 ) {
 
   val coordinates: UnifiedCoordinates = unifiedDependency.coordinates
+  val psiElement: PsiElement?
+    get() {
+      return dataContext.getData(CommonDataKeys.PSI_ELEMENT)
+    }
 
   constructor(groupId: String?,
               artifactId: String?,
               version: String?,
               configuration: String? = null,
-              psiElement: PsiElement?) :
-    this(UnifiedDependency(groupId, artifactId, version, configuration), psiElement)
+              dataContext: DataContext) :
+    this(UnifiedDependency(groupId, artifactId, version, configuration), dataContext)
 }

@@ -6,6 +6,8 @@ import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.ExternalDependencyModificator
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -299,7 +301,15 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
       model.dependencies.dependencies.map {
         var scope = it.scope.stringValue;
         if (scope == SCOPE_COMPILE) scope = null
-        DeclaredDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.stringValue, scope, it.xmlElement)
+        val dataContext = object: DataContext {
+          override fun getData(dataId: String): Any? {
+            if(CommonDataKeys.PSI_ELEMENT.`is`(dataId)){
+              return it.xmlElement
+            }
+            return null
+          }
+        }
+        DeclaredDependency(it.groupId.stringValue, it.artifactId.stringValue, it.version.stringValue, scope, dataContext)
       }
     }
 
