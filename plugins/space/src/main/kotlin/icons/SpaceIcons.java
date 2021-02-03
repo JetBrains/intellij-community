@@ -16,4 +16,5 @@ public final class SpaceIcons {
   }
   /** 16x16 */ public static final @NotNull Icon Main = load("icons/main.svg", 9209017643354815561L, 0);
   /** 13x13 */ public static final @NotNull Icon MainToolwindow = load("icons/mainToolwindow.svg", -6815707641369753444L, 0);
+  /** 13x13 */ public static final @NotNull Icon SpaceToolWindow = load("icons/spaceToolWindow.svg", 8758905544079515861L, 2);
 }
