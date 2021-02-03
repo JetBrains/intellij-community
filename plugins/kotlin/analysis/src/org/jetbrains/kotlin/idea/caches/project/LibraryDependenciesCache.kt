@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.core.util.CachedValue
 import org.jetbrains.kotlin.idea.core.util.getValue
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.idea.project.isHMPPEnabled
 
 internal typealias LibrariesAndSdks = Pair<List<LibraryInfo>, List<SdkInfo>>
 
@@ -139,7 +140,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class LibraryUsageIndex {
-        val modulesLibraryIsUsedIn: MultiMap<LibraryWrapper, Module> = MultiMap.createSet()
+        private val modulesLibraryIsUsedIn: MultiMap<LibraryWrapper, Module> = MultiMap.createSet()
 
         init {
             for (module in ModuleManager.getInstance(project).modules) {
@@ -150,6 +151,16 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                             modulesLibraryIsUsedIn.putValue(library.wrap(), module)
                         }
                     }
+                }
+            }
+        }
+
+        fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
+            val ideaModelInfosCache = getIdeaModelInfosCache(project)
+            for (module in modulesLibraryIsUsedIn[libraryInfo.library]) {
+                val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
+                if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
+                    yield(module)
                 }
             }
         }
