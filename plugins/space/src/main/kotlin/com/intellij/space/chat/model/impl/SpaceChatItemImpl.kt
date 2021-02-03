@@ -9,6 +9,7 @@ import circlet.m2.channel.M2ChannelVm
 import circlet.platform.client.resolve
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.space.chat.model.api.SpaceChatItem
+import com.intellij.space.chat.model.api.SpaceChatItemAdditionalFeature
 import com.intellij.space.chat.model.api.toType
 import com.intellij.space.chat.ui.awaitFullLoad
 import libraries.coroutines.extra.Lifetime
@@ -16,7 +17,8 @@ import libraries.coroutines.extra.Lifetime
 internal class SpaceChatItemImpl private constructor(
   private val messageVm: M2MessageVm,
   override val link: String?,
-  override val thread: M2ChannelVm? = null
+  override val thread: M2ChannelVm? = null,
+  override val additionalFeatures: Set<SpaceChatItemAdditionalFeature> = setOf()
 ) : SpaceChatItem {
   private val record = messageVm.message
 
@@ -84,7 +86,8 @@ internal class SpaceChatItemImpl private constructor(
     internal suspend fun M2MessageVm.convertToChatItemWithThread(
       lifetime: Lifetime,
       channelsVm: ChannelsVm,
-      link: String?
+      link: String?,
+      additionalFeatures: Set<SpaceChatItemAdditionalFeature> = setOf()
     ): SpaceChatItem {
       val thread =
         when (val itemDetails = message.details) {
@@ -97,9 +100,12 @@ internal class SpaceChatItemImpl private constructor(
           }
         } ?: return SpaceChatItemImpl(this, link)
       thread.awaitFullLoad(lifetime)
-      return SpaceChatItemImpl(this, link, thread)
+      return SpaceChatItemImpl(this, link, thread, additionalFeatures = additionalFeatures)
     }
 
-    internal fun M2MessageVm.convertToChatItem(link: String?): SpaceChatItem = SpaceChatItemImpl(this, link)
+    internal fun M2MessageVm.convertToChatItem(
+      link: String?,
+      additionalFeatures: Set<SpaceChatItemAdditionalFeature> = setOf()
+    ): SpaceChatItem = SpaceChatItemImpl(this, link, additionalFeatures = additionalFeatures)
   }
 }

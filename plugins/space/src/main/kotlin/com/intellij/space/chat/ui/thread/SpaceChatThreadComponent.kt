@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.thread
 
+import circlet.m2.M2MessageVm
 import circlet.m2.channel.M2ChannelVm
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.Project
+import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.SpaceChatItemComponentFactory
@@ -21,7 +23,8 @@ internal fun createThreadComponent(
   lifetime: Lifetime,
   thread: M2ChannelVm,
   threadActionsFactory: SpaceChatThreadActionsFactory,
-  withFirst: Boolean = true
+  withFirst: Boolean = true,
+  messageConverter: (index: Int, message: M2MessageVm) -> SpaceChatItem = { _, message -> message.convertToChatItem(message.getLink()) }
 ): JComponent {
   val threadComponent = JPanel(VerticalLayout(0)).apply {
     isOpaque = false
@@ -37,7 +40,7 @@ internal fun createThreadComponent(
     itemsListModel.messageListUpdated(
       messages
         .drop(if (withFirst) 0 else 1)
-        .map { it.convertToChatItem(it.getLink()) }
+        .mapIndexed { index, message -> messageConverter(index, message) }
     )
     threadComponent.isVisible = messages.size > if (withFirst) 0 else 1
   }

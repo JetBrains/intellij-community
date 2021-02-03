@@ -46,6 +46,8 @@ internal interface SpaceChatItem : TimelineItem {
 
   val attachments: List<AttachmentInfo>
 
+  val additionalFeatures: Set<SpaceChatItemAdditionalFeature>
+
   fun startEditing()
 
   fun stopEditing()

@@ -13,8 +13,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.SpaceChatMarkdownTextComponent
+import com.intellij.space.chat.ui.message.createResolvedComponent
 import com.intellij.space.chat.ui.thread.createThreadComponent
-import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.SideBorder
@@ -165,12 +165,7 @@ class SpaceChatCodeDiscussionComponentFactory(
     val parentPath = PathUtil.getParentPath(filePath)
     val nameLabel = JBLabel(name, null, SwingConstants.LEFT).setCopyable(true)
 
-    val resolvedLabel = JBLabel(SpaceBundle.message("chat.message.resolved.text"), UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-      isOpaque = true
-    }
-
+    val resolvedLabel = createResolvedComponent(lifetime, resolved)
     return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("${JBUI.scale(5)}", "0").fill().noGrid())).apply {
       add(nameLabel, CC().minWidth("0").shrinkPrio(9))
 
@@ -183,12 +178,6 @@ class SpaceChatCodeDiscussionComponentFactory(
       add(resolvedLabel, CC().hideMode(3).shrinkPrio(0))
       add(collapseButton, CC().hideMode(3).shrinkPrio(0))
       add(expandButton, CC().hideMode(3).shrinkPrio(0))
-
-      resolved.forEach(lifetime) {
-        resolvedLabel.isVisible = it
-        revalidate()
-        repaint()
-      }
     }
   }
 
