@@ -70,7 +70,8 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   public void generateComponentLayout(final LwComponent component,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,
-                                      final int parentLocal) {
+                                      final int parentLocal,
+                                      final String formClassName) {
     GridBagConstraints gbc;
     if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
       gbc = (GridBagConstraints) component.getCustomLayoutConstraints();

@@ -87,7 +87,7 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
   }
 
   @Override
-  public void generateComponentLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal, final int parentLocal) {
+  public void generateComponentLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal, final int parentLocal, final String formClassName) {
     generator.loadLocal(parentLocal);
     generator.loadLocal(componentLocal);
     addNewCellConstraints(generator, lwComponent);

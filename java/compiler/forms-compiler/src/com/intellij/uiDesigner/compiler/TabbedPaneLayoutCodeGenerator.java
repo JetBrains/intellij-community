@@ -36,12 +36,14 @@ public class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,
-                                      final int parentLocal) {
+                                      final int parentLocal,
+                                      final String formClassName) {
     generator.loadLocal(parentLocal);
     final LwTabbedPane.Constraints tabConstraints = (LwTabbedPane.Constraints)lwComponent.getCustomLayoutConstraints();
     if (tabConstraints == null){
       throw new IllegalArgumentException("tab constraints cannot be null: " + lwComponent.getId());
     }
+    tabConstraints.myTitle.setFormClass(formClassName);
     AsmCodeGenerator.pushPropValue(generator, String.class.getName(), tabConstraints.myTitle);
     if (tabConstraints.myIcon == null) {
       generator.push((String) null);
@@ -54,6 +56,7 @@ public class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
       generator.push((String) null);
     }
     else {
+      tabConstraints.myToolTip.setFormClass(formClassName);
       AsmCodeGenerator.pushPropValue(generator, String.class.getName(), tabConstraints.myToolTip);
     }
     generator.invokeVirtual(myTabbedPaneType, myAddTabMethod);
