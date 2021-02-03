@@ -284,7 +284,7 @@ data class KotlinMPPGradleModelImpl(
         ),
         kotlinNativeHome = mppModel.kotlinNativeHome,
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
-        kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.toMutableSet()
+        kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) }
     )
 }
 
