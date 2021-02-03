@@ -808,8 +808,8 @@ public final class EditorWindow {
   }
 
   private MySplitPainter myPainter = null;
-  private Runnable showSplitChooser() {
-    myPainter = new MySplitPainter();
+  private Runnable showSplitChooser(boolean showInfoPanel) {
+    myPainter = new MySplitPainter(showInfoPanel);
 
     Disposable disposable = Disposer.newDisposable("GlassPaneListeners");
     IdeGlassPaneUtil.find(myPanel).addPainter(myPanel, myPainter, disposable);
@@ -843,7 +843,12 @@ public final class EditorWindow {
 
   private final class MySplitPainter extends AbstractPainter {
     private Shape myRectangle = TabsUtil.getDropArea(EditorWindow.this.getTabbedPane().getTabs());
+    private boolean myShowInfoPanel;
     RelativePosition myPosition = RelativePosition.CENTER;
+
+    private MySplitPainter(boolean showInfoPanel) {
+      myShowInfoPanel = showInfoPanel;
+    }
 
     @Override
     public boolean needsRepaint() {
@@ -859,7 +864,7 @@ public final class EditorWindow {
       g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
       g.fill(myRectangle);
 
-      if (myPosition == RelativePosition.CENTER) {
+      if (myPosition == RelativePosition.CENTER && myShowInfoPanel) {
         drawInfoPanel(component, g);
       }
     }
@@ -905,6 +910,7 @@ public final class EditorWindow {
       if (myPosition == position) {
         return;
       }
+      myShowInfoPanel = false;
       myPosition = position;
       myRectangle = null;
       setNeedsRepaint(true);
@@ -950,7 +956,7 @@ public final class EditorWindow {
       if (openedFromEditor) {
         myInitialEditorWindow = myActiveWindow;
       }
-      mySplitChooserDisposer = myActiveWindow.showSplitChooser();
+      mySplitChooserDisposer = myActiveWindow.showSplitChooser(true);
     }
 
     public void switchWindow(@NotNull EditorWindow window) {
@@ -958,7 +964,7 @@ public final class EditorWindow {
         mySplitChooserDisposer.run();
       }
       myActiveWindow = window;
-      mySplitChooserDisposer = myActiveWindow.showSplitChooser();
+      mySplitChooserDisposer = myActiveWindow.showSplitChooser(false);
     }
 
     public void stopSplitChooser(boolean interrupted) {
