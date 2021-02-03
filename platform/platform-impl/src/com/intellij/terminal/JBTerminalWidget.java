@@ -154,7 +154,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
         TerminalColor backgroundColor = mySettingsProvider.getFoundPatternColor().getBackground();
         if (backgroundColor != null) {
-          g.setColor(mySettingsProvider.getTerminalColorPalette().getColor(backgroundColor));
+          g.setColor(mySettingsProvider.getTerminalColorPalette().getBackground(backgroundColor));
         }
         int anchorHeight = Math.max(2, height / modelHeight);
         for (SubstringFinder.FindResult.FindItem r : result.getItems()) {

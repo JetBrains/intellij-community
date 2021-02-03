@@ -502,8 +502,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public TextStyle getDefaultStyle() {
-    return new TextStyle(TerminalColor.index(JBTerminalSchemeColorPalette.getDefaultForegroundIndex()),
-                         TerminalColor.index(JBTerminalSchemeColorPalette.getDefaultBackgroundIndex()));
+    return new TextStyle(new TerminalColor(() -> myColorsScheme.getDefaultForeground()),
+                         new TerminalColor(() -> myColorsScheme.getDefaultBackground()));
   }
 
   @Override
