@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.google.common.hash.Hasher;
@@ -36,6 +36,8 @@ import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -97,14 +99,19 @@ public final class UITheme {
     return getProviderClassLoader().getResource(path);
   }
 
-  public InputStream getResourceAsStream(String path) {
-    URL url = getResource(path);
-    try {
-      return url != null ? url.openStream() : null;
+  public @Nullable InputStream getResourceAsStream(String path) {
+    if (isTempTheme()) {
+      Path file = Path.of(path);
+      if (Files.exists(file)) {
+        try {
+          return Files.newInputStream(file);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
     }
-    catch (IOException e) {
-      return null;
-    }
+    return getProviderClassLoader().getResourceAsStream(path);
   }
 
   private boolean isTempTheme() {
