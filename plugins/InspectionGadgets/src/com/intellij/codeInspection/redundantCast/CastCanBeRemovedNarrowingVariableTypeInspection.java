@@ -55,7 +55,9 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           else {
             elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
           }
-          if (elementType == null || !castType.isAssignableFrom(elementType)) return;
+          if (!(elementType instanceof PsiClassType) || ((PsiClassType)elementType).isRaw() || !castType.isAssignableFrom(elementType)) {
+            return;
+          }
         }
         else {
           PsiExpression variableInitializer = variable.getInitializer();
