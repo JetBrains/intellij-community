@@ -7721,6 +7721,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertToScope/convertToRun/onProperty.kt");
             }
 
+            @TestMetadata("package.kt")
+            public void testPackage() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToRun/package.kt");
+            }
+
             @TestMetadata("singleCall.kt")
             public void testSingleCall() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToRun/singleCall.kt");
@@ -7837,6 +7842,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("onProperty.kt")
             public void testOnProperty() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToWith/onProperty.kt");
+            }
+
+            @TestMetadata("package.kt")
+            public void testPackage() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToWith/package.kt");
             }
 
             @TestMetadata("singleCall.kt")

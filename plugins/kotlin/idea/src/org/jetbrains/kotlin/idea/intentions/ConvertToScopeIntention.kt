@@ -7,10 +7,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -181,7 +178,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
                 val declaration = receiver?.mainReference?.resolve()
                 val name = receiver?.getReferencedName()
 
-                if (declaration !== null && name !== null) declaration to name else null
+                if (declaration !== null && declaration !is PsiPackage && name !== null) declaration to name else null
             }
         }
     }
