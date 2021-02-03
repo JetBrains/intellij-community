@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
@@ -109,6 +111,8 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     return context;
   }
 
+  private static final Pattern ANONYMOUS_CLASS_NAME_PATTERN = Pattern.compile(".*\\$\\d.*");
+
   private static Pair<String, Map<String, ObjectReference>> createMarkupVariablesText(Map<?, ValueMarkup> markupMap) {
     final Map<String, ObjectReference> reverseMap = new HashMap<>();
     final StringBuilder buffer = new StringBuilder();
@@ -121,7 +125,14 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
       }
       try {
         // TODO: we probably need something more complicated for type name generation, but not in EDT
-        final String typeName = objectRef.type().name().replace('$', '.');
+        String name = objectRef.type().name();
+        String typeName;
+        if (ANONYMOUS_CLASS_NAME_PATTERN.matcher(name).matches() || DebuggerUtilsEx.isLambdaClassName(name)) {
+          typeName = "Object";
+        }
+        else {
+          typeName = name.replace('$', '.');
+        }
         labelName += DEBUG_LABEL_SUFFIX;
         if (buffer.length() > 0) {
           buffer.append("\n");
