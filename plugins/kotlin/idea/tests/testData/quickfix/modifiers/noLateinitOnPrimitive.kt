@@ -13,3 +13,4 @@
 class A {
     private var a: Int<caret>
 }
+/* FIR_COMPARISON */
