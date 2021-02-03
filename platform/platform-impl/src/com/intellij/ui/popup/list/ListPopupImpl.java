@@ -470,6 +470,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
     setIndexForShowingChild(myList.getSelectedIndex());
+    Disposer.register(myChild, () -> setIndexForShowingChild(-1));
   }
 
   @Override
