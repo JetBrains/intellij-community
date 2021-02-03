@@ -100,7 +100,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
 
   protected @NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> createPersistentMap(
     @NotNull KeyDescriptor<Key> keyDescriptor,
-    @NotNull ValueContainerExternalizer<Value> valueContainerExternalizer,
+    @NotNull DataExternalizer<UpdatableValueContainer<Value>> valueContainerExternalizer,
     boolean isReadOnly,
     boolean compactOnClose,
     boolean keyIsUniqueForIndexedFile) throws IOException {
