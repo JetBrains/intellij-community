@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.withPossiblyDisabledDuplicatedFirSourceElements
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.io.File
 
-abstract class AbstractFirPsiCheckerTest : AbstractPsiCheckerTest() {
+abstract class AbstractFirKotlinHighlightingPassTest : AbstractKotlinHighlightingPassTest() {
     override val captureExceptions: Boolean = false
 
     override fun isFirPlugin(): Boolean = true

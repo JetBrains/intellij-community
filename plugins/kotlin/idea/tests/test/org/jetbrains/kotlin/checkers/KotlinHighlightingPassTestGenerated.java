@@ -20,10 +20,10 @@ import org.junit.runner.RunWith;
 @TestRoot("idea")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
+public abstract class KotlinHighlightingPassTestGenerated extends AbstractKotlinHighlightingPassTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker")
-    public static class Checker extends AbstractPsiCheckerTest {
+    public static class Checker extends AbstractKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -36,6 +36,11 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
         @TestMetadata("AnnotationOnFile.kt")
         public void testAnnotationOnFile() throws Exception {
             runTest("testData/checker/AnnotationOnFile.kt");
+        }
+
+        @TestMetadata("AnnotationSupressing.kt")
+        public void testAnnotationSupressing() throws Exception {
+            runTest("testData/checker/AnnotationSupressing.kt");
         }
 
         @TestMetadata("AnonymousInitializers.kt")
@@ -361,7 +366,7 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/regression")
-    public static class Regression extends AbstractPsiCheckerTest {
+    public static class Regression extends AbstractKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -599,7 +604,7 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/recovery")
-    public static class Recovery extends AbstractPsiCheckerTest {
+    public static class Recovery extends AbstractKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -622,7 +627,7 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/rendering")
-    public static class Rendering extends AbstractPsiCheckerTest {
+    public static class Rendering extends AbstractKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -635,7 +640,7 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/scripts")
-    public static class Scripts extends AbstractPsiCheckerTest {
+    public static class Scripts extends AbstractKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -663,10 +668,10 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/duplicateJvmSignature")
-    public abstract static class DuplicateJvmSignature extends AbstractPsiCheckerTest {
+    public abstract static class DuplicateJvmSignature extends AbstractKotlinHighlightingPassTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/fields")
-        public static class Fields extends AbstractPsiCheckerTest {
+        public static class Fields extends AbstractKotlinHighlightingPassTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -679,7 +684,7 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/functionAndProperty")
-        public static class FunctionAndProperty extends AbstractPsiCheckerTest {
+        public static class FunctionAndProperty extends AbstractKotlinHighlightingPassTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -737,7 +742,7 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/duplicateJvmSignature/traitImpl")
-        public static class TraitImpl extends AbstractPsiCheckerTest {
+        public static class TraitImpl extends AbstractKotlinHighlightingPassTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -751,7 +756,7 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/infos")
-    public static class Infos extends AbstractPsiCheckerTest {
+    public static class Infos extends AbstractKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestWithInfos, this, testDataFilePath);
         }
@@ -839,7 +844,7 @@ public abstract class PsiCheckerTestGenerated extends AbstractPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/diagnosticsMessage")
-    public static class DiagnosticsMessage extends AbstractPsiCheckerTest {
+    public static class DiagnosticsMessage extends AbstractKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

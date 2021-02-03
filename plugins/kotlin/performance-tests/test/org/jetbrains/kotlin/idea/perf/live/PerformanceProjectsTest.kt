@@ -5,15 +5,17 @@
 
 package org.jetbrains.kotlin.idea.perf.live
 
+import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.highlighter.KotlinPsiChecker
-import org.jetbrains.kotlin.idea.highlighter.KotlinPsiCheckerAndHighlightingUpdater
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingPass
 import org.jetbrains.kotlin.idea.perf.*
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.TEST_KEY
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.idea.testFramework.Fixture
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
+import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.test.assertNotEquals
 
@@ -38,6 +41,9 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
         @JvmStatic
         val timer: AtomicLong = AtomicLong()
+
+        @JvmStatic
+        val diagnosticTimer: AtomicLong = AtomicLong()
 
         fun resetTimestamp() {
             timer.set(0)
@@ -327,6 +333,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
             val testName = "fileAnalysis ${notePrefix(note)}${simpleFilename(fileName)}"
             val extraStats = Stats("${stats.name} $testName")
             val extraTimingsNs = mutableListOf<Map<String, Any>?>()
+            val diagnosticTimingsNs = mutableListOf<Map<String, Any>?>()
 
             val warmUpIterations = 30
             val iterations = 50
@@ -338,7 +345,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                 iterations(iterations)
                 setUp(perfKtsFileAnalysisSetUp(project, fileName))
                 test(perfKtsFileAnalysisTest())
-                tearDown(perfKtsFileAnalysisTearDown(extraTimingsNs, project))
+                tearDown(perfKtsFileAnalysisTearDown(extraTimingsNs, diagnosticTimingsNs, project))
                 profilerConfig.enabled = true
             }
 
@@ -350,9 +357,21 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                 metricChildren
             )
 
+            extraStats.printWarmUpTimings(
+                "diagnostic",
+                diagnosticTimingsNs.take(warmUpIterations).toTypedArray(),
+                metricChildren
+            )
+
             extraStats.processTimings(
                 "annotator",
                 extraTimingsNs.drop(warmUpIterations).toTypedArray(),
+                metricChildren
+            )
+
+            extraStats.processTimings(
+                "diagnostic",
+                diagnosticTimingsNs.drop(warmUpIterations).toTypedArray(),
                 metricChildren
             )
         }
@@ -361,8 +380,8 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
     private fun replaceWithCustomHighlighter() {
         org.jetbrains.kotlin.idea.testFramework.replaceWithCustomHighlighter(
             testRootDisposable,
-            KotlinPsiCheckerAndHighlightingUpdater::class.java.name,
-            TestKotlinPsiChecker::class.java.name
+            KotlinHighlightingPass.Registrar::class.java.name,
+            TestKotlinHighlightingPass.Registrar::class.java.name
         )
     }
 
@@ -386,18 +405,22 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
     fun perfKtsFileAnalysisTest(): (TestData<Fixture, Pair<Long, List<HighlightInfo>>>) -> Unit {
         return {
             it.value = it.setUpValue?.let { fixture ->
-                Pair(System.nanoTime(), fixture.doHighlighting())
+                val nowNs = System.nanoTime()
+                diagnosticTimer.set(-nowNs)
+                Pair(nowNs, fixture.doHighlighting())
             }
         }
     }
 
     fun perfKtsFileAnalysisTearDown(
         extraTimingsNs: MutableList<Map<String, Any>?>,
+        diagnosticTimingsMs: MutableList<Map<String, Any>?>,
         project: Project
     ): (TestData<Fixture, Pair<Long, List<HighlightInfo>>>) -> Unit {
         return {
             it.setUpValue?.let { fixture ->
                 it.value?.let { v ->
+                    diagnosticTimingsMs.add(mapOf(TEST_KEY to diagnosticTimer.getAndSet(0)))
                     assertTrue(v.second.isNotEmpty())
                     assertNotEquals(0, timer.get())
 
@@ -412,12 +435,38 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
     }
 
 
-    class TestKotlinPsiChecker : KotlinPsiChecker() {
-        override fun annotate(
-            element: PsiElement, holder: AnnotationHolder
-        ) {
-            super.annotate(element, holder)
-            markTimestamp()
+    class TestKotlinHighlightingPass(file: KtFile, document: Document) : KotlinHighlightingPass(file, document) {
+        override fun doCollectInformation(progress: ProgressIndicator) {
+            annotationCallback {
+                val nowNs = System.nanoTime()
+                diagnosticTimer.addAndGet(nowNs)
+                resetAnnotationCallback()
+            }
+            try {
+                super.doCollectInformation(progress)
+            } finally {
+                resetAnnotationCallback()
+                markTimestamp()
+            }
+        }
+
+        class Factory : TextEditorHighlightingPassFactory {
+            override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+                if (file !is KtFile) return null
+                return TestKotlinHighlightingPass(file, editor.document)
+            }
+        }
+
+        class Registrar : TextEditorHighlightingPassFactoryRegistrar {
+            override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
+                registrar.registerTextEditorHighlightingPass(
+                    Factory(),
+                    null,
+                    intArrayOf(Pass.UPDATE_ALL),
+                    false,
+                    -1
+                )
+            }
         }
     }
 }

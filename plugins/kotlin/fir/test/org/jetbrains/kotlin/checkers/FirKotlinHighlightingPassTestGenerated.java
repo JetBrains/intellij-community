@@ -20,10 +20,10 @@ import org.junit.runner.RunWith;
 @TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class FirPsiCheckerTestGenerated extends AbstractFirPsiCheckerTest {
+public class FirKotlinHighlightingPassTestGenerated extends AbstractFirKotlinHighlightingPassTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/testData/checker")
-    public static class Checker extends AbstractFirPsiCheckerTest {
+    public static class Checker extends AbstractFirKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -36,6 +36,11 @@ public class FirPsiCheckerTestGenerated extends AbstractFirPsiCheckerTest {
         @TestMetadata("AnnotationOnFile.kt")
         public void testAnnotationOnFile() throws Exception {
             runTest("../idea/testData/checker/AnnotationOnFile.kt");
+        }
+
+        @TestMetadata("AnnotationSupressing.kt")
+        public void testAnnotationSupressing() throws Exception {
+            runTest("idea/testData/checker/AnnotationSupressing.kt");
         }
 
         @TestMetadata("AnonymousInitializers.kt")
@@ -361,7 +366,7 @@ public class FirPsiCheckerTestGenerated extends AbstractFirPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/testData/checker/regression")
-    public static class Regression extends AbstractFirPsiCheckerTest {
+    public static class Regression extends AbstractFirKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -599,7 +604,7 @@ public class FirPsiCheckerTestGenerated extends AbstractFirPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/testData/checker/recovery")
-    public static class Recovery extends AbstractFirPsiCheckerTest {
+    public static class Recovery extends AbstractFirKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -622,7 +627,7 @@ public class FirPsiCheckerTestGenerated extends AbstractFirPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/testData/checker/rendering")
-    public static class Rendering extends AbstractFirPsiCheckerTest {
+    public static class Rendering extends AbstractFirKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -635,7 +640,7 @@ public class FirPsiCheckerTestGenerated extends AbstractFirPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/testData/checker/infos")
-    public static class Infos extends AbstractFirPsiCheckerTest {
+    public static class Infos extends AbstractFirKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -723,7 +728,7 @@ public class FirPsiCheckerTestGenerated extends AbstractFirPsiCheckerTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/testData/checker/diagnosticsMessage")
-    public static class DiagnosticsMessage extends AbstractFirPsiCheckerTest {
+    public static class DiagnosticsMessage extends AbstractFirKotlinHighlightingPassTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

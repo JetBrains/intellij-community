@@ -263,7 +263,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/resolveModeComparison")
         }
 
-        testClass<AbstractPsiCheckerTest> {
+        testClass<AbstractKotlinHighlightingPassTest> {
             model("checker", isRecursive = false)
             model("checker/regression")
             model("checker/recovery")
@@ -991,7 +991,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractFirPsiCheckerTest> {
+        testClass<AbstractFirKotlinHighlightingPassTest> {
             model("checker", isRecursive = false)
             model("checker/regression")
             model("checker/recovery")

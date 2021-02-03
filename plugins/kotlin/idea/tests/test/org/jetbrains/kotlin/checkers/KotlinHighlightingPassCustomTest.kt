@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 @TestRoot("idea")
 @TestMetadata("testData/checker/custom")
 @RunWith(JUnit38ClassRunner::class)
-class PsiCheckerCustomTest : AbstractPsiCheckerTest() {
+class KotlinHighlightingPassCustomTest : AbstractKotlinHighlightingPassTest() {
 
     @TestMetadata("noUnusedParameterWhenCustom.kt")
     fun testNoUnusedParameterWhenCustom() {
