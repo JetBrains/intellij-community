@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 public final class AssertHint {
+  @NonNls private static final String ORG_TESTNG_ASSERT = "org.testng.Assert";
   private final int myArgIndex;
   private final ParameterOrder myParameterOrder;
   private final @Nullable PsiExpression myMessage;
@@ -26,7 +27,7 @@ public final class AssertHint {
                      @NotNull PsiExpression originalExpression) {
     myArgIndex = index;
     final PsiClass containingClass = method.getContainingClass();
-    if (containingClass != null && "org.testng.Assert".equals(containingClass.getQualifiedName())) {
+    if (containingClass != null && ORG_TESTNG_ASSERT.equals(containingClass.getQualifiedName())) {
       // strictly speaking testng fail() has the message on the first position, but we ignore that here
       myParameterOrder = ParameterOrder.ACTUAL_EXPECTED_MESSAGE;
     }
@@ -239,7 +240,7 @@ public final class AssertHint {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    return "org.testng.AssertJUnit".equals(qualifiedName) || "org.testng.Assert".equals(qualifiedName) && "fail".equals(method.getName()) ||
+    return "org.testng.AssertJUnit".equals(qualifiedName) || ORG_TESTNG_ASSERT.equals(qualifiedName) && "fail".equals(method.getName()) ||
            JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) ||
            JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName) ||
@@ -252,7 +253,7 @@ public final class AssertHint {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName()) ||
+    return ORG_TESTNG_ASSERT.equals(qualifiedName) && !"fail".equals(method.getName()) ||
            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
   }
