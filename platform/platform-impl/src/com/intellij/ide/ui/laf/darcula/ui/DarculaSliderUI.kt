@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ui.JBColor
@@ -295,7 +295,7 @@ public class DarculaSliderUIThemes {
   val tickColor: Color
     get() = JBColor.namedColor("Slider.tickColor", JBColor(0x999999, 0x808080))
   val focusedOuterColor: Color
-    get() = JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA)
+    get() = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
   val disabledButtonColor: Color
     get() = JBColor.PanelBackground
   val disabledButtonBorderColor: Color

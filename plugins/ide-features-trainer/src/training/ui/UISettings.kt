@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
 import com.intellij.openapi.application.ApplicationManager
@@ -61,7 +61,7 @@ class UISettings {
   val descriptionColor = Color(128, 128, 128)
   val completedColor = JBColor(0x368746, 0x50A661)
   var questionColor = lessonActiveColor
-  val activeTaskBorder = JBColor.namedColor("Component.focusedBorderColor", JBColor(0x87AFDA, 0x466d94))
+  val activeTaskBorder = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
 
   //BORDERS
   val emptyBorder: Border

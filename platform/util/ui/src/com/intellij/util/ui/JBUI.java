@@ -366,6 +366,10 @@ public class JBUI {
 
   @SuppressWarnings("UnregisteredNamedColor")
   public static final class CurrentTheme {
+    public interface Component {
+      Color FOCUSED_BORDER_COLOR = JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA, 0x466D94);
+    }
+
     public static final class ActionButton {
       @NotNull
       public static Color pressedBackground() {
@@ -975,6 +979,8 @@ public class JBUI {
     }
 
     public static final class Link {
+      public static final Color FOCUSED_BORDER_COLOR = JBColor.namedColor("Link.focusedBorderColor", Component.FOCUSED_BORDER_COLOR);
+
       public interface Foreground {
         Color DISABLED = JBColor.namedColor("Link.disabledForeground", Label.disabledForeground());
         Color ENABLED = JBColor.namedColor("Link.activeForeground", JBColor.namedColor("link.foreground", 0x589DF6));
