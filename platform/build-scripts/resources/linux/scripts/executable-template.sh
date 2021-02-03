@@ -33,7 +33,11 @@ CAT=$(command -v cat)
 SED=$(command -v sed)
 
 if [ -z "$UNAME" ] || [ -z "$GREP" ] || [ -z "$CUT" ] || [ -z "$DIRNAME" ] || [ -z "$MKTEMP" ] || [ -z "$RM" ] || [ -z "$CAT" ] || [ -z "$SED" ]; then
-  message "Required tools are missing - check beginning of \"$0\" file for details."
+  TOOLS_MSG="Required tools are missing:"
+  for tool in uname egrep cut readlink xargs dirname mktemp rm cat sed ; do
+     test -z "$(command -v $tool)" && TOOLS_MSG="$TOOLS_MSG $tool"
+  done
+  message "$TOOLS_MSG (SHELL=$SHELL PATH=$PATH)"
   exit 1
 fi
 
