@@ -250,7 +250,7 @@ open class MarketplaceRequests {
                            indicator: ProgressIndicator?,
                            @Nls indicatorMessage: String,
                            parser: (Reader) -> T): T {
-    val eTag = if (file == null) null else loadEtagForFile(file)
+    val eTag = if (file == null) null else loadETagForFile(file)
     return HttpRequests
       .request(url)
       .tuner { connection ->
@@ -385,7 +385,7 @@ open class MarketplaceRequests {
   }
 }
 
-private fun loadEtagForFile(file: Path): String {
+private fun loadETagForFile(file: Path): String {
   val eTagFile = getETagFile(file)
   try {
     val lines = Files.readAllLines(eTagFile)
@@ -404,6 +404,7 @@ private fun loadEtagForFile(file: Path): String {
   return ""
 }
 
+@Suppress("SpellCheckingInspection")
 private fun getETagFile(file: Path): Path = file.parent.resolve("${file.fileName}.etag")
 
 private fun saveETagForFile(file: Path, eTag: String) {
