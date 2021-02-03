@@ -415,10 +415,8 @@ public final class PluginDescriptorLoader {
     String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     URL result = null;
     if (platformPrefix != null) {
-      // should be the only plugin in lib (only for Ultimate, WebStorm and Fleet for now)
-      if ((platformPrefix.equals(PlatformUtils.IDEA_PREFIX) ||
-           platformPrefix.equals(PlatformUtils.WEB_PREFIX) ||
-           platformPrefix.equals(PlatformUtils.FLEET_PREFIX)) && !PluginManagerCore.isRunningFromSources()) {
+      // should be the only plugin in lib (only for Ultimate and WebStorm for now)
+      if ((platformPrefix.equals(PlatformUtils.IDEA_PREFIX) || platformPrefix.equals(PlatformUtils.WEB_PREFIX)) && !PluginManagerCore.isRunningFromSources()) {
         urls.put(loader.getResource(PluginManagerCore.PLUGIN_XML_PATH), PluginManagerCore.PLUGIN_XML);
         return null;
       }
