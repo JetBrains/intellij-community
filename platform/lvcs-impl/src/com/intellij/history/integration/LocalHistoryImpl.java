@@ -12,17 +12,14 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +32,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
 
 public final class LocalHistoryImpl extends LocalHistory implements Disposable {
-  private MessageBusConnection myConnection;
   private ChangeList myChangeList;
   private LocalHistoryFacade myVcs;
   private IdeaGateway myGateway;
 
-  private LocalHistoryEventDispatcher myEventDispatcher;
+  private @Nullable LocalHistoryEventDispatcher myEventDispatcher;
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
@@ -85,12 +81,11 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     myGateway = new IdeaGateway();
 
     myEventDispatcher = new LocalHistoryEventDispatcher(myVcs, myGateway);
+  }
 
-    myConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, myEventDispatcher);
-    myConnection.subscribe(CommandListener.TOPIC, myEventDispatcher);
-
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(myEventDispatcher, this);
+  @Nullable
+  LocalHistoryEventDispatcher getEventDispatcher() {
+    return myEventDispatcher;
   }
 
   public static @NotNull Path getStorageDir() {
@@ -106,10 +101,6 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     if (!isInitialized.getAndSet(false)) return;
 
     long period = Registry.intValue("localHistory.daysToKeep") * 1000L * 60L * 60L * 24L;
-
-    myConnection.disconnect();
-    myConnection = null;
-
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
     myChangeList.close();

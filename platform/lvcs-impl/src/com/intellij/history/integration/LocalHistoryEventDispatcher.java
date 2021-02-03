@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-class LocalHistoryEventDispatcher implements VirtualFileManagerListener, CommandListener, BulkFileListener {
+class LocalHistoryEventDispatcher {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
@@ -48,26 +48,6 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
   LocalHistoryEventDispatcher(LocalHistoryFacade vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
-  }
-
-  @Override
-  public void beforeRefreshStart(boolean asynchronous) {
-    beginChangeSet();
-  }
-
-  @Override
-  public void afterRefreshFinish(boolean asynchronous) {
-    endChangeSet(LocalHistoryBundle.message("system.label.external.change"));
-  }
-
-  @Override
-  public void commandStarted(@NotNull CommandEvent e) {
-    beginChangeSet();
-  }
-
-  @Override
-  public void commandFinished(@NotNull CommandEvent e) {
-    endChangeSet(e.getCommandName());
   }
 
   void startAction() {
@@ -188,8 +168,7 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     return myGateway.isVersioned(f);
   }
 
-  @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  private void handleBeforeEvents(@NotNull List<? extends VFileEvent> events) {
     myGateway.runWithVfsEventsDispatchContext(events, true, () -> {
       for (VFileEvent event : events) {
         handleBeforeEvent(event);
@@ -201,8 +180,7 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     });
   }
 
-  @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  private void handleAfterEvents(@NotNull List<? extends VFileEvent> events) {
     myGateway.runWithVfsEventsDispatchContext(events, false, () -> {
       for (VFileEvent event : events) {
         handleAfterEvent(event);
@@ -230,5 +208,47 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
 
   void addVirtualFileListener(BulkFileListener virtualFileListener, Disposable disposable) {
     myVfsEventListeners.add(virtualFileListener, disposable);
+  }
+
+  public static class LocalHistoryFileManagerListener implements VirtualFileManagerListener {
+    @Override
+    public void beforeRefreshStart(boolean asynchronous) {
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      if (dispatcher != null) dispatcher.beginChangeSet();
+    }
+
+    @Override
+    public void afterRefreshFinish(boolean asynchronous) {
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("system.label.external.change"));
+    }
+  }
+
+  public static class LocalHistoryCommandListener implements CommandListener {
+    @Override
+    public void commandStarted(@NotNull CommandEvent e) {
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      if (dispatcher != null) dispatcher.beginChangeSet();
+    }
+
+    @Override
+    public void commandFinished(@NotNull CommandEvent e) {
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName());
+    }
+  }
+
+  public static class LocalHistoryBulkFileListener implements BulkFileListener {
+    @Override
+    public void before(@NotNull List<? extends VFileEvent> events) {
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      if (dispatcher != null) dispatcher.handleBeforeEvents(events);
+    }
+
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      if (dispatcher != null) dispatcher.handleAfterEvents(events);
+    }
   }
 }
