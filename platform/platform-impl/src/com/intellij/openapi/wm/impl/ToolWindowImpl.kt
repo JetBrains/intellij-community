@@ -315,7 +315,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.stretchHeight(this, value)
   }
 
-  override fun getDecorator() = decorator!!
+  override fun getDecorator(): InternalDecorator = decorator!!
 
   override fun setAdditionalGearActions(value: ActionGroup?) {
     additionalGearActions = value
