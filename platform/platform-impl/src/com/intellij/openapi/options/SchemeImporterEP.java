@@ -36,7 +36,7 @@ import java.util.List;
  * {@code ImporterClass} must extend {@link SchemeImporter}
  */
 public final class SchemeImporterEP <S extends Scheme> extends SchemeConvertorEPBase<SchemeImporter<S>> {
-  public static final ExtensionPointName<SchemeImporterEP> EP_NAME = ExtensionPointName.create("com.intellij.schemeImporter");
+  public static final ExtensionPointName<SchemeImporterEP<?>> EP_NAME = ExtensionPointName.create("com.intellij.schemeImporter");
 
   @Attribute("schemeClass")
   public String schemeClass;
