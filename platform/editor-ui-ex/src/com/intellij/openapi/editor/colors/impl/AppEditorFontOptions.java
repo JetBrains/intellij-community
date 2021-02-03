@@ -9,6 +9,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 @State(name = "DefaultFont", storages = @Storage("editor.xml"))
 public final class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
@@ -92,13 +94,21 @@ public final class AppEditorFontOptions implements PersistentStateComponent<AppE
     }
   }
 
+  // Fira Code requires specific migration due to naming workaround in JBR used earlier
+  private static final Map<String, String[]> FIRA_CODE_MIGRATION_MAP = Map.of(
+    "Fira Code Light", new String[] {"Fira Code", "Light", "Light"},
+    "Fira Code Medium", new String[] {"Fira Code", "Medium", "Medium"},
+    "Fira Code Retina", new String[] {"Fira Code", "Retina", "Retina"}
+  );
+
   private static String[] migrateFamilyNameIfNeeded(String family, String regularSubFamily, String boldSubFamily) {
-    if (SystemInfo.isJetBrainsJvm && SystemProperties.is("new.editor.font.selector")) {
-      switch (family) {
-        case "Fira Code Light": return new String[] {"Fira Code", "Light", null};
-        case "Fira Code Medium": return new String[] {"Fira Code", "Medium", null};
-        case "Fira Code Retina": return new String[] {"Fira Code", "Retina", null};
-      }
+    if (SystemInfo.isJetBrainsJvm &&
+        SystemProperties.is("new.editor.font.selector") &&
+        regularSubFamily == null &&
+        boldSubFamily == null &&
+        FIRA_CODE_MIGRATION_MAP.containsKey(family) &&
+        !FontFamilyService.getAvailableFamilies().contains(family)) {
+      return FIRA_CODE_MIGRATION_MAP.get(family);
     }
     return new String[] {family, regularSubFamily, boldSubFamily};
   }
