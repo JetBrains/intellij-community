@@ -65,8 +65,8 @@ public class FontPreferencesTest {
     String fontName = getNonExistingFontName();
     myPreferences.register(fontName, 25);
     checkState(Arrays.asList(fontName),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
-               FontPreferences.DEFAULT_FONT_NAME,
+               Arrays.asList(fontName),
+               fontName,
                fontName, 25);
   }
 
@@ -85,8 +85,8 @@ public class FontPreferencesTest {
     String fontName = getNonExistingFontName();
     myPreferences.addFontFamily(fontName);
     checkState(Arrays.asList(fontName),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
-               FontPreferences.DEFAULT_FONT_NAME,
+               Arrays.asList(fontName),
+               fontName,
                fontName, null);
   }
 
@@ -113,7 +113,6 @@ public class FontPreferencesTest {
                preferences.getFontFamily());
   }
 
-  @SuppressWarnings("AssignmentToForLoopParameter")
   public static void checkState(FontPreferences fontPreferences,
                           java.util.List<String> expectedRealFontFamilies,
                           java.util.List<String> expectedEffectiveFontFamilies,

@@ -316,7 +316,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
 
     private void drawChar(char c, int x, int y) {
-      (((getFont().getStyle() & Font.BOLD) == 0) ? myPlainFont : myBoldFont).draw(myDelegate, c, x, y);
+      (getFont().getFontName().contains("Bold") ? myBoldFont : myPlainFont).draw(myDelegate, c, x, y);
     }
   }
 

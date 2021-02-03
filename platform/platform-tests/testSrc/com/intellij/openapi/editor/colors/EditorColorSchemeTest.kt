@@ -60,7 +60,7 @@ class EditorColorSchemeTest {
       <option name="FONT_SCALE" value="${UISettings.defFontScale}" />
       <option name="LINE_SPACING" value="1.2" />
       <option name="EDITOR_FONT_SIZE" value="12" />
-      <option name="EDITOR_FONT_NAME" value="${scheme.editorFontName}" />
+      <option name="EDITOR_FONT_NAME" value="Menlo" />
     </scheme>""".trimIndent())
     assertThat(schemeFile.parent).hasChildren("Foo.icls")
 
