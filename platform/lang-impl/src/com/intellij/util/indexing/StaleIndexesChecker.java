@@ -9,7 +9,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -39,7 +42,7 @@ public final class StaleIndexesChecker {
       if (data != null) {
         String name;
         try {
-          name = FSRecords.getName(freeRecord);
+          name = getDeadRecordPath(freeRecord);
         }
         catch (Exception e) {
           name = e.getMessage();
@@ -61,6 +64,17 @@ public final class StaleIndexesChecker {
     }
 
     return staleFiles.keySet();
+  }
+
+  @NotNull
+  private static String getDeadRecordPath(int freeRecord) {
+    StringBuilder name = new StringBuilder(FSRecords.getName(freeRecord));
+    int parent = FSRecords.getParent(freeRecord);
+    while (parent > 0) {
+      name.insert(0, FSRecords.getName(parent) + "/");
+      parent = FSRecords.getParent(parent);
+    }
+    return name.toString();
   }
 
   static void clearStaleIndexes(@NotNull IntSet staleIds) {
