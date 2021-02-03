@@ -58,7 +58,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     @Throws(Exception::class)
-    protected fun doTest(beforeFileName: String) {
+    protected open fun doTest(beforeFileName: String) {
         val beforeFileText = FileUtil.loadFile(File(beforeFileName))
         InTextDirectivesUtils.checkIfMuted(beforeFileText);
         withCustomCompilerOptions(beforeFileText, project, module) {
