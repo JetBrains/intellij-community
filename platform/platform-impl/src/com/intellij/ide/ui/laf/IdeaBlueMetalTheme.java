@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ui.UIBundle;
@@ -7,7 +7,7 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
 
-public class IdeaBlueMetalTheme extends DefaultMetalTheme {
+public final class IdeaBlueMetalTheme extends DefaultMetalTheme {
   @Override
   public String getName() {
     return UIBundle.message("idea.blue.metal.theme.name");

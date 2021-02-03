@@ -36,10 +36,10 @@ import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Borders.customLine;
@@ -344,13 +344,13 @@ public final class UITheme {
       value = color == null ? parseValue(key, valueStr) : color;
       if (key.startsWith("*.")) {
         String tail = key.substring(1);
-        Object finalValue = value;
         addPattern(key, value, defaults);
 
-        //please DO NOT stream on UIDefaults directly
-        ((UIDefaults)defaults.clone()).keySet().stream()
-          .filter(k -> k instanceof String && ((String)k).endsWith(tail))
-          .forEach(k -> defaults.put(k, finalValue));
+        for (Object k : new ArrayList<>(defaults.keySet())) {
+          if (k instanceof String && ((String)k).endsWith(tail)) {
+            defaults.put(k, value);
+          }
+        }
       }
       else {
         defaults.put(key, value);

@@ -295,7 +295,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
           myUpdatingPlugin = isUpdate;
           if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-            myThemeIdBeforePluginUpdate = ((UIThemeBasedLookAndFeelInfo) myCurrentLaf).getTheme().getId();
+            myThemeIdBeforePluginUpdate = ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getId();
           }
           else {
             myThemeIdBeforePluginUpdate = null;
@@ -536,8 +536,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // Use HighContrast theme for IDE in Windows if HighContrast desktop mode is set.
     UIManager.LookAndFeelInfo laf;
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == Boolean.TRUE) {
-      laf = ContainerUtil.find(myLaFs.getValue(), l -> l instanceof UIThemeBasedLookAndFeelInfo &&
-                                                 HIGH_CONTAST_THEME_ID.equals(((UIThemeBasedLookAndFeelInfo)l).getTheme().getId()));
+      laf = ContainerUtil.find(myLaFs.getValue(), l -> {
+        return l instanceof UIThemeBasedLookAndFeelInfo &&
+               HIGH_CONTAST_THEME_ID.equals(((UIThemeBasedLookAndFeelInfo)l).getTheme().getId());
+      });
       if (laf != null) {
         return laf;
       }
@@ -548,6 +550,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (laf != null) {
       return laf;
     }
+
     throw new IllegalStateException("No default L&F found: " + defaultLafName);
   }
 
@@ -578,11 +581,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  private void setLookAndFeelImpl(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme, boolean processChangeSynchronously) {
+  private void setLookAndFeelImpl(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo,
+                                  boolean lockEditorScheme,
+                                  boolean processChangeSynchronously) {
     UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
-
-    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-      ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).dispose();
+    if (oldLaf instanceof UIThemeBasedLookAndFeelInfo) {
+      ((UIThemeBasedLookAndFeelInfo)oldLaf).dispose();
     }
 
     if (findLaf(lookAndFeelInfo.getClassName()) == null) {
@@ -590,14 +594,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       return;
     }
 
-    UIManager.getDefaults().clear();
-    UIManager.getDefaults().putAll(ourDefaults);
+    UIDefaults defaults = UIManager.getDefaults();
+    defaults.clear();
+    defaults.putAll(ourDefaults);
     if (!myFirstSetup) {
       SVGLoader.setColorPatcherForSelection(null);
     }
 
-    // Set L&F
-    if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
+    // set L&F
+    // that is IDEA default LAF
+    if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
       IdeaLaf laf = new IdeaLaf();
       MetalLookAndFeel.setCurrentTheme(new IdeaBlueMetalTheme());
       try {
@@ -605,12 +611,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         updateIconsUnderSelection(false);
       }
       catch (Exception e) {
+        LOG.error(e);
         Messages.showMessageDialog(
           IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.getMessage()),
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
-        LOG.error(e);
         return;
       }
     }
@@ -624,16 +630,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
       }
       catch (Exception e) {
+        LOG.error(e);
         Messages.showMessageDialog(
           IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.getMessage()),
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
-        LOG.error(e);
         return;
       }
     }
-    else { // non default LAF
+    else {
+      // non default LAF
       try {
         LookAndFeel laf;
         if (lookAndFeelInfo instanceof PluggableLafInfo) {
@@ -641,7 +648,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
         else {
           laf = (LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).getConstructor().newInstance();
-
           if (laf instanceof MetalLookAndFeel) {
             MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
           }
@@ -659,12 +665,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         UIManager.setLookAndFeel(laf);
       }
       catch (Exception e) {
+        LOG.error(e);
         Messages.showMessageDialog(
           IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.getMessage()),
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
-        LOG.error(e);
         return;
       }
     }
@@ -674,12 +680,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults(), lockEditorScheme);
       }
       catch (Exception e) {
+        LOG.error(e);
         Messages.showMessageDialog(
           IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.getMessage()),
           CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
-        LOG.error(e);
         return;
       }
     }
@@ -812,8 +818,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchHiDPI(uiDefaults);
 
-    fixMacOSDarkThemeDecorations();
-
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue());
 
@@ -826,18 +830,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this);
     myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
-  }
-
-  @SuppressWarnings({"MethodMayBeStatic", "UnnecessaryReturnStatement"})
-  private void fixMacOSDarkThemeDecorations() {
-    if (!SystemInfo.isMacOSMojave) {
-      return;
-    }
-
-    //if (myCurrentLaf == myDefaultDarkTheme
-    //    || (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark())) {
-    //  todo[fokin]: apply dark decorators and dark file choosers if macOS Dark theme is enabled
-    //}
   }
 
   @NotNull
@@ -856,9 +848,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   public static void installMacOSXFonts(UIDefaults defaults) {
     @SuppressWarnings("SpellCheckingInspection")
     final String face = "Helvetica Neue";
-    final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
-    initFontDefaults(defaults, uiFont);
-    for (Object key : new HashSet<>(defaults.keySet())) {
+    // ui font
+    initFontDefaults(defaults, getFont(face, 13, Font.PLAIN));
+    for (Object key : new ArrayList<>(defaults.keySet())) {
       if (!(key instanceof String) || !Strings.endsWithIgnoreCase(((String)key), "font")) {
         continue;
       }
@@ -873,8 +865,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    FontUIResource uiFont11 = getFont(face, 11, Font.PLAIN);
-    defaults.put("TableHeader.font", uiFont11);
+    defaults.put("TableHeader.font", getFont(face, 11, Font.PLAIN));
 
     FontUIResource buttonFont = getFont("Helvetica Neue", 13, Font.PLAIN);
     defaults.put("Button.font", buttonFont);
@@ -1079,10 +1070,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
   }
 
-  private static void updateUI(Window window) {
+  private static void updateUI(@NotNull Window window) {
     IJSwingUtilities.updateComponentTreeUI(window);
-    Window[] children = window.getOwnedWindows();
-    for (Window w : children) {
+    for (Window w : window.getOwnedWindows()) {
       IJSwingUtilities.updateComponentTreeUI(w);
     }
   }
