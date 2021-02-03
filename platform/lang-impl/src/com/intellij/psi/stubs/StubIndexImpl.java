@@ -28,7 +28,9 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.*;
-import com.intellij.util.indexing.impl.storage.*;
+import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
+import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
+import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
@@ -37,6 +39,7 @@ import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -52,7 +55,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.IntPredicate;
-import java.util.stream.Stream;
 
 public final class StubIndexImpl extends StubIndexEx {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
@@ -288,38 +290,29 @@ public final class StubIndexImpl extends StubIndexEx {
     }
 
     VirtualFile singleFileInScope = extractSingleFile(scope);
-    Stream<VirtualFile> fileStream;
+    Iterator<VirtualFile> fileStream;
     boolean shouldHaveKeys;
 
     if (singleFileInScope != null) {
       if (!(singleFileInScope instanceof VirtualFileWithId)) return true;
       FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
-      fileStream = Stream.of(singleFileInScope);
+      fileStream = ObjectIterators.singleton(singleFileInScope);
       shouldHaveKeys = false;
     }
     else {
-      @Nullable IntSet ids = getContainingIds(indexKey, key, project, idFilter, scope);
+      IntSet ids = getContainingIds(indexKey, key, project, idFilter, scope);
       if (ids == null) return true;
-      PersistentFS fs = PersistentFS.getInstance();
       IntPredicate accessibleFileFilter = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getAccessibleFileIdFilter(project);
       // already ensured up-to-date in getContainingIds() method
-      fileStream = ids.stream().map(id -> {
-        ProgressManager.checkCanceled();
-        if (!accessibleFileFilter.test(id)) {
-          return null;
-        }
-        return (VirtualFile)fs.findFileByIdIfCached(id);
-      }).filter(Objects::nonNull);
+      IntIterator idIterator = ids.iterator();
+      fileStream = mapIdIterator(idIterator, accessibleFileFilter);
       shouldHaveKeys = true;
     }
 
     try {
-      Iterator<VirtualFile> fileIt = fileStream.iterator();
-      while (fileIt.hasNext()) {
-        VirtualFile file = fileIt.next();
-        if (file == null) {
-          continue;
-        }
+      while (fileStream.hasNext()) {
+        VirtualFile file = fileStream.next();
+        assert file != null;
 
         List<VirtualFile> filesInScope = scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
         if (filesInScope.isEmpty()) {
@@ -353,6 +346,55 @@ public final class StubIndexImpl extends StubIndexEx {
       wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key);
     }
     return true;
+  }
+
+  @NotNull
+  private static Iterator<VirtualFile> mapIdIterator(@NotNull IntIterator idIterator, @NotNull IntPredicate filter) {
+    PersistentFS fs = PersistentFS.getInstance();
+    return new Iterator<>() {
+      VirtualFile next;
+      boolean hasNext;
+      {
+        findNext();
+      }
+      @Override
+      public boolean hasNext() {
+        return hasNext;
+      }
+
+      private void findNext() {
+        hasNext = false;
+        while (idIterator.hasNext()) {
+          int id = idIterator.nextInt();
+          if (!filter.test(id)) {
+            continue;
+          }
+          VirtualFile t = fs.findFileByIdIfCached(id);
+          if (t != null) {
+            next = t;
+            hasNext = true;
+            break;
+          }
+        }
+      }
+
+      @Override
+      public VirtualFile next() {
+        if (hasNext) {
+          VirtualFile result = next;
+          findNext();
+          return result;
+        }
+        else {
+          throw new NoSuchElementException();
+        }
+      }
+
+      @Override
+      public void remove() {
+        idIterator.remove();
+      }
+    };
   }
 
   private static <Key, Psi extends PsiElement> boolean processInMemoryStubs(StubIndexKey<Key, Psi> indexKey,

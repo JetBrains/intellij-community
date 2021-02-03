@@ -14,10 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.util.IdempotenceChecker;
-import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMaps;
@@ -149,7 +146,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     }
 
     final List<PsiReference> result = new SmartList<>();
-    double maxPriority = Math.max(PsiReferenceRegistrar.LOWER_PRIORITY, Arrays.stream(allReferencesMap.keySet().toDoubleArray()).max().getAsDouble());
+    double maxPriority = Math.max(PsiReferenceRegistrar.LOWER_PRIORITY, ArrayUtil.max(allReferencesMap.keySet().toDoubleArray()));
     List<PsiReference> maxPriorityRefs = collectReferences(allReferencesMap.get(maxPriority));
 
     ContainerUtil.addAllNotNull(result, maxPriorityRefs);
