@@ -292,7 +292,7 @@ public class HelpTooltip {
    */
   public void installOn(@NotNull JComponent component) {
     if (component.getClientProperty(TOOLTIP_PROPERTY) == this) {
-      return;
+      dispose(component);
     }
     getDismissDelay();
     neverHide = neverHide || UIUtil.isHelpButton(component);
