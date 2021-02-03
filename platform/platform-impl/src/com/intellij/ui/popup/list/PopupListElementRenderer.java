@@ -9,11 +9,15 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.SeparatorOrientation;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
@@ -107,7 +111,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.NextStep.getIconWidth()) / 2;
     right.add(myNextStepLabel, BorderLayout.CENTER);
 
-    mySeparator = new JSeparator(SwingConstants.VERTICAL);
+    mySeparator = createLineSeparator();
+    left.add(mySeparator, BorderLayout.EAST);
 
     JPanel result = new JPanel();
     result.setLayout(new GridBagLayout());
@@ -129,13 +134,20 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       .setDefaultFill(GridBagConstraints.BOTH);
 
     result.add(left, gbc.next());
-    result.add(mySeparator, gbc.next().insets(2, 0, 2, 0));
     result.add(right, gbc.next());
 
     myLeftPart = left;
     myRightPart = right;
 
     return result;
+  }
+
+  @NotNull
+  private static JComponent createLineSeparator() {
+    SeparatorComponent separator = new SeparatorComponent(JBColor.namedColor("Menu.separatorColor", JBColor.lightGray), SeparatorOrientation.VERTICAL);
+    separator.setHGap(0);
+    separator.setVGap(2);
+    return separator;
   }
 
   @Nullable
@@ -173,7 +185,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         setSelected(myTextLabel, isSelected && !nextStepButtonSelected);
         setSelected(myRightPart, isSelected && nextStepButtonSelected);
         myNextStepLabel.setIcon(isSelectable & isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
-        mySeparator.setVisible(true);
+        mySeparator.setVisible(!isSelected);
       }
       else {
         myNextStepLabel.setIcon(isSelectable & isSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
