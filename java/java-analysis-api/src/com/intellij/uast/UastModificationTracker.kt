@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uast
 
-import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -39,8 +38,8 @@ class UastModificationTracker internal constructor(val project: Project) : Modif
     }
 
     @JvmStatic
-    private fun getLanguageTrackers(project: Project) : List<ModificationTracker> {
-      val languages = Language.findInstance(UastMetaLanguage::class.java).matchingLanguages
+    private fun getLanguageTrackers(project: Project): List<ModificationTracker> {
+      val languages = UastMetaLanguage.Holder.getLanguages()
       val psiManager = PsiManager.getInstance(project)
       return languages.map { psiManager.modificationTracker.forLanguage(it) }
     }
