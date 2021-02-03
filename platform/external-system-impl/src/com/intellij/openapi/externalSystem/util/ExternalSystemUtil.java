@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
@@ -21,6 +21,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -105,6 +106,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.intellij.ide.impl.TrustedProjects.*;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 
@@ -394,7 +396,9 @@ public final class ExternalSystemUtil {
           ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
         if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
           if (callback != null) {
-            callback.onFailure(resolveProjectTask.getId(), ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
+            callback
+              .onFailure(resolveProjectTask.getId(), ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath),
+                         null);
           }
           return;
         }
@@ -450,13 +454,15 @@ public final class ExternalSystemUtil {
                   Runnable rerunRunnable = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getRerunAction() : null;
                   if (rerunRunnable == null) {
                     refreshProject(externalProjectPath, importSpec);
-                  } else {
+                  }
+                  else {
                     rerunRunnable.run();
                   }
                 }
               };
               String systemId = id.getProjectSystemId().getReadableName();
-              rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.messagePointer("action.refresh.project.text", systemId));
+              rerunImportAction.getTemplatePresentation()
+                .setText(ExternalSystemBundle.messagePointer("action.refresh.project.text", systemId));
               rerunImportAction.getTemplatePresentation()
                 .setDescription(ExternalSystemBundle.messagePointer("action.refresh.project.description", systemId));
               rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
@@ -513,7 +519,8 @@ public final class ExternalSystemUtil {
             @Override
             public void onSuccess(@NotNull ExternalSystemTaskId id) {
               finishSyncEventSupplier.set(
-                () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), BuildBundle.message("build.status.finished"), new SuccessResultImpl()));
+                () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), BuildBundle.message("build.status.finished"),
+                                               new SuccessResultImpl()));
               processHandler.notifyProcessTerminated(0);
             }
 
@@ -622,6 +629,11 @@ public final class ExternalSystemUtil {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
+    boolean doImport = isProjectTrustedEnoughToImport(project, externalSystemId);
+    if (!doImport) {
+      return;
+    }
+
     final String title;
     switch (progressExecutionMode) {
       case NO_PROGRESS_SYNC:
@@ -654,6 +666,20 @@ public final class ExternalSystemUtil {
           }
         }.queue();
     }
+  }
+
+  private static boolean isProjectTrustedEnoughToImport(Project project, ProjectSystemId externalSystemId) {
+    switch (getTrustedState(project)) {
+      case UNSURE:
+        String systemName = externalSystemId.getReadableName();
+        return confirmImportingUntrustedProject(project, systemName,
+                                                ExternalSystemBundle.message("unlinked.project.notification.load.action", systemName));
+      case YES:
+        return true;
+      case NO:
+        return false;
+    }
+    return false;
   }
 
   public static boolean isNewProject(Project project) {
@@ -817,7 +843,7 @@ public final class ExternalSystemUtil {
                              @Nullable UserDataHolderBase userData) {
     ExecutionEnvironment environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
     if (environment == null) {
-      LOG.warn("Execution environment for " + externalSystemId + " is null" );
+      LOG.warn("Execution environment for " + externalSystemId + " is null");
       return;
     }
 

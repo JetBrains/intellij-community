@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -13,6 +13,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.setTrusted
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.application.ApplicationManager
@@ -176,6 +177,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     removeProjectConfigurationAndCaches(projectFile)
 
     val project = instantiateProject(projectFile, options)
+    project.setTrusted(true)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(projectFile, project, options.isRefreshVfsNeeded, options.preloadServices, template,
