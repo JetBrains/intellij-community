@@ -25,4 +25,6 @@ class GradleProjectOpenProcessor : ProjectOpenProcessor() {
   override fun importProjectAfterwards(project: Project, file: VirtualFile) {
     linkAndRefreshGradleProject(file.path, project)
   }
+
+  override fun executesUnverifiedCode(): Boolean = true
 }

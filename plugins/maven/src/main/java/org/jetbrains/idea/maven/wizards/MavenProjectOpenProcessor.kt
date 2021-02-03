@@ -24,4 +24,6 @@ internal class MavenProjectOpenProcessor : ProjectOpenProcessor() {
   override fun importProjectAfterwards(project: Project, file: VirtualFile) {
     importProvider.linkToExistingProject(file, project)
   }
+
+  override fun executesUnverifiedCode(): Boolean = true
 }

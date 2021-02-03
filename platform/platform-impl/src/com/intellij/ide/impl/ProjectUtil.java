@@ -333,7 +333,7 @@ public final class ProjectUtil {
 
     Ref<Project> result = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      result.set(processor.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame()));
+      result.set(doOpenProjectViaProcessor(processor, virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame()));
     });
     return result.get();
   }
@@ -369,9 +369,37 @@ public final class ProjectUtil {
       }
 
       return CompletableFuture.supplyAsync(() -> {
-        return processor.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame());
+        return doOpenProjectViaProcessor(processor, virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame());
       }, ApplicationManager.getApplication()::invokeLater);
     });
+  }
+
+  @Nullable
+  private static Project doOpenProjectViaProcessor(@NotNull ProjectOpenProcessor processor,
+                                                   @NotNull VirtualFile projectFile,
+                                                   @Nullable Project projectToClose,
+                                                   boolean forceOpenInNewFrame) {
+    if (processor.executesUnverifiedCode()) {
+      OpenUntrustedProjectChoice choice = TrustedProjects.confirmOpeningUntrustedProject(processor.getName());
+      switch (choice) {
+        case IMPORT:
+          Project project = processor.doOpenProject(projectFile, projectToClose, forceOpenInNewFrame);
+          if (project != null) {
+            TrustedProjects.setTrusted(project, true);
+          }
+          return project;
+        case OPEN_WITHOUT_IMPORTING:
+          VirtualFile projectDir = projectFile.isDirectory() ? projectFile : projectFile.getParent();
+          Project project1 = PlatformProjectOpenProcessor.getInstance().doOpenProject(projectDir, projectToClose, forceOpenInNewFrame);
+          if (project1 != null) {
+            TrustedProjects.setTrusted(project1, false);
+          }
+          return project1;
+        case CANCEL:
+          return null;
+      }
+    }
+    return processor.doOpenProject(projectFile, projectToClose, forceOpenInNewFrame);
   }
 
   @ApiStatus.Internal

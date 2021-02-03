@@ -2,6 +2,8 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.CommonBundle
+import com.intellij.ide.impl.confirmImportingUntrustedProject
+import com.intellij.ide.impl.isTrusted
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationDisplayType.STICKY_BALLOON
 import com.intellij.notification.NotificationGroup
@@ -55,9 +57,13 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
       }
     }, notificationDisposable)
 
-    notification.addAction(NotificationAction.createSimpleExpiring(unlinkedProjectAware.getNotificationText()) {
-      notification.expire()
-      unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
+    notification.addAction(NotificationAction.createSimple(unlinkedProjectAware.getNotificationText()) {
+      val isLoadAllowed = project.isTrusted() ||
+                          confirmImportingUntrustedProject(project, systemName, unlinkedProjectAware.getNotificationText())
+      if (isLoadAllowed) {
+        notification.expire()
+        unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
+      }
     })
     notification.addAction(NotificationAction.createSimple(message("unlinked.project.notification.skip.action")) {
       notification.expire()
