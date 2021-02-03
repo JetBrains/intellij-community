@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 
@@ -20,17 +21,42 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class TagButton extends JBLayeredPane implements Disposable {
   protected final JButton myButton;
   private final InplaceButton myCloseButton;
+  private final @Nls String myText;
+
+  public static final Function<JComponent, JComponent> COMPONENT_VALIDATOR_TAG_PROVIDER = e -> ((TagButton)e).myButton;
 
   public TagButton(@Nls String text, Consumer<AnActionEvent> action) {
+    myText = text;
     myButton = new JButton(text) {
+
+      private final Consumer<Color> setBorderColorFunc = (Color c) -> putClientProperty("JButton.borderColor", c);
+
       @Override
       protected void paintComponent(Graphics g) {
-        putClientProperty("JButton.borderColor", hasFocus() ? null : getBackgroundColor());
+        setBorderColor();
         super.paintComponent(g);
+      }
+
+      private void setBorderColor() {
+        String outline = ObjectUtils.tryCast(getClientProperty("JComponent.outline"), String.class);
+
+        if (outline != null) {
+          if (outline.equals("error")) {
+            setBorderColorFunc.accept(JBUI.CurrentTheme.Focus.errorColor(hasFocus()));
+            return;
+          }
+          else if (outline.equals("warning")) {
+            setBorderColorFunc.accept(JBUI.CurrentTheme.Focus.warningColor(hasFocus()));
+            return;
+          }
+        }
+
+        setBorderColorFunc.accept(hasFocus() ? null : getBackgroundColor());
       }
     };
     myButton.putClientProperty("styleTag", true);
@@ -56,6 +82,11 @@ public class TagButton extends JBLayeredPane implements Disposable {
 
   public void setToolTip(@Nls String toolTip) {
     myButton.setToolTipText(toolTip);
+  }
+
+  @Nls
+  public String getText() {
+    return myText;
   }
 
   protected void layoutButtons() {

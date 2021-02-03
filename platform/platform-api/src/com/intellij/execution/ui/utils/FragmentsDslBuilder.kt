@@ -5,6 +5,12 @@ import com.intellij.execution.ui.FragmentedSettings
 import com.intellij.execution.ui.NestedGroupFragment
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.TagButton
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.ComponentValidator
+import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Ref
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -40,11 +46,15 @@ class Group<Settings : FragmentedSettings>(val id: String) {
 
 @ApiStatus.Experimental
 @FragmentsDsl
-class Fragment<Settings : FragmentedSettings, Component : JComponent>(val id: String, private val component: Component) {
+class Fragment<Settings : FragmentedSettings, Component : JComponent>(
+  val id: String,
+  private val component: Component
+) {
   var reset: (Settings, Component) -> Unit = { _, _ -> }
   var apply: (Settings, Component) -> Unit = { _, _ -> }
   var visible: (Settings) -> Boolean = { true }
   var isRemovable: Boolean = true
+  var validation: ((Settings, Component) -> ValidationInfo?)? = null
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   var name: String? = null
@@ -61,10 +71,41 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(val id: St
   var commandLinePosition: Int = 0
 
   fun build(): SettingsEditorFragment<Settings, Component> {
-    return SettingsEditorFragment(id, name, group, component, commandLinePosition, reset, apply, visible).also {
+    return object : SettingsEditorFragment<Settings, Component>(id, name, group, component, commandLinePosition, reset, apply, visible) {
+
+      private val validator = if (validation != null) ComponentValidator(this) else null
+
+      override fun applyEditorTo(s: Settings) {
+        super.applyEditorTo(s)
+
+        if (validator != null) {
+          val validationInfo = (validation!!)(s, this.component())
+
+          if (validationInfo != null) {
+            validationInfo.component?.let {
+              if (ComponentValidator.getInstance(it).isEmpty) {
+                when (it) {
+                  is ComponentWithBrowseButton<*> -> validator.withOutlineProvider(ComponentValidator.CWBB_PROVIDER)
+                  is TagButton -> validator.withOutlineProvider(TagButton.COMPONENT_VALIDATOR_TAG_PROVIDER)
+                }
+
+                validator.installOn(it)
+              }
+            }
+          }
+
+          validator.updateInfo(validationInfo)
+        }
+      }
+
+      override fun isTag(): Boolean = component is TagButton
+    }.also {
       it.isRemovable = isRemovable
       it.setHint(hint)
       it.actionHint = actionHint
+      if (component is Disposable) {
+        Disposer.register(it, component)
+      }
     }
   }
 }
@@ -94,12 +135,25 @@ class FragmentsBuilder<Settings : FragmentedSettings> {
     setter: (Settings, Boolean) -> Unit,
     @Nls group: String? = null,
     @Nls actionHint: String? = null,
-    @Nls toolTip: String? = null
+    @Nls toolTip: String? = null,
+    validation: ((Settings, TagButton) -> ValidationInfo?)? = null
   ): SettingsEditorFragment<Settings, TagButton> {
-    return SettingsEditorFragment.createTag(id, name, group, getter, setter).also {
-      it.actionHint = actionHint
+    val ref = Ref<SettingsEditorFragment<Settings, *>>()
+    val tagButton = TagButton(name) {
+      ref.get().isSelected = false
+    }
+    return fragment(id, tagButton) {
+      this.name = name
+      this.actionHint = actionHint
+      this.group = group
+      this.visible = getter
+      this.apply = { s, c -> setter(s, c.isVisible) }
+      this.reset = { s, c -> c.isVisible = getter(s) }
+      this.validation = validation
+    }.also {
       it.component().setToolTip(toolTip)
-    }.apply { fragments += this }
+      ref.set(it)
+    }
   }
 
   fun group(id: String, setup: Group<Settings>.() -> Unit): NestedGroupFragment<Settings> {
