@@ -148,6 +148,7 @@ class EditorEmbeddedComponentManagerTest {
     add(4, JPanel().apply { preferredSize = Dimension(43, 43) })
 
     component.preferredSize = Dimension(19, 19)
+    component.invalidate()
 
     pollAssertions {
       assertYShift(1, 0, "The line above the first component")
@@ -164,6 +165,7 @@ class EditorEmbeddedComponentManagerTest {
     add(4, component)
 
     component.preferredSize = Dimension(19, 19)
+    component.invalidate()
 
     pollAssertions {
       assertYShift(1, 0, "The line above the first component")
