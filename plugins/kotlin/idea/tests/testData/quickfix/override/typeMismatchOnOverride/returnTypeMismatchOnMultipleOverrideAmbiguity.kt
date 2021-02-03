@@ -17,3 +17,4 @@ interface X {
 abstract class B : A(), X {
     abstract override fun foo() : String<caret>
 }
+/* FIR_COMPARISON */
