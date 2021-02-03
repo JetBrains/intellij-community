@@ -15,6 +15,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.*
+import com.intellij.util.ui.IoErrorText
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.xml.sax.InputSource
@@ -285,8 +286,10 @@ open class MarketplaceRequests {
           throw e
         }
         catch (e: Exception) {
-          val fileText = file?.readText()
-          LOG.warn("Error reading Marketplace file: url=$url file=${file?.fileName}. File content:\n$fileText")
+          LOG.warn("Error reading Marketplace file: url=${url} file=${file?.fileName}", e)
+          if (file != null && LOG.isDebugEnabled) {
+            LOG.debug("File content:\n${try { Files.readString(file) } catch (e: Exception) { IoErrorText.message(e) } }")
+          }
           throw e
         }
       }
