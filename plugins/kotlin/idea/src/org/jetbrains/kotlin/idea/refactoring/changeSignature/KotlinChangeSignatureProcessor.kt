@@ -80,13 +80,13 @@ class KotlinChangeSignatureProcessor(
         val javaUsages = mutableSetOf<UsageInfo>()
         ktChangeInfo.getOrCreateJavaChangeInfos()?.let { javaChangeInfos ->
             val javaProcessor = JavaChangeSignatureUsageProcessor()
-            javaChangeInfos.mapTo(allUsages) { javaChangeInfo ->
+            javaChangeInfos.mapNotNullTo(allUsages) { javaChangeInfo ->
                 val javaUsagesForKtChange = javaProcessor.findUsages(javaChangeInfo)
                 val uniqueJavaUsagesForKtChange = javaUsagesForKtChange.filter<UsageInfo> {
                     it.element?.language != KotlinLanguage.INSTANCE && !javaUsages.contains(it)
-                }
+                }.ifEmpty { return@mapNotNullTo null }
 
-                javaUsages.addAll(javaUsagesForKtChange)
+                javaUsages.addAll(uniqueJavaUsagesForKtChange)
                 KotlinWrapperForJavaUsageInfos(javaChangeInfo, uniqueJavaUsagesForKtChange.toTypedArray(), changeInfo.method)
             }
         }
