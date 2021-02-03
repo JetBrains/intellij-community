@@ -17,7 +17,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -305,7 +304,7 @@ public final class StubIndexImpl extends StubIndexEx {
       IntPredicate accessibleFileFilter = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getAccessibleFileIdFilter(project);
       // already ensured up-to-date in getContainingIds() method
       IntIterator idIterator = ids.iterator();
-      fileStream = mapIdIterator(idIterator, accessibleFileFilter);
+      fileStream = StubIndexImplUtil.mapIdIterator(idIterator, accessibleFileFilter);
       shouldHaveKeys = true;
     }
 
@@ -346,55 +345,6 @@ public final class StubIndexImpl extends StubIndexEx {
       wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key);
     }
     return true;
-  }
-
-  @NotNull
-  private static Iterator<VirtualFile> mapIdIterator(@NotNull IntIterator idIterator, @NotNull IntPredicate filter) {
-    PersistentFS fs = PersistentFS.getInstance();
-    return new Iterator<>() {
-      VirtualFile next;
-      boolean hasNext;
-      {
-        findNext();
-      }
-      @Override
-      public boolean hasNext() {
-        return hasNext;
-      }
-
-      private void findNext() {
-        hasNext = false;
-        while (idIterator.hasNext()) {
-          int id = idIterator.nextInt();
-          if (!filter.test(id)) {
-            continue;
-          }
-          VirtualFile t = fs.findFileByIdIfCached(id);
-          if (t != null) {
-            next = t;
-            hasNext = true;
-            break;
-          }
-        }
-      }
-
-      @Override
-      public VirtualFile next() {
-        if (hasNext) {
-          VirtualFile result = next;
-          findNext();
-          return result;
-        }
-        else {
-          throw new NoSuchElementException();
-        }
-      }
-
-      @Override
-      public void remove() {
-        idIterator.remove();
-      }
-    };
   }
 
   private static <Key, Psi extends PsiElement> boolean processInMemoryStubs(StubIndexKey<Key, Psi> indexKey,
