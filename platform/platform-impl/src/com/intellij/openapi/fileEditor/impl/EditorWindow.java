@@ -1036,7 +1036,18 @@ public final class EditorWindow {
     }
 
     public void setSplitSide(RelativePosition side) {
-      myActiveWindow.myPainter.positionChanged(side);
+      if (side != myActiveWindow.myPainter.myPosition) {
+        myActiveWindow.myPainter.positionChanged(side);
+      } else {
+        final Map<RelativePosition, EditorWindow> editors = myActiveWindow.getAdjacentEditors();
+        if (editors.containsKey(side)) {
+          if (!isActive()) {
+            return;
+          }
+
+          switchWindow(editors.get(side));
+        }
+      }
     }
   }
 
