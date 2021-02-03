@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
 import com.intellij.lang.Language
@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.hasErrorElementInRange
-import com.intellij.psi.util.parentsWithSelf
+import com.intellij.psi.util.parents
 
 /**
  * Language extension to implement to support suggested Rename and/or Change Signature refactorings.
@@ -204,6 +204,6 @@ interface SuggestedRefactoringSupport {
 
 fun SuggestedRefactoringSupport.declarationByOffset(psiFile: PsiFile, offset: Int): PsiElement? {
   return psiFile.findElementAt(offset)
-    ?.parentsWithSelf
+    ?.parents(true)
     ?.firstOrNull { isDeclaration(it) }
 }

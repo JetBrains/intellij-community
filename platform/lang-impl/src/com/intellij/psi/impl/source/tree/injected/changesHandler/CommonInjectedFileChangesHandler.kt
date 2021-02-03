@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
-import com.intellij.psi.util.parentsWithSelf
+import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
@@ -243,7 +243,7 @@ private val PsiElement.withNextSiblings: Sequence<PsiElement>
 fun getInjectionHostAtRange(hostPsiFile: PsiFile, contextRange: Segment): PsiLanguageInjectionHost? =
   hostPsiFile.findElementAt(contextRange.startOffset)?.withNextSiblings.orEmpty()
     .takeWhile { it.textRange.startOffset < contextRange.endOffset }
-    .flatMap { it.parentsWithSelf.take(3) }
+    .flatMap { it.parents(true).take(3) }
     .filterIsInstance<PsiLanguageInjectionHost>().firstOrNull()
 
 private fun affectedLength(markersMapping: MarkersMapping?, affectedRange: TextRange): Int =

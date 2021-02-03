@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.spock
 
-import com.intellij.psi.util.parentsWithSelf
+import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_SIGN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_UNSIGNED_SIGN
@@ -43,7 +43,7 @@ private fun GrExpression?.isInteractionCall(): Boolean {
 }
 
 private fun GrExpression.isInteractionUp(): Boolean {
-  for ((lastParent, parent) in parentsWithSelf.zipWithNext()) {
+  for ((lastParent, parent) in parents(true).zipWithNext()) {
     if (parent is GrBinaryExpression) {
       if (parent.leftOperand !== lastParent || !parent.isRightShift()) {
         return false

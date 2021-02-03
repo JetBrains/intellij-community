@@ -234,7 +234,7 @@ private fun findNonParenthesizedExpressionParent(element: PsiElement): PsiElemen
 
 private fun requiresParentheses(element: PsiElement): Boolean {
   val allWhitespacesAreParenthesized = element.collectDescendantsOfType<PsiWhiteSpace>().map { whitespace ->
-    whitespace.parents.takeWhile { it != element }.firstOrNull {
+    whitespace.parents(false).takeWhile { it != element }.firstOrNull {
       it is PyParenthesizedExpression || it is PyArgumentList
     }
   }.all { it != null }

@@ -77,7 +77,7 @@ class PyInvertIfConditionIntention : PyBaseIntentionAction() {
     }
 
     // Checking current element nesting
-    val parents = element.parents.takeWhile { it != statement }
+    val parents = element.parents(false).takeWhile { it != statement }
 
     if (parents.contains(statement.ifPart.statementList)) {
       return false
@@ -289,7 +289,7 @@ class PyInvertIfConditionIntention : PyBaseIntentionAction() {
         when {
           instruction == currentInstruction -> ControlFlowUtil.Operation.NEXT
           instruction is ReadWriteInstruction -> ControlFlowUtil.Operation.NEXT
-          instruction.element == null || !instruction.element!!.parents.contains(currentElement) -> {
+          instruction.element == null || !instruction.element!!.parents(false).contains(currentElement) -> {
             result = false
             ControlFlowUtil.Operation.BREAK
           }
@@ -317,7 +317,7 @@ class PyInvertIfConditionIntention : PyBaseIntentionAction() {
             this is PyContinueStatement ||
             this is PyBreakStatement
 
-  private fun PsiElement.findTerminableParent() = parents.firstOrNull { it.isTerminableStatement } as PyStatementListContainer?
+  private fun PsiElement.findTerminableParent() = parents(false).firstOrNull { it.isTerminableStatement } as PyStatementListContainer?
 
   private fun PsiElement.findTerminationStatement() = children.firstOrNull { it.isTerminationStatement }
 

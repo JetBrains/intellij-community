@@ -21,7 +21,7 @@ class XmlGrammarCheckingStrategy : GrammarCheckingStrategy {
   }
 
   override fun isMyContextRoot(element: PsiElement) = element.language::class in ENABLED_DIALECTS &&
-                                                      element.parents.all { it !is XmlProlog } &&
+                                                      element.parents(false).all { it !is XmlProlog } &&
                                                       getContextRootTextDomain(element) != TextDomain.NON_TEXT
 
   override fun getContextRootTextDomain(root: PsiElement) = when (root) {
