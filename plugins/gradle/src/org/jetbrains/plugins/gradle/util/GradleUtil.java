@@ -15,8 +15,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -42,9 +42,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -198,40 +199,41 @@ public final class GradleUtil {
     if (gradleProjectPath == null) {
       return null;
     }
-    File file = new File(gradleProjectPath);
+    Path file = Path.of(gradleProjectPath);
 
     // There is a possible case that given path points to a gradle script (*.gradle) but it's also possible that
     // it references script's directory. We want to provide flexibility here.
-    File gradleDir;
-    if (file.isFile()) {
-      gradleDir = new File(file.getParentFile(), "gradle");
-    }
-    else {
-      gradleDir = new File(file, "gradle");
-    }
-    if (!gradleDir.isDirectory()) {
+    Path gradleDir = Files.isRegularFile(file) ? file.resolveSibling("gradle") : file.resolve("gradle");
+    if (!Files.isDirectory(gradleDir)) {
       return null;
     }
 
-    File wrapperDir = new File(gradleDir, "wrapper");
-    if (!wrapperDir.isDirectory()) {
+    Path wrapperDir = gradleDir.resolve("wrapper");
+    if (!Files.isDirectory(wrapperDir)) {
       return null;
     }
 
-    File[] candidates = wrapperDir.listFiles(FileFilters.filesWithExtension("properties"));
-    if (candidates == null) {
-      GradleLog.LOG.warn("No *.properties file is found at the gradle wrapper directory " + wrapperDir.getAbsolutePath());
-      return null;
-    }
-    else if (candidates.length != 1) {
-      GradleLog.LOG.warn(String.format(
-        "%d *.properties files instead of one have been found at the wrapper directory (%s): %s",
-        candidates.length, wrapperDir.getAbsolutePath(), Arrays.toString(candidates)
-      ));
-      return null;
-    }
+    try {
+      List<Path> candidates = Files.list(wrapperDir)
+        .filter(path -> FileUtilRt.extensionEquals(path.getFileName().toString(), "properties") && Files.isRegularFile(path))
+        .collect(Collectors.toList());
 
-    return candidates[0];
+      if (candidates.isEmpty()) {
+        GradleLog.LOG.warn("No *.properties file is found at the gradle wrapper directory " + wrapperDir);
+        return null;
+      }
+      if (candidates.size() != 1) {
+        GradleLog.LOG.warn(String.format("%d *.properties files instead of one have been found at the wrapper directory (%s): %s",
+                                         candidates.size(), wrapperDir, join(candidates, ", ")
+        ));
+        return null;
+      }
+      return candidates.get(0).toFile();
+    }
+    catch (IOException e) {
+      GradleLog.LOG.warn("Couldn't list gradle wrapper directory " + wrapperDir, e);
+      return null;
+    }
   }
 
   @NotNull
