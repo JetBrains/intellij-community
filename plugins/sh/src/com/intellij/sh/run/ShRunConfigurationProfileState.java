@@ -44,18 +44,20 @@ final class ShRunConfigurationProfileState implements RunProfileState {
 
   @Override
   public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    ShRunner shRunner = ApplicationManager.getApplication().getService(ShRunner.class);
-    if (shRunner == null || !myRunConfiguration.isExecuteInTerminal() || !shRunner.isAvailable(myProject) || isRunBeforeConfig()) {
-      return buildExecutionResult();
+    if (myRunConfiguration.isExecuteInTerminal() && !isRunBeforeConfig()) {
+      ShRunner shRunner = ApplicationManager.getApplication().getService(ShRunner.class);
+      if (shRunner != null && shRunner.isAvailable(myProject)) {
+        shRunner.run(myProject, buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(),
+                     isActivateToolWindow());
+        return null;
+      }
     }
-    shRunner.run(myProject, buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(), isActivateToolWindow());
-    return null;
+    return buildExecutionResult();
   }
 
   private boolean isActivateToolWindow() {
     RunnerAndConfigurationSettings settings = RunManager.getInstance(myProject).findSettings(myRunConfiguration);
-    if (settings == null) return true;
-    return settings.isActivateToolWindowBeforeRun();
+    return settings == null || settings.isActivateToolWindowBeforeRun();
   }
 
   private ExecutionResult buildExecutionResult() throws ExecutionException {
@@ -180,8 +182,9 @@ final class ShRunConfigurationProfileState implements RunProfileState {
       else {
         return String.join(" ", commandLine);
       }
-    } else {
-      final List<String> commandLine = new ArrayList<>();
+    }
+    else {
+      List<String> commandLine = new ArrayList<>();
       addIfPresent(commandLine, myRunConfiguration.getScriptText());
       return String.join(" ", commandLine);
     }

@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-interface ShRunner {
+public interface ShRunner {
   void run(@NotNull Project project,
            @NotNull String command,
            @NotNull String workingDirectory,
