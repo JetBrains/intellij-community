@@ -503,7 +503,7 @@ public class GradleExecutionHelper {
   public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
     try {
       File initScriptFile = writeToFileGradleInitScript(
-        "ext.mapPath = ext.mapPath ? ext.mapPath : { path -> path }", "ijmapper");
+        "if(!ext.has('mapPath')) ext.mapPath = { path -> path }\n", "ijmapper");
       executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
     }
     catch (IOException e) {
