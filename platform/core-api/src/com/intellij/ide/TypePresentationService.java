@@ -37,7 +37,7 @@ public abstract class TypePresentationService {
   public abstract @NlsSafe String getObjectName(@NotNull Object o);
 
   @NotNull
-  public static String getDefaultTypeName(@NotNull Class aClass) {
+  public static @NlsSafe String getDefaultTypeName(@NotNull Class aClass) {
     String simpleName = aClass.getSimpleName();
     final int i = simpleName.indexOf('$');
     if (i >= 0) {
