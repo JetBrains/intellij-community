@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.markup.AnalyzerStatus;
@@ -57,6 +58,7 @@ public class FontEditorPreview implements PreviewPanel{
     @Nls String text = PropertiesComponent.getInstance().getValue(PREVIEW_TEXT_KEY, getIDEDemoText());
 
     myEditor = (EditorEx)createPreviewEditor(text, mySchemeSupplier.get(), editable);
+    //((JComponent)myEditor.getGutter()).setVisible(false);
     registerRestoreAction(myEditor);
     installTrafficLights(myEditor);
   }
@@ -106,7 +108,7 @@ public class FontEditorPreview implements PreviewPanel{
     EditorEx editor = (EditorEx) (editable ? editorFactory.createEditor(editorDocument) : editorFactory.createViewer(editorDocument));
     editor.setColorsScheme(scheme);
     EditorSettings settings = editor.getSettings();
-    settings.setLineNumbersShown(true);
+    settings.setLineNumbersShown(false);
     settings.setWhitespacesShown(true);
     settings.setLineMarkerAreaShown(false);
     settings.setIndentGuidesShown(false);
@@ -114,6 +116,9 @@ public class FontEditorPreview implements PreviewPanel{
     settings.setAdditionalLinesCount(0);
     settings.setRightMarginShown(true);
     settings.setRightMargin(60);
+    settings.setGutterIconsShown(false);
+    settings.setIndentGuidesShown(false);
+    ((EditorGutterComponentEx)editor.getGutter()).setPaintBackground(false);
     return editor;
   }
 
