@@ -59,7 +59,10 @@ IF NOT EXIST "%JAVA_EXE%" (
 )
 
 SET BITS=
-IF EXIST "%JRE%\bin\windowsaccessbridge-64.dll" SET BITS=64
+FINDSTR /B /C:"OS_ARCH=\"x86_64\"" "%JRE%\release" > NUL
+IF NOT ERRORLEVEL 1 SET BITS=64
+FINDSTR /B /C:"OS_ARCH=\"amd64\"" "%JRE%\release" > NUL
+IF NOT ERRORLEVEL 1 SET BITS=64
 
 :: ---------------------------------------------------------------------
 :: Collect JVM options and properties.

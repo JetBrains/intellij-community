@@ -27,14 +27,12 @@ CUT=$(command -v cut)
 READLINK=$(command -v readlink)
 XARGS=$(command -v xargs)
 DIRNAME=$(command -v dirname)
-MKTEMP=$(command -v mktemp)
-RM=$(command -v rm)
 CAT=$(command -v cat)
 SED=$(command -v sed)
 
-if [ -z "$UNAME" ] || [ -z "$GREP" ] || [ -z "$CUT" ] || [ -z "$DIRNAME" ] || [ -z "$MKTEMP" ] || [ -z "$RM" ] || [ -z "$CAT" ] || [ -z "$SED" ]; then
+if [ -z "$UNAME" ] || [ -z "$GREP" ] || [ -z "$CUT" ] || [ -z "$DIRNAME" ] || [ -z "$CAT" ] || [ -z "$SED" ]; then
   TOOLS_MSG="Required tools are missing:"
-  for tool in uname egrep cut readlink xargs dirname mktemp rm cat sed ; do
+  for tool in uname egrep cut readlink xargs dirname cat sed ; do
      test -z "$(command -v $tool)" && TOOLS_MSG="$TOOLS_MSG $tool"
   done
   message "$TOOLS_MSG (SHELL=$SHELL PATH=$PATH)"
@@ -152,12 +150,7 @@ if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
   exit 1
 fi
 
-VERSION_LOG=$("$MKTEMP" -t java.version.log.XXXXXX)
-JAVA_TOOL_OPTIONS='' "$JAVA_BIN" -version 2> "$VERSION_LOG"
-"$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
-BITS=$?
-"$RM" -f "$VERSION_LOG"
-test ${BITS} -eq 0 && BITS="64" || BITS=""
+"$GREP" -q -E -e "OS_ARCH=\"(x86_64|amd64)\"" "$JDK/release" 2> /dev/null && BITS="64" || BITS=""
 
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
