@@ -102,6 +102,6 @@ class KotlinScriptDependenciesClassFinder(
 
         val file = this.containingFile?.virtualFile ?: return null
         val index = ProjectFileIndex.SERVICE.getInstance(myProject)
-        return this.takeIf { index.isInContent(file) || index.isInLibrary(file) || scope.contains(file) }
+        return this.takeUnless { index.isInContent(file) || index.isInLibrary(file) || !scope.contains(file) }
     }
 }
