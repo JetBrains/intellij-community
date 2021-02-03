@@ -149,7 +149,7 @@ internal class MergeRequestDetailsVm(
   workspace: Workspace
 ) : SpaceReviewDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, workspace) {
 
-  private val branchPair: Property<MergeRequestBranchPair> = cellProperty { review.live.branchPair }
+  val branchPair: Property<MergeRequestBranchPair> = cellProperty { review.live.branchPair }
 
   val repository: Property<String> = cellProperty { branchPair.live.repository }
   val targetBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.targetBranchInfo }
