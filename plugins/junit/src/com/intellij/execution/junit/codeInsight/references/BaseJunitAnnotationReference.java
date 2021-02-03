@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,7 @@ public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiL
       psiClazz = literalClazz.getPsi();
     }
     if (psiClazz == null) return false;
-    PsiClass methodClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
+    PsiClass methodClass = method.getContainingClass();
     if (methodClass == null) return false;
     if (psiClazz.isInheritor(methodClass, false) || methodClass.isInheritor(psiClazz, false)) {
       return true;
@@ -96,7 +95,7 @@ public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiL
       PsiElementResolveResult neededMethod = ClassInheritorsSearch.search(psiClazz, psiClazz.getResolveScope(), false)
         .mapping(aClazz -> {
           final PsiMethod[] methods = aClazz.findMethodsByName(finalMethodName, false);
-          return filteredMethod(methods, aClazz, literalClazz, literalMethod);
+          return filteredMethod(methods, literalClazz, literalMethod);
         })
         .filtering(method -> {
           return method != null;
@@ -108,13 +107,13 @@ public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiL
       if (neededMethod == null) return null;
       return neededMethod.getElement();
     }
-    return filteredMethod(clazzMethods, psiClazz, literalClazz, literalMethod);
+    return filteredMethod(clazzMethods, literalClazz, literalMethod);
   }
 
   @Nullable
-  private PsiMethod filteredMethod(PsiMethod[] clazzMethods, PsiClass finalCls, UClass uClass, UMethod uMethod) {
+  private PsiMethod filteredMethod(PsiMethod[] clazzMethods, UClass uClass, UMethod uMethod) {
     return Arrays.stream(clazzMethods)
-      .filter(method -> staticSuccessfulCheck(method, finalCls, uClass, uMethod))
+      .filter(method -> hasNoStaticProblem(method, uClass, uMethod))
       .findFirst()
       .orElse(clazzMethods.length == 0 ? null : clazzMethods[0]);
   }
@@ -134,7 +133,7 @@ public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiL
         if (aClass == null) continue;
         if (JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
         if (current != null && method.getName().equals(current.getName())) continue;
-        if (!staticSuccessfulCheck(method, psiTopLevelClass, topLevelClass, current)) continue;
+        if (current != null && !hasNoStaticProblem(method, topLevelClass, current)) continue;
         final LookupElementBuilder builder = LookupElementBuilder.create(method);
         list.add(builder.withAutoCompletionPolicy(AutoCompletionPolicy.SETTINGS_DEPENDENT));
       }
@@ -144,10 +143,9 @@ public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiL
 
   /**
    * @param method method referenced from within JUnit annotation
-   * @param psiClass the top level class of the method
    * @param uClass the class where the annotation is located
    * @param uMethod the JUnit annotated method, is null in case the annotation is class-level
    * @return true in case static check is successful
    */
-  abstract protected boolean staticSuccessfulCheck(PsiMethod method, PsiClass psiClass, UClass uClass, UMethod uMethod);
+  abstract protected boolean hasNoStaticProblem(@NotNull PsiMethod method, @NotNull UClass uClass, @Nullable UMethod uMethod);
 }
