@@ -873,11 +873,30 @@ public final class EditorWindow {
       int centerX = myRectangle.getBounds().x + myRectangle.getBounds().width / 2;
       int centerY = myRectangle.getBounds().y + myRectangle.getBounds().height / 2;
 
-      g.setColor(new JBColor(0xf2f2f2, 0x4c5052));
       int height = Registry.intValue("ide.splitter.chooser.info.panel.height");
       int width = Registry.intValue("ide.splitter.chooser.info.panel.width");
       int arc = Registry.intValue("ide.splitter.chooser.info.panel.arc");
+
+      Function<String, String> getShortcut = (actionId) -> KeymapUtil.getKeystrokeText(ActionManager.getInstance().getKeyboardShortcut(actionId).getFirstKeyStroke());
+      String openShortcuts = String.format("%s to open%s", getShortcut.apply("SplitChooser.Split"),
+                                           SplitterService.getInstance().myInitialEditorWindow != null
+                                           ? String.format(", %s to duplicate", getShortcut.apply("SplitChooser.Duplicate")) : "");
+      String switchShortcuts = String.format("%s to go to the next splitter", getShortcut.apply("SplitChooser.NextWindow"));
+
+      // Adjust default width to info text
+      Font font = UIUtil.getLabelFont();
+      FontMetrics fontMetrics = g.getFontMetrics(font);
+      int openShortcutsWidth = fontMetrics.stringWidth(openShortcuts);
+      int switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts);
+      width = Math.max(width, Math.round(Math.max(openShortcutsWidth, switchShortcutsWidth) * 1.2f));
+
+      // Check if info panel will actually fit into editor with some free space around edges
+      if (myRectangle.getBounds().height < height * 1.2f || myRectangle.getBounds().width < width * 1.2f) {
+        return;
+      }
+
       final Shape rectangle = new RoundRectangle2D.Double(centerX - width / 2.0, centerY - height / 2.0, width, height, arc, arc);
+      g.setColor(new JBColor(0xf2f2f2, 0x4c5052));
       g.fill(rectangle);
 
       int arrowsCenterVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.center");
@@ -891,19 +910,12 @@ public final class EditorWindow {
       AllIcons.General.ArrowRight.paintIcon(component, g, forLeftRightIcons.x + arrowsHShift, forLeftRightIcons.y);
       AllIcons.General.ArrowLeft.paintIcon(component, g, forLeftRightIcons.x - arrowsHShift, forLeftRightIcons.y);
 
-      float fontMultiplier = (float)Registry.doubleValue("ide.splitter.chooser.info.panel.font.multiplier");
       int textVShift = Registry.intValue("ide.splitter.chooser.info.panel.text.shift");
-      Function<String, String> getShortcut = (actionId) -> KeymapUtil.getKeystrokeText(ActionManager.getInstance().getKeyboardShortcut(actionId).getFirstKeyStroke());
-      String openShortcuts = String.format("%s to open%s", getShortcut.apply("SplitChooser.Split"),
-                                           SplitterService.getInstance().myInitialEditorWindow != null
-                                           ? String.format(", %s to duplicate", getShortcut.apply("SplitChooser.Duplicate")) : "");
-      String switchShortcuts = String.format("%s to go to the next splitter", getShortcut.apply("SplitChooser.NextWindow"));
-
-      g.setColor(UIUtil.getLabelForeground());
-      g.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() * fontMultiplier));
       int textY = forUpDownIcons.y + AllIcons.General.ArrowDown.getIconHeight() + textVShift;
-      g.drawString(openShortcuts, centerX - g.getFontMetrics().stringWidth(openShortcuts) / 2, textY);
-      g.drawString(switchShortcuts, centerX - g.getFontMetrics().stringWidth(switchShortcuts) / 2, textY + g.getFontMetrics().getHeight());
+      g.setColor(UIUtil.getLabelForeground());
+      g.setFont(font);
+      g.drawString(openShortcuts, centerX - openShortcutsWidth / 2, textY);
+      g.drawString(switchShortcuts, centerX - switchShortcutsWidth / 2, textY + fontMetrics.getHeight());
     }
 
     private void positionChanged(RelativePosition position) {
