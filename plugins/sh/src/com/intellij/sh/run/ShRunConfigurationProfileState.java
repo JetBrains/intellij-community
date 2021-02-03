@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
 import com.intellij.execution.*;
@@ -11,7 +11,7 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.sh.ShBundle;
+import com.intellij.sh.ShStringUtil;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,25 +33,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.sh.ShStringUtil.quote;
-
-public class ShRunConfigurationProfileState implements RunProfileState {
+final class ShRunConfigurationProfileState implements RunProfileState {
   private final Project myProject;
   private final ShRunConfiguration myRunConfiguration;
 
-  public ShRunConfigurationProfileState(@NotNull Project project, @NotNull ShRunConfiguration runConfiguration) {
+  ShRunConfigurationProfileState(@NotNull Project project, @NotNull ShRunConfiguration runConfiguration) {
     myProject = project;
     myRunConfiguration = runConfiguration;
   }
 
-  @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    ShRunner shRunner = ServiceManager.getService(myProject, ShRunner.class);
+  public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+    ShRunner shRunner = ApplicationManager.getApplication().getService(ShRunner.class);
     if (shRunner == null || !myRunConfiguration.isExecuteInTerminal() || !shRunner.isAvailable(myProject) || isRunBeforeConfig()) {
       return buildExecutionResult();
     }
-    shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(), isActivateToolWindow());
+    shRunner.run(myProject, buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(), isActivateToolWindow());
     return null;
   }
 
@@ -197,7 +195,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     envs.forEach((key, value) -> {
       String quotedString;
       if (Platform.current() != Platform.WINDOWS) {
-        quotedString = quote(value);
+        quotedString = ShStringUtil.quote(value);
       }
       else {
         String escapedValue = StringUtil.escapeQuotes(value);
@@ -209,8 +207,8 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
   private static String adaptPathForExecution(@NotNull String systemDependentPath,
                                               @Nullable WSLDistribution wslDistribution) {
-    if (wslDistribution != null) return quote(wslDistribution.getWslPath(systemDependentPath));
-    if (Platform.current() != Platform.WINDOWS) return quote(systemDependentPath);
+    if (wslDistribution != null) return ShStringUtil.quote(wslDistribution.getWslPath(systemDependentPath));
+    if (Platform.current() != Platform.WINDOWS) return ShStringUtil.quote(systemDependentPath);
     String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
     return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.fun(escapedPath) : escapedPath;
   }

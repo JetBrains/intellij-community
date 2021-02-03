@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -13,7 +13,7 @@ import com.intellij.sh.psi.ShFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShErrorFilter extends HighlightErrorFilter implements HighlightInfoFilter {
+final class ShErrorFilter extends HighlightErrorFilter implements HighlightInfoFilter {
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     if (ApplicationManager.getApplication().isInternal()) return true;

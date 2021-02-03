@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ShStructureViewFactory implements PsiStructureViewFactory {
+final class ShStructureViewFactory implements PsiStructureViewFactory {
   @Nullable
   @Override
   public StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile psiFile) {

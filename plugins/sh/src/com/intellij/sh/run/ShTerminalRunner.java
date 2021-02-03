@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,21 +22,20 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 
-final class ShTerminalRunner extends ShRunner {
+final class ShTerminalRunner implements ShRunner {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
 
-  private ShTerminalRunner(@NotNull Project project) {
-    super(project);
-  }
-
   @Override
-  public void run(@NotNull String command,
+  public void run(@NotNull Project project,
+                  @NotNull String command,
                   @NotNull String workingDirectory,
                   @NotNull @NlsContexts.TabTitle String title,
                   boolean activateToolWindow) {
-    TerminalView terminalView = TerminalView.getInstance(myProject);
-    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-    if (window == null) return;
+    TerminalView terminalView = TerminalView.getInstance(project);
+    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    if (window == null) {
+      return;
+    }
 
     ContentManager contentManager = window.getContentManager();
     Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
@@ -51,7 +50,8 @@ final class ShTerminalRunner extends ShRunner {
       pair.first.setDisplayName(title);
       contentManager.setSelectedContent(pair.first);
       pair.second.executeCommand(command);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       LOG.warn("Cannot run command:" + command, e);
     }
   }
@@ -62,8 +62,8 @@ final class ShTerminalRunner extends ShRunner {
     return window != null && window.isAvailable();
   }
 
-  @Nullable
-  private static Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull ContentManager contentManager, @NotNull String workingDirectory) {
+  private static @Nullable Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull ContentManager contentManager,
+                                                                                 @NotNull String workingDirectory) {
     Content selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
       Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(selectedContent, workingDirectory);
@@ -77,14 +77,23 @@ final class ShTerminalRunner extends ShRunner {
       .orElse(null);
   }
 
-  @Nullable
-  private static Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull Content content, @NotNull String workingDirectory) {
+  private static @Nullable Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull Content content,
+                                                                                 @NotNull String workingDirectory) {
     JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
-    if (!(widget instanceof ShellTerminalWidget)) return null;
+    if (!(widget instanceof ShellTerminalWidget)) {
+      return null;
+    }
+
     ShellTerminalWidget shellTerminalWidget = (ShellTerminalWidget)widget;
-    if (!shellTerminalWidget.getTypedShellCommand().isEmpty() || shellTerminalWidget.hasRunningCommands()) return null;
+    if (!shellTerminalWidget.getTypedShellCommand().isEmpty() || shellTerminalWidget.hasRunningCommands()) {
+      return null;
+    }
+
     String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget, null);
-    if (currentWorkingDirectory == null || !currentWorkingDirectory.equals(workingDirectory)) return null;
-    return Pair.create(content, shellTerminalWidget);
+    if (currentWorkingDirectory == null || !currentWorkingDirectory.equals(workingDirectory)) {
+      return null;
+    }
+
+    return new Pair<>(content, shellTerminalWidget);
   }
 }
