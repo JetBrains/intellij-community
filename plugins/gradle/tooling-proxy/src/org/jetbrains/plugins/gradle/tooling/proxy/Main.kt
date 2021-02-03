@@ -19,8 +19,6 @@ import org.gradle.tooling.internal.consumer.BlockingResultHandler
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.InetAddress
-import java.nio.file.Path
-import java.util.*
 
 object Main {
   const val LOCAL_BUILD_PROPERTY = "idea.gradle.target.local"
@@ -54,39 +52,6 @@ object Main {
         override fun getLocalBindingAddress(): InetAddress {
           return inetAddress ?: super.getLocalBindingAddress()
         }
-      }
-    }
-
-    val targetPathMapping = System.getenv("target_path_mapping")?.run {
-      String(Base64.getDecoder().decode(this.toByteArray(Charsets.UTF_8)), Charsets.UTF_8)
-    }
-    val envMap = mutableMapOf<String, String>()
-    val pathMappingPath = targetPathMapping?.lines()?.iterator()?.run {
-      val map = mutableMapOf<String, String>()
-      while (hasNext()) {
-        val localPath = next()
-        if (hasNext()) {
-          val targetPath = next()
-          map[targetPath] = localPath
-          envMap["path_mapping: $localPath"] = targetPath
-        }
-      }
-      map
-    } ?: emptyMap()
-
-    val classpath = System.getProperty("java.class.path")
-    for (path in classpath.split(File.pathSeparator)) {
-      val s = pathMappingPath[path]
-      val mapping: String?
-      if (s != null) {
-        mapping = s
-      }
-      else {
-        val of = Path.of(path)
-        mapping = pathMappingPath[of.parent.toString()]?.run { Path.of(this, of.fileName.toString()).toString() }
-      }
-      mapping?.let {
-        envMap["path_mapping: $mapping"] = path
       }
     }
 
@@ -138,7 +103,6 @@ object Main {
       )
       withArguments(targetBuildParameters.arguments)
       setJvmArguments(targetBuildParameters.jvmArguments)
-      setEnvironmentVariables(envMap)
 
       when (this) {
         is BuildLauncher -> run(resultHandler)

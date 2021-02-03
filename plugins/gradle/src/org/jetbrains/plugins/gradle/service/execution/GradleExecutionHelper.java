@@ -503,7 +503,7 @@ public class GradleExecutionHelper {
   public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
     try {
       File initScriptFile = writeToFileGradleInitScript(
-        "ext.mapPath = { path -> System.getenv(\"path_mapping: $path\") ?: path }", "ijmapper");
+        "ext.mapPath = ext.mapPath ? ext.mapPath : { path -> path }", "ijmapper");
       executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
     }
     catch (IOException e) {
@@ -640,6 +640,9 @@ public class GradleExecutionHelper {
       }
       else if (ch == '"') {
         stringBuilder.append("\\\"");
+      }
+      else if (ch == '$') {
+        stringBuilder.append("\\$");
       }
       else {
         stringBuilder.append(ch);

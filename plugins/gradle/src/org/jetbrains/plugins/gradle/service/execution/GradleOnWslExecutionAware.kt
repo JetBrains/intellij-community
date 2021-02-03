@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
@@ -51,7 +50,7 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
 
   private fun resolveWslEnvironment(path: String): TargetEnvironmentConfiguration? {
     val wslDistribution = resolveWslDistribution(path) ?: return null
-    return WslTargetEnvironmentConfiguration(wslDistribution).withJavaRuntime()
+    return WslTargetEnvironmentConfiguration(wslDistribution)
   }
 
   private fun resolveWslDistribution(path: String): WSLDistribution? {
@@ -59,10 +58,4 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
     return WslDistributionManager.getInstance().distributionFromPath(path)
 
   }
-}
-
-private fun WslTargetEnvironmentConfiguration.withJavaRuntime(): WslTargetEnvironmentConfiguration {
-  if (runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) != null) return this
-  addLanguageRuntime(JavaLanguageRuntimeConfiguration().apply { homePath = "/usr" })
-  return this
 }
