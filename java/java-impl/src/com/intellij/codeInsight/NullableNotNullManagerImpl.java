@@ -66,19 +66,16 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       }
     });
     updateDefaults();
+    myNullables.addAll(myDefaultNullables);
+    myNotNulls.addAll(myDefaultNotNulls);
   }
 
   private void updateDefaults() {
-    boolean initial = myAnnotationSupports == null;
     myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensions();
     myDefaultNullables = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NULLABLE));
     myDefaultNotNulls = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NOT_NULL));
     myDefaultAll = StreamEx.of(myAnnotationSupports).flatCollection(s -> s.getNullabilityAnnotations(Nullability.UNKNOWN))
       .prepend(myDefaultNotNulls).prepend(myDefaultNullables).toList();
-    if (initial) {
-      myNullables.addAll(myDefaultNullables);
-      myNotNulls.addAll(myDefaultNotNulls);
-    }
   }
 
   @Override
