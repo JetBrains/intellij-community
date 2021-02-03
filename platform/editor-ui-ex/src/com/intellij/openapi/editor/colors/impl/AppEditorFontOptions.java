@@ -21,6 +21,8 @@ import java.util.Map;
 
 @State(name = "DefaultFont", storages = @Storage("editor.xml"))
 public final class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
+  public static final boolean NEW_FONT_SELECTOR = SystemProperties.getBooleanProperty("new.editor.font.selector", true);
+
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   public AppEditorFontOptions() {
@@ -103,7 +105,7 @@ public final class AppEditorFontOptions implements PersistentStateComponent<AppE
 
   private static String[] migrateFamilyNameIfNeeded(String family, String regularSubFamily, String boldSubFamily) {
     if (SystemInfo.isJetBrainsJvm &&
-        SystemProperties.is("new.editor.font.selector") &&
+        NEW_FONT_SELECTOR &&
         regularSubFamily == null &&
         boldSubFamily == null &&
         FIRA_CODE_MIGRATION_MAP.containsKey(family) &&
