@@ -15,7 +15,7 @@ interface IndexableSetOrigin
 
 interface ModuleRootOrigin : IndexableSetOrigin {
   val module: Module
-  val root: VirtualFile
+  val roots: List<VirtualFile>
 }
 
 interface LibraryOrigin : IndexableSetOrigin {

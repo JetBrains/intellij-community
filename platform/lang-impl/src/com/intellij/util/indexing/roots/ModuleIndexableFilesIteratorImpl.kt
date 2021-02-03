@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.roots
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
@@ -13,13 +14,26 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.kind.ModuleRootOriginImpl
 
+open class ModuleIndexableFilesPolicy {
+  companion object {
+      fun getInstance() = ApplicationManager.getApplication().getService(ModuleIndexableFilesPolicy::class.java)
+  }
+  open fun shouldIndexSeparateRoots() = true
+}
+
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
-                                                private val root: VirtualFile) : ModuleIndexableFilesIterator {
+                                                private val roots: List<VirtualFile>) : ModuleIndexableFilesIterator {
   companion object {
     @JvmStatic
     fun getModuleIterators(module: Module): Collection<ModuleIndexableFilesIteratorImpl> {
       val fileIndex = ModuleRootManager.getInstance(module).fileIndex as ModuleFileIndexImpl
-      return fileIndex.moduleRootsToIterate.map { ModuleIndexableFilesIteratorImpl(module, it) }
+      val moduleRoots = fileIndex.moduleRootsToIterate.toList()
+      if (moduleRoots.isEmpty()) return emptyList()
+
+      if (ModuleIndexableFilesPolicy.getInstance().shouldIndexSeparateRoots()) {
+        return moduleRoots.map { ModuleIndexableFilesIteratorImpl(module, listOf(it)) }
+      }
+      return listOf(ModuleIndexableFilesIteratorImpl(module, moduleRoots))
     }
   }
 
@@ -39,11 +53,16 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
     return IndexingBundle.message("indexable.files.provider.scanning.module.name", module.name)
   }
 
-  override fun getOrigin(): ModuleRootOrigin = ModuleRootOriginImpl(module, root)
+  override fun getOrigin(): ModuleRootOrigin = ModuleRootOriginImpl(module, roots)
 
   override fun iterateFiles(
     project: Project,
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
-  ): Boolean = ModuleRootManager.getInstance(module).fileIndex.iterateContentUnderDirectory(root, fileIterator, fileFilter)
+  ): Boolean {
+    for (root in roots) {
+      ModuleRootManager.getInstance(module).fileIndex.iterateContentUnderDirectory(root, fileIterator, fileFilter)
+    }
+    return true
+  }
 }

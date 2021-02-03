@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.IndexableSetContributor
 
 class ModuleRootOriginImpl(override val module: Module,
-                           override val root: VirtualFile) : ModuleRootOrigin
+                           override val roots: List<VirtualFile>) : ModuleRootOrigin
 
 class LibraryOriginImpl(override val library: Library) : LibraryOrigin
 
