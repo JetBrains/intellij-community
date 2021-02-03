@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
@@ -16,11 +17,12 @@ import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @State(name = "DefaultFont", storages = @Storage("editor.xml"))
 public final class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
+  private static final Logger LOG = Logger.getInstance(AppEditorFontOptions.class);
   public static final boolean NEW_FONT_SELECTOR = SystemProperties.getBooleanProperty("new.editor.font.selector", true);
 
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
@@ -96,21 +98,11 @@ public final class AppEditorFontOptions implements PersistentStateComponent<AppE
     }
   }
 
-  // Fira Code requires specific migration due to naming workaround in JBR used earlier
-  private static final Map<String, String[]> FIRA_CODE_MIGRATION_MAP = Map.of(
-    "Fira Code Light", new String[] {"Fira Code", "Light", "Light"},
-    "Fira Code Medium", new String[] {"Fira Code", "Medium", "Medium"},
-    "Fira Code Retina", new String[] {"Fira Code", "Retina", "Retina"}
-  );
-
   private static String[] migrateFamilyNameIfNeeded(String family, String regularSubFamily, String boldSubFamily) {
-    if (SystemInfo.isJetBrainsJvm &&
-        NEW_FONT_SELECTOR &&
-        regularSubFamily == null &&
-        boldSubFamily == null &&
-        FIRA_CODE_MIGRATION_MAP.containsKey(family) &&
-        !FontFamilyService.getAvailableFamilies().contains(family)) {
-      return FIRA_CODE_MIGRATION_MAP.get(family);
+    if (SystemInfo.isJetBrainsJvm && NEW_FONT_SELECTOR && regularSubFamily == null && boldSubFamily == null) {
+      String[] result = FontFamilyService.migrateFontSetting(family);
+      LOG.info("Font setting migration: " + family + " -> " + Arrays.toString(result));
+      return result;
     }
     return new String[] {family, regularSubFamily, boldSubFamily};
   }
