@@ -291,7 +291,7 @@ public class XPathEvalAction extends XPathAction {
         presentation.setCodeUsages(false);
         presentation.setCodeUsagesString(XPathBundle.message("list.item.found.matches"));
         presentation.setNonCodeUsagesString(XPathBundle.message("list.item.result"));
-        presentation.setUsagesString("XPath Result");
+        presentation.setUsagesString(XPathBundle.message("xpath.result"));
         final ItemPresentation targetPresentation = usageTarget.getPresentation();
         if (targetPresentation != null) {
           presentation

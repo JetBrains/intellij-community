@@ -6,6 +6,7 @@ import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
@@ -350,7 +351,7 @@ public final class FindInProjectUtil {
       }
       presentation.setTabText(FindBundle.message("tab.title.files"));
       presentation.setToolwindowTitle(FindBundle.message("tab.title.files.in.scope", scope));
-      presentation.setUsagesString("files");
+      presentation.setUsagesString(LangBundle.message("files"));
     }
     else {
       FindModel.SearchContext searchContext = findModel.getSearchContext();
