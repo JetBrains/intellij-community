@@ -164,6 +164,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
         if (!(type instanceof PsiArrayType)) return;
         registerMethodCallError(expression, type, Kind.ARRAY_HASH_CODE);
       } else if ("hash".equals(methodName)) {
+        if (argumentList.getExpressionCount() == 1) return;
         final PsiMethod method = expression.resolveMethod();
         if (method == null) {
           return;
