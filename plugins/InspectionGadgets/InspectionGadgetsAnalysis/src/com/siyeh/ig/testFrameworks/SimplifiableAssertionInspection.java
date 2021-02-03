@@ -238,7 +238,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
         return;
       }
 
-      if (!assertHint.isMessageOnFirstPosition()) {
+      if (!assertHint.isExpectedActualOrder()) {
         final PsiExpression temp = lhs;
         lhs = rhs;
         rhs = temp;

@@ -42,6 +42,10 @@ public final class AssertHint {
     return myParameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL;
   }
 
+  public boolean isExpectedActualOrder() {
+    return myParameterOrder == ParameterOrder.EXPECTED_ACTUAL_MESSAGE || myParameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL;
+  }
+  
   /**
    * @return index of the first (left) argument in expected/actual pair.
    */

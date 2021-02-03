@@ -34,6 +34,7 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
   public void testDoublePrimitive() { doTest(); }
   public void testEqualsToTrueJUnit5() { doTest(); }
   public void testTrueToEqualsJUnit5() { doTest(); }
+  public void testTrueToEqualsJUnit5Order() { doTest(); }
   public void testTrueToEqualsBetweenIncompatibleTypes() { doTest(); }
   public void testFalseToNotEqualsJUnit4() { doTest(); }
   public void testObjectEqualsToEquals() { doTest(); }
