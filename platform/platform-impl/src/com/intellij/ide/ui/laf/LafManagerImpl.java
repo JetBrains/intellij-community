@@ -145,14 +145,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     new SynchronizedClearableLazy<>(() -> new LafComboBoxModel());
 
   private final Lazy<ActionToolbar> settingsToolbar = new SynchronizedClearableLazy<>(() -> {
-    DefaultActionGroup group = new DefaultActionGroup(new PreferredLafsAction());
+    DefaultActionGroup group = new DefaultActionGroup(new PreferredLafAction());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true);
     toolbar.getComponent().setOpaque(false);
     return toolbar;
   });
 
-  private final SystemDarkThemeDetector lafDetector = SystemDarkThemeDetector.createDetector(this::syncLaf);
-
+  // SystemDarkThemeDetector must be created as part of LafManagerImpl initialization and not on demand because system listeners are added
+  private @Nullable SystemDarkThemeDetector lafDetector;
   private static final LafReference SEPARATOR = new LafReference("", null, null);
 
   private boolean myFirstSetup = true;
@@ -270,20 +270,19 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   public void initializeComponent() {
     ApplicationManager.getApplication().invokeLater(() -> {
       UIManager.LookAndFeelInfo currentLaf = myCurrentLaf;
-      if (currentLaf != null) {
-        if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-          if (!((UIThemeBasedLookAndFeelInfo)currentLaf).isInitialised()) {
-            setLookAndFeelImpl(myCurrentLaf, true, false);
-          }
+      assert currentLaf != null;
+      if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+        if (!((UIThemeBasedLookAndFeelInfo)currentLaf).isInitialised()) {
+          setLookAndFeelImpl(myCurrentLaf, true, false);
         }
-        else {
-          UIManager.LookAndFeelInfo laf = findLaf(currentLaf.getClassName());
-          if (laf != null) {
-            boolean needUninstall = StartupUiUtil.isUnderDarcula();
-            // setup default LAF or one specified by readExternal
-            setLookAndFeelImpl(laf, false, false);
-            updateWizardLAF(needUninstall);
-          }
+      }
+      else {
+        UIManager.LookAndFeelInfo laf = findLaf(currentLaf.getClassName());
+        if (laf != null) {
+          boolean needUninstall = StartupUiUtil.isUnderDarcula();
+          // setup default LAF or one specified by readExternal
+          setLookAndFeelImpl(laf, true, false);
+          updateWizardLAF(needUninstall);
         }
       }
 
@@ -312,8 +311,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void detectAndSyncLaf() {
-    if (lafDetector.getDetectionSupported() && autodetect) {
-      lafDetector.check();
+    if (autodetect) {
+      SystemDarkThemeDetector lafDetector = getOrCreateLafDetector();
+      if (lafDetector.getDetectionSupported()) {
+        lafDetector.check();
+      }
     }
   }
 
@@ -356,6 +358,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     autodetect = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_AUTODETECT));
     myPreferredLightLaf = Objects.requireNonNullElse(loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF), myDefaultLightLaf);
     myPreferredDarkLaf = Objects.requireNonNullElse(loadLafState(element, ELEMENT_PREFERRED_DARK_LAF), myDefaultDarkLaf);
+
+    if (autodetect) {
+      getOrCreateLafDetector();
+    }
   }
 
   private @Nullable UIManager.LookAndFeelInfo loadLafState(@NotNull Element element, @NotNull @NonNls String attrName) {
@@ -393,6 +399,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myCurrentLaf = loadDefaultLaf();
     myPreferredLightLaf = myDefaultLightLaf;
     myPreferredDarkLaf = myDefaultDarkLaf;
+    autodetect = false;
   }
 
   @Override
@@ -797,11 +804,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    */
   @Override
   public void updateUI() {
-    final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+    UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI.class.getName());
 
     fixPopupWeight();
-
     fixMenuIssues(uiDefaults);
 
     initInputMapDefaults(uiDefaults);
@@ -1103,17 +1109,26 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public boolean getAutodetectSupported() {
-    return lafDetector.getDetectionSupported();
+    return getOrCreateLafDetector().getDetectionSupported();
+  }
+
+  private @NotNull SystemDarkThemeDetector getOrCreateLafDetector() {
+    SystemDarkThemeDetector result = lafDetector;
+    if (result == null) {
+      result = SystemDarkThemeDetector.createDetector(this::syncLaf);
+      lafDetector = result;
+    }
+    return result;
   }
 
   @Override
-  public void setPreferredDarkLaf(UIManager.@NotNull LookAndFeelInfo myPreferredDarkLaf) {
-    this.myPreferredDarkLaf = myPreferredDarkLaf;
+  public void setPreferredDarkLaf(UIManager.@NotNull LookAndFeelInfo value) {
+    myPreferredDarkLaf = value;
   }
 
   @Override
-  public void setPreferredLightLaf(UIManager.@NotNull LookAndFeelInfo myPreferredLightLaf) {
-    this.myPreferredLightLaf = myPreferredLightLaf;
+  public void setPreferredLightLaf(UIManager.@NotNull LookAndFeelInfo value) {
+    myPreferredLightLaf = value;
   }
 
   private static void repaintUI(Window window) {
@@ -1399,8 +1414,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
   }
 
-  private final class PreferredLafsAction extends DefaultActionGroup {
-    private PreferredLafsAction() {
+  private final class PreferredLafAction extends DefaultActionGroup {
+    private PreferredLafAction() {
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText(IdeBundle.message("preferred.theme.text"));
