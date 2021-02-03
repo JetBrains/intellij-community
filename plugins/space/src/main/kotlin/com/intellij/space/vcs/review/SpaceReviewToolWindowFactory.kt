@@ -7,32 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.space.components.SpaceWorkspaceComponent
-import com.intellij.space.utils.LifetimedDisposable
-import com.intellij.space.utils.LifetimedDisposableImpl
-import com.intellij.space.vcs.SpaceProjectContext
-import runtime.reactive.property.mapInit
 
-internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware, LifetimedDisposable by LifetimedDisposableImpl() {
+internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
-    super.init(toolWindow)
-
-    val project = (toolWindow as ToolWindowEx).project
-
-    val workspace = SpaceWorkspaceComponent.getInstance().workspace
-    val spaceProjectContext = SpaceProjectContext.getInstance(project).context
-    val isToolwindowAvailable = lifetime.mapInit(workspace, spaceProjectContext, false) { ws, context ->
-      ws ?: return@mapInit false
-      return@mapInit context.isAssociatedWithSpaceRepository
-    }
-
-    isToolwindowAvailable.forEach(lifetime) { isAvailable ->
-      if (isAvailable && !toolWindow.isAvailable) {
-        toolWindow.isShowStripeButton = true
-      }
-
-      toolWindow.isAvailable = isAvailable
-    }
+    (toolWindow as ToolWindowEx).project.service<SpaceCodeReviewTabManager>()
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -41,8 +19,7 @@ internal class SpaceReviewToolWindowFactory : ToolWindowFactory, DumbAware, Life
     spaceCodeReviewTabManager.showReviews(toolWindow.contentManager)
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean =
-    SpaceProjectContext.getInstance(project).context.value.isAssociatedWithSpaceRepository
+  override fun shouldBeAvailable(project: Project): Boolean = false
 
   override fun isDoNotActivateOnStart(): Boolean = true
 
