@@ -666,7 +666,7 @@ public class GradleInstallationManager {
   }
 
   @Nullable
-  private static GradleVersion getGradleVersionSafe(String gradleVersion) {
+  public static GradleVersion getGradleVersionSafe(String gradleVersion) {
     try {
       return GradleVersion.version(gradleVersion);
     }

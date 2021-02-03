@@ -29,9 +29,11 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -135,8 +137,18 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
   }
 
-  private boolean testLauncherIsApplicable(GradleExecutionSettings effectiveSettings) {
-    return Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST);
+  private static boolean testLauncherIsApplicable(GradleExecutionSettings effectiveSettings) {
+    boolean allowedByGradleVersion = isSupportedByGradleVersion(effectiveSettings);
+    return Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST)
+      && allowedByGradleVersion;
+  }
+
+  private static boolean isSupportedByGradleVersion(GradleExecutionSettings effectiveSettings) {
+    return Optional.ofNullable(effectiveSettings.getGradleHome())
+      .map(GradleInstallationManager::getGradleVersion)
+      .map(GradleInstallationManager::getGradleVersionSafe)
+      .map(v -> GradleVersion.version("6.1").compareTo(v) <= 0)
+      .orElse(false);
   }
 
   protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
@@ -198,6 +210,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         String debugOptions = effectiveSettings.getUserData(GradleRunConfiguration.DEBUGGER_PARAMETERS_KEY);
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_OPTIONS_KEY, debugOptions);
       }
+
+      enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY,
+                                String.valueOf(testLauncherIsApplicable(effectiveSettings)));
 
 
       resolverExtension.enhanceTaskProcessing(taskNames, initScriptConsumer, enhancementParameters);
