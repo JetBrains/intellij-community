@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
 import com.intellij.icons.AllIcons;
@@ -281,19 +281,19 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected Color getVisited() {
-    return JBUI.CurrentTheme.Link.linkVisitedColor();
+    return JBUI.CurrentTheme.Link.Foreground.VISITED;
   }
 
   protected Color getActive() {
-    return JBUI.CurrentTheme.Link.linkPressedColor();
+    return JBUI.CurrentTheme.Link.Foreground.PRESSED;
   }
 
   protected Color getNormal() {
-    return JBUI.CurrentTheme.Link.linkColor();
+    return JBUI.CurrentTheme.Link.Foreground.ENABLED;
   }
 
   protected Color getHover() {
-    return JBUI.CurrentTheme.Link.linkHoverColor();
+    return JBUI.CurrentTheme.Link.Foreground.HOVERED;
   }
 
   public void entered(MouseEvent e) {

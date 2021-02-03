@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
 import com.intellij.util.ui.UIUtilities
 import com.intellij.util.ui.JBInsets
 import com.intellij.ide.ui.laf.darcula.DarculaLaf.isAltPressed
 import com.intellij.ui.JBColor
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.CurrentTheme.Link
 import org.jetbrains.annotations.NonNls
 import java.awt.Cursor
 import java.awt.FontMetrics
@@ -149,17 +149,12 @@ private fun isFocused(button: AbstractButton) = button.isFocusPainted && button.
 
 // provide dynamic foreground color
 
-private val defaultColor = JBUI.CurrentTheme.Link.linkColor()
-private val hoveredColor = JBUI.CurrentTheme.Link.linkHoverColor()
-private val pressedColor = JBUI.CurrentTheme.Link.linkPressedColor()
-private val visitedColor = JBUI.CurrentTheme.Link.linkVisitedColor()
-private val disabledColor = JBUI.CurrentTheme.Label.disabledForeground()
 private fun getColor(button: AbstractButton) = when {
-  !isEnabled(button) -> disabledColor
-  isPressed(button) -> pressedColor
-  isHovered(button) -> hoveredColor
-  isVisited(button) -> visitedColor
-  else -> defaultColor
+  !isEnabled(button) -> Link.Foreground.DISABLED
+  isPressed(button) -> Link.Foreground.PRESSED
+  isHovered(button) -> Link.Foreground.HOVERED
+  isVisited(button) -> Link.Foreground.VISITED
+  else -> Link.Foreground.ENABLED
 }
 
 private class DynamicColor(button: AbstractButton) : JBColor({ getColor(button) }), UIResource

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -360,9 +360,9 @@ public class HyperlinkLabel extends HighlightableComponent {
 
     @Override public Color getForegroundColor() {
       return !isEnabled() ? UIManager.getColor("Label.disabledForeground") :
-             myMousePressed ? JBUI.CurrentTheme.Link.linkPressedColor() :
-             myMouseHover ? JBUI.CurrentTheme.Link.linkHoverColor() :
-             JBUI.CurrentTheme.Link.linkColor();
+             myMousePressed ? JBUI.CurrentTheme.Link.Foreground.PRESSED :
+             myMouseHover ? JBUI.CurrentTheme.Link.Foreground.HOVERED :
+             JBUI.CurrentTheme.Link.Foreground.ENABLED;
     }
 
     @Override public Color getEffectColor() {

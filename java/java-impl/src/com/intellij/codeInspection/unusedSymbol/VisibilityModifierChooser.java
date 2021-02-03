@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.icons.AllIcons;
@@ -105,7 +105,7 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
 
   @Override
   public void setForeground(Color fg) {
-    super.setForeground(isEnabled() ? JBUI.CurrentTheme.Link.linkColor() : fg);
+    super.setForeground(isEnabled() ? JBUI.CurrentTheme.Link.Foreground.ENABLED : fg);
   }
 
   @Override
