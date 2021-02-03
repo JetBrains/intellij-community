@@ -55,7 +55,9 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           else {
             elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
           }
-          if (!(elementType instanceof PsiClassType) || ((PsiClassType)elementType).isRaw() || !castType.isAssignableFrom(elementType)) {
+          if (elementType == null ||
+              (elementType instanceof PsiClassType && ((PsiClassType)elementType).isRaw()) ||
+              !castType.isAssignableFrom(elementType)) {
             return;
           }
         }
@@ -120,6 +122,15 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
       if (refCopy == null) return false;
       refCopy.replace(cast);
       return callCopy.resolveMethod() == method;
+    }
+    if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)parent.getParent();
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return false;
+      if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        // private method cannot be called on a subtype qualifier
+        return false;
+      }
     }
     return true;
   }
