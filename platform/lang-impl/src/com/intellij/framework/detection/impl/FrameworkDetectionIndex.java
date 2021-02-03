@@ -78,13 +78,8 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<String> {
       @Override
       public Map<String, Void> map(@NotNull FileContent inputData,
                                     @NotNull Collection<Pair<ElementPattern<FileContent>, String>> pairs) {
-        final FileType fileType = inputData.getFileType();
-        MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> detectors = FrameworkDetectorRegistry.getInstance().getDetectorsMap();
-        if (!detectors.containsKey(fileType)) {
-          return Collections.emptyMap();
-        }
         Map<String, Void> result = null;
-        for (Pair<ElementPattern<FileContent>, String> pair : detectors.get(fileType)) {
+        for (Pair<ElementPattern<FileContent>, String> pair : pairs) {
           if (pair.getFirst().accepts(inputData)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug(inputData.getFile() + " accepted by detector " + pair.getSecond());
