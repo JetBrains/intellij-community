@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -6,7 +6,6 @@ import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +43,6 @@ import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +56,7 @@ import java.util.stream.Collectors;
 /**
  * @author peter
  */
-class FindInProjectTask {
+final class FindInProjectTask {
   private static final Comparator<VirtualFile> SEARCH_RESULT_FILE_COMPARATOR =
     Comparator.comparing((VirtualFile f) -> f instanceof VirtualFileWithId ? ((VirtualFileWithId)f).getId() : 0)
       .thenComparing(VirtualFile::getName) // in case files without id are also searched
@@ -74,7 +72,7 @@ class FindInProjectTask {
   private final Condition<VirtualFile> myFileMask;
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
-  private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(new THashSet<>());
+  private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(new HashSet<>());
   private final Set<? extends VirtualFile> myFilesToScanInitially;
   private final AtomicLong myTotalFilesSize = new AtomicLong();
   private final @NotNull List<FindInProjectSearchEngine.@NotNull FindInProjectSearcher> mySearchers;

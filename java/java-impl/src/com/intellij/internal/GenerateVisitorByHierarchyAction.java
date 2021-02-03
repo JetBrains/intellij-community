@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -43,8 +43,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class GenerateVisitorByHierarchyAction extends AnAction {
-
+public final class GenerateVisitorByHierarchyAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Ref<String> visitorNameRef = Ref.create("MyVisitor");
@@ -250,7 +249,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       }
     }
 
-    final THashSet<PsiClass> visitedClasses = new THashSet<>();
+    final Set<PsiClass> visitedClasses = new HashSet<>();
     final LinkedList<PsiClass> toProcess = new LinkedList<>(classes.keySet());
     while (!toProcess.isEmpty()) {
       final PsiClass psiClass = toProcess.removeFirst();
@@ -287,6 +286,4 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         new PsiGenerationInfo<>(method)));
     }
   }
-
-
 }

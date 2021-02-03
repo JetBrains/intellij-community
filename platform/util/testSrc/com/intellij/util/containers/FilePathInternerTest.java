@@ -5,16 +5,17 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FilePathInterner;
 import com.intellij.testFramework.LightPlatformTestCase;
-import gnu.trove.THashSet;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Set;
 
 public class FilePathInternerTest extends LightPlatformTestCase {
   public void testHashCodeIsConsistentWithStringStress() {
     long start = System.currentTimeMillis();
     Set<String> thm = new HashSet<>();
-    Set<CharSequence> uniq = new THashSet<>(ContainerUtil.identityStrategy());
+    Set<CharSequence> uniq = Collections.newSetFromMap(new IdentityHashMap<>());
     FilePathInterner interner = new FilePathInterner();
     FileUtil.processFilesRecursively(new File(PathManagerEx.getTestDataPath()), file -> {
       String s = FileUtil.toSystemIndependentName(file.getPath());

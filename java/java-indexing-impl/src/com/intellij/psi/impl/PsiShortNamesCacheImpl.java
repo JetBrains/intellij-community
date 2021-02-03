@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -73,7 +73,9 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
             }
             else if (res < 0) {
               // aClass hides previousClass in classpath, so remove it from list later
-              if (hiddenClassesToRemove == null) hiddenClassesToRemove = new THashSet<>();
+              if (hiddenClassesToRemove == null) {
+                hiddenClassesToRemove = new HashSet<>();
+              }
               hiddenClassesToRemove.add(previousClass);
               qNamedClasses.add(aClass);
             }

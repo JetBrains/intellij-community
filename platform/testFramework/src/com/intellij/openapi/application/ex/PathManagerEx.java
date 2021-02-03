@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.TestFrameworkUtil;
-import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -27,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -343,7 +343,7 @@ public final class PathManagerEx {
       return ourCommunityModules;
     }
 
-    ourCommunityModules = new THashSet<>();
+    ourCommunityModules = new HashSet<>();
     File modulesXml = findFileUnderCommunityHome(Project.DIRECTORY_STORE_FOLDER + "/modules.xml");
     if (!modulesXml.exists()) {
       throw new IllegalStateException("Cannot obtain test data path: " + modulesXml.getAbsolutePath() + " not found");

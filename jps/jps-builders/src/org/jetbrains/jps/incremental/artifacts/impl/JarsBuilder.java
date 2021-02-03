@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +12,6 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.io.ZipUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +37,7 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class JarsBuilder {
+public final class JarsBuilder {
   private static final Logger LOG = Logger.getInstance(JarsBuilder.class);
   private final Set<JarInfo> myJarsToBuild;
   private final CompileContext myContext;
@@ -145,7 +143,7 @@ public class JarsBuilder {
     BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(jarFile));
     JarOutputStream jarOutputStream = manifest != null ? new JarOutputStream(outputStream, manifest) : new JarOutputStream(outputStream);
 
-    final THashSet<String> writtenPaths = new THashSet<>();
+    final Set<String> writtenPaths = new HashSet<>();
     try {
       if (manifest != null) {
         writtenPaths.add(JarFile.MANIFEST_NAME);

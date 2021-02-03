@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.impl;
 
@@ -50,7 +50,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -562,7 +561,7 @@ public final class FindInProjectUtil {
     String relativePath = VfsUtilCore.getRelativePath(directory, classRoot);
     if (relativePath == null) return;
 
-    Collection<VirtualFile> otherSourceRoots = new THashSet<>();
+    Collection<VirtualFile> otherSourceRoots = new HashSet<>();
 
     // if we are in the library sources, return (to search in this directory only)
     // otherwise, if we outside sources or in a jar directory, add directories from other source roots

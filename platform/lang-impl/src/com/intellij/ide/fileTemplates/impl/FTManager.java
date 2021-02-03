@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.PathKt;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,7 +212,7 @@ public class FTManager {
 
   void loadCustomizedContent() {
     final List<Path> templateWithDefaultExtension = new ArrayList<>();
-    final Set<String> processedNames = new THashSet<>();
+    final Set<String> processedNames = new HashSet<>();
     List<FileTemplateBase> children = new ArrayList<>();
     try(DirectoryStream<Path> stream = Files.newDirectoryStream(getConfigRoot(), file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
       for (Path file : stream) {
@@ -296,7 +295,7 @@ public class FTManager {
   }
 
   private void saveTemplates(boolean removeDeleted) {
-    final Set<String> allNames = new THashSet<>();
+    final Set<String> allNames = new HashSet<>();
     final Path configRoot = getConfigRoot();
     final Map<String, Path> templatesOnDisk = new HashMap<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(getConfigRoot(), file -> !Files.isDirectory(file) && !Files.isHidden(file))) {

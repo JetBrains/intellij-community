@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +35,7 @@ public final class FileNestingBuilder {
     final long modCount = fileNestingService.getModificationCount();
 
     if (myNestingRules == null || myBaseListModCount != modCount) {
-      myNestingRules = new THashSet<>();
+      myNestingRules = new HashSet<>();
       myBaseListModCount = modCount;
 
       final MultiMap<String, String> childToParentSuffix = new MultiMap<>();

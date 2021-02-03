@@ -82,7 +82,7 @@ public class ExpectedHighlightingData {
       this.severity = severity;
       this.endOfLine = endOfLine;
       this.enabled = enabled;
-      this.infos = new THashSet<>();
+      this.infos = new HashSet<>();
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
@@ -24,7 +24,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -311,7 +310,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @NotNull
   @Override
   protected List<String> getNullablesWithNickNames() {
-    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> 
+    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
       CachedValueProvider.Result.create(StreamEx.of(getNullables(), filterNickNames(Nullability.NULLABLE)).toFlatList(Function.identity()),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
@@ -328,7 +327,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   protected Set<String> getAllNullabilityAnnotationsWithNickNames() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
-      Set<String> result = new THashSet<>();
+      Set<String> result = new HashSet<>();
       result.addAll(getNotNulls());
       result.addAll(getNullables());
       result.addAll(ContainerUtil.mapNotNull(getAllNullabilityNickNames(), PsiClass::getQualifiedName));

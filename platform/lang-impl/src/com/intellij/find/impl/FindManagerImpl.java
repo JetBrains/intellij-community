@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -58,7 +58,6 @@ import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -564,8 +563,7 @@ public final class FindManagerImpl extends FindManager {
       if (lang != null) {
         final Language finalLang = lang;
         relevantLanguages = ReadAction.compute(() -> {
-          THashSet<Language> result = new THashSet<>();
-
+          Set<Language> result = new HashSet<>();
           FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
           if (viewProvider != null) {
             result.addAll(viewProvider.getLanguages());

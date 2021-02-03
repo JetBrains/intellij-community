@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -623,7 +623,7 @@ public final class IncProjectBuilder {
     synchronized (TARGET_WITH_CLEARED_OUTPUT) {
       Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
       if (data == null) {
-        data = new THashSet<>();
+        data = new HashSet<>();
         context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
       }
       data.addAll(targets);
@@ -845,7 +845,7 @@ public final class IncProjectBuilder {
 
   private static final class BuildChunkTask {
     private final BuildTargetChunk myChunk;
-    private final Set<BuildChunkTask> myNotBuiltDependencies = new THashSet<>();
+    private final Set<BuildChunkTask> myNotBuiltDependencies = new HashSet<>();
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
     private int mySelfScore = 0;
     private int myDepsScore = 0;

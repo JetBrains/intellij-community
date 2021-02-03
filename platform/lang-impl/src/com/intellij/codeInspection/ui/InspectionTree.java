@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -34,11 +34,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreeCollector.TreePathRoots;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -46,7 +42,6 @@ import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -408,7 +403,7 @@ public class InspectionTree extends Tree {
       }
       return;
     }
-    Set<InspectionTreeNode> processedNodes = new THashSet<>();
+    Set<InspectionTreeNode> processedNodes = new HashSet<>();
     List<InspectionTreeNode> toRemove = new ArrayList<>();
     for (TreePath path : selected) {
       Object[] nodePath = path.getPath();
@@ -441,7 +436,7 @@ public class InspectionTree extends Tree {
       if (commonAliveAncestorPath != null) pathToSelect = commonAliveAncestorPath;
     }
 
-    Set<InspectionTreeNode> parents = new THashSet<>();
+    Set<InspectionTreeNode> parents = new HashSet<>();
     for (InspectionTreeNode node : toRemove) {
       InspectionTreeNode parent = node.getParent();
       if (parent != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.rename;
 
@@ -12,10 +12,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
@@ -28,8 +28,8 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
 
     myElements = PsiUtilCore.toPsiElementArray(renamesMap.keySet());
 
-    Set<String> processedElementsHeaders = new THashSet<>();
-    Set<String> codeReferences = new THashSet<>();
+    Set<String> processedElementsHeaders = new HashSet<>();
+    Set<String> codeReferences = new HashSet<>();
 
     for (final PsiElement element : myElements) {
       PsiUtilCore.ensureValid(element);
