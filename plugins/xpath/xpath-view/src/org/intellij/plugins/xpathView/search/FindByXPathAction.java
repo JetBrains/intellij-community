@@ -100,7 +100,8 @@ public class FindByXPathAction extends AnAction {
         final UsageViewManager.UsageViewStateListener stateListener = new UsageViewManager.UsageViewStateListener() {
             @Override
             public void usageViewCreated(@NotNull UsageView usageView) {
-                usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module), "&Edit Expression");
+                usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module),
+                                               XPathBundle.message("button.edit.expression.with.mnemonic"));
             }
 
             @Override

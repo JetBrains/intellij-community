@@ -317,7 +317,7 @@ public class XPathEvalAction extends XPathAction {
                 new UsageViewManager.UsageViewStateListener() {
                     @Override
                     public void usageViewCreated(@NotNull UsageView usageView) {
-                        usageView.addButtonToLowerPane(editAction, "&Edit Expression");
+                        usageView.addButtonToLowerPane(editAction, XPathBundle.message("button.edit.expression.with.mnemonic"));
                     }
 
                     @Override
