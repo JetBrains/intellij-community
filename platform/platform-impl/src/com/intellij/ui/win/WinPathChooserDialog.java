@@ -57,18 +57,23 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
       .ifDialog(dialogConsumer)
       .ifFrame(frameConsumer)
       .ifNull(frameConsumer);
-    initLocalization();
+    initExtendedProperties();
   }
 
-  private void initLocalization() {
+  private void initExtendedProperties() {
     if (myFileDialog == null) return;
+
     JdkEx.trySetCommonFileDialogLocalization(
       myFileDialog,
       IdeBundle.message("windows.native.common.dialog.open"),
       IdeBundle.message("windows.native.common.dialog.select.folder"));
     boolean isFolderExclusiveMode = myFileChooserDescriptor.isChooseFolders() && !myFileChooserDescriptor.isChooseFiles();
     if (isFolderExclusiveMode)
-      JdkEx.trySetSetFolderPickerMode(myFileDialog, true);
+      JdkEx.trySetFolderPickerMode(myFileDialog, true);
+
+    boolean isFileExclusiveMode = myFileChooserDescriptor.isChooseFiles() && !myFileChooserDescriptor.isChooseFolders();
+    if (isFileExclusiveMode)
+      JdkEx.trySetFileExclusivePickerMode(myFileDialog, true);
   }
 
   private static @NlsContexts.DialogTitle String getChooserTitle(final FileChooserDescriptor descriptor) {

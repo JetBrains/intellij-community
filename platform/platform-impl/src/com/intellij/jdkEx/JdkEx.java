@@ -228,11 +228,46 @@ public final class JdkEx {
     return ourSetFolderPickerModeMethod.isAvailable() ? ourSetFolderPickerModeMethod : null;
   }
 
-  public static boolean trySetSetFolderPickerMode(@NotNull FileDialog fileDialog, boolean folderPickerMode) {
+  public static boolean trySetFolderPickerMode(@NotNull FileDialog fileDialog, boolean folderPickerMode) {
     MethodInvocator setFolderPickerMode = getSetFolderPickerModeMethod();
     if (setFolderPickerMode == null) return false;
     try {
       setFolderPickerMode.invoke(fileDialog, folderPickerMode);
+      return true;
+    }
+    catch (Throwable t) {
+      Logger.getInstance(JdkEx.class).error(t);
+      return false;
+    }
+  }
+
+  private static MethodInvocator ourSetFileExclusivePickerModeMethod;
+
+  @Nullable
+  private static MethodInvocator getSetFileExclusivePickerModeMethod() {
+    if (!SystemInfo.isJetBrainsJvm || !SystemInfo.isWindows || !Registry.is("ide.win.file.chooser.native", false) || !SystemPropertyUtil.getBoolean("sun.awt.windows.useCommonItemDialog", false)) {
+      return null;
+    }
+    if (ourSetFileExclusivePickerModeMethod == null) {
+      ourSetFileExclusivePickerModeMethod = new MethodInvocator(
+        false,
+        FileDialog.class,
+        "setFileExclusivePickerMode",
+        boolean.class);
+      if (ourSetFileExclusivePickerModeMethod.isAvailable()) {
+        return ourSetFileExclusivePickerModeMethod;
+      }
+      return null;
+    }
+
+    return ourSetFileExclusivePickerModeMethod.isAvailable() ? ourSetFileExclusivePickerModeMethod : null;
+  }
+
+  public static boolean trySetFileExclusivePickerMode(@NotNull FileDialog fileDialog, boolean fileExclusivePickerMode) {
+    MethodInvocator setFileExclusivePickerMode = getSetFileExclusivePickerModeMethod();
+    if (setFileExclusivePickerMode == null) return false;
+    try {
+      setFileExclusivePickerMode.invoke(fileDialog, fileExclusivePickerMode);
       return true;
     }
     catch (Throwable t) {
