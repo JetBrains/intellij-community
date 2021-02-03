@@ -23,7 +23,9 @@ class ToolwindowToolbarListener(val project: Project) : ToolWindowManagerListene
     if (toolWindow.isVisibleOnLargeStripe) return
     toolWindow.isVisibleOnLargeStripe = true
 
-    getToolWindowsPane(project)?.onStripeButtonAdded(project, toolWindow, LEFT, Comparator { _, _ -> 0 })
+    toolWindow.largeStripeAnchor = toolWindow.anchor
+
+    getToolWindowsPane(project)?.onStripeButtonAdded(project, toolWindow, toolWindow.largeStripeAnchor, Comparator { _, _ -> 0 })
   }
 
   override fun stateChanged(toolWindowManager: ToolWindowManager) {
