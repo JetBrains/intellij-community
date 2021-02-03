@@ -3,6 +3,5 @@ package com.jetbrains.python.debugger.pydev.dataviewer;
 
 public enum DataViewerCommandAction {
   EXPORT,
-  SORT_COLUMN,
-  ;
+  SORT_COLUMN
 }

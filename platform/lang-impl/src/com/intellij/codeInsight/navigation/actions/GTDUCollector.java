@@ -14,8 +14,7 @@ final class GTDUCollector extends CounterUsagesCollector {
 
   enum GTDUChoice {
     GTD,
-    SU,
-    ;
+    SU
   }
 
   private static final EnumEventField<GTDUChoice> CHOICE = EventFields.Enum("choice", GTDUChoice.class);
