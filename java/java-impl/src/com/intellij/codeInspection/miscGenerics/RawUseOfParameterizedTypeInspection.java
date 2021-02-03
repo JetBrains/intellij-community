@@ -119,7 +119,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         PsiVariable variable = (PsiVariable)typeElement.getParent();
         final PsiType type = getSuggestedType(variable);
         if (type != null) {
-          final String typeText = type.getPresentableText();
+          final String typeText = GenericsUtil.getVariableTypeByExpressionType(type).getPresentableText();
           final String message =
             JavaBundle.message("raw.variable.type.can.be.generic.quickfix", variable.getName(), typeText);
           final boolean isQuickFixAvailable = true;

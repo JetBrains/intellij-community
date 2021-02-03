@@ -88,6 +88,10 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
     assertIntentionNotAvailable(getMessagePrefix());
   }
 
+  public void testBoundedTypeParameter() {
+    doTest(getMessage("list", "List<? extends Integer>"));
+  }
+
   private void doTest(String intentionName) {
     myFixture.configureByFiles(getTestName(false) + ".java");
     final IntentionAction singleIntention = myFixture.findSingleIntention(intentionName);
