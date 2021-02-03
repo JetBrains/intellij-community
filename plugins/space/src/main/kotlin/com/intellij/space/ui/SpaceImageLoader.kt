@@ -9,13 +9,14 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.space.components.SpaceWorkspaceComponent
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
-import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.async
 import runtime.async.backoff
 import java.awt.image.BufferedImage
@@ -24,16 +25,18 @@ import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 
 @Service
-class SpaceImageLoader {
+class SpaceImageLoader: LifetimedDisposable by LifetimedDisposableImpl() {
   private val coroutineDispatcher: ExecutorCoroutineDispatcher = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
 
   private val imageCache: Cache<TID, Deferred<BufferedImage?>> = CacheBuilder.newBuilder()
     .expireAfterAccess(5, TimeUnit.MINUTES)
-    .build<TID, Deferred<BufferedImage?>>()
+    .build()
 
-  private val lifetime = LifetimeSource()
 
   init {
+    lifetime.add {
+      imageCache.cleanUp()
+    }
     SpaceWorkspaceComponent.getInstance().workspace.forEach(lifetime) {
       imageCache.cleanUp()
     }

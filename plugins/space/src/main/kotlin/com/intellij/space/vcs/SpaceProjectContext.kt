@@ -7,16 +7,16 @@ import circlet.client.repoService
 import circlet.platform.client.ConnectionStatus
 import circlet.platform.client.resolve
 import circlet.workspaces.Workspace
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.space.components.SpaceWorkspaceComponent
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import git4idea.GitUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
-import libraries.coroutines.extra.LifetimeSource
 import runtime.async.backoff
 import runtime.reactive.MutableProperty
 import runtime.reactive.Property
@@ -25,8 +25,7 @@ import runtime.reactive.filter
 import runtime.reactive.property.mapInit
 
 @Service
-class SpaceProjectContext(project: Project) : Disposable {
-  private val lifetime: LifetimeSource = LifetimeSource()
+class SpaceProjectContext(project: Project) : LifetimedDisposable by LifetimedDisposableImpl() {
 
   private val remoteUrls: MutableProperty<Set<GitRemoteUrlCoordinates>> = Property.createMutable(findRemoteUrls(project))
 
@@ -93,10 +92,6 @@ class SpaceProjectContext(project: Project) : Disposable {
                          coordinates.repository,
                          repoName,
                          projectInfos)
-  }
-
-  override fun dispose() {
-    lifetime.terminate()
   }
 
   companion object {

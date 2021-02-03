@@ -7,6 +7,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.space.components.SpaceWorkspaceComponent
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.space.vcs.Context
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.SpaceProjectInfo
@@ -15,12 +17,13 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import icons.SpaceIcons
+import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
 import runtime.reactive.Property
 import runtime.reactive.property.mapInit
 
 @Service
-internal class SpaceCodeReviewTabManager(private val project: Project) {
+internal class SpaceCodeReviewTabManager(private val project: Project): LifetimedDisposable by LifetimedDisposableImpl()  {
 
   private var myReviewTabContentManager: SpaceCodeReviewTabContentManager? = null
 
@@ -30,13 +33,12 @@ internal class SpaceCodeReviewTabManager(private val project: Project) {
 
   internal fun showReviews(contentManager: ContentManager) {
     if (myReviewTabContentManager == null) {
-      myReviewTabContentManager = SpaceCodeReviewTabContentManager(project, contentManager)
+      myReviewTabContentManager = SpaceCodeReviewTabContentManager(project, contentManager, lifetime)
     }
   }
 }
 
-internal class SpaceCodeReviewTabContentManager(private val project: Project, private val cm: ContentManager) {
-  private val lifetime: LifetimeSource = LifetimeSource()
+internal class SpaceCodeReviewTabContentManager(private val project: Project, private val cm: ContentManager, lifetime: Lifetime) {
   private val workspace: Property<Workspace?> = SpaceWorkspaceComponent.getInstance().workspace
   private val context: Property<Context> = SpaceProjectContext.getInstance(project).context
 
