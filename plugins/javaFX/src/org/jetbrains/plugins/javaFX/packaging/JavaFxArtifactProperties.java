@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.application.ReadAction;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.artifacts.Artifact;
@@ -67,21 +68,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
     final Project project = compileContext.getProject();
-    final Set<Module> modules = ReadAction.compute(() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project));
-    if (modules.isEmpty()) {
-      return;
-    }
-
-    Sdk fxCompatibleSdk = null;
-    for (Module module : modules) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        if (((JavaSdk)sdk.getSdkType()).isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_7)) {
-          fxCompatibleSdk = sdk;
-          break;
-        }
-      }
-    }
+    Sdk fxCompatibleSdk = getFxCompatibleSdk(artifact, project);
 
     if (fxCompatibleSdk == null) {
       compileContext.addMessage(CompilerMessageCategory.ERROR,
@@ -104,6 +91,25 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       }
     };
     javaFxPackager.buildJavaFxArtifact(fxCompatibleSdk.getHomePath());
+  }
+
+  public static Sdk getFxCompatibleSdk(Artifact artifact, Project project) {
+    final Set<Module> modules =
+      ReadAction.compute(() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project));
+    if (modules.isEmpty()) {
+      return null;
+    }
+
+    for (Module module : modules) {
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null) {
+        final SdkTypeId sdkType = sdk.getSdkType();
+        if (sdkType instanceof JavaSdk && ((JavaSdk)sdkType).isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_7)) {
+          return sdk;
+        }
+      }
+    }
+    return null;
   }
 
   @Override
