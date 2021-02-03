@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details
 
 import circlet.client.api.GitCommitChange
@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.space.vcs.SpaceRepoInfo
+import com.intellij.vcsUtil.VcsUtil
 
 internal class SpaceReviewChange(changeInReview: ChangeInReview, spaceRepoInfo: SpaceRepoInfo?, val unreachable: Boolean) {
   val changeFilePathInfo = getChangeFilePathInfo(changeInReview, spaceRepoInfo)
@@ -42,10 +43,7 @@ private fun GitFile?.getFilePath(spaceRepoInfo: SpaceRepoInfo?): FilePath? {
   val path = path.trimStart('/', '\\')
   if (spaceRepoInfo == null) return LocalFilePath(path, isDirectory())
 
-  val virtualFile = spaceRepoInfo.repository.root.findFileByRelativePath(path)
-  if (virtualFile == null) return LocalFilePath(path, isDirectory())
-
-  return LocalFilePath(virtualFile.toNioPath(), isDirectory())
+  return VcsUtil.getFilePath(spaceRepoInfo.repository.root, path)
 }
 
 private fun ChangeFilePathInfo.actualFilePath(): FilePath = new ?: old!!
