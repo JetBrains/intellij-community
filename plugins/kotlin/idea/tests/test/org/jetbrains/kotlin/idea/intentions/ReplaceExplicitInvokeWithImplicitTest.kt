@@ -7,12 +7,12 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.findDescendantOfType
-import com.intellij.psi.util.parentsWithSelf
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplaceExplicitInvokeWithImplicitTest : KotlinLightCodeInsightFixtureTestCase() {

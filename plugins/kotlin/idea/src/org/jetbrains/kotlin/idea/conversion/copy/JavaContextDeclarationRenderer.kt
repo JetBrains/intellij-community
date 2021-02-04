@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
-import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedMemberDescriptor
 import org.jetbrains.kotlin.types.KotlinType
@@ -28,7 +28,7 @@ data class ContextDeclarations(
 
 class JavaContextDeclarationRenderer {
     private val KtElement.memberDeclarations
-        get() = parents()
+        get() = parentsWithSelf
             .flatMap { declaration ->
                 when (declaration) {
                     is KtClass -> declaration.resolveToDescriptorIfAny()
