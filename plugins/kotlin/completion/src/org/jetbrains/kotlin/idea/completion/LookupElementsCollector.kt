@@ -11,9 +11,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.ElementPattern
-import com.intellij.psi.util.collectDescendantsOfType
-import com.intellij.psi.util.findDescendantOfType
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
@@ -23,8 +20,8 @@ import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
-import java.util.*
 import kotlin.math.max
 
 class LookupElementsCollector(
