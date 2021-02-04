@@ -122,18 +122,19 @@ private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger) 
     process.errorStream.consume(process, timeout, logger::warn)
   }
 
-private fun InputStream.consume(process: Process, timeout: Timeout, consumeLine: (String) -> Unit) {
+private fun InputStream.consume(process: Process, timeout: Timeout, consume: (String) -> Unit) {
   bufferedReader().use { reader ->
-    var lineBuilder = StringBuilder()
+    var linesCount = 0
+    var linesBuffer = StringBuilder()
     while (!timeout.isElapsed && process.isAlive || reader.ready()) {
       if (reader.ready()) {
         val char = reader.read().takeIf { it != -1 }?.toChar()
-        if (char == null || char == '\n' || char == '\r') {
-          consumeLine(lineBuilder.toString())
-          lineBuilder = StringBuilder()
-        }
-        else {
-          lineBuilder.append(char)
+        if (char == '\n' || char == '\r') linesCount++
+        if (char != null) linesBuffer.append(char)
+        if (char == null || !reader.ready() || linesCount > 100) {
+          consume(linesBuffer.toString())
+          linesBuffer = StringBuilder()
+          linesCount = 0
         }
       }
       else {
