@@ -126,14 +126,14 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
 
   @Override
   public <T> void jumpTo(@NotNull final T commitId,
-                         final @NotNull PairFunction<? super GraphTableModel, ? super T, Integer> rowGetter,
+                         final @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                          @NotNull final SettableFuture<? super Boolean> future,
                          boolean silently) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
 
-    int result = rowGetter.fun(model, commitId);
+    int result = rowGetter.fun(myVisiblePack, commitId);
     if (result >= 0) {
       getTable().jumpToRow(result);
       future.set(true);
@@ -152,7 +152,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
 
   protected <T> void handleCommitNotFound(@NotNull T commitId,
                                           boolean commitExists,
-                                          @NotNull PairFunction<? super GraphTableModel, ? super T, Integer> rowGetter) {
+                                          @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     String message = getCommitNotFoundMessage(commitId, commitExists);
     VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
   }

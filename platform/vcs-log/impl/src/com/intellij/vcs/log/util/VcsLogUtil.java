@@ -382,8 +382,8 @@ public final class VcsLogUtil {
   }
 
   public static void jumpToRow(@NotNull VcsLogUiEx vcsLogUi, int row, boolean silently) {
-    vcsLogUi.jumpTo(row, (model, r) -> {
-      if (model.getRowCount() <= r) return -1;
+    vcsLogUi.jumpTo(row, (visiblePack, r) -> {
+      if (visiblePack.getVisibleGraph().getVisibleCommitCount() <= r) return -1;
       return r;
     }, SettableFuture.create(), silently);
   }

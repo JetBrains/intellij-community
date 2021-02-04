@@ -113,9 +113,9 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
-    myUi.jumpTo(commitHash, (model, hash) -> {
+    myUi.jumpTo(commitHash, (visiblePack, hash) -> {
       if (!myLogData.getStorage().containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
-      return getRowOfCommitWithoutCheck(model.getVisiblePack(), hash, root);
+      return getRowOfCommitWithoutCheck(visiblePack, hash, root);
     }, future, false);
     return future;
   }
@@ -131,7 +131,7 @@ public class VcsLogImpl implements VcsLog {
       future.set(false);
       return future;
     }
-    myUi.jumpTo(trimmed, (model, partialHash) -> getRowOfCommitByPartOfHash(model.getVisiblePack(), partialHash), future, false);
+    myUi.jumpTo(trimmed, this::getRowOfCommitByPartOfHash, future, false);
     return future;
   }
 

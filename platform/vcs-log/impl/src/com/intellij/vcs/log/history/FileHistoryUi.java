@@ -22,7 +22,6 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
@@ -124,7 +123,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, boolean commitExists,
-                                          @NotNull PairFunction<? super GraphTableModel, ? super T, Integer> rowGetter) {
+                                          @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     if (!commitExists) {
       super.handleCommitNotFound(commitId, false, rowGetter);
       return;
