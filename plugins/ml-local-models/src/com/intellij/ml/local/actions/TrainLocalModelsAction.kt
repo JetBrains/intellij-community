@@ -7,14 +7,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 class TrainLocalModelsAction : AnAction(MlLocalModelsBundle.message("ml.local.models.training.action")) {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = !LocalModelsTraining.isTraining()
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    if (LocalModelsTraining.isTraining()) {
-      //TODO: Show message that model is training right now
-      return
-    }
+    val language = Language.findLanguageByID("JAVA") ?: return
     //TODO: Dialog for different languages
-    LocalModelsTraining.train(project, Language.findLanguageByID("JAVA")!!)
-    //TODO: Show message that model trained successfully
+    LocalModelsTraining.train(project, language)
   }
 }

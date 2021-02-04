@@ -34,6 +34,10 @@ object LocalModelsTraining {
 
   fun train(project: Project, language: Language) = ApplicationManager.getApplication().executeOnPooledThread {
     val fileType = language.associatedFileType ?: throw IllegalArgumentException("Unsupported language")
+    if (isTraining) {
+      LOG.error("Local models training has already started.")
+      return@executeOnPooledThread
+    }
     isTraining = true
     val modelsManager = LocalModelsManager.getInstance(project)
     val task = object : Task.Backgroundable(project, MlLocalModelsBundle.message("ml.local.models.training.title"), true) {
