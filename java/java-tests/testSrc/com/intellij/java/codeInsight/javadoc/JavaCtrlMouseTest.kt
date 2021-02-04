@@ -24,4 +24,7 @@ class JavaCtrlMouseTest : LightJavaCodeInsightFixtureTestCase4(
 
   @Test
   fun `lambda parameter`(): Unit = doTest()
+
+  @Test
+  fun `var variable`(): Unit = doTest()
 }
