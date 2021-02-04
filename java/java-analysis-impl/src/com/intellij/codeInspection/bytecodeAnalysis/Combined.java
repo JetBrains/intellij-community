@@ -17,7 +17,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.*;
@@ -279,8 +278,10 @@ final class CombinedAnalysis {
       result = Value.Fail;
     }
     else if (!interpreter.calls.isEmpty()) {
-      Set<EKey> keys =
-        interpreter.calls.stream().map(call -> new EKey(call.method, Throw, call.stableCall)).collect(Collectors.toSet());
+      Set<EKey> keys = new HashSet<>();
+      for (TrackableCallValue call : interpreter.calls) {
+        keys.add(new EKey(call.method, Throw, call.stableCall));
+      }
       result = new Pending(Collections.singleton(new Component(Value.Top, keys)));
     }
     else {
