@@ -21,17 +21,19 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +41,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.vcs.log.ui.table.GraphTableModel.COMMIT_DOES_NOT_MATCH;
+import static com.intellij.vcs.log.ui.table.GraphTableModel.COMMIT_NOT_FOUND;
 
 public class VcsLogImpl implements VcsLog {
   @NotNull private final VcsLogData myLogData;
@@ -107,7 +113,10 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
-    myUi.jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
+    myUi.jumpTo(commitHash, (model, hash) -> {
+      if (!myLogData.getStorage().containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
+      return getRowOfCommitWithoutCheck(model.getVisiblePack(), hash, root);
+    }, future, false);
     return future;
   }
 
@@ -122,8 +131,31 @@ public class VcsLogImpl implements VcsLog {
       future.set(false);
       return future;
     }
-    myUi.jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future, false);
+    myUi.jumpTo(trimmed, (model, partialHash) -> getRowOfCommitByPartOfHash(model.getVisiblePack(), partialHash), future, false);
     return future;
+  }
+
+  private int getRowOfCommitByPartOfHash(@NotNull VisiblePack visiblePack, @NotNull String partialHash) {
+    Predicate<CommitId> hashByString = new CommitIdByStringCondition(partialHash);
+    Ref<Boolean> commitExists = new Ref<>(false);
+    CommitId commitId = myLogData.getStorage().findCommitId(commitId1 -> {
+      if (hashByString.test(commitId1)) {
+        commitExists.set(true);
+        return getRowOfCommitWithoutCheck(visiblePack, commitId1.getHash(), commitId1.getRoot()) >= 0;
+      }
+      return false;
+    });
+    return commitId != null
+           ? getRowOfCommitWithoutCheck(visiblePack, commitId.getHash(), commitId.getRoot())
+           : (commitExists.get() ? COMMIT_DOES_NOT_MATCH : COMMIT_NOT_FOUND);
+  }
+
+  private int getRowOfCommitWithoutCheck(@NotNull VisiblePack visiblePack,
+                                         @NotNull Hash hash,
+                                         @NotNull VirtualFile root) {
+    int commitIndex = myLogData.getCommitIndex(hash, root);
+    Integer rowIndex = visiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
+    return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
   }
 
   @NotNull

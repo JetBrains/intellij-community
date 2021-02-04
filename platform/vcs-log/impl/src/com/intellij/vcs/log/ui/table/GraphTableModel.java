@@ -73,32 +73,6 @@ public final class GraphTableModel extends AbstractTableModel {
     return getColumn(column).getLocalizedName();
   }
 
-  public int getRowOfCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
-    if (!myLogData.getStorage().containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
-    return getRowOfCommitWithoutCheck(hash, root);
-  }
-
-  public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
-    Predicate<CommitId> hashByString = new CommitIdByStringCondition(partialHash);
-    Ref<Boolean> commitExists = new Ref<>(false);
-    CommitId commitId = myLogData.getStorage().findCommitId(commitId1 -> {
-      if (hashByString.test(commitId1)) {
-        commitExists.set(true);
-        return getRowOfCommitWithoutCheck(commitId1.getHash(), commitId1.getRoot()) >= 0;
-      }
-      return false;
-    });
-    return commitId != null
-           ? getRowOfCommitWithoutCheck(commitId.getHash(), commitId.getRoot())
-           : (commitExists.get() ? COMMIT_DOES_NOT_MATCH : COMMIT_NOT_FOUND);
-  }
-
-  private int getRowOfCommitWithoutCheck(@NotNull Hash hash, @NotNull VirtualFile root) {
-    int commitIndex = myLogData.getCommitIndex(hash, root);
-    Integer rowIndex = myDataPack.getVisibleGraph().getVisibleRowIndex(commitIndex);
-    return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
-  }
-
   @NotNull
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
