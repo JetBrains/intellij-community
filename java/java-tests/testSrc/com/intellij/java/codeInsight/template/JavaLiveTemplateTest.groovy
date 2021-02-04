@@ -635,4 +635,28 @@ class X {
     assert templates == []
   }
 
+  void "test generic arguments are inserted"() {
+    myFixture.configureByText 'a.java', '''
+import java.util.*;
+public class Main {
+  List<String> getList(ArrayList<String> list) {
+    <caret>
+  }
+}
+'''
+    Template template = templateManager.createTemplate("rlazy", "user", 'return $VAR$ == null ? $VAR$ = new $TYPE$($END$) : $VAR$;')
+    template.addVariable('VAR', 'methodParameterTypes()', '', true)
+    template.addVariable('TYPE', 'subtypes(typeOfVariable(VAR))', '', true)
+    template.setToReformat(true)
+    startTemplate(template)
+    myFixture.type('list\n\n')
+    myFixture.checkResult """
+import java.util.*;
+public class Main {
+  List<String> getList(ArrayList<String> list) {
+      return list == null ? list = new ArrayList<String>() : list;
+  }
+}
+"""
+  }
 }
