@@ -17,27 +17,22 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.components.StoredProperty;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 8);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 9);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", "run_config_id");
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory", "run_config_factory");
   private static final IntEventField COUNT_FIELD = EventFields.Int("count");
@@ -62,59 +57,51 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
 
   @NotNull
   @Override
-  public CancellablePromise<Set<MetricEvent>> getMetrics(@NotNull Project project, @NotNull ProgressIndicator indicator) {
-    AsyncPromise<Set<MetricEvent>> result = new AsyncPromise<>();
-    UIUtil.invokeLaterIfNeeded(() -> {
-      try {
-        Object2IntOpenHashMap<Template> templates = new Object2IntOpenHashMap<>();
-        if (project.isDisposed()) {
-          result.setResult(Collections.emptySet());
-          return;
-        }
-        RunManager runManager = RunManager.getInstance(project);
-        for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {
-          ProgressManager.checkCanceled();
-          RunConfiguration runConfiguration = settings.getConfiguration();
-          final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
-          if (configurationFactory == null) {
-            // not realistic
-            continue;
-          }
+  public Set<MetricEvent> getMetrics(@NotNull Project project) {
+    Object2IntOpenHashMap<Template> templates = new Object2IntOpenHashMap<>();
+    if (project.isDisposed()) {
+      return Collections.emptySet();
+    }
+    RunManager runManager = RunManager.getInstance(project);
+    for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {
+      ProgressManager.checkCanceled();
+      RunConfiguration runConfiguration = settings.getConfiguration();
+      final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
+      if (configurationFactory == null) {
+        // not realistic
+        continue;
+      }
 
-          final ConfigurationType configurationType = configurationFactory.getType();
-          List<EventPair> pairs = createFeatureUsageData(configurationType, configurationFactory);
-          pairs.addAll(getSettings(settings, runConfiguration));
-          final Template template = new Template(CONFIGURED_IN_PROJECT_EVENT, pairs);
-          addOrIncrement(templates, template);
-          collectRunConfigurationFeatures(runConfiguration, templates);
-          if (runConfiguration instanceof FusAwareRunConfiguration) {
-            List<EventPair<?>> additionalData = SlowOperations.allowSlowOperations(
-              () -> ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData()
-            );
-            pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData)));
-          }
-          if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
-            String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
-            if (defaultTargetName != null) {
-              TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
-              if (target != null) {
-                pairs.add(TARGET_FIELD.with(target.getTypeId()));
-              }
-            }
+      final ConfigurationType configurationType = configurationFactory.getType();
+      List<EventPair> pairs = createFeatureUsageData(configurationType, configurationFactory);
+      pairs.addAll(getSettings(settings, runConfiguration));
+      final Template template = new Template(CONFIGURED_IN_PROJECT_EVENT, pairs);
+      addOrIncrement(templates, template);
+      collectRunConfigurationFeatures(runConfiguration, templates);
+      if (runConfiguration instanceof FusAwareRunConfiguration) {
+        List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+        pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData)));
+      }
+      if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
+        String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
+        if (defaultTargetName != null) {
+          TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
+          if (target != null) {
+            pairs.add(TARGET_FIELD.with(target.getTypeId()));
           }
         }
-        Set<MetricEvent> metrics = new HashSet<>();
-        for (Object2IntMap.Entry<Template> entry : Object2IntMaps.fastIterable(templates)) {
-          metrics.add(entry.getKey().createMetricEvent(entry.getIntValue()));
-        }
-        result.setResult(metrics);
       }
-      catch (Throwable t) {
-        result.setError(t);
-        throw t;
-      }
-    });
-    return result;
+    }
+    Set<MetricEvent> metrics = new HashSet<>();
+    for (Object2IntMap.Entry<Template> entry : Object2IntMaps.fastIterable(templates)) {
+      metrics.add(entry.getKey().createMetricEvent(entry.getIntValue()));
+    }
+    return metrics;
+  }
+
+  @Override
+  protected boolean requiresReadAccess() {
+    return true;
   }
 
   private static void addOrIncrement(Object2IntOpenHashMap<Template> templates, Template template) {
