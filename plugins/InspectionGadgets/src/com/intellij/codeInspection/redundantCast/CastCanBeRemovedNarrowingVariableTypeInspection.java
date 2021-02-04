@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.redundantCast;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -47,14 +48,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         if (forEach != null) {
           PsiExpression collection = forEach.getIteratedValue();
           if (collection == null) return;
-          PsiType type = collection.getType();
-          PsiType elementType;
-          if (type instanceof PsiArrayType) {
-            elementType = ((PsiArrayType)type).getComponentType();
-          }
-          else {
-            elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
-          }
+          PsiType elementType = JavaGenericsUtil.getCollectionItemType(collection);
           if (elementType == null ||
               (elementType instanceof PsiClassType && ((PsiClassType)elementType).isRaw()) ||
               !castType.isAssignableFrom(elementType)) {
