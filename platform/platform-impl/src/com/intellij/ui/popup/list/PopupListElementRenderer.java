@@ -178,12 +178,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       if (step.isFinal(value)) {
         myLeftPart.setOpaque(true);
         myRightPart.setOpaque(true);
-        setSelected(myComponent, false);
+        setSelected(myComponent, false, isSelected);
 
         nextStepButtonSelected = isNextStepButtonSelected(list);
-        setSelected(myLeftPart, isSelected && !nextStepButtonSelected);
-        setSelected(myTextLabel, isSelected && !nextStepButtonSelected);
-        setSelected(myRightPart, isSelected && nextStepButtonSelected);
+        setSelected(myLeftPart, isSelected && !nextStepButtonSelected, isSelected);
+        setSelected(myTextLabel, isSelected && !nextStepButtonSelected, isSelected);
+        setSelected(myRightPart, isSelected && nextStepButtonSelected, isSelected);
         myNextStepLabel.setIcon(isSelectable & isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
         mySeparator.setVisible(!isSelected);
       }
@@ -235,7 +235,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
           }
         }
       }
-      setSelected(myShortcutLabel, isSelected && isSelectable && !nextStepButtonSelected);
+      setSelected(myShortcutLabel, isSelected && isSelectable && !nextStepButtonSelected, isSelected);
       myShortcutLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected
                                     ? UIManager.getColor("MenuItem.acceleratorSelectionForeground")
                                     : UIManager.getColor("MenuItem.acceleratorForeground"));
@@ -243,8 +243,19 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     if (myValueLabel != null) {
       myValueLabel.setText(step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getValueFor(value) : null);
-      setSelected(myValueLabel, isSelected && isSelectable  && !nextStepButtonSelected);
+      setSelected(myValueLabel, isSelected && isSelectable  && !nextStepButtonSelected, isSelected);
     }
+  }
+
+  private void setSelected(JComponent component, boolean selected, boolean hovered) {
+    if (!hovered) {
+      super.setSelected(component, selected);
+      return;
+    }
+
+    Color background = JBColor.namedColor("Table.hoverBackground", 0xEDF5FC);
+    UIUtil.setBackgroundRecursively(component, selected ? getSelectionBackground() : background);
+    component.setForeground(selected ? getSelectionForeground() : getForeground());
   }
 
   private boolean isNextStepButtonSelected(JList<? extends E> list) {
