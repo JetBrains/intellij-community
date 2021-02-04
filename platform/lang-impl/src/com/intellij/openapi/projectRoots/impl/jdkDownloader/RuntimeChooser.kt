@@ -26,22 +26,11 @@ private class RuntimeChooserDialog(
   val runtimeChooserModel: RuntimeChooserModel,
 ) : DialogWrapper(project) {
 
-  private val USE_DEFAULT_ACTION = NEXT_USER_EXIT_CODE + 23
-
-  private val useDefaultRuntimeAction = object : DialogWrapperExitAction(
-    LangBundle.message("dialog.action.choose.ide.use.bundled"),
-    USE_DEFAULT_ACTION) {
-  }
-
   init {
     title = LangBundle.message("dialog.title.choose.ide.runtime")
     runtimeChooserModel.fetchAvailableJbrs()
 
     init()
-  }
-
-  override fun createActions(): Array<Action> {
-    return super.createActions() + useDefaultRuntimeAction
   }
 
   override fun createCenterPanel(): JComponent {

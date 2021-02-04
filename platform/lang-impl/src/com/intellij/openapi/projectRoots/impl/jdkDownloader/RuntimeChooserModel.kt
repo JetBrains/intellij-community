@@ -34,7 +34,14 @@ class RuntimeChooserModel {
     val selection = myMainComboModel.selectedItem
 
     myMainComboModel.removeAllElements()
-    val newList = listOf(RuntimeChooseBundledItem, RuntimeChooseSeparator, RuntimeChooseCurrentItem, RuntimeChooseSeparator) + downloadableJbs
+
+    val newList = listOf(
+      RuntimeChooseBundledItem,
+      RuntimeChooseSeparator,
+      RuntimeChooseCurrentItem,
+      RuntimeChooseSeparator
+    ) + downloadableJbs
+
     myMainComboModel.addAll(newList)
     myMainComboModel.selectedItem = selection
   }
