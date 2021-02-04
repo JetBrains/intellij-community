@@ -125,9 +125,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   }
 
   @Override
-  public <T> void jumpTo(@NotNull final T commitId,
-                         final @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
-                         @NotNull final SettableFuture<? super Boolean> future,
+  public <T> void jumpTo(@NotNull T commitId,
+                         @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                         @NotNull SettableFuture<? super Boolean> future,
                          boolean silently) {
     if (future.isCancelled()) return;
 
