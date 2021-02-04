@@ -75,6 +75,7 @@ public final class PluginManagerCore {
 
   static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
+
   public static final @NonNls String DISABLE = "disable";
   public static final @NonNls String ENABLE = "enable";
   public static final @NonNls String EDIT = "edit";
@@ -89,6 +90,10 @@ public final class PluginManagerCore {
   private static Map<PluginId, PluginLoadingError> ourPluginLoadingErrors;
 
   private static Map<String, String[]> ourAdditionalLayoutMap = Collections.emptyMap();
+
+  private static final Path distDir = Paths.get(PathManager.getHomePath());
+  private static final Path dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir)
+    .resolve("brokenPlugins.db");
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
@@ -216,6 +221,22 @@ public final class PluginManagerCore {
 
   public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins) {
     ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(brokenPlugins);
+    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(dbFile), 32_000))) {
+      out.write(1);
+      out.writeInt(brokenPlugins.size());
+      for (Map.Entry<PluginId, Set<String>> entry : brokenPlugins.entrySet()) {
+        out.writeUTF(entry.getKey().getIdString());
+        out.writeShort(entry.getValue().size());
+        for (String s : entry.getValue()) {
+          out.writeUTF(s);
+        }
+      }
+    }
+    catch (NoSuchFileException ignore) {
+    }
+    catch (IOException e) {
+      getLogger().error("Failed to read " + dbFile, e);
+    }
   }
 
   private static @NotNull Map<PluginId, Set<String>> getBrokenPluginVersions() {
@@ -232,8 +253,6 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull Map<PluginId, Set<String>> readBrokenPluginFile() {
-    Path distDir = Paths.get(PathManager.getHomePath());
-    Path dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir).resolve("brokenPlugins.db");
     try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(dbFile), 32_000))) {
       int version = stream.readUnsignedByte();
       if (version != 1) {
