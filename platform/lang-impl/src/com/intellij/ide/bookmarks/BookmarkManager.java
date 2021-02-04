@@ -21,11 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentListener;
@@ -213,8 +209,14 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     return answer;
   }
 
+  @NotNull
   public Collection<Bookmark> getAllBookmarks() {
     return myBookmarks.values();
+  }
+
+  @NotNull
+  public Collection<Bookmark> getFileBookmarks(@Nullable VirtualFile file) {
+    return myBookmarks.get(file);
   }
 
   @Nullable
