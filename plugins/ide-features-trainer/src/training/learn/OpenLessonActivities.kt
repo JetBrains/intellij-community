@@ -166,6 +166,7 @@ internal object OpenLessonActivities {
     if (lesson.lessonType != LessonType.SCRATCH || LearningUiManager.learnProject == project) {
       // do not change view environment for scratch lessons in user project
       hideOtherViews(project)
+      ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.show()
     }
 
     LOG.debug("${project.name}: Add listeners to lesson")
