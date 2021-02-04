@@ -606,6 +606,7 @@
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
         <action id="StateWidgetAction" class="com.intellij.execution.segmentedRunDebugWidget.StateWidgetAction"/>
+        <reference id="SettingsEntryPoint"/>
       </group>
     </group>
 

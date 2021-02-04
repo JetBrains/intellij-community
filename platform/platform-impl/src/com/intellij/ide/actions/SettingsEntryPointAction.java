@@ -31,6 +31,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.PluginUpdateDialog;
 import com.intellij.openapi.updateSettings.impl.UpdateInfoDialog;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
@@ -361,7 +362,7 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
     initUISettingsListener();
 
     UISettings settings = UISettings.getInstance();
-    return !settings.getShowMainToolbar() && !settings.getShowToolbarInNavigationBar();
+    return !settings.getShowMainToolbar() && !settings.getShowToolbarInNavigationBar() && !Registry.is("ide.new.navbar");
   }
 
   private static final String WIDGET_ID = "settingsEntryPointWidget";
