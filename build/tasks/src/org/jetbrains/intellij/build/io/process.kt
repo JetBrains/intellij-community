@@ -58,6 +58,12 @@ fun runJava(mainClass: String,
     }
 
     if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
+      try {
+        dumpThreads(process.pid())
+      }
+      catch (e: Exception) {
+        logger.warn("Cannot dump threads: ${e.message}")
+      }
       process.destroyForcibly().waitFor()
       javaRunFailed("$timeout timeout")
     }
@@ -171,4 +177,8 @@ internal class Timeout(private val millis: Long) {
   val isElapsed: Boolean get() = remainingTime == 0L
 
   override fun toString() = "${millis}ms"
+}
+
+internal fun dumpThreads(pid: Long) {
+  runProcess("jstack", "$pid")
 }
