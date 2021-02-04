@@ -36,7 +36,7 @@ public class InstalledPluginsTableModel {
     myProject = project;
     myPluginTracker = myProject == null ?
                       null :
-                      ProjectPluginTrackerManager.getInstance().createPluginTracker(myProject);
+                      ProjectPluginTrackerManager.getInstance().getPluginTracker(myProject);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
@@ -76,7 +76,7 @@ public class InstalledPluginsTableModel {
   protected final void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
 
-    PluginEnabledState enabled = (myPluginTracker != null && myPluginTracker.isEnabled(pluginId)) ?
+    PluginEnabledState enabled = myPluginTracker != null && myPluginTracker.isEnabled(pluginId) ?
                                  PluginEnabledState.ENABLED_FOR_PROJECT :
                                  myPluginTracker != null && myPluginTracker.isDisabled(pluginId) ?
                                  PluginEnabledState.DISABLED_FOR_PROJECT :
