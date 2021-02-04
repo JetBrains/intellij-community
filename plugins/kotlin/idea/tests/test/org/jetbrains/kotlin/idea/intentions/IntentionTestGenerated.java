@@ -6454,6 +6454,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertReceiverToParameter/replaceThis.kt");
         }
 
+        @TestMetadata("thisCall.kt")
+        public void testThisCall() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/thisCall.kt");
+        }
+
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/topLevelFun.kt");
