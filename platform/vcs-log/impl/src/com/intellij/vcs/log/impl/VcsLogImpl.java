@@ -114,7 +114,7 @@ public class VcsLogImpl implements VcsLog {
     SettableFuture<Boolean> future = SettableFuture.create();
     myUi.jumpTo(commitHash, (visiblePack, hash) -> {
       if (!myLogData.getStorage().containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
-      return getRowOfCommitWithoutCheck(visiblePack, hash, root);
+      return getCommitRow(visiblePack, hash, root);
     }, future, false);
     return future;
   }
@@ -130,27 +130,27 @@ public class VcsLogImpl implements VcsLog {
       future.set(false);
       return future;
     }
-    myUi.jumpTo(trimmed, this::getRowOfCommitByPartOfHash, future, false);
+    myUi.jumpTo(trimmed, this::getCommitRow, future, false);
     return future;
   }
 
-  private int getRowOfCommitByPartOfHash(@NotNull VisiblePack visiblePack, @NotNull String partialHash) {
+  private int getCommitRow(@NotNull VisiblePack visiblePack, @NotNull String partialHash) {
     Ref<Boolean> commitExists = new Ref<>(false);
     CommitId commitId = myLogData.getStorage().findCommitId(commitId1 -> {
       if (CommitIdByStringCondition.matches(commitId1, partialHash)) {
         commitExists.set(true);
-        return getRowOfCommitWithoutCheck(visiblePack, commitId1.getHash(), commitId1.getRoot()) >= 0;
+        return getCommitRow(visiblePack, commitId1.getHash(), commitId1.getRoot()) >= 0;
       }
       return false;
     });
     return commitId != null
-           ? getRowOfCommitWithoutCheck(visiblePack, commitId.getHash(), commitId.getRoot())
+           ? getCommitRow(visiblePack, commitId.getHash(), commitId.getRoot())
            : (commitExists.get() ? COMMIT_DOES_NOT_MATCH : COMMIT_NOT_FOUND);
   }
 
-  private int getRowOfCommitWithoutCheck(@NotNull VisiblePack visiblePack,
-                                         @NotNull Hash hash,
-                                         @NotNull VirtualFile root) {
+  private int getCommitRow(@NotNull VisiblePack visiblePack,
+                           @NotNull Hash hash,
+                           @NotNull VirtualFile root) {
     int commitIndex = myLogData.getCommitIndex(hash, root);
     Integer rowIndex = visiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
     return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
