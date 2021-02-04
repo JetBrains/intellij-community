@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -30,6 +31,8 @@ import com.intellij.util.EmptyConsumer;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -135,24 +138,33 @@ public class VcsLogImpl implements VcsLog {
   }
 
   private int getCommitRow(@NotNull VisiblePack visiblePack, @NotNull String partialHash) {
-    Ref<Boolean> commitExists = new Ref<>(false);
-    CommitId commitId = myLogData.getStorage().findCommitId(commitId1 -> {
-      if (CommitIdByStringCondition.matches(commitId1, partialHash)) {
-        commitExists.set(true);
-        return getCommitRow(visiblePack, commitId1.getHash(), commitId1.getRoot()) >= 0;
+    IntRef row = new IntRef(COMMIT_NOT_FOUND);
+
+    myLogData.getStorage().iterateCommits(candidate -> {
+      if (CommitIdByStringCondition.matches(candidate, partialHash)) {
+        int candidateRow = getCommitRow(visiblePack, candidate.getHash(), candidate.getRoot());
+        if (row.get() == COMMIT_NOT_FOUND) row.set(candidateRow);
+        return candidateRow < 0;
       }
-      return false;
+      return true;
     });
-    return commitId != null
-           ? getCommitRow(visiblePack, commitId.getHash(), commitId.getRoot())
-           : (commitExists.get() ? COMMIT_DOES_NOT_MATCH : COMMIT_NOT_FOUND);
+
+    return row.get();
   }
 
   private int getCommitRow(@NotNull VisiblePack visiblePack,
                            @NotNull Hash hash,
                            @NotNull VirtualFile root) {
     int commitIndex = myLogData.getCommitIndex(hash, root);
-    Integer rowIndex = visiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
+    VisibleGraph<Integer> visibleGraph = visiblePack.getVisibleGraph();
+    if (visibleGraph instanceof VisibleGraphImpl) {
+      int nodeId = ((VisibleGraphImpl<Integer>)visibleGraph).getPermanentGraph().getPermanentCommitsInfo().getNodeId(commitIndex);
+      if (nodeId == COMMIT_NOT_FOUND) return COMMIT_NOT_FOUND;
+      if (nodeId < 0) return COMMIT_DOES_NOT_MATCH;
+      Integer rowIndex = ((VisibleGraphImpl<Integer>)visibleGraph).getLinearGraph().getNodeIndex(nodeId);
+      return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
+    }
+    Integer rowIndex = visibleGraph.getVisibleRowIndex(commitIndex);
     return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
   }
 
