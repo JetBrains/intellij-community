@@ -9,7 +9,7 @@ option java_package = "com.intellij.execution.process.mediator.rpc";
 option java_outer_classname = "ProcessMediatorProto";
 
 service Daemon {
-  rpc AdjustQuota (AdjustQuotaRequest) returns (google.protobuf.Empty);
+  rpc AdjustQuota (QuotaOptions) returns (google.protobuf.Empty);
   rpc Shutdown (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
@@ -20,7 +20,7 @@ message Handshake {
   uint64 pid = 3;
 }
 
-message AdjustQuotaRequest {
+message QuotaOptions {
   int64 time_limit_ms = 1;
   bool is_refreshable = 2;
 }

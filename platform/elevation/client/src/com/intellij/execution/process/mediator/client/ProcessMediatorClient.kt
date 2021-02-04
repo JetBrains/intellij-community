@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import java.io.Closeable
 import java.io.File
+import com.intellij.execution.process.mediator.rpc.QuotaOptions as QuotaOptionsMessage
 
 class ProcessMediatorClient private constructor(
   parentScope: CoroutineScope,
@@ -137,7 +138,7 @@ class ProcessMediatorClient private constructor(
   }
 
   suspend fun adjustQuota(newOptions: QuotaOptions) {
-    val request = AdjustQuotaRequest.newBuilder()
+    val request = QuotaOptionsMessage.newBuilder()
       .setTimeLimitMs(newOptions.timeLimitMs)
       .setIsRefreshable(newOptions.isRefreshable)
       .build()

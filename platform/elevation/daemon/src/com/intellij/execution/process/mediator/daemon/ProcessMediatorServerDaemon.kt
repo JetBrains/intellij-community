@@ -4,13 +4,13 @@ package com.intellij.execution.process.mediator.daemon
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.grpc.CredentialsAuthServerInterceptor
 import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
-import com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.Closeable
+import com.intellij.execution.process.mediator.rpc.QuotaOptions as QuotaOptionsMessage
 
 class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
                                   builder: ServerBuilder<*>,
@@ -65,7 +65,7 @@ class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
   }
 
   inner class DaemonService : DaemonGrpcKt.DaemonCoroutineImplBase() {
-    override suspend fun adjustQuota(request: AdjustQuotaRequest): Empty {
+    override suspend fun adjustQuota(request: QuotaOptionsMessage): Empty {
       ExceptionAsStatus.wrap {
         val quotaOptions = QuotaOptions(timeLimitMs = request.timeLimitMs,
                                         isRefreshable = request.isRefreshable)

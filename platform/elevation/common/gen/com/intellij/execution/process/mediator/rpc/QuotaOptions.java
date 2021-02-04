@@ -4,25 +4,25 @@
 package com.intellij.execution.process.mediator.rpc;
 
 /**
- * Protobuf type {@code intellij.process.mediator.rpc.AdjustQuotaRequest}
+ * Protobuf type {@code intellij.process.mediator.rpc.QuotaOptions}
  */
-public final class AdjustQuotaRequest extends
+public final class QuotaOptions extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:intellij.process.mediator.rpc.AdjustQuotaRequest)
-    AdjustQuotaRequestOrBuilder {
+    // @@protoc_insertion_point(message_implements:intellij.process.mediator.rpc.QuotaOptions)
+    QuotaOptionsOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use AdjustQuotaRequest.newBuilder() to construct.
-  private AdjustQuotaRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use QuotaOptions.newBuilder() to construct.
+  private QuotaOptions(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private AdjustQuotaRequest() {
+  private QuotaOptions() {
   }
 
   @java.lang.Override
   @SuppressWarnings({"unused"})
   protected java.lang.Object newInstance(
       UnusedPrivateParameter unused) {
-    return new AdjustQuotaRequest();
+    return new QuotaOptions();
   }
 
   @java.lang.Override
@@ -30,7 +30,7 @@ private static final long serialVersionUID = 0L;
   getUnknownFields() {
     return this.unknownFields;
   }
-  private AdjustQuotaRequest(
+  private QuotaOptions(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -79,15 +79,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_AdjustQuotaRequest_descriptor;
+    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_QuotaOptions_descriptor;
   }
 
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_AdjustQuotaRequest_fieldAccessorTable
+    return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_QuotaOptions_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.class, com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.Builder.class);
+            com.intellij.execution.process.mediator.rpc.QuotaOptions.class, com.intellij.execution.process.mediator.rpc.QuotaOptions.Builder.class);
   }
 
   public static final int TIME_LIMIT_MS_FIELD_NUMBER = 1;
@@ -159,10 +159,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest)) {
+    if (!(obj instanceof com.intellij.execution.process.mediator.rpc.QuotaOptions)) {
       return super.equals(obj);
     }
-    com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest other = (com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest) obj;
+    com.intellij.execution.process.mediator.rpc.QuotaOptions other = (com.intellij.execution.process.mediator.rpc.QuotaOptions) obj;
 
     if (getTimeLimitMs()
         != other.getTimeLimitMs()) return false;
@@ -190,69 +190,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(byte[] data)
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(java.io.InputStream input)
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseDelimitedFrom(java.io.InputStream input)
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseDelimitedFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parseFrom(
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -265,7 +265,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest prototype) {
+  public static Builder newBuilder(com.intellij.execution.process.mediator.rpc.QuotaOptions prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @java.lang.Override
@@ -281,26 +281,26 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
-   * Protobuf type {@code intellij.process.mediator.rpc.AdjustQuotaRequest}
+   * Protobuf type {@code intellij.process.mediator.rpc.QuotaOptions}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:intellij.process.mediator.rpc.AdjustQuotaRequest)
-      com.intellij.execution.process.mediator.rpc.AdjustQuotaRequestOrBuilder {
+      // @@protoc_insertion_point(builder_implements:intellij.process.mediator.rpc.QuotaOptions)
+      com.intellij.execution.process.mediator.rpc.QuotaOptionsOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_AdjustQuotaRequest_descriptor;
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_QuotaOptions_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_AdjustQuotaRequest_fieldAccessorTable
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_QuotaOptions_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.class, com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.Builder.class);
+              com.intellij.execution.process.mediator.rpc.QuotaOptions.class, com.intellij.execution.process.mediator.rpc.QuotaOptions.Builder.class);
     }
 
-    // Construct using com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.newBuilder()
+    // Construct using com.intellij.execution.process.mediator.rpc.QuotaOptions.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -328,17 +328,17 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_AdjustQuotaRequest_descriptor;
+      return com.intellij.execution.process.mediator.rpc.ProcessMediatorProto.internal_static_intellij_process_mediator_rpc_QuotaOptions_descriptor;
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest getDefaultInstanceForType() {
-      return com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.getDefaultInstance();
+    public com.intellij.execution.process.mediator.rpc.QuotaOptions getDefaultInstanceForType() {
+      return com.intellij.execution.process.mediator.rpc.QuotaOptions.getDefaultInstance();
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest build() {
-      com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest result = buildPartial();
+    public com.intellij.execution.process.mediator.rpc.QuotaOptions build() {
+      com.intellij.execution.process.mediator.rpc.QuotaOptions result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -346,8 +346,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest buildPartial() {
-      com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest result = new com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest(this);
+    public com.intellij.execution.process.mediator.rpc.QuotaOptions buildPartial() {
+      com.intellij.execution.process.mediator.rpc.QuotaOptions result = new com.intellij.execution.process.mediator.rpc.QuotaOptions(this);
       result.timeLimitMs_ = timeLimitMs_;
       result.isRefreshable_ = isRefreshable_;
       onBuilt();
@@ -388,16 +388,16 @@ private static final long serialVersionUID = 0L;
     }
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest) {
-        return mergeFrom((com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest)other);
+      if (other instanceof com.intellij.execution.process.mediator.rpc.QuotaOptions) {
+        return mergeFrom((com.intellij.execution.process.mediator.rpc.QuotaOptions)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest other) {
-      if (other == com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.intellij.execution.process.mediator.rpc.QuotaOptions other) {
+      if (other == com.intellij.execution.process.mediator.rpc.QuotaOptions.getDefaultInstance()) return this;
       if (other.getTimeLimitMs() != 0L) {
         setTimeLimitMs(other.getTimeLimitMs());
       }
@@ -419,11 +419,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest parsedMessage = null;
+      com.intellij.execution.process.mediator.rpc.QuotaOptions parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest) e.getUnfinishedMessage();
+        parsedMessage = (com.intellij.execution.process.mediator.rpc.QuotaOptions) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -507,41 +507,41 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:intellij.process.mediator.rpc.AdjustQuotaRequest)
+    // @@protoc_insertion_point(builder_scope:intellij.process.mediator.rpc.QuotaOptions)
   }
 
-  // @@protoc_insertion_point(class_scope:intellij.process.mediator.rpc.AdjustQuotaRequest)
-  private static final com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:intellij.process.mediator.rpc.QuotaOptions)
+  private static final com.intellij.execution.process.mediator.rpc.QuotaOptions DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest();
+    DEFAULT_INSTANCE = new com.intellij.execution.process.mediator.rpc.QuotaOptions();
   }
 
-  public static com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest getDefaultInstance() {
+  public static com.intellij.execution.process.mediator.rpc.QuotaOptions getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<AdjustQuotaRequest>
-      PARSER = new com.google.protobuf.AbstractParser<AdjustQuotaRequest>() {
+  private static final com.google.protobuf.Parser<QuotaOptions>
+      PARSER = new com.google.protobuf.AbstractParser<QuotaOptions>() {
     @java.lang.Override
-    public AdjustQuotaRequest parsePartialFrom(
+    public QuotaOptions parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new AdjustQuotaRequest(input, extensionRegistry);
+      return new QuotaOptions(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<AdjustQuotaRequest> parser() {
+  public static com.google.protobuf.Parser<QuotaOptions> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<AdjustQuotaRequest> getParserForType() {
+  public com.google.protobuf.Parser<QuotaOptions> getParserForType() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest getDefaultInstanceForType() {
+  public com.intellij.execution.process.mediator.rpc.QuotaOptions getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

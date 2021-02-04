@@ -27,27 +27,27 @@ public final class DaemonGrpc {
   public static final String SERVICE_NAME = "intellij.process.mediator.rpc.Daemon";
 
   // Static method descriptors that strictly reflect the proto.
-  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest,
+  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.QuotaOptions,
       com.google.protobuf.Empty> getAdjustQuotaMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
       fullMethodName = SERVICE_NAME + '/' + "AdjustQuota",
-      requestType = com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.class,
+      requestType = com.intellij.execution.process.mediator.rpc.QuotaOptions.class,
       responseType = com.google.protobuf.Empty.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest,
+  public static io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.QuotaOptions,
       com.google.protobuf.Empty> getAdjustQuotaMethod() {
-    io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest, com.google.protobuf.Empty> getAdjustQuotaMethod;
+    io.grpc.MethodDescriptor<com.intellij.execution.process.mediator.rpc.QuotaOptions, com.google.protobuf.Empty> getAdjustQuotaMethod;
     if ((getAdjustQuotaMethod = DaemonGrpc.getAdjustQuotaMethod) == null) {
       synchronized (DaemonGrpc.class) {
         if ((getAdjustQuotaMethod = DaemonGrpc.getAdjustQuotaMethod) == null) {
           DaemonGrpc.getAdjustQuotaMethod = getAdjustQuotaMethod =
-              io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest, com.google.protobuf.Empty>newBuilder()
+              io.grpc.MethodDescriptor.<com.intellij.execution.process.mediator.rpc.QuotaOptions, com.google.protobuf.Empty>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "AdjustQuota"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest.getDefaultInstance()))
+                  com.intellij.execution.process.mediator.rpc.QuotaOptions.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   com.google.protobuf.Empty.getDefaultInstance()))
               .setSchemaDescriptor(new DaemonMethodDescriptorSupplier("AdjustQuota"))
@@ -139,7 +139,7 @@ public final class DaemonGrpc {
 
     /**
      */
-    public void adjustQuota(com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest request,
+    public void adjustQuota(com.intellij.execution.process.mediator.rpc.QuotaOptions request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnimplementedUnaryCall(getAdjustQuotaMethod(), responseObserver);
     }
@@ -157,7 +157,7 @@ public final class DaemonGrpc {
             getAdjustQuotaMethod(),
             asyncUnaryCall(
               new MethodHandlers<
-                com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest,
+                com.intellij.execution.process.mediator.rpc.QuotaOptions,
                 com.google.protobuf.Empty>(
                   this, METHODID_ADJUST_QUOTA)))
           .addMethod(
@@ -187,7 +187,7 @@ public final class DaemonGrpc {
 
     /**
      */
-    public void adjustQuota(com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest request,
+    public void adjustQuota(com.intellij.execution.process.mediator.rpc.QuotaOptions request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(getAdjustQuotaMethod(), getCallOptions()), request, responseObserver);
@@ -218,7 +218,7 @@ public final class DaemonGrpc {
 
     /**
      */
-    public com.google.protobuf.Empty adjustQuota(com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest request) {
+    public com.google.protobuf.Empty adjustQuota(com.intellij.execution.process.mediator.rpc.QuotaOptions request) {
       return blockingUnaryCall(
           getChannel(), getAdjustQuotaMethod(), getCallOptions(), request);
     }
@@ -248,7 +248,7 @@ public final class DaemonGrpc {
     /**
      */
     public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> adjustQuota(
-        com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest request) {
+        com.intellij.execution.process.mediator.rpc.QuotaOptions request) {
       return futureUnaryCall(
           getChannel().newCall(getAdjustQuotaMethod(), getCallOptions()), request);
     }
@@ -283,7 +283,7 @@ public final class DaemonGrpc {
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
         case METHODID_ADJUST_QUOTA:
-          serviceImpl.adjustQuota((com.intellij.execution.process.mediator.rpc.AdjustQuotaRequest) request,
+          serviceImpl.adjustQuota((com.intellij.execution.process.mediator.rpc.QuotaOptions) request,
               (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
           break;
         case METHODID_SHUTDOWN:

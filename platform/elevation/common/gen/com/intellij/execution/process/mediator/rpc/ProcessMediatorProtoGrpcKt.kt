@@ -39,7 +39,7 @@ object DaemonGrpcKt {
   val serviceDescriptor: ServiceDescriptor
     get() = DaemonGrpc.getServiceDescriptor()
 
-  val adjustQuotaMethod: MethodDescriptor<AdjustQuotaRequest, Empty>
+  val adjustQuotaMethod: MethodDescriptor<QuotaOptions, Empty>
     @JvmStatic
     get() = DaemonGrpc.getAdjustQuotaMethod()
 
@@ -69,7 +69,7 @@ object DaemonGrpcKt {
      *
      * @return The single response from the server.
      */
-    suspend fun adjustQuota(request: AdjustQuotaRequest): Empty = unaryRpc(
+    suspend fun adjustQuota(request: QuotaOptions): Empty = unaryRpc(
       channel,
       DaemonGrpc.getAdjustQuotaMethod(),
       request,
@@ -112,7 +112,7 @@ object DaemonGrpcKt {
      *
      * @param request The request from the client.
      */
-    open suspend fun adjustQuota(request: AdjustQuotaRequest): Empty = throw
+    open suspend fun adjustQuota(request: QuotaOptions): Empty = throw
         StatusException(UNIMPLEMENTED.withDescription("Method intellij.process.mediator.rpc.Daemon.AdjustQuota is unimplemented"))
 
     /**

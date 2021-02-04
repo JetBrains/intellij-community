@@ -3,8 +3,8 @@
 
 package com.intellij.execution.process.mediator.rpc;
 
-public interface AdjustQuotaRequestOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:intellij.process.mediator.rpc.AdjustQuotaRequest)
+public interface QuotaOptionsOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:intellij.process.mediator.rpc.QuotaOptions)
     com.google.protobuf.MessageOrBuilder {
 
   /**
