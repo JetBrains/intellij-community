@@ -424,7 +424,7 @@ public final class PathManager {
    */
   public static @Nullable String getResourceRoot(@NotNull ClassLoader classLoader, @NotNull String resourcePath) {
     URL url = classLoader.getResource(resourcePath);
-    return url == null ? null : extractRoot(url, resourcePath);
+    return url == null ? null : extractRoot(url, "/"+resourcePath);
   }
 
   /**
