@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.impl.DebugUtil
-import com.intellij.psi.util.findDescendantOfType
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -69,7 +69,7 @@ class ReplaceExplicitInvokeWithImplicitTest : KotlinLightCodeInsightFixtureTestC
         val factory = KtPsiFactory(project)
         val expressionBefore = factory.createExpression(before)
         val expressionAfter = factory.createExpression(after)
-        val qualifiedExpression = expressionBefore.findDescendantOfType<KtDotQualifiedExpression> {
+        val qualifiedExpression = expressionBefore.descendantsOfType<KtDotQualifiedExpression>().firstOrNull {
             it.selectorExpression?.safeAs<KtCallExpression>()?.calleeExpression?.text == "invoke"
         } ?: error("Invoke call not found")
 
