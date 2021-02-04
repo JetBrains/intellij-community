@@ -78,9 +78,9 @@ public abstract class AbstractProcessor implements Processor {
     return result;
   }
 
-  protected static void addOnXAnnotations(@Nullable PsiAnnotation processedAnnotation,
-                                          @NotNull PsiModifierList modifierList,
-                                          @NotNull String onXParameterName) {
+  protected static void copyOnXAnnotations(@Nullable PsiAnnotation processedAnnotation,
+                                           @NotNull PsiModifierList modifierList,
+                                           @NotNull String onXParameterName) {
     if (processedAnnotation == null) {
       return;
     }

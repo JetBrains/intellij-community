@@ -2,22 +2,24 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.regex.Pattern;
+import java.util.*;
+import java.util.stream.StreamSupport;
 
 /**
  * Base lombok processor class for field annotations
@@ -45,7 +47,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
       if (null != psiAnnotation) {
         if (possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation, psiField)
-          && validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
+            && validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
 
           generatePsiElements(psiField, psiAnnotation, result);
         }
@@ -89,13 +91,60 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder);
 
-  protected abstract void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
+  protected void validateOnXAnnotations(@NotNull PsiAnnotation psiAnnotation,
+                                        @NotNull PsiField psiField,
+                                        @NotNull ProblemBuilder builder,
+                                        @NotNull String parameterName) {
+    final List<String> copyableAnnotations = copyableAnnotations(psiField, LombokUtils.BASE_COPYABLE_ANNOTATIONS);
 
-  void copyAnnotations(final PsiField fromPsiElement, final PsiModifierList toModifierList, final Pattern... patterns) {
-    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(fromPsiElement, patterns);
-    for (String annotationFQN : annotationsToCopy) {
-      toModifierList.addAnnotation(annotationFQN);
+    if (!copyableAnnotations.isEmpty()) {
+      final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
+
+      for (String copyableAnnotation : copyableAnnotations) {
+        for (String onXAnnotation : onXAnnotations) {
+          if (onXAnnotation.startsWith(copyableAnnotation)) {
+            builder.addError(LombokBundle.message("inspection.message.annotation.copy.duplicate", copyableAnnotation));
+          }
+        }
+      }
+    }
+
+    if (psiField.isDeprecated()) {
+      final Iterable<String> onMethodAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, "onMethod");
+      if (StreamSupport.stream(onMethodAnnotations.spliterator(), false).anyMatch(CommonClassNames.JAVA_LANG_DEPRECATED::equals)) {
+        builder.addError(LombokBundle.message("inspection.message.annotation.copy.duplicate", CommonClassNames.JAVA_LANG_DEPRECATED));
+      }
     }
   }
 
+  protected abstract void generatePsiElements(@NotNull PsiField psiField,
+                                              @NotNull PsiAnnotation psiAnnotation,
+                                              @NotNull List<? super PsiElement> target);
+
+  List<String> copyableAnnotations(@NotNull PsiField psiField, final List<String> copyableAnnotations) {
+    final List<String> combinedListOfCopyableAnnotations = new ArrayList<>(copyableAnnotations);
+
+    final PsiClass containingClass = psiField.getContainingClass();
+    // append only for BASE_COPYABLE
+    if (copyableAnnotations == LombokUtils.BASE_COPYABLE_ANNOTATIONS && null != containingClass) {
+      String[] configuredCopyableAnnotations =
+        ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
+      combinedListOfCopyableAnnotations.addAll(Arrays.asList(configuredCopyableAnnotations));
+    }
+
+    final List<String> existingAnnotations = ContainerUtil.map(psiField.getAnnotations(), PsiAnnotation::getQualifiedName);
+    existingAnnotations.retainAll(combinedListOfCopyableAnnotations);
+
+    return existingAnnotations;
+  }
+
+  void copyCopyableAnnotations(@NotNull PsiField fromPsiElement,
+                               @NotNull PsiModifierList toModifierList,
+                               List<String> copyableAnnotations) {
+    List<String> existingAnnotations = copyableAnnotations(fromPsiElement, copyableAnnotations);
+
+    for (String annotationFQN : existingAnnotations) {
+      toModifierList.addAnnotation(annotationFQN);
+    }
+  }
 }

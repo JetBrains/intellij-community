@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class PsiAnnotationSearchUtil {
@@ -39,19 +38,6 @@ public class PsiAnnotationSearchUtil {
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
-  }
-
-  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull Pattern annotationPattern) {
-    final PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
-    if (psiModifierList != null) {
-      for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
-        final String suspect = getSimpleNameOf(psiAnnotation);
-        if (annotationPattern.matcher(suspect).matches()) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @NotNull

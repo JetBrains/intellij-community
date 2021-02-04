@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -216,7 +217,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       final PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {
         final boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
-        final boolean isNonNull = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokUtils.NON_NULL_PATTERN);
+        final boolean isNonNull = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, ArrayUtil.toStringArray(LombokUtils.NONNULL_ANNOTATIONS));
         // accept initialized final or nonnull fields
         if ((isFinal || isNonNull) && !psiField.hasInitializer()) {
           result.add(psiField);
@@ -315,8 +316,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       }
     }
 
-    Iterable<String> annotationsToAdd = LombokProcessorUtil.getOnX(psiAnnotation, "onConstructor");
-    annotationsToAdd.forEach(constructorBuilder::withAnnotation);
+    copyOnXAnnotations(psiAnnotation, constructorBuilder.getModifierList(), "onConstructor");
 
     if (!useJavaDefaults) {
       final Iterator<String> fieldNameIterator = fieldNames.iterator();

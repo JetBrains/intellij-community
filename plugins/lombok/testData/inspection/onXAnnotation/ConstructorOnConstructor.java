@@ -1,6 +1,6 @@
 
 @lombok.AllArgsConstructor(onConstructor = @__(@Deprecated))
-@lombok.RequiredArgsConstructor(onConstructor__ = @Deprecated)
+@lombok.RequiredArgsConstructor(onConstructor_ = @Deprecated)
 public class ConstructorOnConstructor {
 
   private int intField;

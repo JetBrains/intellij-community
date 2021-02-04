@@ -91,7 +91,7 @@ public final class LombokProcessorUtil {
     Collection<String> annotationStrings = new ArrayList<>();
     for (PsiAnnotation annotation : annotations) {
       PsiAnnotationParameterList params = annotation.getParameterList();
-      annotationStrings.add(PsiAnnotationSearchUtil.getSimpleNameOf(annotation) + params.getText());
+      annotationStrings.add(annotation.getQualifiedName() + params.getText());
     }
     return annotationStrings;
   }
@@ -101,7 +101,7 @@ public final class LombokProcessorUtil {
     final Collection<String> annotationStrings = new ArrayList<>();
     for (PsiAnnotation annotation : annotations) {
       PsiAnnotationParameterList params = annotation.getParameterList();
-      annotationStrings.add(PsiAnnotationSearchUtil.getSimpleNameOf(annotation) + params.getText());
+      annotationStrings.add(annotation.getQualifiedName() + params.getText());
     }
     return annotationStrings;
   }
