@@ -25,7 +25,8 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
   companion object {
 
     @JvmStatic
-    fun getInstance() = service<ProjectPluginTrackerManager>()
+    val instance
+      get() = service<ProjectPluginTrackerManager>()
 
     @JvmStatic
     internal fun loadPlugins(candidatesToLoad: Collection<PluginId>) {

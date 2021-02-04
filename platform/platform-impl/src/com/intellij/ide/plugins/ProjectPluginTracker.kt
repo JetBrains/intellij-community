@@ -27,7 +27,7 @@ class ProjectPluginTracker(
       }
 
       override fun runActivity(project: Project) {
-        val manager = ProjectPluginTrackerManager.getInstance()
+        val manager = ProjectPluginTrackerManager.instance
         val tracker = manager.createPluginTracker(project)
         val trackers = manager.openProjectsPluginTrackers(project)
 
