@@ -413,7 +413,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
     { "meta L",                   "EditorSelectWord", "Terminal.ClearBuffer"},
     { "meta K",                   "SECOND_STROKE_SHORTCUT", "Terminal.ClearBuffer"},
-    { "meta alt button1",         "EditorAddRectangularSelectionOnMouseDrag", "UiInspector"},
     });
     put("macOS System Shortcuts", new String[][] {
       { "ctrl C",                   "Vcs.QuickListPopupAction", "org.jetbrains.r.console.RConsoleView.RInterruptAction"},
