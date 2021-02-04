@@ -36,32 +36,26 @@ class ProjectPluginTracker(
         )
 
         manager.unloadPlugins(
-          tracker.disabledPlugins.findPluginId(),
+          tracker.state.disabledPluginsIds,
           project,
         )
       }
     }
-
-    private fun Set<String>.findPluginId() = mapNotNull { PluginId.findId(it) }
   }
 
-  private val enabledPlugins get() = state.enabledPlugins
+  fun isEnabled(pluginId: PluginId) = state.enabledPlugins.contains(pluginId.idString)
 
-  private val disabledPlugins get() = state.disabledPlugins
-
-  fun isEnabled(pluginId: PluginId) = enabledPlugins.contains(pluginId.idString)
-
-  fun isDisabled(pluginId: PluginId) = disabledPlugins.contains(pluginId.idString)
+  fun isDisabled(pluginId: PluginId) = state.disabledPlugins.contains(pluginId.idString)
 
   internal fun enabledPluginIds(trackers: List<ProjectPluginTracker>): Collection<PluginId> {
     return trackers
       .flatMap { it.disabledPluginIds() }
-      .union(enabledPlugins.findPluginId())
+      .union(state.enabledPluginsIds)
   }
 
   internal fun disabledPluginIds(trackers: List<ProjectPluginTracker> = listOf()): Collection<PluginId> {
-    return disabledPlugins
-      .findPluginId()
+    return state
+      .disabledPluginsIds
       .filterNot { pluginId ->
         DisabledPluginsState.isDisabled(pluginId) ||
         trackers.isNotEmpty() && trackers.all { it.isDisabled(pluginId) }
@@ -74,8 +68,12 @@ class ProjectPluginTrackerState : BaseState() {
   @get:XCollection
   var enabledPlugins by stringSet()
 
+  val enabledPluginsIds: Set<PluginId> get() = enabledPlugins.toPluginIds()
+
   @get:XCollection
   var disabledPlugins by stringSet()
+
+  val disabledPluginsIds: Set<PluginId> get() = disabledPlugins.toPluginIds()
 
   fun startTracking(
     pluginIds: Iterable<PluginId>,
@@ -117,4 +115,6 @@ class ProjectPluginTrackerState : BaseState() {
     if (updated) incrementModificationCount()
     return updated
   }
+
+  private fun Set<String>.toPluginIds() = mapNotNullTo(HashSet()) { PluginId.findId(it) }
 }
