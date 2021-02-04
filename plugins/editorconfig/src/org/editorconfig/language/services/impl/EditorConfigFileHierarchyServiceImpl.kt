@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.services.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -34,10 +35,10 @@ import org.editorconfig.language.services.EditorConfigServiceResult
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import java.lang.ref.Reference
 
-class EditorConfigFileHierarchyServiceImpl(private val project: Project) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener {
+class EditorConfigFileHierarchyServiceImpl(private val project: Project) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener, Disposable {
   private val taskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("EditorConfig.notification.vfs.update.executor")
 
-  private val updateQueue = MergingUpdateQueue("EditorConfigFileHierarchy UpdateQueue", 500, true, null, project)
+  private val updateQueue = MergingUpdateQueue("EditorConfigFileHierarchy UpdateQueue", 500, true, null, this)
 
   @Volatile
   private var cacheDropsCount = 0
@@ -46,9 +47,12 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
 
   init {
     DumbService.getInstance(project).runWhenSmart {
-      ApplicationManager.getApplication().messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, this)
+      ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, this)
     }
-    Registry.get(EditorConfigRegistry.EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY).addListener(this, project)
+    Registry.get(EditorConfigRegistry.EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY).addListener(this, this)
+  }
+
+  override fun dispose() {
   }
 
   private fun updateHandlers(project: Project) {
@@ -95,7 +99,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
     val expectedCacheDropsCount = cacheDropsCount
     ReadAction
       .nonBlocking<List<EditorConfigPsiFile>?> { findApplicableFiles(virtualFile) }
-      .expireWith(project)
+      .expireWith(this)
       .finishOnUiThread(ModalityState.any()) ui@{ affectingFiles ->
       if (affectingFiles == null) return@ui
       synchronized(cacheLocker) {
