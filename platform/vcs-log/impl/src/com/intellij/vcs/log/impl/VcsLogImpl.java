@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -138,8 +137,20 @@ public class VcsLogImpl implements VcsLog {
   }
 
   private int getCommitRow(@NotNull VisiblePack visiblePack, @NotNull String partialHash) {
-    IntRef row = new IntRef(COMMIT_NOT_FOUND);
+    if (partialHash.length() == VcsLogUtil.FULL_HASH_LENGTH) {
+      int row = COMMIT_NOT_FOUND;
+      Hash candidateHash = HashImpl.build(partialHash);
+      for (VirtualFile candidateRoot : myLogData.getRoots()) {
+        if (myLogData.getStorage().containsCommit(new CommitId(candidateHash, candidateRoot))) {
+          int candidateRow = getCommitRow(visiblePack, candidateHash, candidateRoot);
+          if (candidateRow >= 0) return candidateRow;
+          if (row == COMMIT_NOT_FOUND) row = candidateRow;
+        }
+      }
+      return row;
+    }
 
+    IntRef row = new IntRef(COMMIT_NOT_FOUND);
     myLogData.getStorage().iterateCommits(candidate -> {
       if (CommitIdByStringCondition.matches(candidate, partialHash)) {
         int candidateRow = getCommitRow(visiblePack, candidate.getHash(), candidate.getRoot());
@@ -148,7 +159,6 @@ public class VcsLogImpl implements VcsLog {
       }
       return true;
     });
-
     return row.get();
   }
 
