@@ -27,7 +27,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 public class GotoActionAction extends SearchEverywhereBaseAction implements DumbAware, LightEditCompatible {
-
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String tabID = Registry.is("search.everywhere.group.contributors.by.type")
@@ -60,26 +59,25 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
         OptionDescription optionDescription = (OptionDescription)element;
         if (optionDescription.hasExternalEditor()) {
           optionDescription.invokeInternalEditor();
-        } else {
+        }
+        else {
           ShowSettingsUtilImpl.showSettingsDialog(project, optionDescription.getConfigurableId(), enteredText);
         }
       }
       else {
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-          () -> performAction(element, component, null, modifiers, null));
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> performAction(element, component, null, modifiers));
       }
     });
   }
 
   public static void performAction(@NotNull Object element, @Nullable Component component, @Nullable AnActionEvent e) {
-    performAction(element, component, e, 0, null);
+    performAction(element, component, e, 0);
   }
 
   private static void performAction(Object element,
                                     @Nullable Component component,
                                     @Nullable AnActionEvent e,
-                                    @JdkConstants.InputEventMask int modifiers,
-                                    @Nullable Runnable callback) {
+                                    @JdkConstants.InputEventMask int modifiers) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
     AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
@@ -95,7 +93,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
             ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-              event.getPresentation().getText(), (ActionGroup)action, context, false, callback, -1);
+              event.getPresentation().getText(), (ActionGroup)action, context, false, null, -1);
             Window window = SwingUtilities.getWindowAncestor(component);
             if (window != null) {
               popup.showInCenterOf(window);
@@ -108,7 +106,6 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
             ActionManagerEx manager = ActionManagerEx.getInstanceEx();
             manager.fireBeforeActionPerformed(action, context, event);
             ActionUtil.performActionDumbAware(action, event);
-            if (callback != null) callback.run();
             manager.fireAfterActionPerformed(action, context, event);
           }
         }

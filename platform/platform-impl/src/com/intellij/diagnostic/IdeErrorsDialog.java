@@ -186,9 +186,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return 0;
   }
 
-  @Nullable
   @Override
-  protected JComponent createNorthPanel() {
+  protected @Nullable JComponent createNorthPanel() {
     myCountLabel = new JBLabel();
     myInfoLabel = ComponentsKt.htmlComponent("", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && DISABLE_PLUGIN_URL.equals(e.getDescription())) {
@@ -886,8 +885,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
   }
 
-  @Nullable
-  public static IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
+  public static @Nullable IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = null;
     if (event instanceof IdeaReportingEvent) {
       plugin = ((IdeaReportingEvent)event).getPlugin();
@@ -901,12 +899,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return plugin;
   }
 
-  /**
-   * @deprecated use {@link PluginUtil#findPluginId}
-   */
-  @Nullable
+  /** @deprecated use {@link PluginUtil#findPluginId} */
   @Deprecated
-  public static PluginId findPluginId(@NotNull Throwable t) {
+  public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
     return PluginUtil.getInstance().findPluginId(t);
   }
 
