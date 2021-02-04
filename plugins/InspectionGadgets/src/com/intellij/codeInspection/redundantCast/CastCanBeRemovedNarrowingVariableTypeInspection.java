@@ -49,11 +49,9 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           PsiExpression collection = forEach.getIteratedValue();
           if (collection == null) return;
           PsiType elementType = JavaGenericsUtil.getCollectionItemType(collection);
-          if (elementType == null ||
-              (elementType instanceof PsiClassType && ((PsiClassType)elementType).isRaw()) ||
-              !castType.isAssignableFrom(elementType)) {
-            return;
-          }
+          if (elementType == null || !castType.isAssignableFrom(elementType)) return;
+          PsiType elementVarType = GenericsUtil.getVariableTypeByExpressionType(elementType);
+          if (elementVarType instanceof PsiClassType && ((PsiClassType)elementVarType).isRaw()) return;
         }
         else {
           PsiExpression variableInitializer = variable.getInitializer();
