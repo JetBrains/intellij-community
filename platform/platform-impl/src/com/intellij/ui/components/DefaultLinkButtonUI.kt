@@ -1,20 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
-import com.intellij.util.ui.UIUtilities
-import com.intellij.util.ui.JBInsets
 import com.intellij.ide.ui.laf.darcula.DarculaLaf.isAltPressed
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.RectanglePainter
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.CurrentTheme.Link
+import com.intellij.util.ui.UIUtilities
 import org.jetbrains.annotations.NonNls
-import java.awt.Cursor
-import java.awt.FontMetrics
-import java.awt.Graphics
-import java.awt.Rectangle
-import java.awt.Shape
+import java.awt.*
 import java.beans.PropertyChangeEvent
 import java.io.StringReader
-import java.lang.Error
 import java.net.URL
 import javax.swing.AbstractButton
 import javax.swing.JComponent
@@ -30,8 +28,8 @@ import javax.swing.plaf.basic.BasicHTML
 import javax.swing.text.BadLocationException
 import javax.swing.text.Document
 import javax.swing.text.Element
-import javax.swing.text.View
 import javax.swing.text.Position.Bias
+import javax.swing.text.View
 import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.ImageView
@@ -59,49 +57,70 @@ class DefaultLinkButtonUI : BasicButtonUI() {
     button.horizontalAlignment = LEADING
   }
 
+  override fun getBaseline(c: JComponent?, width: Int, height: Int): Int {
+    if (width < 0 || height < 0) return -1
+    val button = c as? AbstractButton ?: return -1
+    val text = button.text ?: return -1
+    if (text.isEmpty()) return -1
+    val layout = Layout(button, Rectangle(width, height))
+    val view = htmlView(button) ?: return layout.baseline
+    val baseline = BasicHTML.getHTMLBaseline(view, layout.textBounds.width, layout.textBounds.height)
+    return if (baseline < 0) baseline else baseline + layout.textBounds.y
+  }
+
+  override fun getPreferredSize(c: JComponent?): Dimension {
+    val button = c as? AbstractButton ?: return Dimension()
+    val max = Short.MAX_VALUE.toInt()
+    val layout = Layout(button, Rectangle(max, max))
+    return layout.bounds.size.also {
+      JBInsets.addTo(it, button.insets)
+      JBInsets.addTo(it, button.focusInsets())
+    }
+  }
+
   override fun contains(c: JComponent?, x: Int, y: Int): Boolean {
     val button = c as? AbstractButton ?: return false
-    val fm = button.getFontMetrics(button.font)
-    val iconBounds = Rectangle()
-    val textBounds = Rectangle()
-    layoutText(button, fm, iconBounds, textBounds)
-    return iconBounds.contains(x, y) || textBounds.contains(x, y) || iconBounds.union(textBounds).contains(x, y)
+    val layout = Layout(button, button.viewBounds())
+    return layout.iconBounds.contains(x, y) || layout.textBounds.contains(x, y) || layout.bounds.contains(x, y)
   }
 
   override fun paint(g: Graphics, c: JComponent?) {
     val button = c as? AbstractButton ?: return
     g.font = button.font
-    val fm = UIUtilities.getFontMetrics(button, g)
-    val iconBounds = Rectangle()
-    val textBounds = Rectangle()
-    val text = layoutText(button, fm, textBounds, iconBounds)
+    val layout = Layout(button, button.viewBounds(), UIUtilities.getFontMetrics(button, g))
 
     if (isPressed(button)) setTextShiftOffset() else clearTextShiftOffset()
 
-    paintIcon(g, button, iconBounds)
+    paintIcon(g, button, layout.iconBounds)
 
-    if (text != null && text.isNotEmpty()) {
+    if (layout.text.isNotEmpty()) {
       val offset = textShiftOffset
-      textBounds.x += offset
-      textBounds.y += offset
+      layout.textBounds.x += offset
+      layout.textBounds.y += offset
 
       val hovered = isHovered(button)
-      val view = button.getClientProperty(BasicHTML.propertyKey) as? View
+      val view = htmlView(button)
       if (view == null) {
         g.color = button.foreground
         val index = if (isEnabled(button) && isAltPressed()) button.displayedMnemonicIndex else -1
-        UIUtilities.drawStringUnderlineCharAt(button, g, text, index, textBounds.x, textBounds.y + fm.ascent)
-        if (hovered) g.fillRect(textBounds.x, textBounds.y + fm.ascent + 1, textBounds.width, 1)
+        UIUtilities.drawStringUnderlineCharAt(button, g, layout.text, index, layout.textBounds.x, layout.baseline)
+        if (hovered) g.fillRect(layout.textBounds.x, layout.baseline + 1, layout.textBounds.width, 1)
       }
       else if (hovered) {
         if (cached == null) {
-          cached = createUnderlinedView(button, text)
+          cached = createUnderlinedView(button, layout.text)
         }
-        cached!!.paint(g, textBounds)
+        cached!!.paint(g, layout.textBounds)
       }
       else {
-        view.paint(g, textBounds)
+        view.paint(g, layout.textBounds)
       }
+    }
+    if (g is Graphics2D && isFocused(button)) {
+      g.color = Link.FOCUSED_BORDER_COLOR
+      val bounds = button.paintBounds()
+      val round = Registry.intValue("ide.link.button.focus.round.arc", 4)
+      RectanglePainter.DRAW.paint(g, bounds.x, bounds.y, bounds.width, bounds.height, scale(round))
     }
   }
 
@@ -122,10 +141,10 @@ class DefaultLinkButtonUI : BasicButtonUI() {
   }
 }
 
-private fun layoutText(button: AbstractButton, fm: FontMetrics, textBounds: Rectangle, iconBounds: Rectangle): String? {
-  val viewBounds = Rectangle(button.width, button.height)
-  JBInsets.removeFrom(viewBounds, button.insets)
-  return layoutCompoundLabel(
+private class Layout(button: AbstractButton, viewBounds: Rectangle, val fm: FontMetrics = button.getFontMetrics(button.font)) {
+  val iconBounds = Rectangle()
+  val textBounds = Rectangle()
+  val text = layoutCompoundLabel(
     button, fm,
     button.text,
     button.icon,
@@ -134,7 +153,21 @@ private fun layoutText(button: AbstractButton, fm: FontMetrics, textBounds: Rect
     button.verticalTextPosition,
     button.horizontalTextPosition,
     viewBounds, iconBounds, textBounds,
-    if (button.text == null) 0 else button.iconTextGap)
+    button.iconTextGap) ?: ""
+
+  val baseline: Int
+    get() = textBounds.y + fm.ascent
+
+  val bounds: Rectangle
+    get() = iconBounds.union(textBounds)
+}
+
+private fun AbstractButton.viewBounds() = paintBounds().also { JBInsets.removeFrom(it, focusInsets()) }
+private fun AbstractButton.paintBounds() = Rectangle(width, height).also { JBInsets.removeFrom(it, insets) }
+private fun AbstractButton.focusInsets(): Insets? {
+  if (!isFocusPainted) return null
+  val margin = scale(1)
+  return Insets(0, margin, 0, margin)
 }
 
 private fun isUpdateable(property: Any?) = property == null || property is UIResource
@@ -143,9 +176,7 @@ private fun isEnabled(button: AbstractButton) = button.model?.isEnabled ?: false
 private fun isHovered(button: AbstractButton) = button.model?.isRollover ?: false
 private fun isPressed(button: AbstractButton) = button.model?.let { it.isArmed && it.isPressed } ?: false
 private fun isVisited(button: AbstractButton) = (button as? ActionLink)?.visited ?: false
-
-@Suppress("unused") // TODO: support dotted border for focused links
-private fun isFocused(button: AbstractButton) = button.isFocusPainted && button.hasFocus()
+private fun isFocused(button: AbstractButton) = button.isFocusPainted && button.hasFocus() && !isPressed(button)
 
 // provide dynamic foreground color
 
@@ -160,6 +191,8 @@ private fun getColor(button: AbstractButton) = when {
 private class DynamicColor(button: AbstractButton) : JBColor({ getColor(button) }), UIResource
 
 // support underlined <html>
+
+private fun htmlView(button: AbstractButton) = button.getClientProperty(BasicHTML.propertyKey) as? View
 
 private fun createUnderlinedView(button: AbstractButton, text: String): View {
   val styles = StyleSheet()

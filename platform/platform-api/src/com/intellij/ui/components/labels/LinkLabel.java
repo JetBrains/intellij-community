@@ -6,8 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -165,9 +167,11 @@ public class LinkLabel<T> extends JLabel {
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
       }
 
-      if (isFocusOwner()) {
-        g.setColor(UIUtil.getTreeSelectionBorderColor());
-        UIUtil.drawLabelDottedRectangle(this, g, getTextBounds());
+      if (g instanceof Graphics2D && isFocusOwner()) {
+        g.setColor(JBUI.CurrentTheme.Link.FOCUSED_BORDER_COLOR);
+        Rectangle bounds = getTextBounds();
+        int round = Registry.intValue("ide.link.button.focus.round.arc", 4);
+        RectanglePainter.DRAW.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, JBUI.scale(round));
       }
     }
   }
