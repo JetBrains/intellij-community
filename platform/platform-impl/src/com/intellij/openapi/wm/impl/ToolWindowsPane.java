@@ -420,6 +420,14 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return null;
   }
 
+  @Nullable
+  ToolwindowToolbar getSquareStripeFor(@NotNull ToolWindowAnchor anchor) {
+    if (ToolWindowAnchor.TOP == anchor || ToolWindowAnchor.RIGHT == anchor) return myRightToolbar;
+    if (ToolWindowAnchor.BOTTOM == anchor || ToolWindowAnchor.LEFT == anchor) return myLeftToolbar;
+
+    throw new IllegalArgumentException("Anchor=" + anchor);
+  }
+
   void startDrag() {
     for (Stripe each : stripes) {
       each.startDrag();

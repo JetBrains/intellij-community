@@ -18,6 +18,8 @@ abstract class ToolwindowToolbar : JPanel() {
 
   abstract fun updateButtons()
 
+  abstract fun getButtonFor(toolWindowId: String): SquareStripeButton?
+
   abstract fun removeStripeButton(project: Project, toolWindow: ToolWindow, anchor: ToolWindowAnchor)
 
   abstract fun addStripeButton(project: Project, anchor: ToolWindowAnchor, comparator: Comparator<ToolWindow>, toolWindow: ToolWindow)
