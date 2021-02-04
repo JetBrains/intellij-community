@@ -3997,6 +3997,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         x = 0;
       }
 
+      Caret selectionCaret = null;
       int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
 
       final int oldStart = mySelectionModel.getSelectionStart();
@@ -4039,8 +4040,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           mySelectionModel.setBlockSelection(anchor, pos);
         }
         else {
-          getCaretModel().removeSecondaryCarets();
-          getCaretModel().moveToVisualPosition(visualPosition);
+          selectionCaret = eventArea == EditorMouseEventArea.EDITING_AREA &&
+                           SwingUtilities.isRightMouseButton(e) &&
+                           getCaretModel().getCaretCount() > 1
+                           ? getSelectionCaret(pos) : null;
+          if (selectionCaret == null) {
+            getCaretModel().removeSecondaryCarets();
+            getCaretModel().moveToVisualPosition(visualPosition);
+          }
+          else {
+            selectionCaret.moveToVisualPosition(visualPosition);
+          }
         }
       }
 
@@ -4055,7 +4065,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       Point p = new Point(x, y);
       myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(p);
-      myKeepSelectionOnMousePress = mySelectionModel.hasSelection() &&
+      myKeepSelectionOnMousePress = selectionCaret != null ||
+                                    mySelectionModel.hasSelection() &&
                                     caretOffset >= mySelectionModel.getSelectionStart() &&
                                     caretOffset <= mySelectionModel.getSelectionEnd() &&
                                     !isPointAfterSelectionEnd(p) &&
@@ -4134,6 +4145,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Point selectionEnd = visualPositionToXY(selectionEndPosition);
       return p.y >= selectionEnd.y + getLineHeight() ||
              p.y >= selectionEnd.y && p.x > selectionEnd.x && xyToVisualPosition(p).column > selectionEndPosition.column;
+    }
+
+    private Caret getSelectionCaret(LogicalPosition logicalPosition) {
+      int offset = logicalPositionToOffset(logicalPosition);
+      for (Caret caret : getCaretModel().getAllCarets()) {
+        if (offset >= caret.getSelectionStart() && offset <= caret.getSelectionEnd()) {
+          return caret;
+        }
+      }
+      return null;
     }
   }
 
