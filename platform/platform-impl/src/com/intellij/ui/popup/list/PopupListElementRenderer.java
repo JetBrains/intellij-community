@@ -258,7 +258,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     component.setForeground(selected ? getSelectionForeground() : getForeground());
   }
 
-  private boolean isNextStepButtonSelected(JList<? extends E> list) {
+  protected boolean isNextStepButtonSelected(JList<?> list) {
     return list instanceof ListPopupImpl.NestedList && ((ListPopupImpl.NestedList)list).isNextStepButtonSelected();
   }
 }

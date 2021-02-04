@@ -723,6 +723,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       myLabel.setEnabled(isSelectable);
       myLabel.setIcon(null);
 
+      isSelected = isSelected && step.hasSubstep(value) && step.isFinal(value) && !isNextStepButtonSelected(list);
       if (isSelected) {
         setSelected(myLabel);
       }
