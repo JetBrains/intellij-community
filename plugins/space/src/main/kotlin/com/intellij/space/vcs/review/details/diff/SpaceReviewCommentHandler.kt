@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.wm.IdeFocusManager
@@ -51,6 +50,8 @@ internal abstract class SpaceDiffCommentsHandler {
 
     return manager.insertAfter(line, component)
   }
+
+  open fun updateCommentableRanges() {}
 }
 
 private class SimpleOnesideDiffCommentsHandler(viewer: SimpleOnesideDiffViewer,
@@ -87,6 +88,7 @@ private class TwoSideDiffCommentsHandler(viewer: TwosideTextDiffViewer,
 private class UnifiedDiffCommentsHandler(private val viewer: UnifiedDiffViewer,
                                          commentSubmitter: SpaceReviewCommentSubmitter) : SpaceDiffCommentsHandler() {
   private val manager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
+  private var spaceEditorRangesController: SpaceEditorRangesController? = null
 
   init {
     val factory = SpaceDiffEditorGutterIconRendererFactory(manager, commentSubmitter) { fileLine ->
@@ -95,7 +97,7 @@ private class UnifiedDiffCommentsHandler(private val viewer: UnifiedDiffViewer,
 
       side to line
     }
-    SpaceEditorRangesController(factory, viewer.editor)
+    spaceEditorRangesController = SpaceEditorRangesController(factory, viewer.editor)
   }
 
   override fun insertLeft(line: Int, component: JComponent): Disposable? {
@@ -106,6 +108,10 @@ private class UnifiedDiffCommentsHandler(private val viewer: UnifiedDiffViewer,
   override fun insertRight(line: Int, component: JComponent): Disposable? {
     val newLine = viewer.transferLineToOneside(Side.RIGHT, line)
     return insert(manager, newLine, component)
+  }
+
+  override fun updateCommentableRanges() {
+    spaceEditorRangesController?.updateCommentableRanges()
   }
 }
 
@@ -128,7 +134,7 @@ internal class SpaceDiffEditorGutterIconRendererFactory(
       return InlayAction({ SpaceBundle.message("action.comment.line.text") }, line)
     }
 
-    private inner class InlayAction(val actionName: () -> String, private val editorLine: Int) : DumbAwareAction(actionName) {
+    private inner class InlayAction(actionName: () -> String, private val editorLine: Int) : DumbAwareAction(actionName) {
       override fun actionPerformed(e: AnActionEvent) {
         if (inlay?.let { focusPanel(it.component) } != null) return
 
@@ -138,13 +144,13 @@ internal class SpaceDiffEditorGutterIconRendererFactory(
           inlay?.let { Disposer.dispose(it.disposable) }
           inlay = null
         }
-        val component = createComponent(side, line, hideCallback, actionName())
+        val component = createComponent(side, line, hideCallback)
         val disposable = inlaysManager.insertAfter(editorLine, component) ?: return
         focusPanel(component)
         inlay = ComponentWithDisposable(component, disposable)
       }
 
-      fun createComponent(side: Side, line: Int, hideCallback: () -> Unit, @NlsActions.ActionText actionName: String): JComponent {
+      fun createComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
         val model = object : SubmittableTextFieldModelBase("") {
           override fun submit() {
             launch(commentSubmitter.lifetime, Ui) {
@@ -178,9 +184,13 @@ internal data class ComponentWithDisposable(val component: JComponent, val dispo
 
 internal class SpaceEditorRangesController(
   factory: SpaceDiffEditorGutterIconRendererFactory,
-  editor: EditorEx
+  private val editor: EditorEx
 ) : EditorRangesController(factory, editor) {
   init {
+    updateCommentableRanges()
+  }
+
+  fun updateCommentableRanges() {
     // all lines are commentable in Space review
     markCommentableLines(LineRange(0, editor.document.lineCount))
   }

@@ -63,6 +63,7 @@ class SpaceReviewCommentDiffExtension : DiffExtension() {
 
       override fun onAfterRediff() {
         if (!viewerIsReady) {
+          handler.updateCommentableRanges()
           discussions.values.forEach { propagatedCodeDiscussion ->
             addCommentWithExceptionHandling(chatPanelFactory, propagatedCodeDiscussion, lifetime, handler)
           }
