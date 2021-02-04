@@ -16,16 +16,17 @@ object IndexableFilesIterationMethods {
   private val followSymlinks
     get() = Registry.`is`("indexer.follows.symlinks")
 
-  fun iterateNonExcludedRoots(
+  fun iterateRoots(
     project: Project,
     roots: Iterable<VirtualFile>,
     contentIterator: ContentIterator,
-    fileFilter: VirtualFileFilter
+    fileFilter: VirtualFileFilter,
+    excludeNonProjectRoots: Boolean = true
   ): Boolean {
     val projectFileIndex = ProjectFileIndex.getInstance(project)
     val filters = IndexableFilesFilter.EP_NAME.extensionList
     val rootsSet = roots.toSet()
-    val finalFileFilter = fileFilter.and { shouldIndexFile(it, projectFileIndex, filters, rootsSet) }
+    val finalFileFilter = fileFilter.and { shouldIndexFile(it, projectFileIndex, filters, rootsSet, excludeNonProjectRoots) }
     return roots.all { root ->
       VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
     }
@@ -35,7 +36,8 @@ object IndexableFilesIterationMethods {
     file: VirtualFile,
     projectFileIndex: ProjectFileIndex,
     filters: List<IndexableFilesFilter>,
-    rootsSet: Set<VirtualFile>
+    rootsSet: Set<VirtualFile>,
+    excludeNonProjectRoots: Boolean
   ): Boolean {
     if (file.`is`(VFileProperty.SYMLINK)) {
       if (!followSymlinks) {
@@ -49,12 +51,12 @@ object IndexableFilesIterationMethods {
       if (file in rootsSet) {
         return true
       }
-      return shouldIndexFile(targetFile, projectFileIndex, filters, rootsSet)
+      return shouldIndexFile(targetFile, projectFileIndex, filters, rootsSet, excludeNonProjectRoots)
     }
     if (file !is VirtualFileWithId || file.id <= 0) {
       return false
     }
-    if (runReadAction { projectFileIndex.isExcluded(file) }) {
+    if (excludeNonProjectRoots && runReadAction { projectFileIndex.isExcluded(file) }) {
       return false
     }
     if (filters.isNotEmpty() && filters.none { it.shouldIndex(file) }) {

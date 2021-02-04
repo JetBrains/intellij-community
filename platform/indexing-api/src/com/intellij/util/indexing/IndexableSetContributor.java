@@ -39,8 +39,7 @@ public abstract class IndexableSetContributor {
 
   /**
    * @return an additional project-dependent set of {@link VirtualFile} instances to index,
-   *         the returned set should not contain {@code null} files, invalid files or files that reside
-   *         under excluded project directories (see {@link com.intellij.openapi.roots.ProjectFileIndex#isExcluded(VirtualFile)}.
+   *         the returned set should not contain {@code null} files or invalid files.
    */
   @NotNull
   public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
@@ -49,8 +48,7 @@ public abstract class IndexableSetContributor {
 
   /**
    * @return an additional project-independent set of {@link VirtualFile} instances to index,
-   *         the returned set should not contain {@code null} files, invalid files or files that reside
-   *         under excluded project directories (see {@link com.intellij.openapi.roots.ProjectFileIndex#isExcluded(VirtualFile)}.
+   *         the returned set should not contain {@code null} files or invalid files.
    */
   @NotNull
   public abstract Set<VirtualFile> getAdditionalRootsToIndex();

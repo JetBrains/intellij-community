@@ -42,6 +42,6 @@ internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticL
     fileFilter: VirtualFileFilter
   ): Boolean {
     val roots = runReadAction { syntheticLibrary.allRoots }
-    return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, roots, fileIterator, fileFilter)
+    return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
   }
 }
