@@ -11,7 +11,9 @@ import com.intellij.execution.process.mediator.client.MediatedProcessHandler
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.daemon.QuotaExceededException
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
+import com.intellij.execution.process.mediator.launcher.ProcessMediatorConnection
 import com.intellij.execution.process.mediator.launcher.ProcessMediatorConnectionManager
+import com.intellij.execution.process.mediator.launcher.startInProcessServer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
@@ -27,7 +29,9 @@ class ElevationServiceImpl : ElevationService, Disposable {
     val daemonLauncher = ElevationDaemonProcessLauncher(clientBuilder)
 
     ProcessMediatorConnectionManager {
-      daemonLauncher.launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
+      val debug = false
+      if (debug) ProcessMediatorConnection.startInProcessServer(coroutineScope, clientBuilder = clientBuilder)
+      else daemonLauncher.launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
     }.apply {
       ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
         override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {

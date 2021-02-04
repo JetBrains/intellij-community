@@ -35,10 +35,6 @@ class ProcessMediatorConnectionManager(private val connectionProvider: () -> Pro
 
   private fun launchDaemonAndConnect(): ProcessMediatorConnection = synchronized(this) {
     check(!isDisposed) { "Already disposed" }
-
-    val debug = false
-    if (debug) return ProcessMediatorConnection.startInProcessServer()
-
     return connectionProvider()
   }
 
