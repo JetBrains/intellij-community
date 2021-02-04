@@ -10,18 +10,19 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class KotlinConcatenationInjectionTest : AbstractInjectionTest() {
 
+    private val TEST_FOO_TEXT = """
+                import org.intellij.lang.annotations.Language;
+                
+                public class Test {
+                    public static void foo(@Language("HTML") String str) {}
+                }
+                """.trimIndent()
+
     fun testConcatenationInjectionWithAnnotation() = doInjectionPresentTest(
         """
             fun bar(a: Int) { Test.foo("<caret>some" + a + "bar" + "foo") }
             """,
-        javaText =
-        """
-            import org.intellij.lang.annotations.Language;
-
-            public class Test {
-                public static void foo(@Language("HTML") String str) {}
-            }
-            """,
+        javaText = TEST_FOO_TEXT,
         languageId = HTMLLanguage.INSTANCE.id,
         unInjectShouldBePresent = false,
         shreds = listOf(
@@ -32,18 +33,39 @@ class KotlinConcatenationInjectionTest : AbstractInjectionTest() {
         injectedText = "someabarfoo"
     )
 
+    fun testConcatenationWithVariableInTheEnd() = doInjectionPresentTest(
+        """
+            fun bar(a: Int) { Test.foo("<caret>some" + a) }
+            """,
+        javaText = TEST_FOO_TEXT,
+        languageId = HTMLLanguage.INSTANCE.id,
+        unInjectShouldBePresent = false,
+        shreds = listOf(
+            ShredInfo(range(0, 4), range(1, 5), prefix = "", suffix = ""),
+            ShredInfo(range(4, 5), range(5, 5), prefix = "", suffix = "a")
+        ),
+        injectedText = "somea"
+    )
+
+    fun testConcatenationWithVariableInTheBeggining() = doInjectionPresentTest(
+        """
+            fun bar(a: Int) { Test.foo(a + "<caret>some") }
+            """,
+        javaText = TEST_FOO_TEXT,
+        languageId = HTMLLanguage.INSTANCE.id,
+        unInjectShouldBePresent = false,
+        shreds = listOf(
+            ShredInfo(range(0, 5), range(1, 5), prefix = "a", suffix = ""),
+        ),
+        injectedText = "asome"
+    )
+
+
     fun testComplexInterpolationConcantenationInjection() = doInjectionPresentTest(
         """
             fun bar(a: Int) { Test.foo(1 + "${'$'}{s} <caret>text" + " ${'$'}{s}${'$'}s${'$'}{s} " + s + " text ${'$'}{s}") }
             """,
-        javaText =
-        """
-            import org.intellij.lang.annotations.Language;
-
-            public class Test {
-                public static void foo(@Language("HTML") String str) {}
-            }
-            """,
+        javaText = TEST_FOO_TEXT,
         languageId = HTMLLanguage.INSTANCE.id,
         unInjectShouldBePresent = false,
         shreds = listOf(

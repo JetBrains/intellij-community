@@ -114,7 +114,16 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
 
                 if (tail.isEmpty()) {
                     // There won't be more elements, so create part with prefix right away
-                    collected += injectionRange(literal, TextRange.from(partOffsetInParent + child.textLength, 0), prefix, injection.suffix)
+                    collected +=
+                        if (literal.textRange.contains(child.textRange))
+                            injectionRange(literal, TextRange.from(partOffsetInParent + child.textLength, 0), prefix, injection.suffix)
+                        else
+                            // when the child is not a string we use the end of the current literal anyway (the concantenation case)
+                            injectionRange(
+                                literal,
+                                ElementManipulators.getValueTextRange(literal).let { TextRange.from(it.endOffset, 0) },
+                                "", prefix + injection.suffix
+                            )
                 }
                 return collectInjections(literal, tail, prefix, unparseable || myUnparseable, collected)
             }
