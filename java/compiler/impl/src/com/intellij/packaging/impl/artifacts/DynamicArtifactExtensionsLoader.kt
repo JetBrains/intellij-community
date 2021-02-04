@@ -19,7 +19,7 @@ internal class DynamicArtifactExtensionsLoader(private val artifactManager: Arti
       override fun extensionAdded(extension: ArtifactType, pluginDescriptor: PluginDescriptor) {
         runWriteAction {
           reloadArtifacts(artifactManager.allArtifactsIncludingInvalid.filter {
-            (it as? InvalidArtifact)?.state?.artifactType == extension.id
+            (it as? InvalidArtifactImpl)?.state?.artifactType == extension.id
           })
         }
       }
@@ -47,7 +47,7 @@ internal class DynamicArtifactExtensionsLoader(private val artifactManager: Arti
       override fun extensionAdded(extension: ArtifactPropertiesProvider, pluginDescriptor: PluginDescriptor) {
         runWriteAction {
           reloadArtifacts(artifactManager.allArtifactsIncludingInvalid.filter { artifact ->
-            (artifact as? InvalidArtifact)?.state?.propertiesList?.any { it.id == extension.id } ?: false
+            (artifact as? InvalidArtifactImpl)?.state?.propertiesList?.any { it.id == extension.id } ?: false
           })
         }
       }

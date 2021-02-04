@@ -107,8 +107,8 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   ArtifactState saveArtifact(Artifact artifact) {
     ArtifactState artifactState;
-    if (artifact instanceof InvalidArtifact) {
-      artifactState = ((InvalidArtifact)artifact).getState();
+    if (artifact instanceof InvalidArtifactImpl) {
+      artifactState = ((InvalidArtifactImpl)artifact).getState();
     }
     else {
       artifactState = new ArtifactState();
@@ -261,10 +261,10 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
     return artifact;
   }
 
-  private InvalidArtifact createInvalidArtifact(ArtifactState state,
-                                                ProjectModelExternalSource externalSource,
-                                                @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage) {
-    final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage, externalSource);
+  private InvalidArtifactImpl createInvalidArtifact(ArtifactState state,
+                                                    ProjectModelExternalSource externalSource,
+                                                    @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage) {
+    final InvalidArtifactImpl artifact = new InvalidArtifactImpl(state, errorMessage, externalSource);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
     UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), "Artifact");
     return artifact;

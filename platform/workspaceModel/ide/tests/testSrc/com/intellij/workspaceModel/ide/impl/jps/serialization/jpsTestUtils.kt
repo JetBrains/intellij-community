@@ -106,7 +106,8 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
 internal fun createProjectSerializers(projectDir: File, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializersImpl {
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
   val externalStoragePath = projectDir.toPath().resolve("cache")
-  return JpsProjectEntitiesLoader.createProjectSerializers(toConfigLocation(projectDir.toPath(), virtualFileManager), reader, externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
+  return JpsProjectEntitiesLoader.createProjectSerializers(toConfigLocation(projectDir.toPath(), virtualFileManager), reader,
+                                                           externalStoragePath, virtualFileManager) as JpsProjectSerializersImpl
 }
 
 fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager) {

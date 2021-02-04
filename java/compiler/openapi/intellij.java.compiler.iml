@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" name="JDOM" level="project" />
@@ -15,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
   </component>
   <component name="copyright">
     <Base>

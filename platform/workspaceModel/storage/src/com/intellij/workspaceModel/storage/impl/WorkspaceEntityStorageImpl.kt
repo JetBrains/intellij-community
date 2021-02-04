@@ -796,6 +796,10 @@ internal sealed class AbstractEntityStorage(internal val consistencyCheckingMode
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
   }
 
+  override fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int {
+    return entitiesByType[entityClass.toClassId()]?.size() ?: 0
+  }
+
   internal fun entityDataById(id: EntityId): WorkspaceEntityData<out WorkspaceEntity>? = entitiesByType[id.clazz]?.get(id.arrayId)
 
   internal fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {

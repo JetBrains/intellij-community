@@ -56,7 +56,7 @@ internal class ValuesCache {
   }
 }
 
-class VersionedEntityStorageOnBuilder(private val builder: WorkspaceEntityStorageBuilder) : VersionedEntityStorage {
+class VersionedEntityStorageOnBuilder(val builder: WorkspaceEntityStorageBuilder) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
     get() = getCurrentSnapshot().cache
@@ -66,6 +66,9 @@ class VersionedEntityStorageOnBuilder(private val builder: WorkspaceEntityStorag
 
   override val current: WorkspaceEntityStorage
     get() = getCurrentSnapshot().storage
+
+  override val base: WorkspaceEntityStorage
+    get() = builder
 
   override fun <R> cachedValue(value: CachedValue<R>): R = valuesCache.cachedValue(value, current)
 
@@ -100,6 +103,9 @@ class VersionedEntityStorageOnStorage(private val storage: WorkspaceEntityStorag
   override val current: WorkspaceEntityStorage
     get() = storage
 
+  override val base: WorkspaceEntityStorage
+    get() = storage
+
   override fun <R> cachedValue(value: CachedValue<R>): R = valuesCache.cachedValue(value, current)
 
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R =
@@ -115,6 +121,9 @@ class DummyVersionedEntityStorage(private val builder: WorkspaceEntityStorageBui
     get() = builder.modificationCount
 
   override val current: WorkspaceEntityStorage
+    get() = builder
+
+  override val base: WorkspaceEntityStorage
     get() = builder
 
   override fun <R> cachedValue(value: CachedValue<R>): R = value.source(current)
@@ -138,6 +147,9 @@ open class VersionedEntityStorageImpl(initialStorage: WorkspaceEntityStorage) : 
 
   override val current: WorkspaceEntityStorage
     get() = currentPointer.storage
+
+  override val base: WorkspaceEntityStorage
+    get() = current
 
   override val version: Long
     get() = currentPointer.version

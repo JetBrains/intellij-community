@@ -71,6 +71,9 @@ interface WorkspaceModel {
     val isEnabled: Boolean
       get() = !Registry.`is`("ide.old.project.model")
 
+    val enabledForArtifacts: Boolean
+      get() = Registry.`is`("ide.new.project.model.artifacts")
+
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModel = project.service()
   }

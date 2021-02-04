@@ -21,13 +21,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
 
-public class InvalidArtifact extends ArtifactImpl {
+public class InvalidArtifactImpl extends ArtifactImpl implements InvalidArtifact {
   private final ArtifactState myState;
   private final @Nls(capitalization = Nls.Capitalization.Sentence) String myErrorMessage;
 
-  public InvalidArtifact(@NotNull ArtifactState state,
-                         @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage,
-                         ProjectModelExternalSource externalSource) {
+  public InvalidArtifactImpl(@NotNull ArtifactState state,
+                             @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage,
+                             ProjectModelExternalSource externalSource) {
     super(state.getName(),
           InvalidArtifactType.getInstance(),
           false,
@@ -38,11 +38,12 @@ public class InvalidArtifact extends ArtifactImpl {
     myErrorMessage = errorMessage;
   }
 
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getErrorMessage() {
+  @Override
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getErrorMessage() {
     return myErrorMessage;
   }
 
-  public ArtifactState getState() {
+  public @NotNull ArtifactState getState() {
     return myState;
   }
 }

@@ -138,6 +138,7 @@ interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
  */
 interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
+  fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?

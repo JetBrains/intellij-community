@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
@@ -14,7 +15,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
@@ -61,5 +61,20 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerService(ModifiableModelCommitterService::class.java, ModifiableModelCommitterServiceBridge::class.java, pluginDescriptor, true)
     container.registerService(WorkspaceModelTopics::class.java, WorkspaceModelTopics::class.java, pluginDescriptor, false)
     container.registerService(FacetEntityChangeListener::class.java, FacetEntityChangeListener::class.java, pluginDescriptor, false)
+
+    if (WorkspaceModel.enabledForArtifacts) {
+      registerArtifactManager(container, pluginDescriptor)
+    }
+  }
+
+  private fun registerArtifactManager(container: ComponentManagerImpl, pluginDescriptor: IdeaPluginDescriptor) {
+    try { //todo improve
+      val apiClass = Class.forName("com.intellij.packaging.artifacts.ArtifactManager", true, javaClass.classLoader)
+      val implClass = Class.forName("com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge", true,
+                                    javaClass.classLoader)
+      container.registerService(apiClass, implClass, pluginDescriptor, true)
+    }
+    catch (ignored: Throwable) {
+    }
   }
 }
