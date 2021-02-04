@@ -33,7 +33,6 @@ public class GitRebase extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
     if (project == null || !hasGitRepositories(project) || !getRebasingRepositories(project).isEmpty()) {
@@ -41,6 +40,9 @@ public class GitRebase extends DumbAwareAction {
     }
     else if (getRepositoriesInState(project, Repository.State.NORMAL).isEmpty()) {
       presentation.setEnabled(false);
+    }
+    else {
+      presentation.setEnabledAndVisible(true);
     }
   }
 
