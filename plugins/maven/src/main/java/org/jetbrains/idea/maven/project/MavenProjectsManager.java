@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -195,7 +196,14 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public File getLocalRepository() {
-    return getGeneralSettings().getEffectiveLocalRepository();
+    WSLDistribution wslDistribution = MavenWslUtil.tryGetWslDistribution(myProject);
+    if (wslDistribution == null) {
+      return getGeneralSettings().getEffectiveLocalRepository();
+    }
+    return MavenWslUtil.resolveLocalRepository(wslDistribution,
+                                               null,
+                                               null,
+                                               null);
   }
 
   @ApiStatus.Internal

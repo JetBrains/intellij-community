@@ -772,7 +772,8 @@ public class MavenUtil {
     if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
-                                        resolveGlobalSettingsFile(overriddenMavenHome));
+                                        resolveGlobalSettingsFile(overriddenMavenHome),
+                                        resolveM2Dir());
     }
     try {
       return result.getCanonicalFile();
@@ -810,7 +811,7 @@ public class MavenUtil {
   }
 
   @NotNull
-  public static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile) {
+  protected static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile, @NotNull File defaultM2Dir) {
     if (userSettingsFile != null) {
       final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
       if (!isEmpty(fromUserSettings)) {
@@ -825,7 +826,7 @@ public class MavenUtil {
       }
     }
 
-    return new File(resolveM2Dir(), REPOSITORY_DIR);
+    return new File(defaultM2Dir, REPOSITORY_DIR);
   }
 
   @Nullable
