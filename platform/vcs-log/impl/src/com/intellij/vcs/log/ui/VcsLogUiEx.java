@@ -53,6 +53,7 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   default ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
     return ((ListenableFuture<Boolean>)getVcsLog().jumpToReference(commitHash));
   }
