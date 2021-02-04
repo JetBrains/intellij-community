@@ -6,6 +6,7 @@ import com.intellij.ide.bookmarks.BookmarkManager
 import com.intellij.ide.bookmarks.BookmarkType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Component
@@ -58,17 +60,23 @@ internal data class BookmarkContext(val project: Project, val file: VirtualFile,
     }
 }
 
-internal val DataContext.editor: Editor?
-  get() {
-    val editor = getData(CommonDataKeys.EDITOR) ?: getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE) ?: return null
-    return if (editor.isOneLineMode) null else editor
-  }
-
 internal val DataContext.context: BookmarkContext?
   get() {
     val project = getData(CommonDataKeys.PROJECT) ?: return null
-    val editor = editor ?: return getData(CommonDataKeys.VIRTUAL_FILE)?.let { BookmarkContext(project, it, null, -1) }
-    val line = getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR) ?: editor.caretModel.logicalPosition.line
-    val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
-    return if (file is LightVirtualFile) null else BookmarkContext(project, file, editor, line)
+    val editor = getData(CommonDataKeys.EDITOR) ?: getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
+    if (editor != null) {
+      if (editor.isOneLineMode) return null
+      val line = getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR) ?: editor.caretModel.logicalPosition.line
+      val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
+      return if (file is LightVirtualFile) null else BookmarkContext(project, file, editor, line)
+    }
+    val psiElement = getData(PlatformDataKeys.PSI_ELEMENT)
+    if (psiElement != null) {
+      val file = PsiUtilCore.getVirtualFile(psiElement)
+      if (file == null || file is LightVirtualFile) return null
+      val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+      val line = document.getLineNumber(psiElement.textOffset)
+      return BookmarkContext(project, file, editor, line)
+    }
+    return null
   }
