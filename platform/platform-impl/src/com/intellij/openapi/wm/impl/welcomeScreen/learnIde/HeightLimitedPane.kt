@@ -6,7 +6,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColors
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.MouseEvent
 import javax.swing.JTextPane
@@ -20,12 +19,8 @@ import javax.swing.text.StyleConstants
  * This panel has limited height by its preferred size and doesn't grow more. The maximum width
  * could be limited as well by setting maximumWidth.
  */
-class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fontColor: Color, isBold: Boolean = false, private val maximumWidth: Int? = null) : JTextPane() {
+class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fontColor: JBColor, private val isBold: Boolean = false, private val maximumWidth: Int? = null) : JTextPane() {
   val style = SimpleAttributeSet()
-
-  // Made for binary compatibility
-  constructor(text: String, relativeFontSize: Int, fontColor: JBColor, isBold: Boolean, maximumWidth: Int):
-    this(text, relativeFontSize, fontColor as Color, isBold, maximumWidth)
 
   init {
     border = JBUI.Borders.empty()

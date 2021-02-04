@@ -157,7 +157,7 @@ class LearningItems : JPanel() {
     modulePanel.add(scaledRigid(0, UISettings.instance.progressModuleGap))
 
     if (expanded.contains(module)) {
-      modulePanel.add(HeightLimitedPane(module.description ?: "", -1, UIUtil.getLabelForeground()).also {
+      modulePanel.add(HeightLimitedPane(module.description ?: "", -1, UIUtil.getLabelForeground() as JBColor).also {
         it.addMouseListener(mouseAdapter)
       })
     }
