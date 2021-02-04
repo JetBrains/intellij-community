@@ -40,7 +40,7 @@ public class FirKotlinHighlightingPassTestGenerated extends AbstractFirKotlinHig
 
         @TestMetadata("AnnotationSupressing.kt")
         public void testAnnotationSupressing() throws Exception {
-            runTest("idea/testData/checker/AnnotationSupressing.kt");
+            runTest("../idea/testData/checker/AnnotationSupressing.kt");
         }
 
         @TestMetadata("AnonymousInitializers.kt")
