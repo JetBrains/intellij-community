@@ -22,9 +22,9 @@ internal class ProcessManagerServerService(
       quotaManager.runIfPermitted {
         coroutineScope {
           val handle = processManager.openHandle(this)
-          val reply = OpenHandleReply.newBuilder()
-            .setHandleId(handle.handleId)
-            .build()
+          val reply = OpenHandleReply.newBuilder().apply {
+            this.handleId = handle.handleId
+          }.build()
           emit(reply)
           // Now it doesn't actually leave the scope until the RPC is cancelled by the client (or due to a disconnect),
           // or until the handle itself is closed through ProcessManager.close().
@@ -48,9 +48,9 @@ internal class ProcessManagerServerService(
                                    commandLine.errFile.takeUnless { it.isEmpty() }?.let { File(it) })
     }
 
-    return CreateProcessReply.newBuilder()
-      .setPid(pid)
-      .build()
+    return CreateProcessReply.newBuilder().apply {
+      this.pid = pid
+    }.build()
   }
 
   override suspend fun destroyProcess(request: DestroyProcessRequest): Empty {
@@ -64,9 +64,9 @@ internal class ProcessManagerServerService(
     val exitCode = ExceptionAsStatus.wrap {
       processManager.awaitTermination(request.handleId)
     }
-    return AwaitTerminationReply.newBuilder()
-      .setExitCode(exitCode)
-      .build()
+    return AwaitTerminationReply.newBuilder().apply {
+      this.exitCode = exitCode
+    }.build()
   }
 
   override fun readStream(request: ReadStreamRequest): Flow<DataChunk> {
@@ -74,9 +74,9 @@ internal class ProcessManagerServerService(
     return ExceptionAsStatus.wrap {
       processManager.readStream(fileHandle.handleId, fileHandle.fd)
     }.map { buffer ->
-      DataChunk.newBuilder()
-        .setBuffer(buffer)
-        .build()
+      DataChunk.newBuilder().apply {
+        this.buffer = buffer
+      }.build()
     }.catch { cause ->
       ExceptionAsStatus.wrap { throw cause }
     }

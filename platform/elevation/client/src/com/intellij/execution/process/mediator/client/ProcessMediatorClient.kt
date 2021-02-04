@@ -51,20 +51,18 @@ class ProcessMediatorClient private constructor(
   suspend fun createProcess(handleId: Long,
                             command: List<String>, workingDir: File, environVars: Map<String, String>,
                             inFile: File?, outFile: File?, errFile: File?): Long {
-    val commandLine = CommandLine.newBuilder()
-      .addAllCommand(command)
-      .setWorkingDir(workingDir.absolutePath)
-      .putAllEnviron(environVars)
-      .apply {
-        inFile?.let { setInFile(it.absolutePath) }
-        outFile?.let { setOutFile(it.absolutePath) }
-        errFile?.let { setErrFile(it.absolutePath) }
-      }
-      .build()
-    val request = CreateProcessRequest.newBuilder()
-      .setHandleId(handleId)
-      .setCommandLine(commandLine)
-      .build()
+    val commandLine = CommandLine.newBuilder().apply {
+      addAllCommand(command)
+      this.workingDir = workingDir.absolutePath
+      putAllEnviron(environVars)
+      inFile?.let { this.inFile = it.absolutePath }
+      outFile?.let { this.outFile = it.absolutePath }
+      errFile?.let { this.errFile = it.absolutePath }
+    }.build()
+    val request = CreateProcessRequest.newBuilder().apply {
+      this.handleId = handleId
+      this.commandLine = commandLine
+    }.build()
     val response = ExceptionAsStatus.unwrap {
       processManagerStub.createProcess(request)
     }
@@ -72,20 +70,20 @@ class ProcessMediatorClient private constructor(
   }
 
   suspend fun destroyProcess(handleId: Long, force: Boolean, destroyGroup: Boolean) {
-    val request = DestroyProcessRequest.newBuilder()
-      .setHandleId(handleId)
-      .setForce(force)
-      .setDestroyGroup(destroyGroup)
-      .build()
+    val request = DestroyProcessRequest.newBuilder().apply {
+      this.handleId = handleId
+      this.force = force
+      this.destroyGroup = destroyGroup
+    }.build()
     ExceptionAsStatus.unwrap {
       processManagerStub.destroyProcess(request)
     }
   }
 
   suspend fun awaitTermination(handleId: Long): Int {
-    val request = AwaitTerminationRequest.newBuilder()
-      .setHandleId(handleId)
-      .build()
+    val request = AwaitTerminationRequest.newBuilder().apply {
+      this.handleId = handleId
+    }.build()
     val reply = ExceptionAsStatus.unwrap {
       processManagerStub.awaitTermination(request)
     }
@@ -93,13 +91,13 @@ class ProcessMediatorClient private constructor(
   }
 
   fun readStream(handleId: Long, fd: Int): Flow<ByteString> {
-    val handle = FileHandle.newBuilder()
-      .setHandleId(handleId)
-      .setFd(fd)
-      .build()
-    val request = ReadStreamRequest.newBuilder()
-      .setHandle(handle)
-      .build()
+    val handle = FileHandle.newBuilder().apply {
+      this.handleId = handleId
+      this.fd = fd
+    }.build()
+    val request = ReadStreamRequest.newBuilder().apply {
+      this.handle = handle
+    }.build()
     val chunkFlow = ExceptionAsStatus.unwrap {
       processManagerStub.readStream(request)
     }
@@ -111,22 +109,22 @@ class ProcessMediatorClient private constructor(
   }
 
   fun writeStream(handleId: Long, fd: Int, chunkFlow: Flow<ByteString>): Flow<Unit> {
-    val handle = FileHandle.newBuilder()
-      .setHandleId(handleId)
-      .setFd(fd)
-      .build()
-    val handleRequest = WriteStreamRequest.newBuilder()
-      .setHandle(handle)
-      .build()
+    val handle = FileHandle.newBuilder().apply {
+      this.handleId = handleId
+      this.fd = fd
+    }.build()
+    val handleRequest = WriteStreamRequest.newBuilder().apply {
+      this.handle = handle
+    }.build()
 
     @Suppress("EXPERIMENTAL_API_USAGE")
     val requests = chunkFlow.map { buffer ->
-      val chunk = DataChunk.newBuilder()
-        .setBuffer(buffer)
-        .build()
-      WriteStreamRequest.newBuilder()
-        .setChunk(chunk)
-        .build()
+      val chunk = DataChunk.newBuilder().apply {
+        this.buffer = buffer
+      }.build()
+      WriteStreamRequest.newBuilder().apply {
+        this.chunk = chunk
+      }.build()
     }.onStart {
       emit(handleRequest)
     }
@@ -138,10 +136,10 @@ class ProcessMediatorClient private constructor(
   }
 
   suspend fun adjustQuota(newOptions: QuotaOptions) {
-    val request = QuotaOptionsMessage.newBuilder()
-      .setTimeLimitMs(newOptions.timeLimitMs)
-      .setIsRefreshable(newOptions.isRefreshable)
-      .build()
+    val request = QuotaOptionsMessage.newBuilder().apply {
+      this.timeLimitMs = newOptions.timeLimitMs
+      this.isRefreshable = newOptions.isRefreshable
+    }.build()
     ExceptionAsStatus.unwrap { daemonStub.adjustQuota(request) }
   }
 
