@@ -29,7 +29,6 @@ HINSTANCE hInst; // Current instance.
 char jvmPath[_MAX_PATH] = "";
 JavaVMOption* vmOptions = NULL;
 int vmOptionCount = 0;
-bool bServerJVM = false;
 HMODULE hJVM = NULL;
 JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
@@ -337,22 +336,14 @@ void TrimLine(char* line)
   }
 }
 
-bool LoadVMOptionsFile(const TCHAR* path, std::vector<std::string>& vmOptionLines)
-{
-  FILE *f = _tfopen(path, _T("rt"));
+bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOptionLines) {
+  FILE *f = fopen(path, "rt");
   if (!f) return false;
 
   char line[4096];
-  while (fgets(line, 4096, f))
-  {
+  while (fgets(line, 4096, f)) {
     TrimLine(line);
-    if (line[0] == '#') continue;
-    if (strcmp(line, "-server") == 0)
-    {
-      bServerJVM = true;
-    }
-    else if (strlen(line) > 0)
-    {
+    if (strlen(line) > 0 && line[0] != '#' && strcmp(line, "-server") != 0) {
       vmOptionLines.push_back(line);
     }
   }
@@ -444,29 +435,6 @@ bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
   return true;
 }
 
-//return VMOptions from one of the files in the following order:
-//$<IDE-NAME>_VM_OPTIONS
-//$CONFIG_DIRECTORY/<ide-name>[64][.exe].vmoptions
-//bin/<ide-name>[64][.exe].vmoptions
-bool FindValidVMOptions(std::vector<std::wstring> files, std::wstring& used, std::vector<std::string>& vmOptionLines)
-{
-  if (files.size() != 0)
-  {
-    for (int i = 0; i < files.size(); i++)
-    {
-      if (GetFileAttributes(files[i].c_str()) != INVALID_FILE_ATTRIBUTES)
-      {
-        if (LoadVMOptionsFile(files[i].c_str(), vmOptionLines))
-        {
-          used += (used.size() ? L"," : L"") + files[i];
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
 std::string getVMOption(int resource){
   TCHAR buffer[_MAX_PATH];
   TCHAR copy[_MAX_PATH];
@@ -511,67 +479,78 @@ void (JNICALL jniExitHook)(jint code) {
   hookExitCode = code;
 }
 
-bool LoadVMOptions()
-{
-  TCHAR buffer[_MAX_PATH];
-  TCHAR copy[_MAX_PATH];
+bool LoadVMOptions() {
+  char bin_vmoptions[_MAX_PATH], buffer1[_MAX_PATH], buffer2[_MAX_PATH], *vmOptionsFile = NULL;
+  std::vector<std::string> lines;
 
-  std::vector<std::wstring> files;
+  GetModuleFileNameA(NULL, bin_vmoptions, _MAX_PATH);
+  size_t moduleBaseLen = strrchr(bin_vmoptions, '\\') - bin_vmoptions;
+  strcat_s(bin_vmoptions, ".vmoptions");
 
-  GetModuleFileName(NULL, buffer, _MAX_PATH);
-  std::wstring module(buffer);
+  // 1. %<IDE_NAME>_VM_OPTIONS%
+  LoadStringA(hInst, IDS_VM_OPTIONS_ENV_VAR, buffer1, _MAX_PATH);
+  if (GetEnvironmentVariableA(buffer1, buffer2, _MAX_PATH) != 0 && LoadVMOptionsFile(buffer2, lines)) {
+    vmOptionsFile = buffer2;
+  }
 
-  if (LoadString(hInst, IDS_VM_OPTIONS_ENV_VAR, buffer, _MAX_PATH))
-  {
-    if (GetEnvironmentVariableW(buffer, copy, _MAX_PATH)) {
-      ExpandEnvironmentStrings(copy, buffer, _MAX_PATH);
-      files.push_back(std::wstring(buffer));
+  // 2. <IDE_HOME>.vmoptions (Toolbox) [+ <IDE_HOME>\bin\<exe_name>.vmoptions]
+  if (vmOptionsFile == NULL) {
+    strcpy_s(buffer1, _MAX_PATH, bin_vmoptions);
+    strcpy_s(buffer1 + moduleBaseLen, _MAX_PATH - moduleBaseLen, ".vmoptions");
+    if (LoadVMOptionsFile(buffer1, lines)) {
+      vmOptionsFile = buffer1;
+      if (std::find(lines.begin(), lines.end(), std::string("-ea")) == lines.end()) {
+        std::vector<std::string> lines2;
+        if (LoadVMOptionsFile(bin_vmoptions, lines2)) {
+          lines.insert(lines.begin(), lines2.begin(), lines2.end());
+        }
+      }
     }
   }
 
-  std::wstring::size_type pos = module.find_last_of('\\');
-  if (pos > 0)
-  {
-    files.push_back(module.substr(0, pos - 4) + L".vmoptions");
+  // 3. <config_directory>\<exe_name>.vmoptions
+  if (vmOptionsFile == NULL) {
+    LoadStringA(hInst, IDS_VM_OPTIONS_PATH, buffer1, _MAX_PATH);
+    ExpandEnvironmentStringsA(buffer1, buffer2, _MAX_PATH);
+    strcat_s(buffer2, bin_vmoptions + moduleBaseLen);
+    if (LoadVMOptionsFile(buffer2, lines)) {
+      vmOptionsFile = buffer2;
+    }
   }
 
-  if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH))
-  {
-    ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
-    std::wstring selector(copy);
-    files.push_back(selector + module.substr(module.find_last_of('\\')) + L".vmoptions");
+  // 4. <IDE_HOME>\bin\<exe_name>.vmoptions [+ <config_directory>\user.vmoptions]
+  if (vmOptionsFile == NULL) {
+    if (LoadVMOptionsFile(bin_vmoptions, lines)) {
+      vmOptionsFile = bin_vmoptions;
+    }
+    char *p = strrchr(buffer2, '\\');
+    strcpy_s(p, _MAX_PATH - (p - buffer2), "\\user.vmoptions");
+    if (LoadVMOptionsFile(buffer2, lines)) {
+      vmOptionsFile = buffer2;
+    }
   }
 
-  files.push_back(module + L".vmoptions");
-
-  std::wstring used;
-  std::vector<std::string> vmOptionLines;
-
-  if (!FindValidVMOptions(files, used, vmOptionLines))
-  {
-    std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
-    MessageBoxA(NULL, "Cannot find VM options file", error.c_str(), MB_OK);
-    return false;
+  if (vmOptionsFile != NULL) {
+    lines.push_back(std::string("-Djb.vmOptionsFile=") + vmOptionsFile);
+  }
+  else {
+    wchar_t *title = NULL;
+    if (LoadStringW(hInst, IDS_ERROR_LAUNCHING_APP, (LPWSTR)(&title), 0) != 0) {
+      MessageBoxW(NULL, L"Cannot find VM options file", title, MB_OK);
+    }
   }
 
-  vmOptionLines.push_back(std::string("-Djb.vmOptionsFile=") + EncodeWideACP(used));
+  AddClassPathOptions(lines);
 
-  if (!AddClassPathOptions(vmOptionLines)) return false;
-  std::string dllName(jvmPath);
-  std::string binDirs = dllName + "\\bin;" + dllName + "\\bin\\server";
+  AddPredefinedVMOptions(lines);
 
-  vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
-  AddPredefinedVMOptions(vmOptionLines);
-
-  vmOptionCount = vmOptionLines.size() + 1;
-  vmOptions = (JavaVMOption*)malloc(vmOptionCount * sizeof(JavaVMOption));
-
-  vmOptions[0].optionString = "exit";
-  vmOptions[0].extraInfo = jniExitHook; // It's our method defined above this one
-  for (int i = 0; i < vmOptionLines.size(); i++)
-  {
-    vmOptions[i + 1].optionString = _strdup(vmOptionLines[i].c_str());
-    vmOptions[i + 1].extraInfo = 0;
+  vmOptionCount = (int)lines.size() + 1;
+  vmOptions = (JavaVMOption *)calloc(vmOptionCount, sizeof(JavaVMOption));
+  vmOptions[0].optionString = (char *)"exit";
+  vmOptions[0].extraInfo = (void *)jniExitHook;
+  for (int i = 0; i < lines.size(); i++) {
+    vmOptions[i + 1].optionString = _strdup(lines[i].c_str());
+    vmOptions[i + 1].extraInfo = NULL;
   }
 
   return true;
@@ -579,18 +558,8 @@ bool LoadVMOptions()
 
 bool LoadJVMLibrary()
 {
-  std::string dllName(jvmPath);
-  std::string binDir = dllName + "\\bin";
-  std::string serverDllName = binDir + "\\server\\jvm.dll";
-  std::string clientDllName = binDir + "\\client\\jvm.dll";
-  if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
-  {
-    dllName = serverDllName;
-  }
-  else
-  {
-    dllName = clientDllName;
-  }
+  std::string binDir = std::string(jvmPath) + "\\bin";
+  std::string dllName = binDir + "\\server\\jvm.dll";
 
   // Sometimes the parent process may call SetDllDirectory to change its own context, and this will be inherited by the
   // launcher. In that case, we won't be able to load the libraries from the current directory that is set below. So, to

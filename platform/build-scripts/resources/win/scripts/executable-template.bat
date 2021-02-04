@@ -70,35 +70,58 @@ IF NOT ERRORLEVEL 1 SET BITS=64
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
 SET VM_OPTIONS_FILE=
+SET USER_VM_OPTIONS_FILE=
 IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" (
-  :: explicit
+  :: 1. %<IDE_NAME>_VM_OPTIONS%
   IF EXIST "%@@product_uc@@_VM_OPTIONS%" SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
 )
 IF "%VM_OPTIONS_FILE%" == "" (
-  :: Toolbox
-  IF EXIST "%IDE_HOME%.vmoptions" SET VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
+  :: 2. <IDE_HOME>.vmoptions || <IDE_HOME>\bin\<exe_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
+  IF EXIST "%IDE_HOME%.vmoptions" (
+    SET VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
+    FINDSTR /B /C:"-ea" "%IDE_HOME%.vmoptions" > NUL
+    IF ERRORLEVEL 1 IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
+      :: partial - prepend with default options
+      SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+      SET USER_VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
+    )
+  )
 )
 IF "%VM_OPTIONS_FILE%" == "" (
-  :: user-overridden
+  :: 3. <config_directory>\<exe_name>.vmoptions
   IF EXIST "%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions" (
     SET VM_OPTIONS_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions
   )
 )
 IF "%VM_OPTIONS_FILE%" == "" (
-  :: default, standard installation
-  IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
-)
-IF "%VM_OPTIONS_FILE%" == "" (
-  :: default, universal package
-  IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
+  :: 4. <IDE_HOME>\bin\[win\]<exe_name>.vmoptions [+ <config_directory>\user.vmoptions]
+  IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
+    SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+  ) ELSE IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" (
+    SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
+  )
+  IF EXIST "%APPDATA%\@@product_vendor@@\@@system_selector@@\user.vmoptions" (
+    SET USER_VM_OPTIONS_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\user.vmoptions
+  )
 )
 
 SET ACC=
+IF "%VM_OPTIONS_FILE%" == "" IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
+  SET VM_OPTIONS_FILE=%USER_VM_OPTIONS_FILE%
+  SET USER_VM_OPTIONS_FILE=
+)
 IF "%VM_OPTIONS_FILE%" == "" (
   ECHO ERROR: cannot find VM options file.
 ) ELSE (
-  SET ACC=-Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
+  IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
+    SET ACC=-Djb.vmOptionsFile="%USER_VM_OPTIONS_FILE%"
+  ) ELSE (
+    SET ACC=-Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
+  )
   FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+  IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
+    FOR /F "eol=# usebackq delims=" %%i IN ("%USER_VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+  )
 )
 
 @@class_path@@

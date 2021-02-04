@@ -7,25 +7,19 @@
 @implementation VMOptionsReader {
 }
 
-+ (NSArray *)readFile:(NSString *)path {
-    NSMutableArray *answer = [NSMutableArray array];
-
++ (NSMutableArray *)readFile:(NSString *)path {
     NSString *contents = readFile(path);
-    if (contents) {
-        NSArray *lines = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-        for (NSString *line in lines) {
-            NSString *trimmedLine = trim(line);
-            if ([trimmedLine length] > 0) {
-                if ([trimmedLine characterAtIndex:0] != '#') {
-                    [answer addObject:trimmedLine];
-                }
-            }
+    if (contents == nil) return nil;
+
+    NSMutableArray *answer = [NSMutableArray array];
+    NSArray *lines = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+    for (NSString *line in lines) {
+        NSString *trimmedLine = trim(line);
+        if ([trimmedLine length] > 0 && [trimmedLine characterAtIndex:0] != '#') {
+            [answer addObject:trimmedLine];
         }
-
-        return answer;
     }
-
-    return nil;
+    return answer;
 }
 
 @end

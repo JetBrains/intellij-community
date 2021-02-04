@@ -161,30 +161,43 @@ if [ -n "$__product_uc___PROPERTIES" ]; then
 fi
 
 VM_OPTIONS_FILE=""
+USER_VM_OPTIONS_FILE=""
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; then
-  # explicit
+  # 1. $<IDE_NAME>_VM_OPTIONS
   VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
 elif [ -r "${IDE_HOME}.vmoptions" ]; then
-  # Toolbox
+  # 2. <IDE_HOME>.vmoptions || <IDE_HOME>/bin/<bin_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
   VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
+  if ! "$GREP" -q -e "^-ea$" "${IDE_HOME}.vmoptions" && [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
+    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
+    USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
+  fi
 elif [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions" ]; then
-  # user-overridden
+  # 3. <config_directory>/<bin_name>.vmoptions
   VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions"
-elif [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
-  # default, standard installation
-  VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
 else
-  # default, universal package
-  test "$OS_TYPE" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
-  if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions" ]; then
-    VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
+  # 4. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions [+ <config_directory>/user.vmoptions]
+  if [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
+    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
+  else
+    test "$OS_TYPE" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
+    if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions" ]; then
+      VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
+    fi
+  fi
+  if [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions" ]; then
+    if [ -n "$VM_OPTIONS_FILE" ]; then
+      VM_OPTIONS="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions"
+    else
+      USER_VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions"
+    fi
   fi
 fi
 
 VM_OPTIONS=""
 if [ -n "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=$("$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*")
+  VM_OPTIONS=$("$CAT" "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" | "$GREP" -v "^#.*")
 else
   message "Cannot find VM options file"
 fi
@@ -207,7 +220,7 @@ IFS="$(printf '\n\t')"
   "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
   "-Didea.vendor.name=${PRODUCT_VENDOR}" \
   "-Didea.paths.selector=${PATHS_SELECTOR}" \
-  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
+  "-Djb.vmOptionsFile=${USER_VM_OPTIONS_FILE:-${VM_OPTIONS_FILE}}" \
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \
   com.intellij.idea.Main \

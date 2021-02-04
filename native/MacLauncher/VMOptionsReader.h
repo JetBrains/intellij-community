@@ -4,5 +4,5 @@
 
 
 @interface VMOptionsReader : NSObject
-+ (NSArray *) readFile: (NSString *)path;
++ (NSMutableArray *) readFile: (NSString *)path;
 @end
