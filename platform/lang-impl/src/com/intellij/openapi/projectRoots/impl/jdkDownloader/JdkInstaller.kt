@@ -85,6 +85,8 @@ class JdkInstaller : JdkInstallerBase() {
     fun getInstance() = service<JdkInstaller>()
   }
 
+  override fun findHistoryRoots(feedItem: JdkItem): List<Path> = service<JdkInstallerStore>().findInstallations(feedItem)
+
   override fun wslDistributionFromPath(targetDir: Path): WSLDistributionForJdkInstaller? {
     val d = WslPath.getDistributionByWindowsUncPath(targetDir.toString()) ?: return null
     return wrap(d)
@@ -103,6 +105,7 @@ class JdkInstaller : JdkInstallerBase() {
     JDK_INSTALL_LISTENER_EP_NAME.forEachExtensionSafe { it.onJdkDownloadStarted(request, project) }
     try {
       super.installJdkImpl(request, indicator, project)
+      runCatching { service<JdkInstallerStore>().registerInstall(request.item, request.installDir) }
     } finally {
       JDK_INSTALL_LISTENER_EP_NAME.forEachExtensionSafe { it.onJdkDownloadFinished(request, project) }
     }
@@ -262,7 +265,6 @@ abstract class JdkInstallerBase {
         }
 
         runCatching { writeMarkerFile(request) }
-        runCatching { service<JdkInstallerStore>().registerInstall(item, targetDir) }
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
@@ -385,10 +387,10 @@ abstract class JdkInstallerBase {
       val localRoots = run {
         val defaultInstallDir = defaultInstallDir()
         if (!defaultInstallDir.isDirectory()) return@run listOf()
-        Files.list(defaultInstallDir).use{ it.toList() }
+        Files.list(defaultInstallDir).use { it.toList() }
       }
 
-      val historyRoots = service<JdkInstallerStore>().findInstallations(feedItem)
+      val historyRoots = findHistoryRoots(feedItem)
       for (installDir in localRoots + historyRoots) {
         if (!installDir.isDirectory()) continue
 
@@ -396,8 +398,7 @@ abstract class JdkInstallerBase {
         if (item != feedItem) continue
 
         val jdkHome = item.resolveJavaHome(installDir)
-        if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome) &&
-            wslDistributionFromPath(jdkHome) == distribution) {
+        if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome) && wslDistributionFromPath(jdkHome) == distribution) {
           return LocallyFoundJdk(feedItem, installDir, jdkHome)
         }
       }
@@ -408,6 +409,7 @@ abstract class JdkInstallerBase {
     return null
   }
 
+  protected open fun findHistoryRoots(feedItem: JdkItem): List<Path> = listOf()
   protected abstract fun wslDistributionFromPath(targetDir: Path) : WSLDistributionForJdkInstaller?
 }
 
