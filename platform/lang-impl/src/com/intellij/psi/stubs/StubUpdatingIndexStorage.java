@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
@@ -55,7 +56,7 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
 
   @Override
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
-    throws MapInputException, ProcessCanceledException {
+    throws MapReduceIndexMappingException, ProcessCanceledException {
     Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
     IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
 

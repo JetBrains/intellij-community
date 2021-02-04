@@ -49,12 +49,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
+import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.IndexedFilesListener;
 import com.intellij.util.indexing.events.VfsEventsMerger;
-import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
@@ -855,7 +856,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (e instanceof ProcessCanceledException) {
       return null;
     }
-    if (e instanceof MapReduceIndex.MapInputException) {
+    if (e instanceof MapReduceIndexMappingException) {
       // If exception has happened on input mapping (DataIndexer.map),
       // it is handled as the indexer exception and must not lead to index rebuild.
       return null;
@@ -957,7 +958,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if(myStorageBufferingHandler.runUpdate(true, () -> task.processAll(documentsToProcessForProject, project)) &&
            documentsToProcessForProject.size() == documents.size() &&
            !hasActiveTransactions()
-          ) {
+        ) {
           ProgressManager.checkCanceled();
           myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
         }
@@ -1172,8 +1173,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       Throwable initializationProblem = getState().getInitializationProblem(indexId);
       String message = "Index is not created for `" + indexId.getName() + "`";
       throw initializationProblem != null
-      ? new IllegalStateException(message, initializationProblem)
-      : new IllegalStateException(message);
+            ? new IllegalStateException(message, initializationProblem)
+            : new IllegalStateException(message);
     }
     return index;
   }
@@ -1196,21 +1197,21 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   private Predicate<VirtualFile> filesToBeIndexedForProjectCondition(Project project) {
     return virtualFile -> {
-        if (!virtualFile.isValid()) {
+      if (!virtualFile.isValid()) {
+        return true;
+      }
+
+      for (IndexableFileSet set : myIndexableSets) {
+        final Project proj = myIndexableSetToProjectMap.get(set);
+        if (proj != null && !proj.equals(project)) {
+          continue; // skip this set as associated with a different project
+        }
+        if (ReadAction.compute(() -> set.isInSet(virtualFile))) {
           return true;
         }
-
-        for (IndexableFileSet set : myIndexableSets) {
-          final Project proj = myIndexableSetToProjectMap.get(set);
-          if (proj != null && !proj.equals(project)) {
-            continue; // skip this set as associated with a different project
-          }
-          if (ReadAction.compute(() -> set.isInSet(virtualFile))) {
-            return true;
-          }
-        }
-        return false;
-      };
+      }
+      return false;
+    };
   }
 
   public boolean isFileUpToDate(VirtualFile file) {
@@ -1452,11 +1453,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       long mapInputTime = System.nanoTime();
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
-      } catch (MapReduceIndex.MapInputException e) {
-        LOG.error(e);
+      } catch (MapReduceIndexMappingException e) {
         if (currentFC != null) {
           setIndexedState(index, currentFC, inputId, false);
         }
+        BrokenIndexingDiagnostics.INSTANCE.getExceptionListener().onFileIndexMappingFailed(
+          inputId,
+          currentFC != null ? currentFC.getFile() : file,
+          currentFC != null ? currentFC.getFileType() : file != null ? file.getFileType() : null,
+          indexId,
+          e
+        );
         return null;
       } finally {
         mapInputTime = System.nanoTime() - mapInputTime;
@@ -1914,12 +1921,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull Predicate<? super VirtualFile> condition) {
     return filter instanceof ProjectSpecificInputFilter
-    ? new ProjectSpecificInputFilter() {
+           ? new ProjectSpecificInputFilter() {
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {
         return ((ProjectSpecificInputFilter)filter).acceptInput(file) && condition.test(file.getFile());
       }
     }
-    : file -> filter.acceptInput(file) && condition.test(file);
+           : file -> filter.acceptInput(file) && condition.test(file);
   }
 }

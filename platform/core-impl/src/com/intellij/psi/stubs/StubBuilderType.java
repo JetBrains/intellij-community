@@ -42,6 +42,16 @@ class StubBuilderType {
     myProperties = Collections.emptyList();
   }
 
+  @NotNull Class<?> getClassToBlameInCaseOfException() {
+    if (myElementType != null) {
+      return myElementType.getClass();
+    }
+    if (myBinarySubBuilder == null) {
+      return myBinaryFileStubBuilder.getClass();
+    }
+    return myBinarySubBuilder.getClass();
+  }
+
   BinaryFileStubBuilder getBinaryFileStubBuilder() {
     return myBinaryFileStubBuilder;
   }

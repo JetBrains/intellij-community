@@ -4,12 +4,14 @@ package com.intellij.psi.impl.cache.impl.todo;
 
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IntInlineKeyDescriptor;
@@ -97,7 +99,13 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
     @NotNull
     @Override
     public Map<TodoIndexEntry, Integer> map(@NotNull FileContent inputData, @NotNull DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
-      return indexer.map(inputData);
+      try {
+        return indexer.map(inputData);
+      }
+      catch (Exception e) {
+        if (e instanceof ControlFlowException) throw e;
+        throw new MapReduceIndexMappingException(e, indexer.getClass());
+      }
     }
   };
 

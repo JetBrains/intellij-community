@@ -249,7 +249,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @Override
-  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
+  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content)
+    throws MapReduceIndexMappingException, ProcessCanceledException {
     InputData<Key, Value> data;
     try {
       data = mapInput(inputId, content);
@@ -257,8 +258,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     catch (ProcessCanceledException e) {
       throw e;
     }
+    catch (MapReduceIndexMappingException e) {
+      throw e;
+    }
     catch (Exception e) {
-      throw new MapInputException("Failed to map data for input " + inputId + " for index " + myIndexId.getName(), e);
+      throw new MapReduceIndexMappingException(e, myExtension.getClass());
     }
 
     UpdateData<Key, Value> updateData = new UpdateData<>(
@@ -270,16 +274,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     );
 
     return new IndexUpdateComputable(updateData, data);
-  }
-
-  /**
-   * An exception occurred while mapping data for a single file by its associated indexer.
-   * We should not rebuild the whole index if indexing of only one file has failed.
-   */
-  public static final class MapInputException extends RuntimeException {
-    public MapInputException(String message, Throwable cause) {
-      super(message, cause);
-    }
   }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
