@@ -91,6 +91,18 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
         }
         queueDetection();
       }
+
+      @Override
+      public void extensionRemoved(@NotNull FrameworkDetector extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+        synchronized (myLock) {
+          myDetectorsToProcess.remove(extension.getDetectorId());
+        }
+        DetectedFrameworksData frameworksData = myDetectedFrameworksData;
+        if (frameworksData != null) {
+          frameworksData.updateFrameworksList(extension.getDetectorId(), Collections.emptyList());
+        }
+      }
     }, project);
   }
 
