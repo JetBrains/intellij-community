@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
@@ -1338,7 +1339,19 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
       else {
-        tracker = getDefaultPositionTracker(anchor)
+        tracker = object : PositionTracker<Balloon>(toolWindowPane) {
+          override fun recalculateLocation(`object`: Balloon): RelativePoint {
+            val bounds = toolWindowPane!!.bounds
+            val target = StartupUiUtil.getCenterPoint(bounds, Dimension(1, 1))
+            when {
+              ToolWindowAnchor.TOP == anchor -> target.y = 0
+              ToolWindowAnchor.BOTTOM == anchor -> target.y = bounds.height - 3
+              ToolWindowAnchor.LEFT == anchor -> target.x = 0
+              ToolWindowAnchor.RIGHT == anchor -> target.x = bounds.width
+            }
+            return RelativePoint(toolWindowPane!!, target)
+          }
+        }
       }
       if (!balloon.isDisposed) {
         balloon.show(tracker, position.get())
@@ -1370,32 +1383,30 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val balloon = createBalloon(options, entry)
-    val button = toolWindowPane!!.getSquareStripeFor(entry.readOnlyWindowInfo.largeStripeAnchor)?.getButtonFor(options.toolWindowId)
+    var button = toolWindowPane!!.getSquareStripeFor(entry.readOnlyWindowInfo.largeStripeAnchor)?.getButtonFor(options.toolWindowId) as ActionButton?
+    if (button == null || !button.isShowing) {
+      button = (toolWindowPane!!.getSquareStripeFor(ToolWindowAnchor.LEFT) as? ToolwindowLeftToolbar)?.moreButton!!
+      position.set(Balloon.Position.atLeft)
+    }
     val show = Runnable {
-      val tracker: PositionTracker<Balloon>
-      if (button != null && button.isShowing) {
-        tracker = object : PositionTracker<Balloon>(button) {
-          override fun recalculateLocation(`object`: Balloon): RelativePoint? {
-            val otherEntry = idToEntry[options.toolWindowId] ?: return null
-            if (otherEntry.readOnlyWindowInfo.largeStripeAnchor != anchor) {
-              `object`.hide()
-              return null
-            }
-
-            return RelativePoint(button,
-                                 Point(if (position.get() == Balloon.Position.atRight) 0 else button.bounds.width, button.height / 2))
+      val tracker = object : PositionTracker<Balloon>(button) {
+        override fun recalculateLocation(`object`: Balloon): RelativePoint? {
+          val otherEntry = idToEntry[options.toolWindowId] ?: return null
+          if (otherEntry.readOnlyWindowInfo.largeStripeAnchor != anchor) {
+            `object`.hide()
+            return null
           }
+
+          return RelativePoint(button,
+                               Point(if (position.get() == Balloon.Position.atRight) 0 else button.bounds.width, button.height / 2))
         }
-      }
-      else {
-        tracker = getDefaultPositionTracker(anchor)
       }
       if (!balloon.isDisposed) {
         balloon.show(tracker, position.get())
       }
     }
 
-    if (button != null && button.isValid) {
+    if (button.isValid) {
       show.run()
     }
     else {
@@ -1430,21 +1441,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     Disposer.register(entry.disposable, balloon)
     return balloon
   }
-
-  private fun getDefaultPositionTracker(anchor: ToolWindowAnchor) =
-    object : PositionTracker<Balloon>(toolWindowPane) {
-      override fun recalculateLocation(`object`: Balloon): RelativePoint {
-        val bounds = toolWindowPane!!.bounds
-        val target = StartupUiUtil.getCenterPoint(bounds, Dimension(1, 1))
-        when {
-          ToolWindowAnchor.TOP == anchor -> target.y = 0
-          ToolWindowAnchor.BOTTOM == anchor -> target.y = bounds.height - 3
-          ToolWindowAnchor.LEFT == anchor -> target.x = 0
-          ToolWindowAnchor.RIGHT == anchor -> target.x = bounds.width
-        }
-        return RelativePoint(toolWindowPane!!, target)
-      }
-    }
 
 
   override fun getToolWindowBalloon(id: String) = idToEntry[id]?.balloon

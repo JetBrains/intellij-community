@@ -12,7 +12,7 @@ import javax.swing.JPanel
 class ToolwindowLeftToolbar : ToolwindowToolbar() {
   private val topPane: JPanel
   private val bottomPane: JPanel
-  private val moreButton: MoreSquareStripeButton
+  val moreButton: MoreSquareStripeButton
 
   init {
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 0, 0, 1)
