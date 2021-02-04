@@ -39,7 +39,6 @@ public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
   @NotNull
   public static AccessToken start(@NotNull @NonNls String activityName) {
     if (!SwingUtilities.isEventDispatchThread()) {
-      // some crazy highlighting queries getData outside EDT: https://youtrack.jetbrains.com/issue/IDEA-162970
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
     ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName);
@@ -56,6 +55,9 @@ public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
   }
 
   public static <T> T prohibitEventsInside(@NonNls @NotNull String activityName, @NotNull Supplier<? extends T> supplier) {
+    if (!SwingUtilities.isEventDispatchThread()) {
+      return supplier.get();
+    }
     ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName);
     IdeEventQueue.getInstance().addPostprocessor(dispatcher, null);
     try {
@@ -69,6 +71,9 @@ public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
   }
 
   public static boolean areEventsProhibited() {
+    if (!SwingUtilities.isEventDispatchThread()) {
+      return false;
+    }
     return ourUseCount != 0;
   }
 }
