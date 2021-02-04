@@ -32,7 +32,6 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="delight-rhino-sandbox" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="netty-handler-proxy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" exported="" />
