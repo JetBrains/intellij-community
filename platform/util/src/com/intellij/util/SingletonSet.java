@@ -4,6 +4,7 @@ package com.intellij.util;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SingletonIterator;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,7 +13,10 @@ import java.util.Set;
 
 /**
  * Read-only set consisting of the only element
+ * @deprecated Use {@link java.util.Collections#singleton(Object)}
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public class SingletonSet<E> implements Set<E> {
   private final E theElement;
 
@@ -103,26 +107,5 @@ public class SingletonSet<E> implements Set<E> {
   @NotNull
   protected TObjectHashingStrategy<E> getStrategy() {
     return ContainerUtil.canonicalStrategy();
-  }
-
-  @NotNull
-  public static <T> Set<T> withCustomStrategy(T o, @NotNull TObjectHashingStrategy<T> strategy) {
-    return new CustomStrategySingletonSet<>(o, strategy);
-  }
-
-  private static final class CustomStrategySingletonSet<E> extends SingletonSet<E> {
-    @NotNull private final TObjectHashingStrategy<E> strategy;
-
-    private CustomStrategySingletonSet(E e, @NotNull final TObjectHashingStrategy<E> strategy) {
-      super(e);
-      this.strategy = strategy;
-    }
-
-
-    @Override
-    @NotNull
-    protected TObjectHashingStrategy<E> getStrategy() {
-      return strategy;
-    }
   }
 }
