@@ -98,6 +98,15 @@ class JdkInstaller : JdkInstallerBase() {
         return d.executeOnWsl(command, WSLCommandLineOptions().setRemoteWorkingDirectory(dir), timeout, null)
       }
     }
+
+  override fun installJdkImpl(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
+    JDK_INSTALL_LISTENER_EP_NAME.forEachExtensionSafe { it.onJdkDownloadStarted(request, project) }
+    try {
+      super.installJdkImpl(request, indicator, project)
+    } finally {
+      JDK_INSTALL_LISTENER_EP_NAME.forEachExtensionSafe { it.onJdkDownloadFinished(request, project) }
+    }
+  }
 }
 
 interface WSLDistributionForJdkInstaller {
@@ -186,9 +195,7 @@ abstract class JdkInstallerBase {
   /**
    * @see [JdkInstallRequest.javaHome] for the actual java home, it may not match the [JdkInstallRequest.installDir]
    */
-  private fun installJdkImpl(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
-    JDK_INSTALL_LISTENER_EP_NAME.forEachExtensionSafe { it.onJdkDownloadStarted(request, project) }
-
+  protected open fun installJdkImpl(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
     val item = request.item
     indicator?.text = ProjectBundle.message("progress.text.installing.jdk.1", item.fullPresentationText)
 
@@ -270,7 +277,6 @@ abstract class JdkInstallerBase {
     }
     finally {
       runCatching { FileUtil.delete(downloadFile) }
-      JDK_INSTALL_LISTENER_EP_NAME.forEachExtensionSafe { it.onJdkDownloadFinished(request, project) }
     }
   }
 
