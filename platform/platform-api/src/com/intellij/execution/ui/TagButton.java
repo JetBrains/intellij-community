@@ -18,8 +18,10 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseListener;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -78,6 +80,31 @@ public class TagButton extends JBLayeredPane implements Disposable {
     add(myCloseButton, JLayeredPane.POPUP_LAYER);
 
     layoutButtons();
+  }
+
+  @Override
+  public synchronized void removeFocusListener(FocusListener l) {
+    myButton.removeFocusListener(l);
+  }
+
+  @Override
+  public synchronized void addFocusListener(FocusListener l) {
+    myButton.addFocusListener(l);
+  }
+
+  @Override
+  public synchronized void addMouseListener(MouseListener l) {
+    myButton.addMouseListener(l);
+  }
+
+  @Override
+  public synchronized void removeMouseListener(MouseListener l) {
+    myButton.removeMouseListener(l);
+  }
+
+  @Override
+  public boolean hasFocus() {
+    return myButton.hasFocus();
   }
 
   public void setToolTip(@Nls String toolTip) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.execution.ui.TagButton;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -363,7 +364,8 @@ public class ComponentValidator {
   private static Optional<Component> getFocusable(Component source) {
     return (source instanceof JComboBox && !((JComboBox)source).isEditable() ||
             source instanceof JCheckBox ||
-            source instanceof JRadioButton) ?
+            source instanceof JRadioButton ||
+            source instanceof TagButton) ?
            Optional.of(source) :
            UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst();
   }
