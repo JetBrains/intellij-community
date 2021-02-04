@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
@@ -257,6 +258,14 @@ public final class PluginManagerConfigurable
       }
     });
     actions.addSeparator();
+    actions.add(new DumbAwareAction("Plugins certificates") {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginCertificateManager())) {
+          resetPanels();
+        }
+      }
+    });
     actions.add(new InstallFromDiskAction());
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));

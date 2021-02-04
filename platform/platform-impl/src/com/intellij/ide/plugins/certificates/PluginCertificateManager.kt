@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.Tree
@@ -23,13 +22,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.CardLayout
 import java.security.cert.X509Certificate
-import java.util.HashSet
 import javax.swing.JPanel
 import javax.swing.tree.TreeSelectionModel
 
 class PluginCertificateManager :
   BoundConfigurable(
-    UIBundle.message("plugins.certificates.display.name"),
+    IdeBundle.message("plugins.certificates.display.name"),
     "plugin.certificates"
   ), Configurable.NoScroll, CertificateListener {
 
