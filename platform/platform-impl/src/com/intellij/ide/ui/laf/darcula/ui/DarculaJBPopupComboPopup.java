@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ComboBoxPopup;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,6 +133,10 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
   @Override
   public boolean isVisible() {
     return myPopup != null && myPopup.isVisible();
+  }
+
+  public ComboBoxPopup<T> getComboPopup() {
+    return myPopup;
   }
 
   // in JDK 11 ComboPopup.getList returns JList<Object>, not raw JList
