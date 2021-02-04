@@ -177,6 +177,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
               @Override
               public boolean process(PsiReference reference) {
                 final PsiClass containingClass = ClassUtils.getContainingClass(reference.getElement());
+                if (containingClass == null) return false;
                 if (problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
                   if (containingClass != ref.get()) {
                     problemDescriptionsProcessor.ignoreElement(refEntity);
