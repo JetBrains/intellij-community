@@ -34,11 +34,11 @@
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="netty-handler-proxy" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.ex" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" name="rd-framework" level="project" />

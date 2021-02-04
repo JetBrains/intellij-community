@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.actions
 
 import com.intellij.execution.ExecutionException
@@ -28,7 +28,7 @@ import java.io.IOException
  * @author [Alexey Efimov](mailto:aefimov.box@gmail.com)
  * @author Konstantin Bulenkov
  */
-class EditExternallyAction : DumbAwareAction() {
+internal class EditExternallyAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
     var executablePath = PropertiesComponent.getInstance().getValue(EditExternalImageEditorAction.EXT_PATH_KEY, "")
@@ -46,7 +46,8 @@ class EditExternallyAction : DumbAwareAction() {
         commandLine.exePath = ExecUtil.openCommandPath
         commandLine.addParameter("-a")
         commandLine.addParameter(path)
-      } else {
+      }
+      else {
         commandLine.exePath = path
       }
 
@@ -64,7 +65,8 @@ class EditExternallyAction : DumbAwareAction() {
         Messages.showErrorDialog(e.project, ex.localizedMessage, ImagesBundle.message("error.title.launching.external.editor"));
         ImagesConfigurable.show(e.project)
       }
-    } else {
+    }
+    else {
       try {
         Desktop.getDesktop().open(imageFile.toNioPath().toFile())
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.*;
@@ -143,7 +143,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
         SAXParserFactory.newInstance().newSAXParser().parse(inputStream, new DefaultHandler() {
           boolean isConfigContent = false;
           final StringBuilder builder = new StringBuilder();
-          
+
           @Override
           public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             if (qName.equals("root")) {
@@ -189,9 +189,9 @@ public abstract class AbstractImportTestsAction extends AnAction {
                     myConfiguration.setName(config.getAttributeValue("name"));
                     myConfiguration.readExternal(config);
                     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
-                    runManager.readBeforeRunTasks(config.getChild("method"), 
+                    runManager.readBeforeRunTasks(config.getChild("method"),
                                                   new RunnerAndConfigurationSettingsImpl(runManager), myConfiguration);
-  
+
                     final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
                     if (executor != null) {
                       if (myConfiguration instanceof SMRunnerConsolePropertiesProvider) {
@@ -202,7 +202,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
                 }
                 myTargetId = config.getAttributeValue("target");
               }
-              catch (Exception e) { 
+              catch (Exception e) {
                 LOG.debug(e);
               }
               throw new TerminateParsingException();
@@ -237,7 +237,8 @@ public abstract class AbstractImportTestsAction extends AnAction {
 
     @Nullable
     @Override
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws
+                                                                                                           ExecutionException {
       if (!myImported) {
         myImported = true;
         return new ImportedTestRunnableState(this, VfsUtilCore.virtualToIoFile(myFile));

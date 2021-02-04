@@ -65,5 +65,6 @@
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
     <orderEntry type="library" scope="TEST" name="org.junit.platform:junit-platform-runner:1.7.0" level="project" />
     <orderEntry type="library" scope="TEST" name="org.junit.platform:junit-platform-suite-api:1.7.0" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
   </component>
 </module>

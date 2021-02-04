@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -28,12 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
-import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
-
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
-public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSchemaConfiguration> {
+public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSchemaConfiguration> {
   private final Project myProject;
   @NotNull private final String mySchemaFilePath;
   @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
@@ -133,7 +131,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   }
 
   public static boolean isValidURL(@NotNull final String url) {
-    return isHttpPath(url) && Urls.parse(url, false) != null;
+    return JsonFileResolver.isHttpPath(url) && Urls.parse(url, false) != null;
   }
 
   private void doValidation() throws ConfigurationException {
@@ -146,7 +144,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     VirtualFile vFile;
     String filename;
 
-    if (isHttpPath(schemaSubPath)) {
+    if (JsonFileResolver.isHttpPath(schemaSubPath)) {
       filename = schemaSubPath;
 
       if (!isValidURL(schemaSubPath)) {

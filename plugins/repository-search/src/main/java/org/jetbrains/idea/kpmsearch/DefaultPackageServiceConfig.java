@@ -4,9 +4,7 @@ package org.jetbrains.idea.kpmsearch;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +14,7 @@ import org.jetbrains.concurrency.Promise;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class DefaultPackageServiceConfig implements PackageSearchEndpointConfig {
+public final class DefaultPackageServiceConfig implements PackageSearchEndpointConfig {
   private static final Object MUTEX = new Object();
   public final static long TIMEOUT = Registry.intValue("packagesearch.timeout");
 

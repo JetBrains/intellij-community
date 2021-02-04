@@ -3,10 +3,10 @@ package org.jetbrains.jsonProtocol
 
 import com.google.gson.stream.JsonWriter
 import com.intellij.util.containers.isNullOrEmpty
-import com.intellij.util.io.writeUtf8
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtf8Writer
+import io.netty.buffer.ByteBufUtil
 import it.unimi.dsi.fastutil.ints.IntList
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.io.JsonUtil
@@ -208,7 +208,7 @@ fun prepareWriteRaw(message: OutMessage, name: String) {
 }
 
 fun doWriteRaw(message: OutMessage, rawValue: String) {
-  message.buffer.writeUtf8(rawValue)
+  ByteBufUtil.writeUtf8(message.buffer, rawValue)
 }
 
 fun OutMessage.writeEnum(name: String, value: Enum<*>?, defaultValue: Enum<*>?) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc
 
 import com.google.gson.Gson
@@ -16,7 +16,6 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.Consumer
 import com.intellij.util.SmartList
 import com.intellij.util.io.releaseIfError
-import com.intellij.util.io.writeUtf8
 import io.netty.buffer.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
@@ -307,7 +306,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
           }
           @Suppress("UNCHECKED_CAST")
           (param as Consumer<StringBuilder>).consume(sb)
-          buffer.writeUtf8(sb)
+          ByteBufUtil.writeUtf8(buffer, sb)
           sb.setLength(0)
         }
         else -> {
