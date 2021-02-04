@@ -161,7 +161,14 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     return response
   }
 
-  fun signInManually(serverName: String, uiLifetime: Lifetime, component: Component) {
+  fun signInManually(server:String, uiLifetime: Lifetime, component: Component) {
+    var serverName = server
+    if (serverName.isBlank()) {
+      val error = SpaceBundle.message("login.panel.error.organization.url.should.not.be.empty")
+      loginState.value = SpaceLoginState.Disconnected("", error)
+      return
+    }
+    serverName = normalizeUrl(serverName)
     launch(uiLifetime, Ui) {
       uiLifetime.usingSource { connectLt ->
         try {
@@ -190,6 +197,13 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
         AppIcon.getInstance().requestFocus(frame as IdeFrame?)
       }
     }
+  }
+
+  private fun normalizeUrl(serverName: String): String {
+    var result = serverName
+    result = if (result.startsWith("https://") || result.startsWith("http://")) result else "https://$result"
+    result = result.removeSuffix("/")
+    return result
   }
 
   fun signOut() {
