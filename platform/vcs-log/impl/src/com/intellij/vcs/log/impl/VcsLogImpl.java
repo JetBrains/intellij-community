@@ -41,7 +41,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.vcs.log.ui.table.GraphTableModel.COMMIT_DOES_NOT_MATCH;
@@ -136,10 +135,9 @@ public class VcsLogImpl implements VcsLog {
   }
 
   private int getRowOfCommitByPartOfHash(@NotNull VisiblePack visiblePack, @NotNull String partialHash) {
-    Predicate<CommitId> hashByString = new CommitIdByStringCondition(partialHash);
     Ref<Boolean> commitExists = new Ref<>(false);
     CommitId commitId = myLogData.getStorage().findCommitId(commitId1 -> {
-      if (hashByString.test(commitId1)) {
+      if (CommitIdByStringCondition.matches(commitId1, partialHash)) {
         commitExists.set(true);
         return getRowOfCommitWithoutCheck(visiblePack, commitId1.getHash(), commitId1.getRoot()) >= 0;
       }
