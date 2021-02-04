@@ -180,5 +180,10 @@ internal class Timeout(private val millis: Long) {
 }
 
 internal fun dumpThreads(pid: Long) {
-  runProcess("jstack", "$pid")
+  val jstack = System.getenv("JAVA_HOME")
+                 ?.removeSuffix("/")
+                 ?.removeSuffix("\\")
+                 ?.let { "$it/bin/jstack" }
+               ?: "jstack"
+  runProcess(jstack, "$pid")
 }
