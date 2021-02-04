@@ -62,8 +62,8 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
           return JavaErrorBundle.message("create.class.action.this.not.valid.java.qualified.name");
         }
         String shortName = StringUtil.getShortName(inputString);
-        if (HighlightClassUtil.isContextualKeyword(shortName, level)) {
-          return JavaErrorBundle.message("contextual.keyword", shortName);
+        if (HighlightClassUtil.isRestrictedIdentifier(shortName, level)) {
+          return JavaErrorBundle.message("restricted.identifier", shortName);
         }
         return null;
       }

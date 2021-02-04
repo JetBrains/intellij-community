@@ -48,7 +48,7 @@ class YieldStatements {
     }
   }
   
-  class <error descr="'yield' is a contextual keyword and cannot be used for type declarations">yield</error> {
+  class <error descr="'yield' is a restricted identifier and cannot be used for type declarations">yield</error> {
     void test(<error descr="Illegal reference to restricted type 'yield'">yield</error> yield) {
       
     }
