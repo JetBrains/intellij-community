@@ -19,6 +19,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.ToolWindowManager
@@ -106,8 +107,11 @@ class PythonOnboardingTour(module: Module) :
     searchEverywhereTasks()
 
     task {
+      val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
+      val welcomeScreenRemark = if (isSingleProject) PythonLessonsBundle.message("python.onboarding.return.to.welcome") else ""
       text(PythonLessonsBundle.message("python.onboarding.epilog",
                                        getCallBackActionId("CloseProject"),
+                                       welcomeScreenRemark,
                                        getCallBackActionId("NewDirectoryProject"),
                                        getCallBackActionId("OpenFile"),
                                        LearningUiManager.addCallback { LearningUiManager.resetModulesView() }))
@@ -350,7 +354,8 @@ class PythonOnboardingTour(module: Module) :
     }
 
     task("EditorChooseLookupItem") {
-      text(PythonLessonsBundle.message("python.onboarding.choose.values.item", code("values"), strong("var")))
+      text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
+                                       code("values"), strong("val")))
       trigger(it) {
         checkEditorModification(completionPosition, "/len(values)")
       }
