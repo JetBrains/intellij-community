@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -101,12 +102,14 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private final ReentrantLock myCookieManagerLock = new ReentrantLock();
   protected volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
+  private final boolean myIsDefaultClient;
 
-  JBCefBrowserBase(@NotNull JBCefClient cefClient, @NotNull CefBrowser cefBrowser, boolean newBrowserCreated) {
+  JBCefBrowserBase(@NotNull JBCefClient cefClient, @NotNull CefBrowser cefBrowser, boolean isNewBrowserCreated, boolean isDefaultClient) {
     myCefClient = cefClient;
     myCefBrowser = cefBrowser;
+    myIsDefaultClient = isDefaultClient;
 
-    if (newBrowserCreated) {
+    if (isNewBrowserCreated) {
       cefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
         @Override
         public void onAfterCreated(CefBrowser browser) {
@@ -229,6 +232,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myDisposeHelper.dispose(() -> {
       if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
       if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
+      myCefBrowser.stopLoad();
+      myCefBrowser.close(true);
+      if (myIsDefaultClient) {
+        Disposer.dispose(myCefClient);
+      }
     });
   }
 

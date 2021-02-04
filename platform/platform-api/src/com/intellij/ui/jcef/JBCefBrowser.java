@@ -55,7 +55,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
     Collections.synchronizedList(new ArrayList<>(1));
 
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
-  private final boolean myIsDefaultClient;
   private JDialog myDevtoolsFrame = null;
   protected CefContextMenuHandler myDefaultContextMenuHandler;
 
@@ -126,11 +125,10 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   private JBCefBrowser(@Nullable CefBrowser cefBrowser, @NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
-    super(client, createBrowser(cefBrowser, client.getCefClient(), url), cefBrowser == null);
+    super(client, createBrowser(cefBrowser, client.getCefClient(), url), cefBrowser == null, isDefaultClient);
     if (client.isDisposed()) {
       throw new IllegalArgumentException("JBCefClient is disposed");
     }
-    myIsDefaultClient = isDefaultClient;
 
     myComponent = createComponent();
 
@@ -342,11 +340,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
     myDisposeHelper.dispose(() -> {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
-      myCefBrowser.stopLoad();
-      myCefBrowser.close(true);
-      if (myIsDefaultClient) {
-        Disposer.dispose(myCefClient);
-      }
     });
   }
 
