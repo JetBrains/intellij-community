@@ -427,7 +427,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
           else if (isAssertThatCouldBeFail(firstArgument, !assertTrue)) {
             registerMethodCallError(expression, "fail()");
           }
-          else if (assertTrue && assertTrueFalseHint.isMessageOnFirstPosition() && isArrayEqualityComparison(firstArgument)) {
+          else if (assertTrue && assertTrueFalseHint.isExpectedActualOrder() && isArrayEqualityComparison(firstArgument)) {
             registerMethodCallError(expression, "assertArrayEquals()");
           }
           else if (BoolUtils.isNegation(firstArgument)) {

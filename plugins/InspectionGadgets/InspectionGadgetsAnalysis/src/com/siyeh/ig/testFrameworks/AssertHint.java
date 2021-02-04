@@ -42,6 +42,9 @@ public final class AssertHint {
     return myParameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL;
   }
 
+  /**
+   * @return false for testng, true otherwise
+   */
   public boolean isExpectedActualOrder() {
     return myParameterOrder == ParameterOrder.EXPECTED_ACTUAL_MESSAGE || myParameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL;
   }
@@ -259,7 +262,18 @@ public final class AssertHint {
   }
 
   enum ParameterOrder {
-    MESSAGE_EXPECTED_ACTUAL, EXPECTED_ACTUAL_MESSAGE, ACTUAL_EXPECTED_MESSAGE
+    /**
+     * junit 3/junit 4
+     */
+    MESSAGE_EXPECTED_ACTUAL,
+    /**
+     * junit 5
+     */
+    EXPECTED_ACTUAL_MESSAGE,
+    /**
+     * testng
+     */
+    ACTUAL_EXPECTED_MESSAGE
   }
 
   public static final class JUnitCommonAssertNames {
