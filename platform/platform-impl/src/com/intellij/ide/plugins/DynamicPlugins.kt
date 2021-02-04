@@ -119,13 +119,8 @@ object DynamicPlugins {
    */
   @JvmStatic
   fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
-    val descriptorsToLoad = loadFullDescriptorsWithoutRestart(
-      descriptors,
-      load = true,
-    ) ?: return false
-
     val loader = lazy(LazyThreadSafetyMode.NONE) { OptionalDependencyDescriptorLoader() }
-    return descriptorsToLoad.allWithLogging(load = true) {
+    return updateDescriptorsWithoutRestart(descriptors, load = true) {
       loadPlugin(it, checkImplementationDetailDependencies = true, loader = loader)
     }
   }
@@ -140,21 +135,19 @@ object DynamicPlugins {
     project: Project? = null,
     parentComponent: JComponent? = null,
     options: UnloadPluginOptions = UnloadPluginOptions().withDisable(true),
-  ): Boolean {
-    val descriptorsToUnload = loadFullDescriptorsWithoutRestart(
-      descriptors,
-      load = false,
-    ) ?: return false
-
-    return descriptorsToUnload.reversed().allWithLogging(load = false) {
-      unloadPluginWithProgress(project, parentComponent, it, options)
-    }
+  ): Boolean = updateDescriptorsWithoutRestart(descriptors, load = false) {
+    unloadPluginWithProgress(project, parentComponent, it, options)
   }
 
-  private fun loadFullDescriptorsWithoutRestart(
+  private fun updateDescriptorsWithoutRestart(
     plugins: Collection<IdeaPluginDescriptor>,
     load: Boolean,
-  ): List<IdeaPluginDescriptorImpl>? {
+    predicate: (IdeaPluginDescriptorImpl) -> Boolean,
+  ): Boolean {
+    if (plugins.isEmpty()) {
+      return true
+    }
+
     val loadedPlugins = PluginManagerCore.getLoadedPlugins().map { it.pluginId }
     val descriptors = plugins
       .asSequence()
@@ -163,32 +156,36 @@ object DynamicPlugins {
       .map { PluginDescriptorLoader.loadFullDescriptor(it) }
       .toList()
 
-    val message = descriptors.joinToString(
-      prefix = "Plugins to ${operationText(load)}: [",
-      postfix = "]"
-    ) {
+    val operationText = if (load) "load" else "unload"
+    val message = descriptors.joinToString(prefix = "Plugins to $operationText: [", postfix = "]") {
       it.pluginId.idString
     }
     LOG.info(message)
 
-    return if (descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) })
-      PluginManagerCore.getPluginsSortedByDependency(descriptors, load)
-    else
-      null
+    if (!descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) }) {
+      return false
+    }
+
+    pluginsSortedByDependency(descriptors, load).forEach { descriptor ->
+      descriptor.isEnabled = load
+
+      if (!predicate.invoke(descriptor)) {
+        LOG.info("Failed to $operationText: $descriptor, restart required")
+        InstalledPluginsState.getInstance().isRestartRequired = true
+        return false
+      }
+    }
+
+    return true
   }
 
-  private fun Collection<IdeaPluginDescriptorImpl>.allWithLogging(
+  private fun pluginsSortedByDependency(
+    descriptors: List<IdeaPluginDescriptorImpl>,
     load: Boolean,
-    predicate: (IdeaPluginDescriptorImpl) -> Boolean,
-  ): Boolean {
-    return firstOrNull {
-      predicate.invoke(it).not()
-    }?.also {
-      LOG.info("Failed to ${operationText(load)}: $it")
-    } == null
+  ): List<IdeaPluginDescriptorImpl> {
+    val plugins = PluginManagerCore.getPluginsSortedByDependency(descriptors)
+    return if (load) plugins.asList() else plugins.reversed()
   }
-
-  private fun operationText(load: Boolean) = if (load) "load" else "unload"
 
   /**
    * @param context Plugins which are being loaded at the same time as [descriptor]

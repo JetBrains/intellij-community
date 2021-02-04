@@ -29,32 +29,9 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       get() = service<ProjectPluginTrackerManager>()
 
     @JvmStatic
-    internal fun loadPlugins(candidatesToLoad: Collection<PluginId>) {
-      loadPlugins(
-        candidatesToLoad.findPluginById()
-      )
-    }
+    fun loadPlugins(pluginIds: Collection<PluginId>): Boolean = DynamicPlugins.loadPlugins(pluginIds.toPluginDescriptors())
 
-    @JvmStatic
-    private fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
-      /*
-     model: enabled (descriptor, disabledList, load), enabled per project (descriptor, load)
-     project opening: enabled per project (descriptor, load)
-     project closing: disabled per project (descriptor, load iff not is disabled globally)
-     */
-
-      return descriptors.isEmpty() ||
-             DynamicPlugins.loadPlugins(descriptors).requireRestartIfNecessary()
-    }
-
-    private fun Boolean.requireRestartIfNecessary(): Boolean {
-      if (!this) {
-        InstalledPluginsState.getInstance().isRestartRequired = true
-      }
-      return this
-    }
-
-    private fun Collection<PluginId>.findPluginById() = mapNotNull { PluginManagerCore.getPlugin(it) }
+    private fun Collection<PluginId>.toPluginDescriptors() = mapNotNull { PluginManagerCore.getPlugin(it) }
   }
 
   private var applicationShuttingDown = false
@@ -70,9 +47,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
           val tracker = createPluginTracker(project)
           val trackers = openProjectsPluginTrackers(project)
 
-          loadPlugins(
-            tracker.disabledPluginIds(trackers)
-          )
+          loadPlugins(tracker.disabledPluginIds(trackers))
 
           unloadPlugins(
             tracker.enabledPluginIds(trackers),
@@ -114,9 +89,13 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     fun stopTrackingPerProject() = state.stopTracking(pluginIds)
 
-    fun loadPlugins() = loadPlugins(descriptors)
+    fun loadPlugins() = DynamicPlugins.loadPlugins(descriptors)
 
-    fun unloadPlugins() = unloadPlugins(descriptors, project, parentComponent)
+    fun unloadPlugins() = DynamicPlugins.unloadPlugins(
+      descriptors.filter(shouldUnload(project)),
+      project,
+      parentComponent,
+    )
 
     return when (action) {
       PluginEnableDisableAction.ENABLE_GLOBALLY -> {
@@ -151,31 +130,10 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
   internal fun unloadPlugins(
     candidatesToUnload: Collection<PluginId>,
     project: Project,
-  ) {
-    unloadPlugins(
-      candidatesToUnload.findPluginById(),
-      project,
-    )
-  }
-
-  private fun unloadPlugins(
-    descriptors: Collection<IdeaPluginDescriptor>,
-    project: Project? = null,
-    parentComponent: JComponent? = null,
-  ): Boolean {
-    /*
-    model: disabled (descriptor, disabledList, unload iff not is used), enabled per project (descriptor, unload if not is used)
-    project opening: disabled per project (descriptor, unload if not is used)
-    project closing: enabled per project (descriptor, unload ???)
-     */
-
-    return descriptors.isEmpty() ||
-           DynamicPlugins.unloadPlugins(
-             descriptors.filter(shouldUnload(project)),
-             project,
-             parentComponent,
-           ).requireRestartIfNecessary()
-  }
+  ): Boolean = DynamicPlugins.unloadPlugins(
+    candidatesToUnload.toPluginDescriptors().filter(shouldUnload(project)),
+    project,
+  )
 
   internal fun openProjectsPluginTrackers(project: Project?): List<ProjectPluginTracker> {
     return ProjectManager

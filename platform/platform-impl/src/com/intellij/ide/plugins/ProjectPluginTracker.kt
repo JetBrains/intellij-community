@@ -31,9 +31,7 @@ class ProjectPluginTracker(
         val tracker = manager.createPluginTracker(project)
         val trackers = manager.openProjectsPluginTrackers(project)
 
-        ProjectPluginTrackerManager.loadPlugins(
-          tracker.enabledPluginIds(trackers)
-        )
+        ProjectPluginTrackerManager.loadPlugins(tracker.enabledPluginIds(trackers))
 
         manager.unloadPlugins(
           tracker.state.disabledPluginsIds,

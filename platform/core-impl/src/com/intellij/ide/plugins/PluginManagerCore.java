@@ -1177,16 +1177,12 @@ public final class PluginManagerCore {
     return sortedRequired;
   }
 
-  public static @NotNull List<IdeaPluginDescriptorImpl> getPluginsSortedByDependency(@NotNull List<IdeaPluginDescriptorImpl> plugins,
-                                                                                     boolean enabled) {
-    for (IdeaPluginDescriptorImpl descriptor : plugins) {
-      descriptor.setEnabled(enabled);
-    }
-    InboundSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(plugins,
+  static @NotNull IdeaPluginDescriptorImpl @NotNull [] getPluginsSortedByDependency(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {
+    InboundSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(descriptors,
                                                                            id -> (IdeaPluginDescriptorImpl)getPlugin(id),
                                                                            true,
                                                                            findPluginByModuleDependency(ALL_MODULES_MARKER) != null);
-    return Arrays.asList(getTopologicallySorted(graph));
+    return getTopologicallySorted(graph);
   }
 
   @ApiStatus.Internal
