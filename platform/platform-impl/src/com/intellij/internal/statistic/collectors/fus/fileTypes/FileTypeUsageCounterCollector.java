@@ -30,9 +30,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
@@ -64,12 +67,12 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE, IS_IN_READER_MODE);
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
-    log(EDIT, project, file);
+    log(EDIT, project, file, false);
   }
 
   public static void triggerSelect(@NotNull Project project, @Nullable VirtualFile file) {
     if (file != null) {
-      log(SELECT, project, file);
+      log(SELECT, project, file, false);
     }
     else {
       logEmptyFile();
@@ -77,28 +80,33 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   }
 
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
-    OPEN.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
-                                       IS_WRITABLE.with(file.isWritable())),
-                                       IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file))));
+    log(OPEN, project, file, true);
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
-    CLOSE.log(project, ArrayUtil.append(ArrayUtil.append(buildCommonEventPairs(project, file),
-                                        IS_WRITABLE.with(file.isWritable())),
-                                        IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file))));
+    log(CLOSE, project, file, true);
   }
 
-  private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
-    eventId.log(project, buildCommonEventPairs(project, file));
+  private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file, boolean withWritable) {
+    eventId.log(project, buildCommonEventPairs(project, file, withWritable));
   }
 
-  private static EventPair<?> @NotNull [] buildCommonEventPairs(@NotNull Project project,
-                                                                @NotNull VirtualFile file) {
+  private static List<@NotNull EventPair<?>> buildCommonEventPairs(@NotNull Project project,
+                                                                   @NotNull VirtualFile file,
+                                                                   boolean withWritable) {
     FileType fileType = file.getFileType();
-    return new EventPair[]{EventFields.PluginInfoFromInstance.with(fileType),
+    List<EventPair<?>> data = ContainerUtil.newArrayList(
+      EventFields.PluginInfoFromInstance.with(fileType),
       EventFields.FileType.with(fileType),
       EventFields.AnonymizedPath.with(file.getPath()),
-      SCHEMA.with(findSchema(project, file))};
+      SCHEMA.with(findSchema(project, file))
+    );
+
+    if (withWritable) {
+      data.add(IS_WRITABLE.with(file.isWritable()));
+      data.add(IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file)));
+    }
+    return data;
   }
 
   private static void logEmptyFile() {
