@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.collectDescendantsOfType
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.IncorrectOperationException
 import com.jetbrains.python.PyTokenTypes
@@ -233,7 +233,7 @@ private fun findNonParenthesizedExpressionParent(element: PsiElement): PsiElemen
 }
 
 private fun requiresParentheses(element: PsiElement): Boolean {
-  val allWhitespacesAreParenthesized = element.collectDescendantsOfType<PsiWhiteSpace>().map { whitespace ->
+  val allWhitespacesAreParenthesized = element.descendantsOfType<PsiWhiteSpace>().map { whitespace ->
     whitespace.parents(false).takeWhile { it != element }.firstOrNull {
       it is PyParenthesizedExpression || it is PyArgumentList
     }
