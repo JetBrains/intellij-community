@@ -1,25 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.IconUtil;
-import com.intellij.util.LazyInitializer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefClient;
@@ -28,17 +19,12 @@ import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
-import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -46,8 +32,6 @@ import java.util.function.Function;
 
 import static com.intellij.ui.jcef.JBCefEventUtils.convertCefKeyEvent;
 import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
-import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 
 /**
@@ -74,44 +58,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
   private final boolean myIsDefaultClient;
   private JDialog myDevtoolsFrame = null;
   protected CefContextMenuHandler myDefaultContextMenuHandler;
-  @Nullable private final CefLoadHandler myLoadHandler;
-
-  @NotNull private static final Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
 
   @NotNull private static final Dimension DEF_PREF_SIZE = new Dimension(800, 600);
-
-  private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
-    new LazyInitializer.NotNullValue<>() {
-      @Override
-      public @NotNull String initialize() {
-        try {
-          return new String(FileUtil.loadBytes(Objects.requireNonNull(
-              JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
-        }
-        catch (IOException | NullPointerException e) {
-          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", e);
-        }
-        return "";
-      }
-    };
-
-  private static final LazyInitializer.NotNullValue<ScaleContext.Cache<String>> BASE64_ERROR_PAGE_ICON =
-    new LazyInitializer.NotNullValue<>() {
-      @Override
-      public @NotNull ScaleContext.Cache<String> initialize() {
-        return new ScaleContext.Cache<>((ctx) -> {
-          try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), false);
-            ImageIO.write(image, "png", out);
-            return Base64.getEncoder().encodeToString(out.toByteArray());
-          }
-          catch (IOException ex) {
-            Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
-          }
-          return "";
-        });
-      }
-    };
 
   private static final class ShortcutProvider {
     // Since these CefFrame::* methods are available only with JCEF API 1.1 and higher, we are adding no shortcuts for older JCEF
@@ -185,24 +133,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
     myIsDefaultClient = isDefaultClient;
 
     myComponent = createComponent();
-
-    if (cefBrowser == null) {
-      myCefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
-        volatile String lastLoadUrl = "";
-        @Override
-        public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
-          lastLoadUrl = frame.getURL();
-        }
-        @Override
-        public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-          if (lastLoadUrl.equals(failedUrl)) {
-            UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
-          }
-        }
-      }, myCefBrowser);
-    } else {
-      myLoadHandler = null;
-    }
 
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
@@ -412,46 +342,12 @@ public class JBCefBrowser extends JBCefBrowserBase {
     myDisposeHelper.dispose(() -> {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
       myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
-      if (myLoadHandler != null) myCefClient.removeLoadHandler(myLoadHandler, myCefBrowser);
       myCefBrowser.stopLoad();
       myCefBrowser.close(true);
       if (myIsDefaultClient) {
         Disposer.dispose(myCefClient);
       }
     });
-  }
-
-  private void loadErrorPage(@NotNull String errorText, @NotNull String failedUrl) {
-    int fontSize = (int)(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() * 1.1);
-    int headerFontSize = fontSize + JBUIScale.scale(3);
-    int headerPaddingTop = headerFontSize / 5;
-    int lineHeight = headerFontSize * 2;
-    int iconPaddingRight = JBUIScale.scale(12);
-    Color bgColor = JBColor.background();
-    String bgWebColor = String.format("#%02x%02x%02x", bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue());
-    Color fgColor = JBColor.foreground();
-    String fgWebColor = String.format("#%02x%02x%02x", fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue());
-
-    String html = ERROR_PAGE_READER.get();
-    html = html.replace("${lineHeight}", String.valueOf(lineHeight));
-    html = html.replace("${iconPaddingRight}", String.valueOf(iconPaddingRight));
-    html = html.replace("${fontSize}", String.valueOf(fontSize));
-    html = html.replace("${headerFontSize}", String.valueOf(headerFontSize));
-    html = html.replace("${headerPaddingTop}", String.valueOf(headerPaddingTop));
-    html = html.replace("${bgWebColor}", bgWebColor);
-    html = html.replace("${fgWebColor}", fgWebColor);
-    html = html.replace("${errorText}", errorText);
-    html = html.replace("${failedUrl}", failedUrl);
-
-    ScaleContext ctx = ScaleContext.create();
-    ctx.update(OBJ_SCALE.of(1.2 * headerFontSize / (float)ERROR_PAGE_ICON.getIconHeight()));
-    // Reset sys scale to prevent raster downscaling on passing the image to jcef.
-    // Overriding is used to prevent scale change during further intermediate context transformations.
-    ctx.overrideScale(SYS_SCALE.of(1.0));
-
-    html = html.replace("${base64Image}", ObjectUtils.notNull(BASE64_ERROR_PAGE_ICON.get().getOrProvide(ctx), ""));
-
-    loadHTML(html);
   }
 
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
