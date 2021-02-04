@@ -1,9 +1,0 @@
-LineBreakpoint created at sourcePositionForGetterWithDelegatedInterface.kt:17
-Run Java
-Connected to the target VM
-sourcePositionForGetterWithDelegatedInterface.kt:17
-Source position of instance.iInt is 4
-Disconnected from the target VM
-
-Process finished with exit code 0
-

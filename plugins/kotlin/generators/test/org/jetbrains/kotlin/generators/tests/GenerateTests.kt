@@ -237,10 +237,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 
-        testClass<AbstractJumpToSourceTest> {
-            model("jumpToSource")
-        }
-
         testClass<AbstractContinuationStackTraceTest> {
             model("continuation")
         }

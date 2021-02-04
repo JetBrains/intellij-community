@@ -14,9 +14,8 @@ class TestClass : AbstractClass(), Interface {
 
 fun main() {
     val instance = TestClass()
-    // JUMP TO SOURCE: instance.myInt
-    // JUMP TO SOURCE: instance.aInt
-    // JUMP TO SOURCE: instance.iInt
     //Breakpoint!
     println("")
 }
+
+// PRINT_FRAME

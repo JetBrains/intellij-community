@@ -18,9 +18,8 @@ class TestClass : I2, I3 {
 
 fun main() {
     val instance = TestClass()
-    // JUMP TO SOURCE: instance.i3Int
-    // JUMP TO SOURCE: instance.i2Int
-    // JUMP TO SOURCE: instance.i1Int
     //Breakpoint!
     println("")
 }
+
+// PRINT_FRAME

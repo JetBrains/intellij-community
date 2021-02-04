@@ -957,6 +957,21 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/frame/remapThis.kt");
             }
 
+            @TestMetadata("sourcePositionForGetter.kt")
+            public void testSourcePositionForGetter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetter.kt");
+            }
+
+            @TestMetadata("sourcePositionForGetterWithDelegatedInterface.kt")
+            public void testSourcePositionForGetterWithDelegatedInterface() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetterWithDelegatedInterface.kt");
+            }
+
+            @TestMetadata("sourcePositionForGetterWithDiamondInterfaces.kt")
+            public void testSourcePositionForGetterWithDiamondInterfaces() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetterWithDiamondInterfaces.kt");
+            }
+
             @TestMetadata("suspendContinuation.kt")
             public void testSuspendContinuation() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/suspendContinuation.kt");
