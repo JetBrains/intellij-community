@@ -2,13 +2,14 @@
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -20,6 +21,7 @@ import java.util.Set;
  * Files provided by {@link IndexableSetContributor} will be indexed (or ensured up to date) on project loading and
  * {@link FileBasedIndex} automatically rebuilds indexes for these files when they are going to be changed.
  */
+@ApiStatus.OverrideOnly
 public abstract class IndexableSetContributor {
 
   public static final ExtensionPointName<IndexableSetContributor> EP_NAME = new ExtensionPointName<>("com.intellij.indexedRootsProvider");
@@ -35,6 +37,11 @@ public abstract class IndexableSetContributor {
   public static Set<VirtualFile> getRootsToIndex(@NotNull IndexableSetContributor contributor) {
     Set<VirtualFile> roots = contributor.getAdditionalRootsToIndex();
     return filterOutNulls(contributor, "getAdditionalRootsToIndex()", roots);
+  }
+
+  @ApiStatus.Experimental
+  public boolean acceptFile(@NotNull VirtualFile file, @NotNull VirtualFile root, @Nullable Project project) {
+    return true;
   }
 
   /**
