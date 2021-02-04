@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
@@ -20,8 +21,11 @@ import java.util.List;
 public interface PyFrameAccessor {
   PyDebugValue evaluate(final String expression, final boolean execute, boolean doTrunc) throws PyDebuggerException;
 
+  /**
+   * @param frame if null, then `XDebuggerSession#getCurrentStackFrame` is used
+   */
   @Nullable
-  XValueChildrenList loadFrame() throws PyDebuggerException;
+  XValueChildrenList loadFrame(@Nullable XStackFrame frame) throws PyDebuggerException;
 
   XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException;
 
@@ -51,9 +55,9 @@ public interface PyFrameAccessor {
 
   default void addFrameListener(@NotNull PyFrameListener listener) {}
 
-  default void loadAsyncVariablesValues(@NotNull final List<PyAsyncValue<String>> pyAsyncValues) {}
+  default void loadAsyncVariablesValues(@Nullable XStackFrame frame, @NotNull final List<PyAsyncValue<String>> pyAsyncValues) {}
 
-  default boolean isCurrentFrameCached() {
+  default boolean isFrameCached(@NotNull XStackFrame frame) {
     return false;
   }
 

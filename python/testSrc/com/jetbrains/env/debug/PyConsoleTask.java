@@ -383,7 +383,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   protected PyDebugValue getValue(String varName) throws PyDebuggerException, InterruptedException {
     Assert.assertTrue(String.format("Can't get value for variable: `%s` \n" +
                                     "Output: %s", varName, output()), waitFor(myCommandSemaphore));
-    XValueChildrenList l = myCommunication.loadFrame();
+    XValueChildrenList l = myCommunication.loadFrame(null);
     myCommandSemaphore.release();
 
     if (l == null) {
@@ -409,7 +409,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   protected List<PyDebugValue> loadFrame() throws PyDebuggerException {
-    return convertToList(myCommunication.loadFrame());
+    return convertToList(myCommunication.loadFrame(null));
   }
 
   protected List<PydevCompletionVariant> getCompletions(String expression) throws Exception {

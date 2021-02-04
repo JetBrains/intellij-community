@@ -358,7 +358,7 @@ public class PyDataViewerPanel extends JPanel {
     private List<PyDebugValue> getAvailableValues() {
       List<PyDebugValue> values = new ArrayList<>();
       try {
-        XValueChildrenList list = myFrameAccessor.loadFrame();
+        XValueChildrenList list = myFrameAccessor.loadFrame(null);
         if (list == null) {
           return values;
         }

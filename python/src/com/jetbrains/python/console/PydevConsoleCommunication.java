@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.PyBundle;
@@ -518,7 +519,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
   @Nullable
   @Override
-  public XValueChildrenList loadFrame() throws PyDebuggerException {
+  public XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
@@ -541,7 +542,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public void loadAsyncVariablesValues(@NotNull List<PyAsyncValue<String>> pyAsyncValues) {
+  public void loadAsyncVariablesValues(@Nullable XStackFrame frame, @NotNull List<PyAsyncValue<String>> pyAsyncValues) {
     PyDebugValueExecutionService.getInstance(myProject).submitTask(this, () -> {
       try {
         List<String> evaluationExpressions = new ArrayList<>();

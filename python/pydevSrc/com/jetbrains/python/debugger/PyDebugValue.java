@@ -426,13 +426,13 @@ public class PyDebugValue extends XNamedValue {
     return variables;
   }
 
-  public static void getAsyncValues(@NotNull PyFrameAccessor frameAccessor, @NotNull XValueChildrenList childrenList) {
+  public static void getAsyncValues(@Nullable XStackFrame frame, @NotNull PyFrameAccessor frameAccessor, @NotNull XValueChildrenList childrenList) {
     List<PyFrameAccessor.PyAsyncValue<String>> variables = getAsyncValuesFromChildren(childrenList);
     int chunkSize = Math.max(1, variables.size() / AVAILABLE_PROCESSORS);
     int left = 0;
     int right = Math.min(chunkSize, variables.size());
     while (left < variables.size()) {
-      frameAccessor.loadAsyncVariablesValues(variables.subList(left, right));
+      frameAccessor.loadAsyncVariablesValues(frame, variables.subList(left, right));
       left = right;
       right = Math.min(right + chunkSize, variables.size());
     }
@@ -484,7 +484,7 @@ public class PyDebugValue extends XNamedValue {
             updateOffset(node, values);
           }
 
-          getAsyncValues(myFrameAccessor, values);
+          getAsyncValues(null, myFrameAccessor, values);
         }
       }
       catch (PyDebuggerException e) {

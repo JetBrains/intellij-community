@@ -13,7 +13,7 @@ class PyOnDemandValueEvaluator(linkText: @Nls String,
     node.setFullValueEvaluator(PyLoadingValueEvaluator("... Loading Value", myDebugProcess, myExpression))
     callback.evaluated("... Loading Value")
     val pyAsyncValue = PyFrameAccessor.PyAsyncValue<String>(debugValue, debugValue.createDebugValueCallback())
-    myDebugProcess.loadAsyncVariablesValues(listOf(pyAsyncValue))
+    myDebugProcess.loadAsyncVariablesValues(null, listOf(pyAsyncValue))
   }
 
   override fun isShowValuePopup(): Boolean {
