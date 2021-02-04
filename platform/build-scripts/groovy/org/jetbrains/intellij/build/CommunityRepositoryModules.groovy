@@ -231,7 +231,6 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.java.coverage") {
       withModule("intellij.java.coverage.rt")
-      withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },
     plugin("intellij.java.decompiler") {
       directoryName = "java-decompiler"

@@ -9,6 +9,32 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="JaCoCo" type="repository">
+        <properties maven-id="org.jacoco:org.jacoco.ant:0.8.6" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.6/org.jacoco.ant-0.8.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.6/org.jacoco.core-0.8.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/8.0.1/asm-8.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/8.0.1/asm-commons-8.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/8.0.1/asm-analysis-8.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/8.0.1/asm-tree-8.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.6/org.jacoco.report-0.8.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.6/org.jacoco.agent-0.8.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.6/org.jacoco.ant-0.8.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.6/org.jacoco.core-0.8.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/8.0.1/asm-8.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/8.0.1/asm-commons-8.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/8.0.1/asm-analysis-8.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/8.0.1/asm-tree-8.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.6/org.jacoco.report-0.8.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.6/org.jacoco.agent-0.8.6-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.coverage" exported="" />
     <orderEntry type="module" module-name="intellij.java.execution" exported="" />
     <orderEntry type="module" module-name="intellij.java" exported="" />
@@ -28,7 +54,6 @@
     <orderEntry type="module" module-name="intellij.testng.rt" />
     <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
-    <orderEntry type="library" name="JaCoCo" level="project" />
     <orderEntry type="module" module-name="intellij.java.coverage.rt" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
