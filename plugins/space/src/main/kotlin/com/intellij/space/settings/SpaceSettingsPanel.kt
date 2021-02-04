@@ -4,7 +4,6 @@ package com.intellij.space.settings
 import circlet.client.api.englishFullName
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -15,6 +14,8 @@ import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.cleanupUrl
 import com.intellij.space.ui.resizeIcon
+import com.intellij.space.utils.LifetimedDisposable
+import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleTextAttributes
@@ -24,7 +25,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import libraries.coroutines.extra.LifetimeSource
 import libraries.klogging.logger
 import java.awt.GridBagLayout
 import javax.swing.*
@@ -34,10 +34,7 @@ val log = logger<SpaceSettingsPanel>()
 class SpaceSettingsPanel :
   BoundConfigurable(SpaceBundle.message("configurable.name"), null),
   SearchableConfigurable,
-  Disposable {
-
-  private val uiLifetime = LifetimeSource()
-
+  LifetimedDisposable by LifetimedDisposableImpl() {
   private val settings = SpaceSettings.getInstance()
 
   private val accountPanel = BorderLayoutPanel()
@@ -52,7 +49,7 @@ class SpaceSettingsPanel :
   }
 
   init {
-    SpaceWorkspaceComponent.getInstance().loginState.forEach(uiLifetime) { st ->
+    SpaceWorkspaceComponent.getInstance().loginState.forEach(lifetime) { st ->
       accountPanel.removeAll()
       accountPanel.addToCenter(createView(st))
       updateUi(st)
@@ -77,15 +74,10 @@ class SpaceSettingsPanel :
     }
   }
 
-
-  override fun dispose() {
-    uiLifetime.terminate()
-  }
-
   private fun createView(st: SpaceLoginState): JComponent {
     when (st) {
       is SpaceLoginState.Disconnected -> return buildLoginPanel(st) { server ->
-        SpaceWorkspaceComponent.getInstance().signInManually(server, uiLifetime, accountPanel)
+        SpaceWorkspaceComponent.getInstance().signInManually(server, lifetime, accountPanel)
       }
 
       is SpaceLoginState.Connecting -> return buildConnectingPanel(st) {
@@ -108,7 +100,7 @@ class SpaceSettingsPanel :
         }
 
         val avatarLabel = JLabel()
-        SpaceUserAvatarProvider.getInstance().avatars.forEach(uiLifetime) { avatars ->
+        SpaceUserAvatarProvider.getInstance().avatars.forEach(lifetime) { avatars ->
           avatarLabel.icon = resizeIcon(avatars.circle, 50)
         }
         return JPanel(GridBagLayout()).apply {
