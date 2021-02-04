@@ -322,10 +322,13 @@ class ModifiableDirectoryPackagingElementEntity : ModifiableWorkspaceEntityBase<
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addDirectoryPackagingElementEntity(directoryName: String,
-                                                                         children: MutableList<PackagingElementEntity>,
-                                                                         source: EntitySource) = addEntity(
-  ModifiableDirectoryPackagingElementEntity::class.java,
-  source) { this.directoryName = directoryName; this.children = children.asSequence() }
+                                                                         children: List<PackagingElementEntity>,
+                                                                         source: EntitySource): DirectoryPackagingElementEntity {
+  return addEntity(ModifiableDirectoryPackagingElementEntity::class.java, source) {
+    this.directoryName = directoryName
+    this.children = children.asSequence()
+  }
+}
 
 class ModifiableArchivePackagingElementEntity : ModifiableWorkspaceEntityBase<ArchivePackagingElementEntity>() {
   var fileName: String by EntityDataDelegation()
@@ -334,9 +337,13 @@ class ModifiableArchivePackagingElementEntity : ModifiableWorkspaceEntityBase<Ar
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addArchivePackagingElementEntity(fileName: String,
-                                                                       children: MutableList<PackagingElementEntity>,
-                                                                       source: EntitySource) = addEntity(
-  ModifiableArchivePackagingElementEntity::class.java, source) { this.fileName = fileName; this.children = children.asSequence() }
+                                                                       children: List<PackagingElementEntity>,
+                                                                       source: EntitySource): ArchivePackagingElementEntity {
+  return addEntity(ModifiableArchivePackagingElementEntity::class.java, source) {
+    this.fileName = fileName
+    this.children = children.asSequence()
+  }
+}
 
 class ModifiableArtifactOutputPackagingElementEntity : ModifiableWorkspaceEntityBase<ArtifactOutputPackagingElementEntity>() {
   var artifact: ArtifactId by EntityDataDelegation()
