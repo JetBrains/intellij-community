@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -34,6 +34,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author anna
@@ -637,14 +638,14 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected final void checkForEmptyAndDuplicatedNames(String prefix, String title,
-                                                       Class<? extends NamedConfigurable> configurableClass) throws ConfigurationException {
+                                                       Class<? extends NamedConfigurable<?>> configurableClass) throws ConfigurationException {
     checkForEmptyAndDuplicatedNames(myRoot, prefix, title, configurableClass, true);
   }
 
   private void checkForEmptyAndDuplicatedNames(MyNode rootNode,
                                                String prefix,
                                                String title,
-                                               Class<? extends NamedConfigurable> configurableClass,
+                                               Class<? extends NamedConfigurable<?>> configurableClass,
                                                boolean recursively) throws ConfigurationException {
     final Set<String> names = new HashSet<>();
     for (int i = 0; i < rootNode.getChildCount(); i++) {
@@ -778,13 +779,21 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected class MyDeleteAction extends AnAction implements DumbAware {
-    private final Condition<Object[]> myCondition;
+    private final @Nullable Predicate<Object[]> myCondition;
 
     public MyDeleteAction() {
-      this(Conditions.alwaysTrue());
+      this((Predicate<Object[]>)null);
     }
 
-    public MyDeleteAction(Condition<Object[]> availableCondition) {
+    /**
+     * @deprecated Use {@link #MyDeleteAction(Predicate)}
+     */
+    @Deprecated
+    public MyDeleteAction(@Nullable Condition<Object[]> availableCondition) {
+      this(availableCondition == null ? null : (Predicate<Object[]>)availableCondition::value);
+    }
+
+    public MyDeleteAction(@Nullable Predicate<Object[]> availableCondition) {
       super(CommonBundle.messagePointer("button.delete"), CommonBundle.messagePointer("button.delete"), PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE), myTree);
       myCondition = availableCondition;
@@ -792,14 +801,23 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
+      Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
-      if (selectionPath != null) {
-        Object[] nodes = ContainerUtil.map2Array(selectionPath, TreePath::getLastPathComponent);
-        if (!myCondition.value(nodes)) return;
-        presentation.setEnabled(true);
+      if (selectionPath == null) {
+        return;
       }
+
+      if (myCondition != null) {
+        Object[] result = new Object[selectionPath.length];
+        for (int i = 0; i < selectionPath.length; i++) {
+          result[i] = selectionPath[i].getLastPathComponent();
+        }
+        if (!myCondition.test(result)) {
+          return;
+        }
+      }
+      presentation.setEnabled(true);
     }
 
     @Override
@@ -808,10 +826,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  protected static Condition<Object[]> forAll(final Condition<Object> condition) {
+  protected static Predicate<Object[]> forAll(@NotNull Predicate<Object> condition) {
     return objects -> {
       for (Object object : objects) {
-        if (!condition.value(object)) return false;
+        if (!condition.test(object)) {
+          return false;
+        }
       }
       return true;
     };

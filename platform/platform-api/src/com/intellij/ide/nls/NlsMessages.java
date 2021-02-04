@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.nls;
 
 import com.ibm.icu.number.FormattedNumber;
@@ -11,8 +11,8 @@ import com.ibm.icu.util.Measure;
 import com.ibm.icu.util.MeasureUnit;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class NlsMessages {
 
   /**
    * @param list list of items
-   * @return localized narrow string representation of all items in the list with conjunction formatting. 
+   * @return localized narrow string representation of all items in the list with conjunction formatting.
    * In narrow representation the conjunction could be omitted.
    * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, Z" in English locale.
    */
@@ -82,8 +82,8 @@ public class NlsMessages {
    */
   public static <T> @NotNull Collector<T, ?, @Nls String> joiningOr() {
     return Collectors.collectingAndThen(Collectors.toList(), NlsMessages::formatOrList);
-  } 
-  
+  }
+
   /**
    * Formats duration given in milliseconds as a sum of time units with at most two units
    * (example: {@code formatDuration(123456) = "2 m, 3 s"}).
@@ -92,7 +92,7 @@ public class NlsMessages {
   public static @NotNull @Nls String formatDurationApproximate(long duration) {
     return formatDuration(duration, 2, false);
   }
-  
+
   /**
    * Formats duration given in milliseconds as a sum of time units with at most two units
    * (example: {@code formatDuration(123456) = "2 m 3 s"}).
@@ -102,7 +102,7 @@ public class NlsMessages {
     return formatDuration(duration, 2, true);
   }
 
-  /** 
+  /**
    * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}).
    * The result is localized according to the currently used language pack.
    */
@@ -113,8 +113,8 @@ public class NlsMessages {
 
   @Contract(pure = true)
   private static @NotNull @Nls String formatDuration(long duration, int maxFragments, boolean narrow) {
-    TLongArrayList unitValues = new TLongArrayList();
-    TIntArrayList unitIndices = new TIntArrayList();
+    LongArrayList unitValues = new LongArrayList();
+    IntArrayList unitIndices = new IntArrayList();
 
     long count = duration;
     int i = 1;
@@ -124,19 +124,19 @@ public class NlsMessages {
       long remainder = count % multiplier;
       count /= multiplier;
       if (remainder != 0 || !unitValues.isEmpty()) {
-        unitValues.insert(0, remainder);
-        unitIndices.insert(0, i - 1);
+        unitValues.add(0, remainder);
+        unitIndices.add(0, i - 1);
       }
     }
-    unitValues.insert(0, count);
-    unitIndices.insert(0, i - 1);
+    unitValues.add(0, count);
+    unitIndices.add(0, i - 1);
 
     if (unitValues.size() > maxFragments) {
-      int lastUnitIndex = unitIndices.get(maxFragments - 1);
+      int lastUnitIndex = unitIndices.getInt(maxFragments - 1);
       long lastMultiplier = TIME_MULTIPLIERS[lastUnitIndex];
       // Round up if needed
-      if (unitValues.get(maxFragments) > lastMultiplier / 2) {
-        long increment = lastMultiplier - unitValues.get(maxFragments);
+      if (unitValues.getLong(maxFragments) > lastMultiplier / 2) {
+        long increment = lastMultiplier - unitValues.getLong(maxFragments);
         for (int unit = lastUnitIndex - 1; unit > 0; unit--) {
           increment *= TIME_MULTIPLIERS[unit];
         }
@@ -149,14 +149,14 @@ public class NlsMessages {
       List<String> fragments = new ArrayList<>();
       LocalizedNumberFormatter formatter = NumberFormatter.withLocale(DynamicBundle.getLocale()).unitWidth(NumberFormatter.UnitWidth.SHORT);
       for (i = 0; i < finalCount; i++) {
-        fragments.add(formatter.unit(TIME_UNITS[unitIndices.get(i)]).format(unitValues.get(i)).toString().replace(' ', '\u2009'));
+        fragments.add(formatter.unit(TIME_UNITS[unitIndices.getInt(i)]).format(unitValues.getLong(i)).toString().replace(' ', '\u2009'));
       }
       return StringUtil.join(fragments, " ");
     }
     MeasureFormat format = MeasureFormat.getInstance(DynamicBundle.getLocale(), MeasureFormat.FormatWidth.SHORT);
     Measure[] measures = new Measure[finalCount];
     for (i = 0; i < finalCount; i++) {
-      measures[i] = new Measure(unitValues.get(i), TIME_UNITS[unitIndices.get(i)]);
+      measures[i] = new Measure(unitValues.getLong(i), TIME_UNITS[unitIndices.getInt(i)]);
     }
     return format.formatMeasures(measures);
   }

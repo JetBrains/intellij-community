@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.Document;
@@ -7,13 +7,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,9 +54,15 @@ public class LocalFilePath implements FilePath {
 
     LocalFilePath path = (LocalFilePath)o;
 
-    if (myIsDirectory != path.myIsDirectory) return false;
-    if (myPath.equals(path.myPath)) return true;
-    if (!CaseInsensitiveStringHashingStrategy.INSTANCE.equals(myPath, path.myPath)) return false;
+    if (myIsDirectory != path.myIsDirectory) {
+      return false;
+    }
+    if (myPath.equals(path.myPath)) {
+      return true;
+    }
+    if (!myPath.equalsIgnoreCase(path.myPath)) {
+      return false;
+    }
     // make sure to not query (expensive) getVirtualFile() until it's absolutely necessary, e.g. we encountered two file paths differ by case only
     VirtualFile file = getVirtualFile();
     VirtualFile oFile = path.getVirtualFile();
@@ -65,7 +72,7 @@ public class LocalFilePath implements FilePath {
 
   @Override
   public int hashCode() {
-    int result = CaseInsensitiveStringHashingStrategy.INSTANCE.computeHashCode(myPath);
+    int result = Strings.stringHashCodeInsensitive(myPath);
     result = 31 * result + (myIsDirectory ? 1 : 0);
     return result;
   }
@@ -106,7 +113,9 @@ public class LocalFilePath implements FilePath {
   @Nullable
   public VirtualFile getVirtualFile() {
     VirtualFile cachedFile = myCachedFile;
-    if (cachedFile == null || !cachedFile.isValid() || !FileUtil.PATH_HASHING_STRATEGY.equals(cachedFile.getPath(), myPath)) {
+    if (cachedFile == null ||
+        !cachedFile.isValid() ||
+        !(SystemInfoRt.isFileSystemCaseSensitive ? cachedFile.getPath().equals(myPath) : cachedFile.getPath().equalsIgnoreCase(myPath))) {
       myCachedFile = cachedFile = LocalFileSystem.getInstance().findFileByPath(myPath);
     }
     return cachedFile;

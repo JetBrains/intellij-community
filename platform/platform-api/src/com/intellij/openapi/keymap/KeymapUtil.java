@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,6 @@ import static java.awt.event.InputEvent.ALT_DOWN_MASK;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 public final class KeymapUtil {
-
   @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";
   @NonNls private static final String BREAK_KEY_TEXT = "Break";
   @NonNls private static final String SHIFT = "shift";
@@ -177,7 +178,7 @@ public final class KeymapUtil {
   private static boolean isNativeMacShortcuts() {
     return SystemInfo.isMac && !isSimplifiedMacShortcuts();
   }
-  
+
   private static boolean isSimplifiedMacShortcuts() {
     return SystemInfo.isMac && Registry.is("ide.macos.disable.native.shortcut.symbols", false);
   }
@@ -576,7 +577,7 @@ public final class KeymapUtil {
     if (shortcuts.length == 0) {
       return Collections.emptySet();
     }
-    Set<KeyStroke> result = new SmartHashSet<>();
+    Set<KeyStroke> result = new HashSet<>();
     for (Shortcut shortcut : shortcuts) {
       if (!(shortcut instanceof KeyboardShortcut)) {
         continue;
