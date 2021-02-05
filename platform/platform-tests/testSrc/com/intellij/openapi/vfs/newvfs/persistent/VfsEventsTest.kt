@@ -257,7 +257,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     vDir.forceAsyncRefresh()
 
     val allVfsListeners = AllVfsListeners(project)
-    jar.moveTo(childDir2.resolve(jar.fileName))
+    jar.moveTo(childDir2.resolve(jar.fileName), true)
     vDir.forceAsyncRefresh()
     allVfsListeners.assertEvents(3)
   }
