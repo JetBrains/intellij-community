@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.Nls;
@@ -70,7 +70,7 @@ public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAc
 
   private Optional<PsiMethod> findGetterMethodToReplace(@NotNull PsiField psiField) {
     final PsiMethod getterForField = PropertyUtilBase.findGetterForField(psiField);
-    if (null != getterForField && !(getterForField instanceof LombokLightClassBuilder)) {
+    if (null != getterForField && !(getterForField instanceof LombokLightMethodBuilder)) {
       if (findAnchorFieldForGetter(getterForField).filter(psiField::equals).isPresent()) {
         return Optional.of(getterForField);
       }
@@ -80,7 +80,7 @@ public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAc
 
   private Optional<PsiMethod> findSetterMethodToReplace(@NotNull PsiField psiField) {
     final PsiMethod setterForField = PropertyUtilBase.findSetterForField(psiField);
-    if (null != setterForField && !(setterForField instanceof LombokLightClassBuilder)) {
+    if (null != setterForField && !(setterForField instanceof LombokLightMethodBuilder)) {
       if (findAnchorFieldForSetter(setterForField).filter(psiField::equals).isPresent()) {
         return Optional.of(setterForField);
       }
