@@ -665,6 +665,27 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
   
+  public void testInternalFrames() {
+    @Language("JAVA") String classText =
+      "import java.util.stream.Collectors;\n" +
+      "\n" +
+      "public class InternalFrames {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    Runnable r = () -> {\n" +
+      "      String frames = StackWalker.getInstance(StackWalker.Option.SHOW_HIDDEN_FRAMES)\n" +
+      "          .walk(s -> s.map(sf -> \"\\tat \" + sf.toStackTraceElement() + \"\\n\").collect(Collectors.joining()));\n" +
+      "      System.out.println(frames);\n" +
+      "    };\n" +
+      "    r.run();\n" +
+      "  }\n" +
+      "}\n";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = List.of(
+      Trinity.create("\tat InternalFrames.lambda$main$2(InternalFrames.java:7)\n", 7, 1),
+      Trinity.create("\tat InternalFrames$$Lambda$14/0x0000000800c01200.run(Unknown Source)\n", null, null),
+      Trinity.create("\tat InternalFrames.main(InternalFrames.java:10)\n", 10, 7));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+  
   public void testParseExceptionLine() {
     String exceptionLine = "Caused by: java.lang.AssertionError: expected same";
     ExceptionInfo info = ExceptionInfo.parseMessage(exceptionLine, exceptionLine.length());
