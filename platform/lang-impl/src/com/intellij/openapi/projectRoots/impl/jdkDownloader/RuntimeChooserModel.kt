@@ -1,33 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
+import com.intellij.openapi.util.io.FileUtil
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 
 
-abstract class RuntimeChooseItem
+abstract class RuntimeChooserItem
 
-object RuntimeChooseSeparator : RuntimeChooseItem()
-
-object RuntimeChooseCurrentItem: RuntimeChooseItem()
-object RuntimeChooseBundledItem: RuntimeChooseItem()
+object RuntimeChooserCurrentItem : RuntimeChooserItem()
+object RuntimeChooserBundledItem : RuntimeChooserItem()
 
 class RuntimeChooserModel {
-  private var downloadableJbs : List<RuntimeChooserDownloadableItem> = listOf()
+  private var showAdvancedOptions: Boolean = false
+  private var downloadableJbs: List<JdkItem> = listOf()
 
+  private val myMainComboModel = DefaultComboBoxModel<RuntimeChooserItem>()
 
-  private val myMainComboModel = DefaultComboBoxModel<RuntimeChooseItem>()
-
-  val mainComboBoxModel : ComboBoxModel<RuntimeChooseItem>
+  val mainComboBoxModel: ComboBoxModel<RuntimeChooserItem>
     get() = myMainComboModel
 
-  fun updateDownloadJbrList(items: List<JdkItem>) {
-    invokeLater(modalityState = ModalityState.any()) {
-      downloadableJbs = items.map { RuntimeChooserDownloadableItem(it) }
-      updateMainCombobox()
-    }
+  fun getDefaultInstallPathFor(item: JdkItem): String {
+    val path = service<RuntimeChooserJbrInstaller>().defaultInstallDir(item)
+    return FileUtil.getLocationRelativeToUserHome(path.toAbsolutePath().toString(), false)
   }
 
   private fun updateMainCombobox() {
@@ -35,19 +31,34 @@ class RuntimeChooserModel {
 
     myMainComboModel.removeAllElements()
 
+    val downloadJbrItems = downloadableJbs
+      .filter { showAdvancedOptions || it.isDefaultItem }
+      .map { RuntimeChooserDownloadableItem(it) }
+
     val newList = listOf(
-      RuntimeChooseBundledItem,
-      RuntimeChooseSeparator,
-      RuntimeChooseCurrentItem,
-      RuntimeChooseSeparator
-    ) + downloadableJbs
+      RuntimeChooserBundledItem,
+      RuntimeChooserCurrentItem,
+    ) + downloadJbrItems
 
     myMainComboModel.addAll(newList)
     myMainComboModel.selectedItem = selection
+                                    ?: newList.firstOrNull { it is RuntimeChooserCurrentItem }
+                                    ?: newList.firstOrNull { it is RuntimeChooserBundledItem }
   }
 
   fun onUpdateDownloadJbrListScheduled() {
     //show progress
+  }
+
+  fun showAdvancedOptions() {
+    if (showAdvancedOptions) return
+    showAdvancedOptions = true
+    updateMainCombobox()
+  }
+
+  fun updateDownloadJbrList(items: List<JdkItem>) {
+    downloadableJbs = items.toList()
+    updateMainCombobox()
   }
 }
 

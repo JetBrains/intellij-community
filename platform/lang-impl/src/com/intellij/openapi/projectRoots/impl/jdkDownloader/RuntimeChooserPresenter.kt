@@ -1,24 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.lang.LangBundle
 import com.intellij.ui.*
-import java.awt.Component
 import javax.swing.JList
 
-class RuntimeChooserPresenter : ColoredListCellRenderer<RuntimeChooseItem>() {
-  override fun getListCellRendererComponent(list: JList<out RuntimeChooseItem>?,
-                                            value: RuntimeChooseItem?,
-                                            index: Int,
-                                            selected: Boolean,
-                                            hasFocus: Boolean): Component {
-    if (value is RuntimeChooseSeparator) {
-      return SeparatorWithText()
-    }
-    return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
-  }
+class RuntimeChooserPresenter(
+  private val model: RuntimeChooserModel
+) : ColoredListCellRenderer<RuntimeChooserItem>() {
 
-  override fun customizeCellRenderer(list: JList<out RuntimeChooseItem>,
-                                     value: RuntimeChooseItem?,
+  override fun customizeCellRenderer(list: JList<out RuntimeChooserItem>,
+                                     value: RuntimeChooserItem?,
                                      index: Int,
                                      selected: Boolean,
                                      hasFocus: Boolean) {
@@ -26,8 +18,13 @@ class RuntimeChooserPresenter : ColoredListCellRenderer<RuntimeChooseItem>() {
       return presentJbrItem(value)
     }
 
-    if (value is RuntimeChooseCurrentItem) {
-      append("Current Runtime")
+    if (value is RuntimeChooserBundledItem) {
+      append(LangBundle.message("dialog.item.choose.ide.runtime.bundled"))
+      return
+    }
+
+    if (value is RuntimeChooserCurrentItem) {
+      append(LangBundle.message("dialog.item.choose.ide.runtime.current"))
       return
     }
   }
