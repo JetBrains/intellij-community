@@ -64,13 +64,11 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
     new UiNotifyConnector(myDragComponent, new Activatable() {
       @Override
       public void showNotify() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(MouseDragHelper.this);
         attach();
       }
 
       @Override
       public void hideNotify() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(MouseDragHelper.this);
         detach(true);
       }
     });
@@ -84,7 +82,7 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
       return;
     }
 
-    if (myStopped) {
+    if (myStopped || myGlassPane != null) {
       return;
     }
 
@@ -93,6 +91,7 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
     Disposer.register(myParentDisposable, myGlassPaneListenersDisposable);
     myGlassPane.addMousePreprocessor(this, myGlassPaneListenersDisposable);
     myGlassPane.addMouseMotionPreprocessor(this, myGlassPaneListenersDisposable);
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
   }
 
   public void stop() {
@@ -108,9 +107,9 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
     if (myGlassPane != null) {
       Disposer.dispose(myGlassPaneListenersDisposable);
       myGlassPaneListenersDisposable = Disposer.newDisposable();
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
       myGlassPane = null;
     }
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
   }
 
   @Override
