@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -16,10 +15,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
-import org.cef.handler.CefLifeSpanHandler;
-import org.cef.handler.CefLifeSpanHandlerAdapter;
-import org.cef.handler.CefLoadHandler;
-import org.cef.handler.CefLoadHandlerAdapter;
+import org.cef.handler.*;
+import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,6 +96,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull protected final CefBrowser myCefBrowser;
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @Nullable private final CefLoadHandler myLoadHandler;
+  @Nullable private final CefRequestHandler myRequestHandler;
   private final ReentrantLock myCookieManagerLock = new ReentrantLock();
   protected volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
@@ -131,15 +129,29 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         @Override
         public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
           // do not show error page if another URL has already been requested to load
-          if (myLastRequestedUrl.equals(StringUtil.trimTrailing(failedUrl, '/'))) {
+          if (myLastRequestedUrl.equals(failedUrl)) {
             UIUtil.invokeLaterIfNeeded(() -> loadErrorPage(errorText, failedUrl));
           }
+        }
+      }, getCefBrowser());
+
+      cefClient.addRequestHandler(myRequestHandler = new CefRequestHandlerAdapter() {
+        @Override
+        public boolean onBeforeBrowse(CefBrowser browser,
+                                      CefFrame frame,
+                                      CefRequest request,
+                                      boolean user_gesture,
+                                      boolean is_redirect)
+        {
+          myLastRequestedUrl = ObjectUtils.notNull(request.getURL(), "");
+          return super.onBeforeBrowse(browser, frame, request, user_gesture, is_redirect);
         }
       }, getCefBrowser());
     }
     else {
       myLifeSpanHandler = null;
       myLoadHandler = null;
+      myRequestHandler = null;
     }
   }
 
@@ -237,6 +249,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myDisposeHelper.dispose(() -> {
       if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
       if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
+      if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
       myCefBrowser.stopLoad();
       myCefBrowser.close(true);
       if (myIsDefaultClient) {
@@ -289,7 +302,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   private void loadUrlImpl(@NotNull String url) {
-    getCefBrowser().loadURL(myLastRequestedUrl = url);
+    getCefBrowser().loadURL(url);
   }
 
   private void loadErrorPage(@NotNull String errorText, @NotNull String failedUrl) {
