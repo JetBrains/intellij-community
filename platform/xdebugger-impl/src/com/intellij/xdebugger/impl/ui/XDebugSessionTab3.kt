@@ -153,7 +153,6 @@ class XDebugSessionTab3(
   override fun addVariablesAndWatches(session: XDebugSessionImpl) {
     val variablesView: XVariablesView?
     val watchesView: XVariablesView?
-    val layoutDisposable = Disposer.newDisposable(ui.contentManager, "debugger layout disposable")
     if (isWatchesInVariables) {
       variablesView = XWatchesViewImpl(session, true, true, false)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
@@ -390,7 +389,7 @@ class XDebugSessionTab3(
         is XDebuggerThreadsList -> component.isEmpty
         is XDebuggerFramesList -> component.isEmpty
         is XDebuggerTree -> component.isEmpty
-        else -> false;
+        else -> false
       }
     }
   }
