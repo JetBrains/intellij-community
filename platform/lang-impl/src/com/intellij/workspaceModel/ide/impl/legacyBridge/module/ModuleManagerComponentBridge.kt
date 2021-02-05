@@ -189,6 +189,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
+  override fun areModulesLoaded(): Boolean {
+    return WorkspaceModelTopics.getInstance(project).modulesAreLoaded
+  }
+
   private fun postProcessModules(oldModuleNames: MutableMap<Module, String>,
                                  unloadedModulesSet: MutableSet<String>) {
     if (oldModuleNames.isNotEmpty()) {
@@ -234,7 +238,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             return
           }
 
-          if (!WorkspaceModelTopics.getInstance(project).modulesAreLoaded) return
+          if (!areModulesLoaded()) return
 
           addModule(change.entity)
         }
@@ -288,7 +292,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         if (moduleEntity.name !in unloadedModules) {
 
           val library = event.storageAfter.libraryMap.getDataByEntity(change.entity)
-          if (library == null && WorkspaceModelTopics.getInstance(project).modulesAreLoaded) {
+          if (library == null && areModulesLoaded()) {
             val module = entityStore.current.findModuleByEntity(moduleEntity)
                          ?: error("Could not find module bridge for module entity $moduleEntity")
             val moduleRootComponent = ModuleRootComponentBridge.getInstance(module)

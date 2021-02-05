@@ -8,7 +8,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -65,8 +65,8 @@ class RootIndex {
       LOG.error("Directory index may not be queried for default project");
     }
     ModuleManager manager = ModuleManager.getInstance(project);
-    if (manager instanceof ModuleManagerImpl) {
-      LOG.assertTrue(((ModuleManagerImpl)manager).areModulesLoaded(), "Directory index can only be queried after project initialization");
+    if (manager instanceof ModuleManagerEx) {
+      LOG.assertTrue(((ModuleManagerEx)manager).areModulesLoaded(), "Directory index can only be queried after project initialization");
     }
 
     final RootInfo info = buildRootInfo(project);
