@@ -1,58 +1,45 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.util;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.util
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GHRepositoryPath;
+import com.intellij.openapi.components.*
+import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 
-/**
- * @author Aleksey Pivovarov
- */
-@State(name = "GithubProjectSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), reportStatistic = false)
-public class GithubProjectSettings implements PersistentStateComponent<GithubProjectSettings.State> {
-  private State myState = new State();
+@State(name = "GithubProjectSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
+class GithubProjectSettings : PersistentStateComponentWithModificationTracker<GithubProjectSettings.State> {
+  private var state = State()
 
-  @Override
-  public State getState() {
-    return myState;
+  class State : BaseState() {
+    var CREATE_PULL_REQUEST_DEFAULT_BRANCH by string(null)
+    var CREATE_PULL_REQUEST_DEFAULT_REPO_USER by string(null)
+    var CREATE_PULL_REQUEST_DEFAULT_REPO_NAME by string(null)
   }
 
-  @Override
-  public void loadState(@NotNull State state) {
-    myState = state;
-  }
-
-  public static GithubProjectSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GithubProjectSettings.class);
-  }
-
-  public static class State {
-    @Nullable public String CREATE_PULL_REQUEST_DEFAULT_BRANCH = null;
-    @Nullable public String CREATE_PULL_REQUEST_DEFAULT_REPO_USER = null;
-    @Nullable public String CREATE_PULL_REQUEST_DEFAULT_REPO_NAME = null;
-  }
-
-  @Nullable
-  public String getCreatePullRequestDefaultBranch() {
-    return myState.CREATE_PULL_REQUEST_DEFAULT_BRANCH;
-  }
-
-  public void setCreatePullRequestDefaultBranch(@NotNull String branch) {
-    myState.CREATE_PULL_REQUEST_DEFAULT_BRANCH = branch;
-  }
-
-  @Nullable
-  public GHRepositoryPath getCreatePullRequestDefaultRepo() {
-    if (myState.CREATE_PULL_REQUEST_DEFAULT_REPO_USER == null || myState.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME == null) {
-      return null;
+  var createPullRequestDefaultBranch: String?
+    get() = state.CREATE_PULL_REQUEST_DEFAULT_BRANCH
+    set(value) {
+      state.CREATE_PULL_REQUEST_DEFAULT_BRANCH = value
     }
-    return new GHRepositoryPath(myState.CREATE_PULL_REQUEST_DEFAULT_REPO_USER, myState.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME);
+
+  var createPullRequestDefaultRepo: GHRepositoryPath?
+    get() = if (state.CREATE_PULL_REQUEST_DEFAULT_REPO_USER == null || state.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME == null) {
+      null
+    }
+    else GHRepositoryPath(state.CREATE_PULL_REQUEST_DEFAULT_REPO_USER!!,
+                          state.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME!!)
+    set(value) {
+      state.CREATE_PULL_REQUEST_DEFAULT_REPO_USER = value?.owner
+      state.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME = value?.repository
+    }
+
+  override fun getStateModificationCount() = state.modificationCount
+  override fun getState() = state
+  override fun loadState(state: State) {
+    this.state = state
   }
 
-  public void setCreatePullRequestDefaultRepo(@NotNull GHRepositoryPath repo) {
-    myState.CREATE_PULL_REQUEST_DEFAULT_REPO_USER = repo.getOwner();
-    myState.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME = repo.getRepository();
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): GithubProjectSettings = project.service()
   }
 }
