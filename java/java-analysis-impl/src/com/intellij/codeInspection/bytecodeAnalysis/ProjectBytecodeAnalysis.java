@@ -148,7 +148,7 @@ public class ProjectBytecodeAnalysis {
   private PsiAnnotation @NotNull [] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
     boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
-    MutationSignature mutationSignature = methodAnnotations.mutates.getOrDefault(primaryKey, MutationSignature.unknown());
+    MutationSignature mutationSignature = methodAnnotations.mutates;
     Map<String, String> annotationParameters = new LinkedHashMap<>();
     String contractValues = methodAnnotations.contractsValues.get(primaryKey);
     if (contractValues != null) {
@@ -285,12 +285,12 @@ public class ProjectBytecodeAnalysis {
   private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull EKey key, List<EKey> allKeys) throws EquationsLimitException {
     MethodAnnotations result = new MethodAnnotations();
 
-    PuritySolver puritySolver = new PuritySolver();
-    collectPurityEquations(key.withDirection(Pure), puritySolver);
+    EKey pureKey = key.withDirection(Pure);
+    PuritySolver puritySolver = collectPurityEquations(pureKey);
     Map<EKey, Effects> puritySolutions = puritySolver.solve();
 
     int arity = owner.getParameterList().getParametersCount();
-    BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
+    BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, pureKey, owner.isConstructor());
 
     EKey failureKey = key.withDirection(Throw);
     Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
@@ -328,12 +328,14 @@ public class ProjectBytecodeAnalysis {
     return new EKey(key.member, key.dirKey, stability, false);
   }
 
-  private void collectPurityEquations(EKey key, PuritySolver puritySolver) throws EquationsLimitException {
+  private PuritySolver collectPurityEquations(EKey key) throws EquationsLimitException {
+    PuritySolver puritySolver = new PuritySolver();
     Set<EKey> queued = new HashSet<>();
     Deque<EKey> queue = new ArrayDeque<>();
 
     queue.push(key);
     queued.add(key);
+    DataValue returnValue = null;
 
     while (!queue.isEmpty()) {
       if (queued.size() > EQUATIONS_LIMIT) {
@@ -352,11 +354,23 @@ public class ProjectBytecodeAnalysis {
         combined = combined == null ? effects : combined.combine(effects);
       }
       if (combined != null) {
+        if (curKey == key && combined.returnValue.dependencies().findFirst().isEmpty()) {
+          returnValue = combined.returnValue;
+          if (combined.isTop()) {
+            return puritySolver;
+          }
+        }
+        else if (returnValue != null && combined.isTop()) {
+          PuritySolver trivialSolver = new PuritySolver();
+          trivialSolver.addEquation(key, new Effects(returnValue, Effects.TOP_EFFECTS));
+          return trivialSolver;
+        }
         combined.dependencies().filter(queued::add).forEach(queue::push);
         puritySolver.addEquation(withStability(curKey, stable), combined);
       }
     }
     puritySolver.addPlainFieldEquations(md -> true);
+    return puritySolver;
   }
 
   private void collectEquations(List<EKey> keys, Solver solver) throws EquationsLimitException {
@@ -427,7 +441,6 @@ public class ProjectBytecodeAnalysis {
     throws EquationsLimitException {
     List<StandardMethodContract> contractClauses = new ArrayList<>();
     Set<EKey> notNulls = methodAnnotations.notNulls;
-    Map<EKey, MutationSignature> mutations = methodAnnotations.mutates;
     Map<EKey, String> contracts = methodAnnotations.contractsValues;
 
     ContractReturnValue fullReturnValue = methodAnnotations.returnValue.asContractReturnValue();
@@ -435,7 +448,7 @@ public class ProjectBytecodeAnalysis {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
       if (value == Value.Top || value == Value.Bot || 
-          (value == Value.Fail && !mutations.getOrDefault(methodKey, MutationSignature.unknown()).isPure())) {
+          (value == Value.Fail && !methodAnnotations.mutates.isPure())) {
         continue;
       }
       EKey key = entry.getKey().mkStable();
@@ -446,9 +459,6 @@ public class ProjectBytecodeAnalysis {
       }
       if (value == Value.NotNull && direction == Out) {
         notNulls.add(methodKey);
-      }
-      else if (value == Value.Pure && direction == Pure) {
-        mutations.put(methodKey, MutationSignature.pure());
       }
       else if (direction instanceof ParamValueBasedDirection) {
         ContractReturnValue contractReturnValue =
@@ -646,7 +656,7 @@ class MethodAnnotations {
   // @Nullable keys
   final Set<EKey> nullables = new HashSet<>(1);
   // @Contract(pure=true) part of contract
-  final Map<EKey, MutationSignature> mutates = new HashMap<>(1);
+  MutationSignature mutates = MutationSignature.unknown();
   // @Contracts
   final Map<EKey, String> contractsValues = new HashMap<>();
   DataValue returnValue = DataValue.UnknownDataValue1;
