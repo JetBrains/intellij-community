@@ -10,8 +10,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.inspections.gradle.GradleKotlinxCoroutinesDeprecationInspection
@@ -30,9 +28,7 @@ class GradleQuickFixTest : KotlinGradleImportingTestCase() {
 
     override fun setUpFixtures() {
         myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
-        codeInsightTestFixture = object : CodeInsightTestFixtureImpl(myTestFixture, TempDirTestFixtureImpl()) {
-            override fun shouldTrackVirtualFilePointers(): Boolean = false
-        }
+        codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
         codeInsightTestFixture.setUp()
     }
 
