@@ -123,16 +123,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
           mavenIndicesManager.clear();
         }
       },
-      () -> {
-        FileUtil.delete(myDir);
-        // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
-        // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
-        if (myDir.exists()) {
-          System.err.println("Cannot delete " + myDir);
-          //printDirectoryContent(myDir);
-          myDir.deleteOnExit();
-        }
-      },
+      ()->deleteDirOnTearDown(myDir),
       () -> super.tearDown()
     ).run();
   }
@@ -162,6 +153,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected MavenProgressIndicator getMavenProgressIndicator() {
     return myProgressIndicator;
+  }
+
+  protected static void deleteDirOnTearDown(File dir) {
+    FileUtil.delete(dir);
+    // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
+    // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
+    if (dir.exists()) {
+      System.err.println("Cannot delete " + dir);
+      //printDirectoryContent(myDir);
+      dir.deleteOnExit();
+    }
   }
 
   private static void printDirectoryContent(File dir) {
