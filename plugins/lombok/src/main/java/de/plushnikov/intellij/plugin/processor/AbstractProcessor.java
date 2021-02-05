@@ -33,7 +33,8 @@ public abstract class AbstractProcessor implements Processor {
 
   /**
    * Constructor for all Lombok-Processors
-   *  @param supportedClass           kind of output elements this processor supports
+   *
+   * @param supportedClass             kind of output elements this processor supports
    * @param supportedAnnotationClasses annotations this processor supports
    */
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
@@ -66,7 +67,7 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   protected boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
-                                                          @NotNull String annotationParameter, @NotNull ConfigKey configKey) {
+                                                   @NotNull String annotationParameter, @NotNull ConfigKey configKey) {
     final boolean result;
     final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, annotationParameter);
     if (null == declaredAnnotationValue) {
@@ -77,17 +78,15 @@ public abstract class AbstractProcessor implements Processor {
     return result;
   }
 
-  protected static void addOnXAnnotations(@Nullable PsiAnnotation processedAnnotation,
-                                          @NotNull PsiModifierList modifierList,
-                                          @NotNull String onXParameterName) {
+  protected static void copyOnXAnnotations(@Nullable PsiAnnotation processedAnnotation,
+                                           @NotNull PsiModifierList modifierList,
+                                           @NotNull String onXParameterName) {
     if (processedAnnotation == null) {
       return;
     }
 
-    Collection<String> annotationsToAdd = LombokProcessorUtil.getOnX(processedAnnotation, onXParameterName);
-    for (String annotation : annotationsToAdd) {
-      modifierList.addAnnotation(annotation);
-    }
+    Iterable<String> annotationsToAdd = LombokProcessorUtil.getOnX(processedAnnotation, onXParameterName);
+    annotationsToAdd.forEach(modifierList::addAnnotation);
   }
 
   @Override

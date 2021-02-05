@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
@@ -43,21 +44,27 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = Collections.emptyList();
-
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
-    if (null != psiAnnotation) {
-      if (supportAnnotationVariant(psiAnnotation) && validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
-        result = new ArrayList<>();
-        generatePsiElements(psiClass, psiAnnotation, result);
-      }
+    if (null != psiAnnotation
+      && supportAnnotationVariant(psiAnnotation)
+      && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
+      && validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())
+    ) {
+      result = new ArrayList<>();
+      generatePsiElements(psiClass, psiAnnotation, result);
     }
     return result;
   }
 
-  @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return true;
+  }
+
   @NotNull
+  @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     Collection<PsiAnnotation> result = new ArrayList<>();
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
@@ -121,7 +128,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(ofProperty, fieldName);
-          builder.addWarning(String.format("The field '%s' does not exist", fieldName),
+          builder.addWarning(LombokBundle.message("inspection.message.field.s.does.not.exist.field", fieldName),
             PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
         }
       }
@@ -134,12 +141,12 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
-          builder.addWarning(String.format("The field '%s' does not exist", fieldName),
+          builder.addWarning(LombokBundle.message("inspection.message.field.s.does.not.exist.exclude", fieldName),
             PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
         } else {
           if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
             final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
-            builder.addWarning(String.format("The field '%s' would have been excluded anyway", fieldName),
+            builder.addWarning(LombokBundle.message("inspection.message.field.s.would.have.been.excluded.anyway", fieldName),
               PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
           }
         }
@@ -163,7 +170,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
     if (result) {
       result = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
-                                                          LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR);
+        LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR);
     }
     return result;
   }

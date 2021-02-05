@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -30,7 +31,7 @@ public class DelegateHandler {
     boolean result = true;
 
     if (psiModifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
-      builder.addError("@Delegate is legal only on instance fields or no-argument instance methods.");
+      builder.addError(LombokBundle.message("inspection.message.delegate.legal.only.on.instance.fields"));
       result = false;
     }
 
@@ -55,8 +56,8 @@ public class DelegateHandler {
     boolean result = true;
     for (PsiType psiType : psiTypes) {
       if (!checkConcreteClass(psiType)) {
-        builder.addError("@Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives. '%s' is wrong class type",
-          psiType.getCanonicalText());
+        builder.addError(LombokBundle.message("inspection.message.delegate.can.only.use.concrete.class.types"),
+                         psiType.getCanonicalText());
         result = false;
       } else {
         result &= validateRecursion(psiType, builder);
@@ -262,8 +263,7 @@ public class DelegateHandler {
 
     private void checkModifierListOwner(PsiModifierListOwner modifierListOwner) {
       if (PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE)) {
-        builder.addError("@Delegate does not support recursion (delegating to a type that itself has @Delegate members). " +
-          "Member \"%s\" is @Delegate in type \"%s\"", ((PsiMember) modifierListOwner).getName(), psiType.getPresentableText());
+        builder.addError(LombokBundle.message("inspection.message.delegate.does.not.support.recursion.delegating"), ((PsiMember) modifierListOwner).getName(), psiType.getPresentableText());
         valid = false;
       }
     }

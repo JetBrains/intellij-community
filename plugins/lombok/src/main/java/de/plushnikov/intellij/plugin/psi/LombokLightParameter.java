@@ -2,40 +2,34 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.light.LightParameter;
-import com.intellij.psi.impl.light.LightVariableBuilder;
-import de.plushnikov.intellij.plugin.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
+import java.util.stream.Stream;
 
 /**
  * @author Plushnikov Michail
  */
 public class LombokLightParameter extends LightParameter implements SyntheticElement {
-  private String myName;
   private final LombokLightIdentifier myNameIdentifier;
 
   public LombokLightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
-    super(name, type, declarationScope, language);
-    myName = name;
-    PsiManager manager = declarationScope.getManager();
-    myNameIdentifier = new LombokLightIdentifier(manager, name);
-    ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class,
-      new LombokLightModifierList(manager, language, Collections.emptySet()));
+    super(name, type, declarationScope, language, new LombokLightModifierList(declarationScope.getManager(), language));
+    myNameIdentifier = new LombokLightIdentifier(declarationScope.getManager(), name);
   }
 
   @NotNull
   @Override
   public String getName() {
-    return myName;
+    return myNameIdentifier.getText();
   }
 
   @Override
   public PsiElement setName(@NotNull String name) {
-    myName = name;
     myNameIdentifier.setText(name);
     return this;
   }
@@ -53,8 +47,9 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
 
   @Override
   public LombokLightParameter setModifiers(String... modifiers) {
-    LombokLightModifierList modifierList = new LombokLightModifierList(getManager(), getLanguage(), Collections.emptySet(), modifiers);
-    ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class, modifierList);
+    final LombokLightModifierList lombokLightModifierList = (LombokLightModifierList)getModifierList();
+    lombokLightModifierList.clearModifiers();
+    Stream.of(modifiers).forEach(lombokLightModifierList::addModifier);
     return this;
   }
 
@@ -67,7 +62,7 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
       return false;
     }
 
-    LombokLightParameter that = (LombokLightParameter) o;
+    LombokLightParameter that = (LombokLightParameter)o;
 
     final PsiType thisType = getType();
     final PsiType thatType = that.getType();

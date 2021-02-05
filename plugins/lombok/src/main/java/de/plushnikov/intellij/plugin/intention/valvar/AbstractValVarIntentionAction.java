@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.intention.AbstractLombokIntentionAction;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractValVarIntentionAction extends AbstractLombokIntentionAction implements LowPriorityAction {

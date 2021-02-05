@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -45,7 +46,7 @@ public class SuperBuilderHandler extends BuilderHandler {
         .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.ABSTRACT));
 
       if (isStaticAndAbstract.isEmpty()) {
-        problemBuilder.addError("Existing Builder must be an abstract static inner class.");
+        problemBuilder.addError(LombokBundle.message("inspection.message.existing.builder.must.be.abstract.static.inner.class"));
         return false;
       }
     }
@@ -204,17 +205,24 @@ public class SuperBuilderHandler extends BuilderHandler {
       }
     }
 
-    final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
-    initBuilderInfosBuilderClassType(builderInfos, bType);
+    baseClassBuilder.withFieldSupplier(() -> {
+      final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
+      initBuilderInfosBuilderClassType(builderInfos, bType);
 
-    // create builder Fields
-    builderInfos.stream()
-      .map(BuilderInfo::renderBuilderFields)
-      .forEach(baseClassBuilder::withFields);
+      // create builder Fields
+      return builderInfos.stream()
+        .map(BuilderInfo::renderBuilderFields)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    });
 
-    // create all methods
-    baseClassBuilder.withMethods(
-      addAllMethodsForBaseBuilderClass(psiClass, psiAnnotation, baseClassBuilder, builderInfos, bType, cType));
+    baseClassBuilder.withMethodSupplier(() -> {
+      final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
+      initBuilderInfosBuilderClassType(builderInfos, bType);
+
+      // create all methods
+      return addAllMethodsForBaseBuilderClass(psiClass, psiAnnotation, baseClassBuilder, builderInfos, bType, cType);
+    });
 
     return baseClassBuilder;
   }
@@ -368,7 +376,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       PsiClassUtil.getTypeWithGenerics(psiClass), PsiClassUtil.getTypeWithGenerics(implClassBuilder));
     implClassBuilder.withExtends(extendsType);
 
-    implClassBuilder.withMethods(createAllMethodsOfImplBuilder(psiClass, psiAnnotation, implClassBuilder));
+    implClassBuilder.withMethodSupplier(() -> createAllMethodsOfImplBuilder(psiClass, psiAnnotation, implClassBuilder));
 
     return implClassBuilder;
   }

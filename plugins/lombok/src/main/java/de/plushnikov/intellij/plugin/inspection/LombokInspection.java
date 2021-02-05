@@ -1,10 +1,10 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
@@ -18,7 +18,7 @@ import java.util.HashSet;
 /**
  * @author Plushnikov Michail
  */
-public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
+public class LombokInspection extends LombokJavaInspectionBase {
 
   private final ValProcessor valProcessor;
 
@@ -28,7 +28,7 @@ public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected PsiElementVisitor createVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new LombokElementVisitor(holder);
   }
 
@@ -36,7 +36,7 @@ public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
 
     private final ProblemsHolder holder;
 
-    public LombokElementVisitor(ProblemsHolder holder) {
+    LombokElementVisitor(ProblemsHolder holder) {
       this.holder = holder;
     }
 
@@ -90,7 +90,7 @@ public class LombokInspection extends AbstractBaseJavaLocalInspectionTool {
         PsiElement resolved = resolveResult.getElement();
 
         if (resolved instanceof LombokLightMethodBuilder && ((LombokLightMethodBuilder) resolved).getParameterList().getParameters().length != 0) {
-          holder.registerProblem(methodCall, "Default constructor doesn't exist", ProblemHighlightType.ERROR);
+          holder.registerProblem(methodCall, LombokBundle.message("inspection.message.default.constructor.doesn.t.exist"), ProblemHighlightType.ERROR);
         }
       }
     }

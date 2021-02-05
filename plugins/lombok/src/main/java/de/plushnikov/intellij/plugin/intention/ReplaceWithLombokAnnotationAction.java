@@ -26,7 +26,7 @@ public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAc
 
   public ReplaceWithLombokAnnotationAction() {
     super();
-    setText("Replace with Lombok");
+    setText(LombokBundle.message("intention.name.replace.with.lombok"));
   }
 
   @Override

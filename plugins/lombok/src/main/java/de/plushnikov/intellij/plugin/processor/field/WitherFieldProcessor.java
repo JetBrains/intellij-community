@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -34,6 +35,8 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+    validateOnXAnnotations(psiAnnotation, psiField, builder, "onParam");
+
     boolean valid = validateVisibility(psiAnnotation);
     valid &= validName(psiField, builder);
     valid &= validNonStatic(psiField, builder);
@@ -65,7 +68,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private boolean validName(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     if (psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER)) {
-      builder.addWarning("Not generating wither for this field: Withers cannot be generated for fields starting with $.");
+      builder.addWarning(LombokBundle.message("inspection.message.not.generating.wither.for.this.field.withers"));
       return false;
     }
     return true;
@@ -73,8 +76,8 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private boolean validNonStatic(@NotNull PsiField psiField, @NotNull final ProblemBuilder builder) {
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-      builder.addWarning("Not generating wither for this field: Withers cannot be generated for static fields.",
-        PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.STATIC, false, false));
+      builder.addWarning(LombokBundle.message("inspection.message.not.generating.wither"),
+                         PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.STATIC, false, false));
       return false;
     }
     return true;
@@ -85,8 +88,8 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     if (null != psiClass &&
       psiField.hasModifierProperty(PsiModifier.FINAL) && !PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE) &&
       psiField.hasInitializer() && !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.BUILDER_DEFAULT)) {
-      builder.addWarning("Not generating wither for this field: Withers cannot be generated for final, initialized fields.",
-        PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
+      builder.addWarning(LombokBundle.message("inspection.message.not.generating.wither.for.this.field.withers.cannot.be.generated"),
+                         PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       return false;
     }
     return true;
@@ -102,7 +105,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       final Collection<String> possibleWitherNames = LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
       for (String witherName : possibleWitherNames) {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, witherName, 1)) {
-          builder.addWarning("Not generating %s(): A method with that name already exists", witherName);
+          builder.addWarning(LombokBundle.message("inspection.message.not.generating.s.method.with.that.name.already.exists"), witherName);
           return false;
         }
       }
@@ -135,7 +138,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     }
 
     if (!constructorExists) {
-      builder.addWarning("@Wither needs constructor for all fields (%d parameters)", constructorParameters.size());
+      builder.addWarning(LombokBundle.message("inspection.message.wither.needs.constructor.for.all.fields.d.parameters"), constructorParameters.size());
     }
     return constructorExists;
   }
@@ -177,14 +180,14 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
         .withModifier(methodModifier);
 
       PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
-      addOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
+      copyOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
 
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder, JavaLanguage.INSTANCE);
-      PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
-      copyAnnotations(psiField, methodParameterModifierList,
-        LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
-      addOnXAnnotations(witherAnnotation, methodParameterModifierList, "onParam");
       methodBuilder.withParameter(methodParameter);
+
+      PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
+      copyCopyableAnnotations(psiField, methodParameterModifierList, LombokUtils.BASE_COPYABLE_ANNOTATIONS);
+      copyOnXAnnotations(witherAnnotation, methodParameterModifierList, "onParam");
 
       if (psiFieldContainingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         methodBuilder.withModifier(PsiModifier.ABSTRACT);

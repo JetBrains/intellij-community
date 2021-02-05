@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -36,7 +37,7 @@ public class GetterProcessor extends AbstractClassProcessor {
     final boolean result = validateAnnotationOnRightType(psiClass, builder) && validateVisibility(psiAnnotation);
 
     if (PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "lazy", false)) {
-      builder.addWarning("'lazy' is not supported for @Getter on a type");
+      builder.addWarning(LombokBundle.message("inspection.message.lazy.not.supported.for.getter.on.type"));
     }
 
     return result;
@@ -45,7 +46,7 @@ public class GetterProcessor extends AbstractClassProcessor {
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError("'@Getter' is only supported on a class, enum or field type");
+      builder.addError(LombokBundle.message("inspection.message.getter.only.supported.on.class.enum.or.field.type"));
       result = false;
     }
     return result;

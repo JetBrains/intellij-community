@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection.modifiers;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
@@ -9,12 +10,12 @@ public class RedundantModifiersInfo {
 
   private final RedundantModifiersInfoType redundantModifiersInfoType;
   private final String[] modifiers;
-  private final String description;
+  @InspectionMessage private final String description;
   private final String dontRunOnModifier;
 
   public RedundantModifiersInfo(@NotNull RedundantModifiersInfoType redundantModifiersInfoType,
                                 @PsiModifier.ModifierConstant @Nullable String dontRunOnModifier,
-                                @NotNull String description,
+                                @InspectionMessage @NotNull String description,
                                 @PsiModifier.ModifierConstant @NotNull String... modifiers) {
     this.redundantModifiersInfoType = redundantModifiersInfoType;
     this.description = description;
@@ -27,6 +28,7 @@ public class RedundantModifiersInfo {
     return modifiers;
   }
 
+  @InspectionMessage
   public String getDescription() {
     return description;
   }

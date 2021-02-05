@@ -36,10 +36,15 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   }
 
   public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type, @NotNull Language language) {
+    this(manager, name, type, language, new LightModifierList(manager));
+  }
+
+  public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type,
+                              @NotNull Language language, @NotNull LightModifierList modifierList) {
     super(manager, language);
     myName = name;
     myType = type;
-    myModifierList = new LightModifierList(manager);
+    myModifierList = modifierList;
   }
 
   @Override

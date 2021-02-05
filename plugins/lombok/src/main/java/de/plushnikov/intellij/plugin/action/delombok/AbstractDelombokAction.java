@@ -6,18 +6,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.containers.ContainerUtil;
+import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.stream.Stream;
 
 public abstract class AbstractDelombokAction extends AnAction {
   private DelombokHandler myHandler;
@@ -42,7 +44,7 @@ public abstract class AbstractDelombokAction extends AnAction {
       return;
     }
 
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     if (psiDocumentManager.hasUncommitedDocuments()) {
       psiDocumentManager.commitAllDocuments();
     }
@@ -113,7 +115,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     final DataContext dataContext = event.getDataContext();
 
     final Project project = event.getProject();
-    if (project == null) {
+    if (project == null || !LombokLibraryUtil.hasLombokLibrary(project)) {
       presentation.setEnabled(false);
       return;
     }
@@ -138,7 +140,7 @@ public abstract class AbstractDelombokAction extends AnAction {
         if (JavaFileType.INSTANCE.equals(file.getFileType())) {
           PsiJavaFile psiFile = (PsiJavaFile) psiManager.findFile(file);
           if (psiFile != null) {
-            isValid = Stream.of(psiFile.getClasses()).anyMatch(this::isValidForClass);
+            isValid = ContainerUtil.or(psiFile.getClasses(), this::isValidForClass);
           }
         }
         if (isValid) {
@@ -187,6 +189,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     return targetClass != null && isValidForClass(targetClass);
   }
 
+  @NlsContexts.Command
   private String getCommandName() {
     String text = getTemplatePresentation().getText();
     return text == null ? "" : text;
