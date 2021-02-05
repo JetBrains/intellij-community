@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.server.WslMavenDistribution
@@ -17,13 +17,13 @@ object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun getWslDistribution(project: Project): WSLDistribution {
     val basePath = project.basePath ?: throw IllegalArgumentException("Project $project with null base path")
-    return WslDistributionManager.getInstance().distributionFromPath(basePath)
+    return WslPath.getDistributionByWindowsUncPath(basePath)
            ?: throw IllegalArgumentException("Distribution for path $basePath not found, check your WSL installation")
   }
 
   @JvmStatic
   fun tryGetWslDistribution(project: Project): WSLDistribution? {
-    return project.basePath?.let { WslDistributionManager.getInstance().distributionFromPath(it) }
+    return project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
   }
 
   /**
@@ -33,7 +33,7 @@ object MavenWslUtil : MavenUtil() {
   fun WSLDistribution.resolveUserSettingsFile(overriddenUserSettingsFile: String?): File {
     val localFile = if (!isEmptyOrSpaces(overriddenUserSettingsFile)) File(overriddenUserSettingsFile)
     else File(this.resolveM2Dir(), SETTINGS_XML)
-    return localFile!!
+    return localFile
   }
 
   /**
@@ -119,7 +119,7 @@ object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun getJdkPath(wslDistribution: WSLDistribution): String? {
-    return wslDistribution.getEnvironmentVariable("JAVA_HOME");
+    return wslDistribution.getEnvironmentVariable("JAVA_HOME")
   }
 
   @JvmStatic

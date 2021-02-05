@@ -18,7 +18,7 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
@@ -246,7 +246,7 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private List<ListeningConnection> myListeningConnections = new ArrayList<>();
+  private final List<ListeningConnection> myListeningConnections = new ArrayList<>();
 
   @NotNull
   private final Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
@@ -1111,12 +1111,7 @@ public final class BuildManager implements Disposable {
     final Pair<Sdk, JavaSdkVersion> pair = getBuildProcessRuntimeSdk(project);
     final Sdk projectJdk = pair.first;
     final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
-    Pair<String, @Nullable WSLDistribution> distributionPair =
-      WslDistributionManager.getInstance().parseWslPath(projectJdkType.getVMExecutablePath(projectJdk));
-    if (distributionPair != null && distributionPair.second != null) {
-      return distributionPair.second;
-    }
-    return null;
+    return WslPath.getDistributionByWindowsUncPath(projectJdkType.getVMExecutablePath(projectJdk));
   }
 
   private OSProcessHandler launchBuildProcess(@NotNull Project project, @NotNull UUID sessionId, boolean requestProjectPreload,
@@ -1178,9 +1173,9 @@ public final class BuildManager implements Disposable {
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
 
     BuildCommandLineBuilder cmdLine;
-    Pair<String, @Nullable WSLDistribution> pair = WslDistributionManager.getInstance().parseWslPath(vmExecutablePath);
-    if (pair != null && pair.second != null) {
-      cmdLine = new WslBuildCommandLineBuilder(project, pair.second, pair.first, progressIndicator);
+    WslPath wslPath = WslPath.parseWindowsUncPath(vmExecutablePath);
+    if (wslPath != null) {
+      cmdLine = new WslBuildCommandLineBuilder(project, wslPath.getDistribution(), wslPath.getLinuxPath(), progressIndicator);
     }
     else {
       cmdLine = new LocalBuildCommandLineBuilder(vmExecutablePath);
