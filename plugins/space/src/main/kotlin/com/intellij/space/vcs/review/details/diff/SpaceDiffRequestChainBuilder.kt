@@ -74,7 +74,7 @@ private class SpaceDiffRequestProducer(
   private fun createSpaceDiffRequest(projectKey: ProjectKey,
                                      selectedCommitHashes: List<String>,
                                      changes: LoadingProperty<Map<String, ChangesWithDiscussion>?>): SimpleDiffRequest {
-    val diffData = spaceDiffVm.spaceReviewDiffLoader.loadDiff(project, projectKey, spaceReviewChange, selectedCommitHashes)
+    val diffData = spaceDiffVm.spaceReviewDiffLoader.loadDiffData(project, projectKey, spaceReviewChange, selectedCommitHashes)
 
     val diffRequestData = SpaceReviewDiffRequestData(SequentialLifetimes(requestProducerLifetime),
                                                      spaceDiffVm,

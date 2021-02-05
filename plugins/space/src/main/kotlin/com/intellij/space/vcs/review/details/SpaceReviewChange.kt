@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.vcsUtil.VcsUtil
 
-internal class SpaceReviewChange(changeInReview: ChangeInReview, spaceRepoInfo: SpaceRepoInfo?, val unreachable: Boolean) {
+internal class SpaceReviewChange(changeInReview: ChangeInReview, val spaceRepoInfo: SpaceRepoInfo?, val unreachable: Boolean) {
   val changeFilePathInfo = getChangeFilePathInfo(changeInReview, spaceRepoInfo)
 
   val fileStatus: FileStatus = changeInReview.getFileStatus()

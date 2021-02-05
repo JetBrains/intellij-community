@@ -21,7 +21,7 @@ import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVm
 import com.intellij.space.vcs.review.details.diff.SpaceDiffVmImpl
-import com.intellij.space.vcs.review.details.diff.SpaceReviewDiffLoader
+import com.intellij.space.vcs.review.details.diff.load.SpaceLocalDiffLoaderWithCallback
 import com.intellij.space.vcs.review.details.process.SpaceReviewStateUpdater
 import com.intellij.space.vcs.review.details.process.SpaceReviewStateUpdaterImpl
 import com.intellij.vcs.log.data.DataPackChangeListener
@@ -127,7 +127,7 @@ internal sealed class SpaceReviewDetailsVm<R : CodeReviewRecord>(
                                                  reviewKey as String,
                                                  projectKey,
                                                  selectedChangesVm,
-                                                 SpaceReviewDiffLoader(lifetime, client),
+                                                 SpaceLocalDiffLoaderWithCallback(lifetime, client),
                                                  participantsVm).also {
    ideaProject.service<SpaceVirtualFilesManager>()
       .updateDiffPresentation(selectedChangesVm, it)
