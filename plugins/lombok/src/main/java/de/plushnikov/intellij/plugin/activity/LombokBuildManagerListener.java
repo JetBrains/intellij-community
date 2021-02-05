@@ -17,22 +17,22 @@ public class LombokBuildManagerListener implements BuildManagerListener {
   public void beforeBuildProcessStarted(@NotNull Project project,
                                         @NotNull UUID sessionId) {
     if (!hasAnnotationProcessorsEnabled(project) &&
-        ReadAction.compute(() -> LombokLibraryUtil.hasLombokLibrary(project))) {
+        ReadAction.nonBlocking(() -> LombokLibraryUtil.hasLombokLibrary(project)).executeSynchronously()) {
       enableAnnotationProcessors(project);
     }
   }
 
-  private CompilerConfigurationImpl getCompilerConfiguration(@NotNull Project project) {
+  private static CompilerConfigurationImpl getCompilerConfiguration(@NotNull Project project) {
     return (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
   }
 
-  private boolean hasAnnotationProcessorsEnabled(@NotNull Project project) {
+  private static boolean hasAnnotationProcessorsEnabled(@NotNull Project project) {
     final CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
     return compilerConfiguration.getDefaultProcessorProfile().isEnabled() &&
            compilerConfiguration.getModuleProcessorProfiles().stream().allMatch(AnnotationProcessingConfiguration::isEnabled);
   }
 
-  private void enableAnnotationProcessors(@NotNull Project project) {
+  private static void enableAnnotationProcessors(@NotNull Project project) {
     CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
     compilerConfiguration.getDefaultProcessorProfile().setEnabled(true);
     compilerConfiguration.getModuleProcessorProfiles().forEach(pp -> pp.setEnabled(true));
