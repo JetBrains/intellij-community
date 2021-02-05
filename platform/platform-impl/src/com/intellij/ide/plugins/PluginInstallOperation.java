@@ -187,6 +187,7 @@ public class PluginInstallOperation {
         result |= prepareToInstallWithCallback(pluginNode, pluginIds);
       }
       catch (IOException e) {
+        LOG.error(e);
         String title = IdeBundle.message("title.plugin.error");
         Notifications.Bus.notify(
           new Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, pluginNode.getName() + ": " + e.getMessage(),
