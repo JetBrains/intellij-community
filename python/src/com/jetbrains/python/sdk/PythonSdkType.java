@@ -12,6 +12,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -348,16 +349,18 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
-    final Project project;
-    final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
-    final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
-    if (ownerComponent != null) {
-      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
-    }
-    else {
-      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    }
-    PythonSdkUpdater.updateOrShowError(sdk, project, ownerComponent);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      final Project project;
+      final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
+      final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
+      if (ownerComponent != null) {
+        project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
+      }
+      else {
+        project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      }
+      PythonSdkUpdater.updateOrShowError(sdk, project, ownerComponent);
+    });
   }
 
   @Override
