@@ -403,7 +403,7 @@ abstract class JdkInstallerBase {
   private fun findAlreadyInstalledJdk(feedItem: JdkItem, distribution: WSLDistributionForJdkInstaller?) : JdkInstallRequest? {
     try {
       val localRoots = run {
-        val defaultInstallDir = defaultInstallDir()
+        val defaultInstallDir = defaultInstallDir(distribution)
         if (!defaultInstallDir.isDirectory()) return@run listOf()
         Files.list(defaultInstallDir).use { it.toList() }
       }
