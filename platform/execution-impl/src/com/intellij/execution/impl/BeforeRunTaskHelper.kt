@@ -5,12 +5,13 @@ import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.BeforeRunTaskProvider
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.util.Key
 import com.intellij.util.SmartList
 import com.intellij.util.containers.filterSmartMutable
 import com.intellij.util.containers.mapSmartSet
 
 internal fun getEffectiveBeforeRunTaskList(ownTasks: List<BeforeRunTask<*>>, templateTasks: List<BeforeRunTask<*>>, ownIsOnlyEnabled: Boolean, isDisableTemplateTasks: Boolean): List<BeforeRunTask<*>> {
-  val idToSet = ownTasks.mapSmartSet { it.providerId }
+  val idToSet = ownTasks.mapSmartSet { it.providerId as Key<*> }
   val result = ownTasks.filterSmartMutable { !ownIsOnlyEnabled || it.isEnabled }
   var i = 0
   for (templateTask in templateTasks) {
