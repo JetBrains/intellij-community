@@ -110,6 +110,9 @@ public final class IndexUpdateRunner {
                             @NotNull Collection<VirtualFile> files,
                             @NotNull ProgressIndicator indicator,
                             @NotNull IndexingJobStatistics statistics) {
+    if (files.isEmpty()) {
+      return;
+    }
     indicator.checkCanceled();
     indicator.setIndeterminate(false);
 

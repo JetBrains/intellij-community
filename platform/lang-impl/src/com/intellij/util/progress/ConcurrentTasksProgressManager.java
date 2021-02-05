@@ -21,8 +21,8 @@ public final class ConcurrentTasksProgressManager {
   private final AtomicInteger myRemainingTotalWeight;
 
   public ConcurrentTasksProgressManager(ProgressIndicator parent, int totalWeight) {
-    if (totalWeight <= 0) {
-      throw new IllegalArgumentException("Total weight must be a positive number: " + totalWeight);
+    if (totalWeight < 0) {
+      throw new IllegalArgumentException("Total weight must not be negative: " + totalWeight);
     }
     myParent = parent;
     myTotalWeight = totalWeight;
@@ -32,8 +32,8 @@ public final class ConcurrentTasksProgressManager {
 
   @NotNull
   public SubTaskProgressIndicator createSubTaskIndicator(int taskWeight) {
-    if (taskWeight <= 0) {
-      throw new IllegalArgumentException("Task weight must be a positive number: " + taskWeight);
+    if (taskWeight < 0) {
+      throw new IllegalArgumentException("Task weight must not be negative: " + taskWeight);
     }
     if (myRemainingTotalWeight.addAndGet(-taskWeight) < 0) {
       throw new IllegalStateException("Attempted to create more task indicators than registered in constructor");
@@ -47,7 +47,7 @@ public final class ConcurrentTasksProgressManager {
   }
 
   void updateTaskFraction(double taskDeltaFraction, int taskWeight) {
-    double delta = taskDeltaFraction * taskWeight / myTotalWeight;
+    double delta = myTotalWeight == 0 ? 0 : taskDeltaFraction * taskWeight / myTotalWeight;
     while (true) {
       long current = myTotalFraction.get();
       double currentVal = Double.longBitsToDouble(current);

@@ -61,6 +61,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   public static final ExecutorService GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "Indexing", getMaxNumberOfIndexingThreads()
   );
+  private static final int MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING = 100;
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
   private static final @NotNull Key<UnindexedFilesUpdater> RUNNING_TASK = Key.create("RUNNING_INDEX_UPDATER_TASK");
   private static final Object ourLastRunningTaskLock = new Object();
@@ -195,18 +196,28 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     LOG.info("Use " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads));
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
 
-    for (IndexableFilesIterator provider : orderedProviders) {
-      List<VirtualFile> providerFiles = providerToFiles.get(provider);
-      if (providerFiles == null || providerFiles.isEmpty()) {
-        continue;
+    for (int index = 0; index < orderedProviders.size(); ) {
+      List<VirtualFile> files = new ArrayList<>();
+      String indexingProgressText = "";
+      StringBuilder providerDebugName = new StringBuilder();
+      while (files.size() < MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING && index < orderedProviders.size()) {
+        IndexableFilesIterator provider = orderedProviders.get(index++);
+        List<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
+        files.addAll(providerFiles);
+
+        indexingProgressText = provider.getIndexingProgressText();
+        if (providerDebugName.length() > 0) {
+          providerDebugName.append(", ");
+        }
+        providerDebugName.append(provider.getDebugName());
       }
-      concurrentTasksProgressManager.setText(provider.getIndexingProgressText());
-      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(providerFiles.size());
+      concurrentTasksProgressManager.setText(indexingProgressText);
+      SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(files.size());
       try {
         IndexingJobStatistics statistics;
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          statistics = indexUpdateRunner.indexFiles(myProject, provider.getDebugName(), providerFiles, subTaskIndicator);
+          statistics = indexUpdateRunner.indexFiles(myProject, providerDebugName.toString(), files, subTaskIndicator);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
@@ -217,7 +228,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
           projectIndexingHistory.addProviderStatistics(statistics);
         }
         catch (Exception e) {
-          LOG.error("Failed to add indexing statistics for " + provider.getDebugName(), e);
+          LOG.error("Failed to add indexing statistics for " + providerDebugName, e);
         }
 
         if (exception != null) {
