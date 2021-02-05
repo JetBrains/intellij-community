@@ -528,7 +528,18 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public VirtualFile getFile(@NotNull FileEditor editor) {
     EditorComposite editorComposite = getEditorComposite(editor);
-    return editorComposite == null ? null : editorComposite.getFile();
+    VirtualFile virtualFile = editorComposite == null ? null : editorComposite.getFile();
+    VirtualFile file = editor.getFile();
+    if (!Comparing.equal(file, virtualFile)) {
+      if (file == null) {
+        LOG.warn(editor.getClass().getName() + ".getFile() shall not return null");
+      }
+      else {
+        LOG.warn("fileEditor.getFile=" + file + "!= fileEditorManager.getFile=" + virtualFile +
+                 ", fileEditor.class=" + editor.getClass().getName());
+      }
+    }
+    return virtualFile;
   }
 
   @Override

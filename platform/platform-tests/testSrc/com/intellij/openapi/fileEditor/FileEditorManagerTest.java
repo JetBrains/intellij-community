@@ -322,6 +322,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
         public String getName() {
           return "mockEditor";
         }
+
+        @Override
+        public VirtualFile getFile() {
+          return file;
+        }
       };
     }
 
@@ -361,7 +366,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     @NotNull
     @Override
     public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-      return new MyTextEditor(FileDocumentManager.getInstance().getDocument(file), myId, myTargetOffset);
+      return new MyTextEditor(file, FileDocumentManager.getInstance().getDocument(file), myId, myTargetOffset);
     }
 
     @NotNull
@@ -378,11 +383,16 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   private static final class MyTextEditor extends Mock.MyFileEditor implements TextEditor {
+    private final VirtualFile myFile;
     private final Editor myEditor;
     private final String myName;
     private final int myTargetOffset;
 
-    private MyTextEditor(Document document, String name, int targetOffset) {
+    private MyTextEditor(VirtualFile file,
+                         Document document,
+                         String name,
+                         int targetOffset) {
+      myFile = file;
       myEditor = EditorFactory.getInstance().createEditor(document);
       myName = name;
       myTargetOffset = targetOffset;
@@ -423,6 +433,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     @Override
     public void navigateTo(@NotNull Navigatable navigatable) {}
+
+    @Override
+    public VirtualFile getFile() {
+      return myFile;
+    }
   }
 }
 

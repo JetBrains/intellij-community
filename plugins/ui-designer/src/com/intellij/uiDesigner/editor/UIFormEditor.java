@@ -87,6 +87,12 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return myEditor;
   }
 
+  @NotNull
+  @Override
+  public VirtualFile getFile() {
+    return myFile;
+  }
+
   @Override
   public boolean isModified(){
     return false;

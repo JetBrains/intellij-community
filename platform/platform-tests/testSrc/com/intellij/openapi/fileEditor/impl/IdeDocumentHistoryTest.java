@@ -41,6 +41,11 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
       public void setState(@NotNull FileEditorState state) {
         myEditorState = state;
       }
+
+      @Override
+      public VirtualFile getFile() {
+        return mySelectedFile;
+      }
     };
 
     EditorManager editorManager = new EditorManager();
