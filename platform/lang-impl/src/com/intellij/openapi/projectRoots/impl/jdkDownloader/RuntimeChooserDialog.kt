@@ -5,10 +5,12 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
@@ -28,8 +30,7 @@ class RuntimeChooserDialog(
 
   init {
     title = LangBundle.message("dialog.title.choose.ide.runtime")
-    model.fetchAvailableJbrs()
-
+    setResizable(false)
     init()
   }
 
@@ -67,8 +68,23 @@ class RuntimeChooserDialog(
 
     return panel {
       row(LangBundle.message("dialog.label.choose.ide.runtime.combo")) {
-        jdkCombobox.invoke()
+        jdkCombobox.invoke(growX)
       }
+
+      //download row
+      row(ProjectBundle.message("dialog.row.jdk.location")) {
+        val locationLabel = JBTextField()
+        locationLabel.isEditable = false
+        locationLabel.invoke(growX)
+
+        val updateLocation = {
+          (jdkCombobox.selectedItem as? RuntimeChooserItemWithFixedLocation)?.let { item ->
+            locationLabel.text = SdkListPresenter.presentDetectedSdkPath(item.homeDir)
+          }
+        }
+        updateLocation()
+        jdkCombobox.addItemListener { updateLocation() }
+      }.onlyVisibleWhenSelected { it is RuntimeChooserItemWithFixedLocation }
 
       //download row
       row(ProjectBundle.message("dialog.row.jdk.location")) {
@@ -76,7 +92,7 @@ class RuntimeChooserDialog(
           project = project,
           browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
           fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        ).component
+        ).constraints(growX).component
 
         val updateLocation = {
           (jdkCombobox.selectedItem as? RuntimeChooserDownloadableItem)?.let { item ->
@@ -94,7 +110,11 @@ class RuntimeChooserDialog(
   }
 
   private fun Row.onlyVisibleWhenSelected(isVisible: (RuntimeChooserItem?) -> Boolean) {
-    val updateVisible = { this@onlyVisibleWhenSelected.visible = isVisible(jdkCombobox.selectedItem as? RuntimeChooserItem) }
+    val updateVisible = {
+      val visible = isVisible(jdkCombobox.selectedItem as? RuntimeChooserItem)
+      this@onlyVisibleWhenSelected.visible = visible
+      this@onlyVisibleWhenSelected.enabled = visible
+    }
     updateVisible()
     jdkCombobox.addItemListener { updateVisible() }
   }

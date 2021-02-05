@@ -9,11 +9,10 @@ import javax.swing.DefaultComboBoxModel
 
 abstract class RuntimeChooserItem
 
-object RuntimeChooserCurrentItem : RuntimeChooserItem()
-object RuntimeChooserBundledItem : RuntimeChooserItem()
-
 class RuntimeChooserModel {
   private var showAdvancedOptions: Boolean = false
+
+  private var currentRuntime : RuntimeChooserCurrentItem? = null
   private var downloadableJbs: List<JdkItem> = listOf()
 
   private val myMainComboModel = DefaultComboBoxModel<RuntimeChooserItem>()
@@ -31,23 +30,18 @@ class RuntimeChooserModel {
 
     myMainComboModel.removeAllElements()
 
-    val downloadJbrItems = downloadableJbs
+    val newList = mutableListOf<RuntimeChooserItem>()
+
+    currentRuntime?.let {
+      newList += it
+    }
+
+    newList += downloadableJbs
       .filter { showAdvancedOptions || it.isDefaultItem }
       .map { RuntimeChooserDownloadableItem(it) }
 
-    val newList = listOf(
-      RuntimeChooserBundledItem,
-      RuntimeChooserCurrentItem,
-    ) + downloadJbrItems
-
     myMainComboModel.addAll(newList)
-    myMainComboModel.selectedItem = selection
-                                    ?: newList.firstOrNull { it is RuntimeChooserCurrentItem }
-                                    ?: newList.firstOrNull { it is RuntimeChooserBundledItem }
-  }
-
-  fun onUpdateDownloadJbrListScheduled() {
-    //show progress
+    myMainComboModel.selectedItem = selection ?: newList.firstOrNull { it is RuntimeChooserCurrentItem }
   }
 
   fun showAdvancedOptions() {
@@ -58,6 +52,11 @@ class RuntimeChooserModel {
 
   fun updateDownloadJbrList(items: List<JdkItem>) {
     downloadableJbs = items.toList()
+    updateMainCombobox()
+  }
+
+  fun updateCurrentRuntime(runtime: RuntimeChooserCurrentItem) {
+    currentRuntime = runtime
     updateMainCombobox()
   }
 }

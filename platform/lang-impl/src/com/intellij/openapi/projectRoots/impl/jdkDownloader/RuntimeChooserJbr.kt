@@ -3,7 +3,6 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
@@ -20,13 +19,9 @@ data class RuntimeChooserDownloadableItem(val item: JdkItem) : RuntimeChooserIte
 }
 
 fun RuntimeChooserModel.fetchAvailableJbrs() {
-  ApplicationManager.getApplication().assertIsDispatchThread()
-
-  object : Task.Backgroundable(null, LangBundle.message("progress.title.downloading.jetbrains.runtime.list")) {
+  object : Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.downloading.jetbrains.runtime.list")) {
     override fun run(indicator: ProgressIndicator) {
-      onUpdateDownloadJbrListScheduled()
       val builds = service<RuntimeChooserJbrListDownloader>().downloadForUI(indicator)
-
       invokeLater(modalityState = ModalityState.any()) {
         updateDownloadJbrList(builds)
       }

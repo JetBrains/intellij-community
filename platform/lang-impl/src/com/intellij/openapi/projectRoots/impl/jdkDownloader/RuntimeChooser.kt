@@ -8,6 +8,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 class RuntimeChooserAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val model = RuntimeChooserModel()
+
+    model.fetchAvailableJbrs()
+    model.fetchCurrentRuntime()
+
     RuntimeChooserDialog(null, model).show()
   }
 }
