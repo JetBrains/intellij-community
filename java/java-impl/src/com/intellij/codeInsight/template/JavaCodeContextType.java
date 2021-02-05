@@ -47,9 +47,11 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   }
 
   @Override
-  public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(JavaLanguage.INSTANCE)) {
-      PsiElement element = file.findElementAt(offset);
+  public boolean isInContext(@NotNull TemplateActionContext templateActionContext) {
+    PsiFile file = templateActionContext.getFile();
+    int startOffset = templateActionContext.getStartOffset();
+    if (PsiUtilCore.getLanguageAtOffset(file, startOffset).isKindOf(JavaLanguage.INSTANCE)) {
+      PsiElement element = file.findElementAt(startOffset);
       if (element instanceof PsiWhiteSpace) {
         return false;
       }
