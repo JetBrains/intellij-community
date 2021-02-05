@@ -162,28 +162,28 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   @ApiStatus.Internal
   public final void registerLanguageSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                              @NotNull LanguageCodeStyleProvider provider) {
-    allSettings.forEach(settings -> settings.registerSettings(provider));
+    allSettings.forEach(settings -> settings.registerCommonSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void unregisterLanguageSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                                @NotNull LanguageCodeStyleProvider provider) {
-    allSettings.forEach(settings -> settings.removeSettings(provider));
+    allSettings.forEach(settings -> settings.removeCommonSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void registerCustomSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                            @NotNull CustomCodeStyleSettingsFactory provider) {
-    allSettings.forEach(settings -> settings.registerSettings(provider));
+    allSettings.forEach(settings -> settings.registerCustomSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void unregisterCustomSettings(@NotNull Collection<? extends CodeStyleSettings> allSettings,
                                              @NotNull CustomCodeStyleSettingsFactory provider) {
-    allSettings.forEach(settings -> settings.removeSettings(provider));
+    allSettings.forEach(settings -> settings.removeCustomSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
