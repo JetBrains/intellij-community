@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -26,6 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
+import java.util.Objects;
 
 @SuppressWarnings("ComponentNotRegistered")
 public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
@@ -231,7 +234,9 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     @Override
     public void addNotify() {
       super.addNotify();
-      myConnection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+      DataContext context = DataManager.getInstance().getDataContext(getParent());
+      Disposable parentDisposable = Objects.requireNonNullElse(CommonDataKeys.PROJECT.getData(context), ApplicationManager.getApplication());
+      myConnection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
       myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
         public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
