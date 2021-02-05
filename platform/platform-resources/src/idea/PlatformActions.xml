@@ -1153,7 +1153,9 @@
     <action id="DumpFocusableComponentHierarchyAction" internal="false"
             class="com.intellij.ui.DumpFocusableComponentHierarchyAction"/>
 
-    <action id="ChooseRuntime" class="com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserAction" />
+    <action id="ChooseRuntime" class="com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserAction">
+      <synonym text="Choose Runtime"/>
+    </action>
 
     <group id="EditorContextBarMenu">
       <action id="EditorToggleUseSoftWrapsInPreview" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsInPreviewAction"
