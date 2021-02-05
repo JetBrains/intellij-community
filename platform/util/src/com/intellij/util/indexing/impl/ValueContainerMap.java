@@ -17,6 +17,16 @@ class ValueContainerMap<Key, Value> {
   private final @NotNull DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 
+  ValueContainerMap(@NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> persistentMap,
+                    @NotNull KeyDescriptor<Key> keyDescriptor,
+                    @NotNull DataExternalizer<Value> valueExternalizer,
+                    boolean keyIsUniqueForIndexedFile) {
+    myPersistentMap = persistentMap;
+    myKeyDescriptor = keyDescriptor;
+    myValueExternalizer = valueExternalizer;
+    myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
+  }
+
   ValueContainerMap(@NotNull Path file,
                     @NotNull KeyDescriptor<Key> keyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,

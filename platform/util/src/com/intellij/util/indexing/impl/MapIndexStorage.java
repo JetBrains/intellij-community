@@ -98,24 +98,46 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     myMap = map;
   }
 
-  @NotNull
-  private ValueContainerMap<Key, Value> createValueContainerMap() throws IOException {
-    ValueContainerMap<Key, Value> map;
+  protected @NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> createPersistentMap(
+    @NotNull KeyDescriptor<Key> keyDescriptor,
+    @NotNull ValueContainerExternalizer<Value> valueContainerExternalizer,
+    boolean isReadOnly,
+    boolean compactOnClose,
+    boolean keyIsUniqueForIndexedFile) throws IOException {
+    PersistentMapImpl<Key, UpdatableValueContainer<Value>> persistentMap;
     PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(() -> checkCanceled());
     PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
-    if (myKeyIsUniqueForIndexedFile) {
+    if (keyIsUniqueForIndexedFile) {
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
     }
     try {
-      map = new ValueContainerMap<>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myInputRemapping, myReadOnly, compactOnClose());
-    } finally {
+      persistentMap = new PersistentMapImpl<>(PersistentMapBuilder
+                                                .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
+                                                .withReadonly(isReadOnly)
+                                                .withCompactOnClose(compactOnClose));
+    }
+    finally {
       PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
       if (myKeyIsUniqueForIndexedFile) {
         PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
       }
     }
-    return map;
+    return persistentMap;
+  }
+
+  private @NotNull ValueContainerMap<Key, Value> createValueContainerMap() throws IOException {
+    ValueContainerExternalizer<Value> valueContainerExternalizer = new ValueContainerExternalizer<>(myDataExternalizer, myInputRemapping);
+    PersistentMapBase<Key, UpdatableValueContainer<Value>> persistentMap = createPersistentMap(myKeyDescriptor,
+                                                                                               valueContainerExternalizer,
+                                                                                               myReadOnly,
+                                                                                               compactOnClose(),
+                                                                                               myKeyIsUniqueForIndexedFile);
+
+    return new ValueContainerMap<>(persistentMap,
+                                   myKeyDescriptor,
+                                   myDataExternalizer,
+                                   myKeyIsUniqueForIndexedFile);
   }
 
   @Override
