@@ -57,7 +57,11 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
-import com.intellij.psi.impl.source.*
+import com.intellij.psi.impl.source.JavaFileElementType
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.PsiFileWithStubSupport
+import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.*
 import com.intellij.psi.stubs.*
 import com.intellij.psi.util.CachedValue
@@ -71,6 +75,8 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
+import com.intellij.util.indexing.events.IndexedFilesListener
+import com.intellij.util.indexing.events.VfsEventsMerger
 import com.intellij.util.indexing.impl.IndexDebugProperties
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
@@ -78,12 +84,9 @@ import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.indexing.impl.forward.IntForwardIndex
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
-import com.intellij.util.indexing.events.IndexedFilesListener
-import com.intellij.util.indexing.events.VfsEventsMerger
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.io.PersistentHashMap
-import com.intellij.util.io.PersistentMapImpl
+import com.intellij.util.io.PersistentMapBase
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -987,9 +990,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     try {
       MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
-      PersistentHashMap<String, UpdatableValueContainer<String>> map = storage.getIndexMap()
-      assertTrue(PersistentMapImpl.unwrap(map).getReadOnly())
-      assertTrue(PersistentMapImpl.unwrap(map).getValueStorage().isReadOnly())
+      PersistentMapBase<String, UpdatableValueContainer<String>> map = storage.getIndexMap()
+      assertTrue(map.getReadOnly())
+      assertTrue(map.getValueStorage().isReadOnly())
     }
     finally {
       index.dispose()

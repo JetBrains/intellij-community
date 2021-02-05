@@ -7,7 +7,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
-  protected PersistentMap<Key, UpdatableValueContainer<Value>> myMap;
+  protected ValueContainerMap<Key, Value> myMap;
   protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   protected final Path myBaseStorageFile;
   protected final KeyDescriptor<Key> myKeyDescriptor;
@@ -65,26 +64,12 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   }
 
   protected void initMapAndCache() throws IOException {
-    ValueContainerMap<Key, Value> map;
-    PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(() -> checkCanceled());
-    PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
-    if (myKeyIsUniqueForIndexedFile) {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-    }
-    try {
-      map = new ValueContainerMap<>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myInputRemapping, myReadOnly, compactOnClose());
-    } finally {
-      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
-      PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
-      if (myKeyIsUniqueForIndexedFile) {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
-    }
+    ValueContainerMap<Key, Value> map = createValueContainerMap();
     myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/, myKeyDescriptor) {
       @Override
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return map.createChangeTrackingValueContainer(key);
+        return map.getModifiableValueContainer(key);
       }
 
       @Override
@@ -101,7 +86,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
             }
           }
           try {
-            map.put(key, storedContainer);
+            map.merge(key, storedContainer);
           }
           catch (IOException e) {
             throw new RuntimeException(e);
@@ -110,7 +95,27 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
       }
     };
 
-    myMap = new PersistentHashMap<>(map);
+    myMap = map;
+  }
+
+  @NotNull
+  private ValueContainerMap<Key, Value> createValueContainerMap() throws IOException {
+    ValueContainerMap<Key, Value> map;
+    PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(() -> checkCanceled());
+    PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
+    if (myKeyIsUniqueForIndexedFile) {
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+    }
+    try {
+      map = new ValueContainerMap<>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myInputRemapping, myReadOnly, compactOnClose());
+    } finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
+      PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
+      if (myKeyIsUniqueForIndexedFile) {
+        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+      }
+    }
+    return map;
   }
 
   @Override
@@ -251,7 +256,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
       return;
     }
 
-    myMap.put(key, new ChangeTrackingValueContainer<>(null));
+    myMap.merge(key, new ChangeTrackingValueContainer<>(null));
   }
 
   private void updateSingleValueDirectly(Key key, int inputId, Value newValue) throws IOException {
@@ -266,7 +271,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
 
     ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<>(null);
     valueContainer.addValue(inputId, newValue);
-    myMap.put(key, valueContainer);
+    myMap.merge(key, valueContainer);
   }
 
   private void putSingleValueDirectly(Key key, int inputId, Value value) throws IOException {
@@ -281,7 +286,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     // do not pollute the cache with keys unique to indexed file
     ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<>(null);
     valueContainer.addValue(inputId, value);
-    myMap.put(key, valueContainer);
+    myMap.merge(key, valueContainer);
   }
 
   @Nullable
@@ -336,16 +341,12 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   }
 
   protected boolean doProcessKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    return myMap instanceof PersistentHashMap && myKeyDescriptor instanceof InlineKeyDescriptor
-           // process keys and check that they're already present in map because we don't have separated key storage we must check keys
-           ? ((PersistentHashMap<Key, UpdatableValueContainer<Value>>)myMap).processKeysWithExistingMapping(processor)
-           // optimization: process all keys, some of them might be already deleted but we don't care. We just read key storage file here
-           : myMap.processKeys(processor);
+    return myMap.processKeys(processor);
   }
 
   @TestOnly
-  public PersistentMap<Key, UpdatableValueContainer<Value>> getIndexMap() {
-    return myMap;
+  public PersistentMapBase<Key, UpdatableValueContainer<Value>> getIndexMap() {
+    return myMap.getStorageMap();
   }
 
   @NotNull
