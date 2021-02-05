@@ -29,6 +29,10 @@ public abstract class TagManager {
     return ServiceManager.getService(project, TagManager.class);
   }
 
+  public static boolean isEnabled() {
+    return Registry.is("ide.element.tags.enabled");
+  }
+
   @Nullable
   public static Icon appendTags(@Nullable PsiElement element, @NotNull ColoredTextContainer component) {
     Collection<TagManager.Tag> tags = getElementTags(element);
@@ -43,7 +47,7 @@ public abstract class TagManager {
   }
 
   public static @NotNull Collection<Tag> getElementTags(@Nullable PsiElement element) {
-    if (!Registry.is("ide.element.tags.enabled")) return Collections.emptySet();
+    if (!isEnabled()) return Collections.emptySet();
     if (element == null || !element.isValid()) return Collections.emptySet();
     return getInstance(element.getProject()).getTags(element);
   }
