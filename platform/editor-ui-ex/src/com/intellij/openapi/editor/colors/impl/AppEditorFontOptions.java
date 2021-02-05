@@ -99,7 +99,7 @@ public final class AppEditorFontOptions implements PersistentStateComponent<AppE
   }
 
   private static String[] migrateFamilyNameIfNeeded(String family, String regularSubFamily, String boldSubFamily) {
-    if (SystemInfo.isJetBrainsJvm && NEW_FONT_SELECTOR && regularSubFamily == null && boldSubFamily == null) {
+    if (regularSubFamily == null && boldSubFamily == null && FontFamilyService.isServiceSupported()) {
       String[] result = FontFamilyService.migrateFontSetting(family);
       LOG.info("Font setting migration: " + family + " -> " + Arrays.toString(result));
       return result;
