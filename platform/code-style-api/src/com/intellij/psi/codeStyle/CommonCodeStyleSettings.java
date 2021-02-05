@@ -155,11 +155,6 @@ public class CommonCodeStyleSettings {
     setSoftMargins(source.getSoftMargins());
   }
 
-  @Nullable
-  private CommonCodeStyleSettings getDefaultSettings() {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
-    return provider == null ? null : provider.getDefaultCommonSettings();
-  }
 
   public void readExternal(Element element) {
     //noinspection deprecation
@@ -179,8 +174,15 @@ public class CommonCodeStyleSettings {
   }
 
   public void writeExternal(Element element) {
-    CommonCodeStyleSettings defaultSettings = getDefaultSettings();
-    Set<String> supportedFields = getSupportedFields();
+    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
+    if (provider != null) {
+      writeExternal(element, provider);
+    }
+  }
+
+  void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
+    CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
+    Set<String> supportedFields = provider.getSupportedFields();
     if (supportedFields != null) {
       supportedFields.add("FORCE_REARRANGE_MODE");
     }
@@ -191,7 +193,7 @@ public class CommonCodeStyleSettings {
     DefaultJDOMExternalizer.write(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     mySoftMargins.serializeInto(element);
     if (myIndentOptions != null) {
-      IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
+      IndentOptions defaultIndentOptions = defaultSettings.getIndentOptions();
       Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
       myIndentOptions.serialize(indentOptionsElement, defaultIndentOptions);
       if (!indentOptionsElement.getChildren().isEmpty()) {
@@ -206,12 +208,6 @@ public class CommonCodeStyleSettings {
         element.addContent(container);
       }
     }
-  }
-
-  @Nullable
-  private Set<String> getSupportedFields() {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(getLanguage());
-    return provider == null ? null : provider.getSupportedFields();
   }
 
   private static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {

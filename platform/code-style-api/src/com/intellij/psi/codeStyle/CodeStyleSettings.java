@@ -1244,12 +1244,12 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   @ApiStatus.Internal
   public void removeSettings(@NotNull LanguageCodeStyleProvider provider) {
-    myCommonSettingsManager.removeLanguageSettings(provider.getLanguage());
+    myCommonSettingsManager.removeLanguageSettings(provider);
   }
 
   @ApiStatus.Internal
   public void registerSettings(@NotNull LanguageCodeStyleProvider provider) {
-    myCommonSettingsManager.addLanguageSettings(provider.getLanguage(), provider.getDefaultCommonSettings());
+    myCommonSettingsManager.addLanguageSettings(provider);
   }
 
   @ApiStatus.Internal
