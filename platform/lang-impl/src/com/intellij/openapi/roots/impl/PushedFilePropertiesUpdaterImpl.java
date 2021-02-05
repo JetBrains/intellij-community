@@ -18,9 +18,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentIteratorEx;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +36,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.roots.*;
@@ -42,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -49,6 +55,11 @@ import java.util.stream.Stream;
 
 public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance(PushedFilePropertiesUpdater.class);
+
+  private static final int SCANNING_EXECUTOR_THREAD_COUNT = UnindexedFilesUpdater.getNumberOfScanningThreads() - 1;
+  private static final ExecutorService GLOBAL_SCANNING_EXECUTOR  = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    "Scanning", SCANNING_EXECUTOR_THREAD_COUNT
+  );
 
   private final Project myProject;
 
@@ -338,25 +349,15 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     };
 
     List<Future<?>> results = new ArrayList<>();
-    int numThreads = Math.min(UnindexedFilesUpdater.getNumberOfScanningThreads(), tasks.size());
-
-    for (int i = 0; i < numThreads; ++i) {
-      results.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    for (int i = 0; i < SCANNING_EXECUTOR_THREAD_COUNT; i++) {
+      results.add(GLOBAL_SCANNING_EXECUTOR.submit(() -> {
         ProgressManager.getInstance().runProcess(taskProcessor, ProgressWrapper.wrap(progress));
       }));
     }
     taskProcessor.run();
 
     for (Future<?> result : results) {
-      try {
-        result.get();
-      }
-      catch (InterruptedException ex) {
-        throw new ProcessCanceledException(ex);
-      }
-      catch (Exception ex) {
-        LOG.error(ex);
-      }
+      ProgressIndicatorUtils.awaitWithCheckCanceled(result);
     }
   }
 
