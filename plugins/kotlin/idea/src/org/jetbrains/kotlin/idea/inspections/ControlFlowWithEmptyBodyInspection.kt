@@ -21,11 +21,16 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
         override fun visitIfExpression(expression: KtIfExpression) {
             val then = expression.then
             val elseKeyword = expression.elseKeyword
-            if (then.isEmptyBodyOrNull() && (elseKeyword == null || then?.hasComments() != true)) {
-                holder.registerProblem(expression, expression.ifKeyword)
+
+            val thenEmpty = then?.isEmptyBody()
+            val elseEmpty = expression.`else`?.isEmptyBody()
+
+            expression.ifKeyword.takeIf { thenEmpty != false && (elseEmpty != false || then?.hasComments() != true) }?.let {
+                holder.registerProblem(expression, it)
             }
-            if (elseKeyword != null && expression.`else`.isEmptyBodyOrNull()) {
-                holder.registerProblem(expression, elseKeyword)
+
+            elseKeyword?.takeIf { elseEmpty != false && (thenEmpty != false || expression.`else`?.hasComments() != true) }?.let {
+                holder.registerProblem(expression, it)
             }
         }
 
@@ -70,7 +75,8 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
         }
     }
 
-    private fun KtExpression?.isEmptyBodyOrNull(): Boolean = if (this == null) true else this is KtBlockExpression && statements.isEmpty()
+    private fun KtExpression?.isEmptyBodyOrNull(): Boolean = this?.isEmptyBody() ?: true
+    private fun KtExpression.isEmptyBody(): Boolean = this is KtBlockExpression && statements.isEmpty()
 
     private fun ProblemsHolder.registerProblem(expression: KtExpression, keyword: PsiElement) {
         val keywordText = if (expression is KtDoWhileExpression) "do while" else keyword.text
