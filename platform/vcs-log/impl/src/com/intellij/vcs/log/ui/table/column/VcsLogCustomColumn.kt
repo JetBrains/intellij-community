@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 
 interface VcsLogCustomColumn<T> : VcsLogColumn<T> {
 
+  @JvmDefault
   fun isEnabledByDefault() = true
 
   companion object {
