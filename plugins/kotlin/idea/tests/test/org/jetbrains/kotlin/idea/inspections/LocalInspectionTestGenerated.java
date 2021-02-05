@@ -10276,6 +10276,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/array.kt");
             }
 
+            @TestMetadata("arrayVersion13.kt")
+            public void testArrayVersion13() throws Exception {
+                runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/arrayVersion13.kt");
+            }
+
             @TestMetadata("basic.kt")
             public void testBasic() throws Exception {
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/basic.kt");
@@ -10304,6 +10309,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("intArray.kt")
             public void testIntArray() throws Exception {
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/intArray.kt");
+            }
+
+            @TestMetadata("intArrayVersion13.kt")
+            public void testIntArrayVersion13() throws Exception {
+                runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWith/intArrayVersion13.kt");
             }
 
             @TestMetadata("labeledReturn.kt")
@@ -10342,6 +10352,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("array.kt")
             public void testArray() throws Exception {
                 runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/array.kt");
+            }
+
+            @TestMetadata("arrayVersion13.kt")
+            public void testArrayVersion13() throws Exception {
+                runTest("testData/inspectionsLocal/replaceAssociateFunction/associateWithTo/arrayVersion13.kt");
             }
 
             @TestMetadata("basic.kt")

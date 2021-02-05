@@ -1,3 +1,5 @@
+// LANGUAGE_VERSION: 1.3
+// PROBLEM: none
 // WITH_RUNTIME
 fun getValue(i: Int): String = ""
 

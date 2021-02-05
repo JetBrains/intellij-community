@@ -52,7 +52,9 @@ class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
                 keySelector.isReferenceTo(lambdaParameter, context) -> {
                     val receiver =
                         dotQualifiedExpression.receiverExpression.getResolvedCall(context)?.resultingDescriptor?.returnType ?: return null
-                    if (KotlinBuiltIns.isArray(receiver) || KotlinBuiltIns.isPrimitiveArray(receiver)) return null
+                    if ((KotlinBuiltIns.isArray(receiver) || KotlinBuiltIns.isPrimitiveArray(receiver)) &&
+                        dotQualifiedExpression.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_4
+                    ) return null
                     ASSOCIATE_WITH to GENERIC_ERROR_OR_WARNING
                 }
                 valueTransform.isReferenceTo(lambdaParameter, context) ->
