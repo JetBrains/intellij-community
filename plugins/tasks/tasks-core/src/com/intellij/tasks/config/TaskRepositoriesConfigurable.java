@@ -153,7 +153,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
           ((CardLayout)myRepositoryEditor.getLayout()).show(myRepositoryEditor, name);
           mySplitter.doLayout();
           mySplitter.repaint();
-		  myRepositoryEditor.updateUI();
+		      myRepositoryEditor.updateUI();
         }
       }
     });
