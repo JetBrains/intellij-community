@@ -253,7 +253,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       return;
     }
 
-    Color background = JBColor.namedColor("Table.hoverBackground", 0xEDF5FC);
+    Color background = JBUI.CurrentTheme.Table.Hover.background(true);
     UIUtil.setBackgroundRecursively(component, selected ? getSelectionBackground() : background);
     component.setForeground(selected ? getSelectionForeground() : getForeground());
   }
