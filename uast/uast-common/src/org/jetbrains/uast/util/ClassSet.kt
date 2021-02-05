@@ -2,12 +2,15 @@
 package org.jetbrains.uast.util
 
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.map2Array
 import java.util.concurrent.ConcurrentMap
 
 
 interface ClassSet<out T> {
   fun isEmpty(): Boolean
   operator fun contains(element: Class<out @UnsafeVariance T>): Boolean
+  fun toList(): List<Class<out @UnsafeVariance T>>
 }
 
 fun <T> T?.isInstanceOf(classSet: ClassSet<T>): Boolean =
@@ -42,6 +45,8 @@ private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : Cla
   override fun toString(): String {
     return "ClassSetImpl(${initialClasses.contentToString()})"
   }
+
+  override fun toList(): List<Class<out @UnsafeVariance T>> = listOf(*initialClasses)
 }
 
 fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> =
@@ -50,6 +55,7 @@ fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> =
 private val emptyClassSet: ClassSet<Nothing> = object : ClassSet<Nothing> {
   override fun isEmpty() = true
   override fun contains(element: Class<out Nothing>): Boolean = false
+  override fun toList(): List<Class<out Nothing>> = emptyList()
 }
 
 fun <T> emptyClassSet(): ClassSet<T> = emptyClassSet
@@ -57,6 +63,7 @@ fun <T> emptyClassSet(): ClassSet<T> = emptyClassSet
 class ClassSetsWrapper<out T>(val sets: Array<ClassSet<@UnsafeVariance T>>) : ClassSet<T> {
   override fun isEmpty(): Boolean = sets.all { it.isEmpty() }
   override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean = sets.any { it.contains(element) }
+  override fun toList(): List<Class<out T>> = ContainerUtil.concat(*sets.map2Array { it.toList() })
 }
 
 private const val SIMPLE_CLASS_SET_LIMIT = 5

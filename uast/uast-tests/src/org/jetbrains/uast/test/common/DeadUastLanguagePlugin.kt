@@ -6,6 +6,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.util.ClassSet
+import org.jetbrains.uast.util.emptyClassSet
 import org.junit.Assert
 
 class DeadUastLanguagePlugin(override val language: Language) : UastLanguagePlugin {
@@ -44,4 +46,5 @@ class DeadUastLanguagePlugin(override val language: Language) : UastLanguagePlug
     return false
   }
 
+  override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> = emptyClassSet()
 }

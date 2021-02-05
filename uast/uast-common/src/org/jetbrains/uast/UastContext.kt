@@ -176,6 +176,8 @@ val DEFAULT_EXPRESSION_TYPES_LIST: Array<Class<out UExpression>> = arrayOf(UExpr
  * @return types of possible source PSI elements of [language], which instances in principle
  *         can be converted to at least one of the specified [uastTypes]
  *         (or to [UElement] if no type was specified)
+ *
+ * @see UastFacade.getPossiblePsiSourceTypes
  */
 fun getPossiblePsiSourceTypes(language: Language, vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
   UastLanguagePlugin.byLanguage(language)?.getPossiblePsiSourceTypes(*uastTypes) ?: emptyClassSet()
