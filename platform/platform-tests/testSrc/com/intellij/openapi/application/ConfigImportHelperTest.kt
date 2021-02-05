@@ -28,7 +28,6 @@ import java.util.function.Predicate
 private val LOG = logger<ConfigImportHelperTest>()
 
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
-
   @Test fun `config directory is valid for import`() {
     PropertiesComponent.getInstance().setValue("property.ConfigImportHelperTest", true)
     try {
@@ -329,7 +328,6 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .isDirectoryContaining { it.fileName.toString() == tempBuilder.id && it.isDirectory() }
       .isDirectoryNotContaining { it.fileName.toString() == "my-plugin-1.0.jar" }
   }
-
 
   @Test fun `do not migrate plugins to existing directory`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
