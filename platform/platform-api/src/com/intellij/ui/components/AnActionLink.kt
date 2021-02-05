@@ -1,0 +1,36 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ui.components
+
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces.UNKNOWN
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.awt.Rectangle
+import javax.swing.SwingUtilities
+
+open class AnActionLink(@Nls text: String, anAction: AnAction, place: String)
+  : DataProvider, ActionLink(text, { invokeAction(anAction, it.source as AnActionLink, place, null, null) }) {
+
+  @JvmOverloads
+  constructor(anAction: AnAction, place: String = UNKNOWN) : this(anAction.templateText!!, anAction, place)
+  constructor(@Nls text: String, anAction: AnAction) : this(text, anAction, UNKNOWN)
+  constructor(@NonNls actionId: String) : this(ActionManager.getInstance().getAction(actionId))
+
+  var dataProvider: DataProvider? = anAction as? DataProvider
+
+  override fun getData(dataId: String) = when {
+    PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.`is`(dataId) -> {
+      val point = SwingUtilities.getRoot(this).locationOnScreen
+      Rectangle(point.x, point.y, width, height)
+    }
+    PlatformDataKeys.CONTEXT_MENU_POINT.`is`(dataId) -> {
+      SwingUtilities.convertPoint(this, 0, height, UIUtil.getRootPane(this))
+    }
+    else -> dataProvider?.getData(dataId)
+  }
+}
