@@ -361,10 +361,10 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
       val asyncEventsToString = asyncEvents.joinToString("\n    ") { it.toString() }
       val bulkEventsToString = bulkEvents.joinToString("\n    ") { it.toString() }
-      assertEquals(expectedEventCount, asyncEventsSize, "Unexpected VFS event count received by async listener: $asyncEventsToString")
       assertEquals(asyncEventsSize, bulkEventsSize, "Async & bulk listener events mismatch." +
                                                     "\n  Async events : $asyncEventsToString," +
                                                     "\n  Bulk events: $bulkEventsToString")
+      assertEquals(expectedEventCount, asyncEventsSize, "Unexpected VFS event count received by async listener: $asyncEventsToString")
 
       assertEquals(asyncEvents.toSet(), bulkEvents.toSet(), "Async & bulk listener events mismatch")
 
