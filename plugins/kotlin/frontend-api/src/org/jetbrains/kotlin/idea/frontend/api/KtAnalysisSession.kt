@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.frontend.api
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtCall
 import org.jetbrains.kotlin.idea.frontend.api.components.*
@@ -181,5 +182,6 @@ abstract class KtAnalysisSession(final override val token: ValidityToken) : Vali
     fun KtReturnExpression.getReturnTargetSymbol(): KtCallableSymbol? =
         expressionHandlingComponent.getReturnExpressionTargetSymbol(this)
 
-    fun collectPossibleReferenceShortenings(file: KtFile, from: Int, to: Int) = referenceShortener.collectShortenings(file, from, to)
+    fun collectPossibleReferenceShortenings(file: KtFile, selection: TextRange): ShortenCommand =
+        referenceShortener.collectShortenings(file, selection)
 }
