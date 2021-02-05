@@ -587,7 +587,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    */
   @Override
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) {
-    setLookAndFeelImpl(lookAndFeelInfo, lockEditorScheme, true);
+    setLookAndFeelImpl(lookAndFeelInfo, !lockEditorScheme, true);
   }
 
   /**
