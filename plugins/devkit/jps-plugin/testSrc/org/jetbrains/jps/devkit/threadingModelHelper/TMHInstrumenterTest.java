@@ -8,7 +8,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,43 +59,34 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   }
 
   public void testConstructor() throws Exception {
-    doTest(TMHInstrumenterTest::invokeConstructor);
+    Class<?> testClass = getInstrumentedTestClass();
+    testClass.getDeclaredConstructor().newInstance();
+    assertThrows(Throwable.class, CALLED_OUTSIDE_AWT_MESSAGE,
+                 () -> executeInBackground(() -> testClass.getDeclaredConstructor().newInstance()));
   }
 
   public void testDoNotInstrument() throws Exception {
-    TestClass testClass = prepareTest(false);
-    assertFalse(testClass.isInstrumented);
-    assertNull(invokeMethod(testClass.aClass));
-    assertNull(invokeInBackground(testClass.aClass, TMHInstrumenterTest::invokeMethod));
+    Class<?> testClass = getNotInstrumentedTestClass();
+    invokeMethod(testClass);
+    executeInBackground(() -> invokeMethod(testClass));
   }
 
   private void doTest() throws Exception {
-    doTest(TMHInstrumenterTest::invokeMethod);
+    Class<?> testClass = getInstrumentedTestClass();
+    invokeMethod(testClass);
+    assertThrows(Throwable.class, CALLED_OUTSIDE_AWT_MESSAGE, () -> executeInBackground(() -> invokeMethod(testClass)));
   }
 
-  private void doTest(@NotNull ThrowableConvertor<Class<?>, Throwable, Exception> invoker) throws Exception {
+  private @NotNull Class<?> getInstrumentedTestClass() throws IOException {
     TestClass testClass = prepareTest(false);
     assertTrue(testClass.isInstrumented);
-    assertNull(invoker.convert(testClass.aClass));
-    Throwable throwable = invokeInBackground(testClass.aClass, invoker);
-    assertNotNull(throwable);
-    assertEquals(CALLED_OUTSIDE_AWT_MESSAGE, throwable.getMessage());
+    return testClass.aClass;
   }
 
-  private static @Nullable Throwable invokeInBackground(@NotNull Class<?> testClass,
-                                                        @NotNull ThrowableConvertor<Class<?>, Throwable, Exception> invoker) {
-    ExecutorService executor = Executors.newSingleThreadExecutor(r -> new Thread(r, TESTING_BACKGROUND_THREAD_NAME));
-    Future<Throwable> futureThrowable = executor.submit(() -> invoker.convert(testClass));
-    try {
-      return futureThrowable.get(10, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException | TimeoutException e) {
-      fail("Test failed to get result of the task from the ExecutorService: " + e.getCause().getMessage());
-    }
-    catch (ExecutionException e) {
-      fail("Method call failed with unexpected exception when executed in background: " + e.getCause().getMessage());
-    }
-    return null;
+  private @NotNull Class<?> getNotInstrumentedTestClass() throws IOException {
+    TestClass testClass = prepareTest(false);
+    assertFalse(testClass.isInstrumented);
+    return testClass.aClass;
   }
 
   @NotNull
@@ -154,34 +146,44 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     return instrumented ? writer.toByteArray() : null;
   }
 
-  @Nullable
-  private static Throwable invokeMethod(@NotNull Class<?> testClass) {
-    try {
+  private static void invokeMethod(@NotNull Class<?> testClass) {
+    rethrowExceptions(() -> {
       Object instance = testClass.getDeclaredConstructor().newInstance();
       Method method = testClass.getMethod("test");
       method.invoke(instance);
-    }
-    catch (InvocationTargetException e) {
-      return e.getCause();
-    }
-    catch (IllegalAccessException | InstantiationException | NoSuchMethodException e) {
-      fail("Failed to invoke test method: " + e.getMessage());
-    }
-    return null;
+    });
   }
 
-  @Nullable
-  private static Throwable invokeConstructor(@NotNull Class<?> testClass) {
+  private static void rethrowExceptions(@NotNull ThrowableRunnable<? extends Throwable> runnable) {
     try {
-      testClass.getDeclaredConstructor().newInstance();
+      runnable.run();
     }
-    catch (InvocationTargetException e) {
-      return e.getCause();
+    catch (Throwable e) {
+      //noinspection InstanceofCatchParameter
+      if (e instanceof InvocationTargetException) {
+        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
+      }
+      ExceptionUtil.rethrowAllAsUnchecked(e);
     }
-    catch (IllegalAccessException | InstantiationException | NoSuchMethodException e) {
-      fail("Failed to invoke constructor: " + e.getMessage());
+  }
+
+  private static void executeInBackground(@NotNull ThrowableRunnable<? extends Throwable> runnable) throws ExecutionException {
+    waitResult(startInBackground(runnable));
+  }
+
+  private static @NotNull Future<?> startInBackground(@NotNull ThrowableRunnable<? extends Throwable> runnable) {
+    return Executors.newSingleThreadExecutor(r -> new Thread(r, TESTING_BACKGROUND_THREAD_NAME))
+      .submit(() -> rethrowExceptions(runnable));
+  }
+
+  private static void waitResult(@NotNull Future<?> future) throws ExecutionException {
+    try {
+      future.get(10, TimeUnit.MINUTES);
     }
-    return null;
+    catch (InterruptedException | TimeoutException e) {
+      e.printStackTrace();
+      fail("Background computation didn't finish as expected");
+    }
   }
 
   private static class MyClassLoader extends ClassLoader {
