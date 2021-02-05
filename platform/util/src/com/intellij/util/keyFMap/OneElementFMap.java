@@ -54,7 +54,7 @@ final class OneElementFMap<V> implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return new Key[] { myKey };
   }
 
