@@ -222,11 +222,17 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
       return AutoSignInResult.NOT_AUTHORIZED_BEFORE
     }
     val newManager = createWorkspaceManager(wsLifetime, server)
-    return if (newManager.signInNonInteractive()) {
-      manager.value = newManager
-      AutoSignInResult.AUTHORIZED
+    return try {
+      if (newManager.signInNonInteractive()) {
+        manager.value = newManager
+        AutoSignInResult.AUTHORIZED
+      }
+      else {
+        AutoSignInResult.NOT_AUTHORIZED
+      }
     }
-    else {
+    catch (th: Throwable) {
+      LOG.info(th, "Couldn't authorize interactively")
       AutoSignInResult.NOT_AUTHORIZED
     }
   }
