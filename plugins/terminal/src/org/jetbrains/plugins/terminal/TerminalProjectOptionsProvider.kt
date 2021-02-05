@@ -138,15 +138,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
-      val provider = project.getService(TerminalProjectOptionsProvider::class.java)
-      val oldState = project.getService(TerminalProjectOptionsProviderOld::class.java).getAndClear()
-      if (oldState != null &&
-          provider.state.startingDirectory == null &&
-          provider.state.envDataOptions.get() == EnvironmentVariablesData.DEFAULT) {
-        provider.state.startingDirectory = oldState.myStartingDirectory
-        provider.state.envDataOptions.set(oldState.envDataOptions.get())
-      }
-      return provider
+      return project.getService(TerminalProjectOptionsProvider::class.java)
     }
   }
 
