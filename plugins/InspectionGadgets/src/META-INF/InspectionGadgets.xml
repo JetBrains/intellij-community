@@ -2803,10 +2803,6 @@
                      key="junit5.converter.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit5ConverterInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5Platform" bundle="messages.InspectionGadgetsBundle"
-                     key="junit5.platform.runner.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.JUnit5PlatformInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="RedundantExplicitVariableType" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
