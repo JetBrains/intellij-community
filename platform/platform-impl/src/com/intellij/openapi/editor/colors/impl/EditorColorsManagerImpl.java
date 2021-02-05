@@ -177,7 +177,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
-    initScheme();
+    // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
+    ApplicationManager.getApplication().invokeLater(this::initScheme);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
