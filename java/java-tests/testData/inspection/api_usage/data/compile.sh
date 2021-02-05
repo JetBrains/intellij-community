@@ -2,11 +2,11 @@
 set +x
 
 # java 1.8
-JAVAC="$(which javac)"
+JAVAC="$JAVA_HOME"/bin/javac
 
 BASE_PATH=$(dirname $0)
 CLASSES="${BASE_PATH}"/classes
-SOURCES="${BASE_PATH}"/src/String.java
+SOURCES="${BASE_PATH}"/src
 
 function error() {
   echo "$@" && false
@@ -29,7 +29,7 @@ function create_classes_dir() {
 }
 
 function compile() {
-  "${JAVAC}" -g -source 1.8 -target 1.8 -d "${CLASSES}" "${SOURCES}" || error "Unable to compile"
+  "${JAVAC}" -g -source 1.8 -target 1.8 -d "${CLASSES}" "${SOURCES}"/* || error "Unable to compile"
 }
 
 javac_defined &&
@@ -37,4 +37,4 @@ javac_defined &&
   remove_classes &&
   create_classes_dir &&
   compile &&
-  echo "The classes '$(find ${CLASSES} -type f -name "*.class")' compiled successfully"
+  echo "The classes '$(find ${CLASSES} -type f -name "*.class" | tr '\n' ' ')' compiled successfully"
