@@ -71,12 +71,16 @@ internal val DataContext.context: BookmarkContext?
       return if (file is LightVirtualFile) null else BookmarkContext(project, file, editor, line)
     }
     val psiElement = getData(PlatformDataKeys.PSI_ELEMENT)
-    if (psiElement != null) {
-      val file = PsiUtilCore.getVirtualFile(psiElement)
-      if (file == null || file is LightVirtualFile) return null
-      val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-      val line = document.getLineNumber(psiElement.textOffset)
-      return BookmarkContext(project, file, editor, line)
+    val elementFile = PsiUtilCore.getVirtualFile(psiElement?.containingFile)
+    if (psiElement != null && elementFile != null) {
+      if (elementFile is LightVirtualFile) return null
+      val line = FileDocumentManager.getInstance().getDocument(elementFile)
+                   ?.getLineNumber(psiElement.textOffset) ?: -1
+      return BookmarkContext(project, elementFile, null, line)
+    }
+    val file = getData(PlatformDataKeys.VIRTUAL_FILE)
+    if (file != null) {
+      return BookmarkContext(project, file, null, -1)
     }
     return null
   }
