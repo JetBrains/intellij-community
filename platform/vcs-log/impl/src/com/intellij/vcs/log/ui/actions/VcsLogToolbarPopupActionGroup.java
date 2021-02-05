@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -36,7 +35,6 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
                                                                           JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
                                                                           VcsLogActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
     myPopupState.prepareToShow(popup);
-    AutoPopupSupportingListener.installOn(popup);
     InputEvent inputEvent = e.getInputEvent();
     if (inputEvent == null) {
       popup.showInFocusCenter();
