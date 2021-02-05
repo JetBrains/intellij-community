@@ -495,10 +495,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   protected open fun createLeftPanel(): JComponent {
     initTree()
-
-    val panel = ScrollPaneFactory.createScrollPane(tree)
-    panel.border = IdeBorderFactory.createBorder(SideBorder.ALL)
-    return panel
+    return ScrollPaneFactory.createScrollPane(tree)
   }
 
   private fun defaultsSettingsChanged() {
@@ -557,8 +554,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
     }
 
-    splitter.firstComponent = createLeftPanel()
+    val leftPanel = createLeftPanel()
+    leftPanel.border = IdeBorderFactory.createBorder(SideBorder.RIGHT)
+    splitter.firstComponent = leftPanel
     splitter.setHonorComponentsMinimumSize(true)
+    rightPanel.border = JBUI.Borders.empty(15, 5, 0, 15)
     splitter.secondComponent = rightPanel
     wholePanel!!.add(splitter, BorderLayout.CENTER)
 

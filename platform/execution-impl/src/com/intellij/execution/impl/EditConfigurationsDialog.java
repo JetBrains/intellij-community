@@ -63,4 +63,9 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
   public Executor getExecutor() {
     return myExecutor;
   }
+
+  @Override
+  protected @NotNull DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
+  }
 }

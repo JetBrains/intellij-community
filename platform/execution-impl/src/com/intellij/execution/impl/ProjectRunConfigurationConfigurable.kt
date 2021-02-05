@@ -8,7 +8,9 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.ui.*
+import com.intellij.ui.AnActionButton
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.util.IconUtil
@@ -24,24 +26,17 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
   override fun createLeftPanel(): JComponent {
 
     if (project.isDefault) {
-      val panel = ScrollPaneFactory.createScrollPane(tree)
-      panel.border = IdeBorderFactory.createBorder(SideBorder.ALL)
-      return panel
+      return ScrollPaneFactory.createScrollPane(tree)
     }
 
     val removeAction = MyRemoveAction()
-    val moveUpAction = MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconUtil.getMoveUpIcon(), -1)
-    val moveDownAction = MyMoveAction(ExecutionBundle.message("move.down.action.name"), null, IconUtil.getMoveDownIcon(), 1)
     toolbarDecorator = ToolbarDecorator.createDecorator(tree)
       .setToolbarPosition(ActionToolbarPosition.TOP)
       .setPanelBorder(JBUI.Borders.empty())
+      .setScrollPaneBorder(JBUI.Borders.empty())
       .setAddAction(toolbarAddAction).setAddActionName(ExecutionBundle.message("add.new.run.configuration.action2.name"))
       .setRemoveAction(removeAction).setRemoveActionUpdater(removeAction)
       .setRemoveActionName(ExecutionBundle.message("remove.run.configuration.action.name"))
-
-      .setMoveUpAction(moveUpAction).setMoveUpActionName(ExecutionBundle.message("move.up.action.name")).setMoveUpActionUpdater(moveUpAction)
-
-      .setMoveDownAction(moveDownAction).setMoveDownActionName(ExecutionBundle.message("move.down.action.name")).setMoveDownActionUpdater(moveDownAction)
 
       .addExtraAction(AnActionButton.fromAction(MyCopyAction()))
       .addExtraAction(AnActionButton.fromAction(MySaveAction()))
