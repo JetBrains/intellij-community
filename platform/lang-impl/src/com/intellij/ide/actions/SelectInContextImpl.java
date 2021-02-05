@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -108,7 +107,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
       return null;
     }
 
-    VirtualFile file = FileEditorManagerEx.getInstanceEx(project).getFile(editor);
+    VirtualFile file = editor.getFile();
     if (file == null) {
       file = contextFile;
     }

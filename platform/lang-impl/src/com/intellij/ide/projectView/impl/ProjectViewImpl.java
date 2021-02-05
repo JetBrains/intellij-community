@@ -37,7 +37,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -1932,7 +1931,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private VirtualFile getVirtualFile(FileEditor fileEditor) {
-      return fileEditor == null ? null : FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
+      return fileEditor == null ? null : fileEditor.getFile();
     }
 
     private boolean isCurrentProjectViewPaneFocused() {

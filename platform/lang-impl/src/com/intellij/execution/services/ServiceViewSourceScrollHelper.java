@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,7 +93,7 @@ final class ServiceViewSourceScrollHelper {
     }
 
     private Promise<Void> select(@NotNull FileEditor editor) {
-      VirtualFile virtualFile = FileEditorManagerEx.getInstanceEx(myProject).getFile(editor);
+      VirtualFile virtualFile = editor.getFile();
       if (virtualFile == null) {
         return Promises.rejectedPromise("Virtual file is null");
       }
