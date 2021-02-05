@@ -74,6 +74,16 @@ class JdkVendorDetectorTest {
        |SOURCE=".:hg:5b0e54350bbc"
     """.trimMargin()
 
+  private /*const*/ val RELEASE_JBR_11_0_10 =
+    """|MODULES="java.base java.datatransfer java.xml java.prefs java.desktop gluegen.rt java.compiler java.instrument java.logging java.management java.security.sasl java.naming java.rmi java.management.rmi java.net.http java.scripting java.security.jgss java.transaction.xa java.sql java.sql.rowset java.xml.crypto java.se java.smartcardio jogl.all jcef jdk.accessibility jdk.internal.vm.ci jdk.management jdk.unsupported jdk.internal.vm.compiler jdk.aot jdk.internal.jvmstat jdk.attach jdk.charsets jdk.compiler jdk.crypto.ec jdk.crypto.cryptoki jdk.dynalink jdk.hotspot.agent jdk.httpserver jdk.internal.ed jdk.internal.le jdk.internal.vm.compiler.management jdk.jdwp.agent jdk.jdi jdk.jfr jdk.jsobject jdk.localedata jdk.management.agent jdk.management.jfr jdk.naming.dns jdk.naming.rmi jdk.net jdk.pack jdk.scripting.nashorn jdk.scripting.nashorn.shell jdk.sctp jdk.security.auth jdk.security.jgss jdk.xml.dom jdk.zipfs"
+       |IMPLEMENTOR="JetBrains s.r.o."
+       |SOURCE=".\:git\:58e267d9f35a+ jcef_git\:git\:e09d9c4a783e"
+       |OS_ARCH="x86_64"
+       |IMPLEMENTOR_VERSION="JBR-11.0.10.9-1304.4-dcevm"
+       |OS_NAME="Windows"
+       |JAVA_VERSION="11.0.10"
+    """.trimMargin()
+
 
   // %formatter:off
 
@@ -83,6 +93,7 @@ class JdkVendorDetectorTest {
   @Test fun checkLiberica11() = checkVendor(RELEASE_LIBRICA_11_0_8,       LIBERICA)
   @Test fun checkSap11()      = checkVendor(RELEASE_SAP_11_0_8,           SAP)
   @Test fun checkZulu11()     = checkVendor(RELEASE_ZULU_11_0_8,          AZUL)
+  @Test fun checkJbr11()      = checkVendor(RELEASE_JBR_11_0_10,          JBR)
 
   // %formatter:on
 
