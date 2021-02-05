@@ -36,12 +36,13 @@ class GeneratorResult(object):
         self.stdout = process_result.stdout
         self.stderr = process_result.stderr
 
-    @property
-    def control_messages(self):
+    def control_messages(self, type_=None):
         result = []
         for line in self.stdout.splitlines(False):  # type: str
             if line.startswith('{'):
-                result.append(json.loads(line))
+                message = json.loads(line)
+                if type_ is None or message['type'] == type_:
+                    result.append(message)
         return result
 
     @property
@@ -364,7 +365,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
             'module_name': 'mod',
             'module_origin': 'mod.py',
             'generation_status': 'GENERATED'
-        }, result.control_messages)
+        }, result.control_messages())
 
     def test_trailing_slash_in_sdk_skeletons_path_does_not_affect_cache_location(self):
         self.run_generator('mod', 'mod.py', output_dir=self.temp_skeletons_dir + os.path.sep)
@@ -383,6 +384,12 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     @python3_only
     def test_keyword_only_arguments_in_return_type_constructor(self):
         self.check_generator_output('mod', 'mod.py')
+
+    def test_stdlib_modules_used_by_pyparsing_not_considered_submodules(self):
+        result = self.run_generator('_ast')
+        submodule_logs = [m for m in result.control_messages('log')
+                          if 'generator3._vendor.' in m['message']]
+        self.assertFalse(submodule_logs)
 
 
 class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
@@ -418,7 +425,7 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
             {'type': 'progress', 'text': 'mod1', 'minor': True, 'fraction': 0.0},
             {'type': 'progress', 'text': 'mod2', 'minor': True, 'fraction': 0.5},
             {'type': 'progress', 'fraction': 1.0},
-        ], result.control_messages)
+        ], result.control_messages())
 
     @test_data_dir('simple')
     def test_intermediate_results_reporting(self):
@@ -432,7 +439,7 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
              'module_name': 'mod2',
              'module_origin': 'mod2.so',
              'generation_status': 'GENERATED'}
-        ], result.control_messages)
+        ], result.control_messages())
 
     @test_data_dir('simple')
     def test_general_results_and_layout(self):
@@ -441,8 +448,8 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     @test_data_dir('simple')
     def test_logging_configured_and_propagates_from_worker_subprocess(self):
         result = self.run_generator()
-        log_messages = [m['message'] for m in result.control_messages if m['type'] == 'log']
-        subprocess_messages = [m for m in log_messages if m.startswith('Updating cache for mod')]
+        subprocess_messages = [m for m in result.control_messages('log')
+                               if m['message'].startswith('Updating cache for mod')]
         self.assertEqual(2, len(subprocess_messages))
 
 

@@ -626,7 +626,12 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     if redo_imports:
         initial_module_set = set(sys.modules)
         for m in list(sys.modules):
-            if m.startswith("pycharm_generator_utils"): continue
+            # Python 2 puts dummy None entries in sys.modules for imports of
+            # top-level modules made from inside packages unless absolute
+            # imports are explicitly enabled.
+            # See https://www.python.org/dev/peps/pep-0328/#relative-imports-and-indirection-entries-in-sys-modules
+            if not sys.modules[m] or m.startswith("generator3"):
+                continue
             action("looking at possible submodule %r", m)
             if m == name or m in old_modules or m in sys.builtin_module_names:
                 continue
