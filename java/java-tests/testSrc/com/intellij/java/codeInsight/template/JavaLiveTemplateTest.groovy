@@ -635,6 +635,19 @@ class X {
     assert templates == []
   }
 
+  void "test whole line selected"() {
+    myFixture.configureByText "a.java", """
+class X {
+  int test() {
+<selection>    return 5;
+</selection>  }
+}
+"""
+    TemplateActionContext templateActionContext = TemplateActionContext.surrounding(file, editor);
+    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
+    assert templates.join(", ") == "Java/C, Java/RL, Java/WL, Java/I"
+  }
+
   void "test generic arguments are inserted"() {
     myFixture.configureByText 'a.java', '''
 import java.util.*;

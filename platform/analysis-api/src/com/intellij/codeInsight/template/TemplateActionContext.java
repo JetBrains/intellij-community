@@ -3,7 +3,9 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +86,17 @@ public final class TemplateActionContext {
 
   public static @NotNull TemplateActionContext surrounding(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     SelectionModel selectionModel = editor.getSelectionModel();
-    return create(psiFile, editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), true);
+    int start = selectionModel.getSelectionStart();
+    int end = selectionModel.getSelectionEnd();
+    PsiElement startElement = psiFile.findElementAt(start);
+    if (startElement instanceof PsiWhiteSpace) {
+      start = Math.min(startElement.getTextRange().getEndOffset(), end);
+    }
+    PsiElement endElement = psiFile.findElementAt(end);
+    if (endElement != startElement && endElement instanceof PsiWhiteSpace) {
+      end = Math.max(start, endElement.getTextRange().getStartOffset());
+    }
+    return create(psiFile, editor, start, end, true);
   }
 
   public static @NotNull TemplateActionContext create(@NotNull PsiFile psiFile,
