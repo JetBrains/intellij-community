@@ -88,6 +88,7 @@ class JdkDownloaderTest : LightPlatformTestCase() {
 
   private val mockWSLInstaller = object: JdkInstallerBase() {
     override fun wslDistributionFromPath(targetDir: Path) = mockWSL
+    override fun defaultInstallDir(): Path = error("Must not call")
   }
 
   fun `test reuse pending jdks`() {
