@@ -22,7 +22,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
@@ -31,62 +30,82 @@ import java.util.stream.Collectors;
 public class TMHInstrumenterTest extends UsefulTestCase {
   private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/assertEdtInstrumenter/";
 
-  private static final String ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
+  private static final String REQUIRES_EDT_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
+  private static final String REQUIRES_BACKGROUND_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresBackgroundThread";
+  private static final String REQUIRES_READ_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresReadLock";
+  private static final String REQUIRES_WRITE_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresWriteLock";
   private static final String APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/fake/ApplicationManager";
   private static final String APPLICATION_CLASS_NAME = "com/intellij/openapi/application/fake/Application";
 
   private static final String TESTING_BACKGROUND_THREAD_NAME = "TESTING_BACKGROUND_THREAD";
-  private static final String CALLED_OUTSIDE_AWT_MESSAGE = "Access is allowed from event dispatch thread only.";
+  private static final String REQUIRES_EDT_MESSAGE = "Access is allowed from event dispatch thread only.";
+  private static final String REQUIRES_BACKGROUND_THREAD_MESSAGE = "Access from event dispatch thread is not allowed.";
 
   public void testSimple() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testSecondMethod() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testMethodHasOtherAnnotationBefore() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testMethodHasOtherAnnotationAfter() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testEmptyBody() throws Exception {
-    doTest();
+    doEdtTest();
   }
 
   public void testConstructor() throws Exception {
-    Class<?> testClass = getInstrumentedTestClass();
-    testClass.getDeclaredConstructor().newInstance();
-    assertThrows(Throwable.class, CALLED_OUTSIDE_AWT_MESSAGE,
-                 () -> executeInBackground(() -> testClass.getDeclaredConstructor().newInstance()));
+    TestClass testClass = getInstrumentedTestClass();
+    testClass.aClass.getDeclaredConstructor().newInstance();
+    assertThrows(Throwable.class, REQUIRES_EDT_MESSAGE,
+                 () -> executeInBackground(() -> testClass.aClass.getDeclaredConstructor().newInstance()));
   }
 
   public void testDoNotInstrument() throws Exception {
-    Class<?> testClass = getNotInstrumentedTestClass();
-    invokeMethod(testClass);
-    executeInBackground(() -> invokeMethod(testClass));
+    TestClass testClass = getNotInstrumentedTestClass();
+    invokeMethod(testClass.aClass);
+    executeInBackground(() -> invokeMethod(testClass.aClass));
   }
 
-  private void doTest() throws Exception {
-    Class<?> testClass = getInstrumentedTestClass();
-    invokeMethod(testClass);
-    assertThrows(Throwable.class, CALLED_OUTSIDE_AWT_MESSAGE, () -> executeInBackground(() -> invokeMethod(testClass)));
+  public void testRequiresBackgroundThreadAssertion() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    executeInBackground(() -> invokeMethod(testClass.aClass));
+    assertThrows(Throwable.class, REQUIRES_BACKGROUND_THREAD_MESSAGE, () -> invokeMethod(testClass.aClass));
   }
 
-  private @NotNull Class<?> getInstrumentedTestClass() throws IOException {
+  public void testRequiresReadLockAssertion() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessAllowed"));
+  }
+
+  public void testRequiresWriteLockAssertion() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccessAllowed"));
+  }
+
+  private void doEdtTest() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    invokeMethod(testClass.aClass);
+    assertThrows(Throwable.class, REQUIRES_EDT_MESSAGE, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
+  }
+
+  private @NotNull TestClass getInstrumentedTestClass() throws IOException {
     TestClass testClass = prepareTest(false);
     assertTrue(testClass.isInstrumented);
-    return testClass.aClass;
+    return testClass;
   }
 
-  private @NotNull Class<?> getNotInstrumentedTestClass() throws IOException {
+  private @NotNull TestClass getNotInstrumentedTestClass() throws IOException {
     TestClass testClass = prepareTest(false);
     assertFalse(testClass.isInstrumented);
-    return testClass.aClass;
+    return testClass;
   }
 
   @NotNull
@@ -104,13 +123,13 @@ public class TMHInstrumenterTest extends UsefulTestCase {
       else {
         byte[] instrumentedClassData = instrument(classData);
         if (instrumentedClassData != null) {
-          testClass = new TestClass(classLoader.doDefineClass(null, instrumentedClassData), true);
+          testClass = new TestClass(classLoader.doDefineClass(null, instrumentedClassData), instrumentedClassData, true);
           if (printClassFiles) {
             TMHTestUtil.printDebugInfo(classData, instrumentedClassData);
           }
         }
         else {
-          testClass = new TestClass(classLoader.doDefineClass(null, classData), false);
+          testClass = new TestClass(classLoader.doDefineClass(null, classData), classData, false);
         }
       }
     }
@@ -140,9 +159,12 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     FailSafeClassReader reader = new FailSafeClassReader(classData);
     int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
     ClassWriter writer = new ClassWriter(reader, flags);
-    boolean instrumented = TMHInstrumenter.instrument(reader, writer, Collections.singleton(
-      new TMHAssertionGenerator.AssertEdt(ANNOTATION_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME))
-    );
+    boolean instrumented = TMHInstrumenter.instrument(reader, writer, ContainerUtil.set(
+      new TMHAssertionGenerator.AssertEdt(REQUIRES_EDT_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
+    ));
     return instrumented ? writer.toByteArray() : null;
   }
 
@@ -198,10 +220,12 @@ public class TMHInstrumenterTest extends UsefulTestCase {
 
   private static class TestClass {
     final Class<?> aClass;
+    final byte[] classBytes;
     final boolean isInstrumented;
 
-    TestClass(Class<?> aClass, boolean isInstrumented) {
+    TestClass(Class<?> aClass, byte[] classBytes, boolean isInstrumented) {
       this.aClass = aClass;
+      this.classBytes = classBytes;
       this.isInstrumented = isInstrumented;
     }
   }

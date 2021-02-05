@@ -1,16 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +27,7 @@ public class TMHInstrumentingBuilderTest extends JpsBuildTestCase {
     JpsModule m = addModule("m", src, testFile);
     buildAllModules().assertSuccessful();
 
-    assertTrue(isInstrumented(getActualFile(m)));
+    assertTrue(TMHTestUtil.containsMethodCall(FileUtil.loadFileBytes(getActualFile(m)), "assertIsDispatchThread"));
   }
 
   @NotNull
@@ -41,29 +36,5 @@ public class TMHInstrumentingBuilderTest extends JpsBuildTestCase {
     File file = new File(outputDirectory, getTestName(false) + ".class");
     assertTrue(file.getAbsolutePath() + " not found", file.exists());
     return file;
-  }
-
-  private static boolean isInstrumented(@NotNull File classFile) throws IOException {
-    Ref<Boolean> instrumented = Ref.create(Boolean.FALSE);
-    ClassVisitor visitor = new ClassVisitor(Opcodes.API_VERSION) {
-      @Override
-      public MethodVisitor visitMethod(int access,
-                                       String name,
-                                       String descriptor,
-                                       String signature,
-                                       String[] exceptions) {
-        return new MethodVisitor(Opcodes.API_VERSION) {
-          @Override
-          public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-            if (name.equals("assertIsDispatchThread")) {
-              instrumented.set(Boolean.TRUE);
-            }
-          }
-        };
-      }
-    };
-    ClassReader reader = new ClassReader(FileUtil.loadFileBytes(classFile));
-    reader.accept(visitor, 0);
-    return instrumented.get();
   }
 }
