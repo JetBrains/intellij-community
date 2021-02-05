@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
@@ -253,22 +253,20 @@ class XDebugSessionTab3(
       val headerVisible = toolWindow.isHeaderVisible
       val topRightToolbar = DefaultActionGroup().apply {
         if (headerVisible) return@apply
-        var list = toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction }
-        if (list.last() is Separator) {
-          list = list.dropLast(1)
-        }
-        addAll(list)
-        if (singleContent == null) return@apply
+        addAll(toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction })
+      }
+      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Cancel) {
+      val topMiddleToolbar = DefaultActionGroup().apply {
+        if (singleContent == null || headerVisible) return@apply
+
+        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Close) {
           override fun actionPerformed(e: AnActionEvent) {
             toolWindow.contentManager.removeContent(singleContent, true)
           }
         })
-        addSeparator()
       }
-      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-      myUi.options.setTopMiddleToolbar(DefaultActionGroup(), ActionPlaces.DEBUGGER_TOOLBAR)
+      myUi.options.setTopMiddleToolbar(topMiddleToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
       toolWindow.decorator.isHeaderVisible = headerVisible
 
