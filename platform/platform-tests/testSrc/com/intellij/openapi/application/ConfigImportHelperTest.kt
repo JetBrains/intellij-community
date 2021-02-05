@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
+import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -22,7 +23,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.function.Predicate
 
 private val LOG = logger<ConfigImportHelperTest>()
@@ -347,5 +347,18 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.fileName == newPluginZip.fileName }
       .isDirectoryNotContaining { it.fileName == oldPluginZip.fileName }
+  }
+
+  @Test fun `filtering custom VM options`() {
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
+    Files.write(oldConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()),
+                listOf("-XX:MaxJavaStackTraceDepth=-1", "-Xverify:none", "-noverify", "-agentlib:yjpagent=opts", "-agentpath:/path/to/lib-yjpagent.so=opts"))
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+
+    assertThat(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName())).hasContent("-XX:MaxJavaStackTraceDepth=10000")
   }
 }

@@ -982,7 +982,9 @@ public final class ConfigImportHelper {
           if (line.equals("-XX:MaxJavaStackTraceDepth=-1")) {
             i.set("-XX:MaxJavaStackTraceDepth=10000"); updated = true;
           }
-          else if (line.startsWith("-agentlib:yjpagent") || "-Xverify:none".equals(line) || "-noverify".equals(line)) {
+          else if ("-Xverify:none".equals(line) || "-noverify".equals(line) ||
+                   line.startsWith("-agentlib:yjpagent") ||
+                   line.startsWith("-agentpath:") && line.contains("yjpagent")) {
             i.remove(); updated = true;
           }
         }
