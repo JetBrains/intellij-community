@@ -19,14 +19,10 @@ internal class Icon(private val file: Path) {
     if (isImage(file)) {
       try {
         muteStdErr {
-          imageSize(file)
+          imageSize(file, failOnMalformedImage = true)
         }
       }
       catch (ignore: NoSuchFileException) {
-        null
-      }
-      catch (e: Exception) {
-        log("WARNING: $file: ${e.message}")
         null
       }
     }
