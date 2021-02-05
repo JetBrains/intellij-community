@@ -17,7 +17,7 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
@@ -62,7 +62,7 @@ fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: 
 }
 
 fun Link(@Label text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit): JComponent {
-  val result = LinkLabel.create(text, action)
+  val result = ActionLink(text) { action() }
   style?.let { UIUtil.applyStyle(it, result) }
   return result
 }

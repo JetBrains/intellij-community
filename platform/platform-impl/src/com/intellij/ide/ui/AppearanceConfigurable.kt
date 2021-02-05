@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -30,9 +30,9 @@ import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
-import com.intellij.ui.components.Link
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
@@ -185,7 +185,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .component.accessibleContext.accessibleName = UIBundle.message("color.blindness.checkbox.text")
             }
 
-            component(Link(UIBundle.message("color.blindness.link.to.help"))
+            component(ActionLink(UIBundle.message("color.blindness.link.to.help"))
                       { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
               .withLargeLeftGap()
           }
