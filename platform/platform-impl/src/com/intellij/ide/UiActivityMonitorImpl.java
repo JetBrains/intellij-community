@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -26,7 +26,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
     if (myObjects.isEmpty()) {
       installListener();
     }
-    return key == null ? new BusyContainer(null) : new BusyContainer(null) {
+    return key == null ? new BusyContainer(null) : new BusyContainer(key) {
           @NotNull
           @Override
           protected BusyImpl createBusyImpl(@NotNull Set<UiActivity> key) {
