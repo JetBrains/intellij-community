@@ -9,7 +9,7 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
 import com.intellij.util.IncorrectOperationException;
-import de.plushnikov.intellij.plugin.icon.LombokIcons;
+import icons.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
       new LombokLightModifierList(manager),
       new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
       new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
-    setBaseIcon(LombokIcons.METHOD_ICON);
+    setBaseIcon(LombokIcons.Nodes.LombokMethod);
   }
 
   public LombokLightMethodBuilder withNavigationElement(PsiElement navigationElement) {
