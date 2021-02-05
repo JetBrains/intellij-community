@@ -382,6 +382,7 @@ public final class GenerateMembersUtil {
                                                           @NotNull PsiSubstitutor substitutor,
                                                           @NotNull PsiMethod sourceMethod) {
     final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
+    LOG.assertTrue(copy != null, typeParameter);
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
