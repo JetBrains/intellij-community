@@ -4,6 +4,8 @@ package com.intellij.internal.jcef;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -15,13 +17,11 @@ import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.List;
 
 /**
@@ -97,41 +97,92 @@ public class WebBrowser extends AnAction implements DumbAware {
     JMenuBar menuBar = new JMenuBar();
     frame.setJMenuBar(menuBar);
     JMenu menu = new JMenu("Tools");
+    menu.setMnemonic('t');
     menuBar.add(menu);
-    JMenuItem menuItem = new JMenuItem("Load HTML with URL");
+    JMenuItem menuItem = new JMenuItem("Load HTML with URL", 'h');
     menu.add(menuItem);
     menuItem.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        JDialog dialog = new JDialog(frame, "Load HTML with URL");
+        MyOkCancelDialog<JPanel> dialog = new MyOkCancelDialog<>(frame, "Load HTML with URL");
         JPanel panel = new JPanel();
-        JTextField url = new JTextField("file://");
-        JTextArea html = new JTextArea("<html>\n</html>");
-
-        JPanel buttonPanel = new JPanel();
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.addActionListener(ae -> dialog.dispose());
-        JButton loadButton = new JButton("Load");
-        loadButton.addActionListener(ae -> {
-          dialog.dispose();
-          myUrlBar.setText(url.getText());
-          SwingUtilities.invokeLater(() -> myJBCefBrowser.loadHTML(html.getText(), url.getText()));
-        });
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(loadButton);
-
-        dialog.add(panel);
         panel.setLayout(new BorderLayout());
+        JTextField url = new JTextField("file://foo/bar");
+        //noinspection NonAsciiCharacters
+        JTextArea html = new JTextArea("<html>\n<body>\nСъешь Еще Этих Мягких Французских Булок &#129366;&#129366;\n</body>\n</html>");
         panel.add(url, BorderLayout.NORTH);
         panel.add(html, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
 
-        dialog.setSize(640, 480);
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
+        dialog.setComponent(panel);
+
+        dialog.setOkAction(() -> {
+          myUrlBar.setText(url.getText());
+          SwingUtilities.invokeLater(() -> myJBCefBrowser.loadHTML(html.getText(), url.getText()));
+        }, "Load");
+        dialog.show();
+      }
+    });
+
+    menuItem = new JMenuItem("Set background color", 'c');
+    menu.add(menuItem);
+    menuItem.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        MyOkCancelDialog<JTextField> dialog = new MyOkCancelDialog<>(frame, "Background Color");
+        JTextField color = dialog.setComponent(new JTextField("lightgreen"));
+        dialog.setOkAction(() -> myJBCefBrowser.setPageBackgroundColor(color.getText()), "Apply");
+        dialog.show();
       }
     });
 
     frame.setVisible(true);
+  }
+}
+
+class MyOkCancelDialog<T extends JComponent> extends DialogWrapper {
+  T myComp;
+  Runnable myOkAction;
+
+  MyOkCancelDialog(@NotNull JFrame owner, @NotNull String title)  {
+    super(null, owner, true, IdeModalityType.IDE);
+
+    setTitle(title);
+  }
+
+  public T setComponent(@NotNull T comp) {
+    return myComp = comp;
+  }
+
+  public void setOkAction(@NotNull Runnable okAction, @NotNull String buttonText) {
+    myOkAction = okAction;
+    setOKButtonText(buttonText);
+  }
+
+  @Override
+  protected @NotNull Action getOKAction() {
+    return new DialogWrapper.OkAction() {
+      @Override
+      protected void doAction(ActionEvent e) {
+        myOkAction.run();
+        super.doAction(e);
+      }
+    };
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createCenterPanel() {
+    return myComp;
+  }
+
+  @Override
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    return myComp;
+  }
+
+  @Override
+  public void show() {
+    init();
+    super.show();
   }
 }

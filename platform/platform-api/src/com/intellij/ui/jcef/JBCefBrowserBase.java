@@ -103,6 +103,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   protected volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
   private final boolean myIsDefaultClient;
+  @Nullable private volatile String myCssBgColor;
 
   JBCefBrowserBase(@NotNull JBCefClient cefClient, @NotNull CefBrowser cefBrowser, boolean isNewBrowserCreated, boolean isDefaultClient) {
     myCefClient = cefClient;
@@ -123,6 +124,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       }, getCefBrowser());
 
       cefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
+        @Override
+        public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+          setPageBackgroundColor();
+        }
         @Override
         public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
           // do not show error page if another URL has already been requested to load
@@ -258,6 +263,25 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       }
     }
     return null;
+  }
+
+  /**
+   * Sets (overrides) background color in the html page.
+   * <p></p>
+   * The color is set for the currently displayed page and all the subsequently loaded pages.
+   *
+   * @see <a href="https://www.w3schools.com/cssref/css_colors_legal.asp">css color format</a>
+   * @param cssColor the color in CSS format
+   */
+  public void setPageBackgroundColor(@NotNull String cssColor) {
+    myCssBgColor = cssColor;
+    setPageBackgroundColor();
+  }
+
+  private void setPageBackgroundColor() {
+    if (myCssBgColor != null) {
+      getCefBrowser().executeJavaScript("document.body.style.backgroundColor = \"" + myCssBgColor + "\";", BLANK_URI, 0);
+    }
   }
 
   private void loadHtmlImpl(@NotNull String html, @NotNull String url) {
