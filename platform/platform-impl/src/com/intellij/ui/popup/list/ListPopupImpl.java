@@ -552,8 +552,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Object selectedValue = myListModel.getElementAt(index);
       if (selectedValue == null || !listStep.hasSubstep(selectedValue)) return ExtendMode.NO_EXTEND;
 
-      PopupStep<?> step = listStep.onChosen(selectedValue, true);
-      return step == PopupStep.FINAL_CHOICE ? ExtendMode.EXTEND_ON_BUTTON : ExtendMode.EXTEND_ON_HOVER;
+      return listStep.isFinal(selectedValue) ? ExtendMode.EXTEND_ON_BUTTON : ExtendMode.EXTEND_ON_HOVER;
     }
 
     private boolean isMovingToSubmenu(Point prevPoint, Point newPoint) {
@@ -585,16 +584,16 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(forIndex);
-      PopupStep<?> step = listStep.onChosen(selectedValue, false);
       if (withTimer) {
         myShowSubmenuTimer = new Timer(250, e -> {
-          if (!isDisposed() && myLastSelectedIndex == forIndex) showNextStepPopup(step, selectedValue);
+          if (!isDisposed() && myLastSelectedIndex == forIndex)
+            showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
         });
         myShowSubmenuTimer.setRepeats(false);
         myShowSubmenuTimer.start();
       }
       else {
-        showNextStepPopup(step, selectedValue);
+        showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
       }
     }
   }
