@@ -232,7 +232,7 @@ class PythonOnboardingTour(module: Module) :
 
     task {
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionToolbarImpl ->
-        ui.place == "NavBarToolbar"
+        ui.place == "NavBarToolbar" || ui.place == "MainToolbar"
       }
     }
 
