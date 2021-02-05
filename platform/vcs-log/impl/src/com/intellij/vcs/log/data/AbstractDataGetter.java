@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -16,8 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -28,14 +29,15 @@ import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * The DataGetter realizes the following pattern of getting some data (parametrized by {@code T}) from the VCS:
@@ -55,7 +57,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @NotNull protected final VcsLogStorage myStorage;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-  @NotNull private final ConcurrentMap<Integer, T> myCache;
+  @NotNull private final Cache<Integer, T> myCache = Caffeine.newBuilder().maximumSize(10_000).build();
   @NotNull private final SequentialLimitedLifoExecutor<TaskDescriptor> myLoader;
 
   /**
@@ -72,7 +74,6 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
                      @NotNull Disposable parentDisposable) {
     myStorage = storage;
     myLogProviders = logProviders;
-    myCache = CacheBuilder.newBuilder().maximumSize(10_000).<Integer, T>build().asMap();
     myIndex = index;
     Disposer.register(parentDisposable, this);
     myLoader =
@@ -118,7 +119,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     loadCommitsData(getCommitsMap(hashes), consumer, errorConsumer, indicator);
   }
 
-  private void loadCommitsData(@NotNull TIntIntHashMap commits,
+  private void loadCommitsData(@NotNull Int2IntMap commits,
                                @NotNull Consumer<? super List<T>> consumer,
                                @NotNull Consumer<? super Throwable> errorConsumer,
                                @Nullable ProgressIndicator indicator) {
@@ -127,7 +128,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
     long taskNumber = myCurrentTaskIndex++;
 
-    for (int id : commits.keys()) {
+    IntIterator keyIterator = commits.keySet().iterator();
+    while (keyIterator.hasNext()) {
+      int id = keyIterator.nextInt();
       T details = getCommitDataIfAvailable(id);
       if (details == null || details instanceof LoadingDetails) {
         toLoad.add(id);
@@ -189,8 +192,8 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }
   }
 
-  private void sortCommitsByRow(@NotNull List<? extends T> result, @NotNull final TIntIntHashMap rowsForCommits) {
-    ContainerUtil.sort(result, (details1, details2) -> {
+  private void sortCommitsByRow(@NotNull List<? extends T> result, @NotNull Int2IntMap rowsForCommits) {
+    result.sort((details1, details2) -> {
       int row1 = rowsForCommits.get(myStorage.getCommitIndex(details1.getId(), details1.getRoot()));
       int row2 = rowsForCommits.get(myStorage.getCommitIndex(details2.getId(), details2.getRoot()));
       return Comparing.compare(row1, row2);
@@ -205,7 +208,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       if (details instanceof LoadingDetails) {
         if (((LoadingDetails)details).getLoadingTaskIndex() <= myCurrentTaskIndex - MAX_LOADING_TASKS) {
           // don't let old "loading" requests stay in the cache forever
-          myCache.remove(hash, details);
+          myCache.asMap().remove(hash, details);
           return null;
         }
       }
@@ -214,9 +217,8 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     return getFromAdditionalCache(hash);
   }
 
-  @Nullable
-  protected T getFromCache(int hash) {
-    return myCache.get(hash);
+  protected @Nullable T getFromCache(int hash) {
+    return myCache.getIfPresent(hash);
   }
 
   /**
@@ -227,10 +229,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   private void runLoadCommitsData(@NotNull Iterable<Integer> hashes) {
     long taskNumber = myCurrentTaskIndex++;
-    TIntIntHashMap commits = getCommitsMap(hashes);
+    Int2IntMap commits = getCommitsMap(hashes);
     TIntHashSet toLoad = new TIntHashSet();
 
-    for (int id : commits.keys()) {
+    IntIterator iterator = commits.keySet().iterator();
+    while (iterator.hasNext()) {
+      int id = iterator.nextInt();
       cacheCommit(id, taskNumber);
       toLoad.add(id);
     }
@@ -253,12 +257,11 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }
   }
 
-  @NotNull
-  private static TIntIntHashMap getCommitsMap(@NotNull Iterable<Integer> hashes) {
-    TIntIntHashMap commits = new TIntIntHashMap();
+  private static @NotNull Int2IntMap getCommitsMap(@NotNull Iterable<Integer> hashes) {
+    Int2IntOpenHashMap commits = new Int2IntOpenHashMap();
     int row = 0;
     for (Integer commitId : hashes) {
-      commits.put(commitId, row);
+      commits.put(commitId.intValue(), row);
       row++;
     }
     return commits;
@@ -298,10 +301,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   protected void clear() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      Iterator<Map.Entry<Integer, T>> iterator = myCache.entrySet().iterator();
+    EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
+      Iterator<Map.Entry<Integer, T>> iterator = myCache.asMap().entrySet().iterator();
       while (iterator.hasNext()) {
-        if (!(iterator.next().getValue() instanceof LoadingDetails)) iterator.remove();
+        if (!(iterator.next().getValue() instanceof LoadingDetails)) {
+          iterator.remove();
+        }
       }
     });
   }

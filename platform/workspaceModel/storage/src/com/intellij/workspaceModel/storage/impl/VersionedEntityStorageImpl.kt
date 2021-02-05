@@ -1,39 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.workspaceModel.storage.*
 import java.util.concurrent.atomic.AtomicReference
 
 internal class ValuesCache {
-  private val cachedValues: Cache<CachedValue<*>, Any?> = CacheBuilder.newBuilder().build()
+  private val cachedValues: Cache<CachedValue<*>, Any?> = Caffeine.newBuilder().build()
   private val cachedValuesWithParameter: Cache<Pair<CachedValueWithParameter<*, *>, *>, Any?> =
-    CacheBuilder.newBuilder().build()
+    Caffeine.newBuilder().build()
 
   fun <R> cachedValue(value: CachedValue<R>, storage: WorkspaceEntityStorage): R {
-    if (storage is WorkspaceEntityStorageBuilder) error("storage must be immutable")
+    if (storage is WorkspaceEntityStorageBuilder) {
+      error("storage must be immutable")
+    }
+
     val o = cachedValues.getIfPresent(value)
+    // recursive update - loading get cannot be used
     if (o != null) {
       @Suppress("UNCHECKED_CAST")
       return o as R
     }
     else {
-      val newValue = value.source(storage)
+      val newValue = value.source(storage)!!
       cachedValues.put(value, newValue)
       return newValue
     }
   }
 
   fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: WorkspaceEntityStorage): R {
-    if (storage is WorkspaceEntityStorageBuilder) error("storage must be immutable")
+    if (storage is WorkspaceEntityStorageBuilder) {
+      error("storage must be immutable")
+    }
+
+    // recursive update - loading get cannot be used
     val o = cachedValuesWithParameter.getIfPresent(value to parameter)
     if (o != null) {
       @Suppress("UNCHECKED_CAST")
       return o as R
     }
     else {
-      val newValue = value.source(storage, parameter)
+      val newValue = value.source(storage, parameter)!!
       cachedValuesWithParameter.put(value to parameter, newValue)
       return newValue
     }
