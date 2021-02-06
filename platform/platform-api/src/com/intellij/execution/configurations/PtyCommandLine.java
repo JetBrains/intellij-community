@@ -63,7 +63,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   private int myInitialColumns = -1;
   private int myInitialRows = -1;
   private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
-  private boolean myUnixOpenTtyToPreserveOutputAfterTermination = false;
+  private boolean myUnixOpenTtyToPreserveOutputAfterTermination = true;
 
   public PtyCommandLine() { }
 
