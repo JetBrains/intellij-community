@@ -7,36 +7,24 @@ import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface ProjectPluginTracker {
+class ProjectPluginTracker : BaseState() {
 
-  val projectName: String
+  var projectName: String = ""
+    internal set
 
-  val enabledPluginsIds: Set<PluginId>
+  @get:XCollection(propertyElementName = "enabledPlugins", style = XCollection.Style.v2)
+  internal val enabledPlugins by stringSet()
 
-  fun isEnabled(pluginId: PluginId): Boolean
+  @get:XCollection(propertyElementName = "disabledPlugins", style = XCollection.Style.v2)
+  internal val disabledPlugins by stringSet()
 
-  val disabledPluginsIds: Set<PluginId>
+  val enabledPluginsIds: Set<PluginId> get() = enabledPlugins.toPluginIds()
 
-  fun isDisabled(pluginId: PluginId): Boolean
-}
+  val disabledPluginsIds: Set<PluginId> get() = disabledPlugins.toPluginIds()
 
-@ApiStatus.Internal
-internal class ProjectPluginTrackerImpl(override val projectName: String) : BaseState(),
-                                                                            ProjectPluginTracker {
+  fun isEnabled(pluginId: PluginId) = enabledPlugins.contains(pluginId.idString)
 
-  @get:XCollection
-  var enabledPlugins by stringSet()
-
-  override val enabledPluginsIds: Set<PluginId> get() = enabledPlugins.toPluginIds()
-
-  override fun isEnabled(pluginId: PluginId) = enabledPlugins.contains(pluginId.idString)
-
-  @get:XCollection
-  var disabledPlugins by stringSet()
-
-  override val disabledPluginsIds: Set<PluginId> get() = disabledPlugins.toPluginIds()
-
-  override fun isDisabled(pluginId: PluginId) = disabledPlugins.contains(pluginId.idString)
+  fun isDisabled(pluginId: PluginId) = disabledPlugins.contains(pluginId.idString)
 
   fun startTracking(
     pluginIds: Iterable<PluginId>,
