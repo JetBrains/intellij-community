@@ -246,15 +246,21 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
   @Override
   public void dispose() {
+    dispose(null);
+  }
+
+  protected void dispose(@Nullable Runnable subDisposer) {
     myDisposeHelper.dispose(() -> {
+      if (subDisposer != null) subDisposer.run();
+
       if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
       if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
       if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
+
       myCefBrowser.stopLoad();
       myCefBrowser.close(true);
-      if (myIsDefaultClient) {
-        Disposer.dispose(myCefClient);
-      }
+
+      if (myIsDefaultClient) Disposer.dispose(myCefClient);
     });
   }
 
