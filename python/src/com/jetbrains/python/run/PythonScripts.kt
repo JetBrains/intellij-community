@@ -1,17 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("PythonScripts")
+
 package com.jetbrains.python.run
 
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.target.*
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.TargetValue
+import com.intellij.execution.target.value.getRelativeTargetPath
+import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkType
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
@@ -78,9 +86,10 @@ private fun resolveUploadPath(localPath: String, uploads: Iterable<Upload>): Tar
   return upload.targetPath.getRelativeTargetPath(localRelativePath)
 }
 
-fun prepareHelperScriptExecution(helperPackage: HelperPackage, targetEnvironmentRequest: TargetEnvironmentRequest): PythonScriptExecution =
+fun prepareHelperScriptExecution(helperPackage: HelperPackage,
+                                 helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): PythonScriptExecution =
   PythonScriptExecution().apply {
-    val uploads = applyHelperPackageToPythonPath(helperPackage, targetEnvironmentRequest)
+    val uploads = applyHelperPackageToPythonPath(helperPackage, helpersAwareTargetRequest)
     pythonScriptPath = resolveUploadPath(helperPackage.asParamString(), uploads)
   }
 
@@ -90,14 +99,10 @@ private const val PYTHONPATH_ENV = "PYTHONPATH"
  * Requests the upload of PyCharm helpers root directory to the target.
  */
 fun PythonExecution.applyHelperPackageToPythonPath(helperPackage: HelperPackage,
-                                                   targetEnvironmentRequest: TargetEnvironmentRequest): Iterable<Upload> {
-  // TODO [Targets API] Helpers scripts should be synchronized by the version of the IDE
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
   val localHelpersRootPath = PythonHelpersLocator.getHelpersRoot().absolutePath
-  val uploadRoot = TargetEnvironment.UploadRoot(localRootPath = PythonHelpersLocator.getHelpersRoot().toPath(),
-                                                targetRootPath = TargetEnvironment.TargetPath.Temporary())
-  targetEnvironmentRequest.uploadVolumes += uploadRoot
-  val targetUploadPath = uploadRoot.getTargetUploadPath()
-  val targetPlatform = targetEnvironmentRequest.targetPlatform
+  val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
+  val targetUploadPath = helpersAwareTargetRequest.preparePyCharmHelpers()
   val targetPathSeparator = targetPlatform.platform.pathSeparator
   val uploads = helperPackage.pythonPathEntries.map {
     // TODO [Targets API] Simplify the paths resolution

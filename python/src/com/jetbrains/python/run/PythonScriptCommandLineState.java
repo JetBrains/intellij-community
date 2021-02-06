@@ -41,7 +41,7 @@ import com.jetbrains.python.actions.PyExecuteInConsole;
 import com.jetbrains.python.actions.PyRunFileInConsoleAction;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.remote.PyRemotePathMapper;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -220,7 +220,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
-  protected @NotNull PythonExecution buildPythonExecution(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+  protected @NotNull PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     PythonExecution pythonExecution;
     if (myConfig.isModuleMode()) {
       PythonModuleExecution moduleExecution = new PythonModuleExecution();
