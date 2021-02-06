@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
   public static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
-
-  private ComboBoxButton myButton;
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -115,7 +114,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     if (ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace())) {
       final Presentation presentation = e.getPresentation();
       if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
-        performWhenButton(myButton, ActionPlaces.TOUCHBAR_GENERAL);
+        InputEvent inputEvent = e.getInputEvent();
+        Component component = inputEvent != null ? inputEvent.getComponent() : null;
+        if (component != null) {
+          performWhenButton(component, ActionPlaces.TOUCHBAR_GENERAL);
+        }
         return;
       }
     }
@@ -130,7 +133,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
-    myButton = new ComboBoxButton(presentation) {
+    ComboBoxButton button = new ComboBoxButton(presentation) {
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
@@ -169,7 +172,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                     JBUI.Borders.empty(0, 2) : JBUI.Borders.empty(0, 5, 0, 4);
 
     panel.setBorder(border);
-    panel.add(myButton);
+    panel.add(button);
     return panel;
   }
 
