@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Sets;
@@ -15,6 +15,7 @@ import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -51,9 +52,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import com.jediterm.terminal.ProcessTtyConnector;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +69,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.util.*;
 
-public final class TerminalView {
+public final class TerminalView implements Disposable {
   private final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
   private static final Logger LOG = Logger.getInstance(TerminalView.class);
 
@@ -90,6 +89,10 @@ public final class TerminalView {
     myTerminalRunner = ApplicationManager.getApplication()
       .getService(DefaultTerminalRunnerFactory.class)
       .create(project);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public static TerminalView getInstance(@NotNull Project project) {
@@ -201,7 +204,7 @@ public final class TerminalView {
     final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
-    new TerminalTabCloseListener(content, myProject);
+    new TerminalTabCloseListener(content, myProject, this);
     Runnable selectRunnable = () -> {
       contentManager.setSelectedContent(content, requestFocus);
     };
