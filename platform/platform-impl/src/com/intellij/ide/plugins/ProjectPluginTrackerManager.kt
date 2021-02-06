@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.AppLifecycleListener
@@ -23,9 +23,7 @@ import javax.swing.JComponent
 )
 @ApiStatus.Internal
 class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPluginTrackerManagerState>(ProjectPluginTrackerManagerState()) {
-
   companion object {
-
     @JvmStatic
     val instance
       get() = service<ProjectPluginTrackerManager>()
@@ -137,6 +135,8 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
   fun getPluginTracker(project: Project): ProjectPluginTracker = getPluginTrackerImpl(project)
 
+  fun getTrackers(): Map<String, ProjectPluginTracker> = state.trackers
+
   @JvmOverloads
   fun updatePluginsState(
     descriptors: Collection<IdeaPluginDescriptor>,
@@ -199,11 +199,11 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
   }
 
   internal fun openProjectsPluginTrackers(project: Project?): List<ProjectPluginTracker> {
-    return ProjectManager
-      .getInstance()
-      .openProjects
+    return ProjectManager.getInstance().openProjects
+      .asSequence()
       .filterNot { it == project }
       .map { getPluginTracker(it) }
+      .toList()
   }
 
   private fun getPluginTrackerImpl(project: Project) = state.findStateByProject(project)
@@ -211,37 +211,35 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
 @ApiStatus.Internal
 class ProjectPluginTrackerManagerState : BaseState() {
+  @get:XCollection(propertyElementName = "trackers", style = XCollection.Style.v2)
+  internal val trackers by map<String, ProjectPluginTrackerImpl>()
 
-  @get:XCollection
-  var trackers by map<String, ProjectPluginTracker>()
-
-  fun startTracking(
-    project: Project,
-    pluginIds: Collection<PluginId>,
-    enable: Boolean,
-  ) {
+  fun startTracking(project: Project, pluginIds: Collection<PluginId>, enable: Boolean) {
     val updated = findStateByProject(project)
       .startTracking(pluginIds, enable)
 
-    if (updated) incrementModificationCount()
+    if (updated) {
+      incrementModificationCount()
+    }
   }
 
   fun stopTracking(pluginIds: Collection<PluginId>) {
     var updated = false
 
-    trackers.forEach { (_, state) ->
-      updated = (state as ProjectPluginTrackerImpl).stopTracking(pluginIds) || updated
+    for (state in trackers.values) {
+      updated = state.stopTracking(pluginIds) || updated
     }
 
-    if (updated) incrementModificationCount()
+    if (updated) {
+      incrementModificationCount()
+    }
   }
 
   internal fun findStateByProject(project: Project): ProjectPluginTrackerImpl {
     val workspaceId = if (project.isDefault) null else project.stateStore.projectWorkspaceId
-
     val projectName = project.name
-    return trackers.getOrPut(workspaceId ?: projectName) {
+    return trackers.computeIfAbsent(workspaceId ?: projectName) {
       ProjectPluginTrackerImpl(projectName).also { incrementModificationCount() }
-    } as ProjectPluginTrackerImpl
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.components.BaseState
@@ -21,8 +21,8 @@ interface ProjectPluginTracker {
 }
 
 @ApiStatus.Internal
-class ProjectPluginTrackerImpl(override val projectName: String) : BaseState(),
-                                                                   ProjectPluginTracker {
+internal class ProjectPluginTrackerImpl(override val projectName: String) : BaseState(),
+                                                                            ProjectPluginTracker {
 
   @get:XCollection
   var enabledPlugins by stringSet()
