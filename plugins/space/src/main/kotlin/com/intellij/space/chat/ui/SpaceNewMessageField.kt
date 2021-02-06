@@ -3,6 +3,7 @@ package com.intellij.space.chat.ui
 
 import circlet.m2.channel.M2ChannelVm
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
@@ -59,7 +60,17 @@ internal class SpaceChatNewMessageWithAvatarComponent(
     val submittableTextField = SubmittableTextField(
       SpaceBundle.message("chat.comment.action.text"),
       submittableModel,
-      onCancel = onCancel
+      onCancel = {
+        if (
+          submittableModel.document.text.isBlank() ||
+          MessageDialogBuilder.yesNo(
+            SpaceBundle.message("chat.message.new.discard.changes.title"),
+            SpaceBundle.message("chat.message.new.discard.changes.text")
+          ).ask(this)
+        ) {
+          onCancel?.invoke()
+        }
+      }
     )
     add(avatarComponent, CC().pushY())
     add(submittableTextField, CC().growX().pushX().alignY("center"))
