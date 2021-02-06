@@ -121,11 +121,6 @@ public final class VcsLogUiUtil {
     });
   }
 
-  @NotNull
-  public static SimpleTextAttributes getLinkAttributes() {
-    return SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
-  }
-
   public static void showTooltip(@NotNull JComponent component,
                                  @NotNull Point point,
                                  @NotNull Balloon.Position position,
@@ -169,7 +164,7 @@ public final class VcsLogUiUtil {
   }
 
   public static void appendActionToEmptyText(@Nls @NotNull StatusText emptyText, @Nls @NotNull String text, @NotNull Runnable action) {
-    emptyText.appendSecondaryText(text, getLinkAttributes(), e -> action.run());
+    emptyText.appendSecondaryText(text, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> action.run());
   }
 
   public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @Nls @NotNull StatusText emptyText) {

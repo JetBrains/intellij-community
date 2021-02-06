@@ -22,10 +22,7 @@ import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
@@ -42,7 +39,6 @@ import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nls;
@@ -230,17 +226,19 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     else if (!myChangesToParents.isEmpty()) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
         appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
-                            VcsLogUiUtil.getLinkAttributes(),
+                            SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                             e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
     }
     else if (isShowOnlyAffectedSelected() && myAffectedPaths != null) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
-        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"), VcsLogUiUtil.getLinkAttributes(),
+        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"),
+                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                              e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
     }
     else if (!myHasMergeCommits && hasActiveChangesFilter()) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status"))
-        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"), VcsLogUiUtil.getLinkAttributes(),
+        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"),
+                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                              e -> clearActiveChangesFilter());
     }
     else {
