@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -182,7 +181,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
       copyOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
 
-      final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder, JavaLanguage.INSTANCE);
+      final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder);
       methodBuilder.withParameter(methodParameter);
 
       PsiModifierList methodParameterModifierList = methodParameter.getModifierList();

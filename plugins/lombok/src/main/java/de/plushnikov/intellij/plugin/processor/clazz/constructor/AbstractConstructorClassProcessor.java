@@ -16,6 +16,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -322,7 +323,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       final Iterator<String> fieldNameIterator = fieldNames.iterator();
       final Iterator<PsiField> fieldIterator = params.iterator();
       while (fieldNameIterator.hasNext() && fieldIterator.hasNext()) {
-        constructorBuilder.withParameter(fieldNameIterator.next(), fieldIterator.next().getType());
+        final String parameterName = fieldNameIterator.next();
+        final PsiField parameterField = fieldIterator.next();
+
+        final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterField.getType(), constructorBuilder);
+        constructorBuilder.withParameter(parameter);
+        copyCopyableAnnotations(parameterField, parameter.getModifierList(), LombokUtils.BASE_COPYABLE_ANNOTATIONS);
       }
     }
 
@@ -362,7 +368,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       for (int index = 0; index < classTypeParameters.length; index++) {
         final PsiTypeParameter classTypeParameter = classTypeParameters[index];
         final LightTypeParameterBuilder methodTypeParameter = createTypeParameter(methodBuilder, index, classTypeParameter);
-
         methodBuilder.withTypeParameter(methodTypeParameter);
 
         substitutor = substitutor.put(classTypeParameter, PsiSubstitutor.EMPTY.substitute(methodTypeParameter));
@@ -375,7 +380,11 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     if (!useJavaDefaults) {
       for (PsiField param : params) {
-        methodBuilder.withParameter(StringUtil.notNullize(param.getName()), substitutor.substitute(param.getType()));
+        final String parameterName = StringUtil.notNullize(param.getName());
+        final PsiType parameterType = substitutor.substitute(param.getType());
+        final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterType, methodBuilder);
+        methodBuilder.withParameter(parameter);
+        copyCopyableAnnotations(param, parameter.getModifierList(), LombokUtils.BASE_COPYABLE_ANNOTATIONS);
       }
     }
 

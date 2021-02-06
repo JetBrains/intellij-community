@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
@@ -17,7 +18,14 @@ import java.util.stream.Stream;
 public class LombokLightParameter extends LightParameter implements SyntheticElement {
   private final LombokLightIdentifier myNameIdentifier;
 
-  public LombokLightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
+  public LombokLightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope) {
+    this(name, type, declarationScope, JavaLanguage.INSTANCE);
+  }
+
+  public LombokLightParameter(@NotNull String name,
+                              @NotNull PsiType type,
+                              @NotNull PsiElement declarationScope,
+                              @NotNull Language language) {
     super(name, type, declarationScope, language, new LombokLightModifierList(declarationScope.getManager(), language));
     myNameIdentifier = new LombokLightIdentifier(declarationScope.getManager(), name);
   }

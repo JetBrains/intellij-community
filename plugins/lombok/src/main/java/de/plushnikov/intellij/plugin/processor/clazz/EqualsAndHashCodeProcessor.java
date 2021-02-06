@@ -198,6 +198,9 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withFinalParameter("o", PsiType.getJavaLangObject(psiManager, psiClass.getResolveScope()));
+
+    copyOnXAnnotationsForFirstParam(psiAnnotation, methodBuilder);
+
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
     return methodBuilder;
   }
@@ -229,8 +232,19 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withFinalParameter("other", PsiType.getJavaLangObject(psiManager, psiClass.getResolveScope()));
+
+    copyOnXAnnotationsForFirstParam(psiAnnotation, methodBuilder);
+
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
     return methodBuilder;
+  }
+
+  private void copyOnXAnnotationsForFirstParam(@NotNull PsiAnnotation psiAnnotation, LombokLightMethodBuilder methodBuilder) {
+    PsiParameter parameter = methodBuilder.getParameterList().getParameter(0);
+    PsiModifierList methodParameterModifierList = parameter.getModifierList();
+    if (null != methodParameterModifierList) {
+      copyOnXAnnotations(psiAnnotation, methodParameterModifierList, "onParam");
+    }
   }
 
   private String createEqualsBlockString(@NotNull PsiClass psiClass,
