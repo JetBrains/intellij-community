@@ -581,6 +581,24 @@ class SkeletonGenerator(object):
             raise
 
 
+@contextmanager
+def imported_names_collected():
+    imported_names = set()
+
+    class MyFinder(object):
+        # noinspection PyMethodMayBeStatic
+        def find_module(self, fullname, path=None):
+            imported_names.add(fullname)
+            return None
+
+    my_finder = MyFinder()
+    sys.meta_path.insert(0, my_finder)
+    try:
+        yield imported_names
+    finally:
+        sys.meta_path.remove(my_finder)
+
+
 def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     # type: (str, str, str, str) -> GenerationStatusId
 
@@ -591,32 +609,12 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
         delete(mod_cache_dir)
     mkdir(mod_cache_dir)
 
-    old_modules = list(sys.modules.keys())
-    imported_module_names = set()
-
-    class MyFinder:
-        # noinspection PyMethodMayBeStatic
-        def find_module(self, fullname, path=None):
-            if fullname != name:
-                imported_module_names.add(fullname)
-            return None
-
-    my_finder = None
-    if hasattr(sys, 'meta_path'):
-        my_finder = MyFinder()
-        sys.meta_path.insert(0, my_finder)
-    else:
-        imported_module_names = None
-
     create_failed_version_stamp(mod_cache_dir, name)
 
     action("importing")
-    __import__(name)  # sys.modules will fill up with what we want
-
-    if my_finder:
-        sys.meta_path.remove(my_finder)
-    if imported_module_names is None:
-        imported_module_names = set(sys.modules.keys()) - set(old_modules)
+    old_modules = list(sys.modules.keys())
+    with imported_names_collected() as imported_module_names:
+        __import__(name)  # sys.modules will fill up with what we want
 
     redo_module(name, mod_file_name, mod_cache_dir, output_dir)
     # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
