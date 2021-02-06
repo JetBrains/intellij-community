@@ -17,6 +17,7 @@ public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitArray(this);
   }
@@ -33,8 +34,8 @@ public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonValue.class);
   }
 
-  @Nullable
-  public ItemPresentation getPresentation() {
+  @Override
+  public @Nullable ItemPresentation getPresentation() {
     return JsonPsiImplUtils.getPresentation(this);
   }
 

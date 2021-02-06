@@ -11,10 +11,8 @@ public interface JsonObject extends JsonContainer {
   @NotNull
   List<JsonProperty> getPropertyList();
 
-  @Nullable
-  JsonProperty findProperty(@NotNull String name);
+  @Nullable JsonProperty findProperty(@NotNull String name);
 
-  @Nullable
-  ItemPresentation getPresentation();
+  @Nullable ItemPresentation getPresentation();
 
 }
