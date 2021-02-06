@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor;
 
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
-public class OnXTest extends AbstractLombokParsingTestCase {
+public class OnXAnnotationTest extends AbstractLombokParsingTestCase {
 
   @Override
   protected boolean shouldCompareAnnotations() {
