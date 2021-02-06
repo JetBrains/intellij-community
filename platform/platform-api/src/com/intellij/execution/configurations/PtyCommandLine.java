@@ -174,18 +174,14 @@ public class PtyCommandLine extends GeneralCommandLine {
     PtyProcessBuilder builder = new PtyProcessBuilder(command)
       .setEnvironment(env)
       .setDirectory(directory)
+      .setInitialColumns(myInitialColumns > 0 ? myInitialColumns : null)
+      .setInitialRows(myInitialRows > 0 ? myInitialRows : null)
       .setConsole(myConsoleMode)
       .setCygwin(cygwin)
       .setLogFile(app != null && app.isEAP() ? new File(PathManager.getLogPath(), "pty.log") : null)
       .setRedirectErrorStream(isRedirectErrorStream())
       .setWindowsAnsiColorEnabled(myWindowsAnsiColorEnabled)
       .setUnixOpenTtyToPreserveOutputAfterTermination(myUnixOpenTtyToPreserveOutputAfterTermination);
-    if (myInitialColumns > 0) {
-      builder = builder.setInitialColumns(myInitialColumns);
-    }
-    if (myInitialRows > 0) {
-      builder = builder.setInitialRows(myInitialRows);
-    }
     return builder.start();
   }
 }
