@@ -28,7 +28,6 @@
     <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
         <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
         <projectResolve implementation="org.jetbrains.kotlin.idea.configuration.KotlinMPPGradleProjectResolver"/>
-        <testTasksProvider implementation="org.jetbrains.kotlin.idea.run.KotlinMPPGradleTestTasksProvider"/>
 
         <projectModelContributor implementation="org.jetbrains.kotlin.idea.scripting.gradle.importing.KotlinDslScriptModelContributor"/>
         <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinGradleAppEnvProvider"/>
