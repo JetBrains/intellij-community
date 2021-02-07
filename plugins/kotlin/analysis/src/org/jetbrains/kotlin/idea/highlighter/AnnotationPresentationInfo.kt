@@ -104,9 +104,8 @@ class AnnotationPresentationInfo(
                     it.problemGroup(KotlinSuppressableWarningProblemGroup(diagnostic.factory))
                 }
             }
-            .create()
-        @Suppress("UNCHECKED_CAST")
-        (holder as? List<Annotation>)?.last()?.let(consumer::invoke)
+            .createAnnotation()
+            .also(consumer)
     }
 
     private fun getMessage(diagnostic: Diagnostic): String {
