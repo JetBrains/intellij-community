@@ -18,6 +18,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.PsiTestUtil
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -107,27 +108,11 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                             if (!SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return@configureRegistryAndRun
                         }
 
-                        if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
-                            DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
-                        }
+                        checkForErrorsBefore(fileText)
 
-                        doTestFor(mainFile.name, pathToFiles, intentionAction, fileText)
+                        doTestFor(mainFile, pathToFiles, intentionAction, fileText)
 
-                        if (file is KtFile &&
-                            isApplicableDirective(fileText) &&
-                            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")
-                        ) {
-                            val ktFile = file as KtFile
-
-                            if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
-                                DirectiveBasedActionUtils.checkForUnexpectedWarnings(
-                                    ktFile,
-                                    disabledByDefault = false,
-                                    directiveName = "AFTER-WARNING"
-                                )
-                            }
-                            DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
-                        }
+                        checkForErrorsAfter(fileText)
 
                         PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
                     } finally {
@@ -135,6 +120,30 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                     }
                 }
             }
+        }
+    }
+
+    protected open fun checkForErrorsAfter(fileText: String) {
+        val file = this.file
+
+        if (file is KtFile && isApplicableDirective(fileText) && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
+            if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
+                DirectiveBasedActionUtils.checkForUnexpectedWarnings(
+                    file,
+                    disabledByDefault = false,
+                    directiveName = "AFTER-WARNING"
+                )
+            }
+
+            DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
+        }
+    }
+
+    protected open fun checkForErrorsBefore(fileText: String) {
+        val file = this.file
+
+        if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
+            DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
         }
     }
 
@@ -155,7 +164,8 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     @Throws(Exception::class)
-    private fun doTestFor(mainFilePath: String, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+    protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+        val mainFilePath = mainFile.name
         val isApplicableExpected = isApplicableDirective(fileText)
 
         val isApplicableOnPooled = computeUnderProgressIndicatorAndWait {

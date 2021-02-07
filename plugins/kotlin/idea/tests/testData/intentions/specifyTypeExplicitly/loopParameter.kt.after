@@ -1,3 +1,4 @@
+// IGNORE_FIR
 // WITH_STDLIB
 
 import java.util.HashMap
