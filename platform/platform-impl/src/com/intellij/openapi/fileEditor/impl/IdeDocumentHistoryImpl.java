@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
+import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -76,7 +77,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
   private boolean myBackInProgress;
   private boolean myForwardInProgress;
-  private Object myLastGroupId;
+  private Reference<Object> myLastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
   private boolean myRegisteredBackPlaceInLastGroup;
 
   // change's navigation
@@ -306,8 +307,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   final void onCommandFinished(Project project, Object commandGroupId) {
-    if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) myRegisteredBackPlaceInLastGroup = false;
-    myLastGroupId = commandGroupId;
+    Object lastGroupId = SoftReference.dereference(myLastGroupId);
+    if (!CommandMerger.canMergeGroup(commandGroupId, lastGroupId)) myRegisteredBackPlaceInLastGroup = false;
+    if (commandGroupId != lastGroupId) {
+      myLastGroupId = commandGroupId == null ? null : new WeakReference<>(commandGroupId);
+    }
 
     if (myCommandStartPlace != null && myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
       if (!myBackInProgress) {
@@ -551,17 +555,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
-    boolean removed = false;
-    for (Iterator<PlaceInfo> iterator = backPlaces.iterator(); iterator.hasNext(); ) {
-      PlaceInfo info = iterator.next();
-      final VirtualFile file = info.myFile;
-      if (!file.isValid()) {
-        iterator.remove();
-        removed = true;
-      }
-    }
-
-    return removed;
+    return backPlaces.removeIf(info -> !info.myFile.isValid());
   }
 
   @Override
