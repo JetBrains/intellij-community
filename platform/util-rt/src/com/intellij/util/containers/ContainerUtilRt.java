@@ -15,9 +15,10 @@ import java.util.*;
 /**
  * Stripped-down version of {@link com.intellij.util.containers.ContainerUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
+ * @deprecated Use collection methods instead
  */
+@Deprecated
 public final class ContainerUtilRt {
-
   /**
    * @deprecated Use {@link HashMap#HashMap()}
    */
@@ -36,7 +37,11 @@ public final class ContainerUtilRt {
   @Deprecated
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
-    return copy(new LinkedList<T>(), elements);
+    LinkedList<T> collection = new LinkedList<T>();
+    for (T element : elements) {
+      collection.add(element);
+    }
+    return collection;
   }
 
   /**
@@ -61,14 +66,6 @@ public final class ContainerUtilRt {
     return list;
   }
 
-  @NotNull
-  static <T, C extends Collection<? super T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
-    for (T element : elements) {
-      collection.add(element);
-    }
-    return collection;
-  }
-
   /**
    * @deprecated Use {@link HashSet#HashSet(int)}
    */
@@ -89,6 +86,10 @@ public final class ContainerUtilRt {
     return new HashSet<T>(Arrays.asList(elements));
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Iterable)}
+   */
+  @Deprecated
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {
@@ -160,14 +161,12 @@ public final class ContainerUtilRt {
     @NotNull
     @Override
     public Iterator<T> iterator() {
-      //noinspection deprecation
       return EmptyIterator.getInstance();
     }
 
     @NotNull
     @Override
     public ListIterator<T> listIterator() {
-      //noinspection deprecation
       return EmptyListIterator.getInstance();
     }
 

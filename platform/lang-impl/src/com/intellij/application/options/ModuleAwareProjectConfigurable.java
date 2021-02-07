@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
@@ -116,12 +114,9 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
       final JComponent component = configurable.createComponent();
       cardPanel.add(component, module.getName());
     }
-    moduleList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        final Module value = moduleList.getSelectedValue();
-        layout.show(cardPanel, value == null ? PROJECT_ITEM_KEY : value.getName());
-      }
+    moduleList.addListSelectionListener(__ -> {
+      final Module value = moduleList.getSelectedValue();
+      layout.show(cardPanel, value == null ? PROJECT_ITEM_KEY : value.getName());
     });
 
     if (moduleList.getItemsCount() > 0) {

@@ -173,7 +173,7 @@ public abstract class DialogWrapper {
   private JComponent myPreferredFocusedComponentFromPanel;
   private Computable<? extends Point> myInitialLocationCallback;
   private Dimension  myActualSize;
-  private @NotNull List<ValidationInfo> myInfo = Collections.emptyList();
+  private List<? extends ValidationInfo> myInfo = Collections.emptyList();
   private @Nullable DoNotAskOption myDoNotAsk;
   private Action myYesAction;
   private Action myNoAction;
@@ -406,7 +406,7 @@ public abstract class DialogWrapper {
         myErrorPainter.setValidationInfo(info);
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(info.isEmpty() || info.stream().allMatch(info1 -> info1.okEnabled));
+        getOKAction().setEnabled(ContainerUtil.all(info, info1 -> info1.okEnabled));
       });
     }
   }
@@ -1890,7 +1890,7 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
         }
         updateErrorInfo(infoList);
         startTrackingValidation();
-        if(infoList.stream().anyMatch(info1 -> !info1.okEnabled)) return;
+        if (ContainerUtil.exists(infoList, info1 -> !info1.okEnabled)) return;
       }
       doOKAction();
     }
@@ -1972,7 +1972,7 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
                     Collections.singletonList(new ValidationInfo(text, component)));
   }
 
-  protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
+  protected void setErrorInfoAll(@NotNull List<? extends ValidationInfo> info) {
     if (myInfo.equals(info)) return;
 
     Application application = ApplicationManager.getApplication();
@@ -1981,7 +1981,7 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
     myErrorTextAlarm.cancelAllRequests();
     Runnable clearErrorRunnable = () -> {
       if (myErrorText != null) {
-        myErrorText.clearError(info.stream().noneMatch(i -> StringUtil.isNotEmpty(i.message)));
+        myErrorText.clearError(ContainerUtil.all(info, i -> StringUtil.isEmpty(i.message)));
       }
     };
     if (headless) {
@@ -1991,11 +1991,12 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
       SwingUtilities.invokeLater(clearErrorRunnable);
     }
 
-    List<ValidationInfo> corrected = ContainerUtil.filter(myInfo, vi -> !info.contains(vi));
     if (isInplaceValidationToolTipEnabled()) {
-      corrected.stream().filter(vi -> vi.component != null).
-        map(vi -> ComponentValidator.getInstance(vi.component)).
-        forEach(c -> c.ifPresent(vi -> vi.updateInfo(null)));
+      myInfo.stream()
+        .filter(vi -> !info.contains(vi))
+        .filter(vi -> vi.component != null)
+        .map(vi -> ComponentValidator.getInstance(vi.component))
+        .forEach(c -> c.ifPresent(vi -> vi.updateInfo(null)));
     }
 
     myInfo = info;
@@ -2038,7 +2039,7 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
    * Check if component is in error state validation-wise
    */
   protected boolean hasErrors(@NotNull JComponent component) {
-    return myInfo.stream().anyMatch(i -> component.equals(i.component) && !i.warning);
+    return ContainerUtil.exists(myInfo, i -> component.equals(i.component) && !i.warning);
   }
 
   private void updateSize() {

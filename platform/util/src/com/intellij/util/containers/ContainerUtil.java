@@ -170,7 +170,11 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <E> ArrayList<E> newArrayList(@NotNull Iterable<? extends E> iterable) {
-    return ContainerUtilRt.copy(new ArrayList<>(), iterable);
+    ArrayList<E> collection = new ArrayList<>();
+    for (E element : iterable) {
+      collection.add(element);
+    }
+    return collection;
   }
 
   /**
@@ -286,7 +290,10 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> iterable) {
-    return ContainerUtilRt.newHashSet(iterable);
+    Iterator<? extends T> iterator = iterable.iterator();
+    HashSet<T> set = new HashSet<T>();
+    while (iterator.hasNext()) set.add(iterator.next());
+    return set;
   }
 
   /**
@@ -306,8 +313,12 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> newHashOrEmptySet(@Nullable Iterable<? extends T> iterable) {
-    boolean empty = iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
-    return empty ? Collections.emptySet() : ContainerUtilRt.newHashSet(iterable);
+    boolean isEmpty = iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
+    if (isEmpty) {
+      return Collections.emptySet();
+    }
+
+    return newHashSet(iterable);
   }
 
   /**
@@ -321,7 +332,11 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
-    return ContainerUtilRt.copy(new LinkedHashSet<>(), elements);
+    LinkedHashSet<T> collection = new LinkedHashSet<>();
+    for (T element : elements) {
+      collection.add(element);
+    }
+    return collection;
   }
 
   /**
