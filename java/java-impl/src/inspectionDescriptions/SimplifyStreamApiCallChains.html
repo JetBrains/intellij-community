@@ -24,10 +24,11 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>stream.map(x -> {...; return x;})</code> &rarr; <code>stream.peek(x -> ...)</code></li>
   <li><code>!stream.anyMatch()</code> &rarr; <code>stream.noneMatch()</code></li>
   <li><code>!stream.anyMatch(x -> !(...))</code> &rarr; <code>stream.allMatch()</code></li>
-  <li><code>stream.map().anyMatch(Boolean::booleanValue)</code> -> <code>stream.anyMatch()</code></li>
-  <li><code>IntStream.range(expr1, expr2).mapToObj(x -> array[x])</code> -> <code>Arrays.stream(array, expr1, expr2)</code></li>
-  <li><code>Collection.nCopies(count, ...)</code> -> <code>Stream.generate().limit(count)</code></li>
-  <li><code>stream.sorted(comparator).findFirst()</code> -> <code>Stream.min(comparator)</code></li>
+  <li><code>stream.map().anyMatch(Boolean::booleanValue)</code> &rarr; <code>stream.anyMatch()</code></li>
+  <li><code>IntStream.range(expr1, expr2).mapToObj(x -> array[x])</code> &rarr; <code>Arrays.stream(array, expr1, expr2)</code></li>
+  <li><code>Collection.nCopies(count, ...)</code> &rarr; <code>Stream.generate().limit(count)</code></li>
+  <li><code>stream.sorted(comparator).findFirst()</code> &rarr; <code>Stream.min(comparator)</code></li>
+  <li><code>optional.orElseGet(() -> { throw new ...; })</code> &rarr; <code>optional.orElseThrow()</code></li>
 </ul>
 <p>
   Note that the replacements semantic may have minor difference in some cases.
