@@ -56,7 +56,7 @@ import java.util.stream.Stream;
 public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance(PushedFilePropertiesUpdater.class);
 
-  private static final int SCANNING_EXECUTOR_THREAD_COUNT = UnindexedFilesUpdater.getNumberOfScanningThreads() - 1;
+  private static final int SCANNING_EXECUTOR_THREAD_COUNT = Math.max(UnindexedFilesUpdater.getNumberOfScanningThreads() - 1, 1);
   private static final ExecutorService GLOBAL_SCANNING_EXECUTOR  = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "Scanning", SCANNING_EXECUTOR_THREAD_COUNT
   );
