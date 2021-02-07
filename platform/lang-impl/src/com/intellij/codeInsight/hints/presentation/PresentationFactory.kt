@@ -48,6 +48,13 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return withInlayAttributes(textWithoutBox)
   }
 
+  fun smallTextWithoutBackground(text: String): InlayPresentation {
+    val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
+    return AttributesTransformerPresentation(textWithoutBox) {
+      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND))
+    }
+  }
+
   override fun container(
     presentation: InlayPresentation,
     padding: Padding?,
@@ -381,7 +388,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   private fun withInlayAttributes(base: InlayPresentation): InlayPresentation {
     return AttributesTransformerPresentation(base) {
-      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT))
+      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLAY_DEFAULT))
     }
   }
 
