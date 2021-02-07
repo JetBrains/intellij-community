@@ -32,7 +32,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
     @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
     private var textGetter: () -> @IntentionName String,
     @FileModifier.SafeFieldForPreview // should not depend on the file and affect fix behavior
-    private val familyNameGetter: () -> @IntentionFamilyName String = textGetter,
+    private var familyNameGetter: () -> @IntentionFamilyName String = textGetter,
 ) : IntentionAction {
     @Deprecated("Replace with primary constructor", ReplaceWith("SelfTargetingIntention<TElement>(elementType, { text }, { familyName })"))
     constructor(
@@ -57,9 +57,17 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
     final override fun getText(): @IntentionName String = textGetter()
     final override fun getFamilyName(): @IntentionFamilyName String = familyNameGetter()
 
+    protected fun setFamilyNameGetter(@Nls familyNameGetter: () -> String) {
+        this.familyNameGetter = familyNameGetter
+    }
+
     abstract fun isApplicableTo(element: TElement, caretOffset: Int): Boolean
 
     abstract fun applyTo(element: TElement, editor: Editor?)
+
+    open fun applyTo(element: TElement, project: Project, editor: Editor?) {
+        applyTo(element, editor)
+    }
 
     protected open val isKotlinOnlyIntention: Boolean = true
 
@@ -126,7 +134,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
         editor ?: return
         val target = getTarget(editor, file) ?: return
         if (!preparePsiElementForWriteIfNeeded(target)) return
-        applyTo(target, editor)
+        applyTo(target, project, editor)
     }
 
     /**
