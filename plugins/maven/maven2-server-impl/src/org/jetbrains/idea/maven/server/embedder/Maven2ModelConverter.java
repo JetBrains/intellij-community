@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.util.ReflectionUtilRt;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
@@ -60,7 +58,7 @@ public final class Maven2ModelConverter {
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
     result.setPlugins(convertPlugins(model));
 
-    Map<Artifact, MavenArtifact> convertedArtifacts = new THashMap<Artifact, MavenArtifact>();
+    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
     result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
@@ -220,7 +218,7 @@ public final class Maven2ModelConverter {
 
   private static List<MavenPlugin> convertPlugins(Model mavenModel) throws RemoteException {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
-    Set<String> pluginKeys = new THashSet<String>();
+    Set<String> pluginKeys = new HashSet<String>();
     Build build = mavenModel.getBuild();
     doConvertPlugins(build, false, result, pluginKeys);
     if (build != null) doConvertPlugins(build.getPluginManagement(), true, result, pluginKeys);
@@ -336,7 +334,7 @@ public final class Maven2ModelConverter {
 
   public static Map<String, String> convertToMap(Object object) {
     try {
-      Map<String, String> result = new THashMap<String, String>();
+      Map<String, String> result = new HashMap<String, String>();
       doConvert(object, "", result);
       return result;
     }

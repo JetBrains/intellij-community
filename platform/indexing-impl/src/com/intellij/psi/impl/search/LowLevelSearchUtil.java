@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.TextOccurenceProcessor;
@@ -20,7 +21,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.IntPredicate;
-
-import static com.intellij.openapi.util.text.StringUtil.isEscapedBackslash;
 
 public final class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance(LowLevelSearchUtil.class);
@@ -279,7 +277,7 @@ public final class LowLevelSearchUtil {
     int[] cachedOccurrences = cachedMap == null ? null : cachedMap.get(searcher);
     boolean hasCachedOccurrences = cachedOccurrences != null && cachedOccurrences[0] <= startOffset && cachedOccurrences[1] >= endOffset;
     if (!hasCachedOccurrences) {
-      TIntArrayList occurrences = new TIntArrayList();
+      IntArrayList occurrences = new IntArrayList();
       int newStart = Math.min(startOffset, cachedOccurrences == null ? startOffset : cachedOccurrences[0]);
       int newEnd = Math.max(endOffset, cachedOccurrences == null ? endOffset : cachedOccurrences[1]);
       occurrences.add(newStart);
@@ -293,7 +291,7 @@ public final class LowLevelSearchUtil {
           occurrences.add(index);
         }
       }
-      cachedOccurrences = occurrences.toNativeArray();
+      cachedOccurrences = occurrences.toIntArray();
       if (cachedMap == null) {
         cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, ContainerUtil.createConcurrentSoftMap());
       }
@@ -320,11 +318,11 @@ public final class LowLevelSearchUtil {
     if (index > 0) {
       char c = text.charAt(index - 1);
       if (Character.isJavaIdentifierPart(c) && c != '$') {
-        if (!searcher.isHandleEscapeSequences() || index < 2 || isEscapedBackslash(text, 0, index - 2)) { //escape sequence
+        if (!searcher.isHandleEscapeSequences() || index < 2 || StringUtil.isEscapedBackslash(text, 0, index - 2)) { //escape sequence
           return false;
         }
       }
-      else if (searcher.isHandleEscapeSequences() && !isEscapedBackslash(text, 0, index - 1)) {
+      else if (searcher.isHandleEscapeSequences() && !StringUtil.isEscapedBackslash(text, 0, index - 1)) {
         return false;
       }
     }

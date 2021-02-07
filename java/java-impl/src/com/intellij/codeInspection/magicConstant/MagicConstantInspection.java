@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashSet;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -377,7 +376,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
                                           @Nullable Set<PsiExpression> visited) {
     PsiExpression expression = PsiUtil.deparenthesizeExpression(argument);
     if (expression == null) return true;
-    if (visited == null) visited = new THashSet<>();
+    if (visited == null) visited = new HashSet<>();
     if (!visited.add(expression)) return true;
     if (expression instanceof PsiConditionalExpression) {
       PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();

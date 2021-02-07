@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,8 +17,6 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -214,8 +212,8 @@ public final class ParametrizedDuplicates {
     }
 
     myUsagesList = new ArrayList<>();
-    Map<PsiExpression, ClusterOfUsages> usagesMap = new THashMap<>();
-    Set<Match> badMatches = new THashSet<>();
+    Map<PsiExpression, ClusterOfUsages> usagesMap = new HashMap<>();
+    Set<Match> badMatches = new HashSet<>();
     for (Match match : matches) {
       List<ClusterOfUsages> usagesInMatch = getUsagesInMatch(usagesMap, match);
       if (usagesInMatch == null) {
@@ -267,7 +265,7 @@ public final class ParametrizedDuplicates {
   }
 
   private static void mergeDuplicateUsages(@NotNull List<? extends ClusterOfUsages> usagesList, @NotNull List<Match> matches) {
-    Set<ClusterOfUsages> duplicateUsages = new THashSet<>();
+    Set<ClusterOfUsages> duplicateUsages = new HashSet<>();
     for (int i = 0; i < usagesList.size(); i++) {
       ClusterOfUsages usages = usagesList.get(i);
       if (duplicateUsages.contains(usages)) continue;
@@ -292,16 +290,16 @@ public final class ParametrizedDuplicates {
   }
 
   private static List<Match> filterNestedSubexpressions(List<Match> matches) {
-    Map<PsiExpression, Set<Match>> patternUsages = new THashMap<>();
+    Map<PsiExpression, Set<Match>> patternUsages = new HashMap<>();
     for (Match match : matches) {
       for (ExtractedParameter parameter : match.getExtractedParameters()) {
         for (PsiExpression patternUsage : parameter.myPatternUsages) {
-          patternUsages.computeIfAbsent(patternUsage, k -> new THashSet<>()).add(match);
+          patternUsages.computeIfAbsent(patternUsage, k -> new HashSet<>()).add(match);
         }
       }
     }
 
-    Set<Match> badMatches = new THashSet<>();
+    Set<Match> badMatches = new HashSet<>();
     for (Map.Entry<PsiExpression, Set<Match>> entry : patternUsages.entrySet()) {
       PsiExpression patternUsage = entry.getKey();
       Set<Match> patternMatches = entry.getValue();
@@ -342,8 +340,8 @@ public final class ParametrizedDuplicates {
   }
 
   private boolean extract(@NotNull ExtractMethodProcessor originalProcessor, @NotNull Map<PsiExpression, String> predefinedNames) {
-    Map<PsiExpression, PsiExpression> expressionsMapping = new THashMap<>();
-    Map<PsiVariable, PsiVariable> variablesMapping = new THashMap<>();
+    Map<PsiExpression, PsiExpression> expressionsMapping = new HashMap<>();
+    Map<PsiVariable, PsiVariable> variablesMapping = new HashMap<>();
     collectCopyMapping(originalProcessor.myElements, myElements, myUsagesList, expressionsMapping, variablesMapping);
 
     Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations =
@@ -390,7 +388,7 @@ public final class ParametrizedDuplicates {
   }
 
   private void putMatchParameters(@NotNull Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations) {
-    Map<PsiExpression, PsiLocalVariable> patternUsageToParameter = new THashMap<>();
+    Map<PsiExpression, PsiLocalVariable> patternUsageToParameter = new HashMap<>();
     for (Map.Entry<PsiLocalVariable, ClusterOfUsages> entry : parameterDeclarations.entrySet()) {
       PsiExpression usage = entry.getValue().myParameter.myPattern.getUsage();
       patternUsageToParameter.put(usage, entry.getKey());
@@ -550,7 +548,7 @@ public final class ParametrizedDuplicates {
                                                                              @NotNull Map<PsiExpression, String> predefinedNames) {
 
     Project project = myElements[0].getProject();
-    Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations = new THashMap<>();
+    Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations = new HashMap<>();
     UniqueNameGenerator generator = originalProcessor.getParameterNameGenerator(myElements[0]);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiStatement statement =
@@ -592,7 +590,7 @@ public final class ParametrizedDuplicates {
                                          @NotNull List<? extends ClusterOfUsages> patternUsages,
                                          @NotNull Map<PsiExpression, PsiExpression> expressions,
                                          @NotNull Map<PsiVariable, PsiVariable> variables) {
-    Set<PsiExpression> patternExpressions = new THashSet<>();
+    Set<PsiExpression> patternExpressions = new HashSet<>();
     for (ClusterOfUsages usages : patternUsages) {
       patternExpressions.addAll(usages.myPatterns);
     }
@@ -672,7 +670,7 @@ public final class ParametrizedDuplicates {
 
     ClusterOfUsages(@NotNull ExtractedParameter parameter) {
       myPatterns = parameter.myPatternUsages;
-      myParameters = new THashMap<>();
+      myParameters = new HashMap<>();
       myParameter = parameter;
       myFirstOffset = myPatterns.stream().mapToInt(PsiElement::getTextOffset).min().orElse(0);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -478,7 +478,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       initializer = expr;
       occurrences = new ExpressionOccurrenceManager(expr, method, null).findExpressionOccurrences();
     }
-    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, initializer, occurrences).toNativeArray())
+    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, initializer, occurrences))
                                                              : new IntArrayList();
     IntroduceParameterProcessor processor = new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, initializer, expr, localVar, true, parameterName, replaceAllOccurrences,
@@ -524,7 +524,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     final PsiLocalVariable localVariable = (PsiLocalVariable)element;
     final PsiExpression parameterInitializer = localVariable.getInitializer();
     assertNotNull(parameterInitializer);
-    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, parameterInitializer, null).toNativeArray())
+    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, parameterInitializer, null))
                                                               : new IntArrayList();
 
     new IntroduceParameterProcessor(

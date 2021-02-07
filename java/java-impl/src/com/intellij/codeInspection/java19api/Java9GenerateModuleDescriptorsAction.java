@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -44,8 +44,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +58,7 @@ import static com.intellij.psi.PsiJavaModule.*;
 /**
  * @author Pavel.Dolgov
  */
-public class Java9GenerateModuleDescriptorsAction extends AnAction {
+public final class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(Java9GenerateModuleDescriptorsAction.class);
 
   @Override
@@ -108,7 +106,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       new Task.Backgroundable(project, getTitle(), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          THashMap<Module, List<File>> classFiles = new THashMap<>();
+          Map<Module, List<File>> classFiles = new HashMap<>();
           int totalFiles = collectClassFiles(project, classFiles);
           if (totalFiles != 0) {
             new DescriptorsGenerator(project, uniqueModuleNames).generate(classFiles, indicator, totalFiles);
@@ -219,7 +217,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     private final UniqueModuleNames myUniqueModuleNames;
 
     private final List<ModuleNode> myModuleNodes = new ArrayList<>();
-    private final Set<String> myUsedExternallyPackages = new THashSet<>();
+    private final Set<String> myUsedExternallyPackages = new HashSet<>();
 
     private final ProgressTracker myProgressTracker = new ProgressTracker(0.5, 0.3, 0.2);
 
@@ -228,7 +226,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       myUniqueModuleNames = uniqueModuleNames;
     }
 
-    void generate(THashMap<Module, List<File>> classFiles, ProgressIndicator indicator, int totalFiles) {
+    void generate(Map<Module, List<File>> classFiles, ProgressIndicator indicator, int totalFiles) {
       myProgressTracker.init(indicator);
       List<ModuleInfo> moduleInfos;
       try {
@@ -261,9 +259,9 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       });
     }
 
-    private Map<String, Set<ModuleNode>> collectDependencies(THashMap<Module, List<File>> classFiles) {
+    private Map<String, Set<ModuleNode>> collectDependencies(Map<Module, List<File>> classFiles) {
       PackageNamesCache packageNamesCache = new PackageNamesCache(myProject);
-      Map<String, Set<ModuleNode>> packagesDeclaredInModules = new THashMap<>();
+      Map<String, Set<ModuleNode>> packagesDeclaredInModules = new HashMap<>();
 
       for (Map.Entry<Module, List<File>> entry : classFiles.entrySet()) {
         Module module = entry.getKey();
@@ -286,14 +284,14 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
         ModuleNode moduleNode = new ModuleNode(module, declaredPackages, requiredPackages, myUniqueModuleNames);
         myModuleNodes.add(moduleNode);
         for (String declaredPackage : declaredPackages) {
-          packagesDeclaredInModules.computeIfAbsent(declaredPackage, __ -> new THashSet<>()).add(moduleNode);
+          packagesDeclaredInModules.computeIfAbsent(declaredPackage, __ -> new HashSet<>()).add(moduleNode);
         }
       }
       return packagesDeclaredInModules;
     }
 
     private void analyseDependencies(Map<String, Set<ModuleNode>> packagesDeclaredInModules) {
-      Map<PsiJavaModule, ModuleNode> nodesByDescriptor = new THashMap<>();
+      Map<PsiJavaModule, ModuleNode> nodesByDescriptor = new HashMap<>();
       for (ModuleNode moduleNode : myModuleNodes) {
         if (moduleNode.getDescriptor() != null) {
           nodesByDescriptor.put(moduleNode.getDescriptor(), moduleNode);
@@ -405,12 +403,12 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  private static class ModuleNode implements Comparable<ModuleNode> {
+  private static final class ModuleNode implements Comparable<ModuleNode> {
     private final Module myModule;
     private final Set<String> myDeclaredPackages;
     private final Set<String> myRequiredPackages;
-    private final Set<ModuleNode> myDependencies = new THashSet<>();
-    private final Set<String> myExports = new THashSet<>();
+    private final Set<ModuleNode> myDependencies = new HashSet<>();
+    private final Set<String> myExports = new HashSet<>();
     private final PsiJavaModule myDescriptor;
     private final String myName;
 
@@ -595,8 +593,8 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  private static class PackageNamesCache {
-    private final Map<String, Boolean> myPackages = new THashMap<>();
+  private static final class PackageNamesCache {
+    private final Map<String, Boolean> myPackages = new HashMap<>();
     private final JavaPsiFacade myPsiFacade;
 
     PackageNamesCache(Project project) {
@@ -620,9 +618,9 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  private static class ModuleVisitor extends AbstractDependencyVisitor {
-    private final Set<String> myRequiredPackages = new THashSet<>();
-    private final Set<String> myDeclaredPackages = new THashSet<>();
+  private static final class ModuleVisitor extends AbstractDependencyVisitor {
+    private final Set<String> myRequiredPackages = new HashSet<>();
+    private final Set<String> myDeclaredPackages = new HashSet<>();
     private final PackageNamesCache myPackageNamesCache;
 
     ModuleVisitor(PackageNamesCache packageNamesCache) {

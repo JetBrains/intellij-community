@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
@@ -18,7 +18,7 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,7 +62,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
                            @NotNull TypeSelectorManager typeSelectorManager,
                            @NotNull PsiMethod methodToSearchFor,
                            @NotNull PsiMethod methodToReplaceIn,
-                           @NotNull TIntArrayList parametersToRemove,
+                           @NotNull IntList parametersToRemove,
                            final boolean mustBeFinal) {
     super(project, true);
     myPanel = new IntroduceParameterSettingsPanel(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
@@ -306,7 +306,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private class IntroduceParameterSettingsPanel extends IntroduceParameterSettingsUI {
     IntroduceParameterSettingsPanel(PsiLocalVariable onLocalVariable,
                                            PsiExpression onExpression,
-                                           PsiMethod methodToReplaceIn, TIntArrayList parametersToRemove) {
+                                           PsiMethod methodToReplaceIn, IntList parametersToRemove) {
       super(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     }
 

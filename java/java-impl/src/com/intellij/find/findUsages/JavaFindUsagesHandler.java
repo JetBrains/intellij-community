@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.CommonBundle;
@@ -29,7 +29,6 @@ import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +132,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         final PsiMethod method = (PsiMethod)scope;
         if (PsiUtil.canBeOverridden(method)) {
           final PsiClass aClass = method.getContainingClass();
-          LOG.assertTrue(aClass != null); //Otherwise can not be overriden
+          LOG.assertTrue(aClass != null); //Otherwise can not be overridden
 
           boolean hasOverridden = OverridingMethodsSearch.search(method).findFirst() != null;
           if (!hasOverridden) {
@@ -158,7 +157,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       if (containingClass != null) {
         String fieldName = field.getName();
         final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
-        Set<PsiMethod> accessors = new THashSet<>();
+        Set<PsiMethod> accessors = new HashSet<>();
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
         Collection<PsiMethod> methods = Arrays.asList(containingClass.getMethods());
         PsiMethod getter = PropertyUtilBase.findPropertyGetterWithType(propertyName, isStatic, field.getType(), methods);
@@ -171,7 +170,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
           final boolean doSearch = !containsPhysical || askShouldSearchAccessors(fieldName);
           if (doSearch) {
-            final Set<PsiElement> elements = new THashSet<>();
+            final Set<PsiElement> elements = new HashSet<>();
             for (PsiMethod accessor : accessors) {
               ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, getActionString()));
             }

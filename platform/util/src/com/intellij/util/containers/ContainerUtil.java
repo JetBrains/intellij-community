@@ -4,7 +4,9 @@ package com.intellij.util.containers;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -935,17 +937,6 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T> List<T> filter(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
     return findAll(collection, condition);
-  }
-
-  @Contract(pure=true)
-  public static int @NotNull [] filter(int @NotNull [] collection, @NotNull TIntProcedure condition) {
-    TIntArrayList result = new TIntArrayList();
-    for (int t : collection) {
-      if (condition.execute(t)) {
-        result.add(t);
-      }
-    }
-    return result.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : result.toNativeArray();
   }
 
   @Contract(pure = true)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -24,6 +10,7 @@ import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -35,19 +22,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
-public class MagicCompletionContributor extends CompletionContributor implements DumbAware {
+public final class MagicCompletionContributor extends CompletionContributor implements DumbAware {
   private static final ElementPattern<PsiElement> IN_METHOD_CALL_ARGUMENT =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiExpressionList.class).withParent(PsiCall.class)));
+    PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(
+      PlatformPatterns.psiElement(PsiExpressionList.class).withParent(PsiCall.class)));
   private static final ElementPattern<PsiElement> IN_BINARY_COMPARISON =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiPolyadicExpression.class)));
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiPolyadicExpression.class)));
   private static final ElementPattern<PsiElement> IN_ASSIGNMENT =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiAssignmentExpression.class)));
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiAssignmentExpression.class)));
   private static final ElementPattern<PsiElement> IN_RETURN =
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiReturnStatement.class)));
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiReturnStatement.class)));
   private static final ElementPattern<PsiElement> IN_ANNOTATION_INITIALIZER =
-    psiElement().afterLeaf("=").withParent(PsiReferenceExpression.class).withSuperParent(2,PsiNameValuePair.class).withSuperParent(3,PsiAnnotationParameterList.class).withSuperParent(4,PsiAnnotation.class);
+    PlatformPatterns
+      .psiElement().afterLeaf("=").withParent(PsiReferenceExpression.class).withSuperParent(2, PsiNameValuePair.class).withSuperParent(3, PsiAnnotationParameterList.class).withSuperParent(4, PsiAnnotation.class);
   private static final int PRIORITY = 100;
 
   @Override
@@ -96,7 +86,7 @@ public class MagicCompletionContributor extends CompletionContributor implements
 
   @NotNull
   public static List<Pair<PsiModifierListOwner, PsiType>> getMembersWithAllowedValues(@NotNull PsiElement pos) {
-    Set<Pair<PsiModifierListOwner, PsiType>> result = new THashSet<>();
+    Set<Pair<PsiModifierListOwner, PsiType>> result = new HashSet<>();
     if (IN_METHOD_CALL_ARGUMENT.accepts(pos)) {
       PsiCall call = PsiTreeUtil.getParentOfType(pos, PsiCall.class);
       if (!(call instanceof PsiExpression)) return Collections.emptyList();

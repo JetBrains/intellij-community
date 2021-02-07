@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -24,7 +24,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.assertj.core.util.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,10 +67,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
   private volatile long prevTime;
   private volatile long now;
+
   public void testCheckCanceledGranularity() {
     prevTime = now = 0;
     final long warmupEnd = System.currentTimeMillis() + 1000;
-    final TLongArrayList times = new TLongArrayList();
+    final LongArrayList times = new LongArrayList();
     final long end = warmupEnd + 1000;
 
     ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
@@ -94,7 +95,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       }
       alarm.cancelAllRequests();
     }, "", false, true, getProject(), null, "");
-    long averageDelay = ArrayUtil.averageAmongMedians(times.toNativeArray(), 5);
+    long averageDelay = ArrayUtil.averageAmongMedians(times.toLongArray(), 5);
     LOG.debug("averageDelay = " + averageDelay);
     assertTrue(averageDelay < CoreProgressManager.CHECK_CANCELED_DELAY_MILLIS *3);
   }
@@ -751,7 +752,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       }));
       futures.add(ReadAction.nonBlocking(action).submit(AppExecutorUtil.getAppExecutorService()));
     }
-      
+
     for (int i = 0; i < 10_000 && !finished.get(); i++) {
       UIUtil.dispatchAllInvocationEvents();
       WriteAction.run(() -> {});
@@ -987,7 +988,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
     assertFalse("pm.runProcess() with the progress already used in the other thread must be prohibited", allowed);
   }
-  
+
   public void testRelayUiToDelegateIndicatorCopiesEverything() {
     ProgressIndicatorBase ui = new ProgressIndicatorBase();
     ProgressIndicatorBase indicator = new ProgressIndicatorBase();

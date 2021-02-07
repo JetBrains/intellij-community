@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -29,14 +29,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
@@ -46,7 +42,7 @@ import static com.intellij.patterns.StandardPatterns.or;
 /**
  * @author peter
  */
-public class JavaMemberNameCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaMemberNameCompletionContributor extends CompletionContributor implements DumbAware {
   public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().
     afterLeaf(psiElement().withText("?").andOr(
       psiElement().afterLeaf("<", ","),
@@ -65,7 +61,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor i
     }
 
     PsiElement position = parameters.getPosition();
-    final Set<LookupElement> lookupSet = new THashSet<>();
+    final Set<LookupElement> lookupSet = new HashSet<>();
     if (psiElement(PsiIdentifier.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).withParent(
       or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class))).accepts(position)) {
       completeLocalVariableName(lookupSet, result.getPrefixMatcher(), (PsiVariable)parameters.getPosition().getParent(),
@@ -120,7 +116,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor i
         seemsMistypedKeyword(((PsiClassType)type).getClassName())) {
       return;
     }
-    
+
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type, StringUtil.isEmpty(matcher.getPrefix()));
     suggestedNameInfo = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, var, false);
     final String[] suggestedNames = suggestedNameInfo.names;
@@ -288,12 +284,12 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor i
 
     Project project = var.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    
+
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, var.getType());
     final String[] suggestedNames = suggestedNameInfo.names;
     addLookupItems(set, suggestedNameInfo, matcher, project, suggestedNames);
   }
-  
+
   private static void completeFieldName(Set<LookupElement> set, PsiField var, final PrefixMatcher matcher, boolean includeOverlapped) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
 
@@ -436,7 +432,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor i
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
       if (fieldType.equals(varType)) {
-        final String getterName = JavaPsiRecordUtil.getComponentForField(field) != null ? 
+        final String getterName = JavaPsiRecordUtil.getComponentForField(field) != null ?
                                   field.getName() : PropertyUtilBase.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
              psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null)) {

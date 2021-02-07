@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems
 
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils.*
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +15,7 @@ import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.util.text.StringSearcher
-import gnu.trove.TIntProcedure
+import java.util.function.IntPredicate
 
 open class MemberUsageCollector {
   companion object {
@@ -35,12 +34,12 @@ open class MemberUsageCollector {
       val searcher = StringSearcher(memberName, true, true, false)
       for (javaFile in javaFiles) {
         val text = javaFile.viewProvider.contents
-        val occurenceProcedure = TIntProcedure { index ->
+        val occurenceProcedure = IntPredicate { index ->
           val usage = usageExtractor(javaFile, index)
           if (usage != null) usages.add(usage)
-          return@TIntProcedure true
+          true
         }
-        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length, searcher, occurenceProcedure)
+        LowLevelSearchUtil.processTexts(text, 0, text.length, searcher, occurenceProcedure)
       }
       return usages
     }

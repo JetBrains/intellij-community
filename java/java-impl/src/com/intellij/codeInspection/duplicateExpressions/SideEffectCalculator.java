@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -6,14 +6,13 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectIntHashMap;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -28,10 +27,10 @@ import static com.intellij.psi.CommonClassNames.*;
  *
  *  @author Pavel.Dolgov
  */
-class SideEffectCalculator {
-  private final ObjectIntHashMap<PsiExpression> myCache = new ObjectIntHashMap<>();
+final class SideEffectCalculator {
+  private final Object2IntOpenHashMap<PsiExpression> myCache = new Object2IntOpenHashMap<>();
 
-  private static final Set<String> SIDE_EFFECTS_FREE_CLASSES = ContainerUtil.set(
+  private static final Set<String> SIDE_EFFECTS_FREE_CLASSES = Set.of(
     JAVA_LANG_BOOLEAN,
     JAVA_LANG_CHARACTER,
     JAVA_LANG_SHORT,
@@ -47,6 +46,10 @@ class SideEffectCalculator {
     "java.util.UUID",
     JAVA_UTIL_OBJECTS);
 
+  SideEffectCalculator() {
+    myCache.defaultReturnValue(-1);
+  }
+
   @Contract("null -> false")
   boolean mayHaveSideEffect(@Nullable PsiExpression expression) {
     if (expression == null ||
@@ -54,7 +57,7 @@ class SideEffectCalculator {
         expression instanceof PsiClassObjectAccessExpression) {
       return false;
     }
-    int c = myCache.get(expression);
+    int c = myCache.getInt(expression);
     if (c < 0) {
       c = calculateSideEffect(expression) ? 1 : 0;
       myCache.put(expression, c);
@@ -71,7 +74,7 @@ class SideEffectCalculator {
     }
     if (e instanceof PsiPolyadicExpression) {
       PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
-      return Arrays.stream(polyadic.getOperands()).anyMatch(this::mayHaveSideEffect);
+      return ContainerUtil.exists(polyadic.getOperands(), this::mayHaveSideEffect);
     }
     if (e instanceof PsiConditionalExpression) {
       PsiConditionalExpression conditional = (PsiConditionalExpression)e;
@@ -164,7 +167,10 @@ class SideEffectCalculator {
     if (psiClass == null) return true;
 
     String className = psiClass.getQualifiedName();
-    if (className == null) return true;
+    if (className == null) {
+      return true;
+    }
+
     if (MethodUtils.isEquals(method) ||
         MethodUtils.isHashCode(method) ||
         MethodUtils.isToString(method) ||

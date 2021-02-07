@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -312,7 +312,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final GrParameter[] parameters = block.getParameters();
     for (int i = settings.parametersToRemove().size() - 1; i >= 0; i--) {
       try {
-        PsiParameter param = parameters[settings.parametersToRemove().get(i)];
+        PsiParameter param = parameters[settings.parametersToRemove().getInt(i)];
         param.delete();
       }
       catch (IncorrectOperationException e) {

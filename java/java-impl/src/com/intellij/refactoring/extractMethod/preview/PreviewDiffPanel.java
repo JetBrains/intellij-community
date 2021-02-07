@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.diff.DiffContentFactory;
@@ -47,7 +47,6 @@ import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -367,7 +366,7 @@ final class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, Pr
     if (ContainerUtil.isEmpty(allDuplicates)) {
       return Collections.emptyMap();
     }
-    Map<DuplicateNode, Match> selectedDuplicates = new THashMap<>();
+    Map<DuplicateNode, Match> selectedDuplicates = new HashMap<>();
     for (DuplicateNode duplicateNode : selectedNodes) {
       TextRange selectedRange = duplicateNode.getTextRange();
       if (selectedRange != null) {

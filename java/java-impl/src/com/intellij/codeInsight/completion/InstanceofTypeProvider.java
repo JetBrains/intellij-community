@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -8,9 +8,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -26,7 +26,7 @@ final class InstanceofTypeProvider {
     final PsiElement position = parameters.getPosition();
     final PsiType[] leftTypes = InstanceOfLeftPartTypeGetter.getLeftTypes(position);
     final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<>();
-    final Set<PsiClass> parameterizedTypes = new THashSet<>();
+    final Set<PsiClass> parameterizedTypes = new HashSet<>();
     for (final PsiType type : leftTypes) {
       if (type instanceof PsiClassType) {
         final PsiClassType classType = (PsiClassType)type;

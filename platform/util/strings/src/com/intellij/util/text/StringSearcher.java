@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.Strings;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.function.IntPredicate;
 
-public class StringSearcher {
+public final class StringSearcher {
   private final String myPattern;
   private final char[] myPatternArray;
   private final int myPatternLength;
@@ -84,16 +84,15 @@ public class StringSearcher {
 
   public int @NotNull [] findAllOccurrences(@NotNull CharSequence text) {
     int end = text.length();
-    TIntArrayList result = new TIntArrayList();
+    IntArrayList result = new IntArrayList();
     for (int index = 0; index < end; index++) {
       //noinspection AssignmentToForLoopParameter
       index = scan(text, index, end);
       if (index < 0) break;
       result.add(index);
     }
-    return result.toNativeArray();
+    return result.toIntArray();
   }
-
 
   public boolean processOccurrences(@NotNull CharSequence text, @NotNull IntPredicate consumer) {
     int end = text.length();

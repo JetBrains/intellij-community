@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -1687,22 +1687,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actualText = StringUtil.convertLineSeparators(actualText);
 
     if (!Objects.equals(expectedText, actualText)) {
-      if (loader.filePath != null) {
-        if (loader.caretState.hasExplicitCaret()) {
-          int offset = editor.getCaretModel().getOffset();
-          if (offset > -1) {
-            actualText = new StringBuilder(actualText).insert(offset, "<caret>").toString();
-          }
-          expectedText = loader.fileText;
-          if (stripTrailingSpaces) {
-            expectedText = stripTrailingSpaces(expectedText);
-          }
-        }
-        throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
-      }
-      else {
+      if (loader.filePath == null) {
         throw new ComparisonFailure(expectedFile, expectedText, actualText);
       }
+
+      if (loader.caretState.hasExplicitCaret()) {
+        int offset = editor.getCaretModel().getOffset();
+        if (offset > -1) {
+          actualText = new StringBuilder(actualText).insert(offset, "<caret>").toString();
+        }
+        expectedText = loader.fileText;
+        if (stripTrailingSpaces) {
+          expectedText = stripTrailingSpaces(expectedText);
+        }
+      }
+      throw new FileComparisonFailure(expectedFile, expectedText, actualText, loader.filePath);
     }
 
     EditorTestUtil.verifyCaretAndSelectionState(editor, loader.caretState, expectedFile);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -128,7 +128,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
   }
 
   private static Collection<String> collectProfilesIds(List<Profile> profiles) {
-    Collection<String> result = new THashSet<String>();
+    Collection<String> result = new HashSet<String>();
     for (Profile each : profiles) {
       if (each.getId() != null) {
         result.add(each.getId());
@@ -308,7 +308,7 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
   private MavenServerExecutionResult createExecutionResult(File file, MavenExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    THashSet<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
+    Set<MavenId> unresolvedArtifacts = new HashSet<MavenId>();
 
     validate(file, result.getExceptions(), problems, unresolvedArtifacts);
 

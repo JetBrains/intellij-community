@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -186,8 +186,8 @@ public abstract class XmlAttributeDelegate {
     int[] gapPhysicalStarts = ArrayUtil.newIntArray(gapsShifts.size());
     int currentGapsSum = 0;
     for (int i = 0; i < gapDisplayStarts.length; i++) {
-      currentGapsSum += gapsShifts.get(i);
-      gapDisplayStarts[i] = gapsStarts.get(i);
+      currentGapsSum += gapsShifts.getInt(i);
+      gapDisplayStarts[i] = gapsStarts.getInt(i);
       gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
     }
     final XmlAttributeDelegate.VolatileState

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -10,7 +10,6 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +110,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .toArray();
 
           case GET_FIELD: {
-            final Set<String> uniqueNames = new THashSet<>();
+            final Set<String> uniqueNames = new HashSet<>();
             return Arrays.stream(ownerClass.getPsiClass().getAllFields())
               .filter(field -> isPotentiallyAccessible(field, ownerClass) && uniqueNames.add(field.getName()))
               .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))

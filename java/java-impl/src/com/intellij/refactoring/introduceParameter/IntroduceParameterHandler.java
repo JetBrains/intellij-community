@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.introduceParameter;
 
@@ -61,7 +61,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairConsumer;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -481,12 +482,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                             : new TypeSelectorManagerImpl(myProject, initializerType, occurrences);
     }
 
-    private TIntArrayList getParamsToRemove(PsiMethod method, PsiExpression[] occurrences) {
+    private IntList getParamsToRemove(PsiMethod method, PsiExpression[] occurrences) {
       PsiExpression expressionToRemoveParamFrom = myExpr;
       if (myExpr == null) {
         expressionToRemoveParamFrom = myLocalVar.getInitializer();
       }
-      return expressionToRemoveParamFrom == null ? new TIntArrayList() : Util
+      return expressionToRemoveParamFrom == null ? new IntArrayList() : Util
         .findParametersToRemove(method, expressionToRemoveParamFrom, occurrences);
     }
   }

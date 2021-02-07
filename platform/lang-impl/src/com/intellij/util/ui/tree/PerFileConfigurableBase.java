@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.CommonBundle;
@@ -45,7 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -260,11 +259,13 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       myModel.data.add(pair(file, getNewMapping(file)));
     }
     myModel.fireTableDataChanged();
-    TIntArrayList rowList = new TIntArrayList();
+    IntArrayList rowList = new IntArrayList();
     for (int i = 0, size = myModel.data.size(); i < size; i++) {
-      if (chosen.contains(myModel.data.get(i).first)) rowList.add(i);
+      if (chosen.contains(myModel.data.get(i).first)) {
+        rowList.add(i);
+      }
     }
-    selectRows(rowList.toNativeArray(), true);
+    selectRows(rowList.toIntArray(), true);
   }
 
   private void doRemoveAction() {

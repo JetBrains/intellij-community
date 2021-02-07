@@ -7,19 +7,15 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
  */
-public class JavaUsageTypeProvider implements UsageTypeProviderEx {
+public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   @Override
   public UsageType getUsageType(final @NotNull PsiElement element) {
     return getUsageType(element, UsageTarget.EMPTY_ARRAY);
@@ -99,8 +95,8 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     supers1Q.add(m1);
     final Queue<PsiMethod> supers2Q = new ArrayDeque<>();
     supers2Q.add(m2);
-    Set<PsiMethod> supers1 = new THashSet<>();
-    Set<PsiMethod> supers2 = new THashSet<>();
+    Set<PsiMethod> supers1 = new HashSet<>();
+    Set<PsiMethod> supers2 = new HashSet<>();
     while (true) {
       PsiMethod me1;
       if ((me1 = supers1Q.poll()) != null) {

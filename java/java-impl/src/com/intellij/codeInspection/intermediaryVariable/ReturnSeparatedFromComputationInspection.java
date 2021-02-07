@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.intermediaryVariable;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -22,8 +22,6 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +32,7 @@ import java.util.*;
 /**
  * @author Pavel.Dolgov
  */
-public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ReturnSeparatedFromComputationInspection.class);
 
   @NotNull
@@ -279,7 +277,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
   }
 
   private static void removeReturn(@NotNull ReturnContext context) {
-    Set<PsiElement> skippedEmptyStatements = new THashSet<>();
+    Set<PsiElement> skippedEmptyStatements = new HashSet<>();
     getPrevNonEmptyStatement(context.returnStatement, skippedEmptyStatements);
     skippedEmptyStatements.forEach(PsiElement::delete);
     removeElementKeepComments(context.returnStatement);
@@ -315,10 +313,10 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     final PsiVariable resultVariable;
     final PsiType returnType;
     final boolean checkingApplicability;
-    final Set<PsiElement> insertBefore = new THashSet<>();
-    final Set<PsiElement> replaceInline = new THashSet<>();
+    final Set<PsiElement> insertBefore = new HashSet<>();
+    final Set<PsiElement> replaceInline = new HashSet<>();
 
-    final Set<PsiElement> removeCompletely = new THashSet<>();
+    final Set<PsiElement> removeCompletely = new HashSet<>();
     private Map<PsiStatement, Set<PsiBreakStatement>> breakStatements;
 
     private Mover(@NotNull ControlFlow flow,
@@ -501,7 +499,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
 
     private Set<PsiBreakStatement> getBreaks(@NotNull PsiStatement targetStatement) {
       if (breakStatements == null) {
-        breakStatements = new THashMap<>();
+        breakStatements = new HashMap<>();
         List<Instruction> instructions = flow.getInstructions();
         for (int i = 0; i < instructions.size(); i++) {
           PsiElement element = flow.getElement(i);
@@ -509,7 +507,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
           if (statement instanceof PsiBreakStatement) {
             PsiStatement exitedStatement = ((PsiBreakStatement)statement).findExitedStatement();
             if (exitedStatement != null) {
-              breakStatements.computeIfAbsent(exitedStatement, unused -> new THashSet<>()).add((PsiBreakStatement)statement);
+              breakStatements.computeIfAbsent(exitedStatement, unused -> new HashSet<>()).add((PsiBreakStatement)statement);
             }
           }
         }

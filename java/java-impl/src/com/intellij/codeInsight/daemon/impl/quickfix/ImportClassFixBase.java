@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -30,7 +30,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,8 +71,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         return false;
       }
     }
-    
-    if (myRef instanceof PsiJavaCodeReferenceElement && 
+
+    if (myRef instanceof PsiJavaCodeReferenceElement &&
         ((PsiJavaCodeReferenceElement)myRef).advancedResolve(false).isValidResult()) {
       return false;
     }
@@ -173,8 +172,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   private void filerByPackageName(@NotNull Collection<? extends PsiClass> classList, PsiFile file) {
     String packageName = StringUtil.getPackageName(getQualifiedName(myElement));
-    if (!packageName.isEmpty() && 
-        file instanceof PsiJavaFile && 
+    if (!packageName.isEmpty() &&
+        file instanceof PsiJavaFile &&
         Arrays.binarySearch(((PsiJavaFile)file).getImplicitlyImportedPackages(), packageName) < 0) {
       for (Iterator<? extends PsiClass> iterator = classList.iterator(); iterator.hasNext(); ) {
         String classQualifiedName = iterator.next().getQualifiedName();
@@ -218,7 +217,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     PsiJavaFile javaFile = (PsiJavaFile)containingFile;
     PsiImportList importList = javaFile.getImportList();
     PsiImportStatementBase[] importStatements = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
-    Set<String> unresolvedImports = new THashSet<>(importStatements.length);
+    Set<String> unresolvedImports = new HashSet<>(importStatements.length);
     for (PsiImportStatementBase statement : importStatements) {
       PsiJavaCodeReferenceElement ref = statement.getImportReference();
       String name = ref == null ? null : ref.getReferenceName();

@@ -24,6 +24,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -146,7 +147,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       return Collections.emptyList();
     }
 
-    TIntObjectHashMap<List<Rule>> rulesByHash = new TIntObjectHashMap<>();
+    Int2ObjectOpenHashMap<List<Rule>> rulesByHash = new Int2ObjectOpenHashMap<>();
     List<String> commentTexts = new ArrayList<>();
     for (PsiElement element = switchBody.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (!(element instanceof PsiSwitchLabeledRuleStatement)) {
@@ -160,15 +161,10 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         Rule rule = new Rule(ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
         commentTexts.clear();
         int hash = rule.hash();
-        List<Rule> list = rulesByHash.get(hash);
-        if (list == null) rulesByHash.put(hash, list = new ArrayList<>());
-        list.add(rule);
+        rulesByHash.computeIfAbsent(hash, __ -> new ArrayList<>()).add(rule);
       }
     }
-
-    Collection<List<Rule>> result = new ArrayList<>();
-    rulesByHash.forEachValue(result::add); // mini-hack: ArrayList.add() always returns true
-    return result;
+    return new ArrayList<>(rulesByHash.values());
   }
 
   @NotNull

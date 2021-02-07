@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.introduceParameter;
 
@@ -15,9 +15,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,13 +100,15 @@ public final class Util {
 
   // returns parameters that are used solely in specified expression
   @NotNull
-  public static TIntArrayList findParametersToRemove(@NotNull PsiMethod method,
-                                                     @NotNull final PsiExpression expr,
-                                                     final PsiExpression @Nullable [] occurences) {
+  public static IntList findParametersToRemove(@NotNull PsiMethod method,
+                                               @NotNull final PsiExpression expr,
+                                               final PsiExpression @Nullable [] occurences) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length == 0) return new TIntArrayList();
+    if (parameters.length == 0) {
+      return new IntArrayList();
+    }
 
-    final TIntHashSet suspects = new TIntHashSet();
+    IntOpenHashSet suspects = new IntOpenHashSet();
     expr.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -121,7 +124,9 @@ public final class Util {
 
     removeUsed(method, expr, occurences, suspects);
 
-    if (suspects.isEmpty()) return new TIntArrayList();
+    if (suspects.isEmpty()) {
+      return new IntArrayList();
+    }
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       OverridingMethodsSearch.search(method).forEach(psiMethod -> {
@@ -129,18 +134,18 @@ public final class Util {
         return !suspects.isEmpty();
       });
     }, JavaBundle.message("progress.title.search.for.overriding.methods"), true, method.getProject())) {
-      return new TIntArrayList();
+      return new IntArrayList();
     }
 
-    return new TIntArrayList(suspects.toArray());
+    return new IntArrayList(suspects);
   }
 
   private static void removeUsed(PsiMethod containingMethod, @NotNull PsiExpression expr,
                                  PsiExpression @Nullable [] occurences,
-                                 TIntHashSet suspects) {
-    final TIntIterator iterator = suspects.iterator();
+                                 IntOpenHashSet suspects) {
+    final IntIterator iterator = suspects.iterator();
     while (iterator.hasNext()) {
-      final int paramNum = iterator.next();
+      final int paramNum = iterator.nextInt();
       PsiParameter[] psiParameters = containingMethod.getParameterList().getParameters();
       if (paramNum >= psiParameters.length) continue;
       PsiParameter parameter = psiParameters[paramNum];

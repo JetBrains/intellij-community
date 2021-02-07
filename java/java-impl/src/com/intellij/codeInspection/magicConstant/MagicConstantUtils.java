@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,16 +14,12 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class MagicConstantUtils {
   private static AllowedValues getAllowedValuesFromMagic(@NotNull PsiType type,
@@ -127,10 +123,16 @@ public final class MagicConstantUtils {
       PsiClass aClass = annotation.resolveAnnotationType();
       if (aClass == null) continue;
 
-      if (visited == null) visited = new THashSet<>();
-      if (!visited.add(aClass)) continue;
+      if (visited == null) {
+        visited = new HashSet<>();
+      }
+      if (!visited.add(aClass)) {
+        continue;
+      }
       AllowedValues values = getAllowedValues(aClass, type, visited);
-      if (values != null) return values;
+      if (values != null) {
+        return values;
+      }
     }
 
     return parseBeanInfo(element, manager);

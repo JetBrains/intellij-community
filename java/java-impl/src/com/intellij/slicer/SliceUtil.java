@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -27,16 +27,11 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 final class SliceUtil {
   static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
@@ -251,7 +246,7 @@ final class SliceUtil {
                                                   PsiMethod methodCalled,
                                                   @Nullable PsiType parentType,
                                                   @NotNull JavaSliceBuilder builder) {
-    Collection<PsiMethod> overrides = new THashSet<>();
+    Collection<PsiMethod> overrides = new HashSet<>();
     SearchScope scope = builder.getSearchScope();
     if (qualifierClass != null && qualifierClass != methodCalled.getContainingClass()) {
       scope = JavaTargetElementEvaluator.getHierarchyScope(qualifierClass, scope, false);
@@ -395,7 +390,7 @@ final class SliceUtil {
     Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
     superMethods.add(method);
 
-    final Set<PsiReference> processed = new THashSet<>(); //usages of super method and overridden method can overlap
+    final Set<PsiReference> processed = new HashSet<>(); //usages of super method and overridden method can overlap
     for (final PsiMethod superMethod : superMethods) {
       if (!MethodReferencesSearch.search(superMethod, builder.getSearchScope(), true).forEach(reference -> {
         ProgressManager.checkCanceled();
@@ -625,12 +620,12 @@ final class SliceUtil {
     Map<PsiTypeParameter, PsiType> map = null;
     for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
       if (entry.getValue() == null) {
-        if (map == null) map = new THashMap<>();
+        if (map == null) map = new HashMap<>();
         map.put(entry.getKey(), entry.getValue());
       }
     }
     if (map == null) return substitutor;
-    Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(substitutor.getSubstitutionMap());
+    Map<PsiTypeParameter, PsiType> newMap = new HashMap<>(substitutor.getSubstitutionMap());
     newMap.keySet().removeAll(map.keySet());
     return PsiSubstitutor.createSubstitutor(newMap);
   }
