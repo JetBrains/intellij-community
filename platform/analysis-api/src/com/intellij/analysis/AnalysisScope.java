@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.analysis;
 
@@ -67,6 +67,7 @@ public class AnalysisScope {
   private Set<VirtualFile> myFilesSet; // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   private boolean myIncludeTestSource = true;
+  private boolean myAnalyzeInjectedCode = true;
 
   public AnalysisScope(@NotNull Project project) {
     myProject = project;
@@ -147,6 +148,10 @@ public class AnalysisScope {
 
   public void setIncludeTestSource(final boolean includeTestSource) {
     myIncludeTestSource = includeTestSource;
+  }
+
+  public void setAnalyzeInjectedCode(boolean analyzeInjectedCode) {
+    myAnalyzeInjectedCode = analyzeInjectedCode;
   }
 
   @NotNull
@@ -709,6 +714,10 @@ public class AnalysisScope {
 
   public boolean isIncludeTestSource() {
     return myIncludeTestSource;
+  }
+
+  public boolean isAnalyzeInjectedCode() {
+    return myAnalyzeInjectedCode;
   }
 
   public void setFilter(@NotNull GlobalSearchScope filter) {

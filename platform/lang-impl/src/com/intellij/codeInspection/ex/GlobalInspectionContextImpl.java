@@ -206,7 +206,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TESTING_VIEW) return;
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
-    LOG.info("Code inspection finished. Took " + elapsed + "ms");
+    LOG.info("Code inspection finished. Took " + elapsed + " ms");
     if (getProject().isDisposed()) return;
 
     InspectionResultsView newView = myView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
@@ -292,7 +292,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                     getWrappersFromTools(globalSimpleTools, file, includeDoNotShow,
                                          wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)),
                     getWrappersFromTools(localTools, file, includeDoNotShow,
-                                         wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)));
+                                         wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)),
+                    INSPECT_INJECTED_PSI && scope.isAnalyzeInjectedCode());
         if (start != 0) {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
         }
@@ -413,7 +414,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                            final @NotNull InspectionManager inspectionManager,
                            final @NotNull Map<String, InspectionToolWrapper<?, ?>> wrappersMap,
                            @NotNull List<? extends GlobalInspectionToolWrapper> globalSimpleTools,
-                           @NotNull List<? extends LocalInspectionToolWrapper> localTools) {
+                           @NotNull List<? extends LocalInspectionToolWrapper> localTools,
+                           boolean inspectInjectedPsi) {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
 
@@ -421,7 +423,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, p -> new InspectionProfileWrapper(getCurrentProfile()));
       LocalInspectionsPass pass = new LocalInspectionsPass(file, document, range.getStartOffset(),
                                                            range.getEndOffset(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                           HighlightInfoProcessor.getEmpty(), INSPECT_INJECTED_PSI);
+                                                           HighlightInfoProcessor.getEmpty(), inspectInjectedPsi);
       pass.doInspectInBatch(this, inspectionManager, localTools);
 
       assertUnderDaemonProgress();

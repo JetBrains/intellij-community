@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -14,10 +14,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -42,6 +44,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final Project myProject;
   private final ButtonGroup myGroup = new ButtonGroup();
   private final JCheckBox myInspectTestSource = new JCheckBox();
+  private final JCheckBox myAnalyzeInjectedCode = new JCheckBox();
   private final List<ModelScopeItemView> myViewItems;
 
   /**
@@ -152,17 +155,24 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       gridY++;
     }
 
+    final BorderLayoutPanel optionPanel = new BorderLayoutPanel(10, 0);
     myInspectTestSource.setText(CodeInsightBundle.message("scope.option.include.test.sources"));
     myInspectTestSource.setSelected(myOptions.ANALYZE_TEST_SOURCES);
     myInspectTestSource.setVisible(myShowInspectTestSource);
+    myAnalyzeInjectedCode.setText(CodeInsightBundle.message("scope.option.analyze.injected.code"));
+    myAnalyzeInjectedCode.setSelected(myOptions.ANALYZE_INJECTED_CODE);
+    myAnalyzeInjectedCode.setVisible(false);
+    optionPanel.addToLeft(myInspectTestSource);
+    optionPanel.addToRight(myAnalyzeInjectedCode);
+
     gbc.gridy = gridY;
     gbc.gridx = 0;
     gbc.gridwidth = maxColumns;
     gbc.weightx = 1.0;
     gbc.fill = 0;
     gbc.anchor = GridBagConstraints.WEST;
-    gbc.insets = JBUI.insetsLeft(10);
-    scopesPanel.add(myInspectTestSource, gbc);
+    gbc.insets = JBUI.insets(10, 10, 0, 0);
+    scopesPanel.add(optionPanel, gbc);
 
     preselectButton();
 
@@ -175,6 +185,13 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     new RadioUpDownListener(buttons);
 
     return wholePanel;
+  }
+
+  public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
+    if (Registry.is("idea.batch.inspections.injected.psi.option") &&
+        SystemProperties.getBooleanProperty("idea.batch.inspections.inspect.injected.psi", true)) {
+      myAnalyzeInjectedCode.setVisible(showInspectInjectedCode);
+    }
   }
 
   private void preselectButton() {
@@ -258,6 +275,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return myInspectTestSource.isSelected();
   }
 
+  public boolean isAnalyzeInjectedCode() {
+    return !myAnalyzeInjectedCode.isVisible() || myAnalyzeInjectedCode.isSelected();
+  }
+
   public AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
     AnalysisScope scope = null;
     for (ModelScopeItemView x : myViewItems) {
@@ -284,6 +305,13 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
         myOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
       }
       scope.setIncludeTestSource(isInspectTestSources());
+    }
+
+    if (myAnalyzeInjectedCode.isVisible()) {
+      if (myRememberScope) {
+        myOptions.ANALYZE_INJECTED_CODE = isAnalyzeInjectedCode();
+      }
+      scope.setAnalyzeInjectedCode(isAnalyzeInjectedCode());
     }
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
