@@ -593,7 +593,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfType == DfTypes.TOP) return true;
     if (dfType == DfTypes.BOTTOM) return false;
     if (value instanceof DfaBinOpValue) {
-      return propagateRangeBack(DfLongType.extractRange(dfType), (DfaBinOpValue)value);
+      return propagateRangeBack(ObjectUtils.tryCast(dfType, DfIntegralType.class), (DfaBinOpValue)value);
     }
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
@@ -627,38 +627,35 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return value.getDfType().meet(dfType) != DfTypes.BOTTOM;
   }
 
-  private boolean propagateRangeBack(@NotNull LongRangeSet factValue, @NotNull DfaBinOpValue binOp) {
-    boolean isLong = PsiType.LONG.equals(binOp.getType());
-    LongRangeSet appliedRange = isLong ? factValue : factValue.intersect(Objects.requireNonNull(LongRangeSet.fromType(PsiType.INT)));
+  private boolean propagateRangeBack(@Nullable DfIntegralType appliedRange, @NotNull DfaBinOpValue binOp) {
+    if (appliedRange == null) return true;
     DfaVariableValue left = binOp.getLeft();
     DfaValue right = binOp.getRight();
     DfIntegralType leftDfType = ObjectUtils.tryCast(getDfType(left), DfIntegralType.class);
     DfIntegralType rightDfType = ObjectUtils.tryCast(getDfType(right), DfIntegralType.class);
     if(leftDfType == null || rightDfType == null) return true;
-    LongRangeSet leftRange = leftDfType.getRange();
-    LongRangeSet rightRange = rightDfType.getRange();
-    LongRangeSet result = getBinOpRange(binOp);
-    assert result != null;
-    if (!result.intersects(appliedRange)) return false;
-    LongRangeSet leftConstraint = LongRangeSet.all();
-    LongRangeSet rightConstraint = LongRangeSet.all();
+    DfType result = getBinOpRange(binOp);
+    DfType targetRange = result.meet(appliedRange);
+    if (targetRange == DfTypes.BOTTOM) return false;
+    DfType leftConstraint = binOp.getDfType();
+    DfType rightConstraint = binOp.getDfType();
     switch (binOp.getOperation()) {
       case PLUS:
-        leftConstraint = appliedRange.minus(rightRange, isLong);
-        rightConstraint = appliedRange.minus(leftRange, isLong);
+        leftConstraint = appliedRange.eval(rightDfType, LongRangeBinOp.MINUS);
+        rightConstraint = appliedRange.eval(leftDfType, LongRangeBinOp.MINUS);
         break;
       case MINUS:
-        leftConstraint = rightRange.plus(appliedRange, isLong);
-        rightConstraint = leftRange.minus(appliedRange, isLong);
+        leftConstraint = rightDfType.eval(appliedRange, LongRangeBinOp.PLUS);
+        rightConstraint = leftDfType.eval(appliedRange, LongRangeBinOp.MINUS);
         break;
       case MOD:
-        Long value = rightRange.getConstantValue();
+        Long value = rightDfType.getRange().getConstantValue();
         if (value != null) {
-          leftConstraint = LongRangeSet.fromRemainder(value, appliedRange.intersect(result));
+          leftConstraint = leftDfType.meetRange(LongRangeSet.fromRemainder(value, DfLongType.extractRange(targetRange)));
         }
         break;
     }
-    return meetDfType(left, leftDfType.meetRange(leftConstraint)) && meetDfType(right, rightDfType.meetRange(rightConstraint));
+    return meetDfType(left, leftDfType.meet(leftConstraint)) && meetDfType(right, rightDfType.meet(rightConstraint));
   }
 
   @Override
@@ -1131,28 +1128,34 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
   }
 
-  public @Nullable LongRangeSet getBinOpRange(DfaBinOpValue binOp) {
-    LongRangeSet left = DfLongType.extractRange(getDfType(binOp.getLeft()));
-    LongRangeSet right = DfLongType.extractRange(getDfType(binOp.getRight()));
+  public @NotNull DfType getBinOpRange(DfaBinOpValue binOp) {
+    DfIntegralType leftType = ObjectUtils.tryCast(getDfType(binOp.getLeft()), DfIntegralType.class);
+    DfIntegralType rightType = ObjectUtils.tryCast(getDfType(binOp.getRight()), DfIntegralType.class);
+    if (leftType == null || rightType == null) return binOp.getDfType();
+    LongRangeSet left = leftType.getRange();
+    LongRangeSet right = rightType.getRange();
     boolean isLong = PsiType.LONG.equals(binOp.getType());
     LongRangeBinOp op = binOp.getOperation();
-    LongRangeSet result = op.eval(left, right, isLong);
+    DfIntegralType result = ObjectUtils.tryCast(leftType.eval(rightType, op), DfIntegralType.class);
+    if (result == null) {
+      result = binOp.getDfType();
+    }
     if (op == LongRangeBinOp.MINUS) {
       RelationType rel = getRelation(binOp.getLeft(), binOp.getRight());
       if (rel == RelationType.NE) {
-        return result.without(0);
+        return result.meetRange(LongRangeSet.all().without(0));
       }
       if (!left.subtractionMayOverflow(right, isLong)) {
         if (rel == RelationType.GT) {
-          return result.intersect(LongRangeSet.range(1, isLong ? Long.MAX_VALUE : Integer.MAX_VALUE));
+          return result.meetRange(LongRangeSet.range(1, Long.MAX_VALUE));
         }
         if (rel == RelationType.LT) {
-          return result.intersect(LongRangeSet.range(isLong ? Long.MIN_VALUE : Integer.MIN_VALUE, -1));
+          return result.meetRange(LongRangeSet.range(Long.MIN_VALUE, -1));
         }
       }
     }
     if (op == LongRangeBinOp.PLUS && areEqual(binOp.getLeft(), binOp.getRight())) {
-      return LongRangeSet.point(2).mul(left, isLong);
+      return leftType.eval(isLong ? DfTypes.longValue(2) : DfTypes.intValue(2), LongRangeBinOp.MUL);
     }
     return result;
   }
@@ -1177,9 +1180,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public @NotNull DfType getDfType(@NotNull DfaValue value) {
     if (value instanceof DfaBinOpValue) {
-      LongRangeSet range = getBinOpRange((DfaBinOpValue)value);
-      if (range == null) range = LongRangeSet.all();
-      return ((DfaBinOpValue)value).getDfType().meetRange(range);
+      return getBinOpRange((DfaBinOpValue)value);
     }
     if (value instanceof DfaVariableValue) {
       DfType type = getRecordedType((DfaVariableValue)value);

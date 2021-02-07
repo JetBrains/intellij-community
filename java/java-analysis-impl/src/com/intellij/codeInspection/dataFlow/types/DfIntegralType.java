@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 public interface DfIntegralType extends DfPrimitiveType {
   @NotNull
   LongRangeSet getRange();
+  
+  @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op);
 
   @NotNull
   default DfType meetRelation(@NotNull RelationType relation, @NotNull DfType other) {
