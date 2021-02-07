@@ -20,6 +20,16 @@ public final class ProcessMediatorProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_intellij_process_mediator_rpc_Handshake_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_intellij_process_mediator_rpc_QuotaState_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_intellij_process_mediator_rpc_QuotaState_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_intellij_process_mediator_rpc_QuotaStateActive_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_intellij_process_mediator_rpc_QuotaStateActive_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_intellij_process_mediator_rpc_QuotaOptions_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -96,33 +106,43 @@ public final class ProcessMediatorProto {
       "\n\025processMediator.proto\022\035intellij.proces" +
       "s.mediator.rpc\032\033google/protobuf/empty.pr" +
       "oto\"5\n\tHandshake\022\014\n\004port\030\001 \001(\r\022\r\n\005token\030" +
-      "\002 \001(\014\022\013\n\003pid\030\003 \001(\004\"=\n\014QuotaOptions\022\025\n\rti" +
-      "me_limit_ms\030\001 \001(\003\022\026\n\016is_refreshable\030\002 \001(" +
-      "\010\"$\n\017OpenHandleReply\022\021\n\thandle_id\030\001 \001(\004\"" +
-      "k\n\024CreateProcessRequest\022\021\n\thandle_id\030\001 \001" +
-      "(\004\022@\n\014command_line\030\002 \001(\0132*.intellij.proc" +
-      "ess.mediator.rpc.CommandLine\"!\n\022CreatePr" +
-      "ocessReply\022\013\n\003pid\030\001 \001(\004\"P\n\025DestroyProces" +
-      "sRequest\022\021\n\thandle_id\030\001 \001(\004\022\r\n\005force\030\002 \001" +
-      "(\010\022\025\n\rdestroy_group\030\003 \001(\010\",\n\027AwaitTermin" +
-      "ationRequest\022\021\n\thandle_id\030\001 \001(\004\"*\n\025Await" +
-      "TerminationReply\022\021\n\texit_code\030\001 \001(\r\"+\n\nF" +
-      "ileHandle\022\021\n\thandle_id\030\001 \001(\004\022\n\n\002fd\030\002 \001(\r" +
-      "\"\033\n\tDataChunk\022\016\n\006buffer\030\001 \001(\014\"N\n\021ReadStr" +
-      "eamRequest\0229\n\006handle\030\001 \001(\0132).intellij.pr" +
-      "ocess.mediator.rpc.FileHandle\"\242\001\n\022WriteS" +
-      "treamRequest\022;\n\006handle\030\001 \001(\0132).intellij." +
-      "process.mediator.rpc.FileHandleH\000\0229\n\005chu" +
-      "nk\030\002 \001(\0132(.intellij.process.mediator.rpc" +
-      ".DataChunkH\000B\024\n\022FileHandleOrBuffer\"\342\001\n\013C" +
-      "ommandLine\022\017\n\007command\030\001 \003(\t\022\023\n\013working_d" +
-      "ir\030\002 \001(\t\022\017\n\007in_file\030\003 \001(\t\022\020\n\010out_file\030\004 " +
-      "\001(\t\022\020\n\010err_file\030\005 \001(\t\022H\n\007environ\030\006 \003(\01327" +
-      ".intellij.process.mediator.rpc.CommandLi" +
-      "ne.EnvironEntry\032.\n\014EnvironEntry\022\013\n\003key\030\001" +
-      " \001(\t\022\r\n\005value\030\002 \001(\t:\0028\0012\230\001\n\006Daemon\022R\n\013Ad" +
-      "justQuota\022+.intellij.process.mediator.rp" +
-      "c.QuotaOptions\032\026.google.protobuf.Empty\022:" +
+      "\002 \001(\014\022\013\n\003pid\030\003 \001(\004\"\205\002\n\nQuotaState\022B\n\rquo" +
+      "ta_options\030\001 \001(\0132+.intellij.process.medi" +
+      "ator.rpc.QuotaOptions\022+\n\tstate_new\030\002 \001(\013" +
+      "2\026.google.protobuf.EmptyH\000\022G\n\014state_acti" +
+      "ve\030\003 \001(\0132/.intellij.process.mediator.rpc" +
+      ".QuotaStateActiveH\000\022/\n\rstate_expired\030\004 \001" +
+      "(\0132\026.google.protobuf.EmptyH\000B\014\n\nStateOne" +
+      "of\"&\n\020QuotaStateActive\022\022\n\nelapsed_ms\030\001 \001" +
+      "(\003\"=\n\014QuotaOptions\022\025\n\rtime_limit_ms\030\001 \001(" +
+      "\003\022\026\n\016is_refreshable\030\002 \001(\010\"$\n\017OpenHandleR" +
+      "eply\022\021\n\thandle_id\030\001 \001(\004\"k\n\024CreateProcess" +
+      "Request\022\021\n\thandle_id\030\001 \001(\004\022@\n\014command_li" +
+      "ne\030\002 \001(\0132*.intellij.process.mediator.rpc" +
+      ".CommandLine\"!\n\022CreateProcessReply\022\013\n\003pi" +
+      "d\030\001 \001(\004\"P\n\025DestroyProcessRequest\022\021\n\thand" +
+      "le_id\030\001 \001(\004\022\r\n\005force\030\002 \001(\010\022\025\n\rdestroy_gr" +
+      "oup\030\003 \001(\010\",\n\027AwaitTerminationRequest\022\021\n\t" +
+      "handle_id\030\001 \001(\004\"*\n\025AwaitTerminationReply" +
+      "\022\021\n\texit_code\030\001 \001(\r\"+\n\nFileHandle\022\021\n\than" +
+      "dle_id\030\001 \001(\004\022\n\n\002fd\030\002 \001(\r\"\033\n\tDataChunk\022\016\n" +
+      "\006buffer\030\001 \001(\014\"N\n\021ReadStreamRequest\0229\n\006ha" +
+      "ndle\030\001 \001(\0132).intellij.process.mediator.r" +
+      "pc.FileHandle\"\242\001\n\022WriteStreamRequest\022;\n\006" +
+      "handle\030\001 \001(\0132).intellij.process.mediator" +
+      ".rpc.FileHandleH\000\0229\n\005chunk\030\002 \001(\0132(.intel" +
+      "lij.process.mediator.rpc.DataChunkH\000B\024\n\022" +
+      "FileHandleOrBuffer\"\342\001\n\013CommandLine\022\017\n\007co" +
+      "mmand\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t\022\017\n\007in_f" +
+      "ile\030\003 \001(\t\022\020\n\010out_file\030\004 \001(\t\022\020\n\010err_file\030" +
+      "\005 \001(\t\022H\n\007environ\030\006 \003(\01327.intellij.proces" +
+      "s.mediator.rpc.CommandLine.EnvironEntry\032" +
+      ".\n\014EnvironEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 " +
+      "\001(\t:\0028\0012\370\001\n\006Daemon\022R\n\013AdjustQuota\022+.inte" +
+      "llij.process.mediator.rpc.QuotaOptions\032\026" +
+      ".google.protobuf.Empty\022^\n\027ListenQuotaSta" +
+      "teUpdates\022\026.google.protobuf.Empty\032).inte" +
+      "llij.process.mediator.rpc.QuotaState0\001\022:" +
       "\n\010Shutdown\022\026.google.protobuf.Empty\032\026.goo" +
       "gle.protobuf.Empty2\216\005\n\016ProcessManager\022V\n" +
       "\nOpenHandle\022\026.google.protobuf.Empty\032..in" +
@@ -155,74 +175,86 @@ public final class ProcessMediatorProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_Handshake_descriptor,
         new java.lang.String[] { "Port", "Token", "Pid", });
-    internal_static_intellij_process_mediator_rpc_QuotaOptions_descriptor =
+    internal_static_intellij_process_mediator_rpc_QuotaState_descriptor =
       getDescriptor().getMessageTypes().get(1);
+    internal_static_intellij_process_mediator_rpc_QuotaState_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_intellij_process_mediator_rpc_QuotaState_descriptor,
+        new java.lang.String[] { "QuotaOptions", "StateNew", "StateActive", "StateExpired", "StateOneof", });
+    internal_static_intellij_process_mediator_rpc_QuotaStateActive_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_intellij_process_mediator_rpc_QuotaStateActive_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_intellij_process_mediator_rpc_QuotaStateActive_descriptor,
+        new java.lang.String[] { "ElapsedMs", });
+    internal_static_intellij_process_mediator_rpc_QuotaOptions_descriptor =
+      getDescriptor().getMessageTypes().get(3);
     internal_static_intellij_process_mediator_rpc_QuotaOptions_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_QuotaOptions_descriptor,
         new java.lang.String[] { "TimeLimitMs", "IsRefreshable", });
     internal_static_intellij_process_mediator_rpc_OpenHandleReply_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_intellij_process_mediator_rpc_OpenHandleReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_OpenHandleReply_descriptor,
         new java.lang.String[] { "HandleId", });
     internal_static_intellij_process_mediator_rpc_CreateProcessRequest_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_intellij_process_mediator_rpc_CreateProcessRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_CreateProcessRequest_descriptor,
         new java.lang.String[] { "HandleId", "CommandLine", });
     internal_static_intellij_process_mediator_rpc_CreateProcessReply_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_intellij_process_mediator_rpc_CreateProcessReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_CreateProcessReply_descriptor,
         new java.lang.String[] { "Pid", });
     internal_static_intellij_process_mediator_rpc_DestroyProcessRequest_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_intellij_process_mediator_rpc_DestroyProcessRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_DestroyProcessRequest_descriptor,
         new java.lang.String[] { "HandleId", "Force", "DestroyGroup", });
     internal_static_intellij_process_mediator_rpc_AwaitTerminationRequest_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_intellij_process_mediator_rpc_AwaitTerminationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_AwaitTerminationRequest_descriptor,
         new java.lang.String[] { "HandleId", });
     internal_static_intellij_process_mediator_rpc_AwaitTerminationReply_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_intellij_process_mediator_rpc_AwaitTerminationReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_AwaitTerminationReply_descriptor,
         new java.lang.String[] { "ExitCode", });
     internal_static_intellij_process_mediator_rpc_FileHandle_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_intellij_process_mediator_rpc_FileHandle_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_FileHandle_descriptor,
         new java.lang.String[] { "HandleId", "Fd", });
     internal_static_intellij_process_mediator_rpc_DataChunk_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_intellij_process_mediator_rpc_DataChunk_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_DataChunk_descriptor,
         new java.lang.String[] { "Buffer", });
     internal_static_intellij_process_mediator_rpc_ReadStreamRequest_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_intellij_process_mediator_rpc_ReadStreamRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_ReadStreamRequest_descriptor,
         new java.lang.String[] { "Handle", });
     internal_static_intellij_process_mediator_rpc_WriteStreamRequest_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_intellij_process_mediator_rpc_WriteStreamRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_WriteStreamRequest_descriptor,
         new java.lang.String[] { "Handle", "Chunk", "FileHandleOrBuffer", });
     internal_static_intellij_process_mediator_rpc_CommandLine_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_intellij_process_mediator_rpc_CommandLine_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_CommandLine_descriptor,

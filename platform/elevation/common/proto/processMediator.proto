@@ -10,6 +10,7 @@ option java_outer_classname = "ProcessMediatorProto";
 
 service Daemon {
   rpc AdjustQuota (QuotaOptions) returns (google.protobuf.Empty);
+  rpc ListenQuotaStateUpdates (google.protobuf.Empty) returns (stream QuotaState);
   rpc Shutdown (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
@@ -18,6 +19,20 @@ message Handshake {
   uint32 port = 1;
   bytes token = 2;
   uint64 pid = 3;
+}
+
+message QuotaState {
+  QuotaOptions quota_options = 1;
+
+  oneof StateOneof {
+    google.protobuf.Empty state_new = 2;
+    QuotaStateActive state_active = 3;
+    google.protobuf.Empty state_expired = 4;
+  }
+}
+
+message QuotaStateActive {
+  int64 elapsed_ms = 1;
 }
 
 message QuotaOptions {

@@ -5,20 +5,15 @@ import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.daemon.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
+import com.intellij.execution.process.mediator.daemon.QuotaState
 import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
 import com.intellij.execution.process.mediator.grpc.LoggingClientInterceptor
 import com.intellij.execution.process.mediator.rpc.*
-import com.intellij.execution.process.mediator.util.childSupervisorScope
 import io.grpc.Channel
 import io.grpc.ClientInterceptors
 import io.grpc.stub.MetadataUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import java.io.Closeable
 import java.io.File
 import com.intellij.execution.process.mediator.rpc.QuotaOptions as QuotaOptionsMessage
@@ -28,7 +23,8 @@ class ProcessMediatorClient private constructor(
   channel: Channel,
   initialQuotaOptions: QuotaOptions,
 ) : Closeable {
-  internal val coroutineScope: CoroutineScope = parentScope.childSupervisorScope()
+  private val job: CompletableJob = SupervisorJob(parentScope.coroutineContext.job)
+  internal val coroutineScope: CoroutineScope = parentScope + job
 
   private val processManagerStub = ProcessManagerGrpcKt.ProcessManagerCoroutineStub(channel)
   private val daemonStub = DaemonGrpcKt.DaemonCoroutineStub(channel)
@@ -37,6 +33,20 @@ class ProcessMediatorClient private constructor(
     // send this request even if doesn't really change the quota, just so we know the server is up and running
     adjustQuotaBlocking(initialQuotaOptions)
   }
+
+  private val stateFlow: StateFlow<QuotaState?> = runBlocking(coroutineScope.coroutineContext) {
+    listenQuotaStateUpdates()
+      .map<QuotaState, QuotaState?> { it }
+      .onStart { emit(QuotaState.New(initialQuotaOptions)) }  // to avoid blocking stateIn()
+      .onCompletion {
+        job.complete()
+        emit(null)
+      }
+      .stateIn(coroutineScope)
+  }
+
+  val stateUpdateFlow: Flow<QuotaState>  // unlike StateFlow<*>, this flow completes when the server is done
+    get() = stateFlow.takeWhile { it != null }.filterNotNull()
 
   fun openHandle(): Flow<Long> {
     return ExceptionAsStatus.unwrap {
@@ -138,6 +148,17 @@ class ProcessMediatorClient private constructor(
   private suspend fun adjustQuota(newOptions: QuotaOptions) {
     val request = QuotaOptionsMessage.newBuilder().buildFrom(newOptions)
     ExceptionAsStatus.unwrap { daemonStub.adjustQuota(request) }
+  }
+
+  private fun listenQuotaStateUpdates(): Flow<QuotaState> {
+    val updateFlow = ExceptionAsStatus.unwrap {
+      daemonStub.listenQuotaStateUpdates(Empty.getDefaultInstance())
+    }
+    return updateFlow.map {
+      it.toQuotaState()
+    }.catch { cause ->
+      ExceptionAsStatus.unwrap { throw cause }
+    }
   }
 
   private suspend fun shutdown() {

@@ -5,13 +5,17 @@ import com.google.protobuf.Empty
 import com.intellij.execution.process.mediator.grpc.CredentialsAuthServerInterceptor
 import com.intellij.execution.process.mediator.grpc.ExceptionAsStatus
 import com.intellij.execution.process.mediator.rpc.DaemonGrpcKt
+import com.intellij.execution.process.mediator.rpc.buildFrom
 import com.intellij.execution.process.mediator.rpc.toQuotaOptions
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.Closeable
 import com.intellij.execution.process.mediator.rpc.QuotaOptions as QuotaOptionsMessage
+import com.intellij.execution.process.mediator.rpc.QuotaState as QuotaStateMessage
 
 class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
                                   builder: ServerBuilder<*>,
@@ -72,6 +76,12 @@ class ProcessMediatorServerDaemon(coroutineScope: CoroutineScope,
         quotaManager.adjustQuota(newOptions)
       }
       return Empty.getDefaultInstance()
+    }
+
+    override fun listenQuotaStateUpdates(request: Empty): Flow<QuotaStateMessage> {
+      return quotaManager.stateUpdateFlow.map {
+        QuotaStateMessage.newBuilder().buildFrom(it)
+      }
     }
 
     override suspend fun shutdown(request: Empty): Empty {

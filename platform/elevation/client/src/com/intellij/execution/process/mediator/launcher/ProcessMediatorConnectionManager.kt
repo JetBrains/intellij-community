@@ -2,16 +2,31 @@
 package com.intellij.execution.process.mediator.launcher
 
 import com.intellij.execution.process.mediator.daemon.QuotaOptions
+import com.intellij.execution.process.mediator.daemon.QuotaState
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.MultiCloseable
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
 
 class ProcessMediatorConnectionManager(private val connectionProvider: () -> ProcessMediatorConnection) : Disposable {
   private var isDisposed = false  // synchronized on this
   private val parkedConnections = mutableListOf<ProcessMediatorConnection>()  // synchronized on this
 
   private val activeConnectionLazy = SynchronizedClearableLazy {
-    launchDaemonAndConnect()
+    launchDaemonAndConnect().apply connection@{
+      client.stateUpdateFlow
+        .onEach {
+          if (it is QuotaState.Expired) {
+            parkConnection(this@connection)
+          }
+        }
+        .onCompletion {
+          removeParkedConnection(this@connection)
+        }
+        .launchIn(client.coroutineScope)
+    }
   }
 
   @get:JvmName("getOrCreateConnection")
@@ -24,6 +39,15 @@ class ProcessMediatorConnectionManager(private val connectionProvider: () -> Pro
     synchronized(this) {
       if (activeConnectionLazy.compareAndDrop(expectedConnection)) {
         parkedConnections.add(expectedConnection)
+      }
+    }
+  }
+
+  private fun removeParkedConnection(connection: ProcessMediatorConnection) {
+    synchronized(this) {
+      if (!activeConnectionLazy.compareAndDrop(connection)) {
+        // note: it may not be there if ProcessMediatorClient.close() is called from dispose()
+        parkedConnections.remove(connection)
       }
     }
   }

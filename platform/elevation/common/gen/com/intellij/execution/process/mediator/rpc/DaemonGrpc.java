@@ -59,6 +59,37 @@ public final class DaemonGrpc {
   }
 
   private static volatile io.grpc.MethodDescriptor<com.google.protobuf.Empty,
+      com.intellij.execution.process.mediator.rpc.QuotaState> getListenQuotaStateUpdatesMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "ListenQuotaStateUpdates",
+      requestType = com.google.protobuf.Empty.class,
+      responseType = com.intellij.execution.process.mediator.rpc.QuotaState.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+  public static io.grpc.MethodDescriptor<com.google.protobuf.Empty,
+      com.intellij.execution.process.mediator.rpc.QuotaState> getListenQuotaStateUpdatesMethod() {
+    io.grpc.MethodDescriptor<com.google.protobuf.Empty, com.intellij.execution.process.mediator.rpc.QuotaState> getListenQuotaStateUpdatesMethod;
+    if ((getListenQuotaStateUpdatesMethod = DaemonGrpc.getListenQuotaStateUpdatesMethod) == null) {
+      synchronized (DaemonGrpc.class) {
+        if ((getListenQuotaStateUpdatesMethod = DaemonGrpc.getListenQuotaStateUpdatesMethod) == null) {
+          DaemonGrpc.getListenQuotaStateUpdatesMethod = getListenQuotaStateUpdatesMethod =
+              io.grpc.MethodDescriptor.<com.google.protobuf.Empty, com.intellij.execution.process.mediator.rpc.QuotaState>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.SERVER_STREAMING)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ListenQuotaStateUpdates"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.google.protobuf.Empty.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.intellij.execution.process.mediator.rpc.QuotaState.getDefaultInstance()))
+              .setSchemaDescriptor(new DaemonMethodDescriptorSupplier("ListenQuotaStateUpdates"))
+              .build();
+        }
+      }
+    }
+    return getListenQuotaStateUpdatesMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<com.google.protobuf.Empty,
       com.google.protobuf.Empty> getShutdownMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
@@ -146,6 +177,13 @@ public final class DaemonGrpc {
 
     /**
      */
+    public void listenQuotaStateUpdates(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.QuotaState> responseObserver) {
+      asyncUnimplementedUnaryCall(getListenQuotaStateUpdatesMethod(), responseObserver);
+    }
+
+    /**
+     */
     public void shutdown(com.google.protobuf.Empty request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnimplementedUnaryCall(getShutdownMethod(), responseObserver);
@@ -160,6 +198,13 @@ public final class DaemonGrpc {
                 com.intellij.execution.process.mediator.rpc.QuotaOptions,
                 com.google.protobuf.Empty>(
                   this, METHODID_ADJUST_QUOTA)))
+          .addMethod(
+            getListenQuotaStateUpdatesMethod(),
+            asyncServerStreamingCall(
+              new MethodHandlers<
+                com.google.protobuf.Empty,
+                com.intellij.execution.process.mediator.rpc.QuotaState>(
+                  this, METHODID_LISTEN_QUOTA_STATE_UPDATES)))
           .addMethod(
             getShutdownMethod(),
             asyncUnaryCall(
@@ -195,6 +240,14 @@ public final class DaemonGrpc {
 
     /**
      */
+    public void listenQuotaStateUpdates(com.google.protobuf.Empty request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.QuotaState> responseObserver) {
+      asyncServerStreamingCall(
+          getChannel().newCall(getListenQuotaStateUpdatesMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
     public void shutdown(com.google.protobuf.Empty request,
         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
       asyncUnaryCall(
@@ -221,6 +274,14 @@ public final class DaemonGrpc {
     public com.google.protobuf.Empty adjustQuota(com.intellij.execution.process.mediator.rpc.QuotaOptions request) {
       return blockingUnaryCall(
           getChannel(), getAdjustQuotaMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public java.util.Iterator<com.intellij.execution.process.mediator.rpc.QuotaState> listenQuotaStateUpdates(
+        com.google.protobuf.Empty request) {
+      return blockingServerStreamingCall(
+          getChannel(), getListenQuotaStateUpdatesMethod(), getCallOptions(), request);
     }
 
     /**
@@ -263,7 +324,8 @@ public final class DaemonGrpc {
   }
 
   private static final int METHODID_ADJUST_QUOTA = 0;
-  private static final int METHODID_SHUTDOWN = 1;
+  private static final int METHODID_LISTEN_QUOTA_STATE_UPDATES = 1;
+  private static final int METHODID_SHUTDOWN = 2;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -285,6 +347,10 @@ public final class DaemonGrpc {
         case METHODID_ADJUST_QUOTA:
           serviceImpl.adjustQuota((com.intellij.execution.process.mediator.rpc.QuotaOptions) request,
               (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
+          break;
+        case METHODID_LISTEN_QUOTA_STATE_UPDATES:
+          serviceImpl.listenQuotaStateUpdates((com.google.protobuf.Empty) request,
+              (io.grpc.stub.StreamObserver<com.intellij.execution.process.mediator.rpc.QuotaState>) responseObserver);
           break;
         case METHODID_SHUTDOWN:
           serviceImpl.shutdown((com.google.protobuf.Empty) request,
@@ -352,6 +418,7 @@ public final class DaemonGrpc {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new DaemonFileDescriptorSupplier())
               .addMethod(getAdjustQuotaMethod())
+              .addMethod(getListenQuotaStateUpdatesMethod())
               .addMethod(getShutdownMethod())
               .build();
         }
