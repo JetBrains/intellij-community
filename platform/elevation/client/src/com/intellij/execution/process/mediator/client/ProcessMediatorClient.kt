@@ -135,11 +135,8 @@ class ProcessMediatorClient private constructor(
     }
   }
 
-  suspend fun adjustQuota(newOptions: QuotaOptions) {
-    val request = QuotaOptionsMessage.newBuilder().apply {
-      this.timeLimitMs = newOptions.timeLimitMs
-      this.isRefreshable = newOptions.isRefreshable
-    }.build()
+  private suspend fun adjustQuota(newOptions: QuotaOptions) {
+    val request = QuotaOptionsMessage.newBuilder().buildFrom(newOptions)
     ExceptionAsStatus.unwrap { daemonStub.adjustQuota(request) }
   }
 
