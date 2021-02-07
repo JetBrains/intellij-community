@@ -229,8 +229,10 @@ public class AnalysisScope {
       case MODULES:
       case MODULE:
       case CUSTOM:
+        long timeStamp = System.currentTimeMillis();
         accept(createFileSearcher(fileSet));
         fileSet.freeze();
+        LOG.info("Scanning scope took " + (System.currentTimeMillis() - timeStamp) + " ms");
         break;
       case VIRTUAL_FILES:
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
