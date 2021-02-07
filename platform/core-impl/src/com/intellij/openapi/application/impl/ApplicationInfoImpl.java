@@ -632,7 +632,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getSmallApplicationSvgIconUrl() {
-    return isEAP() && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
+    return getSmallApplicationSvgIconUrl(isEAP());
+  }
+
+  public @Nullable String getSmallApplicationSvgIconUrl(boolean isEap) {
+    return isEap && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
   }
 
   @Override

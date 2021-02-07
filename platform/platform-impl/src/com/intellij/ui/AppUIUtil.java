@@ -8,10 +8,7 @@ import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -120,8 +117,24 @@ public final class AppUIUtil {
   }
 
   public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext, int size) {
+    return loadSmallApplicationIcon(scaleContext, size, !ApplicationManager.getApplication().isEAP());
+  }
+
+  public static @NotNull Icon loadSmallApplicationIconForRelease(@NotNull ScaleContext scaleContext, int size) {
+    return loadSmallApplicationIcon(scaleContext, size, true);
+  }
+
+  private static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext, int size, boolean isReleaseIcon) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
+
+    //this is a way to load the release icon in EAP. Need for some actions.
+    if (isReleaseIcon && appInfo.isEAP()) {
+      if (appInfo instanceof ApplicationInfoImpl) {
+        smallIconUrl = ((ApplicationInfoImpl)appInfo).getSmallApplicationSvgIconUrl(false);
+      }
+    }
+
     Icon icon = smallIconUrl == null ? null : loadApplicationIcon(smallIconUrl, scaleContext, size);
     if (icon != null) {
       return icon;
