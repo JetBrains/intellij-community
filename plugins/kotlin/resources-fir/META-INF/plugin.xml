@@ -36,6 +36,8 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <xi:include href="project-wizard.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="firInspections.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="firIntentions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <xi:include href="extensions/ide-frontend-independent.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
