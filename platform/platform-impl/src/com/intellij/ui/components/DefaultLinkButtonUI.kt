@@ -53,8 +53,9 @@ class DefaultLinkButtonUI : BasicButtonUI() {
     defaultTextShiftOffset = UIManager.getInt("Button.textShiftOffset")
     if (isUpdateable(button.font)) button.font = UIManager.getFont("Label.font")
     if (isUpdateable(button.background)) button.background = UIManager.getColor("Label.background")
-    button.foreground = DynamicColor(button)
+    if (isUpdateable(button.foreground)) button.foreground = DynamicColor(button)
     button.horizontalAlignment = LEADING
+    button.isRequestFocusEnabled = false
   }
 
   override fun getBaseline(c: JComponent?, width: Int, height: Int): Int {
@@ -188,7 +189,7 @@ private fun getColor(button: AbstractButton) = when {
   else -> Link.Foreground.ENABLED
 }
 
-private class DynamicColor(button: AbstractButton) : JBColor({ getColor(button) }), UIResource
+private class DynamicColor(button: AbstractButton) : UIResource, JBColor({ getColor(button) })
 
 // support underlined <html>
 
