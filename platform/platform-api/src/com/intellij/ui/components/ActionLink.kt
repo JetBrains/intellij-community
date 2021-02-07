@@ -2,7 +2,6 @@
 package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil.browse
 import com.intellij.ui.scale.JBUIScale.scale
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
@@ -30,10 +29,6 @@ open class ActionLink() : JButton() {
   constructor(@Nls text: String, listener: ActionListener? = null) : this() {
     this.text = text
     listener?.let { addActionListener(it) }
-  }
-
-  constructor(@Nls text: String, url: String) : this(text, { browse(url) }) {
-    setExternalLinkIcon()
   }
 
   var autoHideOnDisable = true

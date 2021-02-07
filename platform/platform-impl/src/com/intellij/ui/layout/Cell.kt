@@ -245,9 +245,7 @@ abstract class Cell : BaseBuilder {
   }
 
   fun browserLink(@LinkLabel text: String, url: String): CellBuilder<JComponent> {
-    val result = HyperlinkLabel()
-    result.setHyperlinkText(text)
-    result.setHyperlinkTarget(url)
+    val result = BrowserLink(text, url)
     return component(result)
   }
 
