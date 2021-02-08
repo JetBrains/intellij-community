@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -320,7 +319,7 @@ public final class CustomMethodHandlers {
 
   private static @NotNull DfType calendarGet(DfaValue[] arguments, DfaMemoryState state) {
     if (arguments.length != 1) return TOP;
-    Integer val = DfConstantType.getConstantOfType(state.getDfType(arguments[0]), Integer.class);
+    Integer val = state.getDfType(arguments[0]).getConstantOfType(Integer.class);
     if (val == null) return TOP;
     LongRangeSet range = null;
     switch (val) {
@@ -354,7 +353,7 @@ public final class CustomMethodHandlers {
 
   private static @NotNull DfType enumName(DfaValue qualifier, DfaMemoryState state, PsiType type) {
     DfType dfType = state.getDfType(qualifier);
-    PsiEnumConstant value = DfConstantType.getConstantOfType(dfType, PsiEnumConstant.class);
+    PsiEnumConstant value = dfType.getConstantOfType(PsiEnumConstant.class);
     if (value != null) {
       return constant(value.getName(), type);
     }
@@ -363,7 +362,7 @@ public final class CustomMethodHandlers {
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
     DfType type = memoryState.getUnboxedDfType(value);
-    Object constant = DfConstantType.getConstantOfType(type, Object.class);
+    Object constant = type.getConstantOfType(Object.class);
     if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
     return constant;
   }
@@ -388,7 +387,7 @@ public final class CustomMethodHandlers {
                                            DfaValue qualifier,
                                            String name,
                                            PsiType stringType) {
-    PsiClassType type = DfConstantType.getConstantOfType(memState.getDfType(qualifier), PsiClassType.class);
+    PsiClassType type = memState.getDfType(qualifier).getConstantOfType(PsiClassType.class);
     if (type != null) {
       PsiClass psiClass = type.resolve();
       if (psiClass != null) {

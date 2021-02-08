@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -74,7 +73,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
         DfaValue target = memState.getStackValue(1);
         DfType dfType = memState.getDfType(value);
         if (target != null && memState.areEqual(value, target) &&
-            !(dfType instanceof DfConstantType && isFloatingZero(((DfConstantType<?>)dfType).getValue())) &&
+            !isFloatingZero(dfType.getConstantOfType(Number.class)) &&
             // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
             // (we compare strings by contents)
             !(TypeUtils.isJavaLangString(left.getType()) && !memState.isNull(value)) &&

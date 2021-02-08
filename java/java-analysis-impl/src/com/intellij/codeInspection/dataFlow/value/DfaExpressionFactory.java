@@ -6,7 +6,6 @@ import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -168,7 +167,7 @@ public class DfaExpressionFactory {
   private DfaValue getQualifierValue(PsiExpression qualifierExpression) {
     DfaValue qualifierValue = getExpressionDfaValue(qualifierExpression);
     if (qualifierValue == null) return null;
-    PsiVariable constVar = DfConstantType.getConstantOfType(qualifierValue.getDfType(), PsiVariable.class);
+    PsiVariable constVar = qualifierValue.getDfType().getConstantOfType(PsiVariable.class);
     if (constVar != null) {
       return myFactory.getVarFactory().createVariableValue(constVar);
     }

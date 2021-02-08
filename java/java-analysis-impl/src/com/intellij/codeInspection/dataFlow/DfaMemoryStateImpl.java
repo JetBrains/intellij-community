@@ -1113,8 +1113,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static @Nullable RelationType getFloatingConstantRelation(DfType leftType, DfType rightType) {
-    Number value1 = DfConstantType.getConstantOfType(leftType, Number.class);
-    Number value2 = DfConstantType.getConstantOfType(rightType, Number.class);
+    Number value1 = leftType.getConstantOfType(Number.class);
+    Number value2 = rightType.getConstantOfType(Number.class);
     if (value1 == null || value2 == null) return null;
     double double1 = value1.doubleValue();
     double double2 = value2.doubleValue();

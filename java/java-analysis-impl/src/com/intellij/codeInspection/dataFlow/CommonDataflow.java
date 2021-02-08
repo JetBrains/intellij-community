@@ -319,7 +319,7 @@ public final class CommonDataflow {
     if (expressionToAnalyze == null) return null;
     Object computed = ExpressionUtils.computeConstantExpression(expressionToAnalyze);
     if (computed != null) return computed;
-    return DfConstantType.getConstantOfType(getDfType(expressionToAnalyze), Object.class);
+    return getDfType(expressionToAnalyze).getConstantOfType(Object.class);
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {

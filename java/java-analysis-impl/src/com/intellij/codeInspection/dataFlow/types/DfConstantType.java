@@ -63,15 +63,9 @@ public abstract class DfConstantType<T> implements DfType {
     return Objects.equals(myValue, constant);
   }
 
-  /**
-   * @param dfType dfType to extract the constant value from
-   * @param clazz desired constant class
-   * @param <T> type of the constant
-   * @return the constant of given type; null if the supplied dfType is not a constant or its type class differs from the supplied one.
-   */
-  @Nullable
-  public static <T> T getConstantOfType(@NotNull DfType dfType, @NotNull Class<T> clazz) {
-    return dfType instanceof DfConstantType ? ObjectUtils.tryCast(((DfConstantType<?>)dfType).getValue(), clazz) : null;
+  @Override
+  public <C> @Nullable C getConstantOfType(@NotNull Class<C> clazz) {
+    return ObjectUtils.tryCast(myValue, clazz);
   }
 
   /**

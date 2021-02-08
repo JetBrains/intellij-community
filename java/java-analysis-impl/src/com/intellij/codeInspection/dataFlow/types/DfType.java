@@ -55,6 +55,15 @@ public interface DfType {
   default boolean isConst(@Nullable Object constant) {
     return false;
   }
+
+  /**
+   * @param clazz desired constant class
+   * @param <C> type of the constant
+   * @return the constant of given type; null if this type does not represent a constant of supplied type.
+   */
+  default <C> @Nullable C getConstantOfType(@NotNull Class<C> clazz) {
+    return null;
+  }
   
   @Override @NlsSafe
   String toString();

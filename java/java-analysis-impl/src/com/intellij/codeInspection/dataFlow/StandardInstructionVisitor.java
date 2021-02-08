@@ -5,7 +5,10 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -894,8 +897,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                  DfaMemoryState memState,
                                                  PsiType stringType,
                                                  DfaValueFactory factory) {
-    String leftString = DfConstantType.getConstantOfType(memState.getDfType(left), String.class);
-    String rightString = DfConstantType.getConstantOfType(memState.getDfType(right), String.class);
+    String leftString = memState.getDfType(left).getConstantOfType(String.class);
+    String rightString = memState.getDfType(right).getConstantOfType(String.class);
     if (leftString != null && rightString != null &&
         leftString.length() + rightString.length() <= CustomMethodHandlers.MAX_STRING_CONSTANT_LENGTH_TO_TRACK) {
       return factory.getConstant(leftString + rightString, stringType);
@@ -979,7 +982,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     boolean unknownTargetType = false;
     DfaCondition condition = null;
     if (instruction.isClassObjectCheck()) {
-      PsiType type = DfConstantType.getConstantOfType(memState.getDfType(dfaRight), PsiType.class);
+      PsiType type = memState.getDfType(dfaRight).getConstantOfType(PsiType.class);
       if (type == null || type instanceof PsiPrimitiveType) {
         // Unknown/primitive class: just execute contract "null -> false"
         condition = dfaLeft.cond(RelationType.NE, factory.getNull());
