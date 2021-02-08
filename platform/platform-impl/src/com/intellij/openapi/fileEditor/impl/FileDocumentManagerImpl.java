@@ -345,6 +345,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     if (LOG.isTraceEnabled()) LOG.trace("saving: " + file);
 
     if (file == null || file instanceof LightVirtualFile || file.isValid() && !isFileModified(file)) {
+      myMultiCaster.beforeDocumentSaving(document);
       removeFromUnsaved(document);
       return;
     }
