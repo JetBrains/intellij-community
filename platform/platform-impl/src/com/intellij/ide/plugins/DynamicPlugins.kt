@@ -603,7 +603,6 @@ object DynamicPlugins {
         focusCycleRoot = focusCycleRoot.parent
       }
       if (focusCycleRoot is IdeFrameImpl) {
-        LOG.info("Focus cycle root reset to IdeFrame (from parent hierarchy)")
         focusManager.setGlobalCurrentFocusCycleRoot(focusCycleRoot)
       }
       else {
@@ -613,20 +612,10 @@ object DynamicPlugins {
         if (project != null) {
           val projectFrame = WindowManager.getInstance().getFrame(project)
           if (projectFrame != null) {
-            LOG.info("Focus cycle root reset to IdeFrame (from DataContext)")
             focusManager.setGlobalCurrentFocusCycleRoot(projectFrame)
           }
-          else {
-            LOG.info("Can't find new focus cycle root; old root is $focusCycleRoot")
-          }
-        }
-        else {
-          LOG.info("No project in data context of $focusCycleRoot")
         }
       }
-    }
-    else {
-      LOG.info("No current focus cycle root")
     }
   }
 
