@@ -50,6 +50,7 @@ open class ActionLink() : JButton() {
     }
 
   fun setLinkIcon() = setIcon(AllIcons.Ide.Link, false)
+  fun setContextHelpIcon() = setIcon(AllIcons.General.ContextHelp, false)
   fun setExternalLinkIcon() = setIcon(AllIcons.Ide.External_link_arrow, true)
   fun setDropDownLinkIcon() = setIcon(AllIcons.General.LinkDropTriangle, true)
   fun setIcon(anIcon: Icon, atRight: Boolean) {
