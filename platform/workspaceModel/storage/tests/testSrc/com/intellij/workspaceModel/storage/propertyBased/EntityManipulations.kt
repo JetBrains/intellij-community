@@ -42,7 +42,9 @@ internal interface EntityManipulation {
       SampleEntityManipulation,
       ParentEntityManipulation,
       ChildEntityManipulation,
-      ChildWithOptionalParentManipulation //,
+      ChildWithOptionalParentManipulation,
+      OoParentManipulation,
+      OoChildManipulation,
 
       // Do not enable at the moment. A lot of issues about entities with persistentId
       //NamedEntityManipulation
@@ -185,6 +187,54 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
         )
       }
     }
+  }
+}
+
+private object OoParentManipulation : EntityManipulation {
+  override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
+    return object : AddEntity(storage, "OoParent") {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        return storage.addOoParentEntity(someProperty, source) to "OoParent. $someProperty"
+      }
+    }
+  }
+
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+    return object : ModifyEntity<OoParentEntity, ModifiableOoParentEntity>(OoParentEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableOoParentEntity.() -> Unit> {
+        return listOf(modifyStringProperty(ModifiableOoParentEntity::parentProperty, env))
+      }
+    }
+  }
+}
+
+private object OoChildManipulation : EntityManipulation {
+  override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
+    return object : AddEntity(storage, "OoChild") {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
+        return storage.addOoChildEntity(parentEntity, someProperty, source) to "Selected parent: $parentEntity"
+      }
+    }
+  }
+
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+    return object : ModifyEntity<OoChildEntity, ModifiableOoChildEntity>(OoChildEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableOoChildEntity.() -> Unit> {
+        return listOf(modifyStringProperty(ModifiableOoChildEntity::childProperty, env))
+      }
+    }
+  }
+
+  private fun selectParent(storage: WorkspaceEntityStorageBuilderImpl, env: ImperativeCommand.Environment): OoParentEntity? {
+    val parents = storage.entities(OoParentEntity::class.java).filter { it.child == null }.toList()
+    if (parents.isEmpty()) return null
+
+    return env.generateValue(Generator.sampledFrom(parents), null)
   }
 }
 
