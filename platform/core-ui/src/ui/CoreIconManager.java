@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.AbstractBundle;
@@ -68,9 +68,13 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   private static @NotNull ImageDataLoader createRasterizedImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader, long cacheKey, int imageFlags) {
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = IconLoader.patchPath(path, classLoader);
-    String effectivePath = patchedPath == null ? path : patchedPath.first;
-    if (patchedPath != null && patchedPath.second != null) {
-      classLoader = patchedPath.second;
+    String effectivePath = path;
+    if (patchedPath != null) {
+      // not safe for now to decide should patchPath return path with leading slash or not
+      effectivePath = patchedPath.first.startsWith("/") ? patchedPath.first.substring(1) : patchedPath.first;
+      if (patchedPath.second != null) {
+        classLoader = patchedPath.second;
+      }
     }
 
     ImageDataLoader resolver = new RasterizedImageDataLoader(effectivePath, classLoader, cacheKey, imageFlags);
