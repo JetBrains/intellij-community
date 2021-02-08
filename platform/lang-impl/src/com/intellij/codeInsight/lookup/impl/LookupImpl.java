@@ -335,11 +335,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myOffsets.getAdditionalPrefix();
   }
 
-  void fireBeforeAppendPrefix(char c) {
+  public void fireBeforeAppendPrefix(char c) {
     myPrefixChangeListeners.forEach((listener -> listener.beforeAppend(c)));
   }
 
-  void appendPrefix(char c) {
+  public void appendPrefix(char c) {
     checkValid();
     myOffsets.appendPrefix(c);
     myPresentableArranger.prefixChanged(this);
@@ -748,7 +748,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
-        if (myGuardedChanges == 0 && !myFinishing) {
+        if (canHide()) {
           hideLookup(false);
         }
       }
@@ -765,7 +765,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myEditor.getCaretModel().addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
-        if (myGuardedChanges == 0 && !myFinishing) {
+        if (canHide()) {
           hideLookup(false);
         }
       }
@@ -773,7 +773,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myEditor.getSelectionModel().addSelectionListener(new SelectionListener() {
       @Override
       public void selectionChanged(@NotNull final SelectionEvent e) {
-        if (myGuardedChanges == 0 && !myFinishing) {
+        if (canHide()) {
           hideLookup(false);
         }
       }
@@ -838,7 +838,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }, this);
   }
 
-  protected boolean suppressHidingOnDocumentChanged() {
+  private boolean canHide() {
+    return myGuardedChanges == 0 && !myFinishing && !suppressHidingOnChange();
+  }
+
+  protected boolean suppressHidingOnChange() {
     return false;
   }
 
