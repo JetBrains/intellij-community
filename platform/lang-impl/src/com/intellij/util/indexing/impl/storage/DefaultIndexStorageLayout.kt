@@ -6,11 +6,14 @@ import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings
 import com.intellij.util.io.IOUtil
+import com.intellij.util.io.PagedFileStorage
+import com.intellij.util.io.StorageLockContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 object DefaultIndexStorageLayout {
-  val forcedLayout: String? = System.getProperty("idea.index.storage.forced.layout")
+  private val forcedLayout: String? = System.getProperty("idea.index.storage.forced.layout")
+  private val contentLessIndexLock: StorageLockContext = StorageLockContext(true)
 
   @JvmStatic
   @Throws(IOException::class)
@@ -50,14 +53,27 @@ object DefaultIndexStorageLayout {
   fun <K, V> createOrClearIndexStorage(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorage<K, V> {
     val storageFile = IndexInfrastructure.getStorageFile(extension.name).toPath()
     return try {
-      VfsAwareMapIndexStorage(
+      object : VfsAwareMapIndexStorage<K, V>(
         storageFile,
         extension.keyDescriptor,
         extension.valueExternalizer,
         extension.cacheSize,
         extension.keyIsUniqueForIndexedFile(),
         extension.traceKeyHashToVirtualFileMapping()
-      )
+      ) {
+        override fun initMapAndCache() {
+          assert(PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null)
+          if (!extension.dependsOnFileContent()) {
+            PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(contentLessIndexLock)
+          }
+          try {
+            super.initMapAndCache()
+          }
+          finally {
+            PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove()
+          }
+        }
+      }
     }
     catch (e: IOException) {
       IOUtil.deleteAllFilesStartingWith(storageFile)
@@ -65,17 +81,21 @@ object DefaultIndexStorageLayout {
     }
   }
 
-  class DefaultStorageLayout<K, V>(private val myExtension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
+  class DefaultStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
     @Throws(IOException::class)
     override fun createOrClearIndexStorage(): IndexStorage<K, V> {
-      return createOrClearIndexStorage(myExtension)
+      return createOrClearIndexStorage(extension)
     }
 
     @Throws(IOException::class)
     override fun createOrClearForwardIndex(): ForwardIndex {
-      val indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(myExtension.name)
+      val indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name)
       return try {
-        PersistentMapBasedForwardIndex(indexStorageFile.toPath(), false, false)
+        val storageLockContext = if (extension.dependsOnFileContent()) null else contentLessIndexLock
+        PersistentMapBasedForwardIndex(indexStorageFile.toPath(),
+                                       false,
+                                       false,
+                                       storageLockContext)
       }
       catch (e: IOException) {
         IOUtil.deleteAllFilesStartingWith(indexStorageFile)
@@ -84,11 +104,11 @@ object DefaultIndexStorageLayout {
     }
 
     override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-      return MapForwardIndexAccessor(InputMapExternalizer(myExtension))
+      return MapForwardIndexAccessor(InputMapExternalizer(extension))
     }
   }
 
-  class SnapshotMappingsStorageLayout<K, V> internal constructor(private val myExtension: FileBasedIndexExtension<K, V>,
+  class SnapshotMappingsStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>,
                                                                  contentHashEnumeratorReopen: Boolean) : VfsAwareIndexStorageLayout<K, V> {
     private var mySnapshotInputMappings: SnapshotInputMappings<K, V>? = null
 
@@ -107,24 +127,24 @@ object DefaultIndexStorageLayout {
     }
 
     private fun deleteIndexData() {
-      IOUtil.deleteAllFilesStartingWith(IndexInfrastructure.getPersistentIndexRootDir(myExtension.name))
-      IOUtil.deleteAllFilesStartingWith(IndexInfrastructure.getIndexRootDir(myExtension.name))
+      IOUtil.deleteAllFilesStartingWith(IndexInfrastructure.getPersistentIndexRootDir(extension.name))
+      IOUtil.deleteAllFilesStartingWith(IndexInfrastructure.getIndexRootDir(extension.name))
     }
 
     @Throws(IOException::class)
     override fun createOrClearSnapshotInputMappings(): SnapshotInputMappings<K, V> {
-      return initSnapshotInputMappings(myExtension)
+      return initSnapshotInputMappings(extension)
     }
 
     @Throws(IOException::class)
     override fun createOrClearIndexStorage(): IndexStorage<K, V> {
-      initSnapshotInputMappings(myExtension)
-      return createOrClearIndexStorage(myExtension)
+      initSnapshotInputMappings(extension)
+      return createOrClearIndexStorage(extension)
     }
 
     @Throws(IOException::class)
     override fun createOrClearForwardIndex(): ForwardIndex {
-      initSnapshotInputMappings(myExtension)
+      initSnapshotInputMappings(extension)
       val storageFile = mySnapshotInputMappings!!.inputIndexStorageFile
       return try {
         IntMapForwardIndex(storageFile, true)
@@ -137,7 +157,7 @@ object DefaultIndexStorageLayout {
 
     @Throws(IOException::class)
     override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-      initSnapshotInputMappings(myExtension)
+      initSnapshotInputMappings(extension)
       return mySnapshotInputMappings!!.forwardIndexAccessor
     }
 
@@ -148,14 +168,14 @@ object DefaultIndexStorageLayout {
     }
   }
 
-  class SingleEntryStorageLayout<K, V> internal constructor(private val myExtension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
+  class SingleEntryStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
     override fun createOrClearSnapshotInputMappings(): SnapshotInputMappings<K, V>? {
       return null
     }
 
     @Throws(IOException::class)
     override fun createOrClearIndexStorage(): IndexStorage<K, V> {
-      return createOrClearIndexStorage(myExtension)
+      return createOrClearIndexStorage(extension)
     }
 
     override fun createOrClearForwardIndex(): ForwardIndex {
@@ -163,7 +183,7 @@ object DefaultIndexStorageLayout {
     }
 
     override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-      return SingleEntryIndexForwardIndexAccessor(myExtension as IndexExtension<Int, V, *>) as ForwardIndexAccessor<K, V>
+      return SingleEntryIndexForwardIndexAccessor(extension as IndexExtension<Int, V, *>) as ForwardIndexAccessor<K, V>
     }
   }
 
