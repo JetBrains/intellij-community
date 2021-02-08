@@ -2,7 +2,6 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -11,21 +10,16 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunConfigurationFragmentedEditor;
 import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,19 +40,16 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
   private JBCheckBox myIsAllowRunningInParallelCheckBox;
   private JPanel myRCStoragePanel;
   private final @Nullable RunConfigurationStorageUi myRCStorageUi;
-  private JPanel myDisclaimerPanel;
-  private JLabel myDisclaimerLabel;
-  private JLabel myCreateNewRCLabel;
   private final BeforeRunStepsPanel myBeforeRunStepsPanel;
 
   private final ConfigurationSettingsEditor myEditor;
   private final HideableDecorator myDecorator;
 
-  public <T extends SettingsEditor> T selectExecutorAndGetEditor(ProgramRunner runner, Class<T> editorClass) {
+  public <T extends SettingsEditor<?>> T selectExecutorAndGetEditor(ProgramRunner<?> runner, Class<T> editorClass) {
     return myEditor.selectExecutorAndGetEditor(runner, editorClass);
   }
 
-  public <T extends SettingsEditor> T selectTabAndGetEditor(Class<T> editorClass) {
+  public <T extends SettingsEditor<?>> T selectTabAndGetEditor(Class<T> editorClass) {
     return myEditor.selectTabAndGetEditor(editorClass);
   }
 
@@ -110,8 +101,6 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     if (myRCStorageUi != null) {
       myRCStorageUi.reset(settings);
     }
-
-    myDisclaimerPanel.setVisible(settings.isTemplate() && ProjectManager.getInstance().getOpenProjects().length != 0);
   }
 
   @Override
@@ -200,31 +189,9 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     myDecorator.setTitle(title);
   }
 
-  private void createUIComponents() {
-    myDisclaimerLabel = new JLabel(ExecutionBundle.message("template.disclaimer"), AllIcons.General.Warning, SwingConstants.LEADING);
-    myDisclaimerLabel.setBorder(JBUI.Borders.emptyBottom(2));
-    myCreateNewRCLabel = new LinkLabel<>(ExecutionBundle.message("create.configuration"), null, new LinkListener<>() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        RunConfigurationCreator creator =
-          DataManager.getInstance().getDataContext(myDisclaimerLabel).getData(RunConfigurationCreator.KEY);
-        if (creator != null) {
-          creator.createNewConfiguration(myEditor.getFactory().create().getFactory());
-        }
-      }
-    });
-  }
-
   @Override
   public void targetChanged(String targetName) {
     myEditor.targetChanged(targetName);
-  }
-
-  private static void createConfiguration(JComponent component, RunnerAndConfigurationSettings settings) {
-    RunConfigurationCreator creator = DataManager.getInstance().getDataContext(component).getData(RunConfigurationCreator.KEY);
-    if (creator != null) {
-      creator.createNewConfiguration(settings.getFactory());
-    }
   }
 
   public static SettingsEditor<RunnerAndConfigurationSettings> createWrapper(@NotNull RunnerAndConfigurationSettings settings) {
@@ -232,8 +199,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     //noinspection unchecked
     return configurationEditor instanceof RunConfigurationFragmentedEditor<?>
            ? new RunnerAndConfigurationSettingsEditor(settings,
-                                                      (RunConfigurationFragmentedEditor<RunConfigurationBase<?>>)configurationEditor,
-                                                      (component) -> createConfiguration(component, settings))
+                                                      (RunConfigurationFragmentedEditor<RunConfigurationBase<?>>)configurationEditor)
            : new ConfigurationSettingsEditorWrapper(settings, (SettingsEditor<RunConfiguration>)configurationEditor);
   }
 }

@@ -36,10 +36,6 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
         append(name, simpleTextAttributes)
         icon = userObject.icon
       }
-      userObject === TEMPLATES_NODE_USER_OBJECT -> {
-        append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        icon = AllIcons.General.Settings
-      }
       userObject is String -> {
         // folder
         append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)

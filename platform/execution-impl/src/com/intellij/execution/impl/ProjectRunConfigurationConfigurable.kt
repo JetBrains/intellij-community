@@ -2,23 +2,17 @@
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.configurations.ConfigurationType
-import com.intellij.execution.configurations.ConfigurationTypeUtil
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnActionButton
+import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.ui.components.labels.ActionLink
-import com.intellij.util.IconUtil
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import java.awt.FlowLayout
+import java.awt.BorderLayout
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -40,7 +34,6 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
 
       .addExtraAction(AnActionButton.fromAction(MyCopyAction()))
       .addExtraAction(AnActionButton.fromAction(MySaveAction()))
-      .addExtraAction(AnActionButton.fromAction(MyEditTemplatesAction()))
       .addExtraAction(AnActionButton.fromAction(MyCreateFolderAction()))
       .addExtraAction(AnActionButton.fromAction(MySortFolderAction()))
       .setMinimumSize(JBDimension(200, 200))
@@ -53,30 +46,15 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
                            ExecutionBundle.message("move.down.action.name"),
                            ExecutionBundle.message("run.configuration.create.folder.text"))
       .setForcedDnD()
-    val panel = toolbarDecorator!!.createPanel()
+    val panel = JPanel(BorderLayout())
+    panel.background = JBColor.background()
+    panel.add(toolbarDecorator!!.createPanel(), BorderLayout.CENTER)
+    val actionLink = ActionLink("Edit Configuration Templates...") { showTemplatesDialog(project, selectedConfigurationType) }
+    actionLink.border = JBUI.Borders.empty(10)
+    actionLink.background = JBColor.background()
+    panel.add(actionLink, BorderLayout.SOUTH)
     initTree()
     return panel
-  }
-
-  override fun createTipPanelAboutAddingNewRunConfiguration(configurationType: ConfigurationType?): JPanel {
-    if (!project.isDefault && DumbService.isDumb(project) &&
-        (configurationType == null || !ConfigurationTypeUtil.isEditableInDumbMode(configurationType)))
-      return JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.this.view.is.not.available.until.indices.are.built"))
-
-    val messagePanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
-    messagePanel.border = JBUI.Borders.empty(30, 0, 0, 0)
-    messagePanel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label1")))
-
-    val addIcon = ActionLink("", IconUtil.getAddIcon(), toolbarAddAction)
-    addIcon.border = JBUI.Borders.empty(0, 3, 0, 3)
-    messagePanel.add(addIcon)
-
-    val configurationTypeDescription = when {
-      configurationType != null -> configurationType.configurationTypeDescription
-      else -> ExecutionBundle.message("run.configuration.default.type.description")
-    }
-    messagePanel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)))
-    return messagePanel
   }
 
   override fun addRunConfigurationsToModel(model: DefaultMutableTreeNode) {
