@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
@@ -202,12 +203,26 @@ public final class ClassInnerStuffCache {
     });
   }
 
-  private static PsiMethod makeValuesMethod(PsiExtensibleClass enumClass) {
-    return new EnumSyntheticMethod(enumClass, "public static " + enumClass.getName() + "[] values() { }");
+
+  @Nullable
+  private static String getJavaClassName(Project project, String name) {
+    // There may be decompiled classes from other languages (e.g. Kotlin) with forbidden names in Java
+    // e.g. in Kotlin: enum class `do` {}
+    return !PsiNameHelper.getInstance(project).isIdentifier(name) ? null : name;
   }
 
+  @Nullable
+  private static PsiMethod makeValuesMethod(PsiExtensibleClass enumClass) {
+    String name = getJavaClassName(enumClass.getProject(), enumClass.getName());
+    if (name == null) return null;
+    return new EnumSyntheticMethod(enumClass, "public static " + name + "[] values() { }");
+  }
+
+  @Nullable
   private static PsiMethod makeValueOfMethod(PsiExtensibleClass enumClass) {
-    return new EnumSyntheticMethod(enumClass, "public static " + enumClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
+    String name = getJavaClassName(enumClass.getProject(), enumClass.getName());
+    if (name == null) return null;
+    return new EnumSyntheticMethod(enumClass, "public static " + name + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
   }
 
   /**
