@@ -192,7 +192,7 @@ class KotlinPullUpHelper(
                         val descriptor = data.resolutionFacade.analyze(expression)[BindingContext.REFERENCE_TARGET, expression]
                         val constructorElement = (descriptor as? DeclarationDescriptorWithSource)?.source?.getPsi() ?: return
                         if (constructorElement == data.targetClass || (constructorElement as? KtConstructor<*>)?.getContainingClassOrObject() == data.targetClass) {
-                            result.getOrPut(constructorElement as KtElement, { ArrayList() }).add(callingConstructorElement)
+                            result.getOrPut(constructorElement as KtElement) { ArrayList() }.add(callingConstructorElement)
                         }
                     }
 

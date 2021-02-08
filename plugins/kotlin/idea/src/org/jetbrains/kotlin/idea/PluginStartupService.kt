@@ -36,10 +36,10 @@ class PluginStartupService : Disposable {
         val kotlinTodoSearcher = KotlinTodoSearcher()
         indexPatternSearch.registerExecutor(kotlinTodoSearcher)
 
-        Disposer.register(this, {
+        Disposer.register(this) {
             eventMulticaster.removeDocumentListener(documentListener)
             indexPatternSearch.unregisterExecutor(kotlinTodoSearcher)
-        })
+        }
     }
 
     override fun dispose() {

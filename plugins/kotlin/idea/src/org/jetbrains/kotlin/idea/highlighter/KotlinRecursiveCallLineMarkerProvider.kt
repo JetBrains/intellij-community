@@ -144,7 +144,7 @@ internal fun getElementForLineMark(callElement: PsiElement): PsiElement = when (
     else ->
         // a fallback,
         //but who knows what to reference in KtArrayAccessExpression ?
-        generateSequence(callElement, { it.firstChild }).last()
+        generateSequence(callElement) { it.firstChild }.last()
 }
 
 private fun PsiElement.getLineNumber(): Int {

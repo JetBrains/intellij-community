@@ -72,7 +72,7 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
             get() = generateSequence({ parent }, { it.parent })
 
         val parentsWithSelf: Sequence<TreeElement>
-            get() = generateSequence(this, { it.parent })
+            get() = generateSequence(this) { it.parent }
 
         val firstLeafInside: TreeElement
             get() {

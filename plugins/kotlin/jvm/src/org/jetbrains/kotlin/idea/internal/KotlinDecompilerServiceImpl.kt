@@ -75,7 +75,7 @@ class KotlinDecompilerServiceImpl : KotlinDecompilerService {
                     }.map { it.path to it }
 
         return files.entries.associate {
-            Pair(File(it.key), { it.value.contentsToByteArray(false) })
+            File(it.key) to { it.value.contentsToByteArray(false) }
         }
     }
 

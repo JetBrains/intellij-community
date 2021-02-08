@@ -41,7 +41,7 @@ internal fun Project.files(): List<VirtualFile> {
     return FileTypeIndex.getFiles(KotlinFileType.INSTANCE, scope).toList()
 }
 
-internal inline fun <T> randomNullability(body: () -> T) = randomFunctor(0.8F, body, { null })
+internal inline fun <T> randomNullability(body: () -> T) = randomFunctor(0.8F, body) { null }
 
 internal fun randomString() = RandomStringUtils.randomAlphanumeric(Random.nextInt(1, 10))
 

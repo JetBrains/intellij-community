@@ -197,43 +197,43 @@ class AnnotationConverter(private val converter: Converter) {
         return converter.deferredElement(convertAttributeValue(value, returnType, isVararg = false, isUnnamed = false).single())
     }
 
-    private fun convertAttributeValue(value: PsiAnnotationMemberValue?, expectedType: PsiType?, isVararg: Boolean, isUnnamed: Boolean): List<(CodeConverter) -> Expression> {
-        return when (value) {
-            is PsiExpression -> listOf({ codeConverter -> convertExpressionValue(codeConverter, value, expectedType, isVararg) })
+    private fun convertAttributeValue(
+        value: PsiAnnotationMemberValue?,
+        expectedType: PsiType?,
+        isVararg: Boolean,
+        isUnnamed: Boolean
+    ): List<(CodeConverter) -> Expression> = when (value) {
+        is PsiExpression -> listOf { codeConverter -> convertExpressionValue(codeConverter, value, expectedType, isVararg) }
 
-            is PsiArrayInitializerMemberValue -> {
-                val componentType = (expectedType as? PsiArrayType)?.componentType
-                val componentGenerators = value.initializers.map { convertAttributeValue(it, componentType, false, true).single() }
-                if (isVararg && isUnnamed) {
-                    componentGenerators
-                }
-                else {
-                    listOf({ codeConverter ->
-                               convertArrayInitializerValue(codeConverter, value.text, componentGenerators, expectedType, isVararg)
-                                       .assignPrototype(value)
-                           })
-                }
-            }
-
-            is PsiAnnotation -> {
-                val annotationConstructor = listOf<(CodeConverter) -> Expression>(
-                    { _ ->
-                        val (name, arguments) = convertAnnotationValue(value)!!
-                        AnnotationConstructorCall(name, arguments).assignPrototype(value)
-                    })
-                if (expectedType is PsiArrayType) {
-                    listOf(
-                        { codeConverter ->
-                            convertArrayInitializerValue(codeConverter, value.text, annotationConstructor, expectedType, isVararg)
-                                .assignPrototype(value)
-                        })
-
-                } else {
-                    annotationConstructor
+        is PsiArrayInitializerMemberValue -> {
+            val componentType = (expectedType as? PsiArrayType)?.componentType
+            val componentGenerators = value.initializers.map { convertAttributeValue(it, componentType, false, true).single() }
+            if (isVararg && isUnnamed) {
+                componentGenerators
+            } else {
+                listOf { codeConverter ->
+                    convertArrayInitializerValue(codeConverter, value.text, componentGenerators, expectedType, isVararg)
+                        .assignPrototype(value)
                 }
             }
-            else -> listOf({ _ -> DummyStringExpression(value?.text ?: "").assignPrototype(value) })
         }
+
+        is PsiAnnotation -> {
+            val annotationConstructor = listOf<(CodeConverter) -> Expression> { _ ->
+                val (name, arguments) = convertAnnotationValue(value)!!
+                AnnotationConstructorCall(name, arguments).assignPrototype(value)
+            }
+            if (expectedType is PsiArrayType) {
+                listOf { codeConverter ->
+                    convertArrayInitializerValue(codeConverter, value.text, annotationConstructor, expectedType, isVararg)
+                        .assignPrototype(value)
+                }
+
+            } else {
+                annotationConstructor
+            }
+        }
+        else -> listOf { DummyStringExpression(value?.text ?: "").assignPrototype(value) }
     }
 
     private fun convertExpressionValue(codeConverter: CodeConverter, value: PsiExpression, expectedType: PsiType?, isVararg: Boolean): Expression {
@@ -248,7 +248,7 @@ class AnnotationConverter(private val converter: Converter) {
         if (expectedType is PsiArrayType && !isVararg) {
             return convertArrayInitializerValue(codeConverter,
                                                 value.text,
-                                                listOf({ _ -> expression }),
+                                                listOf { _ -> expression },
                                                 expectedType,
                                                 false
             ).assignPrototype(value)

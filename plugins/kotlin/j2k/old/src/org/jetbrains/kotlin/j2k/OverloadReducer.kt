@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.j2k.ast.*
-import java.util.*
 
 class OverloadReducer(
         private val methods: Collection<PsiMethod>,
@@ -152,7 +151,7 @@ class OverloadReducer(
             val defaults = targetInfo.parameterDefaults
             assert(defaults.size == targetParamCount - paramCount)
 
-            val targetDefaults = methodToLastParameterDefaults.getOrPut(targetInfo.method, { ArrayList() })
+            val targetDefaults = methodToLastParameterDefaults.getOrPut(targetInfo.method) { ArrayList() }
 
             for (i in defaults.indices) {
                 val default = defaults[defaults.size - i - 1]

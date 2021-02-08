@@ -59,7 +59,7 @@ class IterableTypesDetection(
             isIterable(type.toFuzzyType(emptyList()), loopVarType)
 
         private fun elementType(type: FuzzyType): FuzzyType? {
-            return cache.getOrPutNullable(type, { elementTypeNoCache(type) })
+            return cache.getOrPutNullable(type) { elementTypeNoCache(type) }
         }
 
         override fun elementType(type: KotlinType): FuzzyType? = elementType(type.toFuzzyType(emptyList()))

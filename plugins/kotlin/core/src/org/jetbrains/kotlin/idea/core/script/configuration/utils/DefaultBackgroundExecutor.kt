@@ -235,9 +235,9 @@ internal class DefaultBackgroundExecutor(
 
             // executeOnPooledThread requires read lock, and we may fail to acquire it
             SwingUtilities.invokeLater {
-                BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project), {
+                BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project)) {
                     run()
-                })
+                }
             }
         }
 

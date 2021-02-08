@@ -157,7 +157,7 @@ class OldJavaToKotlinConverter(
         try {
             val usageProcessings = LinkedHashMap<PsiElement, MutableCollection<UsageProcessing>>()
             val usageProcessingCollector: (UsageProcessing) -> Unit = {
-                usageProcessings.getOrPut(it.targetElement, { ArrayList() }).add(it)
+                usageProcessings.getOrPut(it.targetElement) { ArrayList() }.add(it)
             }
 
             fun inConversionScope(element: PsiElement) = inputElements.any { it.isAncestor(element, strict = false) }

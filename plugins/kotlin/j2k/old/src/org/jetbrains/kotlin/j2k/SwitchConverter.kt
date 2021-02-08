@@ -94,7 +94,7 @@ class SwitchConverter(private val codeConverter: CodeConverter) {
         if (allowBlock && statementsToKeep.size == 1) {
             val block = statementsToKeep.single() as? PsiBlockStatement
             if (block != null) {
-                return listOf(codeConverter.convertBlock(block.codeBlock, true, { !isSwitchBreak(it) }))
+                return listOf(codeConverter.convertBlock(block.codeBlock, true) { !isSwitchBreak(it) })
             }
         }
         return statementsToKeep.map { codeConverter.convertStatement(it) }

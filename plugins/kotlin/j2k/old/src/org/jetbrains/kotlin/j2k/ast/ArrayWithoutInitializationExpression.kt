@@ -50,11 +50,11 @@ class ArrayWithoutInitializationExpression(val type: ArrayType, val expressions:
 
             val innerType = hostType.elementType
             if (expressions.size > 1 && innerType is ArrayType) {
-                return oneDim(hostType, expressions[0], {
+                return oneDim(hostType, expressions[0]) {
                     builder.append("{")
                     constructInnerType(innerType, expressions.subList(1, expressions.size))
                     builder.append("}")
-                })
+                }
             }
 
             return appendConstructorName(hostType, expressions.isNotEmpty())

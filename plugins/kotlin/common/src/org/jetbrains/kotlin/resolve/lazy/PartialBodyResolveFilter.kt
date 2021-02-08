@@ -100,7 +100,7 @@ class PartialBodyResolveFilter(
             updateNameFilter()
 
             if (!nameFilter.isEmpty) {
-                val smartCastPlaces = potentialSmartCastPlaces(statement, { it.affectsNames(nameFilter) })
+                val smartCastPlaces = potentialSmartCastPlaces(statement) { it.affectsNames(nameFilter) }
                 if (!smartCastPlaces.isEmpty()) {
                     //TODO: do we really need correct resolve for ALL smart cast places?
                     smartCastPlaces.values
@@ -134,12 +134,12 @@ class PartialBodyResolveFilter(
         val map = HashMap<SmartCastName, ArrayList<KtExpression>>(0)
 
         fun addPlace(name: SmartCastName, place: KtExpression) {
-            map.getOrPut(name, { ArrayList(1) }).add(place)
+            map.getOrPut(name) { ArrayList(1) }.add(place)
         }
 
         fun addPlaces(name: SmartCastName, places: Collection<KtExpression>) {
             if (places.isNotEmpty()) {
-                map.getOrPut(name, { ArrayList(places.size) }).addAll(places)
+                map.getOrPut(name) { ArrayList(places.size) }.addAll(places)
             }
         }
 

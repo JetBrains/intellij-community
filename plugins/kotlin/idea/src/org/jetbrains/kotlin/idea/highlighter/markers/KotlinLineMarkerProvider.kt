@@ -271,8 +271,7 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
         SuperDeclarationMarkerTooltip,
         SuperDeclarationMarkerNavigationHandler(),
         GutterIconRenderer.Alignment.RIGHT,
-        { gutter.name },
-    )
+    ) { gutter.name }
 
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
@@ -305,9 +304,8 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
         icon,
         SUBCLASSED_CLASS.tooltip,
         SUBCLASSED_CLASS.navigationHandler,
-        GutterIconRenderer.Alignment.RIGHT,
-        { gutter.name }
-    )
+        GutterIconRenderer.Alignment.RIGHT
+    ) { gutter.name }
 
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
@@ -348,8 +346,7 @@ private fun collectOverriddenPropertyAccessors(
             OVERRIDDEN_PROPERTY.tooltip,
             OVERRIDDEN_PROPERTY.navigationHandler,
             GutterIconRenderer.Alignment.RIGHT,
-            { gutter.name },
-        )
+        ) { gutter.name }
 
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
@@ -483,8 +480,7 @@ private fun collectActualMarkers(
         PLATFORM_ACTUAL.tooltip,
         PLATFORM_ACTUAL.navigationHandler,
         GutterIconRenderer.Alignment.RIGHT,
-        { gutter.name },
-    )
+    ) { gutter.name }
 
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
@@ -512,8 +508,7 @@ private fun collectExpectedMarkers(
         EXPECTED_DECLARATION.tooltip,
         EXPECTED_DECLARATION.navigationHandler,
         GutterIconRenderer.Alignment.RIGHT,
-        { gutter.name },
-    )
+    ) { gutter.name }
 
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
@@ -553,8 +548,7 @@ private fun collectOverriddenFunctions(functions: Collection<KtNamedFunction>, r
             OVERRIDDEN_FUNCTION.tooltip,
             OVERRIDDEN_FUNCTION.navigationHandler,
             GutterIconRenderer.Alignment.RIGHT,
-            { gutter.name },
-        )
+        ) { gutter.name }
 
         NavigateAction.setNavigateAction(
             lineMarkerInfo,

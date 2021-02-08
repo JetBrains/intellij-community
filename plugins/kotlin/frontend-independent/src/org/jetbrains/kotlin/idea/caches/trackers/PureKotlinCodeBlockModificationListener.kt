@@ -266,7 +266,7 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
 
     fun addListener(listener: PureKotlinOutOfCodeBlockModificationListener, parentDisposable: Disposable) {
         listeners.add(listener)
-        Disposer.register(parentDisposable, { removeModelListener(listener) })
+        Disposer.register(parentDisposable) { removeModelListener(listener) }
     }
 
     fun removeModelListener(listener: PureKotlinOutOfCodeBlockModificationListener) {

@@ -19,7 +19,6 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.j2k.ast.*
-import java.util.*
 
 class ConstructorConverter(
         private val psiClass: PsiClass,
@@ -164,7 +163,7 @@ class ConstructorConverter(
                                 return super.convertExpression(expression, codeConverter)
                             }
                         })
-                postProcessBody(bodyConverter.convertBlock(body, false, { !statementsToRemove.contains(it) }))
+                postProcessBody(bodyConverter.convertBlock(body, false) { !statementsToRemove.contains(it) })
             }
         }
         else {

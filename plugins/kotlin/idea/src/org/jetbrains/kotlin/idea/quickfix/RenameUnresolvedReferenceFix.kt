@@ -50,7 +50,7 @@ class RenameUnresolvedReferenceFix(element: KtNameReferenceExpression) : KotlinQ
         private val originalReferenceName: String
     ) : Expression() {
         init {
-            Arrays.sort(items, HammingComparator(originalReferenceName, { lookupString }))
+            Arrays.sort(items, HammingComparator(originalReferenceName) { lookupString })
         }
 
         override fun calculateResult(context: ExpressionContext) = TextResult(items.firstOrNull()?.lookupString ?: originalReferenceName)

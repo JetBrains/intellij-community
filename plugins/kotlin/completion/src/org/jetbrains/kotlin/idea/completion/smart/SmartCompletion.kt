@@ -98,7 +98,7 @@ class SmartCompletion(
         val postProcessedSearcher = if (inheritanceSearcher != null)
             object : InheritanceItemsSearcher {
                 override fun search(nameFilter: (String) -> Boolean, consumer: (LookupElement) -> Unit) {
-                    inheritanceSearcher.search(nameFilter, { consumer(postProcess(it)) })
+                    inheritanceSearcher.search(nameFilter) { consumer(postProcess(it)) }
                 }
             }
         else

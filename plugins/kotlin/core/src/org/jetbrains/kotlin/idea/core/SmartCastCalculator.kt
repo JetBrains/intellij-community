@@ -123,7 +123,7 @@ class SmartCastCalculator(
         for ((dataFlowValue, nullability) in dataFlowInfo.completeNullabilityInfo) {
             if (nullability == Nullability.NOT_NULL) {
                 val entity = dataFlowValueToEntity(dataFlowValue) ?: continue
-                entityToInfo.getOrPut(entity, { SmartCastInfo() }).notNull = true
+                entityToInfo.getOrPut(entity) { SmartCastInfo() }.notNull = true
             }
         }
 

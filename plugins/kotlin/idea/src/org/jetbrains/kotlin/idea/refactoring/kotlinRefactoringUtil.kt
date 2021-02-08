@@ -421,12 +421,12 @@ fun <T> chooseContainerElement(
         },
         title,
         highlightSelection,
-        toPsi,
-        {
-            onSelect(it)
-            true
-        }
-    )
+        toPsi
+    ) {
+        onSelect(it)
+        true
+    }
+
     ApplicationManager.getApplication().invokeLater {
         popup.showInBestPositionFor(editor)
     }

@@ -59,12 +59,12 @@ open class Class(
     }
 
     private fun baseClassSignatureWithParams(builder: CodeBuilder): List<() -> CodeBuilder> {
-        if (keyword.equals("class") && extendsTypes.size == 1 && baseClassParams != null) {
-            return listOf({
-                              builder append extendsTypes[0] append "("
-                              builder.append(baseClassParams, ", ")
-                              builder append ")"
-                          })
+        if (keyword == "class" && extendsTypes.size == 1 && baseClassParams != null) {
+            return listOf {
+                builder append extendsTypes[0] append "("
+                builder.append(baseClassParams, ", ")
+                builder append ")"
+            }
         }
         return extendsTypes.map { { builder.append(it) } }
     }
