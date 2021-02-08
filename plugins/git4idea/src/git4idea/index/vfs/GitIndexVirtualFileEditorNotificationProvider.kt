@@ -3,13 +3,11 @@ package git4idea.index.vfs
 
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.OpenSourceUtil
 import git4idea.i18n.GitBundle
 
 private val KEY: Key<EditorNotificationPanel> = Key.create("GitIndexVirtualFileEditorNotification")
@@ -21,11 +19,8 @@ class GitIndexVirtualFileEditorNotificationProvider : EditorNotifications.Provid
     if (file !is GitIndexVirtualFile) return null
     return EditorNotificationPanel(HintUtil.INFORMATION_COLOR_KEY).apply {
       text = GitBundle.message("stage.vfs.editor.notification.text", file.name)
-      val virtualFile = file.filePath.virtualFile
-      if (virtualFile != null) {
-        createActionLabel(GitBundle.message("stage.vfs.editor.notification.link")) {
-          OpenSourceUtil.navigate(OpenFileDescriptor(project, virtualFile))
-        }
+      if (file.filePath.virtualFile != null) {
+        createActionLabel(GitBundle.message("stage.vfs.editor.notification.link"), "Git.Stage.Show.Local")
       }
     }
   }
