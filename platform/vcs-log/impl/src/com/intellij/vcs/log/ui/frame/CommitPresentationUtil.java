@@ -209,7 +209,8 @@ public final class CommitPresentationUtil {
       return HtmlChunk.empty();
     }
 
-    HtmlChunk.Element graySpan = HtmlChunk.span("color:#" + ColorUtil.toHex(JBColor.GRAY));
+    String style = "color:#" + ColorUtil.toHex(JBColor.GRAY);
+    HtmlChunk.Element graySpan = HtmlChunk.span(style);
 
     String committed;
     if (committer == null) {
@@ -218,7 +219,7 @@ public final class CommitPresentationUtil {
       committed = VcsLogBundle.message("vcs.log.details.committer.info.date.time", date, time);
     } else {
       String by = VcsUserUtil.getShortPresentation(committer) +
-                  (!committer.getEmail().isEmpty() ? "</span> " + getEmailLink(committer) + graySpan : "");
+                  (!committer.getEmail().isEmpty() ? "</span> " + getEmailLink(committer) + "<span style=\"" + style + "\">" : "");
       if (commitTime == null) {
         committed = VcsLogBundle.message("vcs.log.details.committer.info.user", by);
       } else {
