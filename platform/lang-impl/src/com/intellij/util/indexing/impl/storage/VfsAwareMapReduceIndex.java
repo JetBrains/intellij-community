@@ -121,8 +121,13 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
   }
 
-  @Override
-  public String dumpStatistics() {
+  public void resetSnapshotInputMappingsStatistics() {
+    if (mySnapshotInputMappings instanceof SnapshotInputMappings<?, ?>) {
+      ((SnapshotInputMappings<?, ?>)mySnapshotInputMappings).resetStatistics();
+    }
+  }
+
+  public @Nullable SnapshotInputMappingsStatistics dumpSnapshotInputMappingsStatistics() {
     if (mySnapshotInputMappings instanceof SnapshotInputMappings<?, ?>) {
       return ((SnapshotInputMappings<?, ?>) mySnapshotInputMappings).dumpStatistics();
     }

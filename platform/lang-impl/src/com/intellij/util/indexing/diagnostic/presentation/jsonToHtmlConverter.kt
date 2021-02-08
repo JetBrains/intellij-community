@@ -8,6 +8,8 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
+import com.intellij.util.indexing.diagnostic.dto.JsonPercentages
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingHistory
 import org.jetbrains.annotations.Nls
 
 fun JsonIndexDiagnostic.generateHtml(): String {
@@ -134,6 +136,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             th("Total number of files indexed by extensions")
             th("Total files size")
             th("Indexing speed")
+            th("Snapshot input mapping statistics")
           }
         }
         tbody {
@@ -145,6 +148,15 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
               td(statsPerIndexer.totalFilesSize.presentableSize())
               td(statsPerIndexer.indexingSpeed.presentableSpeed())
+
+              fun JsonProjectIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
+                val hitsPercentages = JsonPercentages(totalHits, totalRequests)
+                val missesPercentages = JsonPercentages(totalMisses, totalRequests)
+                return "requests: $totalRequests, " +
+                       "hits: $totalHits (${hitsPercentages.presentablePercentages()}), " +
+                       "misses: $totalMisses (${missesPercentages.presentablePercentages()})"
+              }
+              td(statsPerIndexer.snapshotInputMappingStats.presentable())
             }
           }
         }

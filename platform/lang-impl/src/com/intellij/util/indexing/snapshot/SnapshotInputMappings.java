@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.LongAdder;
 
 @ApiStatus.Internal
 public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInputMappingIndex<Key, Value, FileContent> {
@@ -50,7 +49,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   @NotNull
   private final SnapshotHashEnumeratorService.HashEnumeratorHandle myEnumeratorHandle;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
-  private final Statistics myStatistics = IndexDebugProperties.DEBUG ? new Statistics() : null;
+  private final @Nullable SnapshotInputMappingsStatistics myStatistics;
 
   private final HashIdForwardIndexAccessor<Key, Value, FileContent> myHashIdForwardIndexAccessor;
 
@@ -61,6 +60,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   public SnapshotInputMappings(@NotNull IndexExtension<Key, Value, FileContent> indexExtension,
                                @NotNull AbstractMapForwardIndexAccessor<Key, Value, ?> accessor) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
+    myStatistics = IndexDebugProperties.DEBUG ? new SnapshotInputMappingsStatistics(myIndexId) : null;
 
     boolean storeOnlySingleValue = indexExtension instanceof SingleEntryFileBasedIndexExtension;
     myMapExternalizer = storeOnlySingleValue ? null : new InputMapExternalizer<>(indexExtension);
@@ -359,32 +359,14 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   @ApiStatus.Internal
-  public String dumpStatistics() {
+  public void resetStatistics() {
     if (myStatistics != null) {
-      return myStatistics.dumpStatistics();
+      myStatistics.reset();
     }
-    return null;
   }
 
-  private static class Statistics {
-    private final LongAdder totalRequests = new LongAdder();
-    private final LongAdder totalMisses = new LongAdder();
-
-    void update(boolean miss) {
-      totalRequests.increment();
-      if (miss) {
-        totalMisses.increment();
-      }
-    }
-
-    String dumpStatistics() {
-      long requests = totalRequests.longValue();
-      long misses = totalMisses.longValue();
-      return
-        "input snapshot stats[" +
-        "requests: " + requests +
-        ", hits: " + (requests - misses) +
-        ", misses: " + misses + "]";
-    }
+  @ApiStatus.Internal
+  public @Nullable SnapshotInputMappingsStatistics dumpStatistics() {
+    return myStatistics;
   }
 }

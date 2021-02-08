@@ -34,6 +34,7 @@ import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -178,6 +179,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     poweredIndicator.setText(IndexingBundle.message("progress.indexing.updating"));
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(poweredIndicator, totalFiles);
 
+    myIndex.resetSnapshotInputMappingStatistics();
+
     Instant startIndexing = Instant.now();
     try {
       indexFiles(orderedProviders, providerToFiles, projectIndexingHistory, concurrentTasksProgressManager);
@@ -186,7 +189,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
 
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Finished. Unindexed files update"));
-    myIndex.dumpIndexStatistics();
+    List<SnapshotInputMappingsStatistics> snapshotInputMappingsStatistics = myIndex.dumpSnapshotInputMappingStatistics();
+    projectIndexingHistory.addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics);
   }
 
   private void indexFiles(@NotNull List<IndexableFilesIterator> orderedProviders,

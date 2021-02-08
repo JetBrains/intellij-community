@@ -55,7 +55,6 @@ import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.IndexedFilesListener;
 import com.intellij.util.indexing.events.VfsEventsMerger;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
@@ -63,7 +62,9 @@ import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -312,15 +313,24 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @ApiStatus.Internal
-  public void dumpIndexStatistics() {
-    String statistics = getRegisteredIndexes().getState().getIndexIDs().stream().map(id -> {
-      var indexStats = getIndex(id).dumpStatistics();
-      if (indexStats == null) return null;
-      return "id = " + id + ": " + indexStats;
-    }).filter(Objects::nonNull).collect(Collectors.joining(", "));
-    if (!statistics.isEmpty()) {
-      LOG.info(statistics);
+  public void resetSnapshotInputMappingStatistics() {
+    for (ID<?, ?> id : getRegisteredIndexes().getState().getIndexIDs()) {
+      UpdatableIndex<?, ?, FileContent> index = getIndex(id);
+      if (index instanceof VfsAwareMapReduceIndex) {
+        ((VfsAwareMapReduceIndex<?, ?>)index).resetSnapshotInputMappingsStatistics();
+      }
     }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<SnapshotInputMappingsStatistics> dumpSnapshotInputMappingStatistics() {
+    return getRegisteredIndexes().getState().getIndexIDs().stream().map(id -> {
+      UpdatableIndex<?, ?, FileContent> index = getIndex(id);
+      if (index instanceof VfsAwareMapReduceIndex) {
+        return ((VfsAwareMapReduceIndex<?, ?>)index).dumpSnapshotInputMappingsStatistics();
+      }
+      return null;
+    }).filter(Objects::nonNull).collect(Collectors.toList());
   }
 
   void addStaleIds(@NotNull IntSet staleIds) {
