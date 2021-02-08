@@ -603,6 +603,7 @@
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
 
     <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
+    <projectOriginInfoProvider implementation="git4idea.repo.GitProjectOriginInfoProvider"/>
   </extensions>
 
   <extensionPoints>

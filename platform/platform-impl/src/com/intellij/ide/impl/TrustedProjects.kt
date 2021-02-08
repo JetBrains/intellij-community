@@ -7,21 +7,47 @@ import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.SystemProperties
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
+import java.nio.file.Paths
 
-fun confirmOpeningUntrustedProject(name: @Nls String): OpenUntrustedProjectChoice {
+fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String): OpenUntrustedProjectChoice {
+  if (service<TrustedPathsSettings>().isPathTrusted(virtualFile.toNioPath())) {
+    return OpenUntrustedProjectChoice.IMPORT
+  }
+  val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
+  val origin = getProjectOrigin(projectDir.toNioPath())
+  if (origin != null && service<TrustedHostsSettings>().isHostTrusted(origin)) {
+    return OpenUntrustedProjectChoice.IMPORT
+  }
+
+  val dontAskAgain = if (origin != null) {
+    object : DialogWrapper.DoNotAskOption.Adapter() {
+      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+        service<TrustedHostsSettings>().setHostTrusted(origin, true)
+      }
+
+      override fun getDoNotShowMessage(): String {
+        return IdeBundle.message("untrusted.project.warning.trust.host.checkbox", origin)
+      }
+    }
+  }
+  else null
+
   val choice = MessageDialogBuilder.yesNoCancel(title = IdeBundle.message("untrusted.project.warning.title", name),
                                                 message = IdeBundle.message("untrusted.project.open.warning.text", name))
     .yesText(IdeBundle.message("untrusted.project.open.warning.button.import"))
     .noText(IdeBundle.message("untrusted.project.open.warning.button.open.without.import"))
     .cancelText(CommonBundle.getCancelButtonText())
+    .doNotAsk(dontAskAgain)
     .asWarning()
     .show(project = null)
 
@@ -30,13 +56,22 @@ fun confirmOpeningUntrustedProject(name: @Nls String): OpenUntrustedProjectChoic
     Messages.NO -> OpenUntrustedProjectChoice.OPEN_WITHOUT_IMPORTING
     Messages.CANCEL -> OpenUntrustedProjectChoice.CANCEL
     else -> {
-      OpenUntrustedProjectChoice.log.error("Illegal choice $choice")
+      LOG.error("Illegal choice $choice")
       return OpenUntrustedProjectChoice.CANCEL
     }
   }
 }
 
 fun confirmImportingUntrustedProject(project: Project, @Nls buildSystemName: String, @Nls importButtonText: String): Boolean {
+  val projectDir = project.basePath?.let { Paths.get(it) }
+  if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
+    return true
+  }
+  val origin = getProjectOrigin(projectDir)
+  if (origin != null && service<TrustedHostsSettings>().isHostTrusted(origin)) {
+    return true
+  }
+
   val answer = MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.warning.title", buildSystemName),
                                           message = IdeBundle.message("untrusted.project.import.warning.text", buildSystemName))
     .yesText(importButtonText)
@@ -52,10 +87,6 @@ enum class OpenUntrustedProjectChoice {
   IMPORT,
   OPEN_WITHOUT_IMPORTING,
   CANCEL;
-
-  companion object {
-    val log = logger<OpenUntrustedProjectChoice>()
-  }
 }
 
 fun Project.isTrusted() = this.service<TrustedProjectSettings>().trustedState == ThreeState.YES
@@ -85,3 +116,6 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
       state.isTrusted = value
     }
 }
+
+private val LOG = Logger.getInstance("com.intellij.ide.impl.TrustedProjects")
+
