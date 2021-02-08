@@ -228,10 +228,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
       LOG.debug { "Cascade removing: ${ClassToIntConverter.getClassOrDie(it.clazz)}-${it.arrayId}" }
       this.changeLog.addRemoveEvent(it)
     }
-
-    if (!this.brokenConsistency) {
-      this.assertConsistencyInStrictMode("Check after removing entity", null, null, null)
-    }
   }
 
   private fun ArrayListMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
