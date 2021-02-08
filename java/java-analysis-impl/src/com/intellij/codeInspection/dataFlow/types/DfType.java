@@ -47,6 +47,14 @@ public interface DfType {
   default DfType tryNegate() {
     return null;
   }
+
+  /**
+   * @param constant constant to compare to
+   * @return true if this type represents a constant with given value
+   */
+  default boolean isConst(@Nullable Object constant) {
+    return false;
+  }
   
   @Override @NlsSafe
   String toString();

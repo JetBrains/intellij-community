@@ -58,13 +58,9 @@ public abstract class DfConstantType<T> implements DfType {
     return renderValue(myValue);
   }
 
-  /**
-   * @param dfType dfType to check
-   * @param value constant value
-   * @return true if given dfType represents a constant that is equal to given value
-   */
-  public static boolean isConst(@NotNull DfType dfType, @Nullable Object value) {
-    return dfType instanceof DfConstantType && Objects.equals(((DfConstantType<?>)dfType).getValue(), value);
+  @Override
+  public boolean isConst(@Nullable Object constant) {
+    return Objects.equals(myValue, constant);
   }
 
   /**

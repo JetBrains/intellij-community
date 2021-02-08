@@ -537,7 +537,7 @@ public final class TrackingRunner extends DataFlowRunner {
     if (value instanceof DfaVariableValue) {
       MemoryStateChange change = history.findRelation(
         (DfaVariableValue)value, rel -> rel.myRelationType == RelationType.EQ &&
-            DfConstantType.isConst(rel.myCounterpart.getDfType(), expectedValue), false);
+                                        rel.myCounterpart.getDfType().isConst(expectedValue), false);
       if (change != null) {
         PsiExpression varSourceExpression = change.getExpression();
         Instruction instruction = change.myInstruction;
@@ -629,7 +629,7 @@ public final class TrackingRunner extends DataFlowRunner {
             }
           }
           if (push.myInstruction instanceof PushValueInstruction &&
-              DfConstantType.isConst(((PushValueInstruction)push.myInstruction).getValue(), value) &&
+              ((PushValueInstruction)push.myInstruction).getValue().isConst(value) &&
               ((PushValueInstruction)push.myInstruction).getExpression() == expression) {
             push = push.getPrevious();
           }
@@ -664,7 +664,7 @@ public final class TrackingRunner extends DataFlowRunner {
           if (push != null &&
               ((push.myInstruction instanceof ConditionalGotoInstruction &&
                 ((ConditionalGotoInstruction)push.myInstruction).isTarget(value, history.myInstruction)) ||
-               DfConstantType.isConst(push.myTopOfStack.getDfType(), value))) {
+               push.myTopOfStack.getDfType().isConst(value))) {
             int andVal = and ? 1 : 0;
             CauseItem cause = new CauseItem(
               JavaAnalysisBundle.message("dfa.find.cause.operand.of.boolean.expression.is.the.same", i + 1, andVal == 1 ? 0 : 1, value),

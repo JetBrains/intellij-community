@@ -181,7 +181,7 @@ public class DfaExpressionFactory {
     // If static final field is referred from the same or inner/nested class,
     // we consider that it might be uninitialized yet as some class initializers may call its methods or
     // even instantiate objects of this class and call their methods
-    if (!DfConstantType.isConst(constValue.getDfType(), var)) return false;
+    if (!constValue.getDfType().isConst(var)) return false;
     if (!(var instanceof PsiField) || var instanceof PsiEnumConstant) return false;
     return PsiTreeUtil.getTopmostParentOfType(refExpr, PsiClass.class) == PsiTreeUtil.getTopmostParentOfType(var, PsiClass.class);
   }

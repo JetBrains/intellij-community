@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -390,7 +389,7 @@ public enum SpecialField implements VariableDescriptor {
     if (exactResultType == null) {
       return dfType;
     }
-    if (this == STRING_LENGTH && DfConstantType.isConst(fieldValue, 0)) {
+    if (this == STRING_LENGTH && fieldValue.isConst(0)) {
       return DfTypes.constant("", exactResultType);
     }
     return dfType.meet(TypeConstraints.exact(exactResultType).asDfType());

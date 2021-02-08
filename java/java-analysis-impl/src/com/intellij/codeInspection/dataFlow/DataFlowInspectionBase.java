@@ -10,7 +10,6 @@ import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityPr
 import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -1231,7 +1230,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (dfType == DfTypes.NULL) return NULL;
       if (dfType == DfTypes.TRUE) return TRUE;
       if (dfType == DfTypes.FALSE) return FALSE;
-      if (DfConstantType.isConst(dfType, 0) || DfConstantType.isConst(dfType, 0L)) return ZERO;
+      if (dfType.isConst(0) || dfType.isConst(0L)) return ZERO;
       return UNKNOWN;
     }
 

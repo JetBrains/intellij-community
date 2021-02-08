@@ -116,8 +116,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     DfType dfType = dest.getDfType();
 
     PsiType type = var.getType();
-    boolean isDefaultValue = DfConstantType.isConst(dfType, PsiTypesUtil.getDefaultValue(type)) ||
-                             DfConstantType.isConst(dfType, 0) && TypeConversionUtil.isIntegralNumberType(type);
+    boolean isDefaultValue = dfType.isConst(PsiTypesUtil.getDefaultValue(type)) ||
+                             dfType.isConst(0) && TypeConversionUtil.isIntegralNumberType(type);
     if (!isDefaultValue) return false;
     PsiMethod method = PsiTreeUtil.getParentOfType(rExpression, PsiMethod.class);
     return method != null && method.isConstructor();
