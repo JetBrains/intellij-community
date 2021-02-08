@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -575,7 +576,28 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (myResultStatements.length == 1) {
         return ct.textWithComments(myResultStatements[0]) + "\n";
       }
-      return StreamEx.of(myResultStatements).map(ct::textWithComments).joining("", "{", "\n}");
+      StringBuilder sb = new StringBuilder("{");
+      for (int i = 0, length = myResultStatements.length; i < length; i++) {
+        PsiStatement element = myResultStatements[i];
+        String text = ct.textWithComments(element);
+        if (i == length - 1) {
+          sb.append(text);
+          continue;
+        }
+        int lastCommentIndex = text.lastIndexOf("//");
+        if (lastCommentIndex == -1) {
+          sb.append(text);
+          continue;
+        }
+        String afterComment = text.substring(lastCommentIndex);
+        if (afterComment.contains("\n")) {
+          sb.append(text);
+          continue;
+        }
+        sb.append(text).append("\n");
+      }
+      sb.append("\n}");
+      return sb.toString();
     }
   }
 
