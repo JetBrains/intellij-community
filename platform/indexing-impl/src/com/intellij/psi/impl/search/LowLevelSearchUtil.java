@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntProcedure;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
@@ -277,7 +278,7 @@ public final class LowLevelSearchUtil {
     int[] cachedOccurrences = cachedMap == null ? null : cachedMap.get(searcher);
     boolean hasCachedOccurrences = cachedOccurrences != null && cachedOccurrences[0] <= startOffset && cachedOccurrences[1] >= endOffset;
     if (!hasCachedOccurrences) {
-      IntArrayList occurrences = new IntArrayList();
+      IntList occurrences = new IntArrayList();
       int newStart = Math.min(startOffset, cachedOccurrences == null ? startOffset : cachedOccurrences[0]);
       int newEnd = Math.max(endOffset, cachedOccurrences == null ? endOffset : cachedOccurrences[1]);
       occurrences.add(newStart);
@@ -297,7 +298,7 @@ public final class LowLevelSearchUtil {
       }
       cachedMap.put(searcher, cachedOccurrences);
     }
-    IntArrayList offsets = new IntArrayList(cachedOccurrences.length - 2);
+    IntList offsets = new IntArrayList(cachedOccurrences.length - 2);
     for (int i = 2; i < cachedOccurrences.length; i++) {
       int occurrence = cachedOccurrences[i];
       if (occurrence > endOffset - searcher.getPatternLength()) break;

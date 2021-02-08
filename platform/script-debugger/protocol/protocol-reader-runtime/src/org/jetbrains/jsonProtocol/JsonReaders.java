@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonToken;
 import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,7 +254,7 @@ public final class JsonReaders {
       return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
-    IntArrayList result = new IntArrayList();
+    IntList result = new IntArrayList();
     do {
       result.add(reader.nextInt());
     }

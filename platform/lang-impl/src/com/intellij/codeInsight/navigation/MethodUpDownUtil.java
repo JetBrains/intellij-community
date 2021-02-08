@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,7 +35,7 @@ public final class MethodUpDownUtil {
   }
 
   public static int[] offsetsFromElements(final Collection<? extends PsiElement> array) {
-    IntArrayList offsets = new IntArrayList(array.size());
+    IntList offsets = new IntArrayList(array.size());
     for (PsiElement element : array) {
       int offset = element.getTextOffset();
       assert offset >= 0 : element + " ("+element.getClass()+"); offset: " + offset;

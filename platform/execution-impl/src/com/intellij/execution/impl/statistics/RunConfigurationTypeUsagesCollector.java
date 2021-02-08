@@ -58,7 +58,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   @NotNull
   @Override
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    Object2IntOpenHashMap<Template> templates = new Object2IntOpenHashMap<>();
+    Object2IntMap<Template> templates=new Object2IntOpenHashMap<>();
     if (project.isDisposed()) {
       return Collections.emptySet();
     }
@@ -104,11 +104,13 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return true;
   }
 
-  private static void addOrIncrement(Object2IntOpenHashMap<Template> templates, Template template) {
-    templates.addTo(template, 1);
+  private static void addOrIncrement(Object2IntMap<Template> templates,
+                                     Template template) {
+    templates.mergeInt(template, 1, Math::addExact);
   }
 
-  private static void collectRunConfigurationFeatures(RunConfiguration runConfiguration, Object2IntOpenHashMap<Template> templates) {
+  private static void collectRunConfigurationFeatures(RunConfiguration runConfiguration,
+                                                      Object2IntMap<Template> templates) {
     if (runConfiguration instanceof RunConfigurationBase) {
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
       if (!info.isSafeToReport()) return;

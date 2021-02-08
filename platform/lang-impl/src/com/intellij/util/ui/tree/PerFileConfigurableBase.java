@@ -46,6 +46,7 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -259,7 +260,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       myModel.data.add(pair(file, getNewMapping(file)));
     }
     myModel.fireTableDataChanged();
-    IntArrayList rowList = new IntArrayList();
+    IntList rowList = new IntArrayList();
     for (int i = 0, size = myModel.data.size(); i < size; i++) {
       if (chosen.contains(myModel.data.get(i).first)) {
         rowList.add(i);
@@ -416,7 +417,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected int[] findRow(VirtualFile file, boolean strict, boolean all) {
-    IntArrayList rows = new IntArrayList();
+    IntList rows = new IntArrayList();
     List<Pair<Object, T>> reversed = ContainerUtil.reverse(myModel.data);
     for (int i = 0, size = reversed.size(); i < size; i++) {
       Pair<Object, T> p = reversed.get(i);
@@ -624,7 +625,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private int clearSubdirectoriesOnDemandOrCancel(boolean keysToo, Object... keys) {
-    IntArrayList rows = new IntArrayList();
+    IntList rows = new IntArrayList();
     boolean toOverride = false;
     for (int i = 0, size = myModel.data.size(); i < size; i++) {
       Pair<Object, T> p = myModel.data.get(i);

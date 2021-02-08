@@ -111,8 +111,8 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
 
-  private static final Object2LongOpenHashMap<String> TOTAL_SETUP_COST_MILLIS = new Object2LongOpenHashMap<>();
-  private static final Object2LongOpenHashMap<String> TOTAL_TEARDOWN_COST_MILLIS = new Object2LongOpenHashMap<>();
+  private static final Object2LongMap<String> TOTAL_SETUP_COST_MILLIS=new Object2LongOpenHashMap<>();
+  private static final Object2LongMap<String> TOTAL_TEARDOWN_COST_MILLIS=new Object2LongOpenHashMap<>();
 
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
@@ -483,8 +483,9 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param cost setup cost in milliseconds
    */
-  private void logPerClassCost(long cost, @NotNull Object2LongOpenHashMap<? super String> costMap) {
-    costMap.addTo(getClass().getSuperclass().getName(), cost);
+  private void logPerClassCost(long cost,
+                               @NotNull Object2LongMap<? super String> costMap) {
+    costMap.mergeLong(getClass().getSuperclass().getName(), cost, Math::addExact);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

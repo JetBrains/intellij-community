@@ -57,7 +57,7 @@ public final class GithubTagInfo {
     } else if (StringUtil.startsWithChar(tagName, 'v')) {
       tagName = tagName.substring(1);
     }
-    IntArrayList intComponents = new IntArrayList();
+    IntList intComponents=new IntArrayList();
     int startInd = 0;
     while (true) {
       int ind = tagName.indexOf('.', startInd);
@@ -120,7 +120,7 @@ public final class GithubTagInfo {
   }
 
   public static final class Version implements Comparable<Version> {
-    private final IntArrayList myIntComponents;
+    private final IntList myIntComponents;
     private final String myLabel;
     private final int myLabelVersion;
 

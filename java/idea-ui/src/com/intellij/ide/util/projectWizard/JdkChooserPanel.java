@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.StatusText;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +136,7 @@ public class JdkChooserPanel extends JPanel {
     fillList(type, globalSdks);
     // restore selection
     if (selectedJdk != null) {
-      IntArrayList list = new IntArrayList();
+      IntList list = new IntArrayList();
       for (int i = 0; i < myListModel.size(); i++) {
         Sdk jdk = myListModel.getElementAt(i);
         if (Comparing.strEqual(jdk.getName(), selectedJdk.getName())){

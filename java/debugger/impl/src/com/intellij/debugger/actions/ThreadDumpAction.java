@@ -22,6 +22,7 @@ import com.intellij.unscramble.ThreadState;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -158,7 +159,7 @@ public final class ThreadDumpAction extends DumbAwareAction implements AnAction.
         final List<StackFrame> frames = threadReference.frames();
         hasEmptyStack = frames.size() == 0;
 
-        final Int2ObjectOpenHashMap<List<ObjectReference>> lockedAt = new Int2ObjectOpenHashMap<>();
+        final Int2ObjectMap<List<ObjectReference>> lockedAt = new Int2ObjectOpenHashMap<>();
         if (vmProxy.canGetMonitorFrameInfo()) {
           for (Object m : threadReference.ownedMonitorsAndFrames()) {
             if (m instanceof MonitorInfo) { // see JRE-937

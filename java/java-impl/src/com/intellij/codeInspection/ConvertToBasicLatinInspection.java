@@ -16,6 +16,7 @@ import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.io.IOUtil;
 import com.intellij.xml.util.XmlUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +120,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static class DocCommentHandler extends Handler {
-    private static Int2ObjectOpenHashMap<String> ourEntities;
+    private static Int2ObjectMap<String> ourEntities;
 
     @Override
     PsiElement getSubstitution(PsiElement element) {
@@ -170,7 +171,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
         return;
       }
 
-      Int2ObjectOpenHashMap<String> entities = new Int2ObjectOpenHashMap<>();
+      Int2ObjectMap<String> entities = new Int2ObjectOpenHashMap<>();
       Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, element -> {
         if (element instanceof XmlEntityDecl) {

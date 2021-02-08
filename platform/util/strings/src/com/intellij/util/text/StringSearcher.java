@@ -3,6 +3,7 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.Strings;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +85,7 @@ public final class StringSearcher {
 
   public int @NotNull [] findAllOccurrences(@NotNull CharSequence text) {
     int end = text.length();
-    IntArrayList result = new IntArrayList();
+    IntList result = new IntArrayList();
     for (int index = 0; index < end; index++) {
       //noinspection AssignmentToForLoopParameter
       index = scan(text, index, end);

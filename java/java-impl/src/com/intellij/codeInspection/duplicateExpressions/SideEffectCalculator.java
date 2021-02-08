@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -18,17 +19,17 @@ import java.util.Set;
 import static com.intellij.psi.CommonClassNames.*;
 
 /**
- * Verifies that the expression is free of side effects and always yields the same result (in terms of <code>Object.equals()</code>),
+ * Verifies that the expression is free of side effects and always yields the same result (in terms of {@code Object.equals()}),
  * so that it's safe to compute the expression only once and then reuse the result.<br>
- * Well-known APIs, such as <code>Object.equals()</code>, <code>Object.hashCode()</code>, <code>Object.toString()</code>,
- * <code>Comparable.compareTo()</code>, and <code>Comparator.compare()</code> are considered safe because of their contract.
- * Immutable classes like <code>String</code>, <code>BigDecimal</code>, etc, and utility classes like
- * <code>Objects</code>, <code>Math</code> (except <code>random()</code>) are OK too.
+ * Well-known APIs, such as {@code Object.equals()}, {@code Object.hashCode()}, {@code Object.toString()},
+ * {@code Comparable.compareTo()}, and {@code Comparator.compare()} are considered safe because of their contract.
+ * Immutable classes like {@code String}, {@code BigDecimal}, etc, and utility classes like
+ * {@code Objects}, {@code Math} (except {@code random()}) are OK too.
  *
  *  @author Pavel.Dolgov
  */
 final class SideEffectCalculator {
-  private final Object2IntOpenHashMap<PsiExpression> myCache = new Object2IntOpenHashMap<>();
+  private final Object2IntMap<PsiExpression> myCache = new Object2IntOpenHashMap<>();
 
   private static final Set<String> SIDE_EFFECTS_FREE_CLASSES = Set.of(
     JAVA_LANG_BOOLEAN,

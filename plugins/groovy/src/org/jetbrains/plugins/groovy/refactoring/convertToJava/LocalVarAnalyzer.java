@@ -5,6 +5,7 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiVariable;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -81,7 +82,7 @@ final class LocalVarAnalyzer extends GroovyRecursiveElementVisitor {
 
   private final Set<PsiVariable> touched = new HashSet<>();
   private final Set<PsiVariable> rewritten = new HashSet<>();
-  private final Object2IntOpenHashMap<PsiVariable> allVars = new Object2IntOpenHashMap<>();
+  private final Object2IntMap<PsiVariable> allVars = new Object2IntOpenHashMap<>();
 
   private int grade = 0;
 

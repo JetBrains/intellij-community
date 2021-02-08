@@ -258,7 +258,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   private static @NotNull Int2IntMap getCommitsMap(@NotNull Iterable<Integer> hashes) {
-    Int2IntOpenHashMap commits = new Int2IntOpenHashMap();
+    Int2IntMap commits=new Int2IntOpenHashMap();
     int row = 0;
     for (Integer commitId : hashes) {
       commits.put(commitId.intValue(), row);

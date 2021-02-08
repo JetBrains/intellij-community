@@ -7,6 +7,7 @@ import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -206,7 +207,7 @@ public final class ByChar {
   //
 
   private static int @NotNull [] getAllCodePoints(@NotNull CharSequence text) {
-    IntArrayList list = new IntArrayList(text.length());
+    IntList list = new IntArrayList(text.length());
 
     int len = text.length();
     int offset = 0;
@@ -225,8 +226,8 @@ public final class ByChar {
 
   @NotNull
   private static CodePointsOffsets getNonSpaceCodePoints(@NotNull CharSequence text) {
-    IntArrayList codePoints = new IntArrayList(text.length());
-    IntArrayList offsets = new IntArrayList(text.length());
+    IntList codePoints = new IntArrayList(text.length());
+    IntList offsets = new IntArrayList(text.length());
 
     int len = text.length();
     int offset = 0;
@@ -248,8 +249,8 @@ public final class ByChar {
 
   @NotNull
   private static CodePointsOffsets getPunctuationChars(@NotNull CharSequence text) {
-    IntArrayList codePoints = new IntArrayList(text.length());
-    IntArrayList offsets = new IntArrayList(text.length());
+    IntList codePoints = new IntArrayList(text.length());
+    IntList offsets = new IntArrayList(text.length());
 
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);

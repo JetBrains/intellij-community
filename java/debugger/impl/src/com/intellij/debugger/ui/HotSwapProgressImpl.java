@@ -30,6 +30,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import one.util.streamex.StreamEx;
@@ -44,7 +45,7 @@ import java.util.List;
 public final class HotSwapProgressImpl extends HotSwapProgress {
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
-  private final Int2ObjectOpenHashMap<List<String>> myMessages = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<List<String>> myMessages = new Int2ObjectOpenHashMap<>();
   private final ProgressWindow myProgressWindow;
   private @NlsContexts.ProgressTitle String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;

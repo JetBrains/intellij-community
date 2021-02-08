@@ -23,6 +23,7 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -1556,7 +1557,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * thus sum of resulting class sizes is equal to the original class size
    */
   private @NotNull List<EqClass> splitEqClass(EqClass eqClass, DfaMemoryStateImpl other) {
-    Int2ObjectOpenHashMap<EqClass> groupsInClasses = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<EqClass> groupsInClasses = new Int2ObjectOpenHashMap<>();
     List<EqClass> groups = new ArrayList<>();
     for (DfaVariableValue value : eqClass.asList()) {
       int otherClass = other.getEqClassIndex(value);

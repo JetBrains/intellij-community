@@ -24,6 +24,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -147,7 +148,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       return Collections.emptyList();
     }
 
-    Int2ObjectOpenHashMap<List<Rule>> rulesByHash = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<List<Rule>> rulesByHash = new Int2ObjectOpenHashMap<>();
     List<String> commentTexts = new ArrayList<>();
     for (PsiElement element = switchBody.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (!(element instanceof PsiSwitchLabeledRuleStatement)) {

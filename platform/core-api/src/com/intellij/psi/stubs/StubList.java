@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +162,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     };
   }
 
-  private Int2ObjectOpenHashMap<MostlyUShortIntList> tempMap() {
+  private Int2ObjectMap<MostlyUShortIntList> tempMap() {
     assert myTempState != null;
     return Objects.requireNonNull(myTempState.myTempJoinedChildrenMap);
   }
@@ -220,7 +221,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   private final class TempState {
-    @Nullable Int2ObjectOpenHashMap<MostlyUShortIntList> myTempJoinedChildrenMap;
+    @Nullable Int2ObjectMap<MostlyUShortIntList> myTempJoinedChildrenMap;
 
     int myCurrentParent = -1;
     int myExpectedChildrenCount;

@@ -26,6 +26,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    IntArrayList toIgnoreList = new IntArrayList();
+    IntList toIgnoreList = new IntArrayList();
 
     toIgnoreList.add(Pass.UPDATE_FOLDING);
 

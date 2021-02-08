@@ -45,6 +45,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -528,7 +529,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
   public void onTypeChanged(final int newType) {
     myTypeChooser.setSelectedItem(newType);
-    final IntArrayList enabledFields = ourEnabledFields.size() > newType ? ourEnabledFields.get(newType) : null;
+    final IntList enabledFields = ourEnabledFields.size() > newType ? ourEnabledFields.get(newType) : null;
     for (int i = 0; i < myTestLocations.length; i++)
       getTestLocation(i).setEnabled(enabledFields != null && enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {

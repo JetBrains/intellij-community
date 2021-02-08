@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +114,7 @@ public final class TextMateLexer {
       }
     }
 
-    final Object2IntOpenHashMap<List<TextMateLexerState>> localStates = new Object2IntOpenHashMap<>();
+    final Object2IntMap<List<TextMateLexerState>> localStates = new Object2IntOpenHashMap<>();
     while (true) {
       TextMateLexerState lastState = myStates.element();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;

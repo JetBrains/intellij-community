@@ -12,6 +12,7 @@ import com.ibm.icu.util.MeasureUnit;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -114,7 +115,7 @@ public class NlsMessages {
   @Contract(pure = true)
   private static @NotNull @Nls String formatDuration(long duration, int maxFragments, boolean narrow) {
     LongArrayList unitValues = new LongArrayList();
-    IntArrayList unitIndices = new IntArrayList();
+    IntList unitIndices = new IntArrayList();
 
     long count = duration;
     int i = 1;

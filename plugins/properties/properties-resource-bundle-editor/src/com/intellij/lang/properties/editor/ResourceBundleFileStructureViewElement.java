@@ -97,7 +97,7 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
 
   private static MultiMap<String, IProperty> getChildrenIdShowOnlyIncomplete(ResourceBundle resourceBundle) {
     final MultiMap<String, IProperty> propertyNames = MultiMap.createLinked();
-    Object2IntOpenHashMap<String> occurrences = new Object2IntOpenHashMap<>();
+    Object2IntMap<String> occurrences=new Object2IntOpenHashMap<>();
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       MultiMap<String, IProperty> currentFilePropertyNames = MultiMap.createLinked();
       for (IProperty property : file.getProperties()) {
@@ -106,7 +106,7 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
       }
       propertyNames.putAllValues(currentFilePropertyNames);
       for (String propertyName : currentFilePropertyNames.keySet()) {
-        occurrences.addTo(propertyName, 1);
+        occurrences.mergeInt(propertyName, 1, Math::addExact);
       }
     }
     final int targetOccurrences = resourceBundle.getPropertiesFiles().size();

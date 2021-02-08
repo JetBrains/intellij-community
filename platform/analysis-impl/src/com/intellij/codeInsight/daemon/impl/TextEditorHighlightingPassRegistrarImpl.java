@@ -158,7 +158,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         // init with editor's colors scheme
         pass.setColorsScheme(editor.getColorsScheme());
 
-        IntArrayList ids = new IntArrayList(passConfig.completionPredecessorIds.length);
+        IntList ids=new IntArrayList(passConfig.completionPredecessorIds.length);
         for (int id : passConfig.completionPredecessorIds) {
           if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
         }

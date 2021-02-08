@@ -41,8 +41,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -665,12 +664,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    protected void visitProblemSeverities(@NotNull Object2IntOpenHashMap<HighlightDisplayLevel> counter) {
+    protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
       if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation()
         .isSuppressed(getElement())) {
         HighlightSeverity severity = InspectionToolResultExporter.getSeverity(getElement(), null, getPresentation());
         HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-        counter.addTo(level, 1);
+        counter.mergeInt(level, 1, Math::addExact);
         return;
       }
       super.visitProblemSeverities(counter);

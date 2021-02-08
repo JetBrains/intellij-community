@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.util.containers.UnsignedShortArrayList;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 import java.util.function.IntUnaryOperator;
@@ -10,7 +11,7 @@ import java.util.function.IntUnaryOperator;
 final class MostlyUShortIntList implements IntUnaryOperator {
   private static final int IN_MAP = Character.MAX_VALUE;
   private final UnsignedShortArrayList myList;
-  private Int2IntOpenHashMap myMap;
+  private Int2IntMap myMap;
 
   MostlyUShortIntList(int initialCapacity) {
     myList = new UnsignedShortArrayList(initialCapacity);
@@ -32,7 +33,7 @@ final class MostlyUShortIntList implements IntUnaryOperator {
     myList.setQuick(index, value);
   }
 
-  private Int2IntOpenHashMap initMap() {
+  private Int2IntMap initMap() {
     if (myMap == null) {
       myMap = new Int2IntOpenHashMap();
     }
@@ -56,7 +57,7 @@ final class MostlyUShortIntList implements IntUnaryOperator {
   void trimToSize() {
     myList.trimToSize();
     if (myMap != null) {
-      myMap.trim();
+      ((Int2IntOpenHashMap)myMap).trim();
     }
   }
 }

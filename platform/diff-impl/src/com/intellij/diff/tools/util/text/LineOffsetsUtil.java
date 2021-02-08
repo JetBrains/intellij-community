@@ -5,6 +5,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -16,7 +17,7 @@ public final class LineOffsetsUtil {
 
   @NotNull
   public static LineOffsets create(@NotNull CharSequence text) {
-    IntArrayList ends = new IntArrayList();
+    IntList ends = new IntArrayList();
 
     int index = 0;
     while (true) {

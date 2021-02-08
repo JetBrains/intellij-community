@@ -19,6 +19,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -501,7 +502,7 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
    * It tries to preserve entry count on line as it was before sort
    */
   private static final class LineLayout {
-    private final IntArrayList myEntryCountOnLines = new IntArrayList();
+    private final IntList myEntryCountOnLines = new IntArrayList();
     private int myCurrent = 0;
 
     LineLayout() {

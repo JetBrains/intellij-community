@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,10 +143,10 @@ public abstract class ModuleInsight {
   }
 
   private void maximizeModuleFolders(@NotNull Collection<ModuleCandidate> modules) {
-    Object2IntOpenHashMap<File> dirToChildRootCount = new Object2IntOpenHashMap<>();
+    Object2IntMap<File> dirToChildRootCount = new Object2IntOpenHashMap<>();
     for (ModuleCandidate module : modules) {
       walkParents(module.myFolder, this::isEntryPointRoot, file -> {
-        dirToChildRootCount.addTo(file, 1);
+        dirToChildRootCount.mergeInt(file, 1, Math::addExact);
       });
     }
     for (ModuleCandidate module : modules) {

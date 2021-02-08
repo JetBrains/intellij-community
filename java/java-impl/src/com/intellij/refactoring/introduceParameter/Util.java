@@ -15,10 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +105,7 @@ public final class Util {
       return new IntArrayList();
     }
 
-    IntOpenHashSet suspects = new IntOpenHashSet();
+    IntSet suspects = new IntOpenHashSet();
     expr.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -142,7 +139,7 @@ public final class Util {
 
   private static void removeUsed(PsiMethod containingMethod, @NotNull PsiExpression expr,
                                  PsiExpression @Nullable [] occurences,
-                                 IntOpenHashSet suspects) {
+                                 IntSet suspects) {
     final IntIterator iterator = suspects.iterator();
     while (iterator.hasNext()) {
       final int paramNum = iterator.nextInt();

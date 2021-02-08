@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -97,7 +98,7 @@ public class TypeProvider {
 
     final GrParameter[] parameters = method.getParameters();
 
-    final IntArrayList paramInds = new IntArrayList(parameters.length);
+    final IntList paramInds = new IntArrayList(parameters.length);
     final PsiType[] types = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
       if (parameters[i].getTypeElementGroovy() == null) {

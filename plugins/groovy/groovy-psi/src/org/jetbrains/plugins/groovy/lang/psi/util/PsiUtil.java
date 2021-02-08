@@ -17,8 +17,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -345,7 +345,7 @@ public final class PsiUtil {
       @Override
       public Iterator<PsiClass> iterator() {
         return new Iterator<>() {
-          final IntArrayList indices = new IntArrayList();
+          final IntStack indices = new IntStack();
           final Stack<PsiClassType[]> superTypesStack = new Stack<>();
           final Set<PsiClass> visited = new HashSet<>();
           PsiClass current;
