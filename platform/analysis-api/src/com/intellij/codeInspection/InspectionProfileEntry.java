@@ -328,6 +328,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   /**
    * This method is called each time UI is shown.
+   * To get correct spacing, return a JComponent with empty insets using Kotlin UI DSL
+   * or {@link com.intellij.codeInspection.ui.InspectionOptionsPanel}.
    *
    * @return {@code null} if no UI options required.
    */

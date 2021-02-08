@@ -26,6 +26,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -244,6 +245,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       else {
         configPanelAnchor.add(ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE));
       }
+      additionalConfigPanel.setBorder(additionalConfigPanel instanceof DialogPanel
+                                      ? JBUI.Borders.empty(12, 20, 0, 0)
+                                      : JBUI.Borders.empty(10, 17, 0, 0));
     }
 
     if (myOptionsLabel != null)
@@ -911,7 +915,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         .add(severityPanel,
              new GridBagConstraints(0, 0, 1, 1, 1.0, severityPanelWeightY,
                                     GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                    JBUI.insets(SECTION_GAP, 2, 0, 0),
+                                    JBUI.insetsTop(SECTION_GAP),
                                     0, 0));
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
       if (configPanelAnchor.getComponentCount() != 0) {
@@ -925,14 +929,14 @@ public class SingleInspectionProfilePanel extends JPanel {
         myOptionsPanel.add(configPanelAnchor,
                            new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0,
                                                   GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                  JBUI.insets(0, 2, 0, 0),
+                                                  JBUI.emptyInsets(),
                                                   0, 0));
       }
       else if (scopesNames.isEmpty()) {
         myOptionsPanel.add(configPanelAnchor,
                            new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0,
                                                   GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                  JBUI.insets(0, 2, 0, 0),
+                                                  JBUI.emptyInsets(),
                                                   0, 0));
       }
       myOptionsPanel.revalidate();
@@ -1263,11 +1267,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
       setLayout(new GridBagLayout());
-      setBorder(JBUI.Borders.empty(IdeBorderFactory.TITLED_BORDER_INDENT, 0, IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET, 0));
+      setBorder(JBUI.Borders.emptyTop(IdeBorderFactory.TITLED_BORDER_INDENT));
       GridBagConstraints optionsLabelConstraints =
         new GridBagConstraints(0, 0, 1, 1, 0, 1,
                                GridBagConstraints.WEST, GridBagConstraints.NONE,
-                               JBUI.insets(0, 2, 0, 0),
+                               JBUI.emptyInsets(),
                                0, 0);
       add(myOptionsLabel, optionsLabelConstraints);
       GridBagConstraints separatorConstraints =

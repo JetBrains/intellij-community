@@ -4,19 +4,16 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MultipleCheckboxOptionsPanel extends JPanel {
+public class MultipleCheckboxOptionsPanel extends InspectionOptionsPanel {
 
     private final OptionAccessor myOptionAccessor;
 
@@ -25,7 +22,6 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
     }
 
     public MultipleCheckboxOptionsPanel(final OptionAccessor optionAccessor) {
-        super(new GridBagLayout());
         myOptionAccessor = optionAccessor;
     }
 
@@ -43,7 +39,7 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
 
     public JCheckBox addDependentCheckBox(@NlsContexts.Checkbox String label, @NonNls String property, JCheckBox controller) {
         final JCheckBox checkBox = addCheckboxEx(label, property);
-        checkBox.setBorder(new EmptyBorder(new JBInsets(0, 30, 0, 0)));
+        checkBox.setBorder(new EmptyBorder(new JBInsets(0, 20, 0, 0)));
         controller.addItemListener(
           e -> checkBox.setEnabled(((JCheckBox)e.getSource()).isEnabled() && e.getStateChange() == ItemEvent.SELECTED));
         checkBox.setEnabled(controller.isEnabled() && controller.isSelected());
@@ -51,19 +47,6 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
     }
 
     public void addComponent(JComponent component) {
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.weightx = 1.0;
-        final Component[] components = getComponents();
-        removeAll();
-        for (Component component1 : components) {
-            add(component1, constraints);
-            constraints.gridy++;
-        }
-        constraints.weighty = 1.0;
-        component.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
-        add(component, constraints);
+        add(component);
     }
 }
