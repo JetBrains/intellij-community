@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -33,7 +34,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabsUtil;
@@ -65,8 +65,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static javax.swing.SwingConstants.*;
-import static javax.swing.SwingConstants.RIGHT;
 
 public final class EditorWindow {
   private static final Logger LOG = Logger.getInstance(EditorWindow.class);
@@ -877,11 +875,14 @@ public final class EditorWindow {
       int width = Registry.intValue("ide.splitter.chooser.info.panel.width");
       int arc = Registry.intValue("ide.splitter.chooser.info.panel.arc");
 
-      Function<String, String> getShortcut = (actionId) -> KeymapUtil.getKeystrokeText(ActionManager.getInstance().getKeyboardShortcut(actionId).getFirstKeyStroke());
-      String openShortcuts = String.format("%s to open%s", getShortcut.apply("SplitChooser.Split"),
+      Function<String, String> getShortcut = (actionId) -> {
+        KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
+        return KeymapUtil.getKeystrokeText(shortcut == null ? null : shortcut.getFirstKeyStroke());
+      };
+      String openShortcuts = String.format(IdeBundle.message("split.with.chooser.move.tab"), getShortcut.apply("SplitChooser.Split"),
                                            SplitterService.getInstance().myInitialEditorWindow != null
-                                           ? String.format(", %s to duplicate", getShortcut.apply("SplitChooser.Duplicate")) : "");
-      String switchShortcuts = String.format("%s to go to the next splitter", getShortcut.apply("SplitChooser.NextWindow"));
+                                           ? String.format(IdeBundle.message("split.with.chooser.duplicate.tab"), getShortcut.apply("SplitChooser.Duplicate")) : "");
+      String switchShortcuts = String.format(IdeBundle.message("split.with.chooser.switch.tab"), getShortcut.apply("SplitChooser.NextWindow"));
 
       // Adjust default width to info text
       Font font = UIUtil.getLabelFont();
@@ -896,7 +897,7 @@ public final class EditorWindow {
       }
 
       final Shape rectangle = new RoundRectangle2D.Double(centerX - width / 2.0, centerY - height / 2.0, width, height, arc, arc);
-      g.setColor(new JBColor(0xf2f2f2, 0x4c5052));
+      g.setColor(UIUtil.getLabelBackground());
       g.fill(rectangle);
 
       int arrowsCenterVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.center");
