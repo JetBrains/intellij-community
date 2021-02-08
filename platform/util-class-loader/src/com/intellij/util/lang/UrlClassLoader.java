@@ -538,7 +538,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {
       List<Path> files = new ArrayList<>(urls.size());
       for (URL url : urls) {
-        files.add(Paths.get(url.getPath()));
+        files.add(Paths.get(urlToFilePath(url.getPath())));
       }
       this.files = files;
       return this;
