@@ -13,7 +13,7 @@ internal interface SpaceReviewParticipantSelectorVm : SpaceLoadingVm, Lifetimed 
 
   val currentParticipants: Property<List<CodeReviewParticipant>>
 
-  val suggestedParticipants: Property<List<TD_MemberProfile>>
+  val suggestedParticipants: Property<List<TD_MemberProfile>?>
 
   val possibleParticipants: Property<XPagedListOnFlux<TD_MemberProfile>>
 

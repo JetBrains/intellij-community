@@ -33,7 +33,7 @@ internal abstract class SpaceReviewParticipantSelectorVmImpl(
 
   override val dataUpdateSignal: Signal<DataUpdate> = SignalImpl()
 
-  private val allSuggestedParticipants: Property<List<TD_MemberProfile>> = mapInit(emptyList()) {
+  private val allSuggestedParticipants: Property<List<TD_MemberProfile>?> = mapInit(null) {
     getSuggestedParticipants().resolveAll()
   }
 
@@ -41,8 +41,9 @@ internal abstract class SpaceReviewParticipantSelectorVmImpl(
     it.map { participant -> participant.user.resolve().id }
   }
 
-  final override val suggestedParticipants: Property<List<TD_MemberProfile>> =
+  final override val suggestedParticipants: Property<List<TD_MemberProfile>?> =
     mapInit(searchText, allSuggestedParticipants, emptyList()) { text, suggested ->
+      suggested ?: return@mapInit null
       val result = suggested
         .filter { it.match(text) }
         .filter { filterParticipants(it) }
@@ -77,16 +78,18 @@ internal abstract class SpaceReviewParticipantSelectorVmImpl(
   }
 
   final override val possibleParticipants: Property<XPagedListOnFlux<TD_MemberProfile>> =
-    map(suggestedParticipants, searchText) { _, text ->
-      xPagedListOnFlux(
-        client, 30, keyFn = { it.id }, loadImmediately = true
-      ) {
+    map(suggestedParticipants, searchText) { suggested, text ->
+      if (suggested == null) xPagedListOnFlux(client, 1, keyFn = { it.id }, loadImmediately = true) {
+        Batch("", 0, emptyList())
+      }
+      else xPagedListOnFlux(client, 30, keyFn = { it.id }, loadImmediately = true) {
         getPossibleParticipantsBatch(it, text).resolveAll()
       }
     }
 
   override val isLoading: Property<Boolean> = lifetime.flatten(
     lifetime.map(possibleParticipants) { reviewList ->
+      allSuggestedParticipants.value ?: return@map Property.create(true)
       lifetime.mapInit(reviewList.isLoading, false) {
         it
       }
@@ -104,7 +107,7 @@ internal abstract class SpaceReviewParticipantSelectorVmImpl(
         when (batchResult) {
           is BatchResult.More -> {
             val data = batchResult.items
-              .filter { !suggestedParticipants.value.contains(it) }
+              .filter { !(suggestedParticipants.value?.contains(it) ?: false) }
               .filter { filterParticipants(it) }
               .map { profile ->
                 SpaceReviewParticipantItem(profile, { isSelected(profile) }, SpaceReviewParticipantItemPosition.PLAIN)
