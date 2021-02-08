@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,19 +22,19 @@ import com.intellij.refactoring.changeSignature.ParameterTableModelBase
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
 import com.intellij.util.ui.ColumnInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 abstract class KotlinCallableParameterTableModel protected constructor(
     private val methodDescriptor: KotlinMethodDescriptor,
-    typeContext: PsiElement,
     defaultValueContext: PsiElement,
     vararg columnInfos: ColumnInfo<*, *>?
 ) : ParameterTableModelBase<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>>(
-    typeContext,
+    getTypeCodeFragmentContext(methodDescriptor.baseDeclaration),
     defaultValueContext,
     *columnInfos,
 ) {
-    private val project: Project = typeContext.project
+    private val project: Project = defaultValueContext.project
 
     open var receiver: KotlinParameterInfo? = null
 
@@ -73,6 +73,18 @@ abstract class KotlinCallableParameterTableModel protected constructor(
         fun isNameColumn(column: ColumnInfo<*, *>?): Boolean = column is NameColumn<*, *>
 
         fun isDefaultValueColumn(column: ColumnInfo<*, *>?): Boolean = column is DefaultValueColumn<*, *>
+
+        fun getTypeCodeFragmentContext(startFrom: PsiElement): KtElement = startFrom.parentsWithSelf.mapNotNull {
+            when {
+                it is KtNamedFunction -> it.bodyExpression ?: it.valueParameterList
+                it is KtPropertyAccessor -> it.bodyExpression
+                it is KtDeclaration && KtPsiUtil.isLocal(it) -> null
+                it is KtConstructor<*> -> it
+                it is KtClassOrObject -> it
+                it is KtFile -> it
+                else -> null
+            }
+        }.first()
     }
 
 }

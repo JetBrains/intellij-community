@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeCodeFragmentContext
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallableParameterTableModel
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
 import org.jetbrains.kotlin.idea.search.allScope
@@ -243,10 +243,11 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         setNewParameter(j, temp)
     }
 
-    private fun KotlinChangeInfo.resolveType(text: String, isCovariant: Boolean, forPreview: Boolean): KotlinTypeInfo {
-        val codeFragment = KtPsiFactory(project).createTypeCodeFragment(text, getTypeCodeFragmentContext(context))
-        return codeFragment.getTypeInfo(isCovariant, forPreview)
-    }
+    private fun KotlinChangeInfo.resolveType(text: String, isCovariant: Boolean, forPreview: Boolean): KotlinTypeInfo =
+        KtPsiFactory(project).createTypeCodeFragment(
+            text,
+            KotlinCallableParameterTableModel.getTypeCodeFragmentContext(context),
+        ).getTypeInfo(isCovariant, forPreview)
 
     // --------------------------------- Tests ---------------------------------
 

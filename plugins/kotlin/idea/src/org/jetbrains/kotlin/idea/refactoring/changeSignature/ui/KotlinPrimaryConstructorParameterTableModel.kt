@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,15 @@ import javax.swing.table.TableCellRenderer
 
 class KotlinPrimaryConstructorParameterTableModel(
     methodDescriptor: KotlinMethodDescriptor,
-    typeContext: PsiElement,
     defaultValueContext: PsiElement
 ) : KotlinCallableParameterTableModel(
     methodDescriptor,
-    typeContext,
     defaultValueContext,
     ValVarColumn(),
-    NameColumn<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>>(typeContext.project),
-    TypeColumn<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>>(typeContext.project, KotlinFileType.INSTANCE),
+    NameColumn<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>>(defaultValueContext.project),
+    TypeColumn<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>>(defaultValueContext.project, KotlinFileType.INSTANCE),
     DefaultValueColumn<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>>(
-        typeContext.project,
+        defaultValueContext.project,
         KotlinFileType.INSTANCE,
     )
 ) {

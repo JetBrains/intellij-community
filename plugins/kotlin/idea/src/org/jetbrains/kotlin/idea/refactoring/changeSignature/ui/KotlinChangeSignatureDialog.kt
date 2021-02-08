@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescrip
 import org.jetbrains.kotlin.idea.refactoring.validateElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -407,31 +406,16 @@ class KotlinChangeSignatureDialog(
         private fun createParametersInfoModel(
             descriptor: KotlinMethodDescriptor,
             defaultValueContext: PsiElement
-        ): KotlinCallableParameterTableModel {
-            val typeContext = getTypeCodeFragmentContext(descriptor.baseDeclaration)
-            return when (descriptor.kind) {
-                Kind.FUNCTION -> KotlinFunctionParameterTableModel(descriptor, typeContext, defaultValueContext)
-                Kind.PRIMARY_CONSTRUCTOR -> KotlinPrimaryConstructorParameterTableModel(descriptor, typeContext, defaultValueContext)
-                Kind.SECONDARY_CONSTRUCTOR -> KotlinSecondaryConstructorParameterTableModel(descriptor, typeContext, defaultValueContext)
-            }
+        ): KotlinCallableParameterTableModel = when (descriptor.kind) {
+            Kind.FUNCTION -> KotlinFunctionParameterTableModel(descriptor, defaultValueContext)
+            Kind.PRIMARY_CONSTRUCTOR -> KotlinPrimaryConstructorParameterTableModel(descriptor, defaultValueContext)
+            Kind.SECONDARY_CONSTRUCTOR -> KotlinSecondaryConstructorParameterTableModel(descriptor, defaultValueContext)
         }
-
-        fun getTypeCodeFragmentContext(startFrom: PsiElement): KtElement = startFrom.parentsWithSelf.mapNotNull {
-            when {
-                it is KtNamedFunction -> it.bodyExpression ?: it.valueParameterList
-                it is KtPropertyAccessor -> it.bodyExpression
-                it is KtDeclaration && KtPsiUtil.isLocal(it) -> null
-                it is KtConstructor<*> -> it
-                it is KtClassOrObject -> it
-                it is KtFile -> it
-                else -> null
-            }
-        }.first()
 
         private fun createReturnTypeCodeFragment(project: Project, method: KotlinMethodDescriptor): KtTypeCodeFragment {
             return KtPsiFactory(project).createTypeCodeFragment(
                 method.returnTypeInfo.render(),
-                getTypeCodeFragmentContext(method.baseDeclaration)
+                KotlinCallableParameterTableModel.getTypeCodeFragmentContext(method.baseDeclaration)
             )
         }
 
