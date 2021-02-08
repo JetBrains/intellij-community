@@ -18,7 +18,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -343,20 +342,18 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     protected void selectElementFromEditor(@NotNull FileEditor editor) {
       if (myProject.isDisposed() || !CoverageView.this.isShowing()) return;
       if (myStateBean.myAutoScrollFromSource) {
-        final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(editor);
-        if (file != null) {
-          if (canSelect(file)) {
-            PsiElement e = null;
-            if (editor instanceof TextEditor) {
-              final int offset = ((TextEditor)editor).getEditor().getCaretModel().getOffset();
-              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-              final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-              if (psiFile != null) {
-                e = psiFile.findElementAt(offset);
-              }
+        VirtualFile file = editor.getFile();
+        if (file != null && canSelect(file)) {
+          PsiElement e = null;
+          if (editor instanceof TextEditor) {
+            int offset = ((TextEditor)editor).getEditor().getCaretModel().getOffset();
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+            PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+            if (psiFile != null) {
+              e = psiFile.findElementAt(offset);
             }
-            myBuilder.select(e != null ? e : file);
           }
+          myBuilder.select(e != null ? e : file);
         }
       }
     }
