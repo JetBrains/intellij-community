@@ -250,11 +250,11 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return myComponent;
   }
 
-  public boolean isCompact() {
+  boolean isCompact() {
     return myCompact;
   }
 
-  public TaskInfo getInfo() {
+  TaskInfo getInfo() {
     return myInfo;
   }
 
@@ -302,7 +302,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
         g.setColor(UIUtil.getPanelBackground());
         g.fillRoundRect(0, getHeight() / 2, getWidth() - 1, getHeight() / 2, arc, arc);
         g.fillRect(0, (int)label.getMaxY() + 1, getWidth() - 1, getHeight() / 2);
-      } else {
+      }
+      else {
         bg = bg.brighter();
         g.setColor(bg);
         g.drawLine(0, (int)label.getMaxY() + 1, getWidth() - 1, (int)label.getMaxY() + 1);
