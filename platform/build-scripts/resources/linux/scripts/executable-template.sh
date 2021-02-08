@@ -21,18 +21,9 @@ message()
   fi
 }
 
-UNAME=$(command -v uname)
-GREP=$(command -v egrep)
-CUT=$(command -v cut)
-READLINK=$(command -v readlink)
-XARGS=$(command -v xargs)
-DIRNAME=$(command -v dirname)
-CAT=$(command -v cat)
-SED=$(command -v sed)
-
-if [ -z "$UNAME" ] || [ -z "$GREP" ] || [ -z "$CUT" ] || [ -z "$DIRNAME" ] || [ -z "$CAT" ] || [ -z "$SED" ]; then
+if [ -z "$(command -v uname)" ] || [ -z "$(command -v egrep)" ] || [ -z "$(command -v dirname)" ] || [ -z "$(command -v cat)" ]; then
   TOOLS_MSG="Required tools are missing:"
-  for tool in uname egrep cut readlink xargs dirname cat sed ; do
+  for tool in uname egrep dirname cat ; do
      test -z "$(command -v $tool)" && TOOLS_MSG="$TOOLS_MSG $tool"
   done
   message "$TOOLS_MSG (SHELL=$SHELL PATH=$PATH)"
@@ -41,21 +32,15 @@ fi
 
 # shellcheck disable=SC2034
 GREP_OPTIONS=''
-OS_TYPE=$("$UNAME" -s)
+OS_TYPE=$(uname -s)
+OS_ARCH=$(uname -m)
 
 # ---------------------------------------------------------------------
 # Ensure $IDE_HOME points to the directory where the IDE is installed.
 # ---------------------------------------------------------------------
-SCRIPT_LOCATION="$0"
-if [ -x "$READLINK" ]; then
-  while [ -L "$SCRIPT_LOCATION" ]; do
-    SCRIPT_LOCATION=$("$READLINK" -e "$SCRIPT_LOCATION")
-  done
-fi
-
-cd "$("$DIRNAME" "$SCRIPT_LOCATION")" || exit 2
-IDE_BIN_HOME=$(pwd)
-IDE_HOME=$("$DIRNAME" "$IDE_BIN_HOME")
+cd "$(dirname "$0")" || exit 2
+IDE_BIN_HOME=$(pwd -P)
+IDE_HOME=$(dirname "$IDE_BIN_HOME")
 cd "${OLDPWD}" || exit 2
 
 CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
@@ -63,84 +48,46 @@ PRODUCT_VENDOR="__product_vendor__"
 PATHS_SELECTOR="__system_selector__"
 
 # ---------------------------------------------------------------------
-# Locate a JDK installation directory command -v will be used to run the IDE.
+# Locate a JRE installation directory command -v will be used to run the IDE.
 # Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr[-x86], $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
-  JDK="$__product_uc___JDK"
+  JRE="$__product_uc___JDK"
 fi
 
 BITS=""
-if [ -z "$JDK" ] && [ -s "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
-  USER_JRE=$("$CAT" "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
+if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
+  USER_JRE=$(cat "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
   if [ -x "$USER_JRE/bin/java" ]; then
-    JDK="$USER_JRE"
+    JRE="$USER_JRE"
   fi
 fi
 
-if [ -z "$JDK" ] && [ "$OS_TYPE" = "Linux" ]; then
-  OS_ARCH=$("$UNAME" -m)
+if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ]; then
   if [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
-    JDK="$IDE_HOME/jbr"
-  fi
-  if [ -z "$JDK" ] && [ -d "$IDE_HOME/jbr-x86" ] && "$IDE_HOME/jbr-x86/bin/java" -version > /dev/null 2>&1 ; then
-    JDK="$IDE_HOME/jbr-x86"
+    JRE="$IDE_HOME/jbr"
+  elif [ -d "$IDE_HOME/jbr-x86" ] && "$IDE_HOME/jbr-x86/bin/java" -version > /dev/null 2>&1 ; then
+    JRE="$IDE_HOME/jbr-x86"
   fi
 fi
 
 # shellcheck disable=SC2153
-if [ -z "$JDK" ] && [ -n "$JDK_HOME" ] && [ -x "$JDK_HOME/bin/java" ]; then
-  JDK="$JDK_HOME"
-fi
-
-if [ -z "$JDK" ] && [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
-  JDK="$JAVA_HOME"
-fi
-
-if [ -z "$JDK" ]; then
-  JDK_PATH=$(command -v java)
-
-  if [ -n "$JDK_PATH" ]; then
-    if [ "$OS_TYPE" = "FreeBSD" ] || [ "$OS_TYPE" = "MidnightBSD" ]; then
-      JAVA_LOCATION=$(JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-)
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
-    elif [ "$OS_TYPE" = "SunOS" ]; then
-      JAVA_LOCATION="/usr/jdk/latest"
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
-    elif [ "$OS_TYPE" = "Darwin" ]; then
-      JAVA_LOCATION=$(/usr/libexec/java_home)
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
-    fi
-  fi
-
-  if [ -z "$JDK" ] && [ -n "$JDK_PATH" ] && [ -x "$READLINK" ] && [ -x "$XARGS" ]; then
-    JAVA_LOCATION=$("$READLINK" -f "$JDK_PATH")
-    case "$JAVA_LOCATION" in
-      */jre/bin/java)
-        JAVA_LOCATION=$(echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME")
-        if [ ! -d "$JAVA_LOCATION/bin" ]; then
-          JAVA_LOCATION="$JAVA_LOCATION/jre"
-        fi
-        ;;
-      *)
-        JAVA_LOCATION=$(echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME")
-        ;;
-    esac
-    if [ -x "$JAVA_LOCATION/bin/java" ]; then
-      JDK="$JAVA_LOCATION"
-    fi
+if [ -z "$JRE" ]; then
+  if [ -n "$JDK_HOME" ] && [ -x "$JDK_HOME/bin/java" ]; then
+    JRE="$JDK_HOME"
+  elif [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    JRE="$JAVA_HOME"
   fi
 fi
 
-JAVA_BIN="$JDK/bin/java"
-if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
+if [ -z "$JRE" ]; then
+  JAVA_BIN=$(command -v java)
+else
+  JAVA_BIN="$JRE/bin/java"
+fi
+
+if [ -z "$JAVA_BIN" ] || [ ! -x "$JAVA_BIN" ]; then
   X86_JRE_URL="__x86_jre_url__"
   # shellcheck disable=SC2166
   if [ -n "$X86_JRE_URL" ] && [ ! -d "$IDE_HOME/jbr-x86" ] && [ "$OS_ARCH" = "i386" -o "$OS_ARCH" = "i686" ]; then
@@ -151,7 +98,11 @@ if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
   exit 1
 fi
 
-"$GREP" -q -E -e "OS_ARCH=\"(x86_64|amd64)\"" "$JDK/release" 2> /dev/null && BITS="64" || BITS=""
+if [ -n "$JRE" ] && [ -r "$JRE/release" ]; then
+  egrep -q -E -e "OS_ARCH=\"(x86_64|amd64)\"" "$JRE/release" && BITS="64" || BITS=""
+else
+  test "${OS_ARCH}" = "x86_64" && BITS="64" || BITS=""
+fi
 
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
@@ -170,7 +121,7 @@ if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; t
 elif [ -r "${IDE_HOME}.vmoptions" ]; then
   # 2. <IDE_HOME>.vmoptions || <IDE_HOME>/bin/<bin_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
   VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
-  if ! "$GREP" -q -e "^-ea$" "${IDE_HOME}.vmoptions" && [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
+  if ! egrep -q -e "^-ea$" "${IDE_HOME}.vmoptions" && [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
     VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
     USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
   fi
@@ -182,7 +133,7 @@ else
   if [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
     VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
   else
-    test "$OS_TYPE" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
+    test "${OS_TYPE}" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
     if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions" ]; then
       VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
     fi
@@ -198,7 +149,7 @@ fi
 
 VM_OPTIONS=""
 if [ -n "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=$("$CAT" "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" | "$GREP" -v "^#.*")
+  VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | egrep -v -e "^#.*")
 else
   message "Cannot find VM options file"
 fi
