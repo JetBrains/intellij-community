@@ -73,7 +73,6 @@ public final class BootstrapClassLoaderUtil {
       .usePersistentClasspathIndexForLocalClassDirectories()
       .autoAssignUrlsWithProtectionDomain()
       .parent(ClassLoader.getPlatformClassLoader())
-      .errorReporter(it -> getLogger().error(it))
       .useCache();
     if (Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
