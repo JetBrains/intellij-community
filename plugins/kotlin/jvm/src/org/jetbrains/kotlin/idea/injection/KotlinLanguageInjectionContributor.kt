@@ -131,6 +131,8 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
             else -> null
         } ?: return null
 
+        val unwrapped = unwrapTrims(ktHost) // put before TempInjections for side effects, because TempInjection could also be trim-indented
+
         val tempInjectedLanguage = TemporaryPlacesRegistry.getInstance(ktHost.project).getLanguageFor(languageInjectionHost, containingFile)
         if (tempInjectedLanguage != null) {
             return BaseInjection(support.id).apply {
@@ -139,8 +141,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
                 suffix = tempInjectedLanguage.suffix
             }
         }
-
-        return findInjectionInfo(unwrapTrims(ktHost))?.toBaseInjection(support)
+        return findInjectionInfo(unwrapped)?.toBaseInjection(support)
     }
 
     private fun unwrapTrims(ktHost: KtElement): KtElement {

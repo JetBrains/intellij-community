@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.psi
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
+import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
@@ -10,8 +11,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.psi.injection.Injectable
 import com.intellij.testFramework.fixtures.EditorTestFixture
 import junit.framework.TestCase
+import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.lang.IllegalArgumentException
@@ -124,6 +127,90 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                     "</html>"
         )
     }
+
+    fun testTempInjection() {
+        myFixture.configureByText(
+            "Foo.kt", """
+                import kotlin.text.trimIndent
+                
+                fun foo() {
+                    val toInject = ""${'"'}
+                        <html>
+                            <body><caret>
+                                        
+                            </body>
+                        </html>
+                    ""${'"'}.trimIndent()
+                }
+            """.trimIndent())
+
+        InjectLanguageAction.invokeImpl(project, editor, file, Injectable.fromLanguage(Language.findLanguageByID("HTML")))
+        myFixture.checkResult("""
+                import kotlin.text.trimIndent
+                
+                fun foo() {
+                    val toInject = ""${'"'}
+                        <html>
+                            <body><caret>
+                                        
+                            </body>
+                        </html>
+                    ""${'"'}.trimIndent()
+                }
+            """.trimIndent())
+
+        TestCase.assertEquals("""
+            <html>
+                <body>
+                            
+                </body>
+            </html>
+        """.trimIndent(), myInjectionFixture.injectedElement?.containingFile?.text)
+
+        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
+        val injectedFile = quickEditHandler.newFile
+
+        TestCase.assertEquals(
+            "<html>\n" +
+                    "    <body>\n" +
+                    "                \n" +
+                    "    </body>\n" +
+                    "</html>", injectedFile.text
+        )
+
+        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+
+        editorTestFixture.type('\n')
+        editorTestFixture.type("asss")
+        editorTestFixture.type("s")
+
+        myFixture.checkResult(
+            "Foo.kt", """
+                import kotlin.text.trimIndent
+
+                fun foo() {
+                    val toInject = ""${'"'}
+                        <html>
+                            <body>
+                            assss
+
+                            </body>
+                        </html>
+                    ""${'"'}.trimIndent()
+                }
+            """.trimIndent(), true
+        )
+
+        TestCase.assertEquals(
+            "<html>\n" +
+                    "    <body>\n" +
+                    "    assss\n" +
+                    "                \n" +
+                    "    </body>\n" +
+                    "</html>", injectedFile.text
+        )
+    }
+
 
     fun testNewLineInFragmentEditor() {
 
