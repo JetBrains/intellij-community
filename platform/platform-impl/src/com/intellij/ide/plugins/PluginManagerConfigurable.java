@@ -258,7 +258,7 @@ public final class PluginManagerConfigurable
       }
     });
     actions.addSeparator();
-    actions.add(new DumbAwareAction("Plugins certificates") {
+    actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.custom.certificates")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginCertificateManager())) {
