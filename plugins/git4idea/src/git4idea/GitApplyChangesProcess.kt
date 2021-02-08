@@ -9,8 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -44,6 +43,7 @@ import git4idea.util.GitUntrackedFilesHelper
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.event.HyperlinkEvent
@@ -69,6 +69,15 @@ class GitApplyChangesProcess(private val project: Project,
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
 
   fun execute() {
+    // ensure there are no stall changes (ex: from recent commit) that prevent changes from being moved into temp changelist
+    if (changeListManager.areChangeListsEnabled()) {
+      val semaphore = CountDownLatch(1)
+      changeListManager.invokeAfterUpdate(false) {
+        semaphore.countDown()
+      }
+      ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore)
+    }
+
     val commitsInRoots = DvcsUtil.groupCommitsByRoots(repositoryManager, commits)
     LOG.info("${operationName}ing commits: " + toString(commitsInRoots))
 
