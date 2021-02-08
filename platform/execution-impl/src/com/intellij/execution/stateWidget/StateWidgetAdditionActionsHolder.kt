@@ -10,10 +10,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 internal class StateWidgetAdditionActionsHolder(val executorGroup: ExecutorGroup<*>, val process: StateWidgetProcess) {
   companion object {
     @JvmStatic
-    public fun getAdditionActionId(process: StateWidgetProcess) = "${process.moreActionSubGroupName}_additionAction"
+    fun getAdditionActionId(process: StateWidgetProcess) = "${process.moreActionSubGroupName}_additionAction"
 
     @JvmStatic
-    public fun getAdditionActionChooserGroupId(process: StateWidgetProcess) = "${process.moreActionSubGroupName}_additionActionChooserGroupId"
+    fun getAdditionActionChooserGroupId(process: StateWidgetProcess) = "${process.moreActionSubGroupName}_additionActionChooserGroupId"
   }
 
   private var selectedAction: AnAction? = null
@@ -36,6 +36,6 @@ internal class StateWidgetAdditionActionsHolder(val executorGroup: ExecutorGroup
   val additionAction: StateWidgetAdditionAction = StateWidgetAdditionAction(executorGroup, process) { selectedAction }
 
   init {
-    selectedAction = moreActionChooserGroup.getChildren(null)?.get(0)
+    selectedAction = moreActionChooserGroup.getChildren(null)?.getOrNull(0)
   }
 }
