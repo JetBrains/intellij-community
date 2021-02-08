@@ -21,7 +21,7 @@ public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    presentation.setVisible(getChildrenCount() > 0);
+    presentation.setEnabledAndVisible(getChildrenCount() > 0);
   }
 
   @Override
