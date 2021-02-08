@@ -165,7 +165,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @CompileDynamic
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
         def root = "$context.paths.communityHome/../.."
-        context.ant.copy(todir: "$targetDirectory/bin/clang/win") {
+        context.ant.copy(todir: "$targetDirectory/plugins/c-plugin/bin/clang/win") {
           fileset(dir: "$root/prebuilts/tools/clion/bin/clang/win")
         }
       }
@@ -189,11 +189,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
         def root = "$context.paths.communityHome/../.."
 
-        context.ant.copy(todir: "$targetDirectory/bin/clang/linux") {
+        context.ant.copy(todir: "$targetDirectory/plugins/c-plugin/bin/clang/linux") {
           fileset(dir: "$root/prebuilts/tools/clion/bin/clang/linux")
         }
-        extraExecutables.add("bin/clang/linux/clangd")
-        extraExecutables.add("bin/clang/linux/clang-tidy")
+        extraExecutables.add("plugins/c-plugin/bin/clang/linux/clangd")
+        extraExecutables.add("plugins/c-plugin/bin/clang/linux/clang-tidy")
       }
     }
   }
@@ -221,11 +221,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     void copyAdditionalFiles(BuildContext context, String targetDirectory) {
       def root = "$context.paths.communityHome/../.."
 
-      context.ant.copy(todir: "$targetDirectory/bin/clang/mac") {
+      context.ant.copy(todir: "$targetDirectory/plugins/c-plugin/bin/clang/mac") {
         fileset(dir: "$root/prebuilts/tools/clion/bin/clang/mac")
       }
-      extraExecutables.add("bin/clang/mac/clangd")
-      extraExecutables.add("bin/clang/mac/clang-tidy")
+      extraExecutables.add("plugins/c-plugin/bin/clang/mac/clangd")
+      extraExecutables.add("plugins/c-plugin/bin/clang/mac/clang-tidy")
     }
   }
 
