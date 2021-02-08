@@ -247,6 +247,11 @@
                              key="title.path.variables"
                              bundle="messages.ApplicationBundle"
                              instance="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
+    <applicationConfigurable id="trusted.hosts"
+                             bundle="messages.IdeBundle"
+                             key="configurable.trusted.hosts.display.name"
+                             instance="com.intellij.ide.impl.TrustedHostsConfigurable"
+                             groupId="build" />
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
