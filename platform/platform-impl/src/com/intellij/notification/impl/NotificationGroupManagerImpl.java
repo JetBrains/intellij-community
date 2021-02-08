@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.ide.plugins.PluginManager;
@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -16,19 +17,32 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class NotificationGroupManagerImpl implements NotificationGroupManager {
   private static final Logger LOG = Logger.getInstance(NotificationGroupManagerImpl.class);
   private final Map<String, NotificationGroup> myRegisteredGroups;
-  private final Set<String> myRegisteredNotificationIds = new HashSet<>();
+
+  private final SynchronizedClearableLazy<Set<String>> registeredNotificationIds = new SynchronizedClearableLazy<>(() -> {
+    Set<String> result = new HashSet<>();
+    PluginManager pluginManager = PluginManager.getInstance();
+    NotificationGroupEP.EP_NAME.processWithPluginDescriptor((extension, pluginDescriptor) -> {
+      if (extension.notificationIds != null && pluginManager.isDevelopedByJetBrains(pluginDescriptor)) {
+        result.addAll(extension.notificationIds);
+      }
+    });
+    return result;
+  });
 
   public NotificationGroupManagerImpl() {
-    myRegisteredGroups = new ConcurrentHashMap<>(NotificationGroupEP.EP_NAME.getPoint().size());
-
+    Map<String, NotificationGroup> registeredGroups = new HashMap<>();
     NotificationGroupEP.EP_NAME.processWithPluginDescriptor((extension, descriptor) -> {
-      registerNotificationGroup(extension, descriptor);
+      registerNotificationGroup(extension, descriptor, registeredGroups);
     });
+    myRegisteredGroups = new ConcurrentHashMap<>(registeredGroups);
 
     NotificationGroupEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull NotificationGroupEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        registerNotificationGroup(extension, pluginDescriptor);
+        registerNotificationGroup(extension, pluginDescriptor, myRegisteredGroups);
+        if (extension.notificationIds != null) {
+          registeredNotificationIds.drop();
+        }
       }
 
       @Override
@@ -37,12 +51,16 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
         if (Objects.equals(group.getPluginId(), pluginDescriptor.getPluginId())) {
           myRegisteredGroups.remove(extension.id);
         }
-        myRegisteredNotificationIds.removeAll(NotificationCollector.parseIds(extension.notificationIds));
+        if (extension.notificationIds != null) {
+          registeredNotificationIds.drop();
+        }
       }
     }, null);
   }
 
-  private void registerNotificationGroup(@NotNull NotificationGroupEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+  private static void registerNotificationGroup(@NotNull NotificationGroupEP extension,
+                                                @NotNull PluginDescriptor pluginDescriptor,
+                                                @NotNull Map<String, NotificationGroup> registeredGroups) {
     try {
       String groupId = extension.id;
       NotificationDisplayType type = extension.getDisplayType();
@@ -54,13 +72,9 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
       NotificationGroup notificationGroup = NotificationGroup.create(groupId, type, extension.isLogByDefault,
                                                                      extension.toolWindowId, extension.getIcon(),
                                                                      extension.getDisplayName(), pluginDescriptor.getPluginId());
-      NotificationGroup old = myRegisteredGroups.put(groupId, notificationGroup);
+      NotificationGroup old = registeredGroups.put(groupId, notificationGroup);
       if (old != null) {
         LOG.warn("Notification group " + groupId + " is already registered (group=" + old + "). Plugin descriptor: " + pluginDescriptor);
-      }
-
-      if (PluginManager.getInstance().isDevelopedByJetBrains(pluginDescriptor)) {
-        myRegisteredNotificationIds.addAll(NotificationCollector.parseIds(extension.notificationIds));
       }
     }
     catch (Exception e) {
@@ -80,6 +94,6 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
 
   @Override
   public boolean isRegisteredNotificationId(@NotNull String notificationId) {
-    return myRegisteredNotificationIds.contains(notificationId);
+    return registeredNotificationIds.getValue().contains(notificationId);
   }
 }
