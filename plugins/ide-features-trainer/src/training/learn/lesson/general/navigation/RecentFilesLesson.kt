@@ -14,6 +14,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.UIUtil
+import icons.FeaturesTrainerIcons
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.commands.kotlin.TaskTestContext
@@ -62,7 +63,7 @@ abstract class RecentFilesLesson(module: Module, lang: String)
           LessonsBundle.message("recent.files.dialog.title"),
           CommonBundle.message("button.ok"),
           LearnBundle.message("learn.stop.lesson"),
-          null
+          FeaturesTrainerIcons.Img.PluginIcon
         )
         if(userDecision != Messages.OK) {
           LessonManager.instance.stopLesson()
