@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention.impl.lists;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,23 +24,26 @@ public abstract class AbstractJoinListAction<L extends PsiElement, E extends Psi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    WriteAction.run(() -> {
-      Context<L> context = from(element);
-      if (context == null) return;
-      WhitespacesInfo info = context.myWhitespacesInfo;
-      List<PsiElement> reversedBreaks = Lists.reverse(info.myBreaks);
-      Document document = editor.getDocument();
-      deleteBreakIfPresent(document, info.myAfterLastBreak);
-      for (PsiElement aBreak : reversedBreaks) {
-        TextRange range = aBreak.getTextRange();
-        document.replaceString(range.getStartOffset(), range.getEndOffset(), " ");
-      }
-      deleteBreakIfPresent(document, info.myBeforeFirstBreak);
+    Context<L> context = from(element);
+    if (context == null) return;
+    WhitespacesInfo info = context.myWhitespacesInfo;
+    List<PsiElement> reversedBreaks = Lists.reverse(info.myBreaks);
+    Document document = editor.getDocument();
+    deleteBreakIfPresent(document, info.myAfterLastBreak);
+    for (PsiElement aBreak : reversedBreaks) {
+      TextRange range = aBreak.getTextRange();
+      document.replaceString(range.getStartOffset(), range.getEndOffset(), " ");
+    }
+    deleteBreakIfPresent(document, info.myBeforeFirstBreak);
 
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      documentManager.commitDocument(document);
-      CodeStyleManager.getInstance(project).adjustLineIndent(context.myList.getContainingFile(), context.myList.getParent().getTextRange());
-    });
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(document);
+    CodeStyleManager.getInstance(project).adjustLineIndent(context.myList.getContainingFile(), context.myList.getParent().getTextRange());
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
   }
 
   private static void deleteBreakIfPresent(Document document, PsiElement aBreak) {
