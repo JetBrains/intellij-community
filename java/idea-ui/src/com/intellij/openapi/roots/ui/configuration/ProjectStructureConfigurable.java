@@ -5,6 +5,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.ServiceManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -54,7 +56,7 @@ import java.util.List;
 import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter.ConfigurableId;
 
 public class ProjectStructureConfigurable implements SearchableConfigurable, Place.Navigator,
-                                                                              Configurable.NoMargin, Configurable.NoScroll {
+                                                     Configurable.NoMargin, Configurable.NoScroll, Disposable {
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
   protected final UIState myUiState = new UIState();
@@ -87,7 +89,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private ProjectConfigurable myProjectConfig;
   private final ProjectLibrariesConfigurable myProjectLibrariesConfig;
   private final GlobalLibrariesConfigurable myGlobalLibrariesConfig;
-  private ModuleStructureConfigurable myModulesConfig;
+  private final ModuleStructureConfigurable myModulesConfig;
 
   private boolean myUiInitialized;
 
@@ -104,23 +106,29 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   public ProjectStructureConfigurable(@NotNull Project project) {
     myProject = project;
-    myFacetStructureConfigurable = FacetStructureConfigurable.getInstance(project);
-    myArtifactsStructureConfigurable = project.getService(ArtifactsStructureConfigurable.class);
+    myFacetStructureConfigurable = new FacetStructureConfigurable(this);
+    myArtifactsStructureConfigurable = new ArtifactsStructureConfigurable(this);
 
-    myModuleConfigurator = new ModulesConfigurator(myProject);
+    myModuleConfigurator = new ModulesConfigurator(project, this);
     myContext = new StructureConfigurableContext(myProject, myModuleConfigurator);
     myModuleConfigurator.setContext(myContext);
 
-    myProjectLibrariesConfig = ProjectLibrariesConfigurable.getInstance(project);
-    myGlobalLibrariesConfig = GlobalLibrariesConfigurable.getInstance(project);
-    myModulesConfig = ModuleStructureConfigurable.getInstance(project);
+    myProjectLibrariesConfig = new ProjectLibrariesConfigurable(this);
+    myGlobalLibrariesConfig = new GlobalLibrariesConfigurable(this);
+    myModulesConfig = new ModuleStructureConfigurable(this);
+
+    myJdkListConfig = new JdkListConfigurable(this);
 
     myProjectLibrariesConfig.init(myContext);
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
     myFacetStructureConfigurable.init(myContext);
+    myJdkListConfig.init(myContext);
     if (!project.isDefault()) {
       myArtifactsStructureConfigurable.init(myContext, myModulesConfig, myProjectLibrariesConfig, myGlobalLibrariesConfig);
+    }
+    else {
+      Disposer.register(this, myArtifactsStructureConfigurable);
     }
 
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
@@ -130,6 +138,11 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     final String sideProportion = propertiesComponent.getValue("project.structure.side.proportion");
     myUiState.sideProportion = sideProportion != null ? Float.parseFloat(sideProportion) : 0;
     myObsoleteLibraryFilesRemover = new ObsoleteLibraryFilesRemover(project);
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   @Override
@@ -191,6 +204,10 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return myComponent;
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private void initSidePanel() {
     boolean isDefaultProject = myProject == ProjectManager.getInstance().getDefaultProject();
 
@@ -244,10 +261,6 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   private void addJdkListConfig() {
-    if (myJdkListConfig == null) {
-      myJdkListConfig = JdkListConfigurable.getInstance(myProject);
-      myJdkListConfig.init(myContext);
-    }
     addConfigurable(myJdkListConfig, ConfigurableId.JDK_LIST);
   }
 
@@ -269,7 +282,6 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   private void addModulesConfig() {
-    myModulesConfig = ModuleStructureConfigurable.getInstance(myProject);
     addConfigurable(myModulesConfig, ConfigurableId.MODULES);
   }
 
@@ -474,7 +486,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
-    return ModuleStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry);
+    return myModulesConfig.selectOrderEntry(module, orderEntry);
   }
 
   @Override
@@ -632,6 +644,18 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     } else {
       return myGlobalLibrariesConfig;
     }
+  }
+
+  public ProjectLibrariesConfigurable getProjectLibrariesConfigurable() {
+    return myProjectLibrariesConfig;
+  }
+
+  public GlobalLibrariesConfigurable getGlobalLibrariesConfigurable() {
+    return myGlobalLibrariesConfig;
+  }
+
+  public FacetStructureConfigurable getFacetStructureConfigurable() {
+    return myFacetStructureConfigurable;
   }
 
   @Override

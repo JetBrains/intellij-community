@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel;
@@ -64,7 +63,7 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor imple
   @Override
   public Module getModule(final Module module, final String moduleName) {
     if (module == null) {
-      return ModuleStructureConfigurable.getInstance(myProject).getModule(moduleName);
+      return ProjectStructureConfigurable.getInstance(myProject).getModulesConfig().getModule(moduleName);
     }
     return module;
   }

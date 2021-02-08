@@ -24,10 +24,7 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
-import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -201,7 +198,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
     }
 
     final ModuleConfigurationState state = moduleEditor.createModuleConfigurationState();
-    return new MyProjectConfigurableContext(facet, parentContext, state);
+    return new MyProjectConfigurableContext(facet, parentContext, state, modulesConfigurator.getProjectStructureConfigurable());
   }
 
   private UserDataHolder getSharedModuleData(final Module module) {
@@ -360,9 +357,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {
     private final LibrariesContainer myContainer;
 
-    MyProjectConfigurableContext(final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
+    MyProjectConfigurableContext(final Facet facet,
+                                 final FacetEditorContext parentContext,
+                                 final ModuleConfigurationState state,
+                                 ProjectStructureConfigurable projectStructureConfigurable) {
       super(facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
-            ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData());
+            ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData(), projectStructureConfigurable);
       myContainer = LibrariesContainerFactory.createContainer(myContext);
     }
 

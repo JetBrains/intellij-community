@@ -6,6 +6,7 @@ import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.testFramework.JavaModuleTestCase
 import com.intellij.testFramework.TestActionEvent
 import junit.framework.TestCase
@@ -13,6 +14,11 @@ import junit.framework.TestCase
 class InlineModuleDependencyActionTest : JavaModuleTestCase() {
 
   override fun isRunInWriteAction(): Boolean = true
+
+  override fun tearDown() {
+    ProjectStructureConfigurable.getInstance(myProject).context.modulesConfigurator.disposeUIResources()
+    super.tearDown()
+  }
 
   fun `test inline module with module library`() {
     val newCreatedModule = createModule("My Module")
@@ -115,7 +121,7 @@ class InlineModuleDependencyActionTest : JavaModuleTestCase() {
   }
 
   private fun setUpClasspathPanel(modifiableRootModel: ModifiableRootModel, entryToSelect: ModuleOrderEntry): ClasspathPanelImpl {
-    val moduleConfigurationState = object : ModuleConfigurationStateImpl(project, ModulesProvider.EMPTY_MODULES_PROVIDER) {
+    val moduleConfigurationState = object : ModuleConfigurationStateImpl(project, ProjectStructureConfigurable.getInstance(myProject).context.modulesConfigurator) {
       override fun getModifiableRootModel(): ModifiableRootModel = modifiableRootModel
       override fun getCurrentRootModel(): ModuleRootModel = modifiableRootModel
     }

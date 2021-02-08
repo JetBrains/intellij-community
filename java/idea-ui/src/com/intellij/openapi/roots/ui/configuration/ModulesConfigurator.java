@@ -58,6 +58,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private static final Logger LOG = Logger.getInstance(ModulesConfigurator.class);
 
   private final Project myProject;
+  private final ProjectStructureConfigurable myProjectStructureConfigurable;
 
   private final Map<Module, ModuleEditor> myModuleEditors = new TreeMap<>((o1, o2) -> {
     String n1 = o1.getName();
@@ -78,8 +79,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private StructureConfigurableContext myContext;
   private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<>();
 
+  /**
+   * @deprecated use {@link ModuleManager} to access modules instead
+   */
+  @Deprecated
   public ModulesConfigurator(Project project) {
+    this(project, ProjectStructureConfigurable.getInstance(project));
+  }
+
+  public ModulesConfigurator(Project project, ProjectStructureConfigurable projectStructureConfigurable) {
     myProject = project;
+    myProjectStructureConfigurable = projectStructureConfigurable;
     initModuleModel();
   }
 
@@ -102,6 +112,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   public void setContext(final StructureConfigurableContext context) {
     myContext = context;
     myFacetsConfigurator = createFacetsConfigurator();
+  }
+
+  public ProjectStructureConfigurable getProjectStructureConfigurable() {
+    return myProjectStructureConfigurable;
   }
 
   public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -287,7 +301,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
 
     final Map<Sdk, Sdk> modifiedToOriginalMap = new HashMap<>();
-    final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
+    final ProjectSdksModel projectJdksModel = myProjectStructureConfigurable.getProjectJdksModel();
     for (Map.Entry<Sdk, Sdk> entry : projectJdksModel.getProjectSdks().entrySet()) {
       modifiedToOriginalMap.put(entry.getValue(), entry.getKey());
     }
@@ -329,7 +343,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
       }
       finally {
-        ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
+        myProjectStructureConfigurable.getModulesConfig().getFacetEditorFacade().clearMaps(false);
 
         myFacetsConfigurator = createFacetsConfigurator();
         initModuleModel();
@@ -386,7 +400,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       final List<Module> committedModules;
       if (builder instanceof ProjectImportBuilder<?>) {
         final ModifiableArtifactModel artifactModel =
-          ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
+          myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
         committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
       }
       else {
@@ -548,7 +562,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (moduleEditor != null) {
       moduleEditor.setModuleName(name);
       moduleEditor.updateCompilerOutputPathChanged(
-        ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl(), name);
+        myProjectStructureConfigurable.getProjectConfig().getCompilerOutputUrl(), name);
       myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module));
     }
   }

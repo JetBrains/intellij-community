@@ -4,7 +4,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -60,9 +59,9 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     }
   };
 
-  public JdkListConfigurable(@NotNull Project project) {
-    super(project);
-    myJdksTreeModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+  public JdkListConfigurable(ProjectStructureConfigurable projectStructureConfigurable) {
+    super(projectStructureConfigurable);
+    myJdksTreeModel = projectStructureConfigurable.getProjectJdksModel();
   }
 
   @Override
@@ -164,10 +163,13 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return super.isModified() || myJdksTreeModel.isModified();
   }
 
+  /**
+   * @deprecated use {@link ProjectStructureConfigurable#getJdkConfig()} instead
+   */
+  @Deprecated
   public static JdkListConfigurable getInstance(Project project) {
-    return ServiceManager.getService(project, JdkListConfigurable.class);
+    return ProjectStructureConfigurable.getInstance(project).getJdkConfig();
   }
-
 
   @NotNull
   @Override

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
@@ -25,8 +24,8 @@ import com.intellij.packaging.elements.PackagingElement;
 public class LayoutTreeFindUsagesAction extends ArtifactEditorFindUsagesActionBase {
   private final LayoutTreeComponent myLayoutTreeComponent;
 
-  public LayoutTreeFindUsagesAction(LayoutTreeComponent layoutTreeComponent, Project project, ArtifactsStructureConfigurableContext artifactContext) {
-    super(layoutTreeComponent.getLayoutTree(), project, artifactContext);
+  public LayoutTreeFindUsagesAction(LayoutTreeComponent layoutTreeComponent, ArtifactsStructureConfigurableContext artifactContext) {
+    super(layoutTreeComponent.getLayoutTree(), artifactContext);
     myLayoutTreeComponent = layoutTreeComponent;
   }
 

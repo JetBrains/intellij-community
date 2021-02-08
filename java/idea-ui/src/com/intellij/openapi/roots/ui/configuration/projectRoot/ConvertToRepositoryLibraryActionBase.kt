@@ -144,8 +144,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
     val annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance())
-    ProjectStructureConfigurable.getInstance(project).registerObsoleteLibraryRoots((library.getFiles(OrderRootType.CLASSES) +
-                                                                                    library.getFiles(OrderRootType.SOURCES)).asList())
+    val libraryRoots = library.getFiles(OrderRootType.CLASSES) + library.getFiles(OrderRootType.SOURCES)
+    context.modulesConfigurator.projectStructureConfigurable.registerObsoleteLibraryRoots(libraryRoots.asList())
     replaceLibrary(library) { editor ->
       editor.properties = configuration.properties
       editor.removeAllRoots()

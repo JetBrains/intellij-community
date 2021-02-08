@@ -105,7 +105,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     panel.add(myPanel, BorderLayout.CENTER);
 
     final ModuleJdkConfigurable jdkConfigurable =
-      new ModuleJdkConfigurable(this, ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel()) {
+      new ModuleJdkConfigurable(this, ((ModulesConfigurator)getState().getModulesProvider()).getProjectStructureConfigurable()) {
         @Override
         protected ModifiableRootModel getRootModel() {
           return getModifiableModel();

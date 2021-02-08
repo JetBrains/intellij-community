@@ -13,12 +13,12 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -52,8 +52,8 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
   private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
   private final ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
 
-  public ArtifactsStructureConfigurable(@NotNull Project project) {
-    super(project, new ArtifactStructureConfigurableState());
+  public ArtifactsStructureConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable) {
+    super(projectStructureConfigurable, new ArtifactStructureConfigurableState());
     PackagingElementType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull PackagingElementType extension, @NotNull PluginDescriptor pluginDescriptor) {

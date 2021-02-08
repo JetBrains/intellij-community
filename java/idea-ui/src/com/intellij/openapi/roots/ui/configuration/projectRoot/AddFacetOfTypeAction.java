@@ -76,9 +76,10 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     final List<Facet> chosen = dialog.getChosenElements();
     if (!dialog.isOK() || chosen.size() != 1) return;
     final Facet<?> parent = chosen.get(0);
+    ProjectStructureConfigurable structureConfigurable = myContext.getModulesConfigurator().getProjectStructureConfigurable();
     final Facet<?> facet =
-      ModuleStructureConfigurable.getInstance(project).getFacetEditorFacade().createAndAddFacet(type, parent.getModule(), parent);
-    ProjectStructureConfigurable.getInstance(project).select(facet, true);
+      structureConfigurable.getModulesConfig().getFacetEditorFacade().createAndAddFacet(type, parent.getModule(), parent);
+    structureConfigurable.select(facet, true);
   }
 
   private void addFacetToModule(@NotNull FacetType<?, ?> type) {
@@ -107,8 +108,9 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     if (!dialog.isOK() || elements.size() != 1) return;
 
     final Module module = elements.get(0);
-    final Facet<?> facet = ModuleStructureConfigurable.getInstance(project).getFacetEditorFacade().createAndAddFacet(type, module, null);
-    ProjectStructureConfigurable.getInstance(project).select(facet, true);
+    ProjectStructureConfigurable structureConfigurable = myContext.getModulesConfigurator().getProjectStructureConfigurable();
+    final Facet<?> facet = structureConfigurable.getModulesConfig().getFacetEditorFacade().createAndAddFacet(type, module, null);
+    structureConfigurable.select(facet, true);
   }
 
   public static AnAction[] createAddFacetActions(FacetStructureConfigurable configurable) {

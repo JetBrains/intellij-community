@@ -34,7 +34,8 @@ public class ClasspathEditorTest extends LightPlatformTestCase {
     final ModifiableRootModel uiRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     disposeOnTearDown(() -> uiRootModel.dispose());
 
-    ClasspathEditor e = new ClasspathEditor(new ModuleConfigurationStateImpl(project, new DefaultModulesProvider(project)) {
+    ModulesConfigurator modulesConfigurator = ProjectStructureConfigurable.getInstance(project).getContext().getModulesConfigurator();
+    ClasspathEditor e = new ClasspathEditor(new ModuleConfigurationStateImpl(project, modulesConfigurator) {
       @Override
       public ModifiableRootModel getModifiableRootModel() {
         return uiRootModel;

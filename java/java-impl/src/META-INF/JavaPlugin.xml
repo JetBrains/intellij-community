@@ -480,14 +480,6 @@
 
     <daemon.highlightInfoFilter implementation="com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter"/>
 
-    <!-- Project Configurables -->
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable"/>
-
     <!-- Compiler -->
     <projectConfigurable groupId="build" groupWeight="130" instance="com.intellij.compiler.options.CompilerConfigurable"
                          id="project.propCompiler" order="after project"

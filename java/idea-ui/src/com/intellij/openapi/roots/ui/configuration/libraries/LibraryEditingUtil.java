@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -200,11 +199,5 @@ public final class LibraryEditingUtil {
       modules.add(module);
     }
     return modules;
-  }
-
-  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library,
-                                                           @NotNull Project project,
-                                                           boolean allowEmptySelection) {
-    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, project, allowEmptySelection);
   }
 }

@@ -53,7 +53,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
   @Override
   public String getPresentableName() {
-    return ProjectStructureConfigurable.getInstance(myContext.getProject()).getProjectConfig().getProjectName();
+    return myContext.getModulesConfigurator().getProjectStructureConfigurable().getProjectConfig().getProjectName();
   }
 
   @Override
@@ -64,11 +64,13 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
   @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
     final Project project = myContext.getProject();
+    ProjectStructureConfigurable projectStructureConfigurable = myContext.getModulesConfigurator().getProjectStructureConfigurable();
     if (containsModuleWithInheritedSdk()) {
-      ProjectSdksModel model = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+      ProjectSdksModel model = projectStructureConfigurable.getProjectJdksModel();
       Sdk sdk = model.getProjectSdk();
       if (sdk == null) {
-        PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createProjectConfigurablePlace(), this);
+        PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, projectStructureConfigurable
+          .createProjectConfigurablePlace(), this);
         problemsHolder.registerProblem(JavaUiBundle.message("project.roots.project.jdk.problem.message"), null,
                                        ProjectStructureProblemType.error("project-sdk-not-defined"), place,
                                        null);
@@ -91,7 +93,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     }
     if (!cycles.isEmpty()) {
       final PlaceInProjectStructureBase place =
-        new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulesPlace(), this);
+        new PlaceInProjectStructureBase(project, projectStructureConfigurable.createModulesPlace(), this);
       final String message;
       final HtmlChunk description;
       if (cycles.size() > 1) {

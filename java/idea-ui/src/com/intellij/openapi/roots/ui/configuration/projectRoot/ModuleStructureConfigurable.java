@@ -18,7 +18,6 @@ import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
@@ -94,13 +93,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private final ModuleManager myModuleManager;
 
-  private final FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
+  private final FacetEditorFacadeImpl myFacetEditorFacade;
 
   private final List<RemoveConfigurableHandler<?>> myRemoveHandlers;
 
-  public ModuleStructureConfigurable(Project project) {
-    super(project);
-
+  public ModuleStructureConfigurable(ProjectStructureConfigurable projectStructureConfigurable) {
+    super(projectStructureConfigurable);
+    myFacetEditorFacade = new FacetEditorFacadeImpl(myProjectStructureConfigurable, TREE_UPDATER);
     myModuleManager = ModuleManager.getInstance(myProject);
     myRemoveHandlers = new ArrayList<>();
     myRemoveHandlers.add(new ModuleRemoveHandler());
@@ -191,7 +190,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   protected void updateSelection(@Nullable NamedConfigurable configurable) {
-    FacetStructureConfigurable.getInstance(myProject).disposeMultipleSettingsEditor();
+    myProjectStructureConfigurable.getFacetStructureConfigurable().disposeMultipleSettingsEditor();
     ApplicationManager.getApplication().assertIsDispatchThread();
     super.updateSelection(configurable);
     if (configurable != null) {
@@ -207,7 +206,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   protected boolean updateMultiSelection(final List<? extends NamedConfigurable> selectedConfigurables) {
-    return FacetStructureConfigurable.getInstance(myProject).updateMultiSelection(selectedConfigurables, getDetailsComponent());
+    return myProjectStructureConfigurable.getFacetStructureConfigurable().updateMultiSelection(selectedConfigurables, getDetailsComponent());
   }
 
   @Override
@@ -461,7 +460,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         }
       };
     }
-    final ActionCallback result = ProjectStructureConfigurable.getInstance(myProject).navigateTo(p, true);
+    final ActionCallback result = myProjectStructureConfigurable.navigateTo(p, true);
     return r != null ? result.doWhenDone(r) : result;
   }
 
@@ -469,9 +468,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return ModuleGrouper.instanceFor(myProject, myContext.myModulesConfigurator.getModuleModel());
   }
 
-
+  /**
+   * @deprecated use {@link ProjectStructureConfigurable#getModulesConfig()} instead
+   */
+  @Deprecated
   public static ModuleStructureConfigurable getInstance(final Project project) {
-    return ServiceManager.getService(project, ModuleStructureConfigurable.class);
+    return ProjectStructureConfigurable.getInstance(project).getModulesConfig();
   }
 
   public Project getProject() {
@@ -542,7 +544,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport, defaultModuleName);
     if (modules != null && !modules.isEmpty()) {
       //new module wizard may add yet another SDK to the project
-      ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel().syncSdks();
+      myProjectStructureConfigurable.getProjectJdksModel().syncSdks();
       for (Module module : modules) {
         addModuleNode(module);
       }
@@ -732,7 +734,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     public boolean remove(@NotNull Collection<? extends Facet> facets) {
       for (Facet<?> facet : facets) {
         List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
-        FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+        myProjectStructureConfigurable.getFacetStructureConfigurable().removeFacetNodes(removed);
       }
       return true;
     }
@@ -752,7 +754,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       }
       for (Module module : deleted) {
         List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
-        FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+        myProjectStructureConfigurable.getFacetStructureConfigurable().removeFacetNodes(removed);
         myContext.getDaemonAnalyzer().removeElement(new ModuleProjectStructureElement(myContext, module));
 
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {

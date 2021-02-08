@@ -50,7 +50,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
 
-  private final ModulesProvider myModulesProvider;
+  private final ModulesConfigurator myModulesProvider;
   private String myName;
   private final Module myModule;
 
@@ -63,8 +63,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   protected History myHistory;
 
-  public ModuleEditor(Project project, ModulesProvider modulesProvider,
-                      @NotNull Module module) {
+  public ModuleEditor(@NotNull Project project, @NotNull ModulesConfigurator modulesProvider, @NotNull Module module) {
     myProject = project;
     myModulesProvider = modulesProvider;
     myModule = module;
@@ -118,9 +117,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (myModifiableRootModel == null) {
       final Module module = getModule();
       if (module != null) {
-        WorkspaceEntityStorageBuilder builder = myModulesProvider instanceof ModulesConfigurator
-                                                ? ((ModulesConfigurator)myModulesProvider).getWorkspaceEntityStorageBuilder()
-                                                : null;
+        WorkspaceEntityStorageBuilder builder = myModulesProvider.getWorkspaceEntityStorageBuilder();
         myModifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(new UIRootConfigurationAccessor(myProject, builder));
       }
     }

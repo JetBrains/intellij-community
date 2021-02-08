@@ -141,7 +141,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
                                                   JBUI.insets(4, 0, 10, 0), 0, 0));
     }
 
-    myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, model);
+    myProjectJdkConfigurable = new ProjectJdkConfigurable(myModulesConfigurator.getProjectStructureConfigurable(), model);
     myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
                                                                                    GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                                                    JBUI.insetsTop(4), 0, 0));
