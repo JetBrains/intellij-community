@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDNativeTarget;
@@ -14,7 +15,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +40,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButton.HIDE_DROPDOWN_ICON;
@@ -109,7 +111,27 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
 
             NameFilteringListModel<AnAction> model = new NameFilteringListModel<>(
               projectsList.getModel(), createProjectNameFunction(), speedSearch::shouldBeShowing,
-              () -> StringUtil.notNullize(speedSearch.getFilter()));
+              () -> StringUtil.notNullize(speedSearch.getFilter())) {
+              @Override
+              protected @NotNull Collection<AnAction> getElementsToFilter() {
+                if (projectSearch.getText().isEmpty()) {
+                  return super.getElementsToFilter();
+                }
+                ArrayList<AnAction> result = new ArrayList<>();
+                ListModel<AnAction> originalModel = getOriginalModel();
+                for (int i = 0; i < originalModel.getSize(); i++) {
+                  AnAction element = originalModel.getElementAt(i);
+                  result.add(element);
+                  if (element instanceof ProjectGroupActionGroup) {
+                    ProjectGroupActionGroup group = (ProjectGroupActionGroup)element;
+                    if (!group.getGroup().isExpanded()) {
+                      ContainerUtil.addAll(result, group.getChildActionsOrStubs());
+                    }
+                  }
+                }
+                return result;
+              }
+            };
             projectsList.setModel(model);
 
             projectSearch.addDocumentListener(new DocumentAdapter() {
