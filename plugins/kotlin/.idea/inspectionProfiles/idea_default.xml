@@ -1738,6 +1738,48 @@
         <constraint name="FieldName" within="" contains="" />
         <constraint name="FieldType" regexp="Collection" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="Object2IntOpenHashMap&lt;$e$&gt; $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.objects.Object2IntMap&lt;$e$&gt; $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+        <constraint name="e" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="it.unimi.dsi.fastutil.ints.IntArrayList $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.ints.IntList $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="Int2ObjectOpenHashMap&lt;$e$&gt; $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.ints.Int2ObjectMap&lt;$e$&gt; $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+        <constraint name="e" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="Object2LongOpenHashMap&lt;$e$&gt; $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.objects.Object2LongMap&lt;$e$&gt; $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+        <constraint name="e" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="Long2ObjectOpenHashMap&lt;$e$&gt; $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.longs.Long2ObjectMap&lt;$e$&gt; $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+        <constraint name="e" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="Object2IntOpenCustomHashMap&lt;$e$&gt; $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.objects.Object2IntMap&lt;$e$&gt; $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+        <constraint name="e" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="Object2LongOpenCustomHashMap&lt;$e$&gt; $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.objects.Object2LongMap&lt;$e$&gt; $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+        <constraint name="e" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.ints.Int2IntMap $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too concrete fastutil class" text="it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.longs.Long2LongMap $p$;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
