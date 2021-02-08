@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
 
