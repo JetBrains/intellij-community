@@ -180,11 +180,17 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                  PythonProcessStarter processStarter,
                                  CommandLinePatcher... patchers) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(processStarter, patchers);
+    ConsoleView console = createAndAttachConsoleInEDT(myConfig.getProject(), processHandler, executor);
+    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
+  }
+
+  private @NotNull ConsoleView createAndAttachConsoleInEDT(@NotNull Project project, ProcessHandler processHandler, Executor executor)
+    throws ExecutionException {
     final Ref<Object> consoleRef = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(
       () -> {
         try {
-          consoleRef.set(createAndAttachConsole(myConfig.getProject(), processHandler, executor));
+          consoleRef.set(createAndAttachConsole(project, processHandler, executor));
         }
         catch (ExecutionException | RuntimeException e) {
           consoleRef.set(e);
@@ -194,15 +200,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (consoleRef.get() instanceof ExecutionException) throw (ExecutionException)consoleRef.get();
     else if (consoleRef.get() instanceof RuntimeException) throw (RuntimeException)consoleRef.get();
 
-    var console = (ConsoleView)consoleRef.get();
-    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
+    return (ConsoleView)consoleRef.get();
   }
 
   @NotNull
   public ExecutionResult execute(/*TODO @NotNull ?*/Executor executor,
                                                     @NotNull PythonScriptTargetedCommandLineBuilder converter) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(converter);
-    final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
+    final ConsoleView console = createAndAttachConsoleInEDT(myConfig.getProject(), processHandler, executor);
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
