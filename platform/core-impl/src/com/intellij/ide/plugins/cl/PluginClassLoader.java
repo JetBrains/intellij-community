@@ -368,9 +368,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   public final @Nullable URL findResource(@NotNull String name) {
     String canonicalPath = toCanonicalPath(name);
     Resource resource = classPath.findResource(canonicalPath);
-    if (resource != null) {
-      return resource.getURL();
-    }
+    if (resource != null) return resource.getURL();
 
     URL result = doFindResource(canonicalPath);
     if (result == null && canonicalPath.startsWith("/")) {
