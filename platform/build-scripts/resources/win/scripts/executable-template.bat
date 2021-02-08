@@ -11,7 +11,7 @@ SET IDE_BIN_DIR=%~dp0
 FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET IDE_HOME=%%~fi
 
 :: ---------------------------------------------------------------------
-:: Locate a JDK installation directory which will be used to run the IDE.
+:: Locate a JRE installation directory which will be used to run the IDE.
 :: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jbr[-x86], JDK_HOME, JAVA_HOME.
 :: ---------------------------------------------------------------------
 SET JRE=
@@ -44,11 +44,11 @@ IF "%JRE%" == "" (
 )
 
 IF "%JRE%" == "" (
-  IF EXIST "%JDK_HOME%" SET JRE=%JDK_HOME%
-)
-
-IF "%JRE%" == "" (
-  IF EXIST "%JAVA_HOME%" SET JRE=%JAVA_HOME%
+  IF EXIST "%JDK_HOME%" (
+    SET JRE=%JDK_HOME%
+  ) ELSE IF EXIST "%JAVA_HOME%" (
+    SET JRE=%JAVA_HOME%
+  )
 )
 
 SET JAVA_EXE=%JRE%\bin\java.exe
