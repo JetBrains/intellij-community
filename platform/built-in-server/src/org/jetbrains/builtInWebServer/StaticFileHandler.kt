@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpUtil
 import io.netty.handler.stream.ChunkedStream
+import org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.io.FileResponses
@@ -35,7 +36,8 @@ private class StaticFileHandler : WebServerFileHandler() {
         return true
       }
 
-      FileResponses.sendFile(request, channel, ioFile, extraHeaders)
+      val extraSuffix = WebServerPageConnectionService.getInstance().fileRequested(request, pathInfo::getOrResolveVirtualFile)
+      FileResponses.sendFile(request, channel, ioFile, extraHeaders, extraSuffix)
       return true
     }
 

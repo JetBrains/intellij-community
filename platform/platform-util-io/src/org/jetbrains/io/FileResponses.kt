@@ -4,12 +4,14 @@ package org.jetbrains.io
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.CollectionFactory
+import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.DefaultFileRegion
 import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslHandler
 import io.netty.handler.stream.ChunkedNioFile
+import io.netty.util.CharsetUtil
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -17,6 +19,8 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.math.max
+import kotlin.math.min
 
 fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
   val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
@@ -78,7 +82,7 @@ object FileResponses {
     return response
   }
 
-  fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders? = null) {
+  fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders? = null, extraSuffix: CharSequence? = null) {
     val fileChannel: FileChannel
     val rangeHeader = request.headers().get(HttpHeaderNames.RANGE)
     val lastModified: Long
@@ -98,29 +102,40 @@ object FileResponses {
     val isKeepAlive: Boolean
     var fileWillBeClosed = false
     try {
-      val fileLength = fileChannel.size()
-      val range = parseRange(rangeHeader, fileLength) ?: ByteRange(0, fileLength)
+      val fileSize = fileChannel.size()
+      val responseLength = fileSize + (extraSuffix?.length ?: 0)
+      val range = parseRange(rangeHeader, responseLength) ?: ByteRange(0, responseLength)
 
-      val isPartialContent = !(range.start == 0L && range.end == fileLength)
+      val isPartialContent = !(range.start == 0L && range.end == responseLength)
       val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, if (isPartialContent) HttpResponseStatus.PARTIAL_CONTENT else HttpResponseStatus.OK)
       isKeepAlive = response.addKeepAliveIfNeeded(request)
       doPrepareResponse(response, file.fileName.toString(), lastModified, extraHeaders)
 
       if (isPartialContent) {
-        response.headers().set(HttpHeaderNames.CONTENT_RANGE, "bytes ${range.start}-${range.end - 1}/${fileLength}")//NON-NLS
+        response.headers().set(HttpHeaderNames.CONTENT_RANGE, "bytes ${range.start}-${range.end - 1}/${responseLength}")//NON-NLS
       }
 
-      val contentLength = range.end - range.start
-      HttpUtil.setContentLength(response, contentLength)
+      HttpUtil.setContentLength(response, range.length)
       channel.write(response)
       if (request.method() !== HttpMethod.HEAD) {
-        if (channel.pipeline().get(SslHandler::class.java) == null) {
-          // no encryption - use zero-copy
-          channel.write(DefaultFileRegion(fileChannel, range.start, contentLength))
+        val fileRange = range.intersect(0, fileSize)
+        if (fileRange != null && fileRange.length > 0) {
+          if (channel.pipeline().get(SslHandler::class.java) == null) {
+            // no encryption - use zero-copy
+            channel.write(DefaultFileRegion(fileChannel, range.start, fileRange.length))
+          }
+          else {
+            // cannot use zero-copy with HTTPS
+            channel.write(ChunkedNioFile(fileChannel, range.start, fileRange.length, 8192))
+          }
         }
-        else {
-          // cannot use zero-copy with HTTPS
-          channel.write(ChunkedNioFile(fileChannel, range.start, contentLength, 8192))
+        if (extraSuffix != null) {
+          val suffixRange = range.intersect(fileSize, fileSize + extraSuffix.length)
+          if (suffixRange != null && suffixRange.length > 0) {
+            val byteBuf = Unpooled.copiedBuffer(
+              extraSuffix.subSequence((suffixRange.start - fileSize).toInt(), (suffixRange.end - fileSize).toInt()), CharsetUtil.US_ASCII)
+            channel.write(byteBuf)
+          }
         }
       }
       fileWillBeClosed = true
@@ -138,7 +153,16 @@ object FileResponses {
 private val RANGE_HEADER = Pattern.compile("bytes=(\\d+)?-(\\d+)?")
 
 // http range end is inclusive, but we use more convenient agreement - end here is exclusive
-private data class ByteRange(val start: Long, val end: Long)
+private data class ByteRange(val start: Long, val end: Long) {
+  fun intersect(otherStart: Long, otherEnd: Long): ByteRange? {
+    if (start <= otherStart && otherEnd <= end) return ByteRange(otherStart, otherEnd)
+    if (otherStart <= start && end <= otherEnd) return this
+    if (end <= otherStart || otherEnd <= start) return null
+    return ByteRange(max(start, otherStart), min(end, otherEnd))
+  }
+  val length: Long
+    get() = end - start
+}
 
 private fun parseRange(header: String?, size: Long): ByteRange? {
   if (header.isNullOrEmpty()) {

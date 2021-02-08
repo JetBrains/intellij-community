@@ -48,12 +48,13 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
   }
 
   fun <T> send(messageId: Int, message: ByteBuf, results: MutableList<Promise<Pair<Client, T>>>? = null) {
+    message.retain()
     forEachClient(object : Consumer<Client> {
       private var first: Boolean = false
 
       override fun accept(client: Client) {
         try {
-          val result = client.send<Pair<Client, T>>(messageId, if (first) message else message.duplicate())
+          val result = client.send<Pair<Client, T>>(messageId, if (first) message else message.retainedDuplicate())
           first = false
           results?.add(result!!)
         }
@@ -62,6 +63,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
         }
       }
     })
+    message.release()
   }
 
   fun disconnectClient(channel: Channel, client: Client, closeChannel: Boolean): Boolean {
