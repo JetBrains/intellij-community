@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -538,5 +538,29 @@ abstract class StreamEx<T> implements Stream<T> {
     StreamEx.of(1, 2, 3).into(list);
   }
 }""")
+  }
+
+  void testStringBuilderMethods() {
+    doTest("""
+class X {
+  void x() {
+    String abc = "abc";
+        StringBuilder sb = new StringBuilder(abc);
+
+        abc./*Result of 'String.substring()' is ignored*/substring/**/(0, 1);    // OK, warning: Result of `String.substring()` is ignored
+        abc./*Result of 'String.compareTo()' is ignored*/compareTo/**/(null);
+        sb./*Result of 'AbstractStringBuilder.substring()' is ignored*/substring/**/(0, 1);    // KO, no warning
+        sb./*Result of 'Object.equals()' is ignored*/equals/**/(null);
+        sb./*Result of 'AbstractStringBuilder.capacity()' is ignored*/capacity/**/();
+        sb./*Result of 'AbstractStringBuilder.chars()' is ignored*/chars/**/();
+        sb./*Result of 'AbstractStringBuilder.codePointAt()' is ignored*/codePointAt/**/(1);
+        sb./*Result of 'AbstractStringBuilder.codePointBefore()' is ignored*/codePointBefore/**/(1);
+        sb./*Result of 'AbstractStringBuilder.codePointCount()' is ignored*/codePointCount/**/(0, 1);
+        sb./*Result of 'AbstractStringBuilder.codePoints()' is ignored*/codePoints/**/();
+        sb./*Result of 'StringBuilder.compareTo()' is ignored*/compareTo/**/(null);
+        sb./*Result of 'AbstractStringBuilder.offsetByCodePoints()' is ignored*/offsetByCodePoints/**/(0, 1);
+  }
+}
+""")
   }
 }

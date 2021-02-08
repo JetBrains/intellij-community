@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -49,8 +48,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 public class IgnoreResultOfCallInspection extends BaseInspection {
   private static final CallMatcher STREAM_COLLECT =
@@ -90,6 +91,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.io.File", ".*")
       .add("java.io.InputStream","read|skip|available|markSupported")
       .add("java.io.Reader","read|skip|ready|markSupported")
+      .add("java.lang.AbstractStringBuilder", "capacity|codePointAt|codePointBefore|codePointCount|indexOf|lastIndexOf|offsetByCodePoints|substring|subSequence")
       .add("java.lang.Boolean",".*")
       .add("java.lang.Byte",".*")
       .add("java.lang.Character",".*")
@@ -103,30 +105,30 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.lang.StrictMath",".*")
       .add("java.lang.String",".*")
       .add("java.lang.Thread", "interrupted")
-      .add("java.math.BigInteger",".*")
       .add("java.math.BigDecimal",".*")
+      .add("java.math.BigInteger",".*")
       .add("java.net.InetAddress",".*")
       .add("java.net.URI",".*")
       .add("java.nio.channels.AsynchronousChannelGroup",".*")
       .add("java.util.Arrays", ".*")
-      .add("java.util.List", "of")
-      .add("java.util.Set", "of")
-      .add("java.util.Map", "of|ofEntries|entry")
       .add("java.util.Collections", "(?!addAll).*")
+      .add("java.util.List", "of")
+      .add("java.util.Map", "of|ofEntries|entry")
+      .add("java.util.Set", "of")
       .add("java.util.UUID",".*")
-      .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparentBounds|hasAnchoringBounds|hitEnd|requireEnd")
-      .add("java.util.regex.Pattern",".*")
       .add("java.util.concurrent.CountDownLatch","await|getCount")
       .add("java.util.concurrent.ExecutorService","awaitTermination|isShutdown|isTerminated")
       .add("java.util.concurrent.ForkJoinPool","awaitQuiescence")
       .add("java.util.concurrent.Semaphore","tryAcquire|availablePermits|isFair|hasQueuedThreads|getQueueLength|getQueuedThreads")
       .add("java.util.concurrent.locks.Condition","await|awaitNanos|awaitUntil")
       .add("java.util.concurrent.locks.Lock","tryLock|newCondition")
+      .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparentBounds|hasAnchoringBounds|hitEnd|requireEnd")
+      .add("java.util.regex.Pattern",".*")
       .add("java.util.stream.BaseStream",".*")
-      .add("java.util.stream.Stream",".*")
       .add("java.util.stream.DoubleStream",".*")
       .add("java.util.stream.IntStream",".*")
       .add("java.util.stream.LongStream",".*")
+      .add("java.util.stream.Stream",".*")
       .finishDefault();
   }
 
@@ -204,9 +206,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       }
     }
 
-    private void visitCalledExpression(PsiExpression call,
-                                       PsiMethod method,
-                                       @Nullable PsiElement errorContainer) {
+    private void visitCalledExpression(PsiExpression call, PsiMethod method, @Nullable PsiElement errorContainer) {
       if (shouldReport(call, method, errorContainer)) {
         registerMethodCallOrRefError(call, method.getContainingClass());
       }
