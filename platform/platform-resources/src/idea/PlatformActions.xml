@@ -1080,9 +1080,7 @@
           <action id="MacMessagesSequencesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesSequencesAction"/>
         </group>
         <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction"/>
-        <action id="FocusTracer" internal="true" class="com.intellij.internal.focus.FocusTracesAction">
-          <keyboard-shortcut first-keystroke="control shift F11" keymap="$default"/>
-        </action>
+        <action id="FocusTracer" internal="true" class="com.intellij.internal.focus.FocusTracesAction"/>
         <reference ref="LogFocusRequests"/>
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction">
           <abbreviation value="uii"/>
