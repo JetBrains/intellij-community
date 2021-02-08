@@ -500,6 +500,7 @@ object DynamicPlugins {
           LaterInvocator.purgeExpiredItems()
           FileAttribute.resetRegisteredIds()
           resetFocusCycleRoot()
+          clearNewFocusOwner()
           hideTooltip()
           PerformanceWatcher.getInstance().clearFreezeStacktraces()
 
@@ -943,6 +944,18 @@ object DynamicPlugins {
     if (field != null) {
       try {
         ThrowableInterner.clearBacktrace((field[null] as Throwable))
+      }
+      catch (e: Throwable) {
+        LOG.info(e)
+      }
+    }
+  }
+
+  private fun clearNewFocusOwner() {
+    val field = ReflectionUtil.getDeclaredField(KeyboardFocusManager::class.java, "newFocusOwner")
+    if (field != null) {
+      try {
+        field.set(null, null)
       }
       catch (e: Throwable) {
         LOG.info(e)
