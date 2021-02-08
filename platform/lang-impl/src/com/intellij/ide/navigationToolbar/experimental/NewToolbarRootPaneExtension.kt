@@ -71,7 +71,6 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
           val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
                                                                         if (c is ActionGroup) c else DefaultActionGroup(c),
                                                                         true) as ActionToolbarImpl
-          toolbar.updateActionsImmediately()
           toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
           toolbar.addNotify()
           panel.add(toolbar, if (c is CustomComponentAction) "$layoutConstrains, shrink 0" else layoutConstrains)
