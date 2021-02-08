@@ -35,6 +35,13 @@ object PluginSignatureChecker {
   private val certificateStore = PluginCertificateStore.instance
 
   @JvmStatic
+  fun isSignedByAnyCertificates(pluginName: String, pluginFile: File): Boolean {
+    val jbCert = jetbrainsCertificate ?: return processSignatureWarning(pluginName, IdeBundle.message("jetbrains.certificate.not.found"))
+    val certificates = certificateStore.customTrustManager.certificates.orEmpty() + jbCert
+    return isSignedBy(pluginName, pluginFile, *certificates.toTypedArray())
+  }
+
+  @JvmStatic
   fun isSignedByCustomCertificates(pluginName: String, pluginFile: File): Boolean {
     val certificates = certificateStore.customTrustManager.certificates
     if (certificates.isEmpty()) return true
