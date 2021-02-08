@@ -143,4 +143,14 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     String message = t.getMessage();
     return !StringUtil.isEmptyOrSpaces(message) ? message : defaultMessage;
   }
+
+  public static @Nullable Exception runAndCatch(@NotNull ThrowableRunnable<? extends Exception> runnable) {
+    try {
+      runnable.run();
+      return null;
+    }
+    catch (Exception e) {
+      return e;
+    }
+  }
 }

@@ -41,7 +41,7 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
     repairNameStorage(new Exception());
   }
 
-  public abstract void flushNameStorage();
+  public abstract void flushNameStorage() throws IOException;
 
   public abstract void reinitializeNameStorage();
 }

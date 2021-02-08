@@ -211,7 +211,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   }
 
   @Override
-  public void flush() {
+  public void flush() throws IOException {
     ConcurrencyUtil.withLock(l, () -> {
       if (!myMap.isClosed()) {
         myCache.clear();

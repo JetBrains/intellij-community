@@ -13,8 +13,8 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.*;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.*;
@@ -139,12 +139,10 @@ class KeyHashLog<Key> implements Closeable {
 
   @NotNull
   IntSet getSuitableKeyHashes(@NotNull IdFilter idFilter) throws StorageException {
-    withLock(() -> {
-      myKeyHashToVirtualFileMapping.force();
-    }, false);
-
-    Int2ObjectMap<IntSet> hash2inputIds = new Int2ObjectOpenHashMap<>(1000);
     try {
+      doForce();
+
+      Int2ObjectMap<IntSet> hash2inputIds = new Int2ObjectOpenHashMap<>(1000);
       AtomicInteger uselessRecords = new AtomicInteger();
 
       withLock(() -> {
@@ -178,17 +176,22 @@ class KeyHashLog<Key> implements Closeable {
       if (uselessRecords.get() >= hash2inputIds.size()) {
         setRequiresCompaction();
       }
+
+      return hash2inputIds.keySet();
     }
     catch (IOException e) {
       throw new StorageException(e);
     }
-    return hash2inputIds.keySet();
   }
 
-  void force() {
+  void force() throws IOException {
     if (myKeyHashToVirtualFileMapping.isDirty()) {
-      withLock(() -> myKeyHashToVirtualFileMapping.force(), false);
+      doForce();
     }
+  }
+
+  private void doForce() throws IOException {
+    withLock(() -> myKeyHashToVirtualFileMapping.force(), false);
   }
 
   @Override

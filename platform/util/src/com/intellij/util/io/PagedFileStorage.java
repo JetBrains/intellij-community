@@ -3,6 +3,10 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +17,7 @@ import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 
 public class PagedFileStorage implements Forceable {
   private static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
@@ -228,19 +233,21 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  public void close() {
-    try {
-      force();
-    }
-    finally {
+  public void close() throws IOException {
+    List<Exception> exceptions = new SmartList<>();
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> force()));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
       unmapAll();
       myStorageLockContext.getStorageLock().removeStorage(myStorageIndex);
       myStorageIndex = -1;
+    }));
+    if (!exceptions.isEmpty()) {
+      throw new IOException(new CompoundRuntimeException(exceptions));
     }
   }
 
   private void unmapAll() {
-    myStorageLockContext.getStorageLock().unmapBuffersForOwner(myStorageIndex, myStorageLockContext, false);
+    myStorageLockContext.getStorageLock().unmapBuffersForOwner(myStorageIndex, myStorageLockContext);
     myLastAccessedBufferCache.clear();
   }
 
@@ -355,8 +362,9 @@ public class PagedFileStorage implements Forceable {
   }
 
   @Override
-  public void force() {
-    long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
+  public void force() throws IOException {
+    long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
+
     if (isDirty) {
       myStorageLockContext.getStorageLock().flushBuffersForOwner(myStorageIndex, myStorageLockContext);
       isDirty = false;
@@ -365,7 +373,7 @@ public class PagedFileStorage implements Forceable {
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
       if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
-        IOStatistics.dump("Flushed "+myFile + " for " + (finished - started));
+        IOStatistics.dump("Flushed " + myFile + " for " + (finished - started));
       }
     }
   }

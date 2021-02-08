@@ -67,7 +67,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   }
 
   @Override
-  public void flush() {
+  public void flush() throws IOException {
     l.lock();
     try {
       super.flush();
