@@ -116,7 +116,7 @@ final class ClassLoaderConfigurator {
     this.additionalLayoutMap = additionalLayoutMap;
 
     hasAllModules = idMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER);
-    urlClassLoaderBuilder = UrlClassLoader.build().useCache();
+    urlClassLoaderBuilder = UrlClassLoader.build().useCache().errorReporter(it -> getLogger().error(it));
 
     ClassPath.ResourceFileFactory resourceFileFactory;
     try {

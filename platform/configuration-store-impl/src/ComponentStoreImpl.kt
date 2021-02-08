@@ -37,7 +37,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
-import java.net.URL
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -495,19 +494,14 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun <T : Any> getDefaultState(component: Any, componentName: String, stateClass: Class<T>): T? {
     val classLoader = component.javaClass.classLoader
-    var url: URL? = classLoader.getResource("$componentName.xml")
-    if (url == null) {
-      url = classLoader.getResource("idea/$componentName.xml") ?: return null
-      LOG.error("Do not rely on `idea/` prefix (component=$componentName)")
-    }
-
+    val stream = classLoader.getResourceAsStream("$componentName.xml") ?: return null
     try {
-      val element = JDOMUtil.load(url)
+      val element = JDOMUtil.load(stream)
       getPathMacroManagerForDefaults()?.expandPaths(element)
       return deserializeState(element, stateClass, null)
     }
     catch (e: Throwable) {
-      throw IOException("Error loading default state from $url", e)
+      throw IOException("Error loading default state for $componentName", e)
     }
   }
 

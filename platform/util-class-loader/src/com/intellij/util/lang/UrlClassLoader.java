@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -38,6 +39,8 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   protected final ClassPath classPath;
   private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
+
+  protected final @Nullable Consumer<String> errorReporter;
 
   /**
    * Called by the VM to support dynamic additions to the class path.
@@ -147,6 +150,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     super(builder.parent);
 
     files = builder.files;
+    errorReporter = builder.errorReporter;
 
     Set<Path> urlsWithProtectionDomain = builder.pathsWithProtectionDomain;
     if (urlsWithProtectionDomain == null) {
@@ -281,7 +285,14 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
         resource = classPath.findResource(name.substring(1));
       }
       else {
-        throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
+        String error = "Do not request resource from classloader using path with leading slash (path=" + name + ")";
+        if (errorReporter == null) {
+          throw new IllegalArgumentException(error);
+        }
+        else {
+          errorReporter.accept(error);
+          resource = classPath.findResource(toCanonicalPath(name.substring(1)));
+        }
       }
     }
     return resource == null ? null : resource.getURL();
@@ -528,6 +539,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     boolean errorOnMissingJar = true;
     @Nullable CachePoolImpl cachePool;
     Predicate<? super Path> cachingCondition;
+    Consumer<String> errorReporter;
 
     Builder() { }
 
@@ -640,6 +652,11 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
         }
       }
       pathsWithProtectionDomain = result;
+      return this;
+    }
+
+    public @NotNull UrlClassLoader.Builder errorReporter(@Nullable Consumer<String> value) {
+      errorReporter = value;
       return this;
     }
 

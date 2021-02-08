@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.idea.Main;
@@ -73,6 +73,7 @@ public final class BootstrapClassLoaderUtil {
       .usePersistentClasspathIndexForLocalClassDirectories()
       .autoAssignUrlsWithProtectionDomain()
       .parent(ClassLoader.getPlatformClassLoader())
+      .errorReporter(it -> getLogger().error(it))
       .useCache();
     if (Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();

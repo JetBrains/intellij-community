@@ -372,9 +372,24 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       return resource.getURL();
     }
 
+    URL result = doFindResource(canonicalPath);
+    if (result == null && name.startsWith("/")) {
+      String error = "Do not request resource from classloader using path with leading slash (path=" + name + ")";
+      if (errorReporter == null) {
+        throw new IllegalArgumentException(error);
+      }
+      else {
+        errorReporter.accept(error);
+        return doFindResource(toCanonicalPath(name.substring(1)));
+      }
+    }
+    return result;
+  }
+
+  private @Nullable URL doFindResource(String canonicalPath) {
     for (ClassLoader classloader : getAllParents()) {
       if (classloader instanceof PluginClassLoader) {
-        resource = ((PluginClassLoader)classloader).classPath.findResource(canonicalPath);
+        Resource resource = ((PluginClassLoader)classloader).classPath.findResource(canonicalPath);
         if (resource != null) {
           return resource.getURL();
         }
@@ -385,10 +400,6 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
           return resourceUrl;
         }
       }
-    }
-
-    if (name.startsWith("/")) {
-      throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
     }
     return null;
   }
