@@ -373,15 +373,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     }
 
     URL result = doFindResource(canonicalPath);
-    if (result == null && name.startsWith("/")) {
-      String error = "Do not request resource from classloader using path with leading slash (path=" + name + ")";
-      if (errorReporter == null) {
-        throw new IllegalArgumentException(error);
-      }
-      else {
-        errorReporter.accept(error);
-        return doFindResource(toCanonicalPath(name.substring(1)));
-      }
+    if (result == null && canonicalPath.startsWith("/")) {
+      Logger.getInstance(PluginClassLoader.class).error(
+        "Do not request resource from classloader using path with leading slash", new IllegalArgumentException(name));
+      result = doFindResource(canonicalPath.substring(1));
     }
     return result;
   }

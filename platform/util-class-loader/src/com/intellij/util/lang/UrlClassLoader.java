@@ -2,7 +2,6 @@
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -22,7 +23,6 @@ import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -39,8 +39,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   protected final ClassPath classPath;
   private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
-
-  protected final @Nullable Consumer<String> errorReporter;
 
   /**
    * Called by the VM to support dynamic additions to the class path.
@@ -150,7 +148,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     super(builder.parent);
 
     files = builder.files;
-    errorReporter = builder.errorReporter;
 
     Set<Path> urlsWithProtectionDomain = builder.pathsWithProtectionDomain;
     if (urlsWithProtectionDomain == null) {
@@ -278,22 +275,14 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       return null;
     }
 
-    Resource resource = classPath.findResource(toCanonicalPath(name));
-    if (resource == null && name.startsWith("/")) {
+    String canonicalPath = toCanonicalPath(name);
+    Resource resource = classPath.findResource(canonicalPath);
+    if (resource == null && canonicalPath.startsWith("/")) {
       //noinspection SpellCheckingInspection
-      if (name.startsWith("/org/bridj/")) {
-        resource = classPath.findResource(name.substring(1));
+      if (!canonicalPath.startsWith("/org/bridj/")) {
+        logError("Do not request resource from classloader using path with leading slash", new IllegalArgumentException(name));
       }
-      else {
-        String error = "Do not request resource from classloader using path with leading slash (path=" + name + ")";
-        if (errorReporter == null) {
-          throw new IllegalArgumentException(error);
-        }
-        else {
-          errorReporter.accept(error);
-          resource = classPath.findResource(toCanonicalPath(name.substring(1)));
-        }
-      }
+      resource = classPath.findResource(canonicalPath.substring(1));
     }
     return resource == null ? null : resource.getURL();
   }
@@ -314,12 +303,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
         return resource.getInputStream();
       }
       catch (IOException e) {
-        LoggerRt.getInstance(UrlClassLoader.class).error("Cannot load resource " + normalizedName, e);
+        logError("Cannot load resource " + normalizedName, e);
       }
     }
 
     if (normalizedName.startsWith("/")) {
-      throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash");
+      throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
     }
 
     if (isBootstrapResourcesAllowed) {
@@ -511,6 +500,22 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return 0;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private void logError(String message, Throwable t) {
+    try {
+      Class<?> logger = Class.forName("com.intellij.openapi.diagnostic.Logger", false, this);
+      MethodHandles.Lookup lookup = MethodHandles.lookup();
+      Object instance = lookup.findStatic(logger, "getInstance", MethodType.methodType(logger, Class.class)).invoke(getClass());
+      lookup.findVirtual(logger, "error", MethodType.methodType(void.class, String.class, Throwable.class))
+        .bindTo(instance)
+        .invokeExact(message, t);
+    }
+    catch (Throwable tt) {
+      tt.addSuppressed(t);
+      tt.printStackTrace(System.err);
+    }
+  }
+
   // work around corrupted URLs produced by File.getURL()
   // public for test
   public static @NotNull String urlToFilePath(@NotNull String url) {
@@ -539,7 +544,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     boolean errorOnMissingJar = true;
     @Nullable CachePoolImpl cachePool;
     Predicate<? super Path> cachingCondition;
-    Consumer<String> errorReporter;
 
     Builder() { }
 
@@ -652,11 +656,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
         }
       }
       pathsWithProtectionDomain = result;
-      return this;
-    }
-
-    public @NotNull UrlClassLoader.Builder errorReporter(@Nullable Consumer<String> value) {
-      errorReporter = value;
       return this;
     }
 
