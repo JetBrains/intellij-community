@@ -1328,11 +1328,6 @@
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"/>
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow"/>
 
-    <action id="CopyReferencePopup" class="com.intellij.ide.actions.CopyReferencePopup">
-      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
-    </action>
-
     <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" use-shortcut-of="CopyPaths" />
     <action id="CopyFileName" class="com.intellij.ide.actions.CopyFileNameProvider"/>
     <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider"/>
@@ -1340,7 +1335,7 @@
     <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider"/>
     <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" icon="AllIcons.Nodes.Toolbox"/>
 
-    <group id="CopyReferencePopupGroup">
+    <group id="CopyReferencePopupGroup" class="com.intellij.ide.actions.CopyReferencePopup">
       <group id="CopyFileReference">
         <reference ref="CopyAbsolutePath" />
         <reference ref="CopyFileName" />
@@ -1353,6 +1348,8 @@
       <group id="CopyExternalReferenceGroup">
         <reference ref="CopyTBXReference" />
       </group>
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
     </group>
 
     <action id="OpenMouseWheelSmoothScrollSettings" class="com.intellij.ui.mouse.MouseWheelSmoothScrollOptionsAction"/>
