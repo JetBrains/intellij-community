@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
@@ -81,23 +80,6 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
 
   public void setOngoingRebaseSpec(@Nullable GitRebaseSpec ongoingRebaseSpec) {
     myOngoingRebaseSpec = ongoingRebaseSpec != null && ongoingRebaseSpec.isValid() ? ongoingRebaseSpec : null;
-  }
-
-  @NotNull
-  public Collection<GitRepository> getDirectSubmodules(@NotNull GitRepository superProject) {
-    Collection<GitSubmoduleInfo> modules = superProject.getSubmodules();
-    return ContainerUtil.mapNotNull(modules, module -> {
-      VirtualFile submoduleDir = superProject.getRoot().findFileByRelativePath(module.getPath());
-      if (submoduleDir == null) {
-        LOG.debug("submodule dir not found at declared path [" + module.getPath() + "] of root [" + superProject.getRoot() + "]");
-        return null;
-      }
-      GitRepository repository = getRepositoryForRoot(submoduleDir);
-      if (repository == null) {
-        LOG.warn("Submodule not registered as a repository: " + submoduleDir);
-      }
-      return repository;
-    });
   }
 
   void notifyListenersAsync(@NotNull GitRepository repository) {
