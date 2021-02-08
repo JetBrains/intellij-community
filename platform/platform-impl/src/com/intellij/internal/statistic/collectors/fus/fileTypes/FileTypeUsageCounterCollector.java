@@ -231,34 +231,4 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
       onChange(dataContext);
     }
   }
-
-  public static class MyFileEditorManagerListener implements FileEditorManagerListener, FileEditorManagerListener.Before {
-    private static final Map<String, Long> ourStartOpenTime = new ConcurrentHashMap<>();
-
-    @Override
-    public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      ourStartOpenTime.put(getKey(file), System.nanoTime());
-    }
-
-    @Override
-    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      Long startOpen = ourStartOpenTime.remove(getKey(file));
-      triggerOpen(source.getProject(), source, file, startOpen);
-    }
-
-    @Override
-    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      triggerClosed(source.getProject(), file);
-    }
-
-    @Override
-    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-      triggerSelect(event.getManager().getProject(), event.getNewFile());
-    }
-
-    @NotNull
-    private static String getKey(@NotNull VirtualFile file) {
-      return file.getUrl();
-    }
-  }
 }
