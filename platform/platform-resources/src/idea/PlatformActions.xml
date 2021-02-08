@@ -733,14 +733,14 @@
           <group id="SplitChooser.Actions" text="Split with Chooser Navigation" searchable="false" compact="true" popup="true" internal="true">
             <action id="SplitChooser.NextWindow" class="com.intellij.ide.actions.InteractiveSplitAction$Key$NextWindow"/>
             <action id="SplitChooser.PreviousWindow" class="com.intellij.ide.actions.InteractiveSplitAction$Key$PreviousWindow"/>
-            <action id="SplitChooser.Exit" class="com.intellij.ide.actions.InteractiveSplitAction$Key$Exit"/>
+            <action id="SplitChooser.Exit" class="com.intellij.ide.actions.InteractiveSplitAction$Key$Exit" use-shortcut-of="EditorEscape"/>
             <action id="SplitChooser.Split" class="com.intellij.ide.actions.InteractiveSplitAction$Key$Split"/>
             <action id="SplitChooser.Duplicate" class="com.intellij.ide.actions.InteractiveSplitAction$Key$Duplicate"/>
             <action id="SplitChooser.SplitCenter" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitCenter"/>
-            <action id="SplitChooser.SplitTop" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitTop"/>
-            <action id="SplitChooser.SplitLeft" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitLeft"/>
-            <action id="SplitChooser.SplitDown" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitDown"/>
-            <action id="SplitChooser.SplitRight" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitRight"/>
+            <action id="SplitChooser.SplitTop" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitTop" use-shortcut-of="EditorUp"/>
+            <action id="SplitChooser.SplitLeft" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitLeft" use-shortcut-of="EditorLeft"/>
+            <action id="SplitChooser.SplitDown" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitDown" use-shortcut-of="EditorDown"/>
+            <action id="SplitChooser.SplitRight" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitRight" use-shortcut-of="EditorRight"/>
           </group>
           <action id="StretchSplitToTop" class="com.intellij.ide.actions.StretchSplitAction$StretchToTop"/>
           <action id="StretchSplitToLeft" class="com.intellij.ide.actions.StretchSplitAction$StretchToLeft"/>

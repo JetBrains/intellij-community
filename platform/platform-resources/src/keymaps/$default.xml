@@ -15,9 +15,6 @@
   <action id="SplitChooser.PreviousWindow">
     <keyboard-shortcut first-keystroke="shift TAB"/>
   </action>
-  <action id="SplitChooser.Exit">
-    <keyboard-shortcut first-keystroke="ESCAPE"/>
-  </action>
   <action id="SplitChooser.Split">
     <keyboard-shortcut first-keystroke="ENTER"/>
   </action>
@@ -26,18 +23,6 @@
   </action>
   <action id="SplitChooser.SplitCenter">
     <keyboard-shortcut first-keystroke="SPACE"/>
-  </action>
-  <action id="SplitChooser.SplitTop">
-    <keyboard-shortcut first-keystroke="UP"/>
-  </action>
-  <action id="SplitChooser.SplitLeft">
-    <keyboard-shortcut first-keystroke="LEFT"/>
-  </action>
-  <action id="SplitChooser.SplitDown">
-    <keyboard-shortcut first-keystroke="DOWN"/>
-  </action>
-  <action id="SplitChooser.SplitRight">
-    <keyboard-shortcut first-keystroke="RIGHT"/>
   </action>
   <action id="FileChooser.TogglePathShowing">
     <keyboard-shortcut first-keystroke="control P"/>
