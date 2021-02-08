@@ -115,19 +115,15 @@ public class JsonParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // value+
+  // value*
   static boolean json(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "json")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = value(b, l + 1);
-    while (r) {
+    while (true) {
       int c = current_position_(b);
       if (!value(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "json", c)) break;
     }
-    exit_section_(b, m, null, r);
-    return r;
+    return true;
   }
 
   /* ********************************************************** */

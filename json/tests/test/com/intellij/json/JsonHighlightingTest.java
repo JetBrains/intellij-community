@@ -45,6 +45,16 @@ public class JsonHighlightingTest extends JsonHighlightingTestBase {
     doTestHighlightingForJsonLines(false, true, true);
   }
 
+  public void testJsonLinesEmptyFile() {
+    enableStandardComplianceInspection(true, true);
+    doTestHighlightingForJsonLines(false, true, true);
+  }
+
+  public void testEmptyFile() {
+    enableStandardComplianceInspection(true, true);
+    doTestHighlighting(false, true, true);
+  }
+
   public void testDuplicatePropertyKeys() {
     myFixture.enableInspections(JsonDuplicatePropertyKeysInspection.class);
     doTestHighlighting(false, true, true);
