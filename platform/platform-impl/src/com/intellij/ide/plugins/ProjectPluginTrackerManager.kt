@@ -2,10 +2,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -42,7 +44,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       parentComponent,
     )
 
-    internal class EnableDisablePluginsActivity : StartupActivity.RequiredForSmartMode {
+    internal class EnableDisablePluginsActivity : StartupActivity {
 
       init {
         if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -54,12 +56,24 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
         val tracker = instance.getPluginTracker(project)
         val trackers = instance.openProjectsPluginTrackers(project)
 
-        loadPlugins(tracker.enabledPluginIds(trackers))
+        val indicator = ProgressManager.getInstance().progressIndicator
+        ApplicationManager.getApplication().invokeLater(
+          Runnable {
+            indicator?.let {
+              it.text = IdeBundle.message("plugins.progress.loading.plugins.for.current.project.title", project.name)
+            }
+            loadPlugins(tracker.enabledPluginIds(trackers))
 
-        unloadPlugins(
-          tracker.disabledPluginsIds,
-          project,
-          trackers,
+            indicator?.let {
+              it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
+            }
+            unloadPlugins(
+              tracker.disabledPluginsIds,
+              project,
+              trackers,
+            )
+          },
+          project.disposed,
         )
       }
     }

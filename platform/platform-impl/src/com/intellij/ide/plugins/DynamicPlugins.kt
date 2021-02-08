@@ -388,7 +388,9 @@ object DynamicPlugins {
         }
       }
     }
-    val indicator = PotemkinProgress(IdeBundle.message("unloading.plugin.progress.title", pluginDescriptor.name), project, parentComponent,
+    val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name),
+                                     project,
+                                     parentComponent,
                                      null)
     indicator.runInSwingThread {
       result = unloadPlugin(pluginDescriptor, options.withSave(false))

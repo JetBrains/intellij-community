@@ -531,7 +531,8 @@
 
     <applicationService serviceImplementation="com.intellij.ide.plugins.ProjectPluginTrackerManager"
                         preload="true"/>
-    <postStartupActivity implementation="com.intellij.ide.plugins.ProjectPluginTrackerManager$Companion$EnableDisablePluginsActivity"/>
+    <startupActivity implementation="com.intellij.ide.plugins.ProjectPluginTrackerManager$Companion$EnableDisablePluginsActivity"
+                     order="first"/>
     <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
     <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
                          id="preferences.externalDependencies"
