@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization;
 
 import com.intellij.openapi.util.Couple;
@@ -13,6 +13,7 @@ import java.awt.*;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public class PropertyCollector {
@@ -67,7 +68,10 @@ public class PropertyCollector {
     do {
       accessors.addAll(classToOwnFields == null ? doCollectOwnFields(currentClass, configuration) : classToOwnFields.get(currentClass));
     }
-    while ((currentClass = currentClass.getSuperclass()) != null && !configuration.isAnnotatedAsTransient(currentClass) && currentClass != Object.class);
+    while ((currentClass = currentClass.getSuperclass()) != null && !configuration.isAnnotatedAsTransient(currentClass) &&
+           currentClass != Object.class && currentClass != AtomicReference.class); // AtomicReference is a superclass of UserDataHolderBase
+                                                                                   // which is a superclass of many serializable objects
+                                                                                   // and we mustn't consider AtomicReference.getOpaque etc. as serializable properties
 
     // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter, but annotation moved to var, not to getter/setter
     // so, we must remove duplicated accessor
@@ -173,6 +177,9 @@ public class PropertyCollector {
 
   private static boolean isAcceptableProperty(@Nullable Method getter, @Nullable Method setter, @NotNull Configuration configuration) {
     if (getter == null || configuration.isAnnotatedAsTransient(getter)) {
+      return false;
+    }
+    if (getter.getDeclaringClass() == AtomicReference.class) {
       return false;
     }
 
