@@ -320,6 +320,12 @@ object EventFields {
   @JvmField
   val Enabled = Boolean("enabled")
 
+  @JvmField
+  val DurationMs = LongEventField("duration_ms")
+
+  @JvmField
+  val TimeToShowMs = LongEventField("time_to_show")
+
   @JvmStatic
   fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {
     val additionalFields = mutableListOf<EventField<*>>()

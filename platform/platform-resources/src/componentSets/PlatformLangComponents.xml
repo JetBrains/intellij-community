@@ -169,6 +169,8 @@
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyFileEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
 
     <!-- another one for project level -->
     <listener class="com.intellij.notification.impl.MacEventReader" topic="com.intellij.notification.Notifications" os="mac"
