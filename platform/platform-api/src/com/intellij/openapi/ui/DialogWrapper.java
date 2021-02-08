@@ -623,16 +623,7 @@ public abstract class DialogWrapper {
   private JPanel createSouthPanel(@NotNull List<? extends JButton> leftSideButtons,
                                   @NotNull List<? extends JButton> rightSideButtons,
                                   boolean addHelpToLeftSide) {
-    JPanel panel = new JPanel(new BorderLayout()) {
-      @Override
-      public Color getBackground() {
-        final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
-        if (getStyle() == DialogStyle.COMPACT && bg != null) {
-          return bg;
-        }
-        return super.getBackground();
-      }
-    };
+    JPanel panel = new SouthPanel(getStyle());
 
     if (myDoNotAsk != null) {
       myCheckBoxDoNotShowDialog = new JCheckBox(myDoNotAsk.getDoNotShowMessage());
@@ -2272,6 +2263,24 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
       }
       catch (Exception ignore) {
       }
+    }
+  }
+
+  private static class SouthPanel extends JPanel {
+    private final DialogStyle myStyle;
+
+    SouthPanel(@NotNull DialogStyle style) {
+      super(new BorderLayout());
+      myStyle = style;
+    }
+
+    @Override
+    public Color getBackground() {
+      final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
+      if (myStyle == DialogStyle.COMPACT && bg != null) {
+        return bg;
+      }
+      return super.getBackground();
     }
   }
 }
