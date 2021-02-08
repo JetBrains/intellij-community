@@ -2,9 +2,16 @@
 package com.intellij.execution.wsl
 
 import org.junit.Assert
+import org.junit.Assume
+import org.junit.Before
 import org.junit.Test
 
 class WslPathTest {
+
+  @Before
+  fun setUp() {
+    Assume.assumeTrue(WSLUtil.isSystemCompatible())
+  }
 
   @Test
   fun testParse() {
