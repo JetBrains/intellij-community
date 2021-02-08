@@ -51,9 +51,13 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
     private fun createPresentation(button: StripeButton) =
       Presentation(button.text).apply {
         icon = button.icon
-        if (icon is ScalableIcon) icon = (icon as ScalableIcon).scale(1.4f)
+        scaleIcon()
         isEnabledAndVisible = true
       }
+
+    private fun Presentation.scaleIcon() {
+      if (icon is ScalableIcon) icon = (icon as ScalableIcon).scale(1.4f)
+    }
 
     private fun createPopupGroup(project: Project, toolWindowsPane: ToolWindowsPane, toolWindow: ToolWindow) = DefaultActionGroup()
       .apply {
@@ -101,8 +105,13 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   }
 
   private class SquareAnActionButton(val project: Project, val button: StripeButton) : ToggleActionButton(button.text, null), DumbAware {
-    override fun isSelected(e: AnActionEvent?) = button.toolWindow.isVisible
-    override fun setSelected(e: AnActionEvent?, state: Boolean) {
+    override fun isSelected(e: AnActionEvent): Boolean {
+      e.presentation.icon = button.toolWindow.icon!!
+      e.presentation.scaleIcon()
+      return button.toolWindow.isVisible
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
       val manager = button.toolWindow.toolWindowManager
       if (!state) {
         manager.hideToolWindow(button.id, false, true, ToolWindowEventSource.SquareStripeButton)

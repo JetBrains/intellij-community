@@ -9,12 +9,12 @@ import com.intellij.util.ui.JBUI
 import javax.swing.JPanel
 
 class ToolwindowRightToolbar : ToolwindowToolbar() {
-  private val topPane: JPanel
+  private val topPane = JPanel(VerticalFlowLayout(0, 0))
+  private val topToolbar = ToolwindowActionToolbar(topPane)
 
   init {
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 1, 0, 0)
-
-    topPane = JPanel(VerticalFlowLayout(0, 0))
+    topToolbar.addNotify()
     add(topPane)
   }
 
@@ -26,12 +26,8 @@ class ToolwindowRightToolbar : ToolwindowToolbar() {
 
   override fun addStripeButton(project: Project, anchor: ToolWindowAnchor, comparator: Comparator<ToolWindow>, toolWindow: ToolWindow) {
     if (anchor == ToolWindowAnchor.RIGHT) {
-      rebuildStripe(project, toolwindowPane, topPane, toolWindow, comparator)
+      rebuildStripe(project, topPane, toolWindow, comparator)
     }
-  }
-
-  override fun updateButtons() {
-    topPane.components.filterIsInstance(SquareStripeButton::class.java).forEach { it.update() }
   }
 
   override fun getButtonFor(toolWindowId: String): SquareStripeButton? {

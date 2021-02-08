@@ -5,8 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowAnchor.LEFT
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 
@@ -26,10 +24,6 @@ class ToolwindowToolbarListener(val project: Project) : ToolWindowManagerListene
     toolWindow.largeStripeAnchor = toolWindow.anchor
 
     getToolWindowsPane(project)?.onStripeButtonAdded(project, toolWindow, toolWindow.largeStripeAnchor, Comparator { _, _ -> 0 })
-  }
-
-  override fun stateChanged(toolWindowManager: ToolWindowManager) {
-    getToolWindowsPane(project)?.updateToolbars()
   }
 
   companion object {

@@ -603,8 +603,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     else if (ToolWindowAnchor.RIGHT.equals(anchor)) {
       myRightToolbar.removeStripeButton(project, toolWindow, anchor);
     }
-
-    updateToolbars();
   }
 
   void onStripeButtonAdded(@NotNull Project project,
@@ -634,7 +632,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     else if (ToolWindowAnchor.RIGHT.equals(actualAnchor)) {
       myRightToolbar.addStripeButton(project, actualAnchor, comparator, toolWindow);
     }
-    updateToolbars();
   }
 
   private void ensureDefaultInitialized(@NotNull Project project) {
@@ -648,14 +645,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     myDefaultBottomButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.BOTTOM);
 
     PropertiesComponent.getInstance(project).setValue(key, true);
-  }
-
-  void updateToolbars() {
-    if (myLeftToolbar == null || myRightToolbar == null) return;
-    myLeftToolbar.updateButtons();
-    myLeftToolbar.revalidate();
-    myRightToolbar.updateButtons();
-    myRightToolbar.revalidate();
   }
 
   @FunctionalInterface
