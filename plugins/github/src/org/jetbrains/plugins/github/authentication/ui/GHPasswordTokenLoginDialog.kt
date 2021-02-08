@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.BrowserLink
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -75,7 +72,6 @@ internal class GHPasswordTokenLoginDialog(
 
   companion object {
     fun createSignUpLink(): JPanel = simplePanel()
-      .addToCenter(LinkLabel.create(GithubBundle.message("login.sign.up")) { BrowserUtil.browse("https://github.com") })
-      .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
+      .addToCenter(BrowserLink(GithubBundle.message("login.sign.up"), "https://github.com"))
   }
 }
