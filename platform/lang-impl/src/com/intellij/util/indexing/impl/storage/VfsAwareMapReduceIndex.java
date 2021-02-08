@@ -22,10 +22,7 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingIndex;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
-import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
-import com.intellij.util.indexing.snapshot.UpdatableSnapshotInputMappingIndex;
+import com.intellij.util.indexing.snapshot.*;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -160,7 +157,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
         }
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new SnapshotInputMappingException(e);
       }
     }
     data = super.mapInput(inputId, content);
@@ -169,7 +166,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
         return ((UpdatableSnapshotInputMappingIndex<Key, Value, FileContent>)mySnapshotInputMappings).putData(content, data);
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new SnapshotInputMappingException(e);
       }
     }
     return data;

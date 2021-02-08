@@ -55,6 +55,7 @@ import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.IndexedFilesListener;
 import com.intellij.util.indexing.events.VfsEventsMerger;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
@@ -857,6 +858,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return null;
     }
     if (e instanceof MapReduceIndexMappingException) {
+      if (e.getCause() instanceof SnapshotInputMappingException) {
+        // IDEA-258515: corrupted snapshot index storage must be rebuilt.
+        return e.getCause();
+      }
       // If exception has happened on input mapping (DataIndexer.map),
       // it is handled as the indexer exception and must not lead to index rebuild.
       return null;
@@ -1454,6 +1459,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
       } catch (MapReduceIndexMappingException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SnapshotInputMappingException) {
+          requestRebuild(indexId, e);
+          return null;
+        }
         if (currentFC != null) {
           setIndexedState(index, currentFC, inputId, false);
         }
