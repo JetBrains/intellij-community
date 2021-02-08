@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -12,7 +13,6 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,8 @@ public final class AppEditorFontOptions implements PersistentStateComponent<AppE
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   public AppEditorFontOptions() {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
+    Application app = ApplicationManager.getApplication();
+    if (!app.isHeadlessEnvironment() || app.isUnitTestMode()) {
       myFontPreferences.register(FontPreferences.DEFAULT_FONT_NAME, UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
     }
   }

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.util.ReflectionUtil;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public final class FontFamilyServiceImpl extends FontFamilyService {
+final class FontFamilyServiceImpl extends FontFamilyService {
   private static final Logger LOG = Logger.getInstance(FontFamilyServiceImpl.class);
 
   private static final Method GET_FONT_2D_METHOD = ReflectionUtil.getDeclaredMethod(Font.class, "getFont2D");
@@ -40,36 +41,38 @@ public final class FontFamilyServiceImpl extends FontFamilyService {
   private final SortedMap<String, FontFamily> myFamilies = new TreeMap<>();
 
   private FontFamilyServiceImpl() {
-    if (AppEditorFontOptions.NEW_FONT_SELECTOR) {
-      if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
-        LOG.warn("Couldn't access required runtime API, will fall back to basic logic of font selection");
-      }
-      else {
-        try {
-          Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-          for (Font font : fonts) {
-            Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
-            String fontName = font.getFontName();
-            String font2DName = font2D.getFontName(null);
-            if (!fontName.equals(font2DName)) {
-              // skip fonts that are declared as available, but cannot be used due to some reason,
-              // with JDK substituting them with a different font (on Windows)
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
-              }
-              continue;
-            }
-            String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
-            String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
-            FontFamily fontFamily = myFamilies.computeIfAbsent(family, FontFamily::new);
-            fontFamily.addFont(subfamily, font);
+    if (ApplicationManager.getApplication().isUnitTestMode() || !AppEditorFontOptions.NEW_FONT_SELECTOR) {
+      return;
+    }
+
+    if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
+      LOG.warn("Couldn't access required runtime API, will fall back to basic logic of font selection");
+      return;
+    }
+
+    try {
+      Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
+      for (Font font : fonts) {
+        Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
+        String fontName = font.getFontName();
+        String font2DName = font2D.getFontName(null);
+        if (!fontName.equals(font2DName)) {
+          // skip fonts that are declared as available, but cannot be used due to some reason,
+          // with JDK substituting them with a different font (on Windows)
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
           }
+          continue;
         }
-        catch (Throwable e) {
-          LOG.error(e);
-          myFamilies.clear(); // fallback to old behaviour in case of any errors
-        }
+        String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
+        String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
+        FontFamily fontFamily = myFamilies.computeIfAbsent(family, FontFamily::new);
+        fontFamily.addFont(subfamily, font);
       }
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      myFamilies.clear(); // fallback to old behaviour in case of any errors
     }
   }
 
