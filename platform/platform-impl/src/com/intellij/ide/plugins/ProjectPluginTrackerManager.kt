@@ -15,7 +15,6 @@ import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@Service
 @State(
   name = "ProjectPluginTrackerManager",
   storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)],
