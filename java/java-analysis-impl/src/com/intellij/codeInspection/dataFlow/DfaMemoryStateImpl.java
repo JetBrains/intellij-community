@@ -1663,4 +1663,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return flushCalls ? QualifierStatus.SHOULD_FLUSH_CALLS : QualifierStatus.SHOULD_NOT_FLUSH;
     }
   }
+
+  @Override
+  public void widen() {
+    myVariableTypes.replaceAll((var, type) -> type.widen());
+  }
 }

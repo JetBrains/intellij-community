@@ -50,7 +50,8 @@ public abstract class DfConstantType<T> implements DfType {
 
   @Override
   public boolean equals(Object obj) {
-    return obj == this || obj instanceof DfConstantType && Objects.equals(((DfConstantType<?>)obj).myValue, myValue);
+    return obj == this || 
+           obj != null && obj.getClass() == getClass() && Objects.equals(((DfConstantType<?>)obj).myValue, myValue);
   }
 
   @Override

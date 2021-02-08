@@ -12,6 +12,10 @@ import org.jetbrains.annotations.NotNull;
 public interface DfIntegralType extends DfPrimitiveType {
   @NotNull
   LongRangeSet getRange();
+
+  default @NotNull LongRangeSet getWideRange() {
+    return getRange();
+  }
   
   @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op);
 

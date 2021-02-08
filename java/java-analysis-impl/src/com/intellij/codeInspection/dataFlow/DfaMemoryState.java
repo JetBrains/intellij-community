@@ -166,4 +166,6 @@ public interface DfaMemoryState {
    * @return true if two given values should be compared by content, rather than by reference.
    */
   boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight);
+
+  void widen();
 }

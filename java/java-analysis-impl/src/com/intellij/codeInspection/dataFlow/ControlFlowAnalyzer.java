@@ -684,7 +684,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // Unroll small loops
       addInstruction(new PushInstruction(loopVar, null, true));
       addInstruction(new PushInstruction(loopVar, null));
-      addInstruction(new PushValueInstruction(DfTypes.intValue(1)));
+      addInstruction(new PushValueInstruction(PsiType.LONG.equals(type) ? DfTypes.longValue(1) : DfTypes.intValue(1)));
       addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getType(), -1, true));
       addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());

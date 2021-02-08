@@ -99,7 +99,7 @@ public abstract class DfaCondition {
       if (relationType == RelationType.EQ || relationType == RelationType.NE) {
         if (leftType instanceof DfConstantType) {
           if (rightType instanceof DfConstantType) {
-            return fromBoolean(leftType.equals(rightType) ^
+            return fromBoolean(leftType.isConst(((DfConstantType<?>)rightType).getValue()) ^
                                !DfaUtil.isNaN(((DfConstantType<?>)leftType).getValue()) ^
                                relationType == RelationType.EQ);
           }

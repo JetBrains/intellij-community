@@ -16,14 +16,16 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.JavaTokenType.*;
@@ -42,7 +44,6 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
   private final @Nullable PsiType myResultType;
   private final int myLastOperand;
   private final boolean myUnrolledLoop;
-  private boolean myWidened;
 
   public BinopInstruction(IElementType opSign, @Nullable PsiExpression expression, @Nullable PsiType resultType) {
     this(opSign, expression, resultType, -1);
@@ -73,41 +74,6 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
       ourSignificantOperations.contains(opSign) ? opSign : null;
     myLastOperand = lastOperand;
     myUnrolledLoop = unrolledLoop;
-  }
-
-  /**
-   * Make operation wide (less precise) if necessary (called for the operations inside loops only)
-   */
-  public void widenOperationInLoop() {
-    // these operations usually produce non-converging states
-    if (!myUnrolledLoop && !myWidened && (myOperationSign == PLUS || myOperationSign == MINUS || myOperationSign == ASTERISK) &&
-        mayProduceDivergedState()) {
-      myWidened = true;
-    }
-  }
-
-  private boolean mayProduceDivergedState() {
-    PsiElement anchor = getExpression();
-    if (anchor instanceof PsiUnaryExpression) {
-      return PsiUtil.isIncrementDecrementOperation(anchor);
-    }
-    while (anchor != null && !(anchor instanceof PsiAssignmentExpression) && !(anchor instanceof PsiVariable)) {
-      if (anchor instanceof PsiExpressionList) {
-        PsiCallExpression parent = ObjectUtils.tryCast(anchor.getParent(), PsiCallExpression.class);
-        if (parent != null) {
-          PsiMethod method = parent.resolveMethod();
-          if (CustomMethodHandlers.find(method) == null) return false;
-        }
-      }
-      if (anchor instanceof PsiStatement ||
-          anchor instanceof PsiArrayInitializerExpression || anchor instanceof PsiArrayAccessExpression ||
-          anchor instanceof PsiBinaryExpression &&
-          RelationType.fromElementType(((PsiBinaryExpression)anchor).getOperationTokenType()) != null) {
-        return false;
-      }
-      anchor = anchor.getParent();
-    }
-    return true;
   }
 
   /**
@@ -144,10 +110,7 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
     return myOperationSign;
   }
 
-  /**
-   * @return true if the operation must be executed with widening, otherwise it may produce a diverged state.
-   */
-  public boolean isWidened() {
-    return myWidened;
+  public boolean isUnrolled() {
+    return myUnrolledLoop;
   }
 }

@@ -14,17 +14,29 @@ public interface DfLongType extends DfIntegralType {
   LongRangeSet getRange();
 
   @Override
+  default boolean isSuperType(@NotNull DfType other) {
+    if (other == DfTypes.BOTTOM) return true;
+    if (!(other instanceof DfLongType)) return false;
+    DfLongType longType = (DfLongType)other;
+    return getRange().contains(longType.getRange()) &&
+           getWideRange().contains(longType.getWideRange());
+  }
+
+  @Override
   default @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op) {
     if (!(other instanceof DfLongType)) return DfTypes.LONG;
     LongRangeSet result = op.eval(getRange(), ((DfLongType)other).getRange(), true);
-    return DfTypes.longRange(result);
+    LongRangeSet wideResult = op.evalWide(getRange(), ((DfLongType)other).getRange(), true);
+    return DfTypes.longRange(result, wideResult);
   }
 
   @NotNull
   @Override
   default DfType join(@NotNull DfType other) {
     if (!(other instanceof DfLongType)) return DfTypes.TOP;
-    return DfTypes.longRange(((DfLongType)other).getRange().unite(getRange()));
+    LongRangeSet range = ((DfLongType)other).getRange().unite(getRange());
+    LongRangeSet wideRange = ((DfLongType)other).getWideRange().unite(getWideRange());
+    return DfTypes.longRange(range, wideRange);
   }
 
   @NotNull
@@ -32,7 +44,15 @@ public interface DfLongType extends DfIntegralType {
   default DfType meet(@NotNull DfType other) {
     if (other == DfTypes.TOP) return this;
     if (!(other instanceof DfLongType)) return DfTypes.BOTTOM;
-    return DfTypes.longRange(((DfLongType)other).getRange().intersect(getRange()));
+    LongRangeSet range = ((DfLongType)other).getRange().intersect(getRange());
+    LongRangeSet wideRange = ((DfLongType)other).getWideRange().intersect(getWideRange());
+    return DfTypes.longRange(range, wideRange);
+  }
+
+  @Override
+  default DfType widen() {
+    LongRangeSet wideRange = getWideRange();
+    return wideRange.equals(getRange()) ? this : DfTypes.longRange(wideRange);
   }
 
   @NotNull

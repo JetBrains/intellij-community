@@ -14,17 +14,29 @@ public interface DfIntType extends DfIntegralType {
   LongRangeSet getRange();
 
   @Override
+  default boolean isSuperType(@NotNull DfType other) {
+    if (other == DfTypes.BOTTOM) return true;
+    if (!(other instanceof DfIntType)) return false;
+    DfIntType intType = (DfIntType)other;
+    return getRange().contains(intType.getRange()) &&
+           getWideRange().contains(intType.getWideRange());
+  }
+
+  @Override
   default @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op) {
     if (!(other instanceof DfIntType)) return DfTypes.INT;
     LongRangeSet result = op.eval(getRange(), ((DfIntType)other).getRange(), false);
-    return DfTypes.intRange(result);
+    LongRangeSet wideResult = op.evalWide(getRange(), ((DfIntType)other).getRange(), false);
+    return DfTypes.intRange(result, wideResult);
   }
 
   @NotNull
   @Override
   default DfType join(@NotNull DfType other) {
     if (!(other instanceof DfIntType)) return DfTypes.TOP;
-    return DfTypes.intRange(((DfIntType)other).getRange().unite(getRange()));
+    LongRangeSet range = ((DfIntType)other).getRange().unite(getRange());
+    LongRangeSet wideRange = ((DfIntType)other).getWideRange().unite(getWideRange());
+    return DfTypes.intRange(range, wideRange);
   }
 
   @NotNull
@@ -32,9 +44,17 @@ public interface DfIntType extends DfIntegralType {
   default DfType meet(@NotNull DfType other) {
     if (other == DfTypes.TOP) return this;
     if (!(other instanceof DfIntType)) return DfTypes.BOTTOM;
-    return DfTypes.intRange(((DfIntType)other).getRange().intersect(getRange()));
+    LongRangeSet range = ((DfIntType)other).getRange().intersect(getRange());
+    LongRangeSet wideRange = ((DfIntType)other).getWideRange().intersect(getWideRange());
+    return DfTypes.intRange(range, wideRange);
   }
-  
+
+  @Override
+  default DfType widen() {
+    LongRangeSet wideRange = getWideRange();
+    return wideRange.equals(getRange()) ? this : DfTypes.intRange(wideRange);
+  }
+
   @NotNull
   @Override
   default DfType meetRange(@NotNull LongRangeSet range) {

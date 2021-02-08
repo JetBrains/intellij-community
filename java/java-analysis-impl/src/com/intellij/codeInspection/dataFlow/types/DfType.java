@@ -40,6 +40,13 @@ public interface DfType {
   DfType meet(@NotNull DfType other);
 
   /**
+   * @return the widened version of this type; should be called on back-branches.
+   */
+  default DfType widen() {
+    return this;
+  }
+
+  /**
    * @return a type that contains all the values of the corresponding JVM type except the values of given type;
    * may return null if the corresponding type is not supported by our type system. 
    */

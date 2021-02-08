@@ -5,10 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
-import com.intellij.codeInspection.dataFlow.types.DfIntType;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
-import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -848,21 +845,18 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue result = runner.getFactory().getUnknown();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       boolean isLong = PsiType.LONG.equals(type);
-      if (instruction.isWidened()) {
-        LongRangeSet leftRange = DfLongType.extractRange(memState.getDfType(dfaLeft));
-        LongRangeSet rightRange = DfLongType.extractRange(memState.getDfType(dfaRight));
-        LongRangeBinOp op = LongRangeBinOp.fromToken(opSign);
-        LongRangeSet range = op == null ? LongRangeSet.all() : op.evalWide(leftRange, rightRange, isLong);
-        result = runner.getFactory().fromDfType(rangeClamped(range, isLong));
-      }
-      else {
+      if (instruction.isUnrolled()) {
+        // TODO: cleaner unrolling handling (possibly at backbranch)
+        LongRangeBinOp op = Objects.requireNonNull(LongRangeBinOp.fromToken(opSign));
+        LongRangeSet res =
+          op.eval(DfLongType.extractRange(memState.getDfType(dfaLeft)), DfLongType.extractRange(memState.getDfType(dfaRight)), isLong);
+        result = runner.getFactory().fromDfType(isLong ? longRange(res) : intRange(res));
+      } else {
         result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
       }
     }
     if (DfaTypeValue.isUnknown(result) && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
-      result = instruction.isWidened()
-               ? runner.getFactory().getObjectType(type, Nullability.NOT_NULL)
-               : concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
+      result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
     }
     pushExpressionResult(result, instruction, memState);
 
