@@ -3,6 +3,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ProjectTopics;
+import com.intellij.application.options.RegistryManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -100,7 +101,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -369,7 +371,7 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  public void configureIdleAutomake() {
+  private void configureIdleAutomake() {
     final int idleTimeout = getAutomakeWhileIdleTimeout();
     final int listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
     IdeEventQueue.getInstance().addIdleListener(new Runnable() {
@@ -648,7 +650,7 @@ public final class BuildManager implements Disposable {
   }
 
   private static int getAutomakeWhileIdleTimeout() {
-    return Registry.intValue("compiler.automake.build.while.idle.timeout", 60000);
+    return RegistryManager.getInstance().intValue("compiler.automake.build.while.idle.timeout", 60000);
   }
 
   private static boolean canStartAutoMake(@NotNull Project project) {
