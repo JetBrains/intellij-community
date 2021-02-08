@@ -163,8 +163,8 @@ class PluginCertificateManager :
     }
 
     myCertificatesListPanel.border = IdeBorderFactory.createTitledBorder(
-      IdeBundle.message("settings.certificate.accepted.certificates"), false, JBUI.insetsTop(8))
-      .setShowLine(false)
+      IdeBundle.message("settings.trusted.certificates"), false, JBUI.insetsTop(8)
+    ).setShowLine(false)
   }
 
   private fun chooseFileAndAdd() {
