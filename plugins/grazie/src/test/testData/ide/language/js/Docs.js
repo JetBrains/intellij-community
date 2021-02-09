@@ -29,7 +29,7 @@ class ExampleClassWithNoTypos {
 }
 
 /**
- * It is <warning descr="ARTICLE_MISSING">friend</warning> there
+ * It is friend there
  *
  * This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic; it's just a documentation example.
  */
