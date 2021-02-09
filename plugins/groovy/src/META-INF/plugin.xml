@@ -83,9 +83,6 @@
     <extensionPoint name="groovySourceFolderDetector" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.actions.GroovySourceFolderDetector"/>
 
-    <extensionPoint name="mvc.framework" dynamic="true" interface="org.jetbrains.plugins.groovy.mvc.MvcFramework"/>
-    <extensionPoint name="mvc.command.executor" dynamic="true" interface="org.jetbrains.plugins.groovy.mvc.MvcCommandExecutor"/>
-
     <extensionPoint name="closureCompleter" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.completion.ClosureCompleter"/>
 
     <extensionPoint name="methodMayBeStaticInspectionFilter" dynamic="true"
@@ -99,8 +96,6 @@
 
     <extensionPoint name="signatureHintProcessor" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor"/>
-    <extensionPoint name="mvc.runCommandHandler" dynamic="true"
-                    interface="org.jetbrains.plugins.groovy.mvc.actions.MvcRunCommandActionHandler"/>
     <extensionPoint name="gdslScriptProvider" dynamic="true" interface="org.jetbrains.plugins.groovy.dsl.GdslScriptProvider"/> <!--TODO-->
     <extensionPoint name="expectedPackageNameProvider" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProvider"/>
@@ -301,7 +296,6 @@
     <convertToJava.customMethodInvocator
       implementation="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.MapGetterSetterInvocator"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.TypeCheckedAnnotationChecker"/>
-    <mvc.runCommandHandler implementation="org.jetbrains.plugins.groovy.mvc.actions.DefaultMvcRunCommandActionHandler" order="last"/>
     <methodComparator implementation="org.jetbrains.plugins.groovy.lang.resolve.DGMGetAtMethodFilter" order="last"/>
     <methodComparator implementation="org.jetbrains.plugins.groovy.lang.resolve.GrDefaultMethodComparator" order="last"/>
     <overloadResolver implementation="org.jetbrains.plugins.groovy.lang.resolve.DGMGetAtOverloadResolver" order="last"/>
@@ -338,8 +332,6 @@
                  description="Enable type inference with using info from explicitly typed closures"/>
     <registryKey key="groovy.process.nested.dfa" defaultValue="true"
                  description="Allows to run nested DFA inside the outer one"/>
-
-    <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer$MyPostStartUpActivity"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
@@ -720,8 +712,6 @@
     <projectStructureDetector implementation="org.jetbrains.plugins.groovy.GroovySourceRootDetector" id="groovyDetector"/>
 
     <generation.topLevelFactory language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFactoryProvider"/>
-
-    <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcProjectWithoutLibraryNotificator"/>
 
     <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyStubNotificationProvider"/>
 
@@ -1209,9 +1199,6 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedImplicitUsageProvider"/>
 
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
-    <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory"
                         serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactoryImpl"/>
 
@@ -1244,8 +1231,6 @@
     <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerGradleConfigurationHandler"/>
     <compilableFileTypesProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilableFileTypesProvider"/>
 
-    <pathMacroContributor implementation="org.jetbrains.plugins.groovy.mvc.MvcPathMacros"/>
-    <notificationGroup id="Mvc notifications" displayType="TOOL_WINDOW" toolWindowId="Console"/>
     <notificationGroup id="Groovy DSL errors" displayType="BALLOON"/>
     <notificationGroup id="Grape" displayType="BALLOON"/>
   </extensions>
@@ -1323,19 +1308,6 @@
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-
-    <group id="Mvc.Actions" popup="true" class="org.jetbrains.plugins.groovy.mvc.MvcActionGroup">
-      <action id="Mvc.Upgrade"
-              class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction">
-      </action>
-
-      <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.actions.MvcRunCommandAction">
-        <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt G"/>
-      </action>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddFrameworkSupport"/>
-      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="AddFrameworkSupport"/>
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </group>
   </actions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
