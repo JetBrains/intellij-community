@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
@@ -12,6 +12,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
@@ -37,7 +38,7 @@ public final class DetectedFrameworksData {
     }
     catch (IOException e) {
       LOG.info(e);
-      PersistentHashMap.deleteFilesStartingWith(file.toFile());
+      IOUtil.deleteAllFilesStartingWith(file);
       try {
         myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new TIntHashSetExternalizer());
       }

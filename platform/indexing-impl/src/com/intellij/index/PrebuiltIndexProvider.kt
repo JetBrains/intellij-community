@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.index
 
 import com.google.common.hash.HashCode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -19,9 +19,9 @@ import com.intellij.util.io.PersistentMapBuilder
 import java.io.File
 import java.io.FileFilter
 import java.io.IOException
+import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
-
 
 abstract class PrebuiltIndexProvider<Value>: Disposable {
   private val myFileContentHashing = FileContentHashing()
@@ -33,7 +33,7 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   protected abstract val indexExternalizer: DataExternalizer<Value>
 
   companion object {
-    private val LOG = Logger.getInstance(PrebuiltIndexProvider::class.java)
+    private val LOG = logger<PrebuiltIndexProvider<*>>()
 
     @JvmField
     val DEBUG_PREBUILT_INDICES: Boolean = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
@@ -107,15 +107,13 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
       .build()
   }
 
-  protected abstract fun getIndexRoot(): File
+  protected abstract fun getIndexRoot(): Path
 
   @Throws(IOException::class)
   private fun copyPrebuiltIndicesToIndexRoot(prebuiltIndicesRoot: File): File {
     val indexRoot = getIndexRoot()
-
-    FileUtil.copyDir(prebuiltIndicesRoot, indexRoot, FileFilter { f -> f.name.startsWith(indexName) })
-
-    return indexRoot
+    FileUtil.copyDir(prebuiltIndicesRoot, indexRoot.toFile(), FileFilter { f -> f.name.startsWith(indexName) })
+    return indexRoot.toFile()
   }
 
   private fun findPrebuiltIndicesRoot(): File? {

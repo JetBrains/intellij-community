@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.PathManager;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-class PersistentFSConnector {
+final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
@@ -172,13 +172,13 @@ class PersistentFSConnector {
 
   private static void invalidateIndex(@NotNull String reason) {
     LOG.info("Marking VFS as corrupted: " + reason);
-    final File indexRoot = PathManager.getIndexRoot();
-    if (indexRoot.exists()) {
-      final String[] children = indexRoot.list();
+    Path indexRoot = PathManager.getIndexRoot();
+    if (Files.exists(indexRoot)) {
+      String[] children = indexRoot.toFile().list();
       if (children != null && children.length > 0) {
         // create index corruption marker only if index directory exists and is non-empty
         // It is incorrect to consider non-existing indices "corrupted"
-        FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
+        FileUtil.createIfDoesntExist(PathManager.getIndexRoot().resolve("corruption.marker").toFile());
       }
     }
   }

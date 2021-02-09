@@ -11,13 +11,11 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.impl.storage.VfsAwareIndexStorageLayout
-import java.io.IOException
-import org.jetbrains.mvstore.MVStore
-import java.lang.RuntimeException
-import org.jetbrains.mvstore.index.MVStorePersistentMap
 import com.intellij.util.io.ByteSequenceDataExternalizer
 import com.intellij.util.io.EnumeratorIntegerDescriptor
-import java.lang.Exception
+import org.jetbrains.mvstore.MVStore
+import org.jetbrains.mvstore.index.MVStorePersistentMap
+import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Consumer
 
@@ -70,7 +68,7 @@ internal class MVStoreForwardIndexStorageLayout<K, V>(private val extension: Fil
 
     private fun createMap(): MVStorePersistentMap<Int, ByteArraySequence> {
       return MVStorePersistentMap(extension.name.name,
-                                  MVStoreHolder.getStore(PathManager.getIndexRoot().toPath()),
+                                  MVStoreHolder.getStore(PathManager.getIndexRoot()),
                                   EnumeratorIntegerDescriptor.INSTANCE,
                                   ByteSequenceDataExternalizer.INSTANCE)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -43,8 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -169,23 +169,23 @@ public final class StubIndexImpl extends StubIndexEx {
     final int version = extension.getVersion();
     FileBasedIndexExtension<K, Void> wrappedExtension = wrapStubIndexExtension(extension);
 
-    final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
-
+    Path indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     IndexVersion.IndexVersionDiff versionDiff = forceClean
                                                  ? new IndexVersion.IndexVersionDiff.InitialBuild(version)
                                                  : IndexVersion.versionDiffers(indexKey, version);
 
     registrationResultSink.setIndexVersionDiff(indexKey, versionDiff);
     if (versionDiff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
-      final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
-      final boolean versionFileExisted = versionFile.exists();
-
-      final String[] children = indexRootDir.list();
+      Path versionFile = IndexInfrastructure.getVersionFile(indexKey);
+      boolean versionFileExisted = Files.exists(versionFile);
+      final String[] children = indexRootDir.toFile().list();
       // rebuild only if there exists what to rebuild
       boolean indexRootHasChildren = children != null && children.length > 0;
       boolean needRebuild = !forceClean && (versionFileExisted || indexRootHasChildren);
 
-      if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
+      if (indexRootHasChildren) {
+        FileUtil.deleteWithRenaming(indexRootDir.toFile());
+      }
       IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
 
       try {
@@ -237,10 +237,10 @@ public final class StubIndexImpl extends StubIndexEx {
 
   private static <K> void onExceptionInstantiatingIndex(@NotNull StubIndexKey<K, ?> indexKey,
                                                         int version,
-                                                        @NotNull File indexRootDir,
+                                                        @NotNull Path indexRootDir,
                                                         @NotNull Exception e) throws IOException {
     LOG.info(e);
-    FileUtil.deleteWithRenaming(indexRootDir);
+    FileUtil.deleteWithRenaming(indexRootDir.toFile());
     IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
   }
 
@@ -663,9 +663,11 @@ public final class StubIndexImpl extends StubIndexEx {
 
     @Override
     public @NotNull IndexStorage<K, Void> createOrClearIndexStorage() throws IOException {
-      if (FileBasedIndex.USE_IN_MEMORY_INDEX) return new InMemoryIndexStorage<>(myWrappedExtension.getKeyDescriptor());
+      if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
+        return new InMemoryIndexStorage<>(myWrappedExtension.getKeyDescriptor());
+      }
 
-      Path storageFile = IndexInfrastructure.getStorageFile(myIndexKey).toPath();
+      Path storageFile = IndexInfrastructure.getStorageFile(myIndexKey);
       try {
         return new VfsAwareMapIndexStorage<>(
           storageFile,
@@ -675,7 +677,8 @@ public final class StubIndexImpl extends StubIndexEx {
           myWrappedExtension.keyIsUniqueForIndexedFile(),
           myWrappedExtension.traceKeyHashToVirtualFileMapping()
         );
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         IOUtil.deleteAllFilesStartingWith(storageFile);
         throw e;
       }

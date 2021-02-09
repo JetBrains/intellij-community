@@ -51,7 +51,7 @@ object DefaultIndexStorageLayout {
 
   @Throws(IOException::class)
   fun <K, V> createOrClearIndexStorage(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorage<K, V> {
-    val storageFile = IndexInfrastructure.getStorageFile(extension.name).toPath()
+    val storageFile = IndexInfrastructure.getStorageFile(extension.name)
     return try {
       object : VfsAwareMapIndexStorage<K, V>(
         storageFile,
@@ -92,7 +92,7 @@ object DefaultIndexStorageLayout {
       val indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name)
       return try {
         val storageLockContext = if (extension.dependsOnFileContent()) null else contentLessIndexLock
-        PersistentMapBasedForwardIndex(indexStorageFile.toPath(),
+        PersistentMapBasedForwardIndex(indexStorageFile,
                                        false,
                                        false,
                                        storageLockContext)
@@ -186,5 +186,4 @@ object DefaultIndexStorageLayout {
       return SingleEntryIndexForwardIndexAccessor(extension as IndexExtension<Int, V, *>) as ForwardIndexAccessor<K, V>
     }
   }
-
 }

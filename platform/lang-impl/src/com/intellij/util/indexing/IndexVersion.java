@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -116,27 +118,32 @@ public final class IndexVersion {
   }
 
   public static synchronized void rewriteVersion(@NotNull ID<?,?> indexId, final int version) throws IOException {
-    if (FileBasedIndex.USE_IN_MEMORY_INDEX) return;
-    File file = IndexInfrastructure.getVersionFile(indexId);
+    if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
+      return;
+    }
+
+    Path file = IndexInfrastructure.getVersionFile(indexId);
     if (FileBasedIndexImpl.LOG.isDebugEnabled()) {
       FileBasedIndexImpl.LOG.debug("Rewriting " + file + "," + version);
     }
     IndexVersion newIndexVersion = getIndexVersion(indexId).nextVersion(version, FSRecords.getCreationTimestamp());
 
-    if (file.exists()) {
-      FileUtil.deleteWithRenaming(file);
-    } else {
-      //noinspection ResultOfMethodCallIgnored
-      file.getParentFile().mkdirs();
+    if (Files.exists(file)) {
+      FileUtil.deleteWithRenaming(file.toFile());
     }
-    try (final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
+    else {
+      Files.createDirectories(file.getParent());
+    }
+    try (DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, IOException>() {
       @Override
-      public @Nullable DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
+      public @Nullable DataOutputStream execute(boolean lastAttempt) throws IOException {
         try {
-          return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+          return new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)));
         }
-        catch (FileNotFoundException ex) {
-          if (lastAttempt) throw ex;
+        catch (IOException ex) {
+          if (lastAttempt) {
+            throw ex;
+          }
           return null;
         }
       }
@@ -155,19 +162,22 @@ public final class IndexVersion {
 
   private static @NotNull IndexVersion getIndexVersion(@NotNull ID<?, ?> indexName) {
     IndexVersion version = ourIndexIdToCreationStamp.get(indexName);
-    if (version != null) return version;
+    if (version != null) {
+      return version;
+    }
 
     //noinspection SynchronizeOnThis
     synchronized (IndexingStamp.class) {
       version = ourIndexIdToCreationStamp.get(indexName);
       if (version != null) return version;
 
-      File versionFile = IndexInfrastructure.getVersionFile(indexName);
-      try (DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)))) {
-
-        version = new IndexVersion(in);
-        ourIndexIdToCreationStamp.put(indexName, version);
-        return version;
+      try {
+        Path versionFile = IndexInfrastructure.getVersionFile(indexName);
+        try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(versionFile)))) {
+          version = new IndexVersion(in);
+          ourIndexIdToCreationStamp.put(indexName, version);
+          return version;
+        }
       }
       catch (IOException ignore) {
       }

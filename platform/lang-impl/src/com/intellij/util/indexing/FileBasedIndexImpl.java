@@ -76,10 +76,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -407,18 +408,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ID<K, V> name = extension.getName();
     int version = getIndexExtensionVersion(extension);
 
-    final File versionFile = IndexInfrastructure.getVersionFile(name);
+    Path versionFile = IndexInfrastructure.getVersionFile(name);
 
     IndexVersion.IndexVersionDiff diff = IndexVersion.versionDiffers(name, version);
     versionRegistrationStatusSink.setIndexVersionDiff(name, diff);
     if (diff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
-      final boolean versionFileExisted = versionFile.exists();
+      final boolean versionFileExisted = Files.exists(versionFile);
 
       if (extension.hasSnapshotMapping() && versionFileExisted) {
-        FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
+        FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name).toFile());
       }
-      File rootDir = IndexInfrastructure.getIndexRootDir(name);
-      if (versionFileExisted) FileUtil.deleteWithRenaming(rootDir);
+      Path rootDir = IndexInfrastructure.getIndexRootDir(name);
+      if (versionFileExisted) {
+        FileUtil.deleteWithRenaming(rootDir.toFile());
+      }
       IndexVersion.rewriteVersion(name, version);
 
       try {

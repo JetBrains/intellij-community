@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -11,7 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -35,11 +38,11 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   }
 
   @TestOnly
-  PersistentSubIndexerRetriever(@NotNull File root,
+  PersistentSubIndexerRetriever(@NotNull Path root,
                                 @NotNull String indexName,
                                 int indexVersion,
                                 @NotNull CompositeDataIndexer<?, ?, SubIndexerType, SubIndexerVersion> indexer) throws IOException {
-    Path versionMapRoot = root.toPath().resolve(versionMapRoot());
+    Path versionMapRoot = root.resolve(versionMapRoot());
     myFileAttribute = getFileAttribute(indexName, indexVersion);
     myIndexer = indexer;
     myPersistentVersionEnumerator = new PersistentSubIndexerVersionEnumerator<>(

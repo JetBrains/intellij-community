@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Key;
@@ -14,20 +14,20 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsightFixtureTestCase {
   private TempDirTestFixture myDirTestFixture;
-  private File myRoot;
+  private Path myRoot;
 
   private PersistentSubIndexerRetriever<MyIndexFileAttribute, String> myMap;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myRoot = FileUtil.createTempDirectory("persistent", "map");
+    myRoot = FileUtil.createTempDirectory("persistent", "map").toPath();
     myDirTestFixture = new TempDirTestFixtureImpl();
     myDirTestFixture.setUp();
   }

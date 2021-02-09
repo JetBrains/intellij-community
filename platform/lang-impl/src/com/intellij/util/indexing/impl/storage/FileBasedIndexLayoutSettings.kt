@@ -90,6 +90,6 @@ internal object FileBasedIndexLayoutSettings {
   }
 
   private var currentLayout : Ref<FileBasedIndexLayoutProviderBean?>? = null
-  private fun indexLayoutSettingFile(): Path = PathManager.getIndexRoot().toPath().resolve("indices.layout")
+  private fun indexLayoutSettingFile(): Path = PathManager.getIndexRoot().resolve("indices.layout")
 
 }

@@ -379,10 +379,12 @@ public final class PathManager {
     return getSystemPath() + "/tmp";
   }
 
-  public static @NotNull File getIndexRoot() {
+  public static @NotNull Path getIndexRoot() {
     String indexRootPath = getExplicitPath("index_root_path");
-    if (indexRootPath == null) indexRootPath = getSystemPath() + "/index";
-    return Paths.get(indexRootPath).toFile();
+    if (indexRootPath == null) {
+      indexRootPath = getSystemPath() + "/index";
+    }
+    return Paths.get(indexRootPath);
   }
 
   public static @NotNull String getLogPath() {
