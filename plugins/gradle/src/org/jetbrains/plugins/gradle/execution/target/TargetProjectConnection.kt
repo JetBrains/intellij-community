@@ -9,21 +9,23 @@ import org.gradle.tooling.*
 import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.gradle.tooling.internal.consumer.PhasedBuildAction.BuildActionWrapper
 import org.gradle.tooling.internal.consumer.ProjectConnectionCloseListener
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-class TargetProjectConnection(private val environmentConfiguration: TargetEnvironmentConfiguration,
-                              private val targetPathMapper: PathMapper?,
-                              private val taskId: ExternalSystemTaskId?,
-                              private val taskListener: ExternalSystemTaskNotificationListener?,
-                              private val parameters: ConnectionParameters,
-                              private val connectionCloseListener: ProjectConnectionCloseListener?) : ProjectConnection {
+@ApiStatus.Internal
+internal class TargetProjectConnection(val environmentConfiguration: TargetEnvironmentConfiguration,
+                                       val targetPathMapper: PathMapper?,
+                                       val taskId: ExternalSystemTaskId?,
+                                       val taskListener: ExternalSystemTaskNotificationListener?,
+                                       val parameters: ConnectionParameters,
+                                       private val connectionCloseListener: ProjectConnectionCloseListener?) : ProjectConnection {
   override fun close() {
     connectionCloseListener?.connectionClosed(this)
   }
 
   override fun <T : Any?> getModel(modelType: Class<T>): T = model(modelType).get()
   override fun <T : Any?> getModel(modelType: Class<T>, resultHandler: ResultHandler<in T>) = model(modelType).get(resultHandler)
-  override fun newBuild(): BuildLauncher = TargetBuildLauncher(environmentConfiguration, targetPathMapper, taskId, taskListener, parameters)
+  override fun newBuild(): BuildLauncher = TargetBuildLauncher(this)
 
   override fun newTestLauncher(): TestLauncher {
     TODO("Not yet implemented")
@@ -31,11 +33,10 @@ class TargetProjectConnection(private val environmentConfiguration: TargetEnviro
 
   override fun <T : Any?> model(modelType: Class<T>): ModelBuilder<T> {
     require(modelType.isInterface) { "Cannot fetch a model of type '${modelType.name}' as this type is not an interface." }
-    return TargetModelBuilder(environmentConfiguration, targetPathMapper, taskId, taskListener, parameters, modelType)
+    return TargetModelBuilder(this, modelType)
   }
 
-  override fun <T : Any?> action(buildAction: BuildAction<T?>): BuildActionExecuter<T> =
-    TargetBuildActionExecuter(environmentConfiguration, targetPathMapper, taskId, taskListener, parameters, buildAction)
+  override fun <T : Any?> action(buildAction: BuildAction<T?>): BuildActionExecuter<T> = TargetBuildActionExecuter(this, buildAction)
 
   override fun action(): BuildActionExecuter.Builder {
     return object : BuildActionExecuter.Builder {
@@ -54,13 +55,8 @@ class TargetProjectConnection(private val environmentConfiguration: TargetEnviro
         buildFinishedAction = DefaultBuildActionWrapper(buildAction as BuildAction<Any>, resultHandler as IntermediateResultHandler<Any>)
       }
 
-      override fun build(): BuildActionExecuter<Void> = TargetPhasedBuildActionExecuter(environmentConfiguration,
-                                                                                        targetPathMapper,
-                                                                                        taskId,
-                                                                                        taskListener,
-                                                                                        parameters,
-                                                                                        projectsLoadedAction,
-                                                                                        buildFinishedAction)
+      override fun build(): BuildActionExecuter<Void> = TargetPhasedBuildActionExecuter(this@TargetProjectConnection,
+                                                                                        projectsLoadedAction, buildFinishedAction)
     }
   }
 

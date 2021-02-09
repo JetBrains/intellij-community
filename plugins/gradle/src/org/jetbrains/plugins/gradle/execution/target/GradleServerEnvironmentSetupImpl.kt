@@ -101,7 +101,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
     }
     mapperInitScript.append("ext.mapPath = { path -> pathMapper.get(path) ?: path }")
 
-    val initScript = GradleExecutionHelper.writeToFileGradleInitScript(mapperInitScript.toString(), "ijsupermapper")
+    val initScript = GradleExecutionHelper.writeToFileGradleInitScript(mapperInitScript.toString(), "ijtgtmapper")
     return requestUploadIntoTarget(initScript.path, request, environmentConfiguration)
   }
 
@@ -263,6 +263,9 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project) : 
     classPath.add(PathManager.getJarPathForClass(org.apache.log4j.Level::class.java))
     // gradle tooling proxy module
     classPath.add(PathManager.getJarPathForClass(Main::class.java))
+    // intellij.gradle.toolingExtension - for use of model adapters classes
+    classPath.add(PathManager.getJarPathForClass(
+      org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier::class.java))
 
     javaParameters.mainClass = Main::class.java.name
     javaParameters.setWorkingDirectory(consumerOperationParameters.projectDir)

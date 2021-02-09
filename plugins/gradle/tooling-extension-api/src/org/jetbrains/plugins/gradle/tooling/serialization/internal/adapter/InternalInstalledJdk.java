@@ -3,9 +3,11 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.api.JavaVersion;
 import org.gradle.tooling.model.java.InstalledJdk;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class InternalInstalledJdk implements InstalledJdk {
   private final File javaHome;
   private final JavaVersion javaVersion;

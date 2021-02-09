@@ -14,8 +14,11 @@ import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
 import org.gradle.launcher.daemon.protocol.Failure
 import org.gradle.launcher.daemon.protocol.Success
 import org.gradle.tooling.*
-import org.gradle.tooling.events.OperationType
 import org.gradle.tooling.internal.consumer.BlockingResultHandler
+import org.gradle.tooling.model.build.BuildEnvironment
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.InetAddress
@@ -66,20 +69,22 @@ object Main {
     val targetBuildParameters = incomingConnectionHandler.targetBuildParameters()
     LOG.debug("targetBuildParameters: $targetBuildParameters")
 
-    val connector = createConnector { incomingConnectionHandler.dispatch(BuildEvent(it)) }
+    val connector = GradleConnector.newConnector()
     val workingDirectory = File(".").canonicalFile
     LOG.debug("Working directory: ${workingDirectory.absolutePath}")
     connector.forProjectDirectory(workingDirectory.absoluteFile)
     val resultHandler = BlockingResultHandler(Any::class.java)
     val connection = connector.connect()
     val operation = when (targetBuildParameters) {
-      is BuildLauncherParameters -> connection.newBuild().apply { forTasks(*targetBuildParameters.tasks.toTypedArray()) }
+      is BuildLauncherParameters -> connection.newBuild().apply {
+        targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
+      }
       is TestLauncherParameters -> connection.newTestLauncher()
       is ModelBuilderParameters<*> -> connection.model(targetBuildParameters.modelType).apply {
-        forTasks(*targetBuildParameters.tasks.toTypedArray())
+        targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
       }
       is BuildActionParameters<*> -> connection.action(targetBuildParameters.buildAction).apply {
-        forTasks(*targetBuildParameters.tasks.toTypedArray())
+        targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
       }
       is PhasedBuildActionParameters<*> -> connection.action()
         .projectsLoaded(targetBuildParameters.projectsLoadedAction, IntermediateResultHandler {
@@ -89,17 +94,16 @@ object Main {
           resultHandler.onComplete(it)
         })
         .build().apply {
-          forTasks(*targetBuildParameters.tasks.toTypedArray())
+          targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
         }
     }
+    val progressEventConverter = ProgressEventConverter()
     operation.apply {
       setStandardError(System.err)
       setStandardOutput(System.out)
       addProgressListener(
-        org.gradle.tooling.events.ProgressListener {
-          // empty listener to supply tasks progress events subscription
-        },
-        OperationType.TASK
+        { incomingConnectionHandler.dispatch(BuildEvent(progressEventConverter.convert(it))) },
+        targetBuildParameters.progressListenerOperationTypes
       )
       withArguments(targetBuildParameters.arguments)
       setJvmArguments(targetBuildParameters.jvmArguments)
@@ -114,7 +118,8 @@ object Main {
     try {
       val result = resultHandler.result
       LOG.debug("operation result: $result")
-      incomingConnectionHandler.dispatch(Success(result))
+      val adapted = maybeConvert(result)
+      incomingConnectionHandler.dispatch(Success(adapted))
     }
     catch (t: Throwable) {
       LOG.debug("GradleConnectionException: $t")
@@ -123,6 +128,16 @@ object Main {
     finally {
       connection.close()
     }
+  }
+
+  private fun maybeConvert(result: Any?): Any? {
+    if (result is BuildEnvironment) {
+      return InternalBuildEnvironment({ InternalBuildIdentifier(result.buildIdentifier.rootDir) },
+                                      { result.java.run { InternalJavaEnvironment(javaHome, jvmArguments) } },
+                                      { result.gradle.gradleUserHome },
+                                      result.gradle.gradleVersion)
+    }
+    return result
   }
 
   private fun waitForIncomingConnection() {
@@ -164,3 +179,5 @@ object Main {
     LOG = LoggerFactory.getLogger(Main::class.java)
   }
 }
+
+private fun <T> List<T>?.nullize() = if (isNullOrEmpty()) null else this

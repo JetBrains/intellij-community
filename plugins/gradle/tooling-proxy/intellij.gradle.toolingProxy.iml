@@ -15,5 +15,6 @@
     <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
   </component>
 </module>
