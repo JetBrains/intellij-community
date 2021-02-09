@@ -15081,6 +15081,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/list2.kt");
         }
 
+        @TestMetadata("listCount.kt")
+        public void testListCount() throws Exception {
+            runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/listCount.kt");
+        }
+
         @TestMetadata("lt.kt")
         public void testLt() throws Exception {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/lt.kt");
@@ -15130,6 +15135,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testString2() throws Exception {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/string2.kt");
         }
+
+        @TestMetadata("stringCount.kt")
+        public void testStringCount() throws Exception {
+            runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/stringCount.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -15169,6 +15179,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/list2.kt");
         }
 
+        @TestMetadata("listCount.kt")
+        public void testListCount() throws Exception {
+            runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/listCount.kt");
+        }
+
         @TestMetadata("lt.kt")
         public void testLt() throws Exception {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/lt.kt");
@@ -15197,6 +15212,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("string2.kt")
         public void testString2() throws Exception {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/string2.kt");
+        }
+
+        @TestMetadata("stringCount.kt")
+        public void testStringCount() throws Exception {
+            runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/stringCount.kt");
         }
     }
 
