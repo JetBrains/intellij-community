@@ -251,6 +251,20 @@ internal object OpenLessonActivities {
     FileEditorManager.getInstance(project).openFile(readme, true, true)
   }
 
+  fun openOnboardingFromWelcomeScreen(onboarding: Lesson) {
+    initLearnProject(null) { project ->
+      StartupManager.getInstance(project).runAfterOpened {
+        invokeLater {
+          openReadme(project)
+          hideOtherViews(project)
+          if (onboarding.properties.canStartInDumbMode) {
+            CourseManager.instance.openLesson(project, onboarding)
+          }
+        }
+      }
+    }
+  }
+
   fun openLearnProjectFromWelcomeScreen() {
     initLearnProject(null) { project ->
       StartupManager.getInstance(project).runAfterOpened {
