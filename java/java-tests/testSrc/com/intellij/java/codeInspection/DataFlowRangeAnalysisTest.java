@@ -74,4 +74,6 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testReduceBinOpOnCast() { doTest(); }
   public void testSuppressZeroReport() { doTest(); }
   public void testCompareMethods() { doTest(); }
+  public void testWidenMismatch() { doTest(); }
+  public void testDontWidenPlusInLoop() { doTest(); }
 }

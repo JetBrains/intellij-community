@@ -18,6 +18,14 @@ public interface DfType {
    * @return true if this type is the supertype of other.
    */
   boolean isSuperType(@NotNull DfType other);
+
+  /**
+   * @param constant
+   * @return true given constant value may be contained by this supertype
+   */
+  default boolean containsConstant(@NotNull DfConstantType<?> constant) {
+    return isSuperType(constant);
+  }
   
   default boolean isMergeable(@NotNull DfType other) {
     return isSuperType(other);

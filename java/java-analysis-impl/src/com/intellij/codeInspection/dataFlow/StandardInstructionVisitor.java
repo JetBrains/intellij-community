@@ -895,7 +895,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     String rightString = memState.getDfType(right).getConstantOfType(String.class);
     if (leftString != null && rightString != null &&
         leftString.length() + rightString.length() <= CustomMethodHandlers.MAX_STRING_CONSTANT_LENGTH_TO_TRACK) {
-      return factory.getConstant(leftString + rightString, stringType);
+      return factory.fromDfType(concatenationResult(leftString + rightString, stringType));
     }
     DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, left);
     DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, right);

@@ -167,5 +167,8 @@ public interface DfaMemoryState {
    */
   boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight);
 
+  /**
+   * Widen this memory state on back-branches
+   */
   void widen();
 }

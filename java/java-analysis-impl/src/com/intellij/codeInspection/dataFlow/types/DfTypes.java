@@ -219,12 +219,9 @@ public final class DfTypes {
   }
 
   static @NotNull DfType intRange(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange) {
-    if (wideRange == null || wideRange.equals(range)) return intRange(range);
+    if (wideRange == null || wideRange.equals(range) || wideRange.isEmpty()) return intRange(range);
     if (range.isEmpty()) {
       return BOTTOM;
-    }
-    if (wideRange.isEmpty() || wideRange.min() > range.min() || wideRange.max() < range.max()) {
-      throw new IllegalArgumentException("Wide range " + wideRange + " must contain range " + range);
     }
     Long value = range.getConstantValue();
     if (value != null) {
@@ -265,12 +262,9 @@ public final class DfTypes {
   }
 
   static @NotNull DfType longRange(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange) {
-    if (wideRange == null || wideRange.equals(range)) return longRange(range);
+    if (wideRange == null || wideRange.equals(range) || wideRange.isEmpty()) return longRange(range);
     if (range.isEmpty()) {
       return BOTTOM;
-    }
-    if (wideRange.isEmpty() || wideRange.min() > range.min() || wideRange.max() < range.max()) {
-      throw new IllegalArgumentException("Wide range " + wideRange + " must contain range " + range);
     }
     Long value = range.getConstantValue();
     if (value != null) {
@@ -451,7 +445,17 @@ public final class DfTypes {
     if (constant instanceof Double) {
       return doubleValue((Double)constant);
     }
-    return new DfReferenceConstantType(constant, type, TypeConstraints.instanceOf(type));
+    return new DfReferenceConstantType(constant, type, TypeConstraints.instanceOf(type), false);
+  }
+
+  /**
+   * @param constant string constant
+   * @param stringType string type
+   * @return concatenation result string
+   */
+  @NotNull
+  public static DfConstantType<?> concatenationResult(@NotNull String constant, @NotNull PsiType stringType) {
+    return new DfReferenceConstantType(constant, stringType, TypeConstraints.exact(stringType), true);
   }
 
   /**

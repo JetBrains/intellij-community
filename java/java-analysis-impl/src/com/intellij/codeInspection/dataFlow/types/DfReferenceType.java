@@ -124,5 +124,10 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
+  default boolean containsConstant(@NotNull DfConstantType<?> constant) {
+    return dropTypeConstraint().isSuperType(constant);
+  }
+
+  @Override
   @NlsSafe String toString();
 }

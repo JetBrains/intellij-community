@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,17 +101,18 @@ public abstract class DfaCondition {
 
       if (relationType == RelationType.EQ || relationType == RelationType.NE) {
         if (leftType instanceof DfConstantType) {
+          DfConstantType<?> leftConst = (DfConstantType<?>)leftType;
           if (rightType instanceof DfConstantType) {
             return fromBoolean(leftType.isConst(((DfConstantType<?>)rightType).getValue()) ^
-                               !DfaUtil.isNaN(((DfConstantType<?>)leftType).getValue()) ^
+                               !DfaUtil.isNaN(leftConst.getValue()) ^
                                relationType == RelationType.EQ);
           }
-          if (!couldBeEqualToConstant(rightType, leftType)) {
+          if (!rightType.containsConstant(leftConst)) {
             return fromBoolean(relationType == RelationType.NE);
           }
         }
         else if (rightType instanceof DfConstantType) {
-          if (!couldBeEqualToConstant(leftType, rightType)) {
+          if (!leftType.containsConstant((DfConstantType<?>)rightType)) {
             return fromBoolean(relationType == RelationType.NE);
           }
         }
@@ -137,10 +141,6 @@ public abstract class DfaCondition {
       }
 
       return null;
-    }
-
-    private static boolean couldBeEqualToConstant(DfType type, DfType constantType) {
-      return (type instanceof DfReferenceType ? ((DfReferenceType)type).dropTypeConstraint() : type).isSuperType(constantType);
     }
   }
 }

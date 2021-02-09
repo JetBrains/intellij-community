@@ -23,10 +23,16 @@ public interface DfIntType extends DfIntegralType {
   }
 
   @Override
+  default boolean containsConstant(@NotNull DfConstantType<?> constant) {
+    Integer value = constant.getConstantOfType(Integer.class);
+    return value != null && getRange().contains(value);
+  }
+
+  @Override
   default @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op) {
     if (!(other instanceof DfIntType)) return DfTypes.INT;
     LongRangeSet result = op.eval(getRange(), ((DfIntType)other).getRange(), false);
-    LongRangeSet wideResult = op.evalWide(getRange(), ((DfIntType)other).getRange(), false);
+    LongRangeSet wideResult = op.evalWide(getWideRange(), ((DfIntType)other).getWideRange(), false);
     return DfTypes.intRange(result, wideResult);
   }
 
