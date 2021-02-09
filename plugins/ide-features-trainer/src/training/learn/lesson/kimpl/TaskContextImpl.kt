@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -18,7 +17,6 @@ import com.intellij.ui.EditorNotifications
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.intellij.lang.annotations.Language
-import training.check.Check
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.commands.kotlin.TaskTestContext
@@ -181,8 +179,17 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   override fun <T : Any?> trigger(actionId: String,
                                   calculateState: TaskRuntimeContext.() -> T,
                                   checkState: TaskRuntimeContext.(T, T) -> Boolean) {
-    val check = getCheck(calculateState, checkState)
-    addStep(recorder.futureActionAndCheckAround(actionId, check))
+    // Some checks are needed to be performed in EDT thread
+    // For example, selection information  could not be got (for some magic reason) from another thread
+    // Also we need to commit document
+    fun calculateAction() = WriteAction.computeAndWait<T, RuntimeException> {
+      PsiDocumentManager.getInstance(runtimeContext.project).commitDocument(runtimeContext.editor.document)
+      calculateState(runtimeContext)
+    }
+    var state: T? = null
+    addStep(recorder.futureActionAndCheckAround(actionId, { state = calculateAction()}) {
+      state?.let { checkState(runtimeContext, it, calculateAction()) } ?: false
+    })
   }
 
   override fun stateCheck(checkState: TaskRuntimeContext.() -> Boolean): CompletableFuture<Boolean> {
@@ -215,30 +222,6 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
 
   override fun addStep(step: CompletableFuture<Boolean>) {
     steps.add(step)
-  }
-
-  private fun <T : Any?> getCheck(calculateState: TaskRuntimeContext.() -> T, checkState: TaskRuntimeContext.(T, T) -> Boolean): Check {
-    return object : Check {
-      var state: T? = null
-
-      override fun before() {
-        state = calculateAction()
-      }
-
-      override fun check(): Boolean = state?.let { checkState(runtimeContext, it, calculateAction()) } ?: false
-
-      override fun set(project: Project, editor: Editor) {
-        // do nothing
-      }
-
-      // Some checks are needed to be performed in EDT thread
-      // For example, selection information  could not be got (for some magic reason) from another thread
-      // Also we need to commit document
-      private fun calculateAction() = WriteAction.computeAndWait<T, RuntimeException> {
-        PsiDocumentManager.getInstance(runtimeContext.project).commitDocument(runtimeContext.editor.document)
-        calculateState(runtimeContext)
-      }
-    }
   }
 
   override fun test(action: TaskTestContext.() -> Unit) {

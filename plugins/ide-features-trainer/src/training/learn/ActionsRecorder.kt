@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import training.check.Check
 import training.commands.kotlin.TaskContext
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
@@ -143,13 +142,13 @@ class ActionsRecorder(private val project: Project,
     return future
   }
 
-  fun futureActionAndCheckAround(actionId: String, check: Check): CompletableFuture<Boolean> {
+  fun futureActionAndCheckAround(actionId: String, before: () -> Unit, check: () -> Boolean): CompletableFuture<Boolean> {
     val future: CompletableFuture<Boolean> = CompletableFuture()
     val actionListener = object : AnActionListener {
       override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
         val caughtActionId: String? = ActionManager.getInstance().getId(action)
         if (actionId == caughtActionId) {
-          check.before()
+          before()
         }
         else if (caughtActionId != null) {
           // remove additional state listener to check caret positions and so on
@@ -168,7 +167,7 @@ class ActionsRecorder(private val project: Project,
 
       override fun beforeEditorTyping(c: Char, dataContext: DataContext) {}
 
-      private fun checkComplete(): Boolean = checkAndCancelForException(future) { check.check() }
+      private fun checkComplete(): Boolean = checkAndCancelForException(future, check)
     }
     actionListeners.add(actionListener)
     return future
