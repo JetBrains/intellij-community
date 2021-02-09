@@ -1,185 +1,155 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.compiler.server.impl;
+package com.intellij.compiler.server.impl
 
-import com.intellij.compiler.server.BuildProcessParametersProvider;
-import com.intellij.compiler.server.CompileServerPlugin;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.compiler.server.BuildProcessParametersProvider
+import com.intellij.compiler.server.CompileServerPlugin
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtil
+import com.intellij.util.io.URLUtil
+import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import java.util.jar.JarFile
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.jar.JarFile;
+class BuildProcessClasspathManager(parentDisposable: Disposable) {
+  @Volatile
+  private var compileServerPluginsClasspath: List<String>? = null
 
-public final class BuildProcessClasspathManager {
-  private static final Logger LOG = Logger.getInstance(BuildProcessClasspathManager.class);
-
-  private volatile List<String> myCompileServerPluginsClasspath;
-
-  public BuildProcessClasspathManager(@NotNull Disposable parentDisposable) {
-    CompileServerPlugin.EP_NAME.addChangeListener(() -> myCompileServerPluginsClasspath = null, parentDisposable);
+  init {
+    CompileServerPlugin.EP_NAME.addChangeListener({ compileServerPluginsClasspath = null }, parentDisposable)
   }
 
-  public @NotNull List<String> getBuildProcessPluginsClasspath(Project project) {
-    List<String> staticClasspath = getStaticClasspath();
-    List<String> dynamicClasspath = getDynamicClasspath(project);
-
-    if (dynamicClasspath.isEmpty()) {
-      return staticClasspath;
+  fun getBuildProcessPluginsClasspath(project: Project): List<String> {
+    val dynamicClasspath = BuildProcessParametersProvider.EP_NAME.getExtensions(project).flatMapTo(ArrayList()) { it.classPath }
+    return if (dynamicClasspath.isEmpty()) {
+      staticClasspath
     }
     else {
-      dynamicClasspath.addAll(staticClasspath);
-      return dynamicClasspath;
+      dynamicClasspath.addAll(staticClasspath)
+      dynamicClasspath
     }
   }
 
-  private @NotNull List<String> getStaticClasspath() {
-    List<String> cp = myCompileServerPluginsClasspath;
-    if (cp == null) {
-      myCompileServerPluginsClasspath = cp = Collections.unmodifiableList(computeCompileServerPluginsClasspath());
-    }
-    return cp;
-  }
-
-  private static @NotNull List<String> computeCompileServerPluginsClasspath() {
-    final List<String> classpath = new ArrayList<>();
-
-    for (CompileServerPlugin serverPlugin : CompileServerPlugin.EP_NAME.getExtensions()) {
-      final PluginId pluginId = serverPlugin.getPluginDescriptor().getPluginId();
-      final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
-      LOG.assertTrue(plugin != null, pluginId);
-
-      Path baseFile = plugin.getPluginPath();
-      if (Files.isRegularFile(baseFile)) {
-        classpath.add(baseFile.toString());
+  private val staticClasspath: List<String>
+    get() {
+      val classpath = compileServerPluginsClasspath ?: computeCompileServerPluginsClasspath()
+      if (compileServerPluginsClasspath == null) {
+        compileServerPluginsClasspath = classpath
       }
-      else if (Files.isDirectory(baseFile)) {
-        outer:
-        for (String relativePath : StringUtil.split(serverPlugin.getClasspath(), ";")) {
-          Path jarFile = baseFile.resolve("lib/" + relativePath);
-          if (Files.exists(jarFile)) {
-            classpath.add(jarFile.toString());
-            continue;
-          }
+      return classpath
+    }
 
-          // ... 'plugin run configuration': all module output are copied to 'classes' folder
-          Path classesDir = baseFile.resolve("classes");
-          if (Files.isDirectory(classesDir)) {
-            classpath.add(classesDir.toString());
-            continue;
-          }
+  companion object {
+    private val LOG = Logger.getInstance(BuildProcessClasspathManager::class.java)
 
-          // development mode
-          if (PluginManagerCore.isRunningFromSources()) {
-            // ... try "out/classes/production/<module-name>", assuming that JAR name was automatically generated from module name
-            String fileName = FileUtilRt.getNameWithoutExtension(PathUtil.getFileName(relativePath));
-            String moduleName;
-            if (OLD_TO_NEW_MODULE_NAME.containsKey(fileName)) {
-              moduleName = OLD_TO_NEW_MODULE_NAME.get(fileName);
-            }
-            else {
-              //try restoring module name from JAR name automatically generated by BaseLayout.convertModuleNameToFileName
-              moduleName = "intellij." + fileName.replace('-', '.');
-            }
-            Path baseOutputDir = baseFile.getParent();
-            if (baseOutputDir.getFileName().toString().equals("test")) {
-              baseOutputDir = baseOutputDir.getParent().resolve("production");
-            }
-            Path moduleDir = baseOutputDir.resolve(moduleName);
-            if (Files.isDirectory(moduleDir)) {
-              classpath.add(moduleDir.toString());
-              continue;
-            }
-            // ... try "<plugin-dir>/lib/<jar-name>", assuming that <jar-name> is a module library committed to VCS
-            File pluginDir = getPluginDir(plugin);
-            if (pluginDir != null) {
-              File libraryFile = new File(pluginDir, "lib/" + PathUtil.getFileName(relativePath));
-              if (libraryFile.exists()) {
-                classpath.add(libraryFile.getPath());
-                continue;
-              }
-            }
-            // ... look for <jar-name> on the classpath, assuming that <jar-name> is an external (read: Maven) library
-            try {
-              Enumeration<URL> urls = BuildProcessClasspathManager.class.getClassLoader().getResources(JarFile.MANIFEST_NAME);
-              while (urls.hasMoreElements()) {
-                Pair<String, String> parts = URLUtil.splitJarUrl(urls.nextElement().getFile());
-                if (parts != null && relativePath.equals(PathUtil.getFileName(parts.first))) {
-                  classpath.add(parts.first);
-                  continue outer;
-                }
-              }
-            }
-            catch (IOException ignored) { }
-          }
+    private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, baseFile: Path): String? {
+      val jarFile = baseFile.resolve("lib/$relativePath")
+      if (Files.exists(jarFile)) {
+        return jarFile.toString()
+      }
 
-          LOG.error("Cannot add '" + relativePath + "' from '" + plugin.getName() + ' ' + plugin.getVersion() + "'" + " to compiler classpath");
+      // ... 'plugin run configuration': all module outputs are copied to 'classes' folder
+      val classesDir = baseFile.resolve("classes")
+      if (Files.isDirectory(classesDir)) {
+        return classesDir.toString()
+      }
+
+      // development mode
+      if (PluginManagerCore.isRunningFromSources()) {
+        // ... try "out/classes/production/<module-name>", assuming that JAR name was automatically generated from module name
+        val fileName = FileUtilRt.getNameWithoutExtension(PathUtil.getFileName(relativePath))
+        val moduleName = OLD_TO_NEW_MODULE_NAME[fileName] ?:
+                         //try restoring module name from JAR name automatically generated by BaseLayout.convertModuleNameToFileName
+                         "intellij." + fileName.replace('-', '.')
+        var baseOutputDir = baseFile.parent
+        if (baseOutputDir.fileName.toString() == "test") {
+          baseOutputDir = baseOutputDir.parent.resolve("production")
+        }
+        val moduleDir = baseOutputDir.resolve(moduleName)
+        if (Files.isDirectory(moduleDir)) {
+          return moduleDir.toString()
+        }
+        // ... try "<plugin-dir>/lib/<jar-name>", assuming that <jar-name> is a module library committed to VCS
+        val pluginDir = getPluginDir(plugin)
+        if (pluginDir != null) {
+          val libraryFile = File(pluginDir, "lib/" + PathUtil.getFileName(relativePath))
+          if (libraryFile.exists()) {
+            return libraryFile.path
+          }
+        }
+        // ... look for <jar-name> on the classpath, assuming that <jar-name> is an external (read: Maven) library
+        try {
+          val urls = BuildProcessClasspathManager::class.java.classLoader.getResources(JarFile.MANIFEST_NAME).asSequence()
+          val jarPath = urls.mapNotNull { URLUtil.splitJarUrl(it.file)?.first }.firstOrNull { PathUtil.getFileName(it) == relativePath }
+          if (jarPath != null) {
+            return jarPath
+          }
+        }
+        catch (ignored: IOException) {
         }
       }
+      LOG.error("Cannot add '" + relativePath + "' from '" + plugin.name + ' ' + plugin.version + "'" + " to compiler classpath")
+      return null
     }
 
-    return classpath;
-  }
-
-  private static @Nullable File getPluginDir(@NotNull IdeaPluginDescriptor plugin) {
-    String pluginDirName = StringUtil.getShortName(plugin.getPluginId().getIdString());
-    String extraDir = System.getProperty("idea.external.build.development.plugins.dir");
-    if (extraDir != null) {
-      File extraDirFile = new File(extraDir, pluginDirName);
-      if (extraDirFile.isDirectory()) {
-        return extraDirFile;
+    private fun computeCompileServerPluginsClasspath(): List<String> {
+      val classpath = ArrayList<String>()
+      for (serverPlugin in CompileServerPlugin.EP_NAME.extensions) {
+        val pluginId = serverPlugin.pluginDescriptor.pluginId
+        val plugin = PluginManagerCore.getPlugin(pluginId)
+        LOG.assertTrue(plugin != null, pluginId)
+        val baseFile = plugin!!.pluginPath
+        if (Files.isRegularFile(baseFile)) {
+          classpath.add(baseFile.toString())
+        }
+        else {
+          StringUtil.split(serverPlugin.classpath, ";").mapNotNullTo(classpath) { findClassesRoot(it, plugin, baseFile)}
+        }
       }
+      return classpath
     }
-    File pluginHome = PluginPathManager.getPluginHome(pluginDirName);
-    if (!pluginHome.isDirectory() && StringUtil.isCapitalized(pluginDirName)) {
-      pluginHome = PluginPathManager.getPluginHome(StringUtil.decapitalize(pluginDirName));
-    }
-    return pluginHome.isDirectory() ? pluginHome : null;
-  }
 
-  private static @NotNull List<String> getDynamicClasspath(Project project) {
-    final List<String> classpath = new ArrayList<>();
-    for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
-      classpath.addAll(provider.getClassPath());
+    private fun getPluginDir(plugin: IdeaPluginDescriptor): File? {
+      val pluginDirName = StringUtil.getShortName(plugin.pluginId.idString)
+      val extraDir = System.getProperty("idea.external.build.development.plugins.dir")
+      if (extraDir != null) {
+        val extraDirFile = File(extraDir, pluginDirName)
+        if (extraDirFile.isDirectory) {
+          return extraDirFile
+        }
+      }
+      var pluginHome = PluginPathManager.getPluginHome(pluginDirName)
+      if (!pluginHome.isDirectory && StringUtil.isCapitalized(pluginDirName)) {
+        pluginHome = PluginPathManager.getPluginHome(StringUtil.decapitalize(pluginDirName))
+      }
+      return if (pluginHome.isDirectory) pluginHome else null
     }
-    return classpath;
-  }
 
-  public static @NotNull List<String> getLauncherClasspath(Project project) {
-    final List<String> classpath = new ArrayList<>();
-    for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
-      classpath.addAll(provider.getLauncherClassPath());
+    @JvmStatic
+    fun getLauncherClasspath(project: Project): List<String> {
+      return BuildProcessParametersProvider.EP_NAME.getExtensions(project).flatMap { it.launcherClassPath }
     }
-    return classpath;
-  }
 
-  //todo[nik] this is a temporary compatibility fix; we should update plugin layout so JAR names correspond to module names instead.
-  private static final Map<String, String> OLD_TO_NEW_MODULE_NAME;
-  static {
-    OLD_TO_NEW_MODULE_NAME = new LinkedHashMap<>();
-    OLD_TO_NEW_MODULE_NAME.put("android-jps-plugin", "intellij.android.jps");
-    OLD_TO_NEW_MODULE_NAME.put("android-jps-model", "intellij.android.jps.model");
-    OLD_TO_NEW_MODULE_NAME.put("build-common", "intellij.android.buildCommon");
-    OLD_TO_NEW_MODULE_NAME.put("android-rt", "intellij.android.rt");
-    OLD_TO_NEW_MODULE_NAME.put("sdk-common", "android.sdktools.sdk-common");
-    OLD_TO_NEW_MODULE_NAME.put("sdklib", "android.sdktools.sdklib");
-    OLD_TO_NEW_MODULE_NAME.put("layoutlib-api", "android.sdktools.layoutlib-api");
-    OLD_TO_NEW_MODULE_NAME.put("repository", "android.sdktools.repository");
-    OLD_TO_NEW_MODULE_NAME.put("manifest-merger", "android.sdktools.manifest-merger");
+    //todo[nik] this is a temporary compatibility fix; we should update plugin layout so JAR names correspond to module names instead.
+    private val OLD_TO_NEW_MODULE_NAME = mapOf(
+      "android-jps-plugin" to "intellij.android.jps",
+      "android-jps-model" to "intellij.android.jps.model",
+      "build-common" to "intellij.android.buildCommon",
+      "android-rt" to "intellij.android.rt",
+      "sdk-common" to "android.sdktools.sdk-common",
+      "sdklib" to "android.sdktools.sdklib",
+      "layoutlib-api" to "android.sdktools.layoutlib-api",
+      "repository" to "android.sdktools.repository",
+      "manifest-merger" to "android.sdktools.manifest-merger",
+    )
   }
 }
