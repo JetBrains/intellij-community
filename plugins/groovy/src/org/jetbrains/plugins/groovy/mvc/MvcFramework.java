@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.mvc;
 
@@ -58,6 +58,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jetbrains.plugins.groovy.config.GroovySdkForNewModuleWizardStep.CREATE_APP_STRUCTURE;
+
 /**
  * @author peter
  */
@@ -65,7 +67,6 @@ public abstract class MvcFramework {
   protected static final ExtensionPointName<MvcFramework> EP_NAME = ExtensionPointName.create("org.intellij.groovy.mvc.framework");
 
   private static final Logger LOG = Logger.getInstance(MvcFramework.class);
-  public static final Key<Boolean> CREATE_APP_STRUCTURE = Key.create("CREATE_MVC_APP_STRUCTURE");
   public static final Key<Boolean> UPGRADE = Key.create("UPGRADE");
   @NonNls public static final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";
   @NonNls public static final String XMX_JVM_PARAMETER = "-Xmx";
