@@ -891,6 +891,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> doTestByText("def foo(a: str):  # type: ignore\n" +
+                         "    pass\n" +
+                         "def bar(a: Unknown):  # type: ignore[no-untyped-def, name-defined]\n" +
                          "    pass")
     );
   }
