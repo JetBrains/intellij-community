@@ -84,7 +84,7 @@ application {
 }
 
 tasks.getByName('jsBrowserProductionWebpack') {
-    outputFileName = 'output.js'
+    outputFileName = 'js.js'
 }
 
 tasks.getByName('jvmJar') {
