@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -12,11 +12,10 @@ import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurat
 import com.intellij.framework.detection.impl.ui.ConfigureDetectedFrameworksDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -49,8 +48,7 @@ import java.util.*;
 
 public final class FrameworkDetectionManager implements FrameworkDetectionIndexListener, Disposable {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectionManager.class);
-  private static final NotificationGroup FRAMEWORK_DETECTION_NOTIFICATION = NotificationGroup.balloonGroup("Framework Detection",
-                                                                                                           PluginManagerCore.CORE_ID);
+
   private final Update myDetectionUpdate = new Update("detection") {
     @Override
     public void run() {
@@ -212,7 +210,7 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
       if (!frameworkNames.isEmpty()) {
         String names = StringUtil.join(frameworkNames, ", ");
         final String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
-        FRAMEWORK_DETECTION_NOTIFICATION
+        NotificationGroupManager.getInstance().getNotificationGroup("Framework Detection")
           .createNotification(ProjectBundle.message("notification.title.frameworks.detected"), text, NotificationType.INFORMATION, null)
           .addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.configure")) {
             @Override

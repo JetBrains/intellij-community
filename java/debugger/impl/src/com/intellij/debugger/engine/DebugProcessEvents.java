@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -514,7 +514,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
           final String message =
             JavaDebuggerBundle.message("notification.method.has.not.been.called", ((NamedMethodFilter)methodFilter).getMethodName());
-          XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+          XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
         }
         if (hint.wasStepTargetMethodMatched()) {
           suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
@@ -634,7 +634,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
       String message = isEvaluation ? JavaDebuggerBundle.message("message.breakpoint.skipped", event.location())
                                     : JavaDebuggerBundle.message("message.breakpoint.skipped.other.thread", event.location());
-      XDebuggerManagerImpl.NOTIFICATION_GROUP
+      XDebuggerManagerImpl.getNotificationGroup()
         .createNotification(message, MessageType.WARNING)
         .notify(getProject());
     }

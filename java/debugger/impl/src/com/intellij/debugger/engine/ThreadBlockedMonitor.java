@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.JobScheduler;
@@ -91,7 +91,7 @@ public class ThreadBlockedMonitor {
   private static void onThreadBlocked(@NotNull final ThreadReference blockedThread,
                                       @NotNull final ThreadReference blockingThread,
                                       final DebugProcessImpl process) {
-    XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
+    XDebuggerManagerImpl.getNotificationGroup().createNotification(
       JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
       JavaDebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
       NotificationType.INFORMATION, (notification, event) -> {

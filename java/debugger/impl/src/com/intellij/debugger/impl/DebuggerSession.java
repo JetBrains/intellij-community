@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
@@ -475,7 +475,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         if (thread != null) {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
           if (!descriptors.isEmpty()) {
-            XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
+            XDebuggerManagerImpl.getNotificationGroup().createNotification(
               JavaDebuggerBundle.message("status.breakpoint.reached.in.thread", thread.name()),
               JavaDebuggerBundle.message("status.breakpoint.reached.in.thread.switch"),
               NotificationType.INFORMATION,

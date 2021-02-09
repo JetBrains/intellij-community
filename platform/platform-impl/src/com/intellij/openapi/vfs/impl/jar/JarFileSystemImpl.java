@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.IntegrityCheckCapableFileSystem;
@@ -31,10 +31,10 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   private final Path myNoCopyJarDir;
 
   public JarFileSystemImpl() {
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfoRt.isWindows) {
       myNoCopyJarPaths = null;
     }
-    else if (SystemInfo.isFileSystemCaseSensitive) {
+    else if (SystemInfoRt.isFileSystemCaseSensitive) {
       //noinspection SSBasedInspection
       myNoCopyJarPaths = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }

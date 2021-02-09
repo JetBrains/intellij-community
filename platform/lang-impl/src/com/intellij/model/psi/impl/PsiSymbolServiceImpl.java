@@ -14,8 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class PsiSymbolServiceImpl implements PsiSymbolService {
-
+public final class PsiSymbolServiceImpl implements PsiSymbolService {
   @Contract(pure = true)
   @NotNull
   @Override

@@ -994,7 +994,8 @@ public final class XDebugSessionImpl implements XDebugSession {
         listener.hyperlinkUpdate(event);
       }
     };
-    XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
+    XDebuggerManagerImpl.getNotificationGroup()
+      .createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
   }
 
   private final class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
