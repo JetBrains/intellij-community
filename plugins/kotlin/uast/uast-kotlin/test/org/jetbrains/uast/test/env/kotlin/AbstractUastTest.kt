@@ -10,16 +10,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 import kotlin.test.fail
 
 abstract class AbstractUastTest : AbstractTestWithCoreEnvironment() {
-    protected companion object {
-        val TEST_DATA_DIR = File("testData")
-    }
-
     abstract fun getVirtualFile(testName: String): VirtualFile
     abstract fun check(testName: String, file: UFile)
 
@@ -27,7 +24,7 @@ abstract class AbstractUastTest : AbstractTestWithCoreEnvironment() {
         val virtualFile = getVirtualFile(testName)
 
         val psiFile = psiManager.findFile(virtualFile) ?: error("Can't get psi file for $testName")
-        val uFile = uastContext.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
+        val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
         checkCallback(testName, uFile as UFile)
     }
 }

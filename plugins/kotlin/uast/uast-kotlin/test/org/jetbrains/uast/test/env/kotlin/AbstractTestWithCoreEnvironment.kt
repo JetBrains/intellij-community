@@ -7,7 +7,6 @@ package org.jetbrains.uast.test.env.kotlin
 
 import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockProject
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiManager
@@ -15,7 +14,6 @@ import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.impl.PsiNameHelperImpl
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import junit.framework.TestCase
-import org.jetbrains.uast.UastContext
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.java.JavaUastLanguagePlugin
@@ -29,10 +27,6 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
 
     protected val project: MockProject
         get() = environment.project
-
-    protected val uastContext: UastContext by lazy {
-        ServiceManager.getService(project, UastContext::class.java)
-    }
 
     protected val psiManager: PsiManager by lazy {
         PsiManager.getInstance(project)
@@ -48,28 +42,24 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
         if (myEnvironment != null) {
             error("Environment is already initialized")
         }
+
         myEnvironment = createEnvironment(source)
+        CoreApplicationEnvironment.registerApplicationExtensionPoint(
+            UastLanguagePlugin.extensionPointName,
+            UastLanguagePlugin::class.java
+        )
 
-        CoreApplicationEnvironment.registerExtensionPoint(
-                Extensions.getRootArea(),
-                UastLanguagePlugin.extensionPointName,
-                UastLanguagePlugin::class.java)
+        CoreApplicationEnvironment.registerApplicationExtensionPoint(
+            UEvaluatorExtension.EXTENSION_POINT_NAME,
+            UEvaluatorExtension::class.java
+        )
 
-        CoreApplicationEnvironment.registerExtensionPoint(
-                Extensions.getRootArea(),
-                UEvaluatorExtension.EXTENSION_POINT_NAME,
-                UEvaluatorExtension::class.java)
-
-        project.registerService(UastContext::class.java, UastContext::class.java)
         project.registerService(PsiNameHelper::class.java, PsiNameHelperImpl(project))
         registerUastLanguagePlugins()
     }
 
     private fun registerUastLanguagePlugins() {
-        val area = Extensions.getRootArea()
-
-        area.getExtensionPoint(UastLanguagePlugin.extensionPointName)
-                .registerExtension(JavaUastLanguagePlugin())
+        Extensions.getRootArea().getExtensionPoint(UastLanguagePlugin.extensionPointName).registerExtension(JavaUastLanguagePlugin())
     }
 
     protected fun disposeEnvironment() {
@@ -78,10 +68,10 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
     }
 }
 
-private fun String.trimTrailingWhitespacesAndAddNewlineAtEOF(): String =
-        this.split('\n').map(String::trimEnd).joinToString(separator = "\n").let {
-            result -> if (result.endsWith("\n")) result else result + "\n"
-        }
+private fun String.trimTrailingWhitespacesAndAddNewlineAtEOF(): String = this.split('\n')
+    .joinToString(separator = "\n", transform = String::trimEnd).let { result ->
+        if (result.endsWith("\n")) result else result + "\n"
+    }
 
 fun assertEqualsToFile(description: String, expected: File, actual: String) {
     if (!expected.exists()) {
@@ -89,10 +79,8 @@ fun assertEqualsToFile(description: String, expected: File, actual: String) {
         TestCase.fail("File didn't exist. New file was created (${expected.canonicalPath}).")
     }
 
-    val expectedText =
-            StringUtil.convertLineSeparators(expected.readText().trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
-    val actualText =
-            StringUtil.convertLineSeparators(actual.trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
+    val expectedText = StringUtil.convertLineSeparators(expected.readText().trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
+    val actualText = StringUtil.convertLineSeparators(actual.trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
     if (expectedText != actualText) {
         throw FileComparisonFailure(description, expectedText, actualText, expected.absolutePath)
     }
