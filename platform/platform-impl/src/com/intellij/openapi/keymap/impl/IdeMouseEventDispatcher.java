@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher.rearrangeByPromoters;
 import static java.awt.event.MouseEvent.*;
 
 /**
@@ -259,9 +260,10 @@ public final class IdeMouseEventDispatcher {
     fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
     ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (actionManager != null) {
+      DataContext dataContext = DataManager.getInstance().getDataContext(c);
+      rearrangeByPromoters(myActions, dataContext);
       AnAction[] actions = myActions.toArray(AnAction.EMPTY_ARRAY);
       for (AnAction action : actions) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(c);
         Presentation presentation = myPresentationFactory.getPresentation(action);
         AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MOUSE_SHORTCUT, presentation,
                                                       ActionManager.getInstance(),
