@@ -274,41 +274,22 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     if (skipFindingResource.get() != null) {
       return null;
     }
-
-    String canonicalPath = toCanonicalPath(name);
-    Resource resource = classPath.findResource(canonicalPath);
-    if (resource == null && canonicalPath.startsWith("/")) {
-      //noinspection SpellCheckingInspection
-      if (!canonicalPath.startsWith("/org/bridj/")) {
-        logError("Do not request resource from classloader using path with leading slash", new IllegalArgumentException(name));
-      }
-      resource = classPath.findResource(canonicalPath.substring(1));
-    }
-    return resource == null ? null : resource.getURL();
-  }
-
-  public final void processResources(@NotNull String dir,
-                                     @NotNull Predicate<? super String> fileNameFilter,
-                                     @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
-    classPath.processResources(dir, fileNameFilter, consumer);
+    Resource resource = doFindResource(name);
+    return resource != null ? resource.getURL() : null;
   }
 
   @Override
   public @Nullable InputStream getResourceAsStream(@NotNull String name) {
-    String normalizedName = toCanonicalPath(name);
-    Resource resource = classPath.findResource(normalizedName);
     // compatibility with existing code, non-standard classloader behavior
+    Resource resource = doFindResource(name);
     if (resource != null) {
       try {
         return resource.getInputStream();
       }
       catch (IOException e) {
-        logError("Cannot load resource " + normalizedName, e);
+        logError("Cannot load resource " + name, e);
+        return null;
       }
-    }
-
-    if (normalizedName.startsWith("/")) {
-      throw new IllegalArgumentException("Do not request resource from classloader using path with leading slash (path=" + name + ")");
     }
 
     if (isBootstrapResourcesAllowed) {
@@ -328,6 +309,25 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     return null;
+  }
+
+  private @Nullable Resource doFindResource(String name) {
+    String canonicalPath = toCanonicalPath(name);
+    Resource resource = classPath.findResource(canonicalPath);
+    if (resource == null && canonicalPath.startsWith("/")) {
+      //noinspection SpellCheckingInspection
+      if (!canonicalPath.startsWith("/org/bridj/")) {
+        logError("Do not request resource from classloader using path with leading slash", new IllegalArgumentException(name));
+      }
+      resource = classPath.findResource(canonicalPath.substring(1));
+    }
+    return resource;
+  }
+
+  public final void processResources(@NotNull String dir,
+                                     @NotNull Predicate<? super String> fileNameFilter,
+                                     @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
+    classPath.processResources(dir, fileNameFilter, consumer);
   }
 
   @Override
@@ -500,7 +500,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return 0;
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SameParameterValue"})
   private void logError(String message, Throwable t) {
     try {
       Class<?> logger = Class.forName("com.intellij.openapi.diagnostic.Logger", false, this);
