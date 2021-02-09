@@ -117,7 +117,7 @@ public final class AppUIUtil {
   }
 
   public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext scaleContext, int size) {
-    return loadSmallApplicationIcon(scaleContext, size, !ApplicationManager.getApplication().isEAP());
+    return loadSmallApplicationIcon(scaleContext, size, !ApplicationInfoImpl.getShadowInstance().isEAP());
   }
 
   public static @NotNull Icon loadSmallApplicationIconForRelease(@NotNull ScaleContext scaleContext, int size) {
