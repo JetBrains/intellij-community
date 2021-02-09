@@ -183,7 +183,7 @@ public class GithubTagListProvider {
   private String @NotNull [] formatTagListDownloadUrls() {
     return new String[] {
       "https://api.github.com/repos/" + myUserName + "/" + myRepositoryName + "/tags",
-      "http://download.jetbrains.com/idea/project_templates/github-tags/" + myUserName + "-" + myRepositoryName + "-tags.json"
+      "https://download.jetbrains.com/idea/project_templates/github-tags/" + myUserName + "-" + myRepositoryName + "-tags.json"
     };
   }
 
