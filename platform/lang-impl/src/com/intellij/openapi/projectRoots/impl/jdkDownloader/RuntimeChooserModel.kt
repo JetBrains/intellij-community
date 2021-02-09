@@ -17,6 +17,7 @@ class RuntimeChooserModel {
 
   private var currentRuntime : RuntimeChooserCurrentItem? = null
   private var downloadableJbs: List<JdkItem> = listOf()
+  private val customJdks = mutableListOf<RuntimeChooserCustomItem>()
 
   private val myMainComboModel = DefaultComboBoxModel<RuntimeChooserItem>()
 
@@ -40,8 +41,8 @@ class RuntimeChooserModel {
     return service<RuntimeChooserJbrInstaller>().defaultInstallDir(item)
   }
 
-  private fun updateMainCombobox() {
-    val selection = myMainComboModel.selectedItem
+  private fun updateMainCombobox(newSelection: RuntimeChooserItem? = null) {
+    val selection = newSelection ?: myMainComboModel.selectedItem
 
     myMainComboModel.removeAllElements()
 
@@ -54,6 +55,11 @@ class RuntimeChooserModel {
     newList += downloadableJbs
       .filter { showAdvancedOptions || it.isDefaultItem }
       .map { RuntimeChooserDownloadableItem(it) }
+
+    if (showAdvancedOptions && RuntimeChooserCustom.isActionAvailable) {
+      newList += RuntimeChooserAddCustomItem
+      newList += customJdks
+    }
 
     myMainComboModel.addAll(newList)
     myMainComboModel.selectedItem = selection ?: newList.firstOrNull { it is RuntimeChooserCurrentItem }
@@ -73,6 +79,11 @@ class RuntimeChooserModel {
   fun updateCurrentRuntime(runtime: RuntimeChooserCurrentItem) {
     currentRuntime = runtime
     updateMainCombobox()
+  }
+
+  fun addExistingSdkItem(newItem : RuntimeChooserCustomItem) {
+    customJdks += newItem
+    updateMainCombobox(newItem)
   }
 }
 

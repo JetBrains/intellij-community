@@ -27,6 +27,13 @@ class RuntimeChooserNotifications {
     this?.toAbsolutePath()?.toString()
   }.getOrNull() ?: LangBundle.message("notification.content.choose.ide.runtime.no.file.part")
 
+  fun notifyJdkDoesNotStart(jdkHome: String) {
+    group
+      .createNotification(NotificationType.ERROR)
+      .setContent(LangBundle.message("notification.content.choose.ide.runtime.set.cannot.start.error", jdkHome))
+      .notify(null)
+  }
+
   fun notifySettingBootJdkFailed(jdkHome: Path, jdkFile: Path?) {
     group
       .createNotification(NotificationType.ERROR)

@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.roots.ui.configuration.SdkListPresenter.*
 import com.intellij.ui.*
 import javax.swing.JList
 
@@ -23,6 +22,16 @@ class RuntimeChooserPresenter(
       presetCurrentRuntime(value)
       return
     }
+
+    if (value is RuntimeChooserAddCustomItem) {
+      append(LangBundle.message("dialog.item.choose.ide.runtime.add.custom", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES))
+      return
+    }
+
+    if (value is RuntimeChooserCustomItem) {
+      append(LangBundle.message("dialog.item.choose.ide.runtime.custom", value.version), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true)
+      return
+    }
   }
 
   private fun presetCurrentRuntime(value: RuntimeChooserCurrentItem) {
@@ -31,7 +40,7 @@ class RuntimeChooserPresenter(
       append(" ")
     }
 
-    append(LangBundle.message("dialog.item.choose.ide.runtime.current", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES))
+    append(LangBundle.message("dialog.item.choose.ide.runtime.current", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES))
     append(" ")
 
     value.version?.let {

@@ -19,6 +19,7 @@ class RuntimeChooserAction : AnAction() {
     return when(result) {
       is RuntimeChooserDialogResult.Cancel -> Unit
       is RuntimeChooserDialogResult.UseDefault -> service<RuntimeChooserPaths>().resetCustomJdk()
+      is RuntimeChooserDialogResult.UseCustomJdk -> service<RuntimeChooserPaths>().installCustomJdk(result.name, result.path)
       is RuntimeChooserDialogResult.DownloadAndUse -> service<RuntimeChooserDownloader>().downloadAndUse(result.item, result.path)
     }
   }

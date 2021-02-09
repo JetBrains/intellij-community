@@ -14,9 +14,11 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.layout.*
 import com.intellij.util.castSafelyTo
+import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -25,6 +27,7 @@ sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
   object UseDefault: RuntimeChooserDialogResult()
   data class DownloadAndUse(val item: JdkItem, val path: Path) : RuntimeChooserDialogResult()
+  data class UseCustomJdk(val name: String, val path: Path) : RuntimeChooserDialogResult()
 }
 
 class RuntimeChooserDialog(
@@ -63,6 +66,14 @@ class RuntimeChooserDialog(
       return RuntimeChooserDialogResult.DownloadAndUse(jdkItem, path)
     }
 
+    if (isOK) run {
+      val jdkItem = jdkCombobox.selectedItem.castSafelyTo<RuntimeChooserCustomItem>() ?: return@run
+      val home = Paths.get(jdkItem.homeDir)
+      if (home.isDirectory()) {
+        return RuntimeChooserDialogResult.UseCustomJdk(jdkItem.version, home)
+      }
+    }
+
     return RuntimeChooserDialogResult.Cancel
   }
 
@@ -80,13 +91,25 @@ class RuntimeChooserDialog(
     return panel
   }
 
-
   override fun createCenterPanel(): JComponent {
     jdkCombobox = object : ComboBox<RuntimeChooserItem>(model.mainComboBoxModel) {
       init {
         isSwingPopup = false
         setMinimumAndPreferredWidth(400)
         setRenderer(RuntimeChooserPresenter(this@RuntimeChooserDialog.model))
+      }
+
+      override fun setSelectedItem(anObject: Any?) {
+        if (anObject !is RuntimeChooserItem) return
+
+        if (anObject is RuntimeChooserAddCustomItem) {
+          RuntimeChooserCustom
+            .createSdkChooserPopup(this@RuntimeChooserDialog.model)
+            ?.showUnderneathOf(jdkCombobox)
+          return
+        }
+
+        super.setSelectedItem(anObject)
       }
     }
 
