@@ -5,7 +5,10 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -16,17 +19,23 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.*;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
-import java.io.*;
-import java.util.*;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
@@ -220,8 +229,17 @@ public final class FSRecords {
     return readAndHandleErrors(() -> ourTreeAccessor.wereChildrenAccessed(id, ourConnection));
   }
 
-  static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ?> action) {
-    assert lock.getReadHoldCount() == 0; // otherwise DbConnection.handleError(e) (requires write lock) could fail
+  static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ? extends Exception> action) {
+    // otherwise DbConnection.handleError(e) (requires write lock) could fail
+    if (lock.getReadHoldCount() != 0) {
+      try {
+        return action.compute();
+      }
+      catch (Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+
     r.lock();
     try {
       try {
@@ -391,7 +409,7 @@ public final class FSRecords {
 
   @Nullable
   static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idToDirCache) {
-    class ParentFinder implements ThrowableComputable<Void, Throwable> {
+    class ParentFinder implements ThrowableComputable<Void, Exception> {
       @Nullable private IntList path;
       private VirtualFileSystemEntry foundParent;
 
