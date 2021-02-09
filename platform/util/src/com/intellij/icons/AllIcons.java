@@ -215,6 +215,13 @@ public class AllIcons {
     public static final @NotNull Icon ShowViewer = load("actions/showViewer.png", 0L, 0);
   }
 
+  public static final class Chooser {
+    /** 16x16 */ public static final @NotNull Icon Bottom = load("chooser/bottom.svg", -8108010060508403731L, 2);
+    /** 16x16 */ public static final @NotNull Icon Left = load("chooser/left.svg", 4895662085937558378L, 2);
+    /** 16x16 */ public static final @NotNull Icon Right = load("chooser/right.svg", -3022123317635132687L, 2);
+    /** 16x16 */ public static final @NotNull Icon Top = load("chooser/top.svg", -7250113669665053530L, 2);
+  }
+
   public static final class CodeStyle {
     /** 16x16 */ public static final @NotNull Icon AddNewSectionRule = load("codeStyle/AddNewSectionRule.svg", 6106753974582276537L, 2);
   }
