@@ -438,8 +438,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
         try {
           resources.add(classloader.getResources(name));
         }
-        catch (IOException ignore) {
-        }
+        catch (IOException ignore) { }
       }
     }
     return new DeepEnumeration(resources);
