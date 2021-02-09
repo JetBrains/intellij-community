@@ -21,10 +21,11 @@ class CustomCodeStyleSettingsManager {
   }
 
 
-  void addCustomSettings(@Nullable CustomCodeStyleSettings settings) {
-    if (settings != null) {
+  void addCustomSettings(@NotNull CodeStyleSettings rootSettings, @NotNull CustomCodeStyleSettingsFactory factory) {
+    CustomCodeStyleSettings customSettings = factory.createCustomSettings(rootSettings);
+    if (customSettings != null) {
       synchronized (myCustomSettings) {
-        myCustomSettings.put(settings.getClass().getName(), settings);
+        myCustomSettings.put(customSettings.getClass().getName(), customSettings);
       }
     }
   }
