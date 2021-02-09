@@ -239,7 +239,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     JPanel panel = new JPanel(new BorderLayout(JBUIScale.scale(2), JBUIScale.scale(2)));
     CardLayout layout = new CardLayout();
     JPanel descriptionPanel = new JPanel(layout);
-    descriptionPanel.setBorder(JBUI.Borders.empty(2));
+    descriptionPanel.setBorder(JBUI.Borders.emptyLeft(12));
     panel.add(descriptionPanel, BorderLayout.CENTER);
     CheckBoxList<NamingConvention<T>> list = new CheckBoxList<>();
     list.setBorder(JBUI.Borders.empty(2));
