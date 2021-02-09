@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.wsl
 
+import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.rmi.RemoteServer
@@ -56,7 +57,8 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     }
     wslParams.charset = parameters.charset
     wslParams.vmParametersList.add("-classpath")
-    wslParams.vmParametersList.add(parameters.classPath.pathList.map(myWslDistribution::getWslPath).joinToString(":"))
+    wslParams.vmParametersList.add(parameters.classPath.pathList
+                                     .mapNotNull(myWslDistribution::getWslPath).joinToString(":") { CommandLineUtil.posixQuote(it) })
     return wslParams
   }
 
