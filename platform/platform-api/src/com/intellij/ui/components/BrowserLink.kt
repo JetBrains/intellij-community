@@ -10,16 +10,17 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.datatransfer.StringSelection
 import javax.swing.Icon
 
-class BrowserLink(icon: Icon?, @Nls text: String?, @Nls tooltip: String?, @Nls val url: String) : ActionLink() {
+class BrowserLink(icon: Icon?, @Nls text: String?, @Nls tooltip: String?, @NonNls val url: String) : ActionLink() {
 
-  constructor(@Nls url: String) : this(null, url, null, url)
+  constructor(@NonNls url: String) : this(null, url, null, url) // NON-NLS
 
-  constructor(@Nls text: String, @Nls url: String) : this(AllIcons.Ide.External_link_arrow, text, null, url)
+  constructor(@Nls text: String, @NonNls url: String) : this(AllIcons.Ide.External_link_arrow, text, null, url)
 
-  constructor(icon: Icon, @Nls tooltip: String, @Nls url: String) : this(icon, null, tooltip, url)
+  constructor(icon: Icon, @Nls tooltip: String, @NonNls url: String) : this(icon, null, tooltip, url)
 
   init {
     addActionListener { browse(url) }
