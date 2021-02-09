@@ -4,7 +4,18 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 
 object RelevanceUtil {
-  private val IGNORED_FACTORS = setOf("kotlin.byNameAlphabetical", "scalaMethodCompletionWeigher", "unresolvedOnTop", "alphabetic")
+  private val IGNORED_FACTORS = setOf("kotlin.byNameAlphabetical",
+                                      "scalaMethodCompletionWeigher",
+                                      "unresolvedOnTop",
+                                      "alphabetic",
+                                      "TabNineLookupElementWeigher",
+                                      "AixLookupElementWeigher",
+                                      "CodotaCompletionWeigher",
+                                      "CodotaCompletionWeigher_Kotlin",
+                                      "EmcSuggestionsWeigher",
+                                      "codotaPriorityWeigher",
+                                      "com.zlabs.code.completion.ScaCompletionWeigher",
+                                      "com.aliyun.odps.studio.intellij.compiler.codecompletion.OdpsqlCompletionWeigher")
 
   /*
   * First map contains only features affecting default elements ordering
