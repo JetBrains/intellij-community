@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -113,13 +112,10 @@ final class ResourceBundleEditorFileListener implements VirtualFileListener {
                     }
                     if (validFilesCount > 1) {
                       toDo = myEditor::recreateEditorsPanel;
-                    } else {
+                    }
+                    else {
                       toDo = () -> {
-                        final FileEditorManagerEx fileEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
-                        final VirtualFile file = fileEditorManager.getFile(myEditor);
-                        if (file != null) {
-                          fileEditorManager.closeFile(file);
-                        }
+                        FileEditorManager.getInstance(myProject).closeFile(myEditor.getFile());
                       };
                     }
                     break;

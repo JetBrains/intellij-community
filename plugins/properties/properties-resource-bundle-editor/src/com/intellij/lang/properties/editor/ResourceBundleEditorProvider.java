@@ -38,7 +38,7 @@ public class ResourceBundleEditorProvider implements FileEditorProvider, DumbAwa
 
   @Override
   @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file){
+  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     ResourceBundle resourceBundle;
     if (file instanceof ResourceBundleAsVirtualFile) {
       resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle();
@@ -51,7 +51,7 @@ public class ResourceBundleEditorProvider implements FileEditorProvider, DumbAwa
       resourceBundle = PropertiesImplUtil.getPropertiesFile(psiFile).getResourceBundle();
     }
 
-    return new ResourceBundleEditor(resourceBundle);
+    return new ResourceBundleEditor(project, file, resourceBundle);
   }
 
   @Override
