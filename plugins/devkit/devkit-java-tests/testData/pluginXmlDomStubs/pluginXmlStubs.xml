@@ -1,9 +1,18 @@
-<idea-plugin>
+<idea-plugin package="idea.plugin.package">
   <id>com.intellij.myPlugin</id>
   <name>pluginName</name>
 
   <depends config-file="anotherPlugin.xml" optional="true">anotherPlugin</depends>
   <module value="myModule"/>
+
+  <content>
+    <module name="module.name" package="module.package"/>
+  </content>
+
+  <dependencies>
+    <module name="dependencies.module" package="dependencies.module.package"/>
+    <plugin id="dependencies.plugin.id"/>
+  </dependencies>
 
   <resource-bundle>MyResourceBundle</resource-bundle>
 

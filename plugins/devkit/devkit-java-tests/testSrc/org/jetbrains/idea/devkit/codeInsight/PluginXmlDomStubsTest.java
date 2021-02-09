@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
     doBuilderTest("pluginXmlStubs.xml",
                   "File:idea-plugin\n" +
                   "  Element:idea-plugin\n" +
+                  "    Attribute:package:idea.plugin.package\n" +
                   "    Element:id:com.intellij.myPlugin\n" +
                   "    Element:name:pluginName\n" +
                   "    Element:depends:anotherPlugin\n" +
@@ -54,6 +55,16 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Attribute:optional:true\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
+                  "    Element:content\n" +
+                  "      Element:module\n" +
+                  "        Attribute:name:module.name\n" +
+                  "        Attribute:package:module.package\n" +
+                  "    Element:dependencies\n" +
+                  "      Element:module\n" +
+                  "        Attribute:name:dependencies.module\n" +
+                  "        Attribute:package:dependencies.module.package\n" +
+                  "      Element:plugin\n" +
+                  "        Attribute:id:dependencies.plugin.id\n" +
                   "    Element:resource-bundle:MyResourceBundle\n" +
                   "    Element:idea-version\n" +
                   "      Attribute:since-build:sinceBuildValue\n" +
