@@ -30,6 +30,10 @@ object RelevanceUtil {
       when (name) {
         "proximity" -> relevanceMap.addCompoundValues("prox", value.toString())
         "kotlin.proximity" -> relevanceMap.addCompoundValues("kt_prox", value.toString())
+        "swiftSymbolProximity" -> {
+          relevanceMap[name] = value // while this feature is used in actual models
+          relevanceMap.addCompoundValues("swift_prox", value.toString())
+        }
         "kotlin.callableWeight" -> relevanceMap.addDataClassValues("kotlin.callableWeight", value.toString())
         "ml_weigh" -> additionalMap.addCompoundValues("ml", value.toString())
         else -> if (acceptValue(value)) relevanceMap[name] = value
