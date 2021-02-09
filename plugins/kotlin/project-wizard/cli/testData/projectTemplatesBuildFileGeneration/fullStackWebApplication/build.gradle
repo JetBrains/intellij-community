@@ -27,19 +27,10 @@ kotlin {
         withJava()
     }
     js(LEGACY) {
+        binaries.executable()
         browser {
-            binaries.executable()
-            webpackTask {
+            commonWebpackConfig {
                 cssSupport.enabled = true
-            }
-            runTask {
-                cssSupport.enabled = true
-            }
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                    webpackConfig.cssSupport.enabled = true
-                }
             }
         }
     }
