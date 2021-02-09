@@ -11,6 +11,12 @@ import java.util.Set;
 final class FileBasedIndexFileTypeListener implements FileTypeListener {
   @Override
   public void fileTypesChanged(@NotNull final FileTypeEvent event) {
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+
+    if (fileBasedIndex.getRegisteredIndexes() == null) {
+      return;
+    }
+
     Set<ID<?, ?>> indexesToRebuild = new HashSet<>();
     for (FileBasedIndexExtension<?, ?> extension : FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList()) {
       if (IndexVersion.versionDiffers(extension.getName(), FileBasedIndexImpl.getIndexExtensionVersion(extension)) != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
@@ -18,7 +24,6 @@ final class FileBasedIndexFileTypeListener implements FileTypeListener {
       }
     }
 
-    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     String rebuiltIndexesLog = indexesToRebuild.isEmpty()
                                ? ""
                                : "; indexes " + indexesToRebuild + " will be rebuild completely due to version change";
