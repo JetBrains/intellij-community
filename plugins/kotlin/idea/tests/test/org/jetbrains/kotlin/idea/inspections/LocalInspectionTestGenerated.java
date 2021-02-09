@@ -2346,6 +2346,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("ListIsNullOrEmpty.kt")
+            public void testListIsNullOrEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/ListIsNullOrEmpty.kt");
+            }
+
             @TestMetadata("NotNullType.kt")
             public void testNotNullType() throws Exception {
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NotNullType.kt");

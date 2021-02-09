@@ -25,7 +25,8 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         "kotlin.sequences.orEmpty" to deleteConversion,
         "kotlin.text.orEmpty" to deleteConversion,
         "kotlin.text.isNullOrEmpty" to Conversion("isEmpty"),
-        "kotlin.text.isNullOrBlank" to Conversion("isBlank")
+        "kotlin.text.isNullOrBlank" to Conversion("isBlank"),
+        "kotlin.collections.isNullOrEmpty" to Conversion("isEmpty")
     )
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
