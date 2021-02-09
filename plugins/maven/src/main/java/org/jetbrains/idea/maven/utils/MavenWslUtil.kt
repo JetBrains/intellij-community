@@ -2,11 +2,16 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.WslMavenDistribution
 import java.io.File
+import java.util.function.Function
+import java.util.function.Supplier
 
 object MavenWslUtil : MavenUtil() {
   @JvmStatic
@@ -26,6 +31,10 @@ object MavenWslUtil : MavenUtil() {
     return project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
   }
 
+  @JvmStatic
+  fun tryGetWslDistributionForPath(path: String?): WSLDistribution? {
+    return path?.let { WslPath.getDistributionByWindowsUncPath(it)}
+  }
   /**
    * return file in windows-style ("\\wsl$\distrib-name\home\user\.m2\settings.xml")
    */
@@ -48,7 +57,7 @@ object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun WSLDistribution.resolveM2Dir(): File {
-    return this.getWindowsFile(File(this.userHome, DOT_M2_DIR))!!
+    return this.getWindowsFile(File(this.environment["HOME"], DOT_M2_DIR))!!
   }
 
   /**
@@ -57,7 +66,7 @@ object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun WSLDistribution.resolveMavenHomeDirectory(overrideMavenHome: String?): File? {
     MavenLog.LOG.debug("resolving maven home on WSL with override = \"${overrideMavenHome}\"")
-    if (overrideMavenHome != null) {
+    if (overrideMavenHome != null && overrideMavenHome != MavenServerManager.BUNDLED_MAVEN_3) {
       val home = this.getWindowsPath(overrideMavenHome)?.let(::File)
       if (isValidMavenHome(home)) {
         MavenLog.LOG.debug("resolved maven home as ${home}")
@@ -119,7 +128,7 @@ object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun getJdkPath(wslDistribution: WSLDistribution): String? {
-    return wslDistribution.getEnvironmentVariable("JAVA_HOME")
+    return wslDistribution.getEnvironmentVariable("JDK_HOME")
   }
 
   @JvmStatic
@@ -130,5 +139,17 @@ object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun WSLDistribution.getWslFile(windowsFile: File): File? {
     return windowsFile.path.let(this::getWslPath)?.let(::File)
+  }
+
+  @JvmStatic
+  fun <T> resolveWslAware(project: Project, ordinary: Supplier<T>, wsl: Function<WSLDistribution, T>): T {
+    val wslDistribution = tryGetWslDistribution(project) ?: return ordinary.get()
+    return wsl.apply(wslDistribution)
+  }
+
+  fun useWslMaven(project: Project): Boolean {
+    val projectWslDistr = tryGetWslDistribution(project) ?: return false
+    val jdkWslDistr = tryGetWslDistributionForPath(ProjectRootManager.getInstance(project).projectSdk?.homePath) ?: return false
+    return jdkWslDistr.id == projectWslDistr.id
   }
 }

@@ -71,7 +71,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
     myEnvironmentForm = new MavenEnvironmentForm();
 
     Project project = myProjectOrNull == null ? ProjectManager.getInstance().getDefaultProject() : myProjectOrNull;
-    myEnvironmentForm.getData(MavenProjectsManager.getInstance(project).getGeneralSettings().clone());
+    myEnvironmentForm.initializeFormData(MavenProjectsManager.getInstance(project).getGeneralSettings().clone(), project);
 
     myEnvironmentPanel.add(myEnvironmentForm.createComponent(), BorderLayout.CENTER);
 

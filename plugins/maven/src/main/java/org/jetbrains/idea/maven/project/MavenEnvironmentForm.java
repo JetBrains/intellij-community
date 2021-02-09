@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -58,56 +59,16 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
   private JCheckBox localRepositoryOverrideCheckBox;
   private JComponent anchor;
 
-  private final PathOverrider userSettingsFileOverrider;
-  private final PathOverrider localRepositoryOverrider;
+  private PathOverrider userSettingsFileOverrider;
+  private PathOverrider localRepositoryOverrider;
 
   private boolean isUpdating = false;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private String myTargetName;
 
   public MavenEnvironmentForm() {
-    DocumentAdapter listener = new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull DocumentEvent e) {
-        UIUtil.invokeLaterIfNeeded(() -> {
-          if (isUpdating) return;
-          if (!panel.isShowing()) return;
 
-          myUpdateAlarm.cancelAllRequests();
-          myUpdateAlarm.addRequest(() -> {
-            isUpdating = true;
-            userSettingsFileOverrider.updateDefault();
-            localRepositoryOverrider.updateDefault();
-            isUpdating = false;
-          }, 100);
-        });
-      }
-    };
 
-    userSettingsFileOverrider =
-      new PathOverrider(settingsFileComponent, settingsOverrideCheckBox, listener, new PathProvider() {
-        @Override
-        @Nullable
-        protected File getFile() {
-          return MavenUtil.resolveUserSettingsFile("");
-        }
-      });
-
-    localRepositoryOverrider =
-      new PathOverrider(localRepositoryComponent, localRepositoryOverrideCheckBox, listener, new PathProvider() {
-        @Override
-        @Nullable
-        protected File getFile() {
-          return MavenUtil.resolveLocalRepository("",
-                                                  FileUtil.toSystemIndependentName(
-                                                    mavenHomeField.getText().trim()),
-                                                  settingsFileComponent.getComponent().getText());
-        }
-      });
-
-    mavenHomeField.addDocumentListener(listener);
-
-    setAnchor(mavenHomeComponent.getLabel());
   }
 
   private void createUIComponents() {
@@ -148,16 +109,74 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     data.setLocalRepository(localRepositoryOverrider.getResult());
   }
 
-  public void getData(MavenGeneralSettings data) {
-    final String resolvedMavenHome = resolveMavenHome(data.getMavenHome());
-    final String mavenHome = ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome());
-    String text = mavenHome != null ? FileUtil.toSystemIndependentName(mavenHome) : null;
-    if (MavenServerManager.BUNDLED_MAVEN_3.equals(mavenHome)) {
-      text = MavenProjectBundle.message("maven.bundled.version.title");
-    }
-    if (MavenServerManager.WRAPPED_MAVEN.equals(mavenHome)) {
-      text = MavenProjectBundle.message("maven.wrapper.version.title");
-    }
+  public void initializeFormData(MavenGeneralSettings data, Project project) {
+    DocumentAdapter listener = new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (isUpdating) return;
+          if (!panel.isShowing()) return;
+
+          myUpdateAlarm.cancelAllRequests();
+          myUpdateAlarm.addRequest(() -> {
+            isUpdating = true;
+            userSettingsFileOverrider.updateDefault();
+            localRepositoryOverrider.updateDefault();
+            isUpdating = false;
+          }, 100);
+        });
+      }
+    };
+
+    userSettingsFileOverrider =
+      new PathOverrider(settingsFileComponent, settingsOverrideCheckBox, listener, new PathProvider() {
+        @Override
+        @Nullable
+        protected File getFile() {
+          return MavenWslUtil.resolveWslAware(project,
+                                              () -> MavenUtil.resolveUserSettingsFile(""),
+                                              wsl -> MavenWslUtil.resolveUserSettingsFile(wsl, ""));
+        }
+      });
+
+    localRepositoryOverrider =
+      new PathOverrider(localRepositoryComponent, localRepositoryOverrideCheckBox, listener, new PathProvider() {
+        @Override
+        @Nullable
+        protected File getFile() {
+          return MavenWslUtil.resolveWslAware(project,
+                                              () -> MavenUtil.resolveLocalRepository("",
+                                                                                     FileUtil.toSystemIndependentName(
+                                                                                       mavenHomeField.getText().trim()),
+                                                                                     settingsFileComponent.getComponent().getText()),
+                                              wsl -> MavenWslUtil.resolveLocalRepository(wsl, "",
+                                                                                         FileUtil.toSystemIndependentName(
+                                                                                           mavenHomeField.getText().trim()),
+                                                                                         settingsFileComponent.getComponent().getText()));
+        }
+      });
+
+    mavenHomeField.addDocumentListener(listener);
+
+    setAnchor(mavenHomeComponent.getLabel());
+
+    String text = MavenWslUtil.resolveWslAware(project,
+                                               () -> {
+                                                 final String resolvedMavenHome = resolveMavenHome(data.getMavenHome());
+                                                 final String mavenHome = ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome());
+                                                 if (MavenServerManager.BUNDLED_MAVEN_3.equals(mavenHome)) {
+                                                   return MavenProjectBundle.message("maven.bundled.version.title");
+                                                 }
+                                                 if (MavenServerManager.WRAPPED_MAVEN.equals(mavenHome)) {
+                                                   return MavenProjectBundle.message("maven.wrapper.version.title");
+                                                 }
+                                                 return FileUtil.toSystemIndependentName(mavenHome);
+                                               },
+                                               wsl -> {
+                                                 File home = MavenWslUtil.resolveMavenHomeDirectory(wsl, data.getMavenHome());
+                                                 return home == null ? null : home.getAbsolutePath();
+                                               });
+
     mavenHomeField.setText(text);
     mavenHomeField.addCurrentTextToHistory();
     updateMavenVersionLabel();

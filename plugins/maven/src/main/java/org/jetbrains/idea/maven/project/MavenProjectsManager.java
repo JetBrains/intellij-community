@@ -1006,13 +1006,18 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                                      public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
                                                        try {
                                                          MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
+                                                         VirtualFile virtualFile = mavenProject.getFile();
+                                                         File projectFile = MavenWslUtil.resolveWslAware(myProject,
+                                                                                                         () -> new File(virtualFile.getPath()),
+                                                                                                         wsl -> MavenWslUtil.getWslFile(wsl,new File(virtualFile.getPath())));
                                                          String res =
                                                            embedder
-                                                             .evaluateEffectivePom(mavenProject.getFile(), profiles.getEnabledProfiles(),
+                                                             .evaluateEffectivePom(projectFile, profiles.getEnabledProfiles(),
                                                                                    profiles.getDisabledProfiles());
                                                          consumer.consume(res);
                                                        }
                                                        catch (UnsupportedOperationException e) {
+                                                         e.printStackTrace();
                                                          consumer.consume(null); // null means UnsupportedOperationException
                                                        }
                                                      }

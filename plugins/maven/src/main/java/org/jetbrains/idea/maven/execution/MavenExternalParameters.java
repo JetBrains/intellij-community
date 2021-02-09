@@ -88,7 +88,7 @@ public final class MavenExternalParameters {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (coreSettings == null) {
-      coreSettings = project == null ? new MavenGeneralSettings() : MavenProjectsManager.getInstance(project).getGeneralSettings();
+      coreSettings = project == null ? new MavenGeneralSettings(project) : MavenProjectsManager.getInstance(project).getGeneralSettings();
     }
     if (runnerSettings == null) {
       runnerSettings = project == null ? new MavenRunnerSettings() : MavenRunner.getInstance(project).getState();

@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -19,14 +21,18 @@ import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class MavenGeneralSettings implements Cloneable {
+  private transient Project myProject;
   private boolean workOffline = false;
   private String mavenHome = MavenServerManager.BUNDLED_MAVEN_3;
   private String mavenSettingsFile = "";
@@ -54,6 +60,17 @@ public class MavenGeneralSettings implements Cloneable {
   private int myBulkUpdateLevel = 0;
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  public MavenGeneralSettings() {
+  }
+
+  public MavenGeneralSettings(Project project) {
+    myProject = project;
+  }
+
+  public void setProject(Project project) {
+    myProject = project;
+  }
+
   public void beginUpdate() {
     myBulkUpdateLevel++;
   }
@@ -62,6 +79,12 @@ public class MavenGeneralSettings implements Cloneable {
     if (--myBulkUpdateLevel == 0) {
       changed();
     }
+  }
+
+
+  private <T> T resolveWslAware(Supplier<T> ordinary, Function<WSLDistribution, T> wsl) {
+    if (myProject == null) return ordinary.get();
+    return MavenWslUtil.resolveWslAware(myProject, ordinary, wsl);
   }
 
   public void changed() {
@@ -166,7 +189,11 @@ public class MavenGeneralSettings implements Cloneable {
   @Nullable
   public File getEffectiveMavenHome() {
     if (myEffectiveLocalHomeCache == null) {
-      myEffectiveLocalHomeCache = MavenUtil.resolveMavenHomeDirectory(getMavenHome());
+      myEffectiveLocalHomeCache =
+        resolveWslAware(
+          () -> MavenUtil.resolveMavenHomeDirectory(getMavenHome()),
+          wsl -> MavenWslUtil.resolveMavenHomeDirectory(wsl, getMavenHome())
+        );
     }
     return myEffectiveLocalHomeCache;
   }
@@ -187,12 +214,17 @@ public class MavenGeneralSettings implements Cloneable {
 
   @Nullable
   public File getEffectiveUserSettingsIoFile() {
-    return MavenUtil.resolveUserSettingsFile(getUserSettingsFile());
+    return resolveWslAware(
+      () -> MavenUtil.resolveUserSettingsFile(getUserSettingsFile()),
+      wsl -> MavenWslUtil.resolveUserSettingsFile(wsl, getUserSettingsFile())
+    );
   }
-
   @Nullable
   public File getEffectiveGlobalSettingsIoFile() {
-    return MavenUtil.resolveGlobalSettingsFile(getMavenHome());
+    return resolveWslAware(
+      () -> MavenUtil.resolveGlobalSettingsFile(getMavenHome()),
+      wsl -> MavenWslUtil.resolveGlobalSettingsFile(wsl, getMavenHome())
+    );
   }
 
   @Nullable
@@ -235,7 +267,12 @@ public class MavenGeneralSettings implements Cloneable {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result = MavenUtil.resolveLocalRepository(overriddenLocalRepository, mavenHome, mavenSettingsFile);
+    result = MavenWslUtil.resolveWslAware(myProject,
+                                          () -> MavenUtil.resolveLocalRepository(overriddenLocalRepository, mavenHome, mavenSettingsFile),
+                                          wsl -> MavenWslUtil.resolveLocalRepository(wsl,
+                                                                                     overriddenLocalRepository, mavenHome,
+                                                                                     mavenSettingsFile)
+    );
     myEffectiveLocalRepositoryCache = result;
     return result;
   }

@@ -9,6 +9,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
+
+import java.io.File;
 
 @State(name = "MavenImportPreferences", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
@@ -50,9 +53,16 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
     return mySettings;
   }
 
-  private static void applyDefaults(MavenWorkspaceSettings settings) {
+  private void applyDefaults(MavenWorkspaceSettings settings) {
+    settings.generalSettings.setProject(myProject);
     if (StringUtil.isEmptyOrSpaces(settings.generalSettings.getMavenHome())) {
-      settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+      String home = MavenWslUtil.resolveWslAware(myProject,
+                                              () -> MavenServerManager.BUNDLED_MAVEN_3,
+                                              wsl -> {
+                                                File file = MavenWslUtil.resolveMavenHomeDirectory(wsl, null);
+                                                return file == null ? null : file.getAbsolutePath();
+                                              });
+      settings.generalSettings.setMavenHome(home);
     }
   }
 

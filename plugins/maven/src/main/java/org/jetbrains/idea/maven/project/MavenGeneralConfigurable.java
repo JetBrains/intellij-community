@@ -60,7 +60,7 @@ public class MavenGeneralConfigurable extends MavenGeneralPanel implements Searc
 
   @Override
   public void reset() {
-    getData(getState());
+    initializeFormData(getState(), myProject);
   }
 
   @Override

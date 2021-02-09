@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
@@ -71,7 +72,7 @@ class MavenWslTargetConfigurer : MavenModuleConfigurer() {
                                       project: Project,
                                       wslDistribution: WSLDistribution): JavaLanguageRuntimeConfiguration? {
     val javaConfig = JavaLanguageRuntimeConfiguration()
-    val jdkPath = MavenWslUtil.getJdkPath(wslDistribution)
+    val jdkPath = getJdkPath(project, wslDistribution)
     if (jdkPath == null) {
       MavenProjectsManager.getInstance(project).syncConsole.addWarning(MavenProjectBundle.message("wsl.misconfigured.title"),
                                                                        MavenProjectBundle.message("wsl.does.not.have.configured.jdk",
@@ -84,6 +85,14 @@ class MavenWslTargetConfigurer : MavenModuleConfigurer() {
     }
 
     return javaConfig
+  }
+
+  private fun getJdkPath(project: Project, wslDistribution: WSLDistribution): String? {
+    val projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (projectSdk != null && MavenWslUtil.tryGetWslDistributionForPath(projectSdk.homePath) == wslDistribution) {
+      projectSdk.homePath?.let { wslDistribution.getWslPath(it) }?.let { return@getJdkPath it }
+    }
+    return MavenWslUtil.getJdkPath(wslDistribution)
   }
 
   private fun createWslTarget(project: Project, wslDistribution: WSLDistribution): WslTargetEnvironmentConfiguration {

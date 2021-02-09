@@ -360,7 +360,7 @@ public final class MavenServerManager implements Disposable {
                                              @Nullable String workingDirectory,
                                              @NotNull String multiModuleProjectDirectory) {
 
-    return new MavenEmbedderWrapper(null) {
+    return new MavenEmbedderWrapper(project, null) {
       @NotNull
       @Override
       protected MavenServerEmbedder create() throws RemoteException {
@@ -425,7 +425,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   public static MavenServerSettings convertSettings(Project project, MavenGeneralSettings settings) {
-    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project.getBasePath());
+    RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
