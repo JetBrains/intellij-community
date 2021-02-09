@@ -27,17 +27,17 @@ public interface IdeaPlugin extends DomElement {
   }
 
   @SubTag("product-descriptor")
-  @Nullable
+  @NotNull
   ProductDescriptor getProductDescriptor();
 
   @SubTag("content")
-  @Nullable
+  @NotNull
   @Stubbed
   @ApiStatus.Experimental
   ContentDescriptor getContent();
 
   @SubTag("dependencies")
-  @Nullable
+  @NotNull
   @Stubbed
   @ApiStatus.Experimental
   DependencyDescriptor getDependencies();
