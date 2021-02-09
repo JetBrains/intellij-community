@@ -19,10 +19,9 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author Roman Chernyatchik
@@ -55,17 +54,17 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, false);
     TestConsoleProperties.TRACK_RUNNING_TEST.set(myProperties, false);
 
-    myResultsForm = new SMTestRunnerResultsForm(new JLabel(),
-                                                myProperties) {
+    ConsoleView console = myProperties.createConsole();
+    myResultsForm = new SMTestRunnerResultsForm(console, myProperties, null) {
       @Override
       public void selectAndNotify(AbstractTestProxy testProxy) {
         super.selectAndNotify(testProxy);
         mySelectedTestProxy = testProxy;
       }
     };
+    Disposer.register(myResultsForm, console);
     Disposer.register(myResultsForm, myProperties);
     myResultsForm.initUI();
-
   }
 
   @Override

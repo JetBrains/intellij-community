@@ -18,11 +18,8 @@ import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsol
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -95,6 +92,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private final List<EventsListener> myEventListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final Project myProject;
+  private final ConsoleView myConsoleView;
 
   private int myTotalTestCount = 0;
   private int myStartedTestCount = 0;
@@ -114,21 +112,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
   private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
-  public SMTestRunnerResultsForm(@NotNull final JComponent console,
-                                 final TestConsoleProperties consoleProperties) {
-    this(console, AnAction.EMPTY_ARRAY, consoleProperties, null);
-  }
-
-  public SMTestRunnerResultsForm(@NotNull final JComponent console,
-                                 AnAction[] consoleActions,
-                                 final TestConsoleProperties consoleProperties,
+  public SMTestRunnerResultsForm(@NotNull ConsoleView consoleView,
+                                 @NotNull TestConsoleProperties consoleProperties,
                                  @Nullable String splitterPropertyName) {
-    super(console, consoleActions, consoleProperties,
+    super(consoleView.getComponent(), consoleView.createConsoleActions(), consoleProperties,
           StringUtil.notNullize(splitterPropertyName, DEFAULT_SM_RUNNER_SPLITTER_PROPERTY), 0.2f);
     myProject = consoleProperties.getProject();
+    myConsoleView = consoleView;
 
     //Create tests common suite root
-    myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName(), console);
+    myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName(), consoleView.getComponent());
     myTestsRootNode.setTestConsoleProperties(consoleProperties);
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
@@ -235,10 +228,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private void resetTreeAndConsoleOnSubsequentTestingStarted() {
     myTestsRootNode.testingRestarted();
-    ConsoleView consoleView = DataManager.getInstance().getDataContext(myConsole).getData(LangDataKeys.CONSOLE_VIEW);
-    if (consoleView != null) {
-      consoleView.clear();
-    }
+    myConsoleView.clear();
     ProcessHandler handler = myTestsRootNode.getHandler();
     if (handler instanceof BaseOSProcessHandler) {
       handler.notifyTextAvailable(((BaseOSProcessHandler)handler).getCommandLine() + "\n", ProcessOutputTypes.SYSTEM);
