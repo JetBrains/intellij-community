@@ -15,7 +15,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -327,7 +327,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     VirtualFile vFile = copy.getVirtualFile();
     if (vFile != null) {
-      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+      UndoUtil.disableUndoFor(vFile);
     }
     return copy;
   }

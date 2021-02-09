@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoConstants
+import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
@@ -280,7 +281,7 @@ abstract class LineStatusTrackerBase<R : Range>(
 
     fun createVcsDocument(originalDocument: Document): Document {
       val result = DocumentImpl(originalDocument.immutableCharSequence, true)
-      result.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
+      UndoUtil.disableUndoFor(result)
       result.putUserData(VCS_DOCUMENT_KEY, true)
       result.setReadOnly(true)
       return result

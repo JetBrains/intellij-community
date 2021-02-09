@@ -3,7 +3,7 @@ package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -142,7 +142,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       }
     });
     //record undo only in active edit mode and set to ignore by default
-    myTargetEditor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+    UndoUtil.disableUndoFor(myTargetEditor.getDocument());
   }
 
   private void updateComponents(@Nullable GitPushTarget target) {
@@ -419,8 +419,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myTargetEditor.addHierarchyListener(new HierarchyListener() {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-          myTargetEditor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, !myTargetEditor.isShowing());
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && !myTargetEditor.isShowing()) {
+          UndoUtil.disableUndoFor(myTargetEditor.getDocument());
         }
       }
     });

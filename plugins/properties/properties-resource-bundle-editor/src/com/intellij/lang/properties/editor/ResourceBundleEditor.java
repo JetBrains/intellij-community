@@ -27,8 +27,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
-import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -555,13 +555,8 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   private void updateDocumentFromPropertyValue(final String value,
                                                final Document document,
                                                final VirtualFile propertiesFile) {
-    @NonNls String text = value;
-    if (myBackSlashPressed.contains(propertiesFile)) {
-      text += "\\";
-    }
-    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    document.replaceString(0, document.getTextLength(), text);
-    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.FALSE);
+    @NonNls String text = myBackSlashPressed.contains(propertiesFile) ? value + "\\" : value;
+    UndoUtil.disableUndoIn(document, () -> document.replaceString(0, document.getTextLength(), text));
   }
 
   @NotNull

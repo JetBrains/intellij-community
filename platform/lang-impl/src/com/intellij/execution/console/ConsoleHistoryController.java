@@ -15,7 +15,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -265,13 +265,7 @@ public class ConsoleHistoryController implements Disposable {
       }
       else {
         offset = 0;
-        try {
-          document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-          document.setText(text);
-        }
-        finally {
-          document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
-        }
+        UndoUtil.disableUndoIn(document, () -> document.setText(text));
       }
       editor.getCaretModel().moveToOffset(offset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
