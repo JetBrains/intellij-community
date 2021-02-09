@@ -9,25 +9,54 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.cmdline.ClasspathBootstrap
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.jar.Attributes
 import java.util.jar.JarFile
 
 class BuildProcessClasspathManager(parentDisposable: Disposable) {
   @Volatile
   private var compileServerPluginsClasspath: List<String>? = null
 
+  private val lastClasspathLock = Any()
+  private var lastRawClasspath: List<String>? = null
+  private var lastFilteredClasspath: List<String>? = null
+
   init {
     CompileServerPlugin.EP_NAME.addChangeListener({ compileServerPluginsClasspath = null }, parentDisposable)
   }
 
+  fun getBuildProcessClasspath(project: Project): List<String> {
+    val rawClasspath = computeRawBuildProcessClasspath(project)
+    synchronized(lastClasspathLock) {
+      if (rawClasspath != lastRawClasspath) {
+        lastRawClasspath = rawClasspath
+        lastFilteredClasspath = filterOutOlderVersions(rawClasspath)
+      }
+      return lastFilteredClasspath!!
+    }
+  }
+
+  private fun computeRawBuildProcessClasspath(project: Project): List<String> {
+    return ClasspathBootstrap.getBuildProcessApplicationClasspath() + getBuildProcessPluginsClasspath(project)
+  }
+
+  /**
+   * For internal use only, use [getBuildProcessClasspath] to get full classpath instead.
+   */
+  @ApiStatus.Internal
   fun getBuildProcessPluginsClasspath(project: Project): List<String> {
     val dynamicClasspath = BuildProcessParametersProvider.EP_NAME.getExtensions(project).flatMapTo(ArrayList()) { it.classPath }
     return if (dynamicClasspath.isEmpty()) {
@@ -133,6 +162,34 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
       }
       return if (pluginHome.isDirectory) pluginHome else null
     }
+
+    private fun filterOutOlderVersions(classpath: List<String>): List<String> {
+      data class JarInfo(val path: String, val title: String, val version: String)
+
+      fun readTitleAndVersion(path: String): JarInfo? {
+        val file = File(path)
+        if (!file.isFile || !FileUtil.extensionEquals(file.name, "jar")) return null
+        JarFile(file).use {
+          val attributes = it.manifest?.mainAttributes ?: return null
+          val title = attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE) ?: return null
+          val version = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION) ?: return null
+          return JarInfo(path, title, version)
+        }
+      }
+
+      val jarInfos = classpath.mapNotNull(::readTitleAndVersion)
+      val titleToInfo = jarInfos.groupBy { it.title }
+      val pathToInfo = jarInfos.associateBy { it.path }
+      return classpath.filter { path ->
+        val pathInfo = pathToInfo[path] ?: return@filter true
+        val sameTitle = titleToInfo[pathInfo.title]
+        if (sameTitle == null || sameTitle.size <= 1) return@filter true
+        sameTitle.all { VersionComparatorUtil.compare(it.version, pathInfo.version) <= 0 }
+      }
+    }
+
+    @JvmStatic @TestOnly
+    fun filterOutOlderVersionsForTests(classpath: List<String>): List<String> = filterOutOlderVersions(classpath)
 
     @JvmStatic
     fun getLauncherClasspath(project: Project): List<String> {
