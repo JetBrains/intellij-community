@@ -232,7 +232,7 @@ public interface IdeaPlugin extends DomElement {
     @SubTagList("plugin")
     List<PluginDescriptor> getPlugin();
 
-    @SubTagList("module")
+    @SubTagList("plugin")
     PluginDescriptor addPlugin();
 
     @Presentation(icon = "AllIcons.Nodes.Module")
