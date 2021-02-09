@@ -2,13 +2,14 @@
 package com.intellij.internal.statistic.eventLog.connection.metadata
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatisticsFilterGroupByBuildTest.Companion.createEventGroupsFilterRules
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class StatisticsParseMetadataWithVersionTest {
 
   private fun doTest(content: String, expected: EventGroupsFilterRules<EventLogBuild>) {
-    val actual = EventGroupsFilterRules.create(content)
+    val actual = createEventGroupsFilterRules(content)
     assertEquals(expected.size, actual.size)
     assertEquals(expected, actual)
   }

@@ -10,10 +10,10 @@ import com.intellij.internal.statistic.eventLog.validator.rules.utils.Validation
 import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder
 
 /**
- * @param initialMetadataContent validation rules that will be used initially, they can be updated later (see [update]).
+ * @param initialMetadata validation rules that will be used initially, they can be updated later (see [update]).
  * @param excludedFields  list of event data fields to be excluded from validation.
  */
-class SimpleValidationRuleStorage<T : Comparable<T>?>(initialMetadataContent: String,
+class SimpleValidationRuleStorage<T : Comparable<T>?>(initialMetadata: EventGroupRemoteDescriptors,
                                                       private val buildParser: EventLogBuildParser<T>,
                                                       private val excludedFields: List<String> = emptyList(),
                                                       utilRulesProducer: UtilRuleProducer = ValidationSimpleRuleFactory.REJECTING_UTIL_URL_PRODUCER) : ValidationRuleStorage<T> {
@@ -23,11 +23,11 @@ class SimpleValidationRuleStorage<T : Comparable<T>?>(initialMetadataContent: St
   private val lock = Any()
 
   init {
-    updateEventGroupRules(initialMetadataContent)
+    updateEventGroupRules(initialMetadata)
   }
 
-  fun update(metadataContent: String) {
-    updateEventGroupRules(metadataContent)
+  fun update(metadata: EventGroupRemoteDescriptors) {
+    updateEventGroupRules(metadata)
   }
 
   override fun getGroupValidators(groupId: String): GroupValidators<T> {
@@ -36,10 +36,9 @@ class SimpleValidationRuleStorage<T : Comparable<T>?>(initialMetadataContent: St
     }
   }
 
-  private fun updateEventGroupRules(metadataContent: String?) {
+  private fun updateEventGroupRules(descriptors: EventGroupRemoteDescriptors) {
     synchronized(lock) {
       eventsValidators.clear()
-      val descriptors = EventGroupRemoteDescriptors.create(metadataContent)
       eventsValidators.putAll(createValidators(descriptors))
       filterRules = EventGroupsFilterRules.create(descriptors, buildParser)
     }

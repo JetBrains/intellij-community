@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException.EventLogMetadataLoadErrorType;
@@ -33,10 +35,32 @@ public final class EventLogMetadataUtils {
   public static EventGroupsFilterRules<EventLogBuild> loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     try {
       String content = loadMetadataFromServer(serviceUrl, settings);
-      return EventGroupsFilterRules.create(content);
+      EventGroupRemoteDescriptors groups = parseGroupRemoteDescriptors(content);
+      return EventGroupsFilterRules.create(groups, EventLogBuild.EVENT_LOG_BUILD_PRODUCER);
     }
     catch (EventLogMetadataParseException | EventLogMetadataLoadException e) {
       return EventGroupsFilterRules.empty();
+    }
+  }
+
+  @NotNull
+  public static EventGroupRemoteDescriptors parseGroupRemoteDescriptors(@Nullable String content) throws EventLogMetadataParseException {
+    if (isEmptyOrSpaces(content)) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.EMPTY_CONTENT);
+    }
+
+    try {
+      EventGroupRemoteDescriptors groups = new GsonBuilder().create().fromJson(content, EventGroupRemoteDescriptors.class);
+      if (groups != null) {
+        return groups;
+      }
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON);
+    }
+    catch (JsonSyntaxException e) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON, e);
+    }
+    catch (Exception e) {
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.UNKNOWN, e);
     }
   }
 

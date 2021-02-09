@@ -1,15 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.metadata
 
+import com.google.gson.Gson
 import com.intellij.internal.statistic.eventLog.EventLogBuild
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import org.junit.Assert
 import org.junit.Test
 
 class StatisticsFilterGroupByBuildTest {
 
   private fun doTestAccepted(content: String, build: String, vararg expected: String) {
-    val actual = EventGroupsFilterRules.create(content)
+    val actual = createEventGroupsFilterRules(content)
     for (e in expected) {
       Assert.assertTrue(actual.accepts(e, "4", build))
     }
@@ -20,7 +20,7 @@ class StatisticsFilterGroupByBuildTest {
   }
 
   private fun doTestRejectedWithVersion(content: String, build: String, version: String?, vararg expected: String) {
-    val actual = EventGroupsFilterRules.create(content)
+    val actual = createEventGroupsFilterRules(content)
     for (e in expected) {
       Assert.assertFalse(actual.accepts(e, version, build))
     }
@@ -1581,5 +1581,13 @@ class StatisticsFilterGroupByBuildTest {
 }
     """
     doTestRejected(content, "182.56", "test.group.id", "second.test.group.id")
+  }
+
+  companion object {
+    fun createEventGroupsFilterRules(content: String): EventGroupsFilterRules<EventLogBuild> {
+      val groups = Gson().fromJson(content, EventGroupRemoteDescriptors::class.java)
+      val actual = EventGroupsFilterRules.create(groups, EventLogBuild.EVENT_LOG_BUILD_PRODUCER)
+      return actual
+    }
   }
 }

@@ -78,12 +78,6 @@ public final class EventGroupsFilterRules<T extends Comparable<T>> {
   }
 
   @NotNull
-  public static EventGroupsFilterRules<EventLogBuild> create(@Nullable String metadataContent) throws EventLogMetadataParseException {
-    EventGroupRemoteDescriptors groups = EventGroupRemoteDescriptors.create(metadataContent);
-    return create(groups, EventLogBuild.EVENT_LOG_BUILD_PRODUCER);
-  }
-
-  @NotNull
   public static <P extends Comparable<P>> EventGroupsFilterRules<P> create(@NotNull EventGroupRemoteDescriptors groups,
                                                                            @NotNull EventLogBuildParser<P> buildProducer) {
     Map<String, EventGroupFilterRules<P>> groupToCondition = new HashMap<>();

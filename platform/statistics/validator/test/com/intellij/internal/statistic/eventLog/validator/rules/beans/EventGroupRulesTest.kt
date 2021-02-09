@@ -13,8 +13,7 @@ import kotlin.test.assertEquals
 class EventGroupRulesTest {
   @Test
   fun `test skip validation for system fields`() {
-    val metadata = getMetadataContent()
-    val descriptors: EventGroupRemoteDescriptors = EventGroupRemoteDescriptors.create(metadata)
+    val descriptors: EventGroupRemoteDescriptors = getMetadataContent()
     val globalRulesHolder = GlobalRulesHolder(descriptors.rules)
     val fieldToExclude = "system_event_id"
     val systemFieldValue = "123"
@@ -29,8 +28,7 @@ class EventGroupRulesTest {
 
   @Test
   fun `test skip validation for already validated field`() {
-    val metadata = getMetadataContent()
-    val descriptors: EventGroupRemoteDescriptors = EventGroupRemoteDescriptors.create(metadata)
+    val descriptors: EventGroupRemoteDescriptors = getMetadataContent()
     val globalRulesHolder = GlobalRulesHolder(descriptors.rules)
     val groupRules = EventGroupRules.create(descriptors.groups.first(),
                                             globalRulesHolder,
@@ -45,8 +43,7 @@ class EventGroupRulesTest {
 
   @Test
   fun `test skip validation for already validated field in list`() {
-    val metadata = getMetadataContent()
-    val descriptors: EventGroupRemoteDescriptors = EventGroupRemoteDescriptors.create(metadata)
+    val descriptors: EventGroupRemoteDescriptors = getMetadataContent()
     val globalRulesHolder = GlobalRulesHolder(descriptors.rules)
     val groupRules = EventGroupRules.create(descriptors.groups.first(),
                                             globalRulesHolder,
@@ -59,28 +56,16 @@ class EventGroupRulesTest {
     assertEquals(validatedEventData, fieldValue)
   }
 
-  private fun getMetadataContent(): String {
-    return """
-        {
-          "groups": [
-            {
-              "id": "actions",
-              "versions": [
-                {
-                  "from": "1"
-                }
-              ],
-              "rules": {
-                "event_id": [
-                  "{util#action}"
-                ],
-                "event_data": {
-                }
-              }
-            }
-          ]
-        }
-      """.trimIndent()
+  private fun getMetadataContent(): EventGroupRemoteDescriptors {
+    val descriptors = EventGroupRemoteDescriptors()
+    val element = EventGroupRemoteDescriptors.EventGroupRemoteDescriptor()
+    element.id = "actions"
+    element.versions?.add(EventGroupRemoteDescriptors.GroupVersionRange("1", null))
+    val rules = EventGroupRemoteDescriptors.GroupRemoteRule()
+    rules.event_id = hashSetOf("{util#action}")
+    element.rules = rules
+    descriptors.groups.add(element)
+    return descriptors
   }
 
 }
