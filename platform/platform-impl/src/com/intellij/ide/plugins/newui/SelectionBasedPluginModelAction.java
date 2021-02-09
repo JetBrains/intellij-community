@@ -89,7 +89,9 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
       boolean disabled = pluginIds.isEmpty() ||
                          !all(states, myAction::isApplicable) ||
-                         myAction.isDisable() && exists(pluginIds, myPluginModel::isRequiredPluginForProject) ||
+                         (myAction == PluginEnableDisableAction.DISABLE_GLOBALLY ||
+                          myAction == PluginEnableDisableAction.DISABLE_FOR_PROJECT) &&
+                         exists(pluginIds, myPluginModel::isRequiredPluginForProject) ||
                          myAction.isPerProject() && (e.getProject() == null ||
                                                      !isPerProjectEnabled() ||
                                                      exists(pluginIds, EnableDisableAction::isPluginExcluded) ||

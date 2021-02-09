@@ -23,9 +23,8 @@ class ProjectDependentPluginEnabledState(
         _projectNames = if (isEnabled)
           ""
         else
-          ProjectPluginTrackerManager
-            .instance
-            .openProjectsPluginTrackers(project)
+          ProjectPluginTrackerManager.openProjectsExcludingCurrent(project)
+            .map { ProjectPluginTrackerManager.instance.getPluginTracker(it) }
             .filter { !PluginManagerCore.isDisabled(pluginId) || it.isEnabled(pluginId) }
             .joinToString(limit = 3) { "<code>${it.projectName}</code>" }
       }
