@@ -82,7 +82,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt LEFT",           "Diff.ApplyRightSide", "PreviousEditorTab"},
     { "shift alt RIGHT",          "Diff.ApplyLeftSide", "NextEditorTab"},
     { "shift alt A",              "NotebookInsertCellAboveAction", "VcsHistory.ShowAllAffected"},
-    { "shift alt B",              "NotebookInsertCellBelowAction", "tasks.open.in.browser"},
+    { "shift alt B",              "NotebookInsertCellBelowAction", "tasks.open.in.browser", "sql.SelectInDatabaseView"},
     { "shift alt G",              "EditorAddCaretPerSelectedLine", "hg4idea.QGotoFromPatches"},
     { "shift alt M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
     { "shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction"},
