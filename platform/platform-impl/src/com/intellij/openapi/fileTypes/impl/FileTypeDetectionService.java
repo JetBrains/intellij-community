@@ -9,13 +9,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
@@ -24,7 +31,10 @@ import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.*;
+import com.intellij.util.BitUtil;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
@@ -197,7 +207,7 @@ final class FileTypeDetectionService implements Disposable {
     // while vfs events are processing do not access cache, it can be in invalid state;
     if (myRestrictCachedDetectedFileTypeAccess) {
       try {
-        return detectFromContent(file, readFirstBytes(file, content));
+        return detectFromContent(file, getFirstBytes(file, content));
       }
       catch (IOException e) {
         return UnknownFileType.INSTANCE;
@@ -499,7 +509,7 @@ final class FileTypeDetectionService implements Disposable {
   @NotNull
   private FileType detectFromContentAndCache(@NotNull final VirtualFile file, byte @Nullable [] content) throws IOException {
     long start = System.currentTimeMillis();
-    ByteArraySequence bytes = readFirstBytes(file, content);
+    ByteArraySequence bytes = getFirstBytes(file, content);
     if (bytes.length() == 0) {
       // do not cache the type for empty file because it can change as soon as something got written into it
       return UnknownFileType.INSTANCE;
@@ -552,24 +562,50 @@ final class FileTypeDetectionService implements Disposable {
     return fileType;
   }
 
+  private final DiskQueryRelay<Pair<VirtualFile, Integer>, ByteArraySequence> myReadFirstBytesFromFileRelay = new DiskQueryRelay<>(pair -> {
+    VirtualFile file = pair.getFirst();
+    Integer bufferLength = pair.getSecond();
+    try {
+      return readFirstBytesFromFile(file, bufferLength);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  });
+
   @NotNull
-  private ByteArraySequence readFirstBytes(@NotNull VirtualFile file, byte @Nullable [] content) throws IOException {
-    int n;
+  private ByteArraySequence readFirstBytesFromFile(VirtualFile file, Integer bufferLength) throws IOException {
+    try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
+      if (toLog()) {
+        log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
+      }
+      int fileLength = (int)Math.min(file.getLength(), Integer.MAX_VALUE);
+      byte[] content = new byte[Math.min(fileLength, bufferLength)];
+      int n = readSafely(inputStream, content, content.length);
+      return n > 0 ? new ByteArraySequence(content, 0, n) : ByteArraySequence.EMPTY;
+    }
+  }
+
+  @NotNull
+  private ByteArraySequence getFirstBytes(@NotNull VirtualFile file, byte @Nullable [] content) throws IOException {
     if (content == null) {
-      try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
-        if (toLog()) {
-          log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
+      int bufferLength = getDetectFileBufferSize(file);
+      try {
+        return ProgressManager.getInstance().isInNonCancelableSection()
+               ? readFirstBytesFromFile(file, bufferLength)
+               : myReadFirstBytesFromFileRelay.accessDiskWithCheckCanceled(Pair.create(file, bufferLength));
+      }
+      catch (RuntimeException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof IOException) {
+          throw (IOException)cause;
         }
-        int fileLength = (int)Math.min(file.getLength(), Integer.MAX_VALUE);
-        int bufferLength = getDetectFileBufferSize(file);
-        content = new byte[Math.min(fileLength, bufferLength)];
-        n = readSafely(inputStream, content, content.length);
+        throw e;
       }
     }
     else {
-      n = content.length;
+      return content.length != 0 ? new ByteArraySequence(content) : ByteArraySequence.EMPTY;
     }
-    return n > 0 ? new ByteArraySequence(content, 0, n) : ByteArraySequence.EMPTY;
   }
 
   private @NotNull FileType detect(@NotNull VirtualFile file,
