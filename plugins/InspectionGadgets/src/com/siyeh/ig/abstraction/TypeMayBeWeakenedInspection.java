@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -223,8 +222,8 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   @Override
   @NotNull
   public JComponent createOptionsPanel() {
-    VerticalBox verticalBox = new VerticalBox();
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option"),
                              "useRighthandTypeAsWeakestTypeInAssignments");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.collection.method.option"),
@@ -237,14 +236,14 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
                              "doNotWeakenReturnType");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type"),
                              "doNotWeakenInferredVariableType");
-    verticalBox.add(optionsPanel);
-    final ListTable stopClassesTable = new ListTable(myStopClassesModel);
 
+    final ListTable stopClassesTable = new ListTable(myStopClassesModel);
     final JPanel stopClassesPanel =
       UiUtils.createAddRemoveTreeClassChooserPanel(stopClassesTable, InspectionGadgetsBundle
         .message("inspection.type.may.be.weakened.add.stop.class.selection.table"), CommonClassNames.JAVA_LANG_OBJECT);
-    verticalBox.add(stopClassesPanel);
-    return ScrollPaneFactory.createScrollPane(verticalBox, true);
+    optionsPanel.add(stopClassesPanel, "growx");
+
+    return ScrollPaneFactory.createScrollPane(optionsPanel, true);
   }
 
   private static class TypeMayBeWeakenedFix implements LocalQuickFix {

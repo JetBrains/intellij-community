@@ -2,11 +2,10 @@
 package org.jetbrains.plugins.groovy.codeInspection.style.string
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.SeparatorFactory
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.layout.*
+import com.intellij.util.ui.CheckBox
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
@@ -16,7 +15,6 @@ import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleVio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
-import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.*
@@ -115,18 +113,14 @@ class GrStringStyleViolationInspection : BaseInspection() {
   }
 
   override fun createOptionsPanel(): JComponent {
-    val compressingPanel = JPanel(BorderLayout())
-    val containerPanel = JPanel().apply {
-      border = JBUI.Borders.empty()
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      add(SeparatorFactory.createSeparator(GroovyBundle.message("separator.preferable.string.kind"), null))
-      add(generateComboBoxes(), BorderLayout.NORTH)
-      add(SeparatorFactory.createSeparator(GroovyBundle.message("separator.domain.of.inspection.usage"), null))
-      add(SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.inspect.gradle.files"), this@GrStringStyleViolationInspection,
-                                     "inspectGradle"))
+    return panel {
+      titledRow(GroovyBundle.message("separator.preferable.string.kind")) {
+        row { generateComboBoxes()() }
+      }
+      titledRow(GroovyBundle.message("separator.domain.of.inspection.usage")) {
+        row { CheckBox(GroovyBundle.message("checkbox.inspect.gradle.files"), this, "inspectGradle")() }
+      }
     }
-    compressingPanel.add(containerPanel, BorderLayout.NORTH)
-    return compressingPanel
   }
 
   private enum class StringUsageKind {
