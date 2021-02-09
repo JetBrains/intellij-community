@@ -300,7 +300,7 @@ final class ProgressDialog implements Disposable {
     @Override
     public void doCancelAction() {
       if (myIsCancellable) {
-        super.doCancelAction();
+        ProgressDialog.this.doCancelAction();
       }
     }
 
