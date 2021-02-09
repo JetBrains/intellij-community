@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.PathManager;
@@ -458,30 +458,32 @@ public final class PluginDescriptorLoader {
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR,
                                                                                   DisabledPluginsState.disabledPlugins(),
                                                                                   PluginManagerCore.createLoadingResult(buildNumber));
+    Path outputDir = null;
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);
       if (descriptor != null || !file.toString().endsWith(".zip")) {
         return descriptor;
       }
 
-      Path outputDir = Files.createTempDirectory("plugin");
-      try {
-        new Decompressor.Zip(file).extract(outputDir);
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(outputDir)) {
-          Iterator<Path> iterator = stream.iterator();
-          if (iterator.hasNext()) {
-            descriptor = loadDescriptorFromFileOrDir(iterator.next(), PluginManagerCore.PLUGIN_XML, context, true);
-          }
-        }
-        catch (NoSuchFileException ignore) {
+      outputDir = Files.createTempDirectory("plugin");
+      new Decompressor.Zip(file).extract(outputDir);
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(outputDir)) {
+        Iterator<Path> iterator = stream.iterator();
+        if (iterator.hasNext()) {
+          descriptor = loadDescriptorFromFileOrDir(iterator.next(), PluginManagerCore.PLUGIN_XML, context, true);
         }
       }
-      finally {
-        FileUtil.delete(outputDir);
+      catch (NoSuchFileException ignore) {
       }
       return descriptor;
     }
+    finally {
+      if (outputDir != null) {
+        FileUtil.delete(outputDir);
+      }
+    }
   }
+
 
   public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     return isFull(descriptor) ?
