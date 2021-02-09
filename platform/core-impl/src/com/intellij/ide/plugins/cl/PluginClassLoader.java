@@ -560,8 +560,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       try {
         logStream.flush();
       }
-      catch (IOException ignore) {
-      }
+      catch (IOException ignore) { }
     }
   }
 }
