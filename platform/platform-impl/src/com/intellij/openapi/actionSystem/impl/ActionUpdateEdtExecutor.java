@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,7 +38,7 @@ public final class ActionUpdateEdtExecutor {
       finally {
         semaphore.up();
       }
-    });
+    }, ModalityState.any());
 
     ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
 
