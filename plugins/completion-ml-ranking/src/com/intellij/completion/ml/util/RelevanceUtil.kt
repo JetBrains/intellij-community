@@ -21,11 +21,15 @@ object RelevanceUtil {
         "kotlin.proximity" -> relevanceMap.addCompoundValues("kt_prox", value.toString())
         "kotlin.callableWeight" -> relevanceMap.addDataClassValues("kotlin.callableWeight", value.toString())
         "ml_weigh" -> additionalMap.addCompoundValues("ml", value.toString())
-        else -> relevanceMap[name] = value
+        else -> if (acceptValue(value)) relevanceMap[name] = value
       }
     }
 
     return kotlin.Pair(relevanceMap, additionalMap)
+  }
+
+  private fun acceptValue(value: Any): Boolean {
+    return value !is String
   }
 
   private fun String.normalized(): String {
