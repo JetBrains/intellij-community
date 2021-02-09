@@ -61,11 +61,25 @@ internal object SpaceReviewChangesTreeFactory {
           when (it) {
             is LoadingValue.Loaded -> {
               loadingPane.stopLoading()
-              it.value.forEach { (repo, changesWithDiscussion) ->
-                val spaceRepoInfo = changesWithDiscussion.spaceRepoInfo
-                val repoNode = SpaceRepositoryNode(repo, spaceRepoInfo != null)
+
+              val commits = changesVm.allCommits.value
+              val repositories = it.value.toList()
+              val singleRepoChanges = repositories.singleOrNull()
+              if (singleRepoChanges != null) {
+                // don't show repo node for single repo review
+                val changesWithDiscussion = singleRepoChanges.second
                 val changes = changesWithDiscussion.changesInReview
-                addChanges(builder, repoNode, changes, spaceRepoInfo, changesVm.allCommits.value)
+                val spaceRepoInfo = changesWithDiscussion.spaceRepoInfo
+                addChanges(builder, builder.myRoot, changes, spaceRepoInfo, commits)
+              }
+              else {
+                repositories.forEach { (repo, changesWithDiscussion) ->
+                  val spaceRepoInfo = changesWithDiscussion.spaceRepoInfo
+                  val repoNode = SpaceRepositoryNode(repo, spaceRepoInfo != null)
+                  val changes = changesWithDiscussion.changesInReview
+                  builder.insertSubtreeRoot(repoNode)
+                  addChanges(builder, repoNode, changes, spaceRepoInfo, commits)
+                }
               }
 
               addTreeSelectionListener(listener)
@@ -120,12 +134,10 @@ internal object SpaceReviewChangesTreeFactory {
   }
 
   private fun addChanges(builder: TreeModelBuilder,
-                         repositoryNode: ChangesBrowserNode<*>,
+                         subtreeRoot: ChangesBrowserNode<*>,
                          changesInReview: List<ChangeInReview>,
                          spaceRepoInfo: SpaceRepoInfo?,
                          commits: List<SpaceReviewCommitListItem>) {
-    builder.insertSubtreeRoot(repositoryNode)
-
     val hashes = commits.filterNot { it.commitWithGraph.unreachable }
       .map { it.commitWithGraph.commit.id }
       .toSet()
@@ -134,7 +146,7 @@ internal object SpaceReviewChangesTreeFactory {
       val spaceChange = SpaceReviewChange(changeInReview, spaceRepoInfo, !hashes.contains(changeInReview.change.revision))
       builder.insertChangeNode(
         spaceChange.filePath,
-        repositoryNode,
+        subtreeRoot,
         SpaceReviewChangeNode(spaceChange)
       )
     }
