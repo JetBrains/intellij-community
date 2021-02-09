@@ -2,7 +2,10 @@ package de.plushnikov.intellij.plugin.processor.modifier;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexej Kubarev
@@ -15,9 +18,8 @@ public class ValueModifierTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass("package lombok;\npublic @interface Value { }");
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return LombokTestUtil.LOMBOK_DESCRIPTOR;
   }
 
   public void testValueModifiers() {
