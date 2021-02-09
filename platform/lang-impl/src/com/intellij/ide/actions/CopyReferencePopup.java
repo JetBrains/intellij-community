@@ -28,7 +28,7 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
 import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 
-public class CopyReferencePopup extends NonTrivialActionGroup {
+public class CopyReferencePopup extends NonTrivialActionGroup implements AlwaysPerformingActionGroup {
   private static final Logger LOG = Logger.getInstance(CopyReferencePopup.class);
   private static final int DEFAULT_WIDTH = JBUIScale.scale(500);
 
