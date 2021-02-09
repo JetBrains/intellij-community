@@ -675,6 +675,18 @@ public class LongRangeSetTest {
     checkMul(point(6), range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), false, "{Integer.MIN_VALUE..Integer.MAX_VALUE-1}: even");
     checkMul(point(3), range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), true, "{6442450911..6442450941}: divisible by 3");
     checkMul(point(6), range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), true, "{12884901822..12884901882}: divisible by 6");
+
+    LongRangeSet mul720 = all().mul(point(5), true).mul(point(8), true)
+      .mul(point(3), true).mul(point(6), true);
+    assertEquals("{Long.MIN_VALUE..9223372036854775792}: divisible by 16", mul720.toString());
+    LongRangeSet mul15 = range(0, 10).mul(point(3), true).mul(point(5), true);
+    assertEquals("{0..150}: divisible by 15", mul15.toString());
+    assertEquals("{0..1200}", mul15.mul(point(8), true).toString());
+
+    assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE-1}: even", point(2).unite(point(10)).unite(point(100)).mul(all(), true).toString());
+    LongRangeSet even = modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 1L);
+    assertEquals("{Integer.MIN_VALUE..2147483640}: divisible by 8", point(4).unite(point(100)).unite(point(1000)).mul(
+      even, false).toString());
   }
 
   @Test
