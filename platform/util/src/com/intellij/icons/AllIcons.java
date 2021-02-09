@@ -938,6 +938,7 @@ public class AllIcons {
   public static final class Providers {
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", -5934225321775094516L, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("providers/apacheDerby.svg", -7079921244068107461L, 2);
+    /** 16x16 */ public static final @NotNull Icon ApachePhoenix = load("providers/apachePhoenix.svg", 287384834647316938L, 0);
     /** 16x16 */ public static final @NotNull Icon Athena = load("providers/athena.svg", -3010672165063217069L, 0);
     /** 16x16 */ public static final @NotNull Icon Azure = load("providers/azure.svg", -4108322146501572749L, 0);
     /** 16x16 */ public static final @NotNull Icon BigQuery = load("providers/bigQuery.svg", -1485203038192915431L, 0);
@@ -970,12 +971,14 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Postgresql = load("providers/postgresql.svg", 8942378240461502503L, 2);
     /** 16x16 */ public static final @NotNull Icon Presto = load("providers/presto.svg", 4677484317865724648L, 2);
     /** 16x16 */ public static final @NotNull Icon Redshift = load("providers/redshift.svg", -8161636076303129150L, 0);
+    /** 16x16 */ public static final @NotNull Icon Singlestore = load("providers/singlestore.svg", -4763079360495849532L, 0);
     /** 16x16 */ public static final @NotNull Icon Snowflake = load("providers/snowflake.svg", -511196148296774621L, 0);
     /** 16x16 */ public static final @NotNull Icon Spark = load("providers/spark.svg", 529641334744352380L, 0);
     /** 16x16 */ public static final @NotNull Icon Sqlite = load("providers/sqlite.svg", -1354077436800259360L, 2);
     /** 16x16 */ public static final @NotNull Icon SqlServer = load("providers/sqlServer.svg", 2557052360809110194L, 2);
     /** 16x16 */ public static final @NotNull Icon Sun = load("providers/sun.svg", 901999003933198963L, 2);
     /** 16x16 */ public static final @NotNull Icon Sybase = load("providers/sybase.svg", 469976759404647468L, 0);
+    /** 16x16 */ public static final @NotNull Icon Tarantool = load("providers/tarantool.svg", 2749575921763625124L, 0);
     /** 16x16 */ public static final @NotNull Icon Teradata = load("providers/teradata.svg", -1965526284412460845L, 0);
     /** 16x16 */ public static final @NotNull Icon Tibero = load("providers/tibero.svg", 3743642978823178398L, 2);
     /** 16x16 */ public static final @NotNull Icon Trino = load("providers/trino.svg", 6102370661544681716L, 2);
