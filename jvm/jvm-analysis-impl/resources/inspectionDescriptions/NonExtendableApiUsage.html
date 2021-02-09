@@ -1,10 +1,8 @@
 <html>
 <body>
-<p>
-  Reports classes, interfaces and methods that extend, implement or override API elements marked with <code>@ApiStatus.NonExtendable</code>
-  annotation.
-</p>
-<code>@ApiStatus.NonExtendable</code> annotation indicates that the annotated API class, interface or method <strong>must not be extended,
+Reports classes, interfaces and methods that extend, implement or override API elements marked with an <code>@ApiStatus.NonExtendable</code>
+annotation.
+An <code>@ApiStatus.NonExtendable</code> annotation indicates that the annotated API class, interface or method <strong>must not be extended,
   implemented or overridden</strong>. Instances of classes and interfaces marked with this annotation may be cast to an internal
 implementing class in the library code,
 leading to <code>ClassCastException</code> if a different implementation is provided by client. New abstract methods may be added to such
