@@ -11,9 +11,11 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import kotlin.concurrent.thread
 
 @DslMarker
 private annotation class FragmentsDsl
@@ -78,23 +80,25 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
       override fun applyEditorTo(s: Settings) {
         super.applyEditorTo(s)
 
-        if (validator != null) {
-          val validationInfo = (validation!!)(s, this.component())
+        thread {
+          if (validator != null) {
+            val validationInfo = (validation!!)(s, this.component())
 
-          if (validationInfo != null) {
-            validationInfo.component?.let {
-              if (ComponentValidator.getInstance(it).isEmpty) {
-                when (it) {
-                  is ComponentWithBrowseButton<*> -> validator.withOutlineProvider(ComponentValidator.CWBB_PROVIDER)
-                  is TagButton -> validator.withOutlineProvider(TagButton.COMPONENT_VALIDATOR_TAG_PROVIDER)
+            if (validationInfo != null) {
+              validationInfo.component?.let {
+                if (ComponentValidator.getInstance(it).isEmpty) {
+                  when (it) {
+                    is ComponentWithBrowseButton<*> -> validator.withOutlineProvider(ComponentValidator.CWBB_PROVIDER)
+                    is TagButton -> validator.withOutlineProvider(TagButton.COMPONENT_VALIDATOR_TAG_PROVIDER)
+                  }
+
+                  validator.installOn(it)
                 }
-
-                validator.installOn(it)
               }
             }
-          }
 
-          validator.updateInfo(validationInfo)
+            UIUtil.invokeLaterIfNeeded { validator.updateInfo(validationInfo) }
+          }
         }
       }
 
