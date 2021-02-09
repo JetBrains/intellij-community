@@ -31,7 +31,7 @@ class BuilderSnapshot(val version: Long, private val storage: WorkspaceEntitySto
     return builder.addEntity(clazz, source, initializer)
   }
 
-  override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
+  override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     return builder.modifyEntity(clazz, e, change)
   }
 

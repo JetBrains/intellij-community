@@ -46,6 +46,11 @@ internal interface EntityManipulation {
       OoParentManipulation,
       OoChildManipulation,
 
+      // Entities with abstractions
+      MiddleEntityManipulation,
+      AbstractEntities.Left,
+      AbstractEntities.Right,
+
       // Do not enable at the moment. A lot of issues about entities with persistentId
       //NamedEntityManipulation
     )
@@ -138,7 +143,9 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
 private object NamedEntityManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "NamedEntity") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return try {
           storage.addNamedEntity(someProperty, source = source) to "Set property for NamedEntity: $someProperty"
         }
@@ -165,7 +172,9 @@ private object NamedEntityManipulation : EntityManipulation {
 private object ChildWithOptionalParentManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "ChildWithOptionalDependency") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val classId = ParentEntity::class.java.toClassId()
         val parentId = env.generateValue(Generator.anyOf(
           Generator.constant(null),
@@ -238,10 +247,97 @@ private object OoChildManipulation : EntityManipulation {
   }
 }
 
+private object MiddleEntityManipulation : EntityManipulation {
+  override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
+    return object : AddEntity(storage, "MiddleEntity") {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        return storage.addMiddleEntity(someProperty, source) to "Property: $someProperty"
+      }
+    }
+  }
+
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+    return object : ModifyEntity<MiddleEntity, ModifiableMiddleEntity>(MiddleEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableMiddleEntity.() -> Unit> {
+        return listOf(modifyStringProperty(ModifiableMiddleEntity::property, env))
+      }
+    }
+  }
+}
+
+private object AbstractEntities {
+  object Left : EntityManipulation {
+    override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
+      return object : AddEntity(storage, "LeftEntity") {
+        override fun makeEntity(source: EntitySource,
+                                someProperty: String,
+                                env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+          val children = selectChildren(env, storage).asSequence()
+          return storage.addLeftEntity(children, source) to ""
+        }
+      }
+    }
+
+    override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+      return object : ModifyEntity<LeftEntity, ModifiableLeftEntity>(LeftEntity::class, storage) {
+        override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableLeftEntity.() -> Unit> {
+          return listOf(
+            swapElementsInSequence(ModifiableLeftEntity::children, env),
+            removeInSequence(ModifiableLeftEntity::children, env)
+          )
+        }
+      }
+    }
+  }
+
+  object Right : EntityManipulation {
+    override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
+      return object : AddEntity(storage, "RightEntity") {
+        override fun makeEntity(source: EntitySource,
+                                someProperty: String,
+                                env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+          val children = selectChildren(env, storage).asSequence()
+          return storage.addRightEntity(children, source) to ""
+        }
+      }
+    }
+
+    override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+      return object : ModifyEntity<RightEntity, ModifiableRightEntity>(RightEntity::class, storage) {
+        override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableRightEntity.() -> Unit> {
+          return listOf(
+            swapElementsInSequence(ModifiableRightEntity::children, env),
+            removeInSequence(ModifiableRightEntity::children, env)
+          )
+        }
+      }
+    }
+  }
+
+  private fun selectChildren(env: ImperativeCommand.Environment, storage: WorkspaceEntityStorageBuilderImpl): Set<BaseEntity> {
+    val children = env.generateValue(Generator.integers(0, 3), null)
+    val newChildren = mutableSetOf<BaseEntity>()
+    repeat(children) {
+      val possibleEntities = (storage.entities(LeftEntity::class.java) +
+                              storage.entities(RightEntity::class.java) +
+                              storage.entities(MiddleEntity::class.java)).toList()
+      if (possibleEntities.isNotEmpty()) {
+        val newEntity = env.generateValue(Generator.sampledFrom(possibleEntities), null)
+        newChildren += newEntity
+      }
+    }
+    return newChildren
+  }
+}
+
 private object ChildEntityManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "Child") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parent = selectParent(storage, env) ?: return null to "Cannot select parent"
         return storage.addChildEntity(parent, someProperty, null, source) to "Selected parent: $parent"
       }
@@ -269,7 +365,9 @@ private object ChildEntityManipulation : EntityManipulation {
 private object ParentEntityManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "Parent") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return storage.addParentEntity(someProperty, source) to "parentProperty: $someProperty"
       }
     }
@@ -291,7 +389,9 @@ private object ParentEntityManipulation : EntityManipulation {
 private object SampleEntityManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "Sample") {
-      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return storage.addSampleEntity(someProperty, source) to "property: $someProperty"
       }
     }

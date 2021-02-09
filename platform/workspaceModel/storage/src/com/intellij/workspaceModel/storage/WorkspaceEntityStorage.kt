@@ -161,7 +161,7 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
                                                                                  source: EntitySource,
                                                                                  initializer: M.() -> Unit): T
 
-  override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
+  override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
   override fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
   override fun removeEntity(e: WorkspaceEntity)
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage)
@@ -200,7 +200,7 @@ interface WorkspaceEntityStorageDiffBuilder {
   fun isEmpty(): Boolean
 
   fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>, source: EntitySource, initializer: M.() -> Unit): T
-  fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
+  fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
   fun removeEntity(e: WorkspaceEntity)
   fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
 
