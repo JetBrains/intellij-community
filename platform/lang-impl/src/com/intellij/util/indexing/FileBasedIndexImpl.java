@@ -904,8 +904,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         RebuildStatus.clearIndexIfNecessary(indexId, getIndex(indexId)::clear);
       }
       catch (StorageException e) {
-        requestRebuild(indexId);
         LOG.error(e);
+        requestRebuild(indexId);
       }
     }
   }
