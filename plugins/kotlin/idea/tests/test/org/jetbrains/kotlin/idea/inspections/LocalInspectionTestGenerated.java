@@ -1697,6 +1697,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("filterAny.kt")
+            public void testFilterAny() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterAny.kt");
+            }
+
+            @TestMetadata("filterCount.kt")
+            public void testFilterCount() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterCount.kt");
+            }
+
             @TestMetadata("filterFirst.kt")
             public void testFilterFirst() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterFirst.kt");
@@ -1732,9 +1742,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterLastExplicit.kt");
             }
 
+            @TestMetadata("filterNone.kt")
+            public void testFilterNone() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterNone.kt");
+            }
+
+            @TestMetadata("filterTextAny.kt")
+            public void testFilterTextAny() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextAny.kt");
+            }
+
+            @TestMetadata("filterTextCount.kt")
+            public void testFilterTextCount() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextCount.kt");
+            }
+
             @TestMetadata("filterTextIsEmpty.kt")
             public void testFilterTextIsEmpty() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextIsEmpty.kt");
+            }
+
+            @TestMetadata("filterTextNone.kt")
+            public void testFilterTextNone() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextNone.kt");
             }
 
             @TestMetadata("filterTextSingleOrNull.kt")

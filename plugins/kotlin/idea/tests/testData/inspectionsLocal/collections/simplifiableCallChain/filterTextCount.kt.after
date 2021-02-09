@@ -1,0 +1,4 @@
+// WITH_RUNTIME
+fun main() {
+    "abc".count { it == 'a' }
+}
