@@ -12,6 +12,9 @@ public interface ShFunctionDefinition extends ShCommand, PsiNameIdentifierOwner 
   ShBlock getBlock();
 
   @Nullable
+  ShParenthesesBlock getParenthesesBlock();
+
+  @Nullable
   PsiElement getLeftParen();
 
   @Nullable

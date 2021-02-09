@@ -69,6 +69,7 @@ public interface ShTypes {
   IElementType MUL_EXPRESSION = new ShCompositeElementType("MUL_EXPRESSION");
   IElementType NUMBER = new ShCompositeElementType("NUMBER");
   IElementType OLD_ARITHMETIC_EXPANSION = new ShCompositeElementType("OLD_ARITHMETIC_EXPANSION");
+  IElementType PARENTHESES_BLOCK = new ShCompositeElementType("PARENTHESES_BLOCK");
   IElementType PARENTHESES_CONDITION = new ShCompositeElementType("PARENTHESES_CONDITION");
   IElementType PARENTHESES_EXPRESSION = new ShCompositeElementType("PARENTHESES_EXPRESSION");
   IElementType PATTERN = new ShCompositeElementType("PATTERN");
@@ -365,6 +366,9 @@ public interface ShTypes {
       }
       else if (type == OLD_ARITHMETIC_EXPANSION) {
         return new ShOldArithmeticExpansionImpl(node);
+      }
+      else if (type == PARENTHESES_BLOCK) {
+        return new ShParenthesesBlockImpl(node);
       }
       else if (type == PARENTHESES_CONDITION) {
         return new ShParenthesesConditionImpl(node);

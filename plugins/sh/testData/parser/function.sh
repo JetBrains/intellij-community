@@ -20,3 +20,8 @@ function wait_file {
 
 varr(     ) { ''
 } | echo 1 # what a wonderful language
+
+# Fix for IDEA-261684
+function func_parentheses() (
+  echo "foo bar"
+)

@@ -34,6 +34,12 @@ public class ShFunctionDefinitionImpl extends ShFunctionDefinitionMixin implemen
 
   @Override
   @Nullable
+  public ShParenthesesBlock getParenthesesBlock() {
+    return findChildByClass(ShParenthesesBlock.class);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getLeftParen() {
     return findChildByType(LEFT_PAREN);
   }
