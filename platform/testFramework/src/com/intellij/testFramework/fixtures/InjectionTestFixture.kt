@@ -1,13 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures
 
+import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import junit.framework.TestCase
 import java.util.*
@@ -58,6 +62,19 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
       foundInjections.remove(found)
     }
 
+  }
+
+  fun openInFragmentEditor(): EditorTestFixture {
+    val project = javaFixture.project
+    val quickEditHandler = QuickEditAction().invokeImpl(project, topLevelEditor, topLevelFile)
+    val injectedFile = quickEditHandler.newFile
+    val documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedElement?.containingFile!!)
+    val offset = topLevelEditor.caretModel.offset
+    val unEscapedOffset = InjectedLanguageUtil.hostToInjectedUnescaped(documentWindow, offset)
+    val fragmentEditor = FileEditorManagerEx.getInstanceEx(project).openTextEditor(
+      OpenFileDescriptor(project, injectedFile.virtualFile, unEscapedOffset), true
+    )
+    return EditorTestFixture(project, fragmentEditor, injectedFile.virtualFile)
   }
 
   val topLevelFile: PsiFile
