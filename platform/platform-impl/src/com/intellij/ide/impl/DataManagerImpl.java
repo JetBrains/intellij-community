@@ -39,6 +39,7 @@ import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -136,7 +137,16 @@ public class DataManagerImpl extends DataManager {
   }
 
   private @Nullable GetDataRule getRuleFromMap(@NotNull String dataId) {
-    return myDataRuleCollector.findSingle(dataId);
+    List<GetDataRule> rules = myDataRuleCollector.forKey(dataId);
+    return rules.isEmpty() ? null :
+           rules.size() == 1 ? rules.get(0) :
+           dataProvider -> {
+             for (GetDataRule rule : rules) {
+               Object data = rule.getData(dataProvider);
+               if (data != null) return data;
+             }
+             return null;
+           };
   }
 
   private static @Nullable Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object dataSource) {
