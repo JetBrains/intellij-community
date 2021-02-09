@@ -782,7 +782,8 @@ class ResolveElementCache(
             statementFilter,
             targetPlatform.findAnalyzerServices(file.project),
             file.languageVersionSettings,
-            IdeaModuleStructureOracle()
+            IdeaModuleStructureOracle(),
+            IdeSealedClassInheritorsProvider
         ).get()
     }
 
