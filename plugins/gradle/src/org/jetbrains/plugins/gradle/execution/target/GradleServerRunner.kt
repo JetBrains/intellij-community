@@ -16,14 +16,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.BaseOutputReader
 import org.gradle.initialization.BuildEventConsumer
+import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
 import org.gradle.internal.serialize.Serializers
 import org.gradle.launcher.cli.action.BuildActionSerializer
-import org.gradle.launcher.daemon.protocol.BuildEvent
-import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
-import org.gradle.launcher.daemon.protocol.Failure
-import org.gradle.launcher.daemon.protocol.Success
+import org.gradle.launcher.daemon.protocol.*
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
@@ -91,25 +89,36 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       connection.dispatch(BuildEvent(targetBuildParameters))
       connection.flush()
 
-      loop@ while (true) {
-        val message = connection.receive() ?: break
-        when (message) {
-          is Success -> {
-            resultHandler.onComplete(message.value)
-            break@loop
-          }
-          is Failure -> {
-            resultHandler.onFailure(message.value as? GradleConnectionException ?: GradleConnectionException(message.value.message))
-            break@loop
-          }
-          !is BuildEvent -> {
-            break@loop
-          }
-          else -> {
-            buildEventConsumer.dispatch(message.payload)
+      try {
+        loop@ while (true) {
+          val message = connection.receive() ?: break
+          when (message) {
+            is Success -> {
+              resultHandler.onComplete(message.value)
+              break@loop
+            }
+            is Failure -> {
+              resultHandler.onFailure(message.value as? GradleConnectionException ?: GradleConnectionException(message.value.message))
+              break@loop
+            }
+            !is BuildEvent -> {
+              break@loop
+            }
+            else -> {
+              buildEventConsumer.dispatch(message.payload)
+            }
           }
         }
       }
+      finally {
+        connection.sendResultAck()
+      }
+    }
+
+    private fun RemoteConnection<Message>.sendResultAck() {
+      dispatch(BuildEvent("ack"))
+      flush()
+      stop()
     }
 
     fun stop() {

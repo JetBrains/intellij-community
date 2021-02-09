@@ -126,6 +126,7 @@ object Main {
       incomingConnectionHandler.dispatch(Failure(t))
     }
     finally {
+      incomingConnectionHandler.receiveResultAck()
       connection.close()
     }
   }

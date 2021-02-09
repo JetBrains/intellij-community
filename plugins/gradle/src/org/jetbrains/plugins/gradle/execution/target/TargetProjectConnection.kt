@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.PathMapper
 import org.gradle.tooling.*
 import org.gradle.tooling.internal.consumer.ConnectionParameters
@@ -18,7 +19,7 @@ internal class TargetProjectConnection(val environmentConfiguration: TargetEnvir
                                        val taskId: ExternalSystemTaskId?,
                                        val taskListener: ExternalSystemTaskNotificationListener?,
                                        val parameters: ConnectionParameters,
-                                       private val connectionCloseListener: ProjectConnectionCloseListener?) : ProjectConnection {
+                                       private val connectionCloseListener: ProjectConnectionCloseListener?) : ProjectConnection, UserDataHolderBase() {
   override fun close() {
     connectionCloseListener?.connectionClosed(this)
   }
@@ -65,6 +66,8 @@ internal class TargetProjectConnection(val environmentConfiguration: TargetEnvir
   }
 
   fun disconnect() {
+    close()
+    clearUserData()
   }
 
   internal class DefaultBuildActionWrapper<T>(private val buildAction: BuildAction<T>,

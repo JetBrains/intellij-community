@@ -24,6 +24,10 @@ class TargetIncomingConnectionHandler : IncomingConnectionHandler {
   }
 
   fun dispatch(message: Message) = connection.dispatchAndFlush(message)
+  fun receiveResultAck() {
+    val buildEvent = connection.receive() as BuildEvent
+    LOG.debug("Result ack received: ${buildEvent.payload}")
+  }
 
   companion object {
     private val LOG = LoggerFactory.getLogger(TargetIncomingConnectionHandler::class.java)
