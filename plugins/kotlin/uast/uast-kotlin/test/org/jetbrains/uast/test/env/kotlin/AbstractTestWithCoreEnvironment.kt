@@ -11,6 +11,8 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiNameHelper
+import com.intellij.psi.impl.PsiNameHelperImpl
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.uast.UastContext
@@ -59,7 +61,7 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
                 UEvaluatorExtension::class.java)
 
         project.registerService(UastContext::class.java, UastContext::class.java)
-
+        project.registerService(PsiNameHelper::class.java, PsiNameHelperImpl(project))
         registerUastLanguagePlugins()
     }
 
