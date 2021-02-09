@@ -358,6 +358,12 @@ public class ConstExprent extends Exprent {
     this.constType = constType;
   }
 
+  public void reguessType(VarType newType) {
+    if (boolPermitted && value instanceof Integer && newType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+      setConstType(guessType((int) value, newType == VarType.VARTYPE_BOOLEAN));
+    }
+  }
+
   public void adjustConstType(VarType expectedType) {
     // BYTECHAR and SHORTCHAR => CHAR in the CHAR context
     if ((expectedType.equals(VarType.VARTYPE_CHAR) || expectedType.equals(VarType.VARTYPE_CHARACTER)) &&

@@ -1,0 +1,54 @@
+package pkg;
+
+public class TestVariableInitialization {
+   public int findMin(int first, int second) {
+      int result = 0;// 6
+      if (first > second) {// 7
+         result = second;// 8
+      }
+
+      return result;// 10
+   }
+
+   public int findMinimum(int first, int second) {
+      int result = 0;// 14
+      int result;
+      if (first > second) {// 15
+         result = second;// 16
+      } else {
+         result = first;// 18
+      }
+
+      return result;// 20
+   }
+}
+
+class 'pkg/TestVariableInitialization' {
+   method 'findMin (II)I' {
+      0      4
+      1      4
+      4      5
+      8      6
+      a      9
+   }
+
+   method 'findMinimum (II)I' {
+      0      13
+      1      13
+      4      15
+      8      16
+      d      18
+      f      21
+   }
+}
+
+Lines mapping:
+6 <-> 5
+7 <-> 6
+8 <-> 7
+10 <-> 10
+14 <-> 14
+15 <-> 16
+16 <-> 17
+18 <-> 19
+20 <-> 22

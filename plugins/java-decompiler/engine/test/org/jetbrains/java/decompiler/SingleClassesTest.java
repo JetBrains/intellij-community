@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -117,11 +118,12 @@ public class SingleClassesTest {
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
 
   // TODO: fix all below
-  //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
-  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
-  //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
-  //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
-  //@Test public void testInUse() { doTest("pkg/TestInUse"); }
+  @Test public void testVariableInitialization() { doTest("pkg/TestVariableInitialization"); }
+  @Ignore @Test public void testPackageInfo() { doTest("pkg/package-info"); }
+  @Ignore @Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
+  @Ignore @Test public void testUnionType() { doTest("pkg/TestUnionType"); }
+  @Ignore @Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
+  @Ignore @Test public void testInUse() { doTest("pkg/TestInUse"); }
 
   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }

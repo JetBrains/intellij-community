@@ -28,6 +28,11 @@ import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 public class ExprProcessor implements CodeConstants {
   public static final String UNDEFINED_TYPE_STRING = "<undefinedtype>";
   public static final String UNKNOWN_TYPE_STRING = "<unknown>";
@@ -152,6 +157,7 @@ public class ExprProcessor implements CodeConstants {
       BasicBlockStatement block = node.block;
       if (block != null) {
         processBlock(block, data, cl);
+        tryAdjustConstantTypes(data);
         block.setExprents(data.getLstExprents());
       }
 
@@ -204,6 +210,35 @@ public class ExprProcessor implements CodeConstants {
     }
 
     initStatementExprents(root);
+  }
+
+  private void tryAdjustConstantTypes(PrimitiveExprsList data) {
+    List<AssignmentExprent> assignmentExprents = data.getLstExprents()
+      .stream()
+      .filter(exprent -> exprent.type == Exprent.EXPRENT_ASSIGNMENT)
+      .map(AssignmentExprent.class::cast)
+      .collect(toList());
+
+    Map<Integer, Set<VarType>> varTypes = assignmentExprents.stream()
+      .map(AssignmentExprent::getLeft)
+      .filter(exprent -> exprent.type == Exprent.EXPRENT_VAR)
+      .map(VarExprent.class::cast)
+      .collect(groupingBy(VarExprent::getIndex, mapping(VarExprent::getVarType, toSet())));
+
+    assignmentExprents.forEach(assignment -> tryAdjustConstantType(varTypes, assignment));
+  }
+
+  private void tryAdjustConstantType(Map<Integer, Set<VarType>> varTypeMap, AssignmentExprent assignment) {
+    Exprent assignmentRight = assignment.getRight();
+    if (assignmentRight.type == Exprent.EXPRENT_CONST) {
+      ConstExprent right = (ConstExprent) assignmentRight;
+      VarExprent left = (VarExprent) assignment.getLeft();
+      Set<VarType> varTypes = varTypeMap.get(left.getIndex());
+      varTypes.remove(VarType.VARTYPE_BOOLEAN);
+      if (varTypes.size() == 1) {
+        right.reguessType(varTypes.iterator().next());
+      }
+    }
   }
 
   // FIXME: Ugly code, to be rewritten. A tuple class is needed.
@@ -352,8 +387,8 @@ public class ExprProcessor implements CodeConstants {
         case opc_astore:
           Exprent expr = stack.pop();
           int varindex = instr.operand(0);
-          AssignmentExprent assign = new AssignmentExprent(
-            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i)), expr, bytecode_offsets);
+          VarExprent left = new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i));
+          AssignmentExprent assign = new AssignmentExprent(left, expr, bytecode_offsets);
           exprlist.add(assign);
           break;
         case opc_iastore:
