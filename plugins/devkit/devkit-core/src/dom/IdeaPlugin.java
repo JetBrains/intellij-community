@@ -193,6 +193,7 @@ public interface IdeaPlugin extends DomElement {
   @NotNull
   List<Helpset> getHelpsets();
 
+  @ApiStatus.Experimental
   interface ContentDescriptor extends DomElement {
     @NotNull
     @Stubbed
@@ -218,6 +219,7 @@ public interface IdeaPlugin extends DomElement {
     }
   }
 
+  @ApiStatus.Experimental
   interface DependencyDescriptor extends DomElement {
     @NotNull
     @Stubbed
