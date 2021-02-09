@@ -1,24 +1,16 @@
 package org.jetbrains.kotlin.psi
 
-import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.injection.Injectable
-import com.intellij.testFramework.fixtures.EditorTestFixture
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.lang.IllegalArgumentException
-import kotlin.reflect.KMutableProperty0
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
@@ -142,10 +134,12 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                         </html>
                     ""${'"'}.trimIndent()
                 }
-            """.trimIndent())
+            """.trimIndent()
+        )
 
         InjectLanguageAction.invokeImpl(project, editor, file, Injectable.fromLanguage(Language.findLanguageByID("HTML")))
-        myFixture.checkResult("""
+        myFixture.checkResult(
+            """
                 import kotlin.text.trimIndent
                 
                 fun foo() {
@@ -157,28 +151,27 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                         </html>
                     ""${'"'}.trimIndent()
                 }
-            """.trimIndent())
+            """.trimIndent()
+        )
 
-        TestCase.assertEquals("""
+        TestCase.assertEquals(
+            """
             <html>
                 <body>
                             
                 </body>
             </html>
-        """.trimIndent(), myInjectionFixture.injectedElement?.containingFile?.text)
+        """.trimIndent(), myInjectionFixture.injectedElement?.containingFile?.text
+        )
 
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor();
         TestCase.assertEquals(
             "<html>\n" +
                     "    <body>\n" +
                     "                \n" +
                     "    </body>\n" +
-                    "</html>", injectedFile.text
+                    "</html>", editorTestFixture.file.text
         )
-
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
 
         editorTestFixture.type('\n')
         editorTestFixture.type("asss")
@@ -207,7 +200,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                     "    assss\n" +
                     "                \n" +
                     "    </body>\n" +
-                    "</html>", injectedFile.text
+                    "</html>", editorTestFixture.file.text
         )
     }
 
@@ -227,8 +220,8 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
             )
         )
 
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
+        val injectedFile = editorTestFixture.file
 
         TestCase.assertEquals(
             "<html>\n" +
@@ -237,8 +230,6 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                     "    </body>\n" +
                     "</html>", injectedFile.text
         )
-
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
 
         editorTestFixture.type('\n')
         editorTestFixture.type("asss")
@@ -281,10 +272,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
             )
         )
 
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
         editorTestFixture.type('\n')
 
         myFixture.checkResult(
@@ -315,10 +303,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
             )
         )
 
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
         editorTestFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
 
         myFixture.checkResult(
@@ -332,16 +317,6 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                 "HTML"
             ), true
         )
-    }
-
-    private fun setupFragmentEditorFixture(fragmentFile: PsiFile): EditorTestFixture {
-        val documentWindow = InjectedLanguageUtil.getDocumentWindow(myInjectionFixture.injectedElement?.containingFile!!)
-        val offset = myInjectionFixture.topLevelEditor.caretModel.offset
-        val unEscapedOffset = InjectedLanguageUtil.hostToInjectedUnescaped(documentWindow, offset)
-        val fragmentEditor = FileEditorManagerEx.getInstanceEx(project).openTextEditor(
-            OpenFileDescriptor(project, fragmentFile.virtualFile, unEscapedOffset), true
-        )
-        return EditorTestFixture(project, fragmentEditor, fragmentFile.virtualFile)
     }
 
     fun mkFoo(literalText: String, lang: String): String {
@@ -390,9 +365,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
             "Foo.kt", mkFoo(""" <caret>""", "HTML")
         )
 
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
         editorTestFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
 
         myFixture.checkResult(
@@ -414,9 +387,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                 "JSON"
             )
         )
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
         editorTestFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
         myFixture.checkResult(
             mkFoo(
@@ -445,9 +416,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                 "JSON"
             )
         )
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
 
         val selectionRange = "{\n        \"select abc where \": [1, 2, 3]\n    }".let { toSelect ->
             TextRange.from(editorTestFixture.file.text.let { text ->
@@ -486,9 +455,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                 "JSON"
             )
         )
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
         editorTestFixture.performEditorAction(IdeActions.ACTION_SELECT_ALL)
         editorTestFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
 
@@ -515,9 +482,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                 "JSON"
             )
         )
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
         editorTestFixture.performEditorAction(IdeActions.ACTION_SELECT_ALL)
         editorTestFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
 
@@ -545,9 +510,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                 "JSON"
             )
         )
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
         editorTestFixture.performEditorAction(IdeActions.ACTION_SELECT_ALL)
         editorTestFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
 
@@ -587,9 +550,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                 "JSON"
             )
         )
-        val quickEditHandler = QuickEditAction().invokeImpl(project, myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
-        val injectedFile = quickEditHandler.newFile
-        val editorTestFixture = setupFragmentEditorFixture(injectedFile)
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
         editorTestFixture.performEditorAction(IdeActions.ACTION_SELECT_ALL)
         WriteCommandAction.runWriteCommandAction(project) {
             editorTestFixture.editor.document.setText("{\"abc\": { \n \"def\": 1 \n}")
