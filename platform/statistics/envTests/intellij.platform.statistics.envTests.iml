@@ -15,6 +15,6 @@
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.validator" scope="TEST" />
+    <orderEntry type="library" name="ap-validation" level="project" />
   </component>
 </module>

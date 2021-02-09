@@ -133,6 +133,8 @@ class CommunityLibraryLicenses {
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime-4.1.jar", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
+    new LibraryLicense(name: "ap-validation", libraryName: "ap-validation", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/ap-validation"),
     new LibraryLicense(name: "Apache Ant", version: "1.9", libraryName: "Ant", license: "Apache 2.0", url: "http://ant.apache.org/",
                        licenseUrl: "http://ant.apache.org/license.html"),
     new LibraryLicense(name: "Apache Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0",
