@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -17,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
+public final class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
+  private static final OptionsContainingConfigurable EMPTY_OPTIONS_CONTAINING_CONFIGURABLE = new OptionsContainingConfigurable() {};
+
   private static final Logger LOG = Logger.getInstance(NewCodeStyleSettingsPanel.class);
 
   private final Configurable myTab;
@@ -25,6 +26,7 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
 
   public NewCodeStyleSettingsPanel(@NotNull Configurable tab, @NotNull CodeStyleSchemesModel model) {
     super(new BorderLayout());
+
     myTab = tab;
     myModel = model;
     JComponent component = myTab.createComponent();
@@ -98,11 +100,8 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     }
   }
 
-  @NotNull
-  public OptionsContainingConfigurable getOptionIndexer() {
-    return myTab instanceof OptionsContainingConfigurable
-           ? (OptionsContainingConfigurable)myTab
-           : OptionsContainingConfigurable.EMPTY;
+  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
+    return myTab instanceof OptionsContainingConfigurable ? (OptionsContainingConfigurable)myTab : EMPTY_OPTIONS_CONTAINING_CONFIGURABLE;
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs
 
 import com.intellij.icons.AllIcons
@@ -47,9 +47,9 @@ import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
-class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScroll {
+internal class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScroll {
   override fun getId() = "reference.settings.ide.settings.file-colors"
-  override fun getDisplayName(): String = message("configurable.file.colors")
+  override fun getDisplayName() = message("configurable.file.colors")
   override fun getHelpTopic() = id
 
   private val enabledFileColors = object : CheckBoxConfigurable() {
@@ -79,7 +79,7 @@ class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScrol
     override var selectedState: Boolean
       get() = manager.isEnabledForTabs
       set(state) {
-        manager.isEnabledForTabs = state
+        FileColorManagerImpl.setEnabledForTabs(state)
       }
   }
 
@@ -103,7 +103,7 @@ class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScrol
 
   // UnnamedConfigurable
 
-  override fun createComponent(): JPanel? {
+  override fun createComponent(): JPanel {
     disposeUIResources()
 
     val north = JPanel(HorizontalLayout(10))
@@ -231,14 +231,14 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     selectRow(row)
   }
 
-  internal fun addScopeColor(scope: NamedScope, color: String?) {
+  fun addScopeColor(scope: NamedScope, color: String?) {
     val colorName = resolveCustomColor(color) ?: return
     if (resolveDuplicate(scope.scopeId, colorName, false)) return
     local.add(0, FileColorConfiguration(scope.scopeId, colorName))
     onRowInserted(0)
   }
 
-  internal fun getColors(): List<@Nls String> {
+  fun getColors(): List<@Nls String> {
     val list = mutableListOf<String>()
     list += manager.colorNames
     list += message("settings.file.color.custom.name")

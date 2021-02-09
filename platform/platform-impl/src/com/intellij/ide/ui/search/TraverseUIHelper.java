@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -9,8 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 public interface TraverseUIHelper {
-  String EP_NAME = "com.intellij.search.traverseUiHelper";
-  ExtensionPointName<TraverseUIHelper> helperExtensionPoint = ExtensionPointName.create(EP_NAME);
+  ExtensionPointName<TraverseUIHelper> helperExtensionPoint = new ExtensionPointName<>("com.intellij.search.traverseUiHelper");
 
   /**
    * Invoked before indexing SearchableConfigurables

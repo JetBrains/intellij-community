@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.BundleBase;
 import com.intellij.application.options.SkipSelfSearchComponent;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.JBColor;
@@ -46,11 +44,8 @@ public final class SearchUtil {
 
   private SearchUtil() { }
 
-  public static void processProjectConfigurables(@NotNull Project project, Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
-    processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
-  }
-
-  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
+  static void processConfigurables(@NotNull List<? extends Configurable> configurables,
+                                   @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
       if (!(configurable instanceof SearchableConfigurable)) {
         continue;
@@ -66,7 +61,7 @@ public final class SearchUtil {
       Set<OptionDescription> configurableOptions = new TreeSet<>();
       options.put(searchableConfigurable, configurableOptions);
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeConfigurable(searchableConfigurable, configurableOptions);
       }
 
@@ -99,7 +94,7 @@ public final class SearchUtil {
         }
       }
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.afterConfigurable(searchableConfigurable, configurableOptions);
       }
     }
@@ -124,14 +119,14 @@ public final class SearchUtil {
 
   private static void processComponent(SearchableConfigurable configurable, Set<OptionDescription> configurableOptions, JComponent component) {
     if (component != null) {
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeComponent(configurable, component, configurableOptions);
       }
 
       processUILabel(configurable.getDisplayName(), configurableOptions, null);
       processComponent(component, configurableOptions, null);
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.afterComponent(configurable, component, configurableOptions);
       }
     }
