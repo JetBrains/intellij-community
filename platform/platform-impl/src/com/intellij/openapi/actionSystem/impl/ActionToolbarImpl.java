@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -1096,7 +1095,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater.updateActions(true, false, includeInvisible);
   }
 
-  private boolean myAlreadyUpdated;
   private boolean myHideDisabled = false;
 
   public void setHideDisabled(boolean hideDisabled) {
@@ -1105,12 +1103,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private void updateActionsImpl(boolean transparentOnly, boolean forced) {
-    DataContext dataContext = getDataContext();
-    boolean async = myAlreadyUpdated && Registry.is("actionSystem.update.actions.asynchronously") && ourToolbars.contains(this) && isShowing();
+    DataContext dataContext = Utils.wrapDataContext(getDataContext());
     ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
-                                              Utils.wrapDataContext(dataContext),
-                                              myPlace, false, true, transparentOnly);
-    if (async) {
+                                              dataContext, myPlace, false, true, transparentOnly);
+    if (Utils.isAsyncDataContext(dataContext)) {
       if (myLastUpdate != null) myLastUpdate.cancel();
 
       myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
@@ -1118,7 +1114,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     else {
       actionsUpdated(forced, updater.expandActionGroupWithTimeout(myActionGroup, myHideDisabled));
-      myAlreadyUpdated = true;
     }
     if (mySecondaryActionsButton != null) {
       mySecondaryActionsButton.update();

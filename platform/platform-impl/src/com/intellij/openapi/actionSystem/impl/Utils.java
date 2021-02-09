@@ -48,6 +48,10 @@ public final class Utils {
     return dataContext;
   }
 
+  public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
+    return dataContext instanceof PreCachedDataContext;
+  }
+
   /**
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
