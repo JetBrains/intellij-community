@@ -15,7 +15,7 @@ class PluginCertificateStore {
   val customTrustManager: MutableTrustManager = myTrustManager.value.customManager
 
   companion object {
-    private val DEFAULT_PATH: String = java.lang.String.join(File.separator, PathManager.getConfigPath(), "plugins", "cacerts")
+    private val DEFAULT_PATH: String = java.lang.String.join(File.separator, PathManager.getConfigPath(), "ssl", "plugins-certs")
     private const val DEFAULT_PASSWORD = "changeit"
     val instance: PluginCertificateStore = ApplicationManager.getApplication()
       .getService(PluginCertificateStore::class.java)
