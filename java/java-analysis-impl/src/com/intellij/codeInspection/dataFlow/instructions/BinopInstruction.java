@@ -43,14 +43,9 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
   private final IElementType myOperationSign;
   private final @Nullable PsiType myResultType;
   private final int myLastOperand;
-  private final boolean myUnrolledLoop;
 
   public BinopInstruction(IElementType opSign, @Nullable PsiExpression expression, @Nullable PsiType resultType) {
     this(opSign, expression, resultType, -1);
-  }
-
-  public BinopInstruction(IElementType opSign, @Nullable PsiExpression expression, @Nullable PsiType resultType, int lastOperand) {
-    this(opSign, expression, resultType, lastOperand, false);
   }
 
   /**
@@ -64,8 +59,7 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
   public BinopInstruction(IElementType opSign,
                           @Nullable PsiExpression expression,
                           @Nullable PsiType resultType,
-                          int lastOperand,
-                          boolean unrolledLoop) {
+                          int lastOperand) {
     super(expression);
     assert lastOperand == -1 || expression instanceof PsiPolyadicExpression;
     myResultType = resultType;
@@ -73,7 +67,6 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
       opSign == XOR && PsiType.BOOLEAN.equals(resultType) ? NE : // XOR for boolean is equivalent to NE 
       ourSignificantOperations.contains(opSign) ? opSign : null;
     myLastOperand = lastOperand;
-    myUnrolledLoop = unrolledLoop;
   }
 
   /**
@@ -108,9 +101,5 @@ public class BinopInstruction extends ExpressionPushingInstruction<PsiExpression
 
   public IElementType getOperationSign() {
     return myOperationSign;
-  }
-
-  public boolean isUnrolled() {
-    return myUnrolledLoop;
   }
 }

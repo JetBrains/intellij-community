@@ -616,16 +616,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       body.accept(this);
     }
 
-    if (!addCountingLoopBound(statement)) {
+    ControlFlowOffset offset = initialization != null ? getEndOffset(initialization) : getStartOffset(statement);
+
+    if (!addCountingLoopBound(statement, offset)) {
       PsiStatement update = statement.getUpdate();
       if (update != null) {
         update.accept(this);
       }
+      addInstruction(new GotoInstruction(offset));
     }
 
-    ControlFlowOffset offset = initialization != null ? getEndOffset(initialization) : getStartOffset(statement);
-
-    addInstruction(new GotoInstruction(offset));
     finishElement(statement);
 
     for (PsiElement declaredVariable : declaredVariables) {
@@ -651,8 +651,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * Does nothing if the statement is not a counting loop.
    *
    * @param statement counting loop candidate.
+   * @param startOffset loop start offset (jump target for back-branch)
    */
-  private boolean addCountingLoopBound(PsiForStatement statement) {
+  private boolean addCountingLoopBound(PsiForStatement statement, ControlFlowOffset startOffset) {
     CountingLoop loop = CountingLoop.from(statement);
     if (loop == null || loop.isDescending()) return false;
     PsiLocalVariable counter = loop.getCounter();
@@ -682,12 +683,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaVariableValue loopVar = myFactory.getVarFactory().createVariableValue(counter);
     if(diff >= 0 && diff <= MAX_UNROLL_SIZE) {
       // Unroll small loops
-      addInstruction(new PushInstruction(loopVar, null, true));
-      addInstruction(new PushInstruction(loopVar, null));
-      addInstruction(new PushValueInstruction(PsiType.LONG.equals(type) ? DfTypes.longValue(1) : DfTypes.intValue(1)));
-      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getType(), -1, true));
-      addInstruction(new AssignInstruction(null, null));
-      addInstruction(new PopInstruction());
+      statement.getUpdate().accept(this);
+      addInstruction(new GotoInstruction(startOffset, false));
+      return true;
     }
     else if (start != null) {
       long maxValue = end == null ? Long.MAX_VALUE : loop.isIncluding() ? end + 1 : end;
@@ -709,6 +707,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                           .compare(JavaTokenType.LE);
       addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
     }
+    addInstruction(new GotoInstruction(startOffset));
     return true;
   }
 

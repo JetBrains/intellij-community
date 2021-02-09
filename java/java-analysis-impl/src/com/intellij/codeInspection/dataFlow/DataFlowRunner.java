@@ -294,7 +294,8 @@ public class DataFlowRunner {
                 incomingStates.putValue(branching, state.getMemoryState().createCopy());
               }
             }
-            if (nextInstruction.getIndex() < instruction.getIndex()) {
+            if (nextInstruction.getIndex() < instruction.getIndex() && 
+                (!(instruction instanceof GotoInstruction) || ((GotoInstruction)instruction).shouldWidenBackBranch())) {
               state.getMemoryState().widen();
             }
             queue.offer(state);

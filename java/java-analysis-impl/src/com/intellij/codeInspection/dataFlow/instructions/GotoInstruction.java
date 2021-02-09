@@ -21,9 +21,24 @@ import com.intellij.codeInspection.dataFlow.*;
 
 public class GotoInstruction extends Instruction {
   private ControlFlow.ControlFlowOffset myOffset;
+  private final boolean myShouldWiden;
 
-  public GotoInstruction(ControlFlow.ControlFlowOffset myOffset) {
-    this.myOffset = myOffset;
+  public GotoInstruction(ControlFlow.ControlFlowOffset offset) {
+    this(offset, true);
+  }
+
+  /**
+   * @param offset target offset
+   * @param shouldWiden if false, widening is not performed at this instruction, even if it's a back-branch.
+   *                    Used to mark 'unrolled' loops, which are known to have very few iterations.
+   */
+  public GotoInstruction(ControlFlow.ControlFlowOffset offset, boolean shouldWiden) {
+    myOffset = offset;
+    myShouldWiden = shouldWiden;
+  }
+  
+  public boolean shouldWidenBackBranch() {
+    return myShouldWiden;
   }
 
   public int getOffset() {
