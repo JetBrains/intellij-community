@@ -9,10 +9,13 @@ import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -43,10 +46,8 @@ import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
-import libraries.coroutines.extra.Lifetime
-import libraries.coroutines.extra.LifetimeSource
-import libraries.coroutines.extra.delay
-import libraries.coroutines.extra.launch
+import kotlinx.coroutines.asCoroutineDispatcher
+import libraries.coroutines.extra.*
 import runtime.Ui
 import runtime.reactive.SequentialLifetimes
 import java.awt.event.AdjustmentEvent
@@ -102,7 +103,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   override fun onComponentSelected() {
     val isConnected = SpaceWorkspaceComponent.getInstance().loginState.value is SpaceLoginState.Connected
     dialogStateListener.onOkActionNameChanged(DvcsBundle.message("clone.button"))
-    dialogStateListener.onOkActionEnabled(isConnected && cloneView.getUrl() != null)
+    dialogStateListener.onOkActionEnabled(isConnected && cloneView.getSelectedListItem() != null)
   }
 
   override fun doValidateAll(): List<ValidationInfo> {
@@ -188,9 +189,12 @@ private class CloneView(
   init {
     cloneViewModel.readyToClone.forEach(lifetime, dialogStateListener::onOkActionEnabled)
 
-    cloneViewModel.selectedUrl.forEach(lifetime) { su ->
-      su ?: return@forEach
-      val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, su), GitUtil.DOT_GIT)
+    cloneViewModel.selectedCloneListItem.forEach(lifetime) { cloneListItem ->
+      cloneListItem ?: return@forEach
+      val details = cloneListItem.repoDetails.value
+      val httpUrl = details?.urls?.httpUrl ?: cloneListItem.repoInfo.name
+
+      val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, httpUrl), GitUtil.DOT_GIT)
       directoryField.trySetChildPath(path)
     }
 
@@ -254,7 +258,8 @@ private class CloneView(
                                              serverUrl,
                                              resizeIcon(SpaceUserAvatarProvider.getInstance().avatars.value.circle,
                                                         VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
-                                             listOf(browseAction(SpaceBundle.message("clone.dialog.browse.server.action", serverUrl), host)))
+                                             listOf(
+                                               browseAction(SpaceBundle.message("clone.dialog.browse.server.action", serverUrl), host)))
         menuItems += browseAction(SpaceBundle.message("clone.dialog.open.projects.action"), SpaceUrls.projects(), true)
         menuItems += AccountMenuItem.Action(SpaceBundle.message("clone.dialog.open.settings.action"),
                                             {
@@ -262,7 +267,8 @@ private class CloneView(
                                               updateSelectedUrl()
                                             },
                                             showSeparatorAbove = true)
-        menuItems += AccountMenuItem.Action(SpaceBundle.message("clone.dialog.logout.action"), { SpaceWorkspaceComponent.getInstance().signOut() })
+        menuItems += AccountMenuItem.Action(SpaceBundle.message("clone.dialog.logout.action"),
+                                            { SpaceWorkspaceComponent.getInstance().signOut() })
 
         AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
           .showUnderneathOf(accountLabel)
@@ -362,16 +368,12 @@ private class CloneView(
   }
 
   fun updateSelectedUrl() {
-    cloneViewModel.cloneType.value = settings.cloneType
-
-    val repositoryUrls = list.selectedValue?.repoDetails?.value?.urls
-    cloneViewModel.selectedUrl.value = when (settings.cloneType) {
-      CloneType.SSH -> repositoryUrls?.sshUrl
-      CloneType.HTTPS -> repositoryUrls?.httpUrl
-    }
+    cloneViewModel.selectedCloneListItem.value = list.selectedValue
   }
 
-  fun getUrl(): String? = cloneViewModel.selectedUrl.value
+  fun getSelectedListItem(): SpaceCloneListItem? {
+    return cloneViewModel.selectedCloneListItem.value
+  }
 
   fun getDirectory(): String = directoryField.text
 
@@ -382,30 +384,47 @@ private class CloneView(
   }
 
   fun doClone(checkoutListener: CheckoutProvider.Listener) {
-    val url = getUrl()
-    url ?: return
-    val directory = getDirectory()
+    val cloneListItem = getSelectedListItem() ?: return
 
-    createDirectoryError = CloneDvcsValidationUtils.createDestination(directory)
-    if (createDirectoryError != null) {
-      return
-    }
+    object : Task.Backgroundable(project, SpaceBundle.message("clone.dialog.progress.title.loading.repository.details"), false) {
+      var details = cloneListItem.repoDetails.value
 
-    val parent = Paths.get(directory).toAbsolutePath().parent
-    val lfs = LocalFileSystem.getInstance()
-    var destinationParent = lfs.findFileByIoFile(parent.toFile())
-    if (destinationParent == null) {
-      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
-    }
-    destinationParent ?: return
-    val directoryName = Paths.get(directory).fileName.toString()
-    val parentDirectory = parent.toAbsolutePath().toString()
-    GitCheckoutProvider.clone(project,
-                              Git.getInstance(),
-                              checkoutListener,
-                              destinationParent,
-                              url,
-                              directoryName,
-                              parentDirectory)
+      override fun run(indicator: ProgressIndicator) {
+        if (details != null) return
+        details = st.workspace.lifetime.usingSource { lt ->
+          runBlocking(lt, ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+            cloneViewModel.loadDetails(cloneListItem)
+          }
+        }
+      }
+
+      override fun onSuccess() {
+        val url = when (settings.cloneType) {
+                    CloneType.SSH -> details!!.urls.sshUrl
+                    CloneType.HTTPS -> details!!.urls.httpUrl
+                  } ?: return
+
+        val directory = getDirectory()
+
+        createDirectoryError = CloneDvcsValidationUtils.createDestination(directory)
+        if (createDirectoryError != null) {
+          return
+        }
+        val parent = Paths.get(directory).toAbsolutePath().parent
+        val lfs = LocalFileSystem.getInstance()
+        val destinationParent = lfs.findFileByIoFile(parent.toFile()) ?: lfs.refreshAndFindFileByIoFile(parent.toFile()) ?: return
+
+        val directoryName = Paths.get(directory).fileName.toString()
+        val parentDirectory = parent.toAbsolutePath().toString()
+        GitCheckoutProvider.clone(project,
+                                  Git.getInstance(),
+                                  checkoutListener,
+                                  destinationParent,
+                                  url,
+                                  directoryName,
+                                  parentDirectory)
+      }
+    }.queue()
   }
 }
+
