@@ -37,6 +37,7 @@ public class PyQualifiedNameCompletionMatcher {
   }
 
   public static void processMatchingExportedNames(@NotNull QualifiedName qualifiedNamePattern,
+                                                  @Nullable QualifiedName originallyTypedAlias,
                                                   @NotNull PsiFile currentFile,
                                                   @NotNull GlobalSearchScope scope,
                                                   @NotNull Processor<? super ExportedName> processor) {
@@ -71,7 +72,7 @@ public class PyQualifiedNameCompletionMatcher {
             }
             QualifiedName attributeQualifiedName = importPath.append(attributeName);
             if (alreadySuggestedAttributes.add(attributeQualifiedName)) {
-              if (!processor.process(new ExportedName(attributeQualifiedName, element))) {
+              if (!processor.process(new ExportedName(attributeQualifiedName, originallyTypedAlias, element))) {
                 return false;
               }
             }
@@ -120,10 +121,12 @@ public class PyQualifiedNameCompletionMatcher {
 
   public static final class ExportedName {
     private final QualifiedName myQualifiedName;
+    private final QualifiedName myOriginallyTypedQName;
     private final PyElement myElement;
 
-    private ExportedName(@NotNull QualifiedName qualifiedName, @NotNull PyElement element) {
+    private ExportedName(@NotNull QualifiedName qualifiedName, @Nullable QualifiedName originallyTypedQName, @NotNull PyElement element) {
       myQualifiedName = qualifiedName;
+      myOriginallyTypedQName = originallyTypedQName;
       myElement = element;
     }
 
@@ -132,9 +135,21 @@ public class PyQualifiedNameCompletionMatcher {
       return myQualifiedName;
     }
 
+    @Nullable
+    public QualifiedName getOriginallyTypedQName() {
+      return myOriginallyTypedQName;
+    }
+
     @NotNull
     public PyElement getElement() {
       return myElement;
+    }
+
+    @NotNull
+    public QualifiedName getQualifiedNameWithUserTypedAlias() {
+      return myOriginallyTypedQName != null
+             ? myOriginallyTypedQName.removeLastComponent().append(myQualifiedName.getLastComponent())
+             : myQualifiedName;
     }
   }
 

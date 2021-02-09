@@ -45,14 +45,28 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     assertFalse(matcher.prefixMatches("xxx.foo.bar.baz"));
   }
 
-  public void testImportForModuleFunctionIsAdded() {
+  public void testImportForModuleFunction() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
   }
 
-  public void testImportForModuleClassIsAdded() {
+  public void testImportForModuleClass() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+  }
+
+  public void testImportForAlias() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+  }
+
+  public void testImportForAliasWithNonEmptyAttribute() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();

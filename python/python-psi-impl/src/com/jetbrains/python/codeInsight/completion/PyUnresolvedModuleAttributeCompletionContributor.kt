@@ -18,6 +18,7 @@ import com.intellij.util.Processor
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
+import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
@@ -78,14 +79,17 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
       WriteCommandAction.writeCommandAction(context.project, context.file).run<RuntimeException> {
         val psiElement = item.psiElement
         if (psiElement is PsiNamedElement && psiElement.containingFile != null) {
-          val nameToImport = QualifiedName.fromDottedString(item.lookupString).removeLastComponent().toString()
-          AddImportHelper.addImportStatement(context.file, nameToImport, null, null, ref?.element as? PyElement)
+          val name = QualifiedName.fromDottedString(item.lookupString).removeLastComponent().toString()
+          val commonAlias = PyPackageAliasesProvider.commonImportAliases[name]
+          val nameToImport = commonAlias ?: name
+          AddImportHelper.addImportStatement(context.file, nameToImport, if (commonAlias != null) name else null, null, ref?.element as? PyElement)
         }
       }
     }
 
     private fun getInsertHandler(elementToInsert: PyElement, position: PsiElement): InsertHandler<LookupElement> {
-      return if (elementToInsert is PyFunction && position.parent?.parent !is PyDecorator) functionInsertHandler else importingInsertHandler
+      return if (elementToInsert is PyFunction && position.parent?.parent !is PyDecorator) functionInsertHandler
+      else importingInsertHandler
     }
   }
 
@@ -104,19 +108,23 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
 
         ProgressManager.checkCanceled()
         val qualifiedName = qualifier.append(attribute)
+        val commonAlias = PyPackageAliasesProvider.commonImportAliases[qualifier.toString()]
+        val packageName = if (commonAlias != null) QualifiedName.fromDottedString(commonAlias) else qualifier
         val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifiedName))
-        PyModuleNameIndex.find(qualifier.lastComponent!!, project, true).asSequence()
-          .filter { QualifiedNameFinder.findShortestImportableQName(it) == qualifier }
+        PyModuleNameIndex.find(packageName.lastComponent!!, project, true).asSequence()
+          .filter { QualifiedNameFinder.findShortestImportableQName(it) == packageName }
           .flatMap { it.iterateNames().asSequence() }
+          .filter { it.containingFile != null }
           .filterNot { it is PsiFileSystemItem }
           .filterNot { it.name == null || it.name!!.startsWith('_') }
-          .filter { attribute.isEmpty() || result.prefixMatcher.prefixMatches(it.name!!) }
+          .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches(it.name!!) }
           .mapNotNull {
             val qualifiedNameToSuggest = "$qualifier.${it.name}"
             if (suggestedQualifiedNames.add(qualifiedNameToSuggest)) {
               LookupElementBuilder.create(it, qualifiedNameToSuggest)
                 .withIcon(it.getIcon(0))
                 .withInsertHandler(getInsertHandler(it, parameters.position))
+                .withTypeText(commonAlias)
             }
             else null
           }
@@ -128,12 +136,12 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         }
         val scope = PySearchUtilBase.excludeSdkTestsScope(project)
         PyQualifiedNameCompletionMatcher.processMatchingExportedNames(
-          qualifiedName, parameters.originalFile, scope,
+          packageName.append(attribute), if (commonAlias != null) qualifiedName else null, parameters.originalFile, scope,
           Processor {
             ProgressManager.checkCanceled()
             if (suggestedQualifiedNames.add(it.qualifiedName.toString())) {
               resultMatchingCompleteReference.addElement(LookupElementBuilder
-                                                           .createWithSmartPointer(it.qualifiedName.toString(), it.element)
+                                                           .createWithSmartPointer(it.qualifiedNameWithUserTypedAlias.toString(), it.element)
                                                            .withIcon(it.element.getIcon(0))
                                                            .withInsertHandler(getInsertHandler(it.element, parameters.position)))
             }
