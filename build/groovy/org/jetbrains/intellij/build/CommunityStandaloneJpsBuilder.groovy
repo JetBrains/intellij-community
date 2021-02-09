@@ -82,7 +82,7 @@ final class CommunityStandaloneJpsBuilder {
         for (String name in List.of(
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-          "jetbrains-annotations-java5", "qdox-java-parser", "gson", "jps-javac-extension", "fastutil-min"
+          "jetbrains-annotations-java5", "qdox-java-parser", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib-jdk8"
         )) {
           projectLibrary(name)
         }
