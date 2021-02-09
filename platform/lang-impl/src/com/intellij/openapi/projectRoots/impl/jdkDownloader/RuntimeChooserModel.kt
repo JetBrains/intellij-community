@@ -3,6 +3,9 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 
@@ -21,8 +24,20 @@ class RuntimeChooserModel {
     get() = myMainComboModel
 
   fun getDefaultInstallPathFor(item: JdkItem): String {
-    val path = service<RuntimeChooserJbrInstaller>().defaultInstallDir(item)
+    val path = getInstallPathFromText(item, null)
     return FileUtil.getLocationRelativeToUserHome(path.toAbsolutePath().toString(), false)
+  }
+
+  fun getInstallPathFromText(item: JdkItem, text: String?) : Path {
+    val path = text?.trim()?.takeIf { it.isNotBlank() }?.let { FileUtil.expandUserHome(it) }
+    if (path != null) {
+      var file = Paths.get(path)
+      repeat(1000) {
+        if (!Files.exists(file)) return file
+        file = Paths.get(path + "-" + (it + 1))
+      }
+    }
+    return service<RuntimeChooserJbrInstaller>().defaultInstallDir(item)
   }
 
   private fun updateMainCombobox() {

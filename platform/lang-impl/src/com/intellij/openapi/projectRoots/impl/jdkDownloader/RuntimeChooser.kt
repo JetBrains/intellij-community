@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 
 
 class RuntimeChooserAction : AnAction() {
@@ -12,6 +13,13 @@ class RuntimeChooserAction : AnAction() {
     model.fetchAvailableJbrs()
     model.fetchCurrentRuntime()
 
-    RuntimeChooserDialog(null, model).show()
+    val result = RuntimeChooserDialog(null, model).showDialogAndGetResult()
+
+    @Suppress("MoveVariableDeclarationIntoWhen")
+    return when(result) {
+      is RuntimeChooserDialogResult.Cancel -> Unit
+      is RuntimeChooserDialogResult.UseDefault -> service<RuntimeChooserPaths>().resetCustomJdk()
+      is RuntimeChooserDialogResult.DownloadAndUse -> service<RuntimeChooserDownloader>().downloadAndUse(result.item, result.path)
+    }
   }
 }

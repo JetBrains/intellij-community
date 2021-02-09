@@ -13,11 +13,19 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.layout.*
+import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.nio.file.Path
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
+
+sealed class RuntimeChooserDialogResult {
+  object Cancel : RuntimeChooserDialogResult()
+  object UseDefault: RuntimeChooserDialogResult()
+  data class DownloadAndUse(val item: JdkItem, val path: Path) : RuntimeChooserDialogResult()
+}
 
 class RuntimeChooserDialog(
   private val project: Project?,
@@ -40,6 +48,22 @@ class RuntimeChooserDialog(
       USE_DEFAULT_RUNTIME_CODE) {
 
     }
+  }
+
+  fun showDialogAndGetResult() : RuntimeChooserDialogResult {
+    show()
+
+    if (exitCode == USE_DEFAULT_RUNTIME_CODE) {
+      return RuntimeChooserDialogResult.UseDefault
+    }
+
+    if (isOK) run {
+      val jdkItem = jdkCombobox.selectedItem.castSafelyTo<RuntimeChooserDownloadableItem>()?.item ?: return@run
+      val path = model.getInstallPathFromText(jdkItem, jdkInstallDirSelector.text)
+      return RuntimeChooserDialogResult.DownloadAndUse(jdkItem, path)
+    }
+
+    return RuntimeChooserDialogResult.Cancel
   }
 
   override fun createSouthAdditionalPanel(): JPanel {

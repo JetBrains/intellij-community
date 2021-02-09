@@ -37,21 +37,3 @@ private class RuntimeChooserJbrListDownloader : JdkListDownloaderBase() {
   }
 }
 
-@Service(Service.Level.APP)
-class RuntimeChooserJbrInstaller : JdkInstallerBase() {
-  override fun defaultInstallDir(): Path {
-    val explicitHome = System.getProperty("jbr.downloader.home")
-    if (explicitHome != null) {
-      return Paths.get(explicitHome)
-    }
-
-    val home = Paths.get(FileUtil.toCanonicalPath(System.getProperty("user.home") ?: "."))
-    return when {
-      SystemInfo.isLinux   -> home.resolve(".jbr")
-      //see https://youtrack.jetbrains.com/issue/IDEA-206163#focus=streamItem-27-3270022.0-0
-      SystemInfo.isMac     -> home.resolve("Library/Java/JetBrainsRuntime")
-      SystemInfo.isWindows -> home.resolve(".jbr")
-      else -> error("Unsupported OS: ${SystemInfo.getOsNameAndVersion()}")
-    }
-  }
-}
