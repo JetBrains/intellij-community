@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,7 +26,6 @@ import com.siyeh.ig.fixes.ExtractMethodFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -64,29 +63,14 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final CheckBox ignoreConjunctionsDisjunctionsCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"),
-                   this, "m_ignorePureConjunctionsDisjunctions");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+
+    final JLabel label = new JLabel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"));
     final JFormattedTextField termLimitTextField = prepareNumberEditor("m_limit");
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    final JLabel label = new JLabel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"));
+    panel.row(label, termLimitTextField);
+    panel.addCheckbox(InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"), "m_ignorePureConjunctionsDisjunctions");
 
-    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(label, constraints);
-
-    constraints.fill = GridBagConstraints.NONE;
-    constraints.gridx = 1;
-    panel.add(termLimitTextField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 2;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    panel.add(ignoreConjunctionsDisjunctionsCheckBox, constraints);
     return panel;
   }
 

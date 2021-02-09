@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.Property;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -58,24 +58,16 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
   @Override
   public @NotNull JComponent createOptionsPanel() {
     Disposable disposable = Disposer.newDisposable();
-    JPanel panel = new JPanel(new GridBagLayout()) {
+    InspectionOptionsPanel panel = new InspectionOptionsPanel() {
       @Override
       public void removeNotify() {
         super.removeNotify();
         Disposer.dispose(disposable);
       }
     };
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(new JBLabel(PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches")), constraints);
+    panel.add(new JBLabel(PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches")));
     JBTextField textField = new JBTextField(fileNameMask);
-    constraints.gridy++;
-    panel.add(textField, constraints);
+    panel.add(textField, "growx");
     
     ComponentValidator validator = new ComponentValidator(disposable).withValidator(() -> {
       String text = textField.getText();

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,7 +37,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -61,15 +61,14 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
+    JPanel panel = new InspectionOptionsPanel();
     LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
                                                                                     JavaBundle
                                                                                       .message("label.minimal.reported.method.visibility"),
                                                                                     BorderLayout.WEST);
-    panel.add(component, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
-
+    panel.add(component);
 
     IntegerField minimalUsageCountEditor = new IntegerField(null, 1, Integer.MAX_VALUE);
     minimalUsageCountEditor.getValueEditor().addListener(new ValueEditor.Listener<>() {
@@ -80,8 +79,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     });
     minimalUsageCountEditor.setValue(minimalUsageCount);
     minimalUsageCountEditor.setColumns(4);
-    panel.add(LabeledComponent.create(minimalUsageCountEditor, JavaBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST),
-              new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NORTHWEST, JBUI.emptyInsets(), 0, 0));
+    panel.add(LabeledComponent.create(minimalUsageCountEditor, JavaBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST));
     return panel;
   }
 

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
@@ -17,7 +18,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
-import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -72,7 +71,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JLabel label = new JLabel(InspectionGadgetsBundle.message("if.can.be.switch.minimum.branch.option"));
     final NumberFormat formatter = NumberFormat.getIntegerInstance();
     formatter.setParseIntegerOnly(true);
@@ -93,33 +92,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         }
       }
     });
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.insets.bottom = 4;
-    constraints.weightx = 0.0;
-    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
-    constraints.fill = GridBagConstraints.NONE;
-    constraints.insets.right = 10;
-    panel.add(label, constraints);
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.insets.right = 0;
-    panel.add(valueField, constraints);
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 2;
-    final CheckBox checkBox1 = new CheckBox(InspectionGadgetsBundle.message("if.can.be.switch.int.option"), this, "suggestIntSwitches");
-    panel.add(checkBox1, constraints);
-    constraints.gridy = 2;
-    final CheckBox checkBox2 = new CheckBox(InspectionGadgetsBundle.message("if.can.be.switch.enum.option"), this, "suggestEnumSwitches");
-    panel.add(checkBox2, constraints);
-    constraints.gridy = 3;
-    constraints.weighty = 1.0;
-    final CheckBox checkBox3 =
-      new CheckBox(InspectionGadgetsBundle.message("if.can.be.switch.null.safe.option"), this, "onlySuggestNullSafe");
-    panel.add(checkBox3, constraints);
+
+    panel.row(label, valueField);
+    panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.int.option"), "suggestIntSwitches");
+    panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.enum.option"), "suggestEnumSwitches");
+    panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.null.safe.option"), "onlySuggestNullSafe");
+
     return panel;
   }
 

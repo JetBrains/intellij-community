@@ -13,6 +13,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,9 +55,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                         JBUI.emptyInsets(), 0, 0);
+    final JPanel panel = new InspectionOptionsPanel();
 
     panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.assignment"), IGNORE_UNCHECKED_ASSIGNMENT,
                             new Pass<>() {
@@ -66,7 +63,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
                               public void pass(JCheckBox cb) {
                                 IGNORE_UNCHECKED_ASSIGNMENT = cb.isSelected();
                               }
-                            }), gc);
+                            }));
 
     panel.add(createSetting(
       JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.generics.array.creation.for.vararg.parameter"), IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION,
@@ -75,7 +72,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
         public void pass(JCheckBox cb) {
           IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION = cb.isSelected();
         }
-      }), gc);
+      }));
 
     panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.call.as.member.of.raw.type"), IGNORE_UNCHECKED_CALL,
                             new Pass<>() {
@@ -83,7 +80,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
                               public void pass(JCheckBox cb) {
                                 IGNORE_UNCHECKED_CALL = cb.isSelected();
                               }
-                            }), gc);
+                            }));
 
     panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.cast"), IGNORE_UNCHECKED_CAST,
                             new Pass<>() {
@@ -91,7 +88,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
                               public void pass(JCheckBox cb) {
                                 IGNORE_UNCHECKED_CAST = cb.isSelected();
                               }
-                            }), gc);
+                            }));
 
     panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.overriding"), IGNORE_UNCHECKED_OVERRIDING,
                             new Pass<>() {
@@ -99,11 +96,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
                               public void pass(JCheckBox cb) {
                                 IGNORE_UNCHECKED_OVERRIDING = cb.isSelected();
                               }
-                            }), gc);
-
-    gc.fill = GridBagConstraints.BOTH;
-    gc.weighty = 1;
-    panel.add(Box.createVerticalBox(), gc);
+                            }));
 
     return panel;
   }

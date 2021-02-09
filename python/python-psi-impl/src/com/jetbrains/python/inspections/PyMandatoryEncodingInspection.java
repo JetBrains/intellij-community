@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
@@ -79,43 +80,13 @@ public class PyMandatoryEncodingInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel main = new JPanel(new GridBagLayout());
+    final InspectionOptionsPanel main = new InspectionOptionsPanel();
 
-    main.add(onlyPython2Box(), fixedIn(0));
-    main.add(defaultEncodingLabel(), fixedIn(1));
-    main.add(defaultEncodingBox(), resizableIn(1));
-    main.add(encodingFormatLabel(), fixedIn(2));
-    main.add(encodingFormatBox(), resizableIn(2));
+    main.add(onlyPython2Box());
+    main.row(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding")), defaultEncodingBox());
+    main.row(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format")), encodingFormatBox());
 
-    final JPanel result = new JPanel(new BorderLayout());
-    result.add(main, BorderLayout.NORTH);
-    return result;
-  }
-
-  @NotNull
-  private static GridBagConstraints fixedIn(int y) {
-    final GridBagConstraints c = new GridBagConstraints();
-
-    c.anchor = GridBagConstraints.WEST;
-    c.fill = GridBagConstraints.NONE; // do not resize
-    c.weightx = 0; // do not give extra horizontal space
-    c.gridx = 0;
-    c.gridy = y;
-
-    return c;
-  }
-
-  @NotNull
-  private static GridBagConstraints resizableIn(int y) {
-    final GridBagConstraints c = new GridBagConstraints();
-
-    c.anchor = GridBagConstraints.WEST;
-    c.fill = GridBagConstraints.HORIZONTAL; // resize horizontally
-    c.weightx = 1; // give extra horizontal space
-    c.gridx = 1;
-    c.gridy = y;
-
-    return c;
+    return main;
   }
 
   @NotNull
@@ -126,13 +97,6 @@ public class PyMandatoryEncodingInspection extends PyInspection {
     if (checkBox != null) {
       panel.add(checkBox);
     }
-    return panel;
-  }
-
-  @NotNull
-  private static JPanel defaultEncodingLabel() {
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding")));
     return panel;
   }
 
@@ -153,15 +117,8 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   }
 
   @NotNull
-  private static JPanel encodingFormatLabel() {
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format")));
-    return panel;
-  }
-
-  @NotNull
   private JComboBox<String> encodingFormatBox() {
-    final JComboBox<String> box = PythonUiService.getInstance().createComboBox(PyEncodingUtil.ENCODING_FORMAT, 250);
+    final JComboBox<String> box = PythonUiService.getInstance().createComboBox(PyEncodingUtil.ENCODING_FORMAT);
 
     box.setSelectedIndex(myEncodingFormatIndex);
     box.addActionListener(new ActionListener() {

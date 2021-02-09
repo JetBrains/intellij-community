@@ -7,6 +7,7 @@ import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.i18n.JavaI18nBundle;
@@ -231,8 +232,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   @Override
   public JComponent createOptionsPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    final JPanel panel = new JPanel(layout);
+    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
     final JCheckBox assertStatementsCheckbox = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.assert"), ignoreForAssertStatements);
     assertStatementsCheckbox.addChangeListener(new ChangeListener() {
       @Override
@@ -325,29 +325,12 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       }
     });
 
-    final GridBagConstraints gc = new GridBagConstraints();
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.insets.bottom = 2;
+    panel.add(ignoreAllButNls);
+    panel.add(reportRefs);
+    panel.add(assertStatementsCheckbox);
+    panel.add(junitAssertCheckbox);
+    panel.add(exceptionConstructorCheck);
 
-    gc.gridx = GridBagConstraints.REMAINDER;
-    gc.gridy = 0;
-    gc.weightx = 1;
-    gc.weighty = 0;
-    panel.add(ignoreAllButNls, gc);
-
-    gc.gridy ++;
-    panel.add(reportRefs, gc);
-
-    gc.gridy ++;
-    panel.add(assertStatementsCheckbox, gc);
-
-    gc.gridy ++;
-    panel.add(junitAssertCheckbox, gc);
-
-    gc.gridy ++;
-    panel.add(exceptionConstructorCheck, gc);
-
-    gc.gridy ++;
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     panel.add(new FieldPanel(specifiedExceptions,
                              null,
@@ -359,38 +342,22 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
                                  createIgnoreExceptionsConfigurationDialog(openProjects[0], specifiedExceptions).show();
                                }
                              },
-                             null), gc);
+                             null), "growx, wrap");
 
-    gc.gridy ++;
-    panel.add(classRef, gc);
+    panel.add(classRef);
+    panel.add(propertyRef);
+    panel.add(assignedToConstants);
+    panel.add(chkToString);
+    panel.add(nonAlpha);
+    panel.add(ignoreEnumConstants);
 
-    gc.gridy ++;
-    panel.add(propertyRef, gc);
-
-    gc.gridy++;
-    panel.add(assignedToConstants, gc);
-
-    gc.gridy++;
-    panel.add(chkToString, gc);
-
-    gc.gridy ++;
-    panel.add(nonAlpha, gc);
-
-    gc.gridy ++;
-    panel.add(ignoreEnumConstants, gc);
-
-    gc.gridy ++;
-    gc.anchor = GridBagConstraints.NORTHWEST;
-    gc.weighty = 1;
     final JTextField commentPattern = new JTextField(nonNlsCommentPattern);
     final FieldPanel nonNlsCommentPatternComponent =
       new FieldPanel(commentPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null,
                      () -> setNonNlsCommentPattern(commentPattern.getText()));
-    panel.add(nonNlsCommentPatternComponent, gc);
-    gc.gridy ++;
-    gc.anchor = GridBagConstraints.NORTHWEST;
-    gc.weighty = 1;
+    panel.add(nonNlsCommentPatternComponent, "growx, wrap");
+
     final JTextField literalPattern = new ExpandableTextField(text -> Collections.singletonList(text),
                                                               strings -> StringUtil.join(strings, "|"));
     literalPattern.setText(nonNlsLiteralPattern);
@@ -398,7 +365,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null,
                      () -> setNonNlsLiteralPattern(literalPattern.getText()));
-    panel.add(nonNlsStringPatternComponent, gc);
+    panel.add(nonNlsStringPatternComponent, "growx, wrap");
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
