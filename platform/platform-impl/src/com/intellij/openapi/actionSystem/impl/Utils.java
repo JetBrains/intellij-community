@@ -171,7 +171,7 @@ public final class Utils {
       }
       else if (action instanceof ActionGroup &&
                !(updater.canBePerformedCached((ActionGroup)action) &&
-                 !updater.hasVisibleChildren((ActionGroup)action))) {
+                 action instanceof AlwaysPerformingActionGroup || !updater.hasVisibleChildren((ActionGroup)action))) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
