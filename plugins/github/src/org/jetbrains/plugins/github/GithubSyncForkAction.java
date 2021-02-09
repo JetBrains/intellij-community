@@ -4,15 +4,20 @@ package org.jetbrains.plugins.github;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitSaveChangesPolicy;
@@ -30,54 +35,147 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
+import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
+import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
 
-public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingAction {
+public class GithubSyncForkAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;
   private static final String UPSTREAM_REMOTE = "upstream";
+  private static final String ORIGIN_REMOTE = "origin";
 
-  public GithubRebaseAction() {
+  public GithubSyncForkAction() {
     super(GithubBundle.messagePointer("rebase.action"),
           GithubBundle.messagePointer("rebase.action.description"),
           AllIcons.Vcs.Vendors.Github);
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e,
-                              @NotNull Project project,
-                              @NotNull GHGitRepositoryMapping repository,
-                              @NotNull GithubAccount account) {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
-    if (executor == null) return;
-
-    new RebaseTask(project, executor, Git.getInstance(), account.getServer(),
-                   repository.getGitRemote().getRepository(),
-                   repository.getRepository().getRepositoryPath()).queue();
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
   }
 
-  private static class RebaseTask extends Task.Backgroundable {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    Project project = Objects.requireNonNull(e.getData(CommonDataKeys.PROJECT));
+
+    GitRepositoryManager gitRepositoryManager = project.getServiceIfCreated(GitRepositoryManager.class);
+    if (gitRepositoryManager == null) {
+      LOG.warn("Unable to get the GitRepositoryManager service");
+      return;
+    }
+
+    if (gitRepositoryManager.getRepositories().size() > 1) {
+      GithubNotifications.showError(project,
+                                    GithubNotificationIdsHolder.REBASE_MULTI_REPO_NOT_SUPPORTED,
+                                    GithubBundle.message("rebase.error"),
+                                    GithubBundle.message("rebase.error.multi.repo.not.supported"));
+      return;
+    }
+
+    GHProjectRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GHProjectRepositoriesManager.class);
+    if (ghRepositoriesManager == null) {
+      LOG.warn("Unable to get the GHProjectRepositoriesManager service");
+      return;
+    }
+
+    GHGitRepositoryMapping originMapping = ContainerUtil.find(ghRepositoriesManager.getKnownRepositories(), mapping ->
+      mapping.getGitRemote().getRemote().getName().equals(ORIGIN_REMOTE));
+    if (originMapping == null) {
+      GithubNotifications.showError(project,
+                                    GithubNotificationIdsHolder.REBASE_REMOTE_ORIGIN_NOT_FOUND,
+                                    GithubBundle.message("rebase.error"),
+                                    GithubBundle.message("rebase.error.remote.origin.not.found"));
+      return;
+    }
+
+    GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
+    GithubServerPath serverPath = originMapping.getRepository().getServerPath();
+    List<GithubAccount> accounts = ContainerUtil.filter(authManager.getAccounts(), account -> serverPath.equals(account.getServer()));
+    if (accounts.size() == 0) {
+      GithubNotifications.showError(project,
+                                    GithubNotificationIdsHolder.REBASE_ACCOUNT_NOT_FOUND,
+                                    GithubBundle.message("rebase.error"),
+                                    GithubBundle.message("rebase.error.no.suitable.account.found"));
+      return;
+    }
+    GithubAccount githubAccount;
+    if (accounts.size() == 1) {
+      githubAccount = accounts.get(0);
+    }
+    else {
+      GithubChooseAccountDialog chooseAccountDialog = new GithubChooseAccountDialog(project,
+                                                                                    null,
+                                                                                    accounts,
+                                                                                    GithubBundle.message("account.choose.for", serverPath),
+                                                                                    false,
+                                                                                    true);
+      DialogManager.show(chooseAccountDialog);
+      if (chooseAccountDialog.isOK()) {
+        githubAccount = chooseAccountDialog.getAccount();
+      }
+      else {
+        GithubNotifications.showError(project,
+                                      GithubNotificationIdsHolder.REBASE_ACCOUNT_NOT_FOUND,
+                                      GithubBundle.message("rebase.error"),
+                                      GithubBundle.message("rebase.error.no.suitable.account.found"));
+        return;
+      }
+    }
+    if (githubAccount == null) {
+      GithubNotifications.showError(project,
+                                    GithubNotificationIdsHolder.REBASE_ACCOUNT_NOT_FOUND,
+                                    GithubBundle.message("rebase.error"),
+                                    GithubBundle.message("rebase.error.no.suitable.account.found"));
+      return;
+    }
+
+    GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(githubAccount, project);
+    if (executor == null) {
+      LOG.warn("Unable to perform the GitHub Sync Fork action. Unable to get GithubApiRequestExecutor");
+      return;
+    }
+
+    new SyncForkTask(project, executor, Git.getInstance(), githubAccount.getServer(),
+                     originMapping.getGitRemote().getRepository(),
+                     originMapping.getRepository().getRepositoryPath()).queue();
+  }
+
+  private static boolean isEnabledAndVisible(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null || project.isDefault()) return false;
+
+    GHProjectRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHProjectRepositoriesManager.class);
+    if (repositoriesManager == null) return false;
+
+    return !repositoriesManager.getKnownRepositories().isEmpty();
+  }
+
+  private static class SyncForkTask extends Task.Backgroundable {
     @NotNull private final GithubApiRequestExecutor myRequestExecutor;
     @NotNull private final Git myGit;
     @NotNull private final GithubServerPath myServer;
     @NotNull private final GitRepository myRepository;
     @NotNull private final GHRepositoryPath myRepoPath;
 
-    RebaseTask(@NotNull Project project,
-               @NotNull GithubApiRequestExecutor requestExecutor,
-               @NotNull Git git,
-               @NotNull GithubServerPath server,
-               @NotNull GitRepository repository,
-               @NotNull GHRepositoryPath repoPath) {
+    SyncForkTask(@NotNull Project project,
+                 @NotNull GithubApiRequestExecutor requestExecutor,
+                 @NotNull Git git,
+                 @NotNull GithubServerPath server,
+                 @NotNull GitRepository repository,
+                 @NotNull GHRepositoryPath repoPath) {
       super(project, GithubBundle.message("rebase.process"));
       myRequestExecutor = requestExecutor;
       myGit = git;
@@ -89,12 +187,11 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       myRepository.update();
-      String upstreamRemoteUrl = findUpstreamRemoteUrl();
-      if (upstreamRemoteUrl == null) {
-        indicator.setText(GithubBundle.message("rebase.process.configuring.upstream.remote"));
-        LOG.info("Configuring upstream remote");
-        if ((upstreamRemoteUrl = configureUpstreamRemote(indicator)) == null) return;
-      }
+
+      indicator.setText(GithubBundle.message("rebase.process.configuring.upstream.remote"));
+      LOG.info("Configuring upstream remote");
+      String upstreamRemoteUrl = configureUpstreamRemote(indicator);
+      if (upstreamRemoteUrl == null) return;
 
       GHRepositoryPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamRemoteUrl);
       if (userAndRepo == null) {
@@ -126,16 +223,6 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
       LOG.info("Rebasing current branch");
       indicator.setText(GithubBundle.message("rebase.process.rebasing.branch.onto", onto));
       rebaseCurrentBranch(indicator, onto);
-    }
-
-    @Nullable
-    private String findUpstreamRemoteUrl() {
-      return myRepository.getRemotes().stream()
-        .filter(remote -> remote.getName().equals("upstream") &&
-                          remote.getFirstUrl() != null &&
-                          myServer.matches(remote.getFirstUrl()))
-        .findFirst()
-        .map(GitRemote::getFirstUrl).orElse(null);
     }
 
     private boolean isUpstreamWithSameUsername(@NotNull ProgressIndicator indicator, @NotNull GHRepositoryPath userAndRepo) {
@@ -193,6 +280,13 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
       }
 
       String parentRepoUrl = GithubGitHelper.getInstance().getRemoteUrl(myServer, repositoryInfo.getParent().getFullPath());
+
+      GitRemote upstreamRemote = ContainerUtil.find(myRepository.getRemotes(), remote ->
+        remote.getName().equals(UPSTREAM_REMOTE) && StringUtil.equals(remote.getFirstUrl(), parentRepoUrl));
+      if (upstreamRemote != null) {
+        LOG.info("Correct upstream remote already exists");
+        return parentRepoUrl;
+      }
 
       LOG.info("Adding GitHub parent as a remote host");
       indicator.setText(GithubBundle.message("rebase.process.adding.github.parent.as.remote.host"));

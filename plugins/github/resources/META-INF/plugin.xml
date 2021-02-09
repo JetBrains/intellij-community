@@ -110,7 +110,7 @@
     <action id="Github.Share" class="org.jetbrains.plugins.github.GithubShareAction">
       <add-to-group group-id="Vcs.Import"/>
     </action>
-    <action id="Github.Rebase" class="org.jetbrains.plugins.github.GithubRebaseAction">
+    <action id="Github.Sync.Fork" class="org.jetbrains.plugins.github.GithubSyncForkAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
     <action id="Github.Create.Pull.Request" class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreatePullRequestAction">
@@ -140,7 +140,7 @@
       <reference ref="Github.Share"/>
       <reference ref="Github.Create.Pull.Request"/>
       <reference ref="Github.View.Pull.Request"/>
-      <reference ref="Github.Rebase"/>
+      <reference ref="Github.Sync.Fork"/>
       <reference ref="Github.Create.Gist"/>
       <reference ref="Github.Open.In.Browser"/>
 
