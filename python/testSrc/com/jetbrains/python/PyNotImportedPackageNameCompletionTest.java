@@ -15,6 +15,13 @@ public class PyNotImportedPackageNameCompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
   }
 
+  public void testCompletionForAlias() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion/notImportedPackageName/";
