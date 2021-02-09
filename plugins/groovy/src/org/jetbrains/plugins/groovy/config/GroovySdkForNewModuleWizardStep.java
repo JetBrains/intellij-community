@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +25,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 public final class GroovySdkForNewModuleWizardStep extends ModuleWizardStep {
-
-  public static final Key<Boolean> CREATE_APP_STRUCTURE = Key.create("CREATE_MVC_APP_STRUCTURE");
 
   private final String myBasePath;
   private final LibrariesContainer myLibrariesContainer;
@@ -57,7 +54,6 @@ public final class GroovySdkForNewModuleWizardStep extends ModuleWizardStep {
         if (myLibraryCompositionSettings != null) {
           myLibraryCompositionSettings.addLibraries(rootModel, new ArrayList<>(), myLibrariesContainer);
         }
-        module.putUserData(CREATE_APP_STRUCTURE, Boolean.TRUE);
       }
     };
   }
