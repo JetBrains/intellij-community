@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiDirectory
@@ -14,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -38,17 +40,23 @@ class PyModuleNameCompletionContributor : CompletionContributor() {
 
   fun doFillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val autoPopupController = AutoPopupController.getInstance(parameters.originalFile.project)
+    val packageInsertHandler = InsertHandler<LookupElement> { context, _ ->
+      // add dot for PyUnresolvedModuleAttributeCompletionContributor to work
+      context.document.insertString(context.tailOffset, ".")
+      context.editor.caretModel.moveToOffset(context.tailOffset)
+      autoPopupController.autoPopupMemberLookup(context.editor, null)
+    }
+    val commonAlias = PyPackageAliasesProvider.commonImportAliases[result.prefixMatcher.prefix]
+    if (commonAlias != null) {
+      result.addElement(LookupElementBuilder.create(result.prefixMatcher.prefix).withTypeText(commonAlias).withInsertHandler(packageInsertHandler))
+      return
+    }
     getCompletionVariants(parameters.position.parent, parameters.originalFile).asSequence()
       .filterIsInstance<LookupElementBuilder>()
       .filter { result.prefixMatcher.prefixMatches(it.lookupString) }
       .filterNot { it.lookupString.startsWith('_') }
       .map {
-        it.withInsertHandler(InsertHandler { context, _ ->
-          // add dot for PyUnresolvedModuleAttributeCompletionContributor to work
-          context.document.insertString(context.tailOffset, ".")
-          context.editor.caretModel.moveToOffset(context.tailOffset)
-          autoPopupController.autoPopupMemberLookup(context.editor, null)
-        })
+        it.withInsertHandler(packageInsertHandler)
       }
       .forEach { result.addElement(it) }
   }
