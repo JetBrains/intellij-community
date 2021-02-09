@@ -81,6 +81,13 @@
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </group>
 
+    <group id="Internal.Space" internal="true" popup="true">
+      <action internal="true"
+              class="com.intellij.space.actions.internal.SpaceReceivedPacketsAction"
+              id="com.intellij.space.actions.internal.SpaceReceivedPacketsAction"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
 
     <action id="com.intellij.space.vcs.clone.SpaceCloneAction"
             class="com.intellij.space.vcs.clone.SpaceCloneAction"/>
