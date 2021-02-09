@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
@@ -31,9 +30,9 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.trimMiddle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -95,8 +94,7 @@ fun guessCurrentProject(component: JComponent?): Project {
          ?: ProjectManager.getInstance().defaultProject
 }
 
-fun currentOrDefaultProject(project: Project?): Project =
-  project ?: ProjectManager.getInstance().defaultProject
+fun currentOrDefaultProject(project: Project?): Project = project ?: ProjectManager.getInstance().defaultProject
 
 inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
   val model = ModuleManager.getInstance(this).modifiableModel
@@ -109,7 +107,7 @@ inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() 
 
 fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
   return try {
-    Paths.get(FileUtil.toSystemDependentName(parent.path), Project.DIRECTORY_STORE_FOLDER).exists()
+    Files.exists(Path.of(parent.path, Project.DIRECTORY_STORE_FOLDER))
   }
   catch (e: InvalidPathException) {
     false
