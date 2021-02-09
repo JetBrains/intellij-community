@@ -1335,7 +1335,7 @@
     <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider"/>
     <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" icon="AllIcons.Nodes.Toolbox"/>
 
-    <group id="CopyReferencePopupGroup" class="com.intellij.ide.actions.CopyReferencePopup">
+    <group id="CopyReferencePopupGroup" class="com.intellij.ide.actions.CopyReferencePopup" popup="true">
       <group id="CopyFileReference">
         <reference ref="CopyAbsolutePath" />
         <reference ref="CopyFileName" />
