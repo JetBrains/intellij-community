@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -47,25 +48,18 @@ internal class RootsChangeWatcher(val project: Project) {
 
   init {
     VirtualFileManager.getInstance().addAsyncFileListener(object : AsyncFileListener {
+      @Volatile
       var result: ProjectRootManagerImpl.RootsChangeType? = null
-      val changedUrlsList = mutableListOf<Pair<String, String>>()
-      val changedModuleStorePaths = mutableListOf<Pair<Module, Path>>()
+      val changedUrlsList = ContainerUtil.createConcurrentList<Pair<String, String>>()
+      val changedModuleStorePaths = ContainerUtil.createConcurrentList<Pair<Module, Path>>()
 
       override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier {
         result = null
         changedUrlsList.clear()
         changedModuleStorePaths.clear()
 
-        val rootChangeForbidden = isRootChangeForbidden()
         val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
         events.forEach { event ->
-          if (rootChangeForbidden) {
-            if (event is VFilePropertyChangeEvent) propertyChanged(event)
-            val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
-            if (oldUrl != newUrl) changedUrlsList.add(Pair(oldUrl, newUrl))
-            return@forEach
-          }
-
           when (event) {
             is VFileDeleteEvent -> calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(event.file.url),
                                                                     ProjectRootManagerImpl.RootsChangeType.ROOTS_REMOVED)
