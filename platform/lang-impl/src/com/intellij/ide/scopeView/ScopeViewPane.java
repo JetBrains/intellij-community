@@ -68,7 +68,8 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private JScrollPane myScrollPane;
 
   private static Project checkApplicability(@NotNull Project project) {
-    if (PlatformUtils.isPyCharmEducational()) {
+    // TODO: make a proper extension point here
+    if (PlatformUtils.isPyCharmEducational() || PlatformUtils.isRider()) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
     return project;
