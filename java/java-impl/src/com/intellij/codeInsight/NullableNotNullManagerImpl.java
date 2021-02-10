@@ -43,6 +43,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   private List<String> myDefaultNullables;
   private List<String> myDefaultNotNulls;
+  private List<String> myDefaultUnknowns;
   private List<String> myDefaultAll;
   public String myDefaultNullable = NULLABLE;
   public String myDefaultNotNull = NOT_NULL;
@@ -73,8 +74,8 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensions();
     myDefaultNullables = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NULLABLE));
     myDefaultNotNulls = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NOT_NULL));
-    myDefaultAll = StreamEx.of(myAnnotationSupports).flatCollection(s -> s.getNullabilityAnnotations(Nullability.UNKNOWN))
-      .prepend(myDefaultNotNulls).prepend(myDefaultNullables).toList();
+    myDefaultUnknowns = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.UNKNOWN));
+    myDefaultAll = StreamEx.of(myDefaultNullables, myDefaultNotNulls, myDefaultUnknowns).toFlatList(Function.identity());
   }
 
   @Override
@@ -133,6 +134,20 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @NotNull
   List<String> getAllDefaultAnnotations() {
     return myDefaultAll;
+  }
+
+  @Override
+  public @NotNull Optional<Nullability> getAnnotationNullability(String name) {
+    if (myNotNulls.contains(name)) {
+      return Optional.of(Nullability.NOT_NULL);
+    }
+    if (myNullables.contains(name)) {
+      return Optional.of(Nullability.NULLABLE);
+    }
+    if (myDefaultUnknowns.contains(name)) {
+      return Optional.of(Nullability.UNKNOWN);
+    }
+    return Optional.empty();
   }
 
   @Override

@@ -13,10 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
 
@@ -45,6 +42,8 @@ public abstract class NullableNotNullManager {
    * @return list of all default non-container annotations that affect nullability (including nullable, not-null and unknown)
    */
   abstract @NotNull List<String> getAllDefaultAnnotations();
+
+  public abstract @NotNull Optional<Nullability> getAnnotationNullability(String name);
 
   public static NullableNotNullManager getInstance(Project project) {
     return ServiceManager.getService(project, NullableNotNullManager.class);

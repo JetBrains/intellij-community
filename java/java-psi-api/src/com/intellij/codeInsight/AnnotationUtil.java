@@ -812,13 +812,26 @@ public class AnnotationUtil {
     PsiType type = null;
     if (owner instanceof PsiModifierList) {
       PsiElement parent = ((PsiModifierList)owner).getParent();
+      PsiTypeElement typeElement = null;
       if (parent instanceof PsiVariable) {
         type = ((PsiVariable)parent).getType();
+        typeElement = ((PsiVariable)parent).getTypeElement();
       }
       if (parent instanceof PsiMethod) {
         type = ((PsiMethod)parent).getReturnType();
+        typeElement = ((PsiMethod)parent).getReturnTypeElement();
       }
       if (type != null) {
+        if (typeElement != null) {
+          PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
+          // See com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl.getOwner
+          while (ref != null && ref.isQualified()) {
+            ref = ObjectUtils.tryCast(ref.getQualifier(), PsiJavaCodeReferenceElement.class);
+          }
+          if (ref != null) {
+            return JavaPsiFacade.getElementFactory(annotation.getProject()).createType(ref);
+          }
+        }
         if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
           return type.getDeepComponentType();
         }

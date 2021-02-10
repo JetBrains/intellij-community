@@ -185,11 +185,11 @@ public final class DfaPsiUtil {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
-      if (nnn.getNullables().contains(qualifiedName) && !shouldIgnoreAnnotation(annotation)) {
-        return new NullabilityAnnotationInfo(annotation, Nullability.NULLABLE, false);
-      }
-      if (nnn.getNotNulls().contains(qualifiedName)) {
-        return new NullabilityAnnotationInfo(annotation, Nullability.NOT_NULL, false);
+      Optional<Nullability> optionalNullability = nnn.getAnnotationNullability(qualifiedName);
+      if (optionalNullability.isPresent()) {
+        Nullability nullability = optionalNullability.get();
+        if (nullability == Nullability.NULLABLE && shouldIgnoreAnnotation(annotation)) continue;
+        return new NullabilityAnnotationInfo(annotation, nullability, false);
       }
     }
     if (eachType instanceof PsiClassType) {
