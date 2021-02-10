@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -88,20 +89,22 @@ public final class LombokProcessorUtil {
       return Collections.emptyList();
     }
     Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation)onXValue, "value", PsiAnnotation.class);
-    Collection<String> annotationStrings = new ArrayList<>();
-    for (PsiAnnotation annotation : annotations) {
-      PsiAnnotationParameterList params = annotation.getParameterList();
-      annotationStrings.add(annotation.getQualifiedName() + params.getText());
-    }
-    return annotationStrings;
+    return collectAnnotationStrings(annotations);
   }
 
   public static Collection<String> getNewOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
     final Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class);
-    final Collection<String> annotationStrings = new ArrayList<>();
+    return collectAnnotationStrings(annotations);
+  }
+
+  private static Collection<String> collectAnnotationStrings(Collection<PsiAnnotation> annotations) {
+    Collection<String> annotationStrings = new ArrayList<>();
     for (PsiAnnotation annotation : annotations) {
-      PsiAnnotationParameterList params = annotation.getParameterList();
-      annotationStrings.add(annotation.getQualifiedName() + params.getText());
+      final String annotationQualifiedName = annotation.getQualifiedName();
+      if (!StringUtil.isEmptyOrSpaces(annotationQualifiedName)) {
+        PsiAnnotationParameterList params = annotation.getParameterList();
+        annotationStrings.add(annotationQualifiedName + params.getText());
+      }
     }
     return annotationStrings;
   }
