@@ -497,6 +497,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       processAllBreakpoints(!muted, muted);
     }
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
+    myDispatcher.getMulticaster().breakpointsMuted(muted);
   }
 
   @Override
