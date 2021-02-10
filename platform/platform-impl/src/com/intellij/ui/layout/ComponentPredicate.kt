@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.ui.DocumentAdapter
 import javax.swing.AbstractButton
 import javax.swing.JComboBox
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
+import javax.swing.text.JTextComponent
 
 abstract class ComponentPredicate : () -> Boolean {
   abstract fun addListener(listener: (Boolean) -> Unit)
@@ -28,6 +32,22 @@ class ComboBoxPredicate<T>(private val comboBox: JComboBox<T>, private val predi
     comboBox.addActionListener {
       listener(predicate(comboBox.selectedItem as T?))
     }
+  }
+}
+
+fun JTextComponent.enteredTextSatisfies(predicate: (String) -> Boolean): ComponentPredicate {
+  return TextComponentPredicate(this, predicate)
+}
+
+private class TextComponentPredicate(private val component: JTextComponent, private val predicate: (String) -> Boolean) : ComponentPredicate() {
+  override fun invoke(): Boolean = predicate(component.text)
+
+  override fun addListener(listener: (Boolean) -> Unit) {
+    component.document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        listener(invoke())
+      }
+    })
   }
 }
 

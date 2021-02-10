@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
@@ -50,6 +51,7 @@ class UpdateFromSourcesDialog(private val project: Project,
       row {
         checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.restart.automatically"),
                  { state.restartAutomatically }, { state.restartAutomatically = it })
+          .visibleIf(pathField.textField.enteredTextSatisfies { FileUtil.pathsEqual(it, PathManager.getHomePath()) })
       }
       row {
         checkBox(UIBundle.message("dialog.options.do.not.show"), { !state.showSettings }, { state.showSettings = !it },
