@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
@@ -532,7 +531,7 @@ final class FileTypeDetectionService implements Disposable {
       if (toLog()) {
         log("F: processFirstBytes(): inputStream.read() returned "+n+"; retrying with read action. stream="+ streamInfo(stream));
       }
-      n = ReadAction.compute(() -> stream.read(buffer, 0, length));
+      n = stream.read(buffer, 0, length);
       if (toLog()) {
         log("F: processFirstBytes(): under read action inputStream.read() returned "+n+"; stream="+ streamInfo(stream));
       }
