@@ -576,6 +576,7 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/IntelliLang/intellij.java.langInjection.iml" filepath="$PROJECT_DIR$/intellij/plugins/IntelliLang/intellij.java.langInjection.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/IntelliLang/intellilang-jps-plugin/intellij.java.langInjection.jps.iml" filepath="$PROJECT_DIR$/intellij/plugins/IntelliLang/intellilang-jps-plugin/intellij.java.langInjection.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/java/manifest/intellij.java.manifest.iml" filepath="$PROJECT_DIR$/intellij/java/manifest/intellij.java.manifest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/java/java-ml-local-models/intellij.java.ml.models.local.iml" filepath="$PROJECT_DIR$/intellij/java/java-ml-local-models/intellij.java.ml.models.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/java/plugin/intellij.java.plugin.iml" filepath="$PROJECT_DIR$/intellij/java/plugin/intellij.java.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/java/java-psi-api/intellij.java.psi.iml" filepath="$PROJECT_DIR$/intellij/java/java-psi-api/intellij.java.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/java/java-psi-impl/intellij.java.psi.impl.iml" filepath="$PROJECT_DIR$/intellij/java/java-psi-impl/intellij.java.psi.impl.iml" />
@@ -635,6 +636,7 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/maven/maven3-server-impl/intellij.maven.server.m3.impl.iml" filepath="$PROJECT_DIR$/intellij/plugins/maven/maven3-server-impl/intellij.maven.server.m3.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/maven/maven30-server-impl/intellij.maven.server.m30.impl.iml" filepath="$PROJECT_DIR$/intellij/plugins/maven/maven30-server-impl/intellij.maven.server.m30.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/maven/maven36-server-impl/intellij.maven.server.m36.impl.iml" filepath="$PROJECT_DIR$/intellij/plugins/maven/maven36-server-impl/intellij.maven.server.m36.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/plugins/ml-local-models/intellij.ml.models.local.iml" filepath="$PROJECT_DIR$/intellij/plugins/ml-local-models/intellij.ml.models.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/built-in-server/client/node-rpc-client/intellij.nodeRpcClient.iml" filepath="$PROJECT_DIR$/intellij/platform/built-in-server/client/node-rpc-client/intellij.nodeRpcClient.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/package-search/intellij.packageSearch.iml" filepath="$PROJECT_DIR$/intellij/plugins/package-search/intellij.packageSearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/package-search/pkgs-tests/intellij.packageSearch.tests.iml" filepath="$PROJECT_DIR$/intellij/plugins/package-search/pkgs-tests/intellij.packageSearch.tests.iml" />
