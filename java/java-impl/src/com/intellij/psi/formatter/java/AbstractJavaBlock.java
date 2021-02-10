@@ -175,7 +175,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                 @NotNull AlignmentStrategy alignmentStrategy,
                                 int startOffset,
                                 @NotNull FormattingMode formattingMode) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, getJavaIndentOptions(settings)) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings) : indent;
     IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
     PsiElement childPsi = child.getPsi();
@@ -241,7 +241,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                    @NotNull CommonCodeStyleSettings settings,
                                    @NotNull JavaCodeStyleSettings javaSettings,
                                    @NotNull FormattingMode formattingMode) {
-    final Indent indent = getDefaultSubtreeIndent(child, getJavaIndentOptions(settings));
+    final Indent indent = getDefaultSubtreeIndent(child, settings);
     return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy(), formattingMode);
   }
 
@@ -293,7 +293,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
 
   @Nullable
-  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings) {
+    CommonCodeStyleSettings.IndentOptions indentOptions= getJavaIndentOptions(settings);
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
     if (childNodeType == JavaElementType.ANNOTATION) {
@@ -315,6 +316,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
       if (defaultChildIndent != null) return defaultChildIndent;
       if (parent.getPsi() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
+        if (settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+            settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2) {
+          return Indent.getNormalIndent();
+        }
         return Indent.getNoneIndent();
       }
     }
