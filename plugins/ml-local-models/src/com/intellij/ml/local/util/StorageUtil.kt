@@ -31,7 +31,7 @@ object StorageUtil {
 
   fun saveInfo(version: Int, isValid: Boolean, storageDirectory: Path) {
     val infoFile = storageDirectory.resolve(STORAGE_INFO_FILE)
-    infoFile.writeText(GSON.toJson(StorageInfo(version, isValid)))
+    infoFile.writeText(GSON.toJson(StorageInfo(version, isValid, System.currentTimeMillis())))
   }
 
   fun <K> PersistentHashMap<K, *>.isEmpty(): Boolean = this.processKeysWithExistingMapping { false }
@@ -58,5 +58,5 @@ object StorageUtil {
     saveInfo(version, true, storageDirectory)
   }
 
-  private data class StorageInfo(val version: Int, val isValid: Boolean)
+  private data class StorageInfo(val version: Int, val isValid: Boolean, val timestamp: Long)
 }
