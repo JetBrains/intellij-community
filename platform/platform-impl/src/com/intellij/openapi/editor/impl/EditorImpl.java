@@ -104,6 +104,7 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
 import java.awt.font.TextHitInfo;
 import java.awt.geom.Point2D;
+import java.awt.im.InputContext;
 import java.awt.im.InputMethodRequests;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
@@ -3851,7 +3852,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (composedTextExists()) {
-        myEditorComponent.getInputContext().endComposition();
+        InputContext inputContext = myEditorComponent.getInputContext();
+        if (inputContext != null) {
+          inputContext.endComposition();
+        }
       }
 
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA ||
