@@ -105,6 +105,12 @@ object Main {
         { incomingConnectionHandler.dispatch(BuildEvent(progressEventConverter.convert(it))) },
         targetBuildParameters.progressListenerOperationTypes
       )
+      addProgressListener(org.gradle.tooling.ProgressListener {
+        val description = it.description
+        if (description.isNotEmpty()) {
+          incomingConnectionHandler.dispatch(BuildEvent(description))
+        }
+      })
       withArguments(targetBuildParameters.arguments)
       setJvmArguments(targetBuildParameters.jvmArguments)
 

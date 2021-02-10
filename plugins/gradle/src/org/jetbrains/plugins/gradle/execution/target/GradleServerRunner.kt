@@ -55,7 +55,15 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
     val targetBuildParameters = serverEnvironmentSetup.targetBuildParameters
     val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters) {
-      consumerOperationParameters.buildProgressListener.onEvent(it)
+      if (it is String) {
+        consumerOperationParameters.progressListener.run {
+          onOperationStart(it)
+          onOperationEnd()
+        }
+      }
+      else {
+        consumerOperationParameters.buildProgressListener.onEvent(it)
+      }
     }
 
     val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true) null
