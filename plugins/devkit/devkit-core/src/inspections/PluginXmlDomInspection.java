@@ -192,6 +192,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       else if (element instanceof Dependency) {
         annotateDependency((Dependency)element, holder);
       }
+      else if (element instanceof DependencyDescriptor) {
+        annotateDependencyDescriptor((DependencyDescriptor)element, holder);
+      }
+      else if (element instanceof ContentDescriptor) {
+        annotateContentDescriptor((ContentDescriptor)element, holder);
+      }
       else if (element instanceof Extensions) {
         annotateExtensions((Extensions)element, holder);
       }
@@ -235,6 +241,29 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotatePsiClassValue(domValue, holder);
       }
     }
+  }
+
+  private static void annotateDependencyDescriptor(DependencyDescriptor descriptor, DomElementAnnotationHolder holder) {
+    if (isIdeaProjectOrJetBrains(descriptor)) return;
+
+    highlightJetbrainsOnly(descriptor, holder);
+  }
+
+  private static void annotateContentDescriptor(ContentDescriptor descriptor, DomElementAnnotationHolder holder) {
+    if (isIdeaProjectOrJetBrains(descriptor)) return;
+
+    highlightJetbrainsOnly(descriptor, holder);
+  }
+
+  private static boolean isIdeaProjectOrJetBrains(DomElement element) {
+    final Module module = element.getModule();
+    if (module == null) return true;
+
+    if (PsiUtil.isIdeaProject(module.getProject())) return true;
+
+    final IdeaPlugin ideaPlugin = element.getParentOfType(IdeaPlugin.class, false);
+    assert ideaPlugin != null;
+    return PluginManagerCore.VENDOR_JETBRAINS.equals(ideaPlugin.getVendor().getValue());
   }
 
   private static void annotatePsiClassValue(GenericDomValue domValue, DomElementAnnotationHolder holder) {
@@ -402,6 +431,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (isNotIdeaProject && !DomUtil.hasXml(ideaPlugin.getVendor())) {
       holder.createProblem(ideaPlugin, DevKitBundle.message("inspections.plugin.xml.vendor.must.be.specified"),
                            new AddMissingMainTag(DevKitBundle.message("inspections.plugin.xml.add.vendor.tag"), ideaPlugin.getVendor(), ""));
+    }
+
+    if (DomUtil.hasXml(ideaPlugin.getPackage()) && !isIdeaProjectOrJetBrains(ideaPlugin)) {
+      highlightJetbrainsOnly(ideaPlugin.getPackage(), holder);
     }
   }
 
@@ -1092,6 +1125,14 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (highlightWholeElement) {
       problem.highlightWholeElement();
     }
+  }
+
+  private static void highlightJetbrainsOnly(DomElement element, DomElementAnnotationHolder holder) {
+    holder.createProblem(element, ProblemHighlightType.WARNING,
+                         DevKitBundle.message("inspections.plugin.xml.jetbrains.only.api",
+                                              ApiStatus.Experimental.class.getCanonicalName()),
+                         null)
+      .highlightWholeElement();
   }
 
   private static void highlightExperimental(DomElement element, DomElementAnnotationHolder holder) {
