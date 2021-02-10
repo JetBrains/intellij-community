@@ -82,7 +82,9 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           val name = QualifiedName.fromDottedString(item.lookupString).removeLastComponent().toString()
           val commonAlias = PyPackageAliasesProvider.commonImportAliases[name]
           val nameToImport = commonAlias ?: name
-          AddImportHelper.addImportStatement(context.file, nameToImport, if (commonAlias != null) name else null, null, ref?.element as? PyElement)
+          AddImportHelper.addImportStatement(context.file, nameToImport, if (commonAlias != null) name else null,
+                                             AddImportHelper.getImportPriority(context.file, psiElement.containingFile),
+                                             ref?.element as? PyElement)
         }
       }
     }
@@ -134,14 +136,15 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           result.restartCompletionOnAnyPrefixChange()
           return
         }
-        val scope = PySearchUtilBase.excludeSdkTestsScope(project)
+        val scope = PySearchUtilBase.defaultSuggestionScope(parameters.originalFile)
         PyQualifiedNameCompletionMatcher.processMatchingExportedNames(
           packageName.append(attribute), if (commonAlias != null) qualifiedName else null, parameters.originalFile, scope,
           Processor {
             ProgressManager.checkCanceled()
             if (suggestedQualifiedNames.add(it.qualifiedName.toString())) {
               resultMatchingCompleteReference.addElement(LookupElementBuilder
-                                                           .createWithSmartPointer(it.qualifiedNameWithUserTypedAlias.toString(), it.element)
+                                                           .createWithSmartPointer(it.qualifiedNameWithUserTypedAlias.toString(),
+                                                                                   it.element)
                                                            .withIcon(it.element.getIcon(0))
                                                            .withInsertHandler(getInsertHandler(it.element, parameters.position)))
             }

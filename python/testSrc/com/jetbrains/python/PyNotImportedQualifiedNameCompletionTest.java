@@ -73,6 +73,13 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
   }
 
+  public void testUseImportPriorityWhenAddingImport() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/main.after.py");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion/notImportedQualifiedName/";
