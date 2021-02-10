@@ -127,7 +127,7 @@ public final class DocumentUndoProvider implements DocumentListener {
     VirtualFile file = ref.getFile();
 
     // Allow undo even from refresh if requested
-    if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
+    if (file != null && UndoUtil.isForceUndoFlagSet(file)) {
       return true;
     }
     return !UndoManagerImpl.isRefresh() || undoManager.isUndoOrRedoAvailable(ref);

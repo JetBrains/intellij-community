@@ -157,7 +157,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   private static boolean isUndoable(@NotNull VFileEvent e, @NotNull VirtualFile file) {
-    return !e.isFromRefresh() || file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE;
+    return !e.isFromRefresh() || UndoUtil.isForceUndoFlagSet(file);
   }
 
   private void registerUndoableAction(@NotNull VirtualFile file) {

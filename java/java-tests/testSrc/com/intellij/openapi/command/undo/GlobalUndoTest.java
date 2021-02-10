@@ -532,7 +532,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       FileUtil.writeToFile(ioFile, "content".getBytes(Charsets.UTF_8));
       ioFile.setLastModified(f.getTimeStamp() + 2000);
 
-      f.putUserData(UndoConstants.FORCE_RECORD_UNDO, true);
+      UndoUtil.setForceUndoFlag(f, true);
       f.refresh(false, true);
     });
 

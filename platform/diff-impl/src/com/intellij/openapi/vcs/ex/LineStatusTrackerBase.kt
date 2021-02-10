@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.DiffBundle

@@ -7,11 +7,14 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -165,7 +168,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
                   document.setText(text);
                   FileDocumentManager.getInstance().saveDocument(document);
                 });
-                file.putUserData(UndoConstants.FORCE_RECORD_UNDO, null);
+                UndoUtil.setForceUndoFlag(file, false);
               }, message("sh.fmt.reformat.code.with", getId()), null, document);
             });
           }

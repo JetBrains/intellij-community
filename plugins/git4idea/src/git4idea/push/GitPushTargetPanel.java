@@ -419,8 +419,13 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myTargetEditor.addHierarchyListener(new HierarchyListener() {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && !myTargetEditor.isShowing()) {
-          UndoUtil.disableUndoFor(myTargetEditor.getDocument());
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+          if (myTargetEditor.isShowing()) {
+            UndoUtil.enableUndoFor(myTargetEditor.getDocument());
+          }
+          else {
+            UndoUtil.disableUndoFor(myTargetEditor.getDocument());
+          }
         }
       }
     });
