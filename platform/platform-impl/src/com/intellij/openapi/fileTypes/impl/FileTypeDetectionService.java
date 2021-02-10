@@ -590,7 +590,7 @@ final class FileTypeDetectionService implements Disposable {
     if (content == null) {
       int bufferLength = getDetectFileBufferSize(file);
       try {
-        return ProgressManager.getInstance().isInNonCancelableSection() && ApplicationManager.getApplication().isWriteThread()
+        return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteThread()
                ? readFirstBytesFromFile(file, bufferLength)
                : myReadFirstBytesFromFileRelay.accessDiskWithCheckCanceled(Pair.create(file, bufferLength));
       }
