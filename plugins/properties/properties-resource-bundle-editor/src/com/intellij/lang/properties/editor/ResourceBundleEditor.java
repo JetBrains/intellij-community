@@ -820,7 +820,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     }
 
     @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
       return false;
     }
 

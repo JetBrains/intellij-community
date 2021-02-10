@@ -18,6 +18,7 @@ package org.intellij.images.editor.impl;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.TransferableFileEditorState;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public class ImageFileEditorState implements TransferableFileEditorState, Serial
   }
 
   @Override
-  public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+  public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
     return otherState instanceof ImageFileEditorState;
   }
 

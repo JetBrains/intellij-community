@@ -49,7 +49,7 @@ public class DesignerEditorState implements FileEditorState {
   }
 
   @Override
-  public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+  public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
     return otherState instanceof DesignerEditorState;
   }
 

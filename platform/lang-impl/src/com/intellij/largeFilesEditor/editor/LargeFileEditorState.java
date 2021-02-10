@@ -4,13 +4,14 @@ package com.intellij.largeFilesEditor.editor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 class LargeFileEditorState implements FileEditorState {
   long caretPageNumber = 0;
   int caretSymbolOffsetInPage = 0;
 
   @Override
-  public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+  public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
     if (otherState instanceof LargeFileEditorState) {
       LargeFileEditorState state = (LargeFileEditorState)otherState;
       return caretPageNumber == state.caretPageNumber

@@ -96,15 +96,11 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
                                                                         final boolean focusEditor,
                                                                         boolean searchForSplitter) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject,
-                                                  () -> result.set(openFileImpl3(new OpenFileDescriptor(myProject, file), focusEditor)),
-                                                  "", null);
-    return result.get();
-
+    return openFileInCommand(new OpenFileDescriptor(myProject, file));
   }
 
-  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(FileEditorNavigatable openFileDescriptor, boolean focusEditor) {
+  @NotNull
+  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull FileEditorNavigatable openFileDescriptor) {
     VirtualFile file = openFileDescriptor.getFile();
     boolean isNewEditor = !myVirtualFile2Editor.containsKey(file);
 
@@ -132,7 +128,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     return result;
   }
 
-  private void modifyTabWell(Runnable tabWellModification) {
+  private void modifyTabWell(@NotNull Runnable tabWellModification) {
     if (myProject.isDisposed()) return;
 
     FileEditor lastFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
@@ -189,7 +185,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   private String createNewTabbedContainerName() {
     counter++;
-    return "SplitTabContainer" + ((Object) counter).toString();
+    return "SplitTabContainer" + counter;
   }
 
 
@@ -441,11 +437,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject,
-                                                  () -> result.set(openFileImpl3(descriptor, focusEditor)),
-                                                  "", null);
-    Pair<FileEditor[], FileEditorProvider[]> pair = result.get();
+    Pair<FileEditor[], FileEditorProvider[]> pair = openFileInCommand(descriptor);
 
     for (FileEditor editor : pair.first) {
       if (editor instanceof TextEditor) {
@@ -453,6 +445,13 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       }
     }
     return null;
+  }
+
+  @NotNull
+  private Pair<FileEditor[], FileEditorProvider[]> openFileInCommand(@NotNull FileEditorNavigatable descriptor) {
+    Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(descriptor)), "", null);
+    return result.get();
   }
 
   @NotNull
@@ -493,11 +492,8 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject,
-                                                  () -> result.set(openFileImpl3(descriptor, focusEditor)),
-                                                  "", null);
-    return Arrays.asList(result.get().first);
+    Pair<FileEditor[], FileEditorProvider[]> pair = openFileInCommand(descriptor);
+    return Arrays.asList(pair.first);
   }
 
   @Override

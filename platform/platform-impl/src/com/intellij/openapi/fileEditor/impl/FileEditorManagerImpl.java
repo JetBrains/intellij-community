@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
@@ -215,27 +214,26 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       return;
     }
     if (editor instanceof EditorEx) {
-      ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(@NotNull Editor editor) {
-          Component comp = editor.getComponent();
-          while (comp != getMainSplitters() && comp != null) {
-            Component parent = comp.getParent();
-            if (parent instanceof Splitter) {
-              Splitter splitter = (Splitter)parent;
-              if ((splitter.getFirstComponent() == comp
-                   && (splitter.getProportion() == splitter.getMinProportion(true) || splitter.getProportion() == splitter.getMinimumProportion())) ||
-                  (splitter.getProportion() == splitter.getMinProportion(false) || splitter.getProportion() == splitter.getMaximumProportion())) {
-                Set<kotlin.Pair<Splitter, Boolean>> pairs = HideAllToolWindowsAction.Companion.getSplittersToMaximize(project, editor);
-                for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
-                  Splitter s = pair.getFirst();
-                  s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
-                }
-                break;
+      ((EditorEx)editor).addFocusListener(editor1 -> {
+        Component comp = editor1.getComponent();
+        while (comp != getMainSplitters() && comp != null) {
+          Component parent = comp.getParent();
+          if (parent instanceof Splitter) {
+            Splitter splitter = (Splitter)parent;
+            if ((splitter.getFirstComponent() == comp
+                 && (splitter.getProportion() == splitter.getMinProportion(true) ||
+                     splitter.getProportion() == splitter.getMinimumProportion())) ||
+                splitter.getProportion() == splitter.getMinProportion(false)
+                || splitter.getProportion() == splitter.getMaximumProportion()) {
+              Set<kotlin.Pair<Splitter, Boolean>> pairs = HideAllToolWindowsAction.Companion.getSplittersToMaximize(project, editor1);
+              for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
+                Splitter s = pair.getFirst();
+                s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
               }
+              break;
             }
-            comp = parent;
           }
+          comp = parent;
         }
       });
     }
@@ -691,13 +689,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public void closeFile(@NotNull VirtualFile file, boolean moveFocus, boolean closeAllCopies) {
     assertDispatchThread();
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> closeFileImpl(file, moveFocus, closeAllCopies), "", null);
-  }
-
-  private void closeFileImpl(@NotNull VirtualFile file, boolean moveFocus, boolean closeAllCopies) {
-    assertDispatchThread();
-    ourOpenFilesSetModificationCount.incrementAndGet();
-    runChange(splitters -> splitters.closeFile(file, moveFocus), closeAllCopies ? null : getActiveSplittersSync());
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      ourOpenFilesSetModificationCount.incrementAndGet();
+      runChange(splitters -> splitters.closeFile(file, moveFocus), closeAllCopies ? null : getActiveSplittersSync());
+    }, "", null);
   }
 
   //-------------------------------------- Open File ----------------------------------------
@@ -726,7 +721,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       EditorsSplitters active = getActiveSplittersSync();
       if (active.getCurrentWindow() != null && active.getCurrentWindow().isFileOpen(file)) {
         wndToOpenIn = active.getCurrentWindow();
-      } else {
+      }
+      else {
         for (EditorsSplitters splitters : all) {
           EditorWindow window = splitters.getCurrentWindow();
           if (window == null) continue;
@@ -942,11 +938,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       builders = null;
     }
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      runBulkTabChange(window.getOwner(), splitters -> {
-        openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders);
-      });
-    });
+    ApplicationManager.getApplication().invokeAndWait(() ->
+      runBulkTabChange(window.getOwner(), splitters ->
+        openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders)));
 
     EditorWithProviderComposite composite = compositeRef.get();
     return new Pair<>(composite == null ? FileEditor.EMPTY_ARRAY : composite.getEditors(),
@@ -1174,11 +1168,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
 
   @Nullable
-  EditorWithProviderComposite newEditorComposite(@Nullable VirtualFile file) {
-    if (file == null) {
-      return null;
-    }
-
+  EditorWithProviderComposite newEditorComposite(@NotNull VirtualFile file) {
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
     if (providers.length == 0) return null;
@@ -1200,7 +1190,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
       FileEditorProvider provider = providers[i];
 
-// Restore myEditor state
+      // Restore myEditor state
       FileEditorState state = editorHistoryManager.getState(file, provider);
       if (state != null) {
         editor.setState(state);

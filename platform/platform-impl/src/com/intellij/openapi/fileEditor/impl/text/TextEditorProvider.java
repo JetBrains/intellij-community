@@ -119,23 +119,21 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
       element.setAttribute(RELATIVE_CARET_POSITION_ATTR, Integer.toString(state.RELATIVE_CARET_POSITION));
     }
 
-    if (state.CARETS != null) {
-      for (TextEditorState.CaretState caretState : state.CARETS) {
-        Element e = new Element(CARET_ELEMENT);
-        writeIfNot0(e, LINE_ATTR, caretState.LINE);
-        writeIfNot0(e, COLUMN_ATTR, caretState.COLUMN);
-        if (caretState.LEAN_FORWARD) {
-          e.setAttribute(LEAN_FORWARD_ATTR, Boolean.toString(true));
-        }
-        writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.SELECTION_START_LINE);
-        writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.SELECTION_START_COLUMN);
-        writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
-        writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
-        writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN);
+    for (TextEditorState.CaretState caretState : state.CARETS) {
+      Element e = new Element(CARET_ELEMENT);
+      writeIfNot0(e, LINE_ATTR, caretState.LINE);
+      writeIfNot0(e, COLUMN_ATTR, caretState.COLUMN);
+      if (caretState.LEAN_FORWARD) {
+        e.setAttribute(LEAN_FORWARD_ATTR, Boolean.toString(true));
+      }
+      writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.SELECTION_START_LINE);
+      writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.SELECTION_START_COLUMN);
+      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
+      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
+      writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN);
 
-        if (!JDOMUtil.isEmpty(e)) {
-          element.addContent(e);
-        }
+      if (!JDOMUtil.isEmpty(e)) {
+        element.addContent(e);
       }
     }
   }
@@ -199,7 +197,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     return Document.EMPTY_ARRAY;
   }
 
-  static void putTextEditor(Editor editor, TextEditor textEditor) {
+  static void putTextEditor(@NotNull Editor editor, @NotNull TextEditor textEditor) {
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
@@ -253,7 +251,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
 
   protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState){
     TextEditorState.CaretState[] carets = state.CARETS;
-    if (carets != null && carets.length > 0) {
+    if (carets.length > 0) {
       List<CaretState> states = new ArrayList<>(carets.length);
       for (TextEditorState.CaretState caretState : carets) {
         states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
@@ -276,8 +274,12 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
       }
     };
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
-      if (ApplicationManager.getApplication().isUnitTestMode()) scrollingRunnable.run();
-      else UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        scrollingRunnable.run();
+      }
+      else {
+        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+      }
     });
   }
 
