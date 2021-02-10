@@ -11,11 +11,11 @@ class Main {
       /*4*/
       /*5*/
       /*6*/
+      /*10*/
+      /*11*/
       /*7*/
       /*8*/
       /*9*/
-      /*10*/
-      /*11*/
       getOptional().orElseThrow(/*1*/IllegalArgumentException::new/*12*/)/*13*/;
   }
 }

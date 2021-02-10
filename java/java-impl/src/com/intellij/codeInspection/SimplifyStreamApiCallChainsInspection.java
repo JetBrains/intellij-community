@@ -2325,17 +2325,13 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     public PsiElement simplify(PsiMethodCallExpression orElseGetCall) {
       final PsiLambdaExpression lambda =
         tryCast(skipParenthesizedExprDown(orElseGetCall.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
-      if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
-      final PsiCodeBlock body = tryCast(lambda.getBody(), PsiCodeBlock.class);
-      if (body == null) return null;
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length != 1) return null;
-      final PsiThrowStatement statement = tryCast(statements[0], PsiThrowStatement.class);
-      if (statement == null) return null;
-      final PsiExpression expression = statement.getException();
-      if (expression == null) return null;
-      LambdaCanBeMethodReferenceInspection.tryConvertToMethodReference(lambda, expression);
+      final PsiExpression thrownException = getThrownException(lambda);
+      if (thrownException == null) return null;
+      final PsiElement body = lambda.getBody();
+      assert body != null;
       ExpressionUtils.bindCallTo(orElseGetCall, "orElseThrow");
+      new CommentTracker().replaceAndRestoreComments(body, thrownException);
+      LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(lambda);
       return orElseGetCall;
     }
 
@@ -2343,14 +2339,22 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       return CallHandler.of(OPTIONAL_OR_ELSE_GET, call -> {
         final PsiLambdaExpression lambda =
             tryCast(skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
-        if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
-        final PsiCodeBlock body = tryCast(lambda.getBody(), PsiCodeBlock.class);
-        if (body == null) return null;
-        final PsiStatement[] statements = body.getStatements();
-        if (statements.length != 1) return null;
-        if (!(statements[0] instanceof PsiThrowStatement)) return null;
+        final PsiExpression thrownException = getThrownException(lambda);
+        if (thrownException == null) return null;
         return new ReplaceWithOrElseThrowFix();
       });
+    }
+
+    @Nullable
+    private static PsiExpression getThrownException(@Nullable PsiLambdaExpression lambda) {
+      if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
+      final PsiCodeBlock body = tryCast(lambda.getBody(), PsiCodeBlock.class);
+      if (body == null) return null;
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length != 1) return null;
+      final PsiThrowStatement throwStatement = tryCast(statements[0], PsiThrowStatement.class);
+      if (throwStatement == null) return null;
+      return throwStatement.getException();
     }
   }
 }
