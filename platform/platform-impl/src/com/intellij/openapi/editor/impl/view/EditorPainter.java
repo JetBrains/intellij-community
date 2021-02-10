@@ -782,6 +782,21 @@ public final class EditorPainter implements TextDrawingCallback {
                 g.fillPolygon(new int[]{tabEndX - halfHeight, tabEndX - halfHeight, tabEndX}, new int[]{yToUse, yTop, yMid}, 3);
               });
             }
+            else if (Registry.is("editor.arrow.tab.painting")) {
+              int tabLineHeight = calcFeatureSize(4, scale);
+              int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
+              int xToUse = Math.min(endX - tabLineWidth, startX + tabLineWidth);
+              myTextDrawingTasks.add(g -> {
+                g.setColor(color);
+                g.setStroke(stroke);
+                Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.drawLine(xToUse, yToUse, xToUse + tabLineWidth, yToUse - tabLineHeight);
+                g.drawLine(xToUse, yToUse - tabLineHeight * 2, xToUse + tabLineWidth, yToUse - tabLineHeight);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
+              });
+              restoreStroke = true;
+            }
             else {
               int yMid = yToUse - myView.getCharHeight() / 2;
               int tabEndX = Math.max(startX + 1, endX - getTabGap(scale));
