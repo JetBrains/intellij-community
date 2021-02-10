@@ -40,7 +40,7 @@
               <text resource-bundle="messages/ShBundle" key="sh.invalid.path"/>
             </properties>
           </component>
-          <component id="156ed" class="com.intellij.ui.components.labels.ActionLink" binding="myShellcheckDownloadLink" custom-create="true">
+          <component id="156ed" class="com.intellij.ui.components.ActionLink" binding="myShellcheckDownloadLink" custom-create="true">
             <constraints/>
             <properties>
               <text resource-bundle="messages/ShBundle" key="sh.download"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -12,7 +12,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.ui.components.AnActionLink;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,10 +28,10 @@ public class ChangeProjectIconForm {
   JBLabel myDefaultIcon;
   JBLabel myDarculaIcon;
   JPanel myRootPanel;
-  ActionLink mySetIcon;
-  ActionLink mySetIconDark;
-  ActionLink myClear;
-  ActionLink myClearDark;
+  AnActionLink mySetIcon;
+  AnActionLink mySetIconDark;
+  AnActionLink myClear;
+  AnActionLink myClearDark;
   boolean resetIcon;
   boolean resetDarkIcon;
   VirtualFile pathToIcon;
@@ -57,10 +57,10 @@ public class ChangeProjectIconForm {
   }
 
   private void createUIComponents() {
-    mySetIcon = new ActionLink(IdeBundle.message("link.change.icon"), new ChangeProjectIcon(false));
-    mySetIconDark = new ActionLink(IdeBundle.message("link.change.icon"), new ChangeProjectIcon(true));
-    myClear = new ActionLink(IdeBundle.message("link.reset.icon"), new ResetProjectIcon(false));
-    myClearDark = new ActionLink(IdeBundle.message("link.reset.icon"), new ResetProjectIcon(true));
+    mySetIcon = new AnActionLink(IdeBundle.message("link.change.icon"), new ChangeProjectIcon(false));
+    mySetIconDark = new AnActionLink(IdeBundle.message("link.change.icon"), new ChangeProjectIcon(true));
+    myClear = new AnActionLink(IdeBundle.message("link.reset.icon"), new ResetProjectIcon(false));
+    myClearDark = new AnActionLink(IdeBundle.message("link.reset.icon"), new ResetProjectIcon(true));
   }
 
   public void apply() throws IOException {

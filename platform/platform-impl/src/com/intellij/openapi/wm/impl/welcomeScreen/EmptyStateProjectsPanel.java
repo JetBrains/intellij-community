@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -10,9 +10,9 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
@@ -53,19 +53,13 @@ public class EmptyStateProjectsPanel extends JPanel {
     DefaultActionGroup moreActionGroup = mainAndMore.getSecond();
     if (moreActionGroup.getChildrenCount() > 0) {
       JPanel moreLinkPanel = new Wrapper(new FlowLayout(), moreActionGroup.getChildrenCount() == 1
-                                                           ? createActionLink(moreActionGroup.getChildren(null)[0])
+                                                           ? new AnActionLink(moreActionGroup.getChildren(null)[0], ActionPlaces.WELCOME_SCREEN)
                                                            : createLinkWithPopup(moreActionGroup));
       moreLinkPanel.setBorder(JBUI.Borders.emptyTop(5));
       mainPanel.add(moreLinkPanel);
     }
 
     add(mainPanel);
-  }
-
-  private static ActionLink createActionLink(@NotNull AnAction action) {
-    ActionLink actionLink = new ActionLink(action.getTemplateText(), null, action, null, ActionPlaces.WELCOME_SCREEN);
-    actionLink.setFocusable(true);
-    return actionLink;
   }
 
   @NotNull

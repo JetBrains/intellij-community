@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -25,8 +23,8 @@ import com.intellij.sh.formatter.ShShfmtFormatterUtil;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.fields.IntegerField;
-import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,13 +83,10 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
   private void createUIComponents() {
     myIndentField = new IntegerField(null, CodeStyleConstraints.MIN_INDENT_SIZE, CodeStyleConstraints.MAX_INDENT_SIZE);
     myTabField = new IntegerField(null, CodeStyleConstraints.MIN_TAB_SIZE, CodeStyleConstraints.MAX_TAB_SIZE);
-    myShfmtDownloadLink = new ActionLink(ShBundle.message("sh.code.style.download.link"), new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent event) {
-        ShShfmtFormatterUtil.download(event.getProject(),
+    myShfmtDownloadLink = new ActionLink(ShBundle.message("sh.code.style.download.link"), e -> {
+        ShShfmtFormatterUtil.download(ProjectUtil.guessCurrentProject(getPanel()),
                                       () -> myShfmtPathSelector.setText(ShSettings.getShfmtPath()),
                                       () -> myErrorLabel.setVisible(true));
-      }
     });
   }
 

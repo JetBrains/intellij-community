@@ -13,13 +13,12 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Rectangle
 import javax.swing.SwingUtilities
 
-open class AnActionLink(@Nls text: String, anAction: AnAction, place: String)
+open class AnActionLink(@Nls text: String, anAction: AnAction, @NonNls place: String)
   : DataProvider, ActionLink(text, { invokeAction(anAction, it.source as AnActionLink, place, null, null) }) {
 
-  @JvmOverloads
-  constructor(anAction: AnAction, place: String = UNKNOWN) : this(anAction.templateText!!, anAction, place)
   constructor(@Nls text: String, anAction: AnAction) : this(text, anAction, UNKNOWN)
-  constructor(@NonNls actionId: String) : this(ActionManager.getInstance().getAction(actionId))
+  constructor(anAction: AnAction, @NonNls place: String) : this(anAction.templateText ?: "", anAction, place)
+  constructor(@NonNls actionId: String, @NonNls place: String) : this(ActionManager.getInstance().getAction(actionId), place)
 
   var dataProvider: DataProvider? = anAction as? DataProvider
 

@@ -209,7 +209,7 @@
                       <text resource-bundle="messages/ShBundle" key="sh.invalid.path"/>
                     </properties>
                   </component>
-                  <component id="84c43" class="com.intellij.ui.components.labels.ActionLink" binding="myShfmtDownloadLink" custom-create="true">
+                  <component id="84c43" class="com.intellij.ui.components.ActionLink" binding="myShfmtDownloadLink" custom-create="true">
                     <constraints/>
                     <properties>
                       <horizontalTextPosition value="0"/>

@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -13,13 +11,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TooltipWithClickableLinks;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.labels.ActionLink;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -154,9 +151,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
       new TooltipWithClickableLinks.ForBrowser(warningIcon,
                                                PyBundle.message("debugger.warning.message")));
 
-    myActionLink = new ActionLink(PyBundle.message("form.debugger.clear.caches.action"), new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
+    myActionLink = new ActionLink(PyBundle.message("form.debugger.clear.caches.action"), e -> {
         boolean cleared = PySignatureCacheManager.getInstance(myProject).clearCache();
         String message;
         if (cleared) {
@@ -166,8 +161,6 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
           message = PyBundle.message("python.debugger.nothing.to.delete");
         }
         Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
-
-      }
     });
   }
 }

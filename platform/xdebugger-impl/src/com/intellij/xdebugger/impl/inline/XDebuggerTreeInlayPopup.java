@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.ide.DataManager;
@@ -21,8 +21,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
@@ -411,17 +411,14 @@ public class XDebuggerTreeInlayPopup<D> {
 
   }
 
-  private static class ActionLinkButton extends ActionLink {
-    private final @Nullable DataProvider myDataProvider;
-    boolean isEnabled;
-
+  private static class ActionLinkButton extends AnActionLink {
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
                      @Nullable DataProvider contextComponent) {
-      //noinspection DialogTitleCapitalization
+      //noinspection ConstantConditions
       super(presentation.getText(), action);
-      isEnabled = presentation.isEnabled();
-      myDataProvider = contextComponent;
+      setEnabled(presentation.isEnabled());
+      setDataProvider(contextComponent);
       presentation.addPropertyChangeListener(new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
@@ -430,30 +427,12 @@ public class XDebuggerTreeInlayPopup<D> {
             repaint();
           }
           if (evt.getPropertyName() == Presentation.PROP_ENABLED) {
-            isEnabled =(boolean)evt.getNewValue();
+            setEnabled((boolean)evt.getNewValue());
             repaint();
           }
         }
       });
       setFont(UIUtil.getToolTipFont());
-    }
-
-    @Override
-    protected Color getTextColor() {
-      return isEnabled ? super.getTextColor() : getDisabledColor();
-    }
-
-    private static Color getDisabledColor() {
-      return JBUI.CurrentTheme.Label.disabledForeground();
-    }
-
-
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      Object data = super.getData(dataId);
-      if (data != null) return data;
-
-      return myDataProvider != null ? myDataProvider.getData(dataId) : null;
     }
   }
 }

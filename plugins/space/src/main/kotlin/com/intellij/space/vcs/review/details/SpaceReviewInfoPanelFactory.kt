@@ -18,9 +18,9 @@ import com.intellij.space.vcs.review.details.process.SpaceReviewActionsBuilder
 import com.intellij.space.vcs.review.openReviewInEditor
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.FontUtil
@@ -158,10 +158,10 @@ internal object SpaceReviewInfoPanelFactory {
     val actionManager = ActionManager.getInstance()
 
     val checkoutAction = actionManager.getAction("com.intellij.space.vcs.review.details.SpaceReviewCheckoutBranchAction")
-    val checkoutActionLink = ActionLink(SpaceBundle.message("review.actions.link.label.checkout"), checkoutAction)
+    val checkoutActionLink = AnActionLink(SpaceBundle.message("review.actions.link.label.checkout"), checkoutAction)
 
     val updateAction = actionManager.getAction("com.intellij.space.vcs.review.details.SpaceReviewUpdateBranchAction")
-    val updateActionLink = ActionLink(SpaceBundle.message("review.actions.link.label.update"), updateAction)
+    val updateActionLink = AnActionLink(SpaceBundle.message("review.actions.link.label.update"), updateAction)
 
     val branchActionPanel = NonOpaquePanel().apply {
       border = JBUI.Borders.emptyLeft(4)

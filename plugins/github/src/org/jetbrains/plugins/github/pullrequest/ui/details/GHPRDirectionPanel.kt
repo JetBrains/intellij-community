@@ -10,9 +10,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.CardLayoutPanel
+import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
@@ -130,9 +130,9 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
 
       abstract class SingleActionUi(private val actionId: String, @NlsContexts.LinkLabel private val actionName: String) : StateUi() {
         override fun createUi(): JComponent =
-          ActionLink(actionName, null,
-                     ActionManager.getInstance().getAction(actionId), null, BRANCH_ACTIONS_TOOLBAR)
+          AnActionLink(actionId, BRANCH_ACTIONS_TOOLBAR)
             .apply {
+              text = actionName
               border = JBUI.Borders.emptyLeft(8)
             }
       }
