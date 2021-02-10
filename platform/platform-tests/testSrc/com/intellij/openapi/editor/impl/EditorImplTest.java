@@ -29,7 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputMethodEvent;
-import java.awt.event.KeyEvent;
 import java.awt.font.TextHitInfo;
 import java.text.AttributedString;
 import java.util.Collections;
