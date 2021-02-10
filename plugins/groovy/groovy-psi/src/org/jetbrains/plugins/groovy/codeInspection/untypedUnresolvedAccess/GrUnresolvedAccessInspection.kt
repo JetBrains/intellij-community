@@ -3,23 +3,21 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
-import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionTool
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessChecker.shouldHighlightAsUnresolved
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInStaticCompilationContext
 import javax.swing.JComponent
 
-class GrUnresolvedAccessInspection : LocalInspectionTool() {
+class GrUnresolvedAccessInspection : GroovyLocalInspectionTool() {
 
   @JvmField
   var myHighlightIfGroovyObjectOverridden = true
@@ -33,8 +31,8 @@ class GrUnresolvedAccessInspection : LocalInspectionTool() {
     return optionsPanel
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    return GroovyPsiElementVisitor(Visitor(UnresolvedReferenceInspectionSink(holder)))
+  override fun buildGroovyVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): GroovyElementVisitor {
+    return Visitor(UnresolvedReferenceInspectionSink(holder))
   }
 
   private inner class Visitor(private val highlightSink: HighlightSink) : GroovyElementVisitor() {
