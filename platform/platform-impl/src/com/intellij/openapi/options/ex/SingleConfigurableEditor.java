@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.CommonBundle;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.Alarm;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +36,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   public SingleConfigurableEditor(@Nullable Project project,
                                   @NotNull Configurable configurable,
-                                  @NonNls String dimensionKey,
-                                  final boolean showApplyButton,
+                                  String dimensionKey,
+                                  boolean showApplyButton,
                                   @NotNull IdeModalityType ideModalityType) {
     super(project, true, ideModalityType);
     myDimensionKey = dimensionKey;
@@ -59,9 +58,9 @@ public class SingleConfigurableEditor extends DialogWrapper {
   public SingleConfigurableEditor(Component parent,
                                   @NotNull Configurable configurable,
                                   String dimensionServiceKey,
-                                  final boolean showApplyButton,
-                                  final IdeModalityType ideModalityType) {
-    super(parent, true);
+                                  boolean showApplyButton,
+                                  @NotNull IdeModalityType ideModalityType) {
+    super(null, parent, true, ideModalityType);
     myDimensionKey = dimensionServiceKey;
     myShowApplyButton = showApplyButton;
     setTitle(createTitleString(configurable));
@@ -71,25 +70,19 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myConfigurable.reset();
   }
 
-  public SingleConfigurableEditor(@Nullable Project project,
-                                  Configurable configurable,
-                                  @NonNls String dimensionKey,
-                                  final boolean showApplyButton) {
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, String dimensionKey, boolean showApplyButton) {
     this(project, configurable, dimensionKey, showApplyButton, IdeModalityType.IDE);
   }
 
-  public SingleConfigurableEditor(Component parent,
-                                  Configurable configurable,
-                                  String dimensionServiceKey,
-                                  final boolean showApplyButton) {
+  public SingleConfigurableEditor(Component parent, Configurable configurable, String dimensionServiceKey, boolean showApplyButton) {
     this(parent, configurable, dimensionServiceKey, showApplyButton, IdeModalityType.IDE);
   }
 
-  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, @NonNls String dimensionKey, @NotNull IdeModalityType ideModalityType) {
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, String dimensionKey, @NotNull IdeModalityType ideModalityType) {
     this(project, configurable, dimensionKey, true, ideModalityType);
   }
 
-  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, @NonNls String dimensionKey) {
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, String dimensionKey) {
     this(project, configurable, dimensionKey, true);
   }
 
@@ -125,12 +118,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   @Override
   protected String getDimensionServiceKey() {
-    if (myDimensionKey == null) {
-      return super.getDimensionServiceKey();
-    }
-    else {
-      return myDimensionKey;
-    }
+    return myDimensionKey != null ? myDimensionKey : super.getDimensionServiceKey();
   }
 
   @Override
@@ -199,8 +187,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
           try {
             setEnabled(myConfigurable != null && myConfigurable.isModified());
           }
-          catch (IndexNotReadyException ignored) {
-          }
+          catch (IndexNotReadyException ignored) { }
           addUpdateRequest(this);
         }
       };
@@ -233,10 +220,10 @@ public class SingleConfigurableEditor extends DialogWrapper {
           Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
         else {
-          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(),
-                                     Messages.getErrorIcon());
+          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
-      } finally {
+      }
+      finally {
         myPerformAction = false;
       }
     }
