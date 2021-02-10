@@ -107,7 +107,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
             effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
           }
 
-          if (testLauncherIsApplicable(effectiveSettings)) {
+          if (testLauncherIsApplicable(tasks, effectiveSettings)) {
             TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, effectiveSettings, listener);
             launcher.withCancellationToken(cancellationTokenSource.token());
             launcher.run();
@@ -137,10 +137,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
   }
 
-  private static boolean testLauncherIsApplicable(GradleExecutionSettings effectiveSettings) {
+  private static boolean testLauncherIsApplicable(@NotNull List<String> taskNames,
+                                                  @NotNull GradleExecutionSettings effectiveSettings) {
     boolean allowedByGradleVersion = isSupportedByGradleVersion(effectiveSettings);
+    boolean allowedByTasksList = taskNames.size() < 2;
     return Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST)
-      && allowedByGradleVersion;
+      && allowedByGradleVersion
+      && allowedByTasksList;
   }
 
   private static boolean isSupportedByGradleVersion(GradleExecutionSettings effectiveSettings) {
@@ -212,7 +215,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
 
       enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY,
-                                String.valueOf(testLauncherIsApplicable(effectiveSettings)));
+                                String.valueOf(testLauncherIsApplicable(taskNames, effectiveSettings)));
 
 
       resolverExtension.enhanceTaskProcessing(taskNames, initScriptConsumer, enhancementParameters);
