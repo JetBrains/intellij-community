@@ -48,7 +48,8 @@ class PyModuleNameCompletionContributor : CompletionContributor() {
     }
     val commonAlias = PyPackageAliasesProvider.commonImportAliases[result.prefixMatcher.prefix]
     if (commonAlias != null) {
-      result.addElement(LookupElementBuilder.create(result.prefixMatcher.prefix).withTypeText(commonAlias).withInsertHandler(packageInsertHandler))
+      result.addElement(
+        LookupElementBuilder.create(result.prefixMatcher.prefix).withTypeText(commonAlias).withInsertHandler(packageInsertHandler))
       return
     }
     getCompletionVariants(parameters.position.parent, parameters.originalFile).asSequence()
@@ -67,25 +68,20 @@ class PyModuleNameCompletionContributor : CompletionContributor() {
     resolveQualifiedName(QualifiedName.fromComponents(), fromFoothold(file))
       .asSequence()
       .filterIsInstance<PsiDirectory>()
-      .forEach { fillCompletionVariantsFromDir(it, element, result, alreadyAddedNames) }
+      .forEach {
+        val initPy = it.findFile(PyNames.INIT_DOT_PY)
+        if (initPy is PyFile) {
+          val moduleType = PyModuleType(initPy)
+          val context = ProcessingContext()
+          context.put(PyType.CTX_NAMES, alreadyAddedNames)
+          val completionVariants = moduleType.getCompletionVariants("", element, context)
+          result.addAll(listOf(*completionVariants))
+        }
+        else {
+          result.addAll(PyModuleType.getSubModuleVariants(it, element, alreadyAddedNames))
+        }
+      }
     return result
-  }
-
-  private fun fillCompletionVariantsFromDir(targetDir: PsiDirectory?, element: PsiElement,
-                                            result: ArrayList<Any>, alreadyAddedNames: HashSet<String>) {
-    if (targetDir != null) {
-      val initPy = targetDir.findFile(PyNames.INIT_DOT_PY)
-      if (initPy is PyFile) {
-        val moduleType = PyModuleType((initPy as PyFile?)!!)
-        val context = ProcessingContext()
-        context.put(PyType.CTX_NAMES, alreadyAddedNames)
-        val completionVariants = moduleType.getCompletionVariants("", element, context)
-        result.addAll(listOf(*completionVariants))
-      }
-      else {
-        result.addAll(PyModuleType.getSubModuleVariants(targetDir, element, alreadyAddedNames))
-      }
-    }
   }
 
   private fun shouldDoCompletion(parameters: CompletionParameters): Boolean {

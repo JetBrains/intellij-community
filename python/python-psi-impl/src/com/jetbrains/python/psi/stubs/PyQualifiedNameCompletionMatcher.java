@@ -114,7 +114,7 @@ public class PyQualifiedNameCompletionMatcher {
       canonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(element, currentFile);
     }
     else {
-      canonicalImportPath = QualifiedNameFinder.canonizeQualifiedName(moduleQualifiedName, currentFile);
+      canonicalImportPath = QualifiedNameFinder.canonizeQualifiedName(element, moduleQualifiedName, currentFile);
     }
     return canonicalImportPath;
   }
