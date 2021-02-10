@@ -118,7 +118,7 @@ class GrStringStyleViolationInspection : BaseInspection() {
         row { generateComboBoxes()() }
       }
       titledRow(GroovyBundle.message("separator.domain.of.inspection.usage")) {
-        row { CheckBox(GroovyBundle.message("checkbox.inspect.gradle.files"), this, "inspectGradle")() }
+        row { CheckBox(GroovyBundle.message("checkbox.inspect.gradle.files"), this@GrStringStyleViolationInspection, "inspectGradle")() }
       }
     }
   }
