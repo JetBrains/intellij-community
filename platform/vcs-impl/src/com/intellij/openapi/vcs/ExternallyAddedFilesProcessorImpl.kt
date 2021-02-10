@@ -91,7 +91,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
           !isProjectConfigDirOrUnderIt(configDir, it.parent)
         }
         .mapNotNull(VFileEvent::getFile)
-        .toSet()
+        .toList()
 
     if (externallyAddedFiles.isEmpty()) return
     LOG.debug("Got external files from VFS events", externallyAddedFiles)
@@ -146,16 +146,18 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
     vcsManager.getStandardConfirmation(ADD, vcs).value == DO_ACTION_SILENTLY
     && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY
 
-  override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> =
-    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
+  override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
+    val parents = files.toHashSet()
+    return ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
       .asSequence()
       .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
-      .filter { isUnder(files, it) }
+      .filter { isUnder(parents, it) }
       .toSet()
+  }
 
   override fun rememberForAllProjects() {}
 
-  private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
+  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
   private fun isProjectConfigDirOrUnderIt(configDir: VirtualFile?, file: VirtualFile) =
     configDir != null && VfsUtilCore.isAncestor(configDir, file, false)

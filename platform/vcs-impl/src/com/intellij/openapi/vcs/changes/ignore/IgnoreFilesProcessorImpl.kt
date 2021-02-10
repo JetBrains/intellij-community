@@ -175,8 +175,11 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     return VfsUtilCore.isAncestor(storeDir, this, true)
   }
 
-  override fun doFilterFiles(files: Collection<VirtualFile>) =
-    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles.filter { isUnder(files, it) }
+  override fun doFilterFiles(files: Collection<VirtualFile>): List<VirtualFile> {
+    val parents = files.toHashSet()
+    return ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
+      .filter { isUnder(parents, it) }
+  }
 
   override fun rememberForAllProjects() {
     val applicationSettings = VcsApplicationSettings.getInstance()
@@ -202,7 +205,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
                                                                  ApplicationNamesInfo.getInstance().fullProductName,
                                                                  findIgnoredFileContentProvider(vcs)?.fileName ?: VcsBundle.message("changes.ignore.file"))
 
-  private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
+  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
   override fun needDoForCurrentProject(): Boolean {
     val appSettings = VcsApplicationSettings.getInstance()
