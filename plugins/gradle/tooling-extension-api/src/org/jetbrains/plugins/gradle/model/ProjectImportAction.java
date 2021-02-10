@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import java.util.concurrent.ConcurrentHashMap;
 import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -315,9 +316,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     Object convert(Object object);
   }
 
+  // Note: This class is NOT thread safe and it is supposed to be used from a single thread.
+  //       Performance logging related methods are thread safe.
   public static class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     @NotNull private final List<Build> includedBuilds = new ArrayList<Build>();
-    private final Map<String, Long> performanceTrace = new LinkedHashMap<String, Long>();
+    private final Map<String, Long> performanceTrace = new ConcurrentHashMap<String, Long>();
 
     public AllModels(@NotNull Build mainBuild) {
       super(mainBuild);
