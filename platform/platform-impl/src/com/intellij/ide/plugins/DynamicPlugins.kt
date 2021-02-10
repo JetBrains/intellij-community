@@ -969,17 +969,6 @@ object DynamicPlugins {
     val snapshotPath = System.getProperty("memory.snapshots.path", SystemProperties.getUserHome()) + "/" + snapshotFileName
 
     MemoryDumpHelper.captureMemoryDump(snapshotPath)
-    notify(
-      IdeBundle.message("memory.snapshot.captured.text", snapshotPath, snapshotFileName),
-      NotificationType.WARNING,
-      object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
-        override fun actionPerformed(e: AnActionEvent) = ApplicationManager.getApplication().restart()
-      },
-      object : AnAction(
-        IdeBundle.message("memory.snapshot.captured.action.text", snapshotFileName, RevealFileAction.getFileManagerName())), DumbAware {
-        override fun actionPerformed(e: AnActionEvent) = RevealFileAction.openFile(Paths.get(snapshotPath))
-      }
-    )
 
     if (classloadersFromUnloadedPlugins[pluginId] == null) {
       LOG.info("Successfully unloaded plugin $pluginId (classloader collected during memory snapshot generation)")
@@ -998,6 +987,18 @@ object DynamicPlugins {
         LOG.info("Snapshot analysis result: $analysisResult")
       }
     }
+
+    notify(
+      IdeBundle.message("memory.snapshot.captured.text", snapshotPath, snapshotFileName),
+      NotificationType.WARNING,
+      object : AnAction(IdeBundle.message("ide.restart.action")), DumbAware {
+        override fun actionPerformed(e: AnActionEvent) = ApplicationManager.getApplication().restart()
+      },
+      object : AnAction(
+        IdeBundle.message("memory.snapshot.captured.action.text", snapshotFileName, RevealFileAction.getFileManagerName())), DumbAware {
+        override fun actionPerformed(e: AnActionEvent) = RevealFileAction.openFile(Paths.get(snapshotPath))
+      }
+    )
 
     LOG.info("Plugin $pluginId is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
     return false
