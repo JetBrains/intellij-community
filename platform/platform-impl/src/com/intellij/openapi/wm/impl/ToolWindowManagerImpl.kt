@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
@@ -30,6 +31,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -64,6 +66,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.*
 import org.intellij.lang.annotations.JdkConstants
 import org.jdom.Element
@@ -139,6 +142,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   internal fun getFrame() = frame
+
+  private fun runPendingLayoutTask() {
+    pendingSetLayoutTask.getAndSet(null)?.run()
+  }
 
   @Service
   private class ToolWindowManagerAppLevelHelper {
@@ -388,91 +395,96 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return toolWindowPane
   }
 
-  private fun beforeProjectOpened() {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
+  // must be executed in EDT
+  private fun beforeProjectOpenedTask(
+    tasks: List<RegisterToolWindowTask>,
+    app: Application,
+  ) = Runnable {
+    frame!!.rootPane!!.updateToolbar()
 
+    runPendingLayoutTask()
+
+    // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
+    // 1. read action is required to read facet list (might cause a deadlock)
+    // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
+    val list = ArrayList(tasks) +
+               (app.extensionArea as ExtensionsAreaImpl)
+                 .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
+                 .computeExtraToolWindowBeans()
+
+    if (toolWindowPane == null) {
+      if (!app.isUnitTestMode) {
+        LOG.error("ProjectFrameAllocator is not used - use ProjectManager.openProject to open project in a correct way")
+      }
+
+      val toolWindowsPane = init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
+      // cannot be executed because added layered pane is not yet validated and size is not known
+      app.invokeLater(Runnable {
+        runPendingLayoutTask()
+        initToolWindows(list, toolWindowsPane)
+      }, project.disposed)
+    }
+    else {
+      initToolWindows(list, toolWindowPane!!)
+    }
+
+    registerEPListeners()
+  }
+
+  private fun computeToolWindowBeans(): List<RegisterToolWindowTask> {
     val list = mutableListOf<RegisterToolWindowTask>()
-    runActivity("toolwindow init command creation") {
-      processDescriptors { bean, pluginDescriptor  ->
-        val condition = bean.getCondition(pluginDescriptor)
-        // compute outside of EDT
-        if (condition != null && !condition.value(project)) {
-          return@processDescriptors
-        }
-
-        val factory = bean.getToolWindowFactory(pluginDescriptor) ?: return@processDescriptors
-        if (!factory.isApplicable(project)) {
-          return@processDescriptors
-        }
-
-        list.add(beanToTask(bean, factory, pluginDescriptor))
+    processDescriptors { bean, pluginDescriptor ->
+      val condition = bean.getCondition(pluginDescriptor)
+      if (condition == null ||
+          condition.value(project)) {
+        list.addIfNotNull(beanToTask(bean, pluginDescriptor))
       }
     }
+    return list
+  }
 
-    // must be executed in EDT
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      frame!!.rootPane!!.updateToolbar()
-
-      pendingSetLayoutTask.getAndSet(null)?.run()
-
-      // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for not it is not safe because:
-      // 1. read action is required to read facet list (can lead to deadlock)
-      // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
-      computeExtraToolWindowBeans(list)
-
-      if (toolWindowPane == null) {
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
-          LOG.error("ProjectFrameAllocator is not used - use ProjectManager.openProject to open project in a correct way")
+  private fun ExtensionPointImpl<RegisterToolWindowTaskProvider>.computeExtraToolWindowBeans(): List<RegisterToolWindowTask> {
+    val list = mutableListOf<RegisterToolWindowTask>()
+    this.processImplementations(true) { supplier, epPluginDescriptor ->
+      if (epPluginDescriptor.pluginId == PluginManagerCore.CORE_ID)
+        for (bean in supplier.get().getTasks(project)) {
+          list.addIfNotNull(beanToTask(bean))
         }
-
-        val toolWindowsPane = init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
-        // cannot be executed because added layered pane is not yet validated and size is not known
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          pendingSetLayoutTask.getAndSet(null)?.run()
-          initToolWindows(list, toolWindowsPane)
-        }, project.disposed)
-      }
       else {
-        initToolWindows(list, toolWindowPane!!)
-      }
-
-      registerEPListeners()
-    }, project.disposed)
-  }
-
-  private fun computeExtraToolWindowBeans(list: MutableList<RegisterToolWindowTask>) {
-    val area = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-    area.getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider").processImplementations(
-      true) { supplier, epPluginDescriptor ->
-      if (epPluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
         LOG.error("Only bundled plugin can define registerToolWindowTaskProvider: $epPluginDescriptor")
-        return@processImplementations
-      }
-
-      for (bean in supplier.get().getTasks(project)) {
-        val factory = bean.getToolWindowFactory(bean.pluginDescriptor) ?: continue
-        if (factory.isApplicable(project)) {
-          list.add(beanToTask(bean, factory, bean.pluginDescriptor))
-        }
       }
     }
+    return list
   }
 
-  private fun beanToTask(bean: ToolWindowEP, factory: ToolWindowFactory, pluginDescriptor: PluginDescriptor): RegisterToolWindowTask {
-    @Suppress("DEPRECATION")
-    val sideTool = bean.secondary || bean.side
-    return RegisterToolWindowTask(
-      id = bean.id,
-      icon = findIconFromBean(bean, factory, pluginDescriptor),
-      anchor = getToolWindowAnchor(factory, bean),
-      sideTool = sideTool,
-      canCloseContent = bean.canCloseContents,
-      canWorkInDumbMode = DumbService.isDumbAware(factory),
-      shouldBeAvailable = factory.shouldBeAvailable(project),
-      contentFactory = factory,
-      stripeTitle = getStripeTitleSupplier(bean.id, pluginDescriptor)
-    )
+  private fun beanToTask(
+    bean: ToolWindowEP,
+    pluginDescriptor: PluginDescriptor = bean.pluginDescriptor,
+  ): RegisterToolWindowTask? {
+    val factory = bean.getToolWindowFactory(pluginDescriptor)
+
+    return if (factory != null &&
+               factory.isApplicable(project))
+      beanToTask(bean, pluginDescriptor, factory)
+    else
+      null
   }
+
+  private fun beanToTask(
+    bean: ToolWindowEP,
+    pluginDescriptor: PluginDescriptor,
+    factory: ToolWindowFactory,
+  ) = RegisterToolWindowTask(
+    id = bean.id,
+    icon = findIconFromBean(bean, factory, pluginDescriptor),
+    anchor = getToolWindowAnchor(factory, bean),
+    sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
+    canCloseContent = bean.canCloseContents,
+    canWorkInDumbMode = DumbService.isDumbAware(factory),
+    shouldBeAvailable = factory.shouldBeAvailable(project),
+    contentFactory = factory,
+    stripeTitle = getStripeTitleSupplier(bean.id, pluginDescriptor),
+  )
 
   // This method cannot be inlined because of magic Kotlin compilation bug: it 'captured' "list" local value and cause class-loader leak
   // See IDEA-CR-61904
@@ -1740,7 +1752,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     else {
       pendingSetLayoutTask.set(task)
       app.invokeLater(Runnable {
-        pendingSetLayoutTask.getAndSet(null)?.run()
+        runPendingLayoutTask()
       }, project.disposed)
     }
   }
@@ -2049,7 +2061,17 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         return
       }
 
-      (getInstance(project) as ToolWindowManagerImpl).beforeProjectOpened()
+      LOG.assertTrue(!app.isDispatchThread)
+
+      val manager = getInstance(project) as ToolWindowManagerImpl
+      val tasks = runActivity("toolwindow init command creation") {
+        manager.computeToolWindowBeans()
+      }
+
+      app.invokeLater(
+        manager.beforeProjectOpenedTask(tasks, app),
+        project.disposed,
+      )
     }
   }
 
