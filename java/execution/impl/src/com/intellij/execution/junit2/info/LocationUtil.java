@@ -4,6 +4,7 @@ package com.intellij.execution.junit2.info;
 import com.intellij.execution.Location;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -23,6 +24,7 @@ public final class LocationUtil {
                                       final PsiDirectory[] directories,
                                       final String... fqns) {
     final Project project = location.getProject();
+    if (DumbService.isDumb(project)) return false; //disable creation of junit/testng package configurations in dumb mode
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final Module locationModule = location.getModule();
     VirtualFile locationVirtualFile = location.getVirtualFile();
