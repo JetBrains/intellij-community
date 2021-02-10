@@ -9,20 +9,24 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory
 
 internal class IndexingFinishedListener : IndexDiagnosticDumper.ProjectIndexingHistoryListener {
   companion object {
     private const val NOTIFICATION_EXPIRED_KEY = "ml.local.models.training.notification.expired"
+    private const val SHOW_NOTIFICATION_REGISTRY = "ml.local.models.show.notification"
   }
 
   override fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory) {
-    val project = projectIndexingHistory.project
-    //TODO: check that it's a java project
-    val language = Language.findLanguageByID("JAVA") ?: return
-    if (!PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_EXPIRED_KEY)) {
-      TrainingNotification(project, language).notify(project)
+    if (Registry.`is`(SHOW_NOTIFICATION_REGISTRY, false)) {
+      val project = projectIndexingHistory.project
+      //TODO: check that it's a java project
+      val language = Language.findLanguageByID("JAVA") ?: return
+      if (!PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_EXPIRED_KEY)) {
+        TrainingNotification(project, language).notify(project)
+      }
     }
   }
 

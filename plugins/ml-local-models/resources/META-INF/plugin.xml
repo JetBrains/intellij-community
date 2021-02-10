@@ -22,6 +22,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ml.local.models.show.notification" defaultValue="false"
+                 description="Show notification with suggestion to train local ML models"/>
+
     <projectService serviceImplementation="com.intellij.ml.local.models.LocalModelsManager"/>
     <projectIndexingHistoryListener implementation="com.intellij.ml.local.actions.IndexingFinishedListener"/>
   </extensions>
