@@ -39,12 +39,15 @@ import kotlin.coroutines.CoroutineContext
 
 internal typealias UsagePointer = Pointer<out RenameUsage>
 
-internal fun rename(project: Project, target: RenameTarget) {
+/**
+ * Entry point to perform rename with a dialog initialized with [targetName].
+ */
+internal fun showDialogAndRename(project: Project, target: RenameTarget, targetName: String = target.targetName) {
   ApplicationManager.getApplication().assertIsDispatchThread()
   val canRenameTextOccurrences = !target.textTargets(IN_PLAIN_TEXT).isEmpty()
   val canRenameCommentAndStringOccurrences = !target.textTargets(IN_COMMENTS_AND_STRINGS).isEmpty()
   val initOptions = RenameDialog.Options(
-    targetName = target.targetName,
+    targetName = targetName,
     renameOptions = RenameOptions(
       renameTextOccurrences = if (canRenameTextOccurrences) true else null,
       renameCommentsStringsOccurrences = if (canRenameCommentAndStringOccurrences) true else null,
@@ -57,8 +60,20 @@ internal fun rename(project: Project, target: RenameTarget) {
     return
   }
   val (newName: String, options: RenameOptions) = dialog.result()
-  val preview: Boolean = dialog.preview
-  val targetPointer: Pointer<out RenameTarget> = target.createPointer()
+  rename(project, target.createPointer(), newName, options, dialog.preview)
+}
+
+/**
+ * Entry point to perform rename without a dialog.
+ * @param preview whether the user explicitly requested the Preview
+ */
+internal fun rename(
+  project: Project,
+  targetPointer: Pointer<out RenameTarget>,
+  newName: String,
+  options: RenameOptions,
+  preview: Boolean = false
+) {
   CoroutineScope(CoroutineName("root rename coroutine")).launch(Dispatchers.Default) {
     rename(this, project, targetPointer, newName, options, preview)
   }
