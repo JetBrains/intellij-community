@@ -69,7 +69,6 @@
     <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
 
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="await"/>
-    <applicationService serviceImplementation="com.intellij.ide.plugins.certificates.PluginCertificateManager" preload="await"/>
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="notHeadless"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>

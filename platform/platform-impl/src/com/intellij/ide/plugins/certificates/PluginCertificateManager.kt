@@ -27,7 +27,7 @@ import javax.swing.tree.TreeSelectionModel
 
 class PluginCertificateManager :
   BoundConfigurable(
-    IdeBundle.message("plugins.certificates.display.name"),
+    IdeBundle.message("plugin.manager.custom.certificates"),
     "plugin.certificates"
   ), Configurable.NoScroll, CertificateListener {
 
