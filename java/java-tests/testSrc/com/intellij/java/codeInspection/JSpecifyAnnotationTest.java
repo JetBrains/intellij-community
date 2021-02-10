@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -94,33 +95,60 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
   @Test
   public void test() throws IOException {
     Path path = PATH.resolve(myFileName);
-    if (!Files.isRegularFile(path)) {
-      // TODO
-      throw new UnsupportedOperationException("Directory tests aren't supported yet");
+    boolean dirMode = Files.isDirectory(path);
+    List<Path> files = Files.walk(path)
+      .filter(p -> Files.isRegularFile(p)).filter(p -> p.getFileName().toString().endsWith(".java"))
+      .collect(Collectors.toList());
+    if (files.isEmpty()) {
+      throw new IllegalStateException("No Java files");
     }
-    String fileText = Files.readString(path).replace("\r\n", "\n");
-    String stripped = fileText.replaceAll("// jspecify_\\w+", "");
-    PsiFile file = myFixture.configureByText(path.getFileName().toString(), stripped);
+    class FileData {
+      final Path path;
+      final String fileText;
+      final String stripped;
+      final PsiFile psiFile;
 
-    Map<PsiElement, String> actual = new LinkedHashMap<>();
-    var dfaInspection = new JSpecifyDataFlowInspection(actual);
-    var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
-    var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
-    List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
-    ReadAction.run(() -> {
-      ProblemsHolder holder = new ProblemsHolder(new InspectionManagerEx(getProject()), file, false);
-      for (LocalInspectionTool inspection : inspections) {
-        PsiElementVisitor visitor = inspection.buildVisitor(holder, false);
-        PsiTreeUtil.processElements(file, e -> {
-          e.accept(visitor);
-          return true;
-        });
+      FileData(Path path, String fileText, String stripped, PsiFile psiFile) {
+        this.path = path;
+        this.fileText = fileText;
+        this.stripped = stripped;
+        this.psiFile = psiFile;
       }
-      String actualText = getActualText(actual, stripped);
-      if (!fileText.equals(actualText)) {
-        throw new FileComparisonFailure("Messages don't match", fileText, actualText, path.toString());
-      }
-    });
+    }
+    List<FileData> fileData = new ArrayList<>();
+    for (Path file : files) {
+      String fileText = Files.readString(file).replace("\r\n", "\n");
+      String stripped = fileText.replaceAll("// jspecify_\\w+", "");
+      String relativeFile = FileUtil.toSystemIndependentName((dirMode ? path.relativize(file) : file.getFileName()).toString());
+      PsiFile psiFile = myFixture.addFileToProject(relativeFile, stripped);
+      fileData.add(new FileData(file, fileText, stripped, psiFile));
+    }
+    for (FileData data : fileData) {
+      String fileText = data.fileText;
+      String stripped = data.stripped;
+      PsiFile file = data.psiFile;
+
+      Map<PsiElement, String> actual = new LinkedHashMap<>();
+      var dfaInspection = new JSpecifyDataFlowInspection(actual);
+      var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
+      var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
+      List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
+      ReadAction.run(() -> {
+        ProblemsHolder holder = new ProblemsHolder(new InspectionManagerEx(getProject()), file, false);
+        for (LocalInspectionTool inspection : inspections) {
+          PsiElementVisitor visitor = inspection.buildVisitor(holder, false);
+          PsiTreeUtil.processElements(file, e -> {
+            e.accept(visitor);
+            return true;
+          });
+        }
+        String actualText = getActualText(actual, stripped);
+        if (!fileText.equals(actualText)) {
+          throw new FileComparisonFailure("Messages don't match ("+data.path.getFileName().toString()+")", 
+                                          fileText, actualText, data.path.toString());
+        }
+      });
+    }
   }
   
   private static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
