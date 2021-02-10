@@ -205,6 +205,8 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     public static final int CHECK_MARK = 0;
     public static final int FILTER = 1;
 
+    private boolean myEditEnabled = true;
+
     public final void setFilters(com.intellij.ui.classFilter.ClassFilter[] filters) {
       myFilters.clear();
       if (filters != null) {
@@ -285,13 +287,17 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return isEnabled();
+      return isEnabled() && myEditEnabled;
     }
 
     @Override
     public void removeRow(final int idx) {
       myFilters.remove(idx);
       fireTableRowsDeleted(idx, idx);
+    }
+
+    public void setEditEnabled(boolean editEnabled) {
+      myEditEnabled = editEnabled;
     }
   }
 
