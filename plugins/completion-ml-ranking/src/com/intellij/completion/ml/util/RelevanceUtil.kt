@@ -1,6 +1,7 @@
 package com.intellij.completion.ml.util
 
 import com.intellij.completion.ml.sorting.FeatureUtils
+import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
@@ -18,6 +19,8 @@ object RelevanceUtil {
                                       "codotaPriorityWeigher",
                                       "com.zlabs.code.completion.ScaCompletionWeigher",
                                       "com.aliyun.odps.studio.intellij.compiler.codecompletion.OdpsqlCompletionWeigher")
+
+  private val weighersClassesCache = mutableMapOf<Class<*>, PluginType>()
 
   /*
   * First map contains only features affecting default elements ordering
@@ -46,7 +49,12 @@ object RelevanceUtil {
   }
 
   private fun acceptValue(value: Any): Boolean {
-    return value is Number || value is Boolean || value.javaClass.isEnum || getPluginInfo(value.javaClass).type.isDevelopedByJetBrains()
+    return value is Number || value is Boolean || value.javaClass.isEnum || isJetBrainsClass(value.javaClass)
+  }
+
+  private fun isJetBrainsClass(cl: Class<*>): Boolean {
+    val pluginType = weighersClassesCache.getOrPut(cl) { getPluginInfo(cl).type }
+    return pluginType.isDevelopedByJetBrains()
   }
 
   private fun String.normalized(): String {
