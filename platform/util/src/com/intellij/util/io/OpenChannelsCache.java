@@ -97,7 +97,10 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
           return FileChannelUtil.unInterruptible(FileChannel.open(file, accessMode));
         }
         catch (NoSuchFileException ex) {
-          Files.createDirectory(file.getParent());
+          Path parent = file.getParent();
+          if (!Files.exists(parent)) {
+            Files.createDirectories(parent);
+          }
           if (!lastAttempt) return null;
           throw ex;
         }

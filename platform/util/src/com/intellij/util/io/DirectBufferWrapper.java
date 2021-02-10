@@ -145,7 +145,7 @@ public final class DirectBufferWrapper {
             if (!Files.isWritable(path)) {
               throw ex;
             }
-            Files.createDirectory(parentFile);
+            Files.createDirectories(parentFile);
           }
           if (!finalAttempt) return null;
           throw ex;
