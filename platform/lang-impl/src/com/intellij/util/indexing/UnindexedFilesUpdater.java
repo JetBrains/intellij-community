@@ -177,13 +177,12 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     poweredIndicator.setIndeterminate(false);
     poweredIndicator.setFraction(0);
     poweredIndicator.setText(IndexingBundle.message("progress.indexing.updating"));
-    ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(poweredIndicator, totalFiles);
 
     myIndex.resetSnapshotInputMappingStatistics();
 
     Instant startIndexing = Instant.now();
     try {
-      indexFiles(orderedProviders, providerToFiles, projectIndexingHistory, concurrentTasksProgressManager);
+      indexFiles(orderedProviders, providerToFiles, projectIndexingHistory, poweredIndicator);
     } finally {
       projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(startIndexing, Instant.now()));
     }
@@ -196,7 +195,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private void indexFiles(@NotNull List<IndexableFilesIterator> orderedProviders,
                           @NotNull Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles,
                           @NotNull ProjectIndexingHistory projectIndexingHistory,
-                          @NotNull ConcurrentTasksProgressManager concurrentTasksProgressManager) {
+                          @NotNull ProgressIndicator progressIndicator) {
+    int totalFiles = providerToFiles.values().stream().mapToInt(it -> it.size()).sum();
+    ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(progressIndicator, totalFiles);
+
     int numberOfIndexingThreads = getNumberOfIndexingThreads();
     LOG.info("Use " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads));
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
