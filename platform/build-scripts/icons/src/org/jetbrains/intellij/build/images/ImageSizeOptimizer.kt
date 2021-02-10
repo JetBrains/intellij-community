@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -14,8 +14,8 @@ class ImageSizeOptimizer(private val projectHome: Path) {
   private val optimizedTotal = AtomicLong(0)
   private val totalFiles = AtomicLong(0)
 
-  fun optimizeIcons(module: JpsModule) {
-    val icons = ImageCollector(projectHome).collect(module)
+  fun optimizeIcons(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
+    val icons = ImageCollector(projectHome, moduleConfig = moduleConfig).collect(module)
     icons.parallelStream().forEach { icon ->
       icon.files.parallelStream().forEach {
         tryToReduceSize(it)

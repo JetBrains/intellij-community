@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import org.jetbrains.intellij.build.images.ImageExtension.*
@@ -6,15 +6,15 @@ import org.jetbrains.intellij.build.images.ImageType.*
 import org.jetbrains.jps.model.module.JpsModule
 import java.awt.Dimension
 import java.nio.file.Path
-import java.util.*
 
 abstract class ImageSanityCheckerBase(private val projectHome: Path, private val ignoreSkipTag: Boolean) {
   private val STUB_PNG_MD5 = "5a87124746c39b00aad480e92672eca0" // /actions/stub.svg - 16x16
 
-  fun check(module: JpsModule) {
-    val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
+  fun check(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
+    val allImages = ImageCollector(projectHome = projectHome, iconsOnly = false, ignoreSkipTag = ignoreSkipTag,
+                                   moduleConfig = moduleConfig).collect(module)
 
-    val (images, broken) = allImages.partition { it.file != null }
+    val (images, broken) = allImages.partition { it.basicFile != null }
     log(Severity.ERROR, "image without base version", module, broken)
 
     checkHaveRetinaVersion(images, module)
@@ -27,13 +27,13 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
     checkNoOverridingFallbackVersions(images, module)
   }
 
-  private fun checkHaveRetinaVersion(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkHaveRetinaVersion(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.INFO, "image without retina version", module) { image ->
       return@process image.getFiles(RETINA, RETINA_DARCULA).isNotEmpty()
     }
   }
 
-  private fun checkHaveCompleteIconSet(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkHaveCompleteIconSet(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "image without complete set of additional icons", module) { image ->
       return@process image.files.groupBy { ImageExtension.fromFile(it) }.all { (_, files) ->
         val types = files.map { ImageType.fromFile(it) }
@@ -54,9 +54,9 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
     }
   }
 
-  private fun checkHaveValidSize(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkHaveValidSize(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "icon with suspicious size", module) { image ->
-      if (!isIcon(image.file!!)) {
+      if (!isIcon(image.basicFile!!)) {
         return@process true
       }
 
@@ -85,26 +85,26 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
     }
   }
 
-  private fun checkAreNotAmbiguous(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkAreNotAmbiguous(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "image with ambiguous definition (has both '.png' and '.gif' versions)", module) { image ->
       val extensions = image.files.map { ImageExtension.fromFile(it) }
       return@process GIF !in extensions || PNG !in extensions
     }
   }
 
-  private fun checkNoStubIcons(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkNoStubIcons(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "copies of the stub.png image must be removed", module) { image ->
       return@process image.files.none { STUB_PNG_MD5 == md5(it) }
     }
   }
 
-  private fun checkNoDeprecatedIcons(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkNoDeprecatedIcons(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "deprecated icons must be moved to /compatibilityResources", module) { image ->
       return@process image.deprecation == null || image.files.isEmpty()
     }
   }
 
-  private fun checkNoSvgFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkNoSvgFallbackVersions(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "SVG icons should not use PNG icons as fallback", module) { image ->
       if (image.files.none { ImageExtension.fromFile(it) == SVG }) return@process true
 
@@ -113,7 +113,7 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
     }
   }
 
-  private fun checkNoOverridingFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkNoOverridingFallbackVersions(images: List<ImageInfo>, module: JpsModule) {
     process(images, Severity.WARNING, "Overridden icons should not use PNG icons as fallback", module) { image ->
       if (image.deprecation?.replacement == null) return@process true
 
@@ -122,8 +122,8 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
   }
 
 
-  private fun process(images: List<ImagePaths>, severity: Severity, message: String, module: JpsModule, processor: (ImagePaths) -> Boolean) {
-    val result = ArrayList<ImagePaths>()
+  private fun process(images: List<ImageInfo>, severity: Severity, message: String, module: JpsModule, processor: (ImageInfo) -> Boolean) {
+    val result = ArrayList<ImageInfo>()
     images.forEach {
       if (!processor(it)) {
         result.add(it)
@@ -132,7 +132,7 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
     log(severity, message, module, result)
   }
 
-  internal abstract fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>)
+  internal abstract fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImageInfo>)
 
   enum class Severity { INFO, WARNING, ERROR }
 }
@@ -152,7 +152,7 @@ class ImageSanityChecker(projectHome: Path) : ImageSanityCheckerBase(projectHome
     }
   }
 
-  override fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>) {
+  override fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImageInfo>) {
     val logger = when (severity) {
       Severity.ERROR -> warnings
       Severity.WARNING -> warnings

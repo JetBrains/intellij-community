@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
 import com.intellij.openapi.util.text.StringUtilRt
 import org.jetbrains.intellij.build.images.IconClassInfo
 import org.jetbrains.intellij.build.images.IconsClassGenerator
 import org.jetbrains.intellij.build.images.IconsClasses
+import org.jetbrains.intellij.build.images.IntellijIconClassGeneratorModuleConfig
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
@@ -16,8 +17,8 @@ internal class DotnetIconsClasses(override val homePath: String) : IconsClasses(
 
   override fun generator(home: Path, modules: List<JpsModule>): IconsClassGenerator {
     return object : IconsClassGenerator(home, modules) {
-      override fun getIconClassInfo(module: JpsModule): List<IconClassInfo> {
-        val info = super.getIconClassInfo(module)
+      override fun getIconClassInfo(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?): List<IconClassInfo> {
+        val info = super.getIconClassInfo(module, moduleConfig)
         return splitRiderAndReSharper(info.single())
       }
 

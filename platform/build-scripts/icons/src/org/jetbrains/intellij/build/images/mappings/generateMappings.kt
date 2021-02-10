@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.mappings
 
 import org.jetbrains.intellij.build.images.IconsClassGenerator
+import org.jetbrains.intellij.build.images.IntellijIconClassGeneratorConfig
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
@@ -103,13 +104,14 @@ private fun loadIdeaGeneratedIcons(context: Context, filter: Mapping.() -> Boole
   val home = context.devRepoDir
   val project = jpsProject(home.toString())
   val generator = IconsClassGenerator(home, project.modules)
+  val config = IntellijIconClassGeneratorConfig()
   return protectStdErr {
     project.modules.parallelStream()
-      .flatMap { generator.getIconClassInfo(it).stream() }
+      .flatMap { generator.getIconClassInfo(it, moduleConfig = config.getConfigForModule(it.name)).stream() }
       .filter { it.images.isNotEmpty() }
       .flatMap { info ->
         val icons = info.images.asSequence()
-          .filter { it.file != null && Icon(it.file!!).isValid }
+          .filter { it.basicFile != null && Icon(it.basicFile!!).isValid }
           .map { Paths.get(JpsPathUtil.urlToPath(it.sourceRoot.url)) }
           .distinct()
           .map { Mapping("idea", info.className, "idea/${home.relativize(it)}") }

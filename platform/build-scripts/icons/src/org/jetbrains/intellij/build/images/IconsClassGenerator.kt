@@ -34,7 +34,7 @@ internal data class IconClassInfo(val customLoad: Boolean,
                                   val packageName: String,
                                   val className: String,
                                   val outFile: Path,
-                                  val images: List<ImagePaths>)
+                                  val images: Collection<ImageInfo>)
 
 internal open class IconsClassGenerator(private val projectHome: Path,
                                         val modules: List<JpsModule>,
@@ -64,7 +64,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   private val modifiedClasses = ContainerUtil.createConcurrentList<ModifiedClass>()
   private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
 
-  internal open fun getIconClassInfo(module: JpsModule): List<IconClassInfo> {
+  internal open fun getIconClassInfo(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?): List<IconClassInfo> {
     val packageName: String
     val className: CharSequence
     val outFile: Path
@@ -96,25 +96,25 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         val sourceRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).single().file.absolutePath
         val resourceRoot = module.getSourceRoots(JavaResourceRootType.RESOURCE).single()
         // avoid merge conflicts - do not transform StudioIcons to nested class of AndroidIcons
-        var imageCollector = ImageCollector(projectHome)
+        var imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
         val imagesA = imageCollector.collectSubDir(resourceRoot, "icons", includePhantom = true)
         imageCollector.printUsedIconRobots()
 
-        imageCollector = ImageCollector(projectHome)
+        imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
         val imagesS = imageCollector.collectSubDir(resourceRoot, "studio/icons", includePhantom = true)
         imageCollector.printUsedIconRobots()
 
         return listOf(
-          IconClassInfo(true, packageName, "AndroidIcons", Paths.get(sourceRoot, "icons", "AndroidIcons.java"), imagesA),
-          IconClassInfo(true, packageName, "StudioIcons", Paths.get(sourceRoot, "icons", "StudioIcons.java"), imagesS),
+          IconClassInfo(true, packageName, "AndroidIcons", Path.of(sourceRoot, "icons", "AndroidIcons.java"), imagesA),
+          IconClassInfo(true, packageName, "StudioIcons", Path.of(sourceRoot, "icons", "StudioIcons.java"), imagesS),
         )
       }
       else -> {
-        packageName = getPluginPackageIfPossible(module) ?: "icons"
+        packageName = moduleConfig?.packageName ?: getPluginPackageIfPossible(module) ?: "icons"
 
         val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).firstOrNull() ?: return emptyList()
 
-        val firstRootDir = Paths.get(JpsPathUtil.urlToPath(firstRoot.url)).resolve("icons")
+        val firstRootDir = Path.of(JpsPathUtil.urlToPath(firstRoot.url)).resolve("icons")
         var oldClassName: String?
         // this is added to remove unneeded empty directories created by previous version of this script
         if (Files.isDirectory(firstRootDir)) {
@@ -147,18 +147,22 @@ internal open class IconsClassGenerator(private val projectHome: Path,
           }
         }
 
-        className = oldClassName ?: directoryName(module).let {
+        className = oldClassName ?: moduleConfig?.className ?: directoryName(module).let {
           if (it.endsWith("Icons")) it else "${it}Icons"
         }
         outFile = targetRoot.resolve("$className.java")
       }
     }
-    return listOf(IconClassInfo(true, packageName, className.toString(), outFile, collectImages(module)))
+
+    val imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
+    val images = imageCollector.collect(module, includePhantom = true)
+    imageCollector.printUsedIconRobots()
+    return listOf(IconClassInfo(true, packageName, className.toString(), outFile, images))
   }
 
-  fun processModule(module: JpsModule) {
+  fun processModule(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
     val classCode = StringBuilder()
-    for (iconsClassInfo in getIconClassInfo(module)) {
+    for (iconsClassInfo in getIconClassInfo(module, moduleConfig)) {
       val outFile = iconsClassInfo.outFile
       val oldText = try {
         Files.readString(outFile)
@@ -263,13 +267,6 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     return StringUtil.detectSeparators(text ?: return LineSeparator.LF) ?: LineSeparator.LF
   }
 
-  private fun collectImages(module: JpsModule): List<ImagePaths> {
-    val imageCollector = ImageCollector(projectHome)
-    val images = imageCollector.collect(module, includePhantom = true)
-    imageCollector.printUsedIconRobots()
-    return images
-  }
-
   private fun writeClass(copyrightComment: String, info: IconClassInfo, result: StringBuilder): CharSequence? {
     val images = info.images
     if (images.isEmpty()) {
@@ -283,7 +280,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     result.append('\n')
     append(result, "import javax.swing.*;", 0)
     result.append('\n')
-    if (images.any(ImagePaths::scheduledForRemoval)) {
+    if (images.any(ImageInfo::scheduledForRemoval)) {
       append(result, "import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;", 0)
       result.append('\n')
     }
@@ -326,14 +323,20 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     return result
   }
 
-  private fun processIcons(images: List<ImagePaths>, result: StringBuilder, customLoad: Boolean, depth: Int) {
+  private fun processIcons(images: Collection<ImageInfo>, result: StringBuilder, customLoad: Boolean, depth: Int) {
     val level = depth + 1
 
-    val (nodes, leaves) = images.partition { getImageId(it, depth).contains('/') }
-    val nodeMap = nodes.groupBy { getImageId(it, depth).substringBefore('/') }
-    val leafMap: MutableMap<String, ImagePaths> = HashMap(leaves.size)
-    for (leaf in leaves) {
-      leafMap.put(getImageId(leaf, depth), leaf)
+    val nodeMap = HashMap<String, MutableList<ImageInfo>>(images.size / 2)
+    val leafMap = HashMap<String, ImageInfo>(images.size)
+    for (imageInfo in images) {
+      val imageId = getImageId(imageInfo, depth)
+      val index = imageId.indexOf('/')
+      if (index >= 0) {
+        nodeMap.computeIfAbsent(imageId.substring(0, index)) { mutableListOf() }.add(imageInfo)
+      }
+      else {
+        leafMap.put(imageId, imageInfo)
+      }
     }
 
     fun getWeight(key: String): Int {
@@ -345,14 +348,15 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     sortedKeys.addAll(nodeMap.keys)
     sortedKeys.addAll(leafMap.keys)
     sortedKeys.sortWith(NAME_COMPARATOR)
-    sortedKeys.sortWith(kotlin.Comparator { o1, o2 -> getWeight(o1) - getWeight(o2) })
+    sortedKeys.sortWith(Comparator { o1, o2 -> getWeight(o1) - getWeight(o2) })
 
     var innerClassWasBefore = false
     for (key in sortedKeys) {
       val group = nodeMap.get(key)
       if (group != null) {
         val oldLength = result.length
-        if (isInlineClass(className(key))) {
+        val className = className(key)
+        if (isInlineClass(className)) {
           processIcons(group, result, customLoad, depth + 1)
         }
         else {
@@ -360,7 +364,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
           if (result.length < 2 || result.get(result.length - 1) != '\n' || result.get(result.length - 2) != '{') {
             result.append('\n')
           }
-          append(result, "public static final class ${className(key)} {", level)
+          append(result, "public static final class $className {", level)
           val lengthBeforeBody = result.length
           processIcons(group, result, customLoad, depth + 1)
           if (lengthBeforeBody == result.length) {
@@ -386,8 +390,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
   protected open fun isInlineClass(name: CharSequence) = false
 
-  private fun appendImage(image: ImagePaths, result: StringBuilder, level: Int, customLoad: Boolean) {
-    val file = image.file ?: return
+  private fun appendImage(image: ImageInfo, result: StringBuilder, level: Int, customLoad: Boolean) {
+    val file = image.basicFile ?: return
     if (!image.phantom && !isIcon(file)) {
       return
     }
@@ -440,7 +444,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       return
     }
 
-    val rootDir = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
+    val rootDir = Path.of(JpsPathUtil.urlToPath(sourceRoot.url))
     val imageFile: Path
     if (deprecation?.replacement == null) {
       imageFile = file
@@ -517,10 +521,10 @@ private fun generateIconFieldName(file: Path): CharSequence {
   }
 }
 
-private fun getImageId(image: ImagePaths, depth: Int): String {
+private fun getImageId(image: ImageInfo, depth: Int): String {
   val path = image.id.removePrefix("/").split("/")
   if (path.size < depth) {
-    throw IllegalArgumentException("Can't get image ID - ${image.id}, $depth")
+    throw IllegalArgumentException("Can't get image id - ${image.id}, $depth")
   }
   return path.drop(depth).joinToString("/")
 }
@@ -535,7 +539,7 @@ private fun directoryNameFromConfig(module: JpsModule): String? {
   val file = rootDir.resolve(ROBOTS_FILE_NAME)
   val prefix = "name:"
   try {
-    Files.newBufferedReader(file).useLines { lines ->
+    Files.lines(file).use { lines ->
       for (line in lines) {
         if (line.startsWith(prefix)) {
           val name = line.substring(prefix.length).trim()
