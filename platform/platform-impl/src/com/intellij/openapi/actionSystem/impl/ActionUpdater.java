@@ -212,6 +212,7 @@ final class ActionUpdater {
     }
   }
 
+  @NotNull
   CancellablePromise<List<AnAction>> expandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     AsyncPromise<List<AnAction>> promise = new AsyncPromise<>();
     ProgressIndicator indicator = new EmptyProgressIndicator();
@@ -228,6 +229,7 @@ final class ActionUpdater {
     ourExecutor.execute(() -> {
       while (promise.getState() == Promise.State.PENDING) {
         try {
+          indicator.checkCanceled();
           boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
             List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
             ActionUpdateEdtExecutor.computeOnEdt(() -> {
@@ -320,7 +322,10 @@ final class ActionUpdater {
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
             return Collections.emptyList();
           }
-          presentation.setEnabled(visibleChildren || canBePerformed(actionGroup, strategy));
+          boolean canBePerformed = canBePerformed(actionGroup, strategy);
+          presentation.setEnabled(visibleChildren || canBePerformed);
+          boolean performOnly = canBePerformed && (actionGroup instanceof AlwaysPerformingActionGroup || !visibleChildren);
+          presentation.putClientProperty("actionGroup.perform.only", performOnly ? true : null);
         }
 
         if (myVisitor != null) {
@@ -339,10 +344,6 @@ final class ActionUpdater {
       myVisitor.visitLeaf(child);
     }
     return Collections.singletonList(child);
-  }
-
-  boolean canBePerformedCached(ActionGroup group) {
-    return !Boolean.FALSE.equals(myCanBePerformedCache.get(group));
   }
 
   private boolean canBePerformed(ActionGroup group, UpdateStrategy strategy) {
@@ -376,10 +377,6 @@ final class ActionUpdater {
 
   private boolean hasEnabledChildren(ActionGroup group, UpdateStrategy strategy) {
     return hasChildrenWithState(group, false, true, strategy, new LinkedHashSet<>());
-  }
-
-  boolean hasVisibleChildren(ActionGroup group) {
-    return hasVisibleChildren(group, myRealUpdateStrategy);
   }
 
   private boolean hasVisibleChildren(ActionGroup group, UpdateStrategy strategy) {

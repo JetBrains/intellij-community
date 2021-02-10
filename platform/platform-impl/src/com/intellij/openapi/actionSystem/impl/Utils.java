@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -120,7 +121,18 @@ public final class Utils {
     List<AnAction> list = DO_FULL_EXPAND ?
                           updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
                           updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+    fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+  }
 
+  private static void fillMenuInner(JComponent component,
+                                    List<AnAction> list,
+                                    boolean checked,
+                                    boolean enableMnemonics,
+                                    PresentationFactory presentationFactory,
+                                    @NotNull DataContext context,
+                                    String place,
+                                    boolean isWindowMenu,
+                                    boolean useDarkIcons) {
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
 
@@ -139,43 +151,13 @@ public final class Utils {
       if (action instanceof Separator) {
         final String text = ((Separator)action).getText();
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
-          JPopupMenu.Separator separator = new JPopupMenu.Separator() {
-            private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
-
-            @Override
-            public void doLayout() {
-              super.doLayout();
-              if (myMenu != null) {
-                myMenu.setBounds(getBounds());
-              }
-            }
-
-            @Override
-            protected void paintComponent(Graphics g) {
-              if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel()) {
-                g.setColor(component.getBackground());
-                g.fillRect(0, 0, getWidth(), getHeight());
-              }
-              if (myMenu != null) {
-                myMenu.paint(g);
-              }
-              else {
-                super.paintComponent(g);
-              }
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-              return myMenu != null ? myMenu.getPreferredSize() : super.getPreferredSize();
-            }
-          };
+          JPopupMenu.Separator separator = createSeparator(text);
           component.add(separator);
           children.add(separator);
         }
       }
       else if (action instanceof ActionGroup &&
-               !(updater.canBePerformedCached((ActionGroup)action) &&
-                 action instanceof AlwaysPerformingActionGroup || !updater.hasVisibleChildren((ActionGroup)action))) {
+               !Boolean.TRUE.equals(presentation.getClientProperty("actionGroup.perform.only"))) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
@@ -229,6 +211,40 @@ public final class Utils {
         }
       }
     }
+  }
+
+  @NotNull
+  private static JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
+    return new JPopupMenu.Separator() {
+      private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
+
+      @Override
+      public void doLayout() {
+        super.doLayout();
+        if (myMenu != null) {
+          myMenu.setBounds(getBounds());
+        }
+      }
+
+      @Override
+      protected void paintComponent(Graphics g) {
+        if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel()) {
+          g.setColor(getParent().getBackground());
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
+        if (myMenu != null) {
+          myMenu.paint(g);
+        }
+        else {
+          super.paintComponent(g);
+        }
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        return myMenu != null ? myMenu.getPreferredSize() : super.getPreferredSize();
+      }
+    };
   }
 
   private static void replaceIconIn(Component menuItem, Icon icon) {
