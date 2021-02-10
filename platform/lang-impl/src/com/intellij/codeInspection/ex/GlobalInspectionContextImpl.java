@@ -45,6 +45,7 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -77,7 +78,6 @@ import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenActivi
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenInspectionFinished;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
-  private static final boolean INSPECT_INJECTED_PSI = SystemProperties.getBooleanProperty("idea.batch.inspections.inspect.injected.psi", true);
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextImpl.class);
   @SuppressWarnings("StaticNonFinalField")
   @TestOnly
@@ -267,6 +267,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
 
     final boolean headlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
+    final boolean inspectInjectedPsi = Registry.is("idea.batch.inspections.inspect.injected.psi", true);
+
     final Map<String, InspectionToolWrapper<?, ?>> map = getInspectionWrappersMap(localTools);
 
     final BlockingQueue<VirtualFile> filesToInspect = new ArrayBlockingQueue<>(1000);
@@ -293,7 +295,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                                          wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)),
                     getWrappersFromTools(localTools, file, includeDoNotShow,
                                          wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)),
-                    INSPECT_INJECTED_PSI && scope.isAnalyzeInjectedCode());
+                    inspectInjectedPsi && scope.isAnalyzeInjectedCode());
         if (start != 0) {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
         }
