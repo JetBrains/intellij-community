@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tests.targets.java
 
+import com.intellij.debugger.DebuggerManager
 import com.intellij.debugger.ExecutionWithDebuggerToolsTestCase
+import com.intellij.debugger.engine.DebugProcess
+import com.intellij.debugger.engine.DebugProcessEvents
+import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.OutputChecker
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.PsiLocation
@@ -578,7 +582,25 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
 
         assertNotNull(runContentDescriptor)
 
-        val resultsViewer = (runContentDescriptor.executionConsole as SMTRunnerConsoleView).resultsViewer
+        val smtRunnerConsoleView = runContentDescriptor.executionConsole as SMTRunnerConsoleView
+        val resultsViewer = smtRunnerConsoleView.resultsViewer
+
+        DebuggerManager.getInstance(project).getDebugProcess(runContentDescriptor.processHandler)?.let { process: DebugProcess ->
+          (process as DebugProcessEvents).session?.let { session: DebuggerSession ->
+            val sessionCompletable = CompletableDeferred<Unit>()
+            session.contextManager.addListener { _, event ->
+              if (event == DebuggerSession.Event.DISPOSE) {
+                sessionCompletable.complete(Unit)
+              }
+            }
+            if (session.state == DebuggerSession.State.DISPOSED) {
+              sessionCompletable.complete(Unit)
+            }
+            withTimeout(30_000) {
+              sessionCompletable.await()
+            }
+          }
+        }
 
         val transformerFactory = TransformerFactory.newInstance() as SAXTransformerFactory
         val handler: TransformerHandler = transformerFactory.newTransformerHandler()
