@@ -96,6 +96,13 @@ internal open class UpdateIdeFromSourcesAction
                                         workIdeHome, notIdeHomeMessage))
     }
 
+    if (FileUtil.isAncestor(workIdeHome, PathManager.getConfigPath(), false)) {
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.config.or.system.directory.under.home", workIdeHome, PathManager.PROPERTY_CONFIG_PATH))
+    }
+    if (FileUtil.isAncestor(workIdeHome, PathManager.getSystemPath(), false)) {
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.config.or.system.directory.under.home", workIdeHome, PathManager.PROPERTY_SYSTEM_PATH))
+    }
+
     val scriptFile = File(devIdeaHome, "build/scripts/idea_ultimate.gant")
     if (!scriptFile.exists()) {
       return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.build.scripts.not.exists", scriptFile))
