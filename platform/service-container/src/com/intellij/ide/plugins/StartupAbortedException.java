@@ -9,6 +9,7 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -25,7 +26,7 @@ public final class StartupAbortedException extends RuntimeException {
 
   public static void processException(@NotNull Throwable t) {
     if (LoadingState.COMPONENTS_LOADED.isOccurred() && !(t instanceof StartupAbortedException)) {
-      if (!(t instanceof ProcessCanceledException)) {
+      if (!(t instanceof ControlFlowException)) {
         PluginManagerCore.getLogger().error(t);
       }
       return;

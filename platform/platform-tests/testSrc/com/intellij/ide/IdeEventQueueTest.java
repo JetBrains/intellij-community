@@ -3,13 +3,19 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +26,9 @@ import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
@@ -161,5 +169,41 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testEdtScheduledExecutorRunnableMustThrowImmediatelyInTests() {
     EdtExecutorService.getScheduledExecutorInstance().schedule(()->throwMyException(), 1, TimeUnit.MILLISECONDS);
     checkMyExceptionThrownImmediately();
+  }
+
+  public void testNoExceptionEvenCreatedByThanosExtensionNotApplicableExceptionMustKillEDT() {
+    assert SwingUtilities.isEventDispatchThread();
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    throwInIdeEventQueueDispatch(ExtensionNotApplicableException.INSTANCE, null); // ControlFlowException silently ignored
+    throwInIdeEventQueueDispatch(new ProcessCanceledException(), null);  // ControlFlowException silently ignored
+    Error error = new Error();
+    throwInIdeEventQueueDispatch(error, error);
+  }
+
+  private void throwInIdeEventQueueDispatch(@NotNull Throwable toThrow, Throwable expectedToBeLogged) {
+    AtomicBoolean run = new AtomicBoolean();
+    InvocationEvent event = new InvocationEvent(this, () -> {
+      run.set(true);
+      ExceptionUtil.rethrow(toThrow);
+    });
+    AtomicReference<Throwable> error = new AtomicReference<>();
+    LoggedErrorProcessor old = LoggedErrorProcessor.getInstance();
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public void processError(String message, Throwable t, String[] details, @NotNull org.apache.log4j.Logger logger) {
+        assertNull(error.get());
+        error.set(t);
+      }
+    });
+
+    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
+    try {
+      ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
+    }
+    finally {
+      LoggedErrorProcessor.setNewInstance(old);
+    }
+    assertTrue(run.get());
+    assertSame(expectedToBeLogged, error.get());
   }
 }

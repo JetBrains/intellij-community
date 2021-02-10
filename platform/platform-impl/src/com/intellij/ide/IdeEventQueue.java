@@ -49,6 +49,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import sun.awt.AppContext;
 import sun.awt.SunToolkit;
 
@@ -1612,6 +1613,18 @@ public final class IdeEventQueue extends EventQueue {
     testMode = application.isUnitTestMode();
     myTestMode = testMode;
     return testMode;
+  }
+
+  @TestOnly
+  void executeInProductionModeEvenThoughWeAreInTests(@NotNull Runnable runnable) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myTestMode = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      myTestMode = true;
+    }
   }
 
   /**
