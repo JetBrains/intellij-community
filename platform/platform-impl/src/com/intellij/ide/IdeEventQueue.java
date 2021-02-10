@@ -583,7 +583,7 @@ public final class IdeEventQueue extends EventQueue {
    * Extract Method dialog to show up. The second is KeyEvent with ID KeyEvent.KEY_TYPED with symbol 'µ' inside,
    * and it will insert 'µ' the focused text component in Extract Method dialog.
    *
-   * See more examples here: https://youtrack.jetbrains.com/issue/IDEA-187355
+   * See more examples <a href="https://youtrack.jetbrains.com/issue/IDEA-187355">here</a>
    */
   private boolean isSpecialSymbolMatchingShortcut(AWTEvent e) {
     final MyLastShortcut shortcut = myLastShortcut;

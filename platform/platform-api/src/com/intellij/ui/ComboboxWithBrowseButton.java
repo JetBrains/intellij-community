@@ -24,7 +24,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @deprecated Please use ComboBox with browse extension: https://jetbrains.design/intellij/controls/built_in_button/#browse
+ * @deprecated please use ComboBox with browse extension, see <a href="https://jetbrains.design/intellij/controls/built_in_button/#browse">UI guidelines</a>
+ * for details
  */
 @Deprecated
 public class ComboboxWithBrowseButton extends ComponentWithBrowseButton<JComboBox> {

@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
+ * This class is used to workaround <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143">the problem</a> with getting clipboard contents.
  * Although this bug is marked as fixed actually Sun just set 10 seconds timeout for {@link Clipboard#getContents(Object)}
  * method which may cause unacceptably long UI freezes. So we worked around this as follows:
  * <ul>

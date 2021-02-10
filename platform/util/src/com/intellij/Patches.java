@@ -7,7 +7,7 @@ import com.intellij.util.lang.JavaVersion;
 
 public final class Patches {
   /**
-   * See https://bugs.openjdk.java.net/browse/JDK-6322854.
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-6322854">JDK-6322854</a>.
    * java.lang.NullPointerException: Failed to retrieve atom name.
    */
   public static final boolean SUN_BUG_ID_6322854 = SystemInfoRt.isXWindow;
@@ -18,7 +18,7 @@ public final class Patches {
   public static final boolean IBM_JDK_DISABLE_COLLECTION_BUG = "false".equalsIgnoreCase(System.getProperty("idea.debugger.keep.temp.objects"));
 
   /**
-   * See https://bugs.openjdk.java.net/browse/JDK-4818143.
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-4818143">JDK-4818143</a>.
    * The bug is marked as fixed but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
    * for up to 10 seconds if clipboard owner is not responding.
    */
@@ -26,7 +26,7 @@ public final class Patches {
 
   /**
    * Desktop API support on X Window is limited to GNOME (and even there it may work incorrectly).
-   * See https://bugs.openjdk.java.net/browse/JDK-6486393.
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-6486393">JDK-6486393</a>.
    */
   public static final boolean SUN_BUG_ID_6486393 = SystemInfoRt.isXWindow;
 
@@ -48,13 +48,13 @@ public final class Patches {
   public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfoRt.isMac;
 
   /**
-   * Some HTTP connections lock class loaders: https://bugs.openjdk.java.net/browse/JDK-8032832
+   * Some HTTP connections lock class loaders: <a href="https://bugs.openjdk.java.net/browse/JDK-8032832">JDK-8032832</a>
    * The issue claims to be fixed in 8u20, but the fix just replaces one lock with another (on a context class loader).
    */
   public static final boolean JDK_BUG_ID_8032832 = true;
 
   /**
-   * https://bugs.openjdk.java.net/browse/JDK-8220231
+   * <a href="https://bugs.openjdk.java.net/browse/JDK-8220231">JDK-8220231</a>
    */
   @ReviseWhenPortedToJDK("13")
   public static final boolean TEXT_LAYOUT_IS_SLOW = JavaVersion.current().feature == 12 && !SystemInfo.isJetBrainsJvm;

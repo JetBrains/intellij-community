@@ -54,7 +54,7 @@ public abstract class StartupManager {
    * Registers activity that is executed on pooled thread after project is opened.
    * The runnable will be executed in current thread if project is already opened.</p>
    * <p>
-   * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
+   * See <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity">docs</a> for details.
    *
    * @see StartupActivity#POST_STARTUP_ACTIVITY
    */

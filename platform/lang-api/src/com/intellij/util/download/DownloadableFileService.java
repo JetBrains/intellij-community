@@ -22,7 +22,7 @@ public abstract class DownloadableFileService {
 
   /**
    * Create descriptor for set of files
-   * @param groupId id of the file set descriptors on http://frameworks.jetbrains.com/ site
+   * @param groupId id of the file set descriptors on <a href="http://frameworks.jetbrains.com/">frameworks site</a>
    * @param localUrls URLs of local copies of the descriptors
    * @return {@link DownloadableFileSetVersions} instance
    */

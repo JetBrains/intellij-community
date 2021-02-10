@@ -168,7 +168,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  /**
+  /*
    * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
    */
   private void runStartUpActivities(@Nullable ProgressIndicator indicator) {
