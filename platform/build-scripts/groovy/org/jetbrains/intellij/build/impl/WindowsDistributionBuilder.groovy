@@ -51,7 +51,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   @CompileStatic(TypeCheckingMode.SKIP)
-  void copyFilesForOsDistribution(@NotNull Path winDistPath) {
+  void copyFilesForOsDistribution(@NotNull Path winDistPath, JvmArchitecture arch = null) {
     Path distBinDir = winDistPath.resolve("bin")
     Files.createDirectories(distBinDir)
 
@@ -90,6 +90,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(@NotNull Path winDistPath) {
+    copyFilesForOsDistribution(winDistPath)
     if (customizer.include32BitLauncher) {
       buildContext.executeStep("Packaging x86 JRE for $OsFamily.WINDOWS", BuildOptions.WINDOWS_JRE_FOR_X86_STEP) {
         buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -47,10 +47,10 @@ final class MacDmgBuilder {
   }
 
   static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer,
-                              MacHostProperties macHostProperties, String macZipPath,
+                              MacHostProperties macHostProperties, String macZipPath, String macAdditionalDirPath,
                               String jreArchivePath, String suffix, boolean notarize) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, suffix, notarize)
+    dmgBuilder.doSignAndBuildDmg(macZipPath, macAdditionalDirPath, jreArchivePath, suffix, notarize)
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
@@ -108,7 +108,7 @@ final class MacDmgBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, String suffix, boolean notarize) {
+  private void doSignAndBuildDmg(String macZipPath, String macAdditionalDirPath, String jreArchivePath, String suffix, boolean notarize) {
     String javaExePath = null
     if (jreArchivePath != null) {
       String rootDir = buildContext.bundledJreManager.jbrRootDir(new File(jreArchivePath)) ?: 'jdk'
@@ -119,17 +119,22 @@ final class MacDmgBuilder {
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)
 
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
+    def installationDirectories = []
     def installationArchives = [pair(macZipPath, zipRoot)]
+    if (macAdditionalDirPath != null) {
+      installationDirectories += macAdditionalDirPath
+    }
     if (jreArchivePath != null) {
       installationArchives += pair(jreArchivePath, "")
     }
-    new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "Resources/", [], installationArchives)
+    new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "Resources/", installationDirectories, installationArchives)
 
     def targetName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
     def sitFile = new File(artifactsPath, "${targetName}.sit")
     ant.copy(file: macZipPath, tofile: sitFile.path)
     ant.zip(destfile: sitFile.path, update: true) {
       zipfileset(dir: productJsonDir.toString(), prefix: zipRoot)
+      zipfileset(dir: macAdditionalDirPath, prefix: zipRoot)
     }
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP) || !isMac()) {
       ftpAction("mkdir") {}

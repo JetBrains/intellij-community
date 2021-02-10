@@ -304,7 +304,6 @@ idea.fatal.error.notification=disabled
 
       return context.messages.block("Build $builder.targetOs.osName Distribution") {
         Path osSpecificDistDirectory = DistributionJARsBuilder.getOsSpecificDistDirectory(builder.targetOs, context)
-        builder.copyFilesForOsDistribution(osSpecificDistDirectory)
         builder.buildArtifacts(osSpecificDistDirectory)
         osSpecificDistDirectory
       }
@@ -898,8 +897,8 @@ idea.fatal.error.notification=disabled
     }
 
     DistributionJARsBuilder.reorderJars(buildContext)
+    JvmArchitecture arch = SystemInfo.isArm64 ? JvmArchitecture.aarch64 : SystemInfo.is64Bit ? JvmArchitecture.x64 : JvmArchitecture.x32
     if (includeBinAndRuntime) {
-      JvmArchitecture arch = SystemInfo.isArm64 ? JvmArchitecture.aarch64 : SystemInfo.is64Bit ? JvmArchitecture.x64 : JvmArchitecture.x32
       setupJBre(arch.name())
     }
     layoutShared()
@@ -918,7 +917,7 @@ idea.fatal.error.notification=disabled
           builder = new MacDistributionBuilder(buildContext, buildContext.macDistributionCustomizer, propertiesFile)
           break
       }
-      builder.copyFilesForOsDistribution(targetDirectory)
+      builder.copyFilesForOsDistribution(targetDirectory, arch)
       Path jbrTargetDir = buildContext.bundledJreManager.extractJre(currentOs)
       if (currentOs == OsFamily.WINDOWS) {
         buildContext.ant.move(todir: targetDirectory.toString()) {

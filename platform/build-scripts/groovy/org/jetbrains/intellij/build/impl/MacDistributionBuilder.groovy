@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -72,7 +72,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  void copyFilesForOsDistribution(@NotNull Path macDistPath) {
+  void copyFilesForOsDistribution(@NotNull Path macDistPath, JvmArchitecture arch = null) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
     def docTypes = getDocTypes()
     Map<String, String> customIdeaProperties = [:]
@@ -87,7 +87,10 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     BuildTasksImpl.generateBuildTxt(buildContext, resourceDir)
     BuildTasksImpl.copyResourceFiles(buildContext, resourceDir)
 
-    customizer.copyAdditionalFiles(buildContext, macDistPath.toString())
+    customizer.copyAdditionalFiles(buildContext, macDistPath.toString(), null)
+    if (arch != null) {
+      customizer.copyAdditionalFiles(buildContext, macDistPath.toString(), arch)
+    }
 
     if (!customizer.binariesToSign.empty) {
       if (buildContext.proprietaryBuildTools.macHostProperties == null) {
@@ -103,6 +106,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(@NotNull Path osSpecificDistPath) {
+    copyFilesForOsDistribution(osSpecificDistPath)
     buildContext.executeStep("Build macOS artifacts", BuildOptions.MAC_ARTIFACTS_STEP) {
       def macZipPath = buildMacZip(osSpecificDistPath)
       if (buildContext.proprietaryBuildTools.macHostProperties == null) {
@@ -123,12 +127,16 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
               String suffix = (arch == JvmArchitecture.x64) ? "" : "-${arch.fileSuffix}"
               String archStr = arch.toString()
 
+              def additional = buildContext.paths.tempDir.resolve("mac-additional-files-for-" + archStr)
+              Files.createDirectories(additional)
+              customizer.copyAdditionalFiles(buildContext, additional.toString(), arch)
+
               File jreArchive = jreManager.findJreArchive(OsFamily.MACOS, arch)
               if (jreArchive.file) {
                 tasks.add(BuildTaskRunnable.task("dmg-" + archStr) { buildContext ->
                   buildContext.executeStep("Building dmg with JRE for " + archStr, "mac_dmg_jre_" + archStr) {
                     MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                                  jreArchive.absolutePath, suffix, notarize)
+                                                  additional.toString(), jreArchive.absolutePath, suffix, notarize)
                   }
                 })
               }
@@ -143,7 +151,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
             tasks.add(BuildTaskRunnable.task("dmg-no-jdk") { buildContext ->
               buildContext.executeStep("Building dmg without JRE", "mac_dmg_no_jre") {
                 MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                              null, "-no-jdk", notarize)
+                                              null, null, "-no-jdk", notarize)
               }
             })
           }
