@@ -1,0 +1,11 @@
+<idea-plugin package="java.lang">
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <content>
+    <module name="moduleName" package="java.lang"/>
+
+    <module name=<error descr="Value must not be empty">""</error> package="<error descr="Cannot resolve package"></error>"/>
+  </content>
+</idea-plugin>

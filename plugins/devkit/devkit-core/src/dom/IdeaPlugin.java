@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -78,7 +79,8 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @Stubbed
-  GenericAttributeValue<String> getPackage();
+  @Convert(PsiPackageConverter.class)
+  GenericAttributeValue<PsiPackage> getPackage();
 
   @NotNull
   @Stubbed
@@ -218,7 +220,8 @@ public interface IdeaPlugin extends DomElement {
       @Required
       @Stubbed
       @NameValue
-      GenericAttributeValue<String> getPackage();
+      @Convert(PsiPackageConverter.class)
+      GenericAttributeValue<PsiPackage> getPackage();
     }
   }
 
@@ -252,7 +255,8 @@ public interface IdeaPlugin extends DomElement {
       @Required
       @Stubbed
       @NameValue
-      GenericAttributeValue<String> getPackage();
+      @Convert(PsiPackageConverter.class)
+      GenericAttributeValue<PsiPackage> getPackage();
     }
 
     @Presentation(icon = "AllIcons.Nodes.Plugin")
