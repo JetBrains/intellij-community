@@ -22,6 +22,7 @@ class CloseProjectAction : CloseProjectsActionBase() {
     else {
       @Suppress("DialogTitleCapitalization")
       e.presentation.text = IdeUICustomization.getInstance().projectMessage("action.close.project.text")
+      e.presentation.description = IdeUICustomization.getInstance().projectMessage("action.close.project.description")
     }
   }
 }
