@@ -35,7 +35,7 @@ class TargetGradleConnector(environmentConfiguration: TargetEnvironmentConfigura
   override fun disconnect() {
     synchronized(connections) {
       stopped = true
-      connections.forEach(TargetProjectConnection::disconnect)
+      connections.toMutableList().forEach(TargetProjectConnection::disconnect)
       connections.clear()
     }
   }
