@@ -3,11 +3,15 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection;
+import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -27,6 +31,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,10 +41,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
@@ -57,13 +59,15 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
   }; 
   
   private static final String PACKAGE_NAME = "org.jspecify.annotations";
-  private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/codeanalysis/");
+  private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/jspecify/");
   @Parameterized.Parameter
   public String myFileName;
 
   @Parameterized.Parameters(name = "{0}")
   public static List<String> getData() throws IOException {
-    return Files.walk(PATH).filter(Files::isRegularFile).map(PATH::relativize).map(Path::toString).collect(Collectors.toList());
+    return Files.list(PATH).filter(f -> !f.getFileName().toString().startsWith("."))
+      .filter(f -> Files.isDirectory(f) || f.toString().endsWith(".java"))
+      .map(PATH::relativize).map(Path::toString).collect(Collectors.toList());
   }
 
   @Override
@@ -83,33 +87,87 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     String template = "package " + PACKAGE_NAME + ";import java.lang.annotation.*;\n\n@Target(%s)public @interface %s {}";
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NonNull"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "Nullable"));
-    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE", "DefaultNonNull"));
+    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NullnessUnspecified"));
+    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE, ElementType.PACKAGE", "DefaultNonNull"));
   }
 
   @Test
   public void test() throws IOException {
     Path path = PATH.resolve(myFileName);
+    if (!Files.isRegularFile(path)) {
+      // TODO
+      throw new UnsupportedOperationException("Directory tests aren't supported yet");
+    }
     String fileText = Files.readString(path).replace("\r\n", "\n");
-    String stripped = fileText.replaceAll("/\\*ca-[a-z\\-]+\\*/", "");
+    String stripped = fileText.replaceAll("// jspecify_\\w+", "");
     PsiFile file = myFixture.configureByText(path.getFileName().toString(), stripped);
 
-    CodeAnalysisDataFlowInspection inspection = new CodeAnalysisDataFlowInspection();
+    Map<PsiElement, String> actual = new LinkedHashMap<>();
+    var dfaInspection = new JSpecifyDataFlowInspection(actual);
+    var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
+    var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
+    List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
     ReadAction.run(() -> {
-      PsiElementVisitor visitor = inspection.buildVisitor(new ProblemsHolder(new InspectionManagerEx(getProject()), file, false), false);
-      PsiTreeUtil.processElements(file, e -> {
-        e.accept(visitor);
-        return true;
-      });
-      String actualText = inspection.getActualText(stripped);
+      ProblemsHolder holder = new ProblemsHolder(new InspectionManagerEx(getProject()), file, false);
+      for (LocalInspectionTool inspection : inspections) {
+        PsiElementVisitor visitor = inspection.buildVisitor(holder, false);
+        PsiTreeUtil.processElements(file, e -> {
+          e.accept(visitor);
+          return true;
+        });
+      }
+      String actualText = getActualText(actual, stripped);
       if (!fileText.equals(actualText)) {
         throw new FileComparisonFailure("Messages don't match", fileText, actualText, path.toString());
       }
     });
   }
+  
+  private static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
+    private final Map<PsiElement, String> warnings;
+
+    JSpecifyNullableStuffInspection(Map<PsiElement, String> warnings) {
+      this.warnings = warnings;
+    }
+
+    @Override
+    protected void reportProblem(@NotNull ProblemsHolder holder,
+                                 @NotNull PsiElement anchor,
+                                 @Nullable LocalQuickFix fix,
+                                 @NotNull String messageKey, Object... args) {
+      switch (messageKey) {
+        case "inspection.nullable.problems.primitive.type.annotation":
+        case "inspection.nullable.problems.receiver.annotation":
+        case "inspection.nullable.problems.outer.type":
+          warnings.put(anchor, "jspecify_nullness_intrinsically_not_nullable");
+          break;
+      }
+    }
+  }
+
+  private static class JSpecifyNotNullFieldNotInitializedInspection extends NotNullFieldNotInitializedInspection {
+    private final Map<PsiElement, String> warnings;
+
+    JSpecifyNotNullFieldNotInitializedInspection(Map<PsiElement, String> warnings) {
+      this.warnings = warnings;
+    }
+
+    @Override
+    protected void reportProblem(@NotNull ProblemsHolder holder,
+                                 PsiElement anchor,
+                                 String message,
+                                 List<LocalQuickFix> fixes) {
+      warnings.put(anchor, "jspecify_nullness_mismatch");
+    }
+  }
 
   // Reports dataflow problems in code-analysis-conformant way
-  private static class CodeAnalysisDataFlowInspection extends DataFlowInspectionBase {
-    private final Map<PsiElement, String> actual = new LinkedHashMap<>();
+  private static class JSpecifyDataFlowInspection extends DataFlowInspectionBase {
+    private final Map<PsiElement, String> warnings;
+
+    JSpecifyDataFlowInspection(Map<PsiElement, String> warnings) {
+      this.warnings = warnings;
+    }
 
     @Override
     protected void reportNullabilityProblems(DataFlowInspectionBase.ProblemReporter reporter,
@@ -120,21 +178,38 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         if (expression != null) {
           if (problem.getKind() == NullabilityProblemKind.nullableReturn) {
             PsiType returnType = PsiTypesUtil.getMethodReturnType(expression);
-            if (DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) continue;
+            Nullability nullability = DfaPsiUtil.getTypeNullability(returnType);
+            if (nullability == Nullability.UNKNOWN) {
+              warnings.put(expression, "jspecify_nullness_not_enough_information");
+            }
+            if (nullability == Nullability.NOT_NULL) {
+              warnings.put(expression, "jspecify_nullness_mismatch");
+            }
+            continue;
           }
-          actual.put(expression, "ca-nullable-to-not-null");
+          else if (problem.getKind() == NullabilityProblemKind.passingToNonAnnotatedParameter) continue;
+          warnings.put(expression, "jspecify_nullness_mismatch");
         }
       }
     }
-
-    String getActualText(String stripped) {
-      Map<Integer, String> map = EntryStream.of(this.actual)
-        .mapKeys(e -> e.getTextRange().getStartOffset())
-        .mapValues(v -> "/*" + v + "*/")
-        .grouping(Collectors.joining());
-      return StreamEx.ofKeys(map).sorted().prepend(0).append(stripped.length())
-        .pairMap((prev, next) -> stripped.substring(prev, next) + map.getOrDefault(next, ""))
-        .joining();
+  }
+  
+  String getActualText(Map<PsiElement, String> actual, String stripped) {
+    StringBuilder sb = new StringBuilder();
+    int pos = 0;
+    TreeMap<Integer, List<String>> map = EntryStream.of(actual)
+      .mapKeys(e -> e.getTextRange().getStartOffset())
+      .grouping(TreeMap::new, Collectors.toList());
+    for (String str : stripped.split("\n", -1)) {
+      int endPos = pos + str.length() + 1;
+      String warnings = StreamEx.of(map.subMap(pos, endPos).values()).flatMap(List::stream).joining(" & ");
+      if (!warnings.isEmpty()) {
+        sb.append("// ").append(warnings);
+      }
+      if (sb.length() > 0) sb.append("\n");
+      pos = endPos;
+      sb.append(str);
     }
+    return sb.toString();
   }
 }
