@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -134,18 +133,15 @@ public final class IndexVersion {
     else {
       Files.createDirectories(file.getParent());
     }
-    try (DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, IOException>() {
-      @Override
-      public @Nullable DataOutputStream execute(boolean lastAttempt) throws IOException {
-        try {
-          return new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)));
+    try (DataOutputStream os = FileUtilRt.doIOOperation(lastAttempt -> {
+      try {
+        return new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)));
+      }
+      catch (IOException ex) {
+        if (lastAttempt) {
+          throw ex;
         }
-        catch (IOException ex) {
-          if (lastAttempt) {
-            throw ex;
-          }
-          return null;
-        }
+        return null;
       }
     })) {
       assert os != null;

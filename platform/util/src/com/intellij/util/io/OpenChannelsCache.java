@@ -1,14 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 
 @ApiStatus.Internal
@@ -89,26 +88,35 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
   }
 
   private static final class ChannelDescriptor {
-    private int lockCount = 0;
-    private final FileChannel myChannel;
+    private int myLockCount = 0;
+    private final @NotNull FileChannel myChannel;
 
     ChannelDescriptor(@NotNull Path file, @NotNull Set<? extends OpenOption> accessMode) throws IOException {
-      myChannel = FileChannelUtil.unInterruptible(FileChannel.open(file, accessMode));
+      myChannel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
+        try {
+          return FileChannelUtil.unInterruptible(FileChannel.open(file, accessMode));
+        }
+        catch (NoSuchFileException ex) {
+          Files.createDirectory(file.getParent());
+          if (!lastAttempt) return null;
+          throw ex;
+        }
+      }));
     }
 
     void lock() {
-      lockCount++;
+      myLockCount++;
     }
 
     void unlock() {
-      lockCount--;
+      myLockCount--;
     }
 
     boolean isLocked() {
-      return lockCount != 0;
+      return myLockCount != 0;
     }
 
-    FileChannel getChannel() {
+    @NotNull FileChannel getChannel() {
       return myChannel;
     }
   }

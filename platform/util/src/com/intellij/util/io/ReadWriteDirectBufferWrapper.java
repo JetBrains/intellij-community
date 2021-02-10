@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,6 +14,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.util.io.FileChannelUtil.unInterruptible;
@@ -50,42 +50,30 @@ public final class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   }
 
   static class FileContext implements AutoCloseable {
-    private final FileChannel myFile;
+    private final @NotNull FileChannel myFile;
     private final boolean myReadOnly;
 
     FileContext(Path path, boolean readOnly) throws IOException {
       myReadOnly = readOnly;
-      myFile = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<FileChannel, IOException>() {
-        boolean parentWasCreated;
-
-        @Nullable
-        @Override
-        public FileChannel execute(boolean finalAttempt) throws IOException {
-          try {
-            Set<StandardOpenOption> options = myReadOnly
-                                              ? EnumSet.of(StandardOpenOption.READ)
-                                              : EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-            return unInterruptible(FileChannel.open(path, options));
-          }
-          catch (NoSuchFileException ex) {
-            Path parentFile = path.getParent();
-            if (!Files.exists(parentFile)) {
-              if (!Files.isWritable(path)) {
-                throw ex;
-              }
-              if (!parentWasCreated) {
-                Files.createDirectories(parentFile);
-                parentWasCreated = true;
-              }
-              else {
-                throw new IOException("Parent directory still doesn't exist: " + path);
-              }
-            }
-            if (!finalAttempt) return null;
-            throw ex;
-          }
+      myFile = Objects.requireNonNull(FileUtilRt.doIOOperation(finalAttempt -> {
+        try {
+          Set<StandardOpenOption> options = myReadOnly
+                                            ? EnumSet.of(StandardOpenOption.READ)
+                                            : EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+          return unInterruptible(FileChannel.open(path, options));
         }
-      });
+        catch (NoSuchFileException ex) {
+          Path parentFile = path.getParent();
+          if (!Files.exists(parentFile)) {
+            if (!Files.isWritable(path)) {
+              throw ex;
+            }
+            Files.createDirectory(parentFile);
+          }
+          if (!finalAttempt) return null;
+          throw ex;
+        }
+      }));
     }
 
     @Override
