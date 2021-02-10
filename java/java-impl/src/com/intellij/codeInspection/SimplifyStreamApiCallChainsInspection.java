@@ -1976,11 +1976,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   }
 
   static class EntrySetMapFix implements CallChainSimplification {
-    private final String myMapMethod;
+    private final @NotNull String myMapMethod;
     private final boolean myDeleteMap;
-    private final String[] myNames;
+    private final @NotNull String @NotNull [] myNames;
 
-    EntrySetMapFix(String entryMethod, boolean deleteMap) {
+    EntrySetMapFix(@NotNull String entryMethod, boolean deleteMap) {
       myMapMethod = entryMethod.equals("getKey") ? "keySet" : "values";
       myDeleteMap = deleteMap;
       myNames = myMapMethod.equals("keySet") ? new String[]{"k", "key"} : new String[]{"v", "value"};
@@ -1993,7 +1993,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getMessage() {
-      return CommonQuickFixBundle.message("fix.can.replace.with.x", "." + "().stream()");
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", "." + myMapMethod + "().stream()");
     }
 
     @Override
