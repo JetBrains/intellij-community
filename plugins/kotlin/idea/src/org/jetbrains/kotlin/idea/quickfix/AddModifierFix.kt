@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiNameIdentifierOwner
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -36,7 +35,7 @@ open class AddModifierFix(
     override fun getText(): String {
         val element = element ?: return ""
         if (modifier in modalityModifiers || modifier in VISIBILITY_MODIFIERS || modifier == CONST_KEYWORD) {
-            return KotlinBundle.message("fix.add.modifier.text", getElementName(element), modifier.value)
+            return KotlinBundle.message("fix.add.modifier.text", RemoveModifierFix.getElementName(element), modifier.value)
         }
         return KotlinBundle.message("fix.add.modifier.text.generic", modifier.value)
     }
@@ -75,24 +74,6 @@ open class AddModifierFix(
             this in MODALITY_MODIFIERS || this == INLINE_KEYWORD
 
         private val modalityModifiers = setOf(ABSTRACT_KEYWORD, OPEN_KEYWORD, FINAL_KEYWORD)
-
-        fun getElementName(modifierListOwner: KtModifierListOwner): String {
-            var name: String? = null
-            if (modifierListOwner is PsiNameIdentifierOwner) {
-                val nameIdentifier = modifierListOwner.nameIdentifier
-                if (nameIdentifier != null) {
-                    name = nameIdentifier.text
-                } else if ((modifierListOwner as? KtObjectDeclaration)?.isCompanion() == true) {
-                    name = "companion object"
-                }
-            } else if (modifierListOwner is KtPropertyAccessor) {
-                name = modifierListOwner.namePlaceholder.text
-            }
-            if (name == null) {
-                name = modifierListOwner.text
-            }
-            return "'$name'"
-        }
 
         fun createFactory(modifier: KtModifierKeywordToken): KotlinSingleIntentionActionFactory {
             return createFactory(modifier, KtModifierListOwner::class.java)
