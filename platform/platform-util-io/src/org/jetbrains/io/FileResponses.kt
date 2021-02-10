@@ -82,6 +82,10 @@ object FileResponses {
     return response
   }
 
+  fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders? = null) {
+    return sendFile(request, channel, file, extraHeaders, null)
+  }
+
   fun sendFile(request: HttpRequest, channel: Channel, file: Path, extraHeaders: HttpHeaders? = null, extraSuffix: CharSequence? = null) {
     val fileChannel: FileChannel
     val rangeHeader = request.headers().get(HttpHeaderNames.RANGE)
