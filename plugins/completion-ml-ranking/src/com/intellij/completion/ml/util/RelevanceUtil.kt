@@ -20,7 +20,7 @@ object RelevanceUtil {
                                       "com.zlabs.code.completion.ScaCompletionWeigher",
                                       "com.aliyun.odps.studio.intellij.compiler.codecompletion.OdpsqlCompletionWeigher")
 
-  private val weighersClassesCache = mutableMapOf<Class<*>, PluginType>()
+  private val weighersClassesCache = mutableMapOf<String, PluginType>()
 
   /*
   * First map contains only features affecting default elements ordering
@@ -53,7 +53,7 @@ object RelevanceUtil {
   }
 
   private fun isJetBrainsClass(cl: Class<*>): Boolean {
-    val pluginType = weighersClassesCache.getOrPut(cl) { getPluginInfo(cl).type }
+    val pluginType = weighersClassesCache.getOrPut(cl.name) { getPluginInfo(cl).type }
     return pluginType.isDevelopedByJetBrains()
   }
 
