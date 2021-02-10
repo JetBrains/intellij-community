@@ -20,24 +20,17 @@ import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.psi.search.FileTypeIndex
-import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.configuration.notifyOutdatedBundledCompilerIfNecessary
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
-import org.jetbrains.kotlin.idea.util.projectStructure.allModules
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import java.util.concurrent.atomic.AtomicInteger
 
 class KotlinConfigurationCheckerStartupActivity : StartupActivity {
@@ -61,49 +54,17 @@ class KotlinConfigurationCheckerService(val project: Project) {
     private val syncDepth = AtomicInteger()
 
     fun performProjectPostOpenActions() {
-        val task = object : Task.Backgroundable(project, KotlinJvmBundle.message("configure.kotlin.language.settings"), true) {
+        val task = object : Task.Backgroundable(project, KotlinJvmBundle.message("configure.kotlin.language.settings"), false) {
             override fun run(indicator: ProgressIndicator) {
-                val anyKotlinFileInProject = project.runReadActionInSmartMode {
-                    !project.isDisposed &&
-                            FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
-                }
-                if (!anyKotlinFileInProject) return
-
-                val modules = runReadAction {
-                    project.allModules()
-                }
-
-                val totalModules = modules.size
+                val ktModules = getModulesWithKotlinFiles(project)
                 indicator.isIndeterminate = false
-                project.runReadActionInSmartMode {
-                    val facetSettingsProvider = KotlinFacetSettingsProvider.getInstance(project) ?: return@runReadActionInSmartMode
-
-                    var referenceModuleWithUseProjectSettings: Module? = null
-                    val filteredModules = modules.withIndex().filter {
-                        indicator.checkCanceled()
-                        indicator.fraction = (it.index / (2.0 * totalModules))
-                        val facetSettings = facetSettingsProvider.getInitializedSettings(it.value)
-                        val useProjectSettings = facetSettings.useProjectSettings
-                        if (referenceModuleWithUseProjectSettings == null && useProjectSettings) {
-                            referenceModuleWithUseProjectSettings = it.value
-                        }
-                        !useProjectSettings
-                    }
-
-                    referenceModuleWithUseProjectSettings?.getAndCacheLanguageLevelByDependencies()
-
-                    for ((index, module) in filteredModules) {
-                        indicator.checkCanceled()
-                        indicator.fraction = 0.5 + (index / (2.0 * filteredModules.size))
-
-                        val anyKotlinFileInModule =
-                            !project.isDisposed && !module.isDisposed
-                                    && FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, module.getModuleScope(true))
-
-                        if (anyKotlinFileInModule) {
-                            indicator.text2 = KotlinJvmBundle.message("configure.kotlin.language.settings.0.module", module.name)
-                            module.getAndCacheLanguageLevelByDependencies()
-                        }
+                for ((idx, module) in ktModules.withIndex()) {
+                    if (project.isDisposed) return
+                    indicator.fraction = 1.0 * idx / ktModules.size
+                    runReadAction {
+                        if (module.isDisposed) return@runReadAction
+                        indicator.text2 = KotlinJvmBundle.message("configure.kotlin.language.settings.0.module", module.name)
+                        module.getAndCacheLanguageLevelByDependencies()
                     }
                 }
             }
