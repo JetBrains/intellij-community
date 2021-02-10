@@ -317,9 +317,14 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     InspectionResultSink() {}
 
-    public void setConfigurationAndHolder(@NotNull Configuration configuration, @NotNull ProblemsHolder holder) {
+    void setConfigurationAndHolder(@NotNull Configuration configuration, @NotNull ProblemsHolder holder) {
       myConfiguration = configuration;
       myHolder = holder;
+    }
+
+    void resetConfigurationAndHolder() {
+      myConfiguration = null;
+      myHolder = null;
     }
 
     @Override
@@ -446,26 +451,26 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       if (!matcher.checkIfShouldAttemptToMatch(matchedNodes)) {
         return;
       }
+      final MatchContext matchContext = matcher.getMatchContext();
+      final InspectionResultSink sink = (InspectionResultSink)matchContext.getSink();
+      sink.setConfigurationAndHolder(configuration, myHolder);
+      final int nodeCount = matchContext.getPattern().getNodeCount();
       try {
-        final MatchContext matchContext = matcher.getMatchContext();
-        final InspectionResultSink sink = (InspectionResultSink)matchContext.getSink();
-        sink.setConfigurationAndHolder(configuration, myHolder);
-        final int nodeCount = matchContext.getPattern().getNodeCount();
-        try {
-          matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
+        matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
+      }
+      catch (StructuralSearchException e) {
+        if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
+          final String message = e.getMessage().replace(ScriptSupport.UUID, "");
+          final NotificationGroup notificationGroup =
+            NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
+          notificationGroup.createNotification(NotificationType.ERROR)
+            .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
+            .setImportant(true)
+            .notify(element.getProject());
         }
-        catch (StructuralSearchException e) {
-          if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
-            final String message = e.getMessage().replace(ScriptSupport.UUID, "");
-            final NotificationGroup notificationGroup =
-              NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
-            notificationGroup.createNotification(NotificationType.ERROR)
-              .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
-              .setImportant(true)
-              .notify(element.getProject());
-          }
-        }
-      } finally {
+      }
+      finally {
+        sink.resetConfigurationAndHolder();
         matchedNodes.reset();
       }
     }
