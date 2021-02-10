@@ -40,17 +40,6 @@
     <orderEntry type="module" module-name="intellij.java" exported="" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" />
-    <orderEntry type="module-library" exported="">
-      <library name="CoverageReport">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/coverage-report.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/coverage-report-idea.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/freemarker.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.testng.rt" />
     <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
@@ -63,5 +52,23 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" name="intellij-coverage" level="project" />
+    <orderEntry type="module-library">
+      <library name="coverage-report" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps:coverage-report:1.0.4">
+          <exclude>
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="org.jetbrains.intellij.deps:intellij-coverage-agent" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.4/coverage-report-1.0.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.30/freemarker-2.3.30.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
