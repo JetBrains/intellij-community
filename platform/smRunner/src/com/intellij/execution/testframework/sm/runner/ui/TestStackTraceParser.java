@@ -6,7 +6,6 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.SlowOperations;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -60,8 +59,7 @@ public class TestStackTraceParser {
           myErrorMessage = line;
         }
         if (myTopLocationLine == null) {
-          String finalLine = line;
-          List<Location> location = SlowOperations.allowSlowOperations(() -> locator.getLocation(finalLine, project, scope));
+          List<Location> location = locator.getLocation(line, project, scope);
           if (!location.isEmpty()) {
             myTopLocationLine = line;
           }

@@ -793,7 +793,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         String url = proxy.getLocationUrl();
         if (url != null && proxy.getLocator() != null) {
           String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-          DumbService.getInstance(getProject()).runWhenSmart(() -> {
+          DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
             Project project = getProject();
             TestStackTraceParser info =
               new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
