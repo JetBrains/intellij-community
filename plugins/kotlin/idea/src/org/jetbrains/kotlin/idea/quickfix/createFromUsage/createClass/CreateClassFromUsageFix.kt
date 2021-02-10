@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 import java.util.*
 import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind as IdeaClassKind
@@ -218,7 +219,8 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
                     when (selectedParent) {
                         is KtElement, is PsiClass -> selectedParent
                         is PsiPackage -> createFileByPackage(selectedParent, editor, file)
-                        else -> throw AssertionError("Unexpected element: " + selectedParent.text)
+                        else -> throw KotlinExceptionWithAttachments("Unexpected element: ${selectedParent::class.java}")
+                            .withAttachment("selectedParent", selectedParent.text)
                     } ?: return@runWriteAction
                 val constructorInfo = ClassWithPrimaryConstructorInfo(
                     classInfo,

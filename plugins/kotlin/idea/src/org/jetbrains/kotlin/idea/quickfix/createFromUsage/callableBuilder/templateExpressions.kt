@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.*
 
 /**
@@ -56,7 +57,8 @@ internal class ParameterNameExpression(
         val parameterList = when (declaration) {
             is KtFunction -> declaration.valueParameterList!!
             is KtClass -> declaration.getPrimaryConstructorParameterList()!!
-            else -> throw AssertionError("Unexpected declaration: ${declaration.text}")
+            else -> throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
+                .withAttachment("declaration", declaration.text)
         }
 
         // add names based on selected type

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ManualVariance
 import org.jetbrains.kotlin.resolve.VarianceCheckerCore
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class AddVarianceModifierInspection : AbstractKotlinInspection() {
 
@@ -94,7 +95,8 @@ class AddVarianceModifierInspection : AbstractKotlinInspection() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.psiElement)) return
             val typeParameter = descriptor.psiElement as? KtTypeParameter
-                ?: throw AssertionError("Add variance fix is used on ${descriptor.psiElement.text}")
+                ?: throw KotlinExceptionWithAttachments("Add variance fix is used on ${descriptor.psiElement}")
+                    .withAttachment("element", descriptor.psiElement.text)
             addModifier(typeParameter, if (variance == Variance.IN_VARIANCE) KtTokens.IN_KEYWORD else KtTokens.OUT_KEYWORD)
         }
 

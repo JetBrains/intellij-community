@@ -58,6 +58,7 @@ import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.checker.ClassicTypeCheckerContext
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.checker.NewKotlinTypeChecker
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
@@ -343,7 +344,8 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             when (candidate) {
                 is KtExpression -> candidate
                 is KtStringTemplateEntryWithExpression -> candidate.expression
-                else -> throw AssertionError("Unexpected candidate element: " + candidate.text)
+                else -> throw KotlinExceptionWithAttachments("Unexpected candidate element ${candidate::class.java}")
+                    .withAttachment("candidate.kt", candidate.text)
             }
         }
 

@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.constant
 
 fun KtBinaryExpression.expressionComparedToNull(): KtExpression? {
@@ -130,7 +131,8 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
     val occurrenceInConditional = when (val condition = condition) {
         is KtBinaryExpression -> condition.left
         is KtIsExpression -> condition.leftHandSide
-        else -> throw AssertionError("Only binary / is expressions are supported here: ${condition?.text}")
+        else -> throw KotlinExceptionWithAttachments("Only binary / is expressions are supported here: ${condition?.let { it::class.java }}")
+            .withAttachment("condition", condition?.text)
     }!!
     KotlinIntroduceVariableHandler.doRefactoring(
         project,

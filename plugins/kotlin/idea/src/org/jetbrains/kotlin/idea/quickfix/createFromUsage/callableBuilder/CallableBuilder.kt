@@ -64,7 +64,6 @@ import org.jetbrains.kotlin.resolve.scopes.LexicalScopeImpl
 import org.jetbrains.kotlin.resolve.scopes.LexicalScopeKind
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
-import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.TypeUtils
@@ -74,6 +73,7 @@ import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 import kotlin.math.max
@@ -541,7 +541,10 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             when (kind) {
                                 ClassKind.ENUM_ENTRY -> {
                                     val targetParent = applicableParents.singleOrNull()
-                                    if (!(targetParent is KtClass && targetParent.isEnum())) throw AssertionError("Enum class expected: ${targetParent?.text}")
+                                    if (!(targetParent is KtClass && targetParent.isEnum())) {
+                                        throw KotlinExceptionWithAttachments("Enum class expected: ${targetParent?.let { it::class.java }}")
+                                            .withAttachment("targetParent", targetParent?.text)
+                                    }
                                     val hasParameters = targetParent.primaryConstructorParameters.isNotEmpty()
                                     psiFactory.createEnumEntry("$safeName${if (hasParameters) "()" else " "}")
                                 }
@@ -736,7 +739,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     elementToReplace = declaration.superTypeListEntries.firstOrNull()
                     TypeExpression.ForDelegationSpecifier(candidates)
                 }
-                else -> throw AssertionError("Unexpected declaration kind: ${declaration.text}")
+                else -> throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
+                    .withAttachment("declaration", declaration.text)
             }
             if (elementToReplace == null) return null
 
@@ -761,7 +765,10 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         ): TypeParameterListExpression? {
             when (declaration) {
                 is KtObjectDeclaration -> return null
-                !is KtTypeParameterListOwner -> throw AssertionError("Unexpected declaration kind: ${declaration.text}")
+                !is KtTypeParameterListOwner -> {
+                    throw KotlinExceptionWithAttachments("Unexpected declaration kind: ${declaration::class.java}")
+                        .withAttachment("declaration", declaration.text)
+                }
             }
 
             val typeParameterList = (declaration as KtTypeParameterListOwner).typeParameterList ?: return null
@@ -1116,7 +1123,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
 
     val declarationInPlace = when {
         declaration is KtPrimaryConstructor -> {
-            (container as KtClass).createPrimaryConstructorIfAbsent().replaced(declaration) as D
+            (container as KtClass).createPrimaryConstructorIfAbsent().replaced(declaration)
         }
 
         declaration is KtProperty && container !is KtBlockExpression -> {
@@ -1162,7 +1169,8 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
 
             insertMember(null, container, declaration, sibling)
         }
-        else -> throw AssertionError("Invalid containing element: ${container.text}")
+        else -> throw KotlinExceptionWithAttachments("Invalid containing element: ${container::class.java}")
+            .withAttachment("container", container.text)
     }
 
     when (declaration) {

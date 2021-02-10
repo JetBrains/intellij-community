@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class ExtractableSubstringInfo(
     val startEntry: KtStringTemplateEntry,
@@ -78,7 +79,9 @@ class ExtractableSubstringInfo(
         val startIndex = oldEntries.indexOf(startEntry)
         val endIndex = oldEntries.indexOf(endEntry)
         if (startIndex < 0 || startIndex >= newEntries.size || endIndex < 0 || endIndex >= newEntries.size) {
-            throw AssertionError("Old template($startIndex..$endIndex): ${template.text}, new template: ${newTemplate.text}")
+            throw KotlinExceptionWithAttachments("Old template($startIndex..$endIndex): $template, new template: $newTemplate")
+                .withAttachment("template", template.text)
+                .withAttachment("newTemplate", newTemplate.text)
         }
         return ExtractableSubstringInfo(newEntries[startIndex], newEntries[endIndex], prefix, suffix, type)
     }

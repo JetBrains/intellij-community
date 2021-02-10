@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import javax.swing.JComponent
 
 @Suppress("DEPRECATION")
@@ -283,7 +284,8 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
             val firstStatement = callParent.bodyBlockExpression?.statements?.first()
             callToConvert = (firstStatement as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
                 ?: firstStatement as? KtCallExpression
-                        ?: throw IllegalStateException("Unexpected contents of function after conversion: ${callParent.text}")
+                        ?: throw KotlinExceptionWithAttachments("Unexpected contents of function after conversion: ${callParent::class.java}")
+                    .withAttachment("callParent", callParent.text)
         }
 
         val qualifiedExpression = callToConvert.getQualifiedExpressionForSelector()

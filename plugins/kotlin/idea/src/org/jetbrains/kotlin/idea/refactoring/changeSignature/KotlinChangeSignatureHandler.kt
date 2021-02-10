@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class KotlinChangeSignatureHandler : ChangeSignatureHandler {
 
@@ -47,14 +48,19 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
 
         val element = findTargetMember(file, editor) ?: CommonDataKeys.PSI_ELEMENT.getData(dataContext) ?: return
         val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return
-        if (element !is KtElement) throw AssertionError("This handler must be invoked for Kotlin elements only: ${element.text}")
+        if (element !is KtElement)
+            throw KotlinExceptionWithAttachments("This handler must be invoked for Kotlin elements only: ${element::class.java}")
+                .withAttachment("element", element.text)
 
         invokeChangeSignature(element, elementAtCaret, project, editor)
     }
 
     override fun invoke(project: Project, elements: Array<PsiElement>, dataContext: DataContext?) {
         val element = elements.singleOrNull()?.unwrapped ?: return
-        if (element !is KtElement) throw AssertionError("This handler must be invoked for Kotlin elements only: ${element.text}")
+        if (element !is KtElement) {
+            throw KotlinExceptionWithAttachments("This handler must be invoked for Kotlin elements only: ${element::class.java}")
+                .withAttachment("element", element.text)
+        }
 
         val editor = dataContext?.let { CommonDataKeys.EDITOR.getData(it) }
         invokeChangeSignature(element, element, project, editor)
