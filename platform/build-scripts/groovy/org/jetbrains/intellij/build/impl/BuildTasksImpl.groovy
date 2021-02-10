@@ -15,11 +15,7 @@ import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.java.JavaResourceRootProperties
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootProperties
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -307,7 +303,7 @@ idea.fatal.error.notification=disabled
       }
 
       return context.messages.block("Build $builder.targetOs.osName Distribution") {
-        Path osSpecificDistDirectory = Paths.get(context.paths.buildOutputRoot, "dist.$builder.targetOs.distSuffix")
+        Path osSpecificDistDirectory = DistributionJARsBuilder.getOsSpecificDistDirectory(builder.targetOs, context)
         builder.copyFilesForOsDistribution(osSpecificDistDirectory)
         builder.buildArtifacts(osSpecificDistDirectory)
         osSpecificDistDirectory
@@ -894,6 +890,13 @@ idea.fatal.error.notification=disabled
     setupBundledMaven()
     Path patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo).buildJARs(true)
+    def osSpecificPlugins = DistributionJARsBuilder.getOsSpecificDistDirectory(currentOs, buildContext).resolve("plugins")
+    if (Files.isDirectory(osSpecificPlugins)) {
+      Files.newDirectoryStream(osSpecificPlugins).withCloseable { children ->
+        children.each { Files.move(it, buildContext.paths.distAllDir.resolve("plugins").resolve(it.fileName)) }
+      }
+    }
+
     DistributionJARsBuilder.reorderJars(buildContext)
     if (includeBinAndRuntime) {
       JvmArchitecture arch = SystemInfo.isArm64 ? JvmArchitecture.aarch64 : SystemInfo.is64Bit ? JvmArchitecture.x64 : JvmArchitecture.x32
