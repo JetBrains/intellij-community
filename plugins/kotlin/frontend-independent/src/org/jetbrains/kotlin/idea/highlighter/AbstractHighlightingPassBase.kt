@@ -74,8 +74,7 @@ abstract class AbstractHighlightingPassBase(
         try {
             val infos = annotationHolder?.map { HighlightInfo.fromAnnotation(it) } ?: return
             highlightInfos.addAll(infos)
-            // NOTE: keep !! for 201 version
-            UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument!!, 0, file.textLength, infos, colorsScheme, id)
+            UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, infos, colorsScheme, id)
         } finally {
             annotationHolder = null
         }

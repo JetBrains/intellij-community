@@ -129,7 +129,6 @@ fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
     }
 
     return project.runReadActionInSmartMode {
-        val time = System.currentTimeMillis()
         val projectFileIndex = ProjectFileIndex.getInstance(project)
         val modules = mutableSetOf<Module>()
         val ktFileProcessor = { ktFile: VirtualFile ->
@@ -139,9 +138,6 @@ fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
             true
         }
         FileTypeIndex.processFiles(KotlinFileType.INSTANCE, ktFileProcessor, GlobalSearchScope.projectScope(project))
-
-        val time1 = System.currentTimeMillis()
-        println("getModulesWithKotlinFiles took: ${time1 - time} ms")
         modules
     }
 }

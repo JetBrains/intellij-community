@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.isFunctionTypeOrSubtype
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -30,8 +29,7 @@ internal class FunctionsHighlightingVisitor(holder: AnnotationHolder, bindingCon
 
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
         if (expression.operationReference.getIdentifier() != null) {
-            val resolvedCall = expression.getResolvedCall(bindingContext)
-            if (resolvedCall != null) {
+            expression.getResolvedCall(bindingContext)?.let { resolvedCall ->
                 highlightCall(expression.operationReference, resolvedCall)
             }
         }
@@ -51,10 +49,9 @@ internal class FunctionsHighlightingVisitor(holder: AnnotationHolder, bindingCon
     private fun highlightCall(callee: PsiElement, resolvedCall: ResolvedCall<out CallableDescriptor>) {
         val calleeDescriptor = resolvedCall.resultingDescriptor
 
-        @Suppress("DEPRECATION")
-        val extensions = Extensions.getExtensions(HighlighterExtension.EP_NAME)
+        val extensions = HighlighterExtension.EP_NAME.extensionList
 
-        val key = extensions.firstNotNullResult { extension ->
+        (extensions.firstNotNullResult { extension ->
             extension.highlightCall(callee, resolvedCall)
         } ?: when {
             calleeDescriptor.fqNameOrNull() == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME -> KEYWORD
@@ -73,8 +70,7 @@ internal class FunctionsHighlightingVisitor(holder: AnnotationHolder, bindingCon
             calleeDescriptor.extensionReceiverParameter != null -> EXTENSION_FUNCTION_CALL
             DescriptorUtils.isTopLevelDeclaration(calleeDescriptor) -> PACKAGE_FUNCTION_CALL
             else -> FUNCTION_CALL
-        }
-        if (key != null) {
+        })?.let { key ->
             highlightName(callee, key)
         }
     }

@@ -35,6 +35,8 @@ class DebugInfoHighlightingPass(file: KtFile, document: Document) : AbstractBind
     private inner class DebugInfoAnnotator : Annotator {
         override fun annotate(element: PsiElement, holder: AnnotationHolder) {
             if (element is KtFile && element !is KtCodeFragment) {
+
+                @Suppress("HardCodedStringLiteral")
                 fun errorAnnotation(
                     expression: PsiElement,
                     message: String,
@@ -68,7 +70,7 @@ class DebugInfoHighlightingPass(file: KtFile, document: Document) : AbstractBind
                     throw e
                 } catch (e: Throwable) {
                     // TODO
-                    errorAnnotation(element, e.javaClass.canonicalName + ": " + e.message, null)
+                    errorAnnotation(element, "${e.javaClass.canonicalName}: ${e.message}", null)
                     e.printStackTrace()
                 }
 
