@@ -20,7 +20,17 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenWorkspaceSettings {
+  private transient Throwable created = new Throwable();
+  @Deprecated
+  /**
+   * Do not use this public field
+   */
   public MavenGeneralSettings generalSettings = new MavenGeneralSettings();
+
+  @Deprecated
+  /**
+   * Do not use this public field
+   */
   public MavenImportingSettings importingSettings = new MavenImportingSettings();
 
   public List<String> enabledProfiles = new ArrayList<>();
@@ -34,5 +44,21 @@ public class MavenWorkspaceSettings {
   public void setDisabledProfiles(Collection<String> profiles) {
     disabledProfiles.clear();
     disabledProfiles.addAll(profiles);
+  }
+
+  public MavenGeneralSettings getGeneralSettings() {
+    return generalSettings;
+  }
+
+  public void setGeneralSettings(MavenGeneralSettings generalSettings) {
+    this.generalSettings = generalSettings;
+  }
+
+  public MavenImportingSettings getImportingSettings() {
+    return importingSettings;
+  }
+
+  public void setImportingSettings(MavenImportingSettings importingSettings) {
+    this.importingSettings = importingSettings;
   }
 }

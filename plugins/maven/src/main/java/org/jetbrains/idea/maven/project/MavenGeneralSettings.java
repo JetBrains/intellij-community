@@ -187,6 +187,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Nullable
+  @Deprecated
+  /*use MavenUtil or MavenWslUtil*/
   public File getEffectiveMavenHome() {
     if (myEffectiveLocalHomeCache == null) {
       myEffectiveLocalHomeCache =
@@ -213,6 +215,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Nullable
+  @Deprecated
+  /*use MavenUtil or MavenWslUtil*/
   public File getEffectiveUserSettingsIoFile() {
     return resolveWslAware(
       () -> MavenUtil.resolveUserSettingsFile(getUserSettingsFile()),
@@ -220,6 +224,8 @@ public class MavenGeneralSettings implements Cloneable {
     );
   }
   @Nullable
+  @Deprecated
+  /*use MavenUtil or MavenWslUtil*/
   public File getEffectiveGlobalSettingsIoFile() {
     return resolveWslAware(
       () -> MavenUtil.resolveGlobalSettingsFile(getMavenHome()),
@@ -228,11 +234,15 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Nullable
+  @Deprecated
+  /*use MavenUtil or MavenWslUtil*/
   public VirtualFile getEffectiveUserSettingsFile() {
     File file = getEffectiveUserSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
+  @Deprecated
+  /*use MavenUtil or MavenWslUtil*/
   public List<VirtualFile> getEffectiveSettingsFiles() {
     List<VirtualFile> result = new ArrayList<>(2);
     VirtualFile file = getEffectiveUserSettingsFile();
@@ -243,6 +253,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Nullable
+  @Deprecated
+  /*use MavenUtil or MavenWslUtil*/
   public VirtualFile getEffectiveGlobalSettingsFile() {
     File file = getEffectiveGlobalSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -263,6 +275,9 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
+  @Deprecated
+  /*use MavenUtil or MavenWslUtil*/
+
   public File getEffectiveLocalRepository() {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
@@ -278,6 +293,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Nullable
+  @Deprecated
+  /*use MavenUtil or MavenWslUtil*/
   public VirtualFile getEffectiveSuperPom() {
     VirtualFile result = myEffectiveSuperPomCache;
     if (result != null && result.isValid()) {
@@ -414,6 +431,7 @@ public class MavenGeneralSettings implements Cloneable {
       MavenGeneralSettings result = (MavenGeneralSettings)super.clone();
       result.myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
       result.myBulkUpdateLevel = 0;
+      result.setProject(myProject);
       return result;
     }
     catch (CloneNotSupportedException e) {

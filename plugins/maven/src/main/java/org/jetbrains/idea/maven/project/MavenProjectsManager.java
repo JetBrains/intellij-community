@@ -180,11 +180,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public MavenGeneralSettings getGeneralSettings() {
-    return getWorkspaceSettings().generalSettings;
+    MavenGeneralSettings generalSettings = getWorkspaceSettings().getGeneralSettings();
+    generalSettings.setProject(myProject);
+    return generalSettings;
   }
 
   public MavenImportingSettings getImportingSettings() {
-    return getWorkspaceSettings().importingSettings;
+    return getWorkspaceSettings().getImportingSettings();
   }
 
   private MavenWorkspaceSettings getWorkspaceSettings() {

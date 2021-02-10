@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -142,8 +142,11 @@ object MavenWslUtil : MavenUtil() {
   }
 
   @JvmStatic
-  fun <T> resolveWslAware(project: Project, ordinary: Supplier<T>, wsl: Function<WSLDistribution, T>): T {
-    val wslDistribution = tryGetWslDistribution(project) ?: return ordinary.get()
+  fun <T> resolveWslAware(project: Project?, ordinary: Supplier<T>, wsl: Function<WSLDistribution, T>): T {
+    if (project == null && ApplicationManager.getApplication().isUnitTestMode) {
+      MavenLog.LOG.error("resolveWslAware: Project is null");
+    }
+    val wslDistribution = project?.let { tryGetWslDistribution(it) } ?: return ordinary.get()
     return wsl.apply(wslDistribution)
   }
 
