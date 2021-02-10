@@ -36,12 +36,19 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
 
   @NotNull
   @Override
-  public String getTextValue() {
-    String value = super.getTextValue();
-    if (!value.isEmpty() && getChompingIndicator() != ChompingIndicator.STRIP) {
+  public String getTextValue(@Nullable TextRange rangeInHost) {
+    String value = super.getTextValue(rangeInHost);
+    if (!value.isEmpty() && getChompingIndicator() != ChompingIndicator.STRIP && isEnding(rangeInHost)) {
       value += "\n";
     }
     return value;
+  }
+
+  private boolean isEnding(@Nullable TextRange rangeInHost) {
+    if (rangeInHost == null) return true;
+    TextRange lastItem = ContainerUtil.getLastItem(getContentRanges());
+    if (lastItem == null) return false;
+    return rangeInHost.getEndOffset() == lastItem.getEndOffset();
   }
 
   @NotNull

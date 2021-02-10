@@ -6,8 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
@@ -42,19 +40,25 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
 
   @NotNull
   @Override
-  public String getTextValue() {
+  public final String getTextValue() {
+    return getTextValue(null);
+  }
+
+  @NotNull
+  public String getTextValue(@Nullable TextRange rangeInHost) {
     final String text = getText();
     final List<TextRange> contentRanges = getContentRanges();
 
     final StringBuilder builder = new StringBuilder();
 
     for (int i = 0; i < contentRanges.size(); i++) {
-      final TextRange range = contentRanges.get(i);
+      final TextRange range = rangeInHost != null ? rangeInHost.intersection(contentRanges.get(i)) : contentRanges.get(i);
+      if (range == null) continue;
 
       final CharSequence curString = range.subSequence(text);
       builder.append(curString);
 
-      if (i + 1 != contentRanges.size()) {
+      if (range.getEndOffset() == contentRanges.get(i).getEndOffset() && i + 1 != contentRanges.size()) {
         builder.append(getRangesJoiner(text, contentRanges, i));
       }
     }
@@ -125,25 +129,26 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
 
     @Override
     public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-      outChars.append(myHost.getTextValue());
+      outChars.append(myHost.getTextValue(rangeInsideHost));
       return true;
     }
 
     @Override
     public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
       final String text = myHost.getText();
-      final List<TextRange> contentRanges = StreamEx.of(myHost.getContentRanges())
-        .map(cr -> rangeInsideHost.intersection(cr)).nonNull()
-        .toList();
+      final List<TextRange> contentRanges = myHost.getContentRanges();
 
       int currentOffsetInDecoded = 0;
 
+      TextRange last = null;
       for (int i = 0; i < contentRanges.size(); i++) {
-        final TextRange range = contentRanges.get(i);
+        final TextRange range = rangeInsideHost.intersection(contentRanges.get(i));
+        if (range == null) continue;
+        last = range;
 
         String curString = range.subSequence(text).toString();
 
-        if (i + 1 != contentRanges.size()) {
+        if (range.getEndOffset() == contentRanges.get(i).getEndOffset() && i + 1 != contentRanges.size()) {
           final String joiner = myHost.getRangesJoiner(text, contentRanges, i);
           curString += joiner;
         }
@@ -166,8 +171,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
         currentOffsetInDecoded += deltaLength;
       }
 
-      //noinspection ConstantConditions
-      return ContainerUtil.getLastItem(contentRanges, rangeInsideHost).getEndOffset();
+      return last != null ? last.getEndOffset() : -1;
     }
 
     @Override
