@@ -365,7 +365,11 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     @Override
     protected SeparatorWithText createSeparator() {
-      return new MyTextSeparator();
+      SeparatorWithText separator = super.createSeparator();
+      separator.setTextForeground(UIUtil.getListForeground());
+      separator.setCaptionCentered(false);
+      UIUtil.addInsets(separator, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
+      return separator;
     }
 
     @Override
@@ -375,6 +379,10 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         myTextLabel.setForeground(JBColor.gray);
       }
       super.customizeComponent(list, value, isSelected);
+      if (mySeparatorComponent.isVisible()) {
+        ((GroupHeaderSeparator)mySeparatorComponent).setHideLine(myCurrentIndex == 0 || StringUtil.isNotEmpty(mySeparatorComponent.getCaption()));
+      }
+
       CustomIconProvider actionWithIconProvider = getSpecificAction(value, CustomIconProvider.class);
       if (actionWithIconProvider != null) {
         myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
@@ -424,23 +432,6 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       compoundTextPanel.add(textPanel, BorderLayout.CENTER);
       compoundPanel.add(compoundTextPanel, BorderLayout.CENTER);
       return layoutComponent(compoundPanel);
-    }
-  }
-
-  private static class MyTextSeparator extends SeparatorWithText {
-
-    MyTextSeparator() {
-      super();
-      setTextForeground(UIUtil.getListForeground());
-      setCaptionCentered(false);
-      UIUtil.addInsets(this, DEFAULT_VGAP, UIUtil.getListCellHPadding(), 0, 0);
-    }
-
-    @Override
-    protected void paintLine(Graphics g, int x, int y, int width) {
-      if (StringUtil.isEmptyOrSpaces(getCaption())) {
-        super.paintLine(g, x, y, width);
-      }
     }
   }
 
