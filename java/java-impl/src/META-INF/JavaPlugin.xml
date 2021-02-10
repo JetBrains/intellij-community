@@ -1797,6 +1797,11 @@
                      groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.valuebased.SynchronizeOnValueBasedClassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="preview" shortName="PreviewFeature"
+                     key="inspection.preview.feature" bundle="messages.JavaBundle"
+                     groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.preview.PreviewFeatureInspection"/>
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"

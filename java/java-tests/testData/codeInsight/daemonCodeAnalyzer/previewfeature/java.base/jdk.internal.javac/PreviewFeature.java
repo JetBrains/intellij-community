@@ -6,22 +6,18 @@ import java.lang.annotation.*;
   ElementType.CONSTRUCTOR,
   ElementType.FIELD,
   ElementType.PACKAGE,
+  ElementType.MODULE,
   ElementType.TYPE})
 @Retention(RetentionPolicy.CLASS)
 public @interface PreviewFeature {
-  /**
-   * Name of the preview feature the annotated API is associated
-   * with.
-   */
   public Feature feature();
 
-  public boolean essentialAPI() default false;
+  public boolean reflective() default false;
 
   public enum Feature {
-    PATTERN_MATCHING_IN_INSTANCEOF,
     TEXT_BLOCKS,
     RECORDS,
-    SEALED_CLASSES
+    SEALED_CLASSES,
     ;
   }
 }

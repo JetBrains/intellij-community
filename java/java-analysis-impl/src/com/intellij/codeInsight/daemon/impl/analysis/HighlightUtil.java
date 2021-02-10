@@ -3405,13 +3405,23 @@ public final class HighlightUtil {
     return feature.level;
   }
 
-  static HighlightInfo checkFeature(@NotNull PsiElement element,
-                                    @NotNull HighlightingFeature feature,
-                                    @NotNull LanguageLevel level,
-                                    @NotNull PsiFile file) {
+  public static HighlightInfo checkFeature(@NotNull PsiElement element,
+                                           @NotNull HighlightingFeature feature,
+                                           @NotNull LanguageLevel level,
+                                           @NotNull PsiFile file) {
+    return checkFeature(element, feature, level, file, null, HighlightInfoType.ERROR);
+  }
+
+  public static HighlightInfo checkFeature(@NotNull PsiElement element,
+                                           @NotNull HighlightingFeature feature,
+                                           @NotNull LanguageLevel level,
+                                           @NotNull PsiFile file,
+                                           @Nullable @NlsContexts.DetailedDescription String message,
+                                           @NotNull HighlightInfoType highlightInfoType
+  ) {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
-      String message = getUnsupportedFeatureMessage(feature, level, file);
-      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
+      message = Objects.requireNonNullElse(message, getUnsupportedFeatureMessage(feature, level, file));
+      HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).create();
       if (info != null) {
         registerIncreaseLanguageLevelFixes(file, feature, new QuickFixActionRegistrarImpl(info));
       }
