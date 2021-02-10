@@ -41,9 +41,9 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   private AnnotationPackageSupport[] myAnnotationSupports;
 
-  private List<String> myDefaultNullables;
-  private List<String> myDefaultNotNulls;
-  private List<String> myDefaultUnknowns;
+  private Map<String, AnnotationPackageSupport> myDefaultNullables;
+  private Map<String, AnnotationPackageSupport> myDefaultNotNulls;
+  private Map<String, AnnotationPackageSupport> myDefaultUnknowns;
   private List<String> myDefaultAll;
   public String myDefaultNullable = NULLABLE;
   public String myDefaultNotNull = NOT_NULL;
@@ -66,16 +66,19 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       }
     });
     updateDefaults();
-    myNullables.addAll(myDefaultNullables);
-    myNotNulls.addAll(myDefaultNotNulls);
+    myNullables.addAll(myDefaultNullables.keySet());
+    myNotNulls.addAll(myDefaultNotNulls.keySet());
   }
 
   private void updateDefaults() {
     myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensions();
-    myDefaultNullables = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NULLABLE));
-    myDefaultNotNulls = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.NOT_NULL));
-    myDefaultUnknowns = StreamEx.of(myAnnotationSupports).toFlatList(s -> s.getNullabilityAnnotations(Nullability.UNKNOWN));
-    myDefaultAll = StreamEx.of(myDefaultNullables, myDefaultNotNulls, myDefaultUnknowns).toFlatList(Function.identity());
+    myDefaultNullables = StreamEx.of(myAnnotationSupports)
+      .cross(s -> s.getNullabilityAnnotations(Nullability.NULLABLE).stream()).invert().toMap();
+    myDefaultNotNulls = StreamEx.of(myAnnotationSupports)
+      .cross(s -> s.getNullabilityAnnotations(Nullability.NOT_NULL).stream()).invert().toMap();
+    myDefaultUnknowns = StreamEx.of(myAnnotationSupports)
+      .cross(s -> s.getNullabilityAnnotations(Nullability.UNKNOWN).stream()).invert().toMap();
+    myDefaultAll = StreamEx.of(myDefaultNullables, myDefaultNotNulls, myDefaultUnknowns).toFlatList(Map::keySet);
   }
 
   @Override
@@ -121,13 +124,13 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   @NotNull
   List<String> getDefaultNullables() {
-    return myDefaultNullables;
+    return new ArrayList<>(myDefaultNullables.keySet());
   }
 
   @Override
   @NotNull
   List<String> getDefaultNotNulls() {
-    return myDefaultNotNulls;
+    return new ArrayList<>(myDefaultNotNulls.keySet());
   }
 
   @Override
@@ -144,10 +147,22 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     if (myNullables.contains(name)) {
       return Optional.of(Nullability.NULLABLE);
     }
-    if (myDefaultUnknowns.contains(name)) {
+    if (myDefaultUnknowns.containsKey(name)) {
       return Optional.of(Nullability.UNKNOWN);
     }
     return Optional.empty();
+  }
+
+  @Override
+  public boolean isTypeUseAnnotationLocationRestricted(String name) {
+    AnnotationPackageSupport support = myDefaultUnknowns.get(name);
+    if (support == null) {
+      support = myDefaultNotNulls.get(name);
+      if (support == null) {
+        support = myDefaultNullables.get(name);
+      }
+    }
+    return support != null && support.isTypeUseAnnotationLocationRestricted();
   }
 
   @Override
@@ -208,8 +223,8 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   private boolean hasDefaultValues() {
     return NOT_NULL.equals(myDefaultNotNull) &&
            NULLABLE.equals(myDefaultNullable) &&
-           new HashSet<>(myNullables).equals(new HashSet<>(getDefaultNullables())) &&
-           new HashSet<>(myNotNulls).equals(new HashSet<>(getDefaultNotNulls()));
+           new HashSet<>(myNullables).equals(myDefaultNullables.keySet()) &&
+           new HashSet<>(myNotNulls).equals(myDefaultNotNulls.keySet());
   }
 
   @Override
@@ -232,10 +247,10 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   private void normalizeDefaults() {
-    myNotNulls.removeAll(getDefaultNullables());
-    myNullables.removeAll(getDefaultNotNulls());
-    myNullables.addAll(ContainerUtil.filter(getDefaultNullables(), s -> !myNullables.contains(s)));
-    myNotNulls.addAll(ContainerUtil.filter(getDefaultNotNulls(), s -> !myNotNulls.contains(s)));
+    myNotNulls.removeAll(myDefaultNullables.keySet());
+    myNullables.removeAll(myDefaultNotNulls.keySet());
+    myNullables.addAll(ContainerUtil.filter(myDefaultNullables.keySet(), s -> !myNullables.contains(s)));
+    myNotNulls.addAll(ContainerUtil.filter(myDefaultNotNulls.keySet(), s -> !myNotNulls.contains(s)));
     myTracker.incModificationCount();
   }
 

@@ -63,4 +63,9 @@ public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
         return Collections.singletonList(NULLNESS_UNKNOWN);
     }
   }
+
+  @Override
+  public boolean isTypeUseAnnotationLocationRestricted() {
+    return true;
+  }
 }

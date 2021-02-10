@@ -38,4 +38,11 @@ public interface AnnotationPackageSupport {
   default @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return Collections.emptyList();
   }
+
+  /**
+   * @return true if the annotations defined by this support cannot be placed at wildcards or type parameters 
+   */
+  default boolean isTypeUseAnnotationLocationRestricted() {
+    return false;
+  }
 }
