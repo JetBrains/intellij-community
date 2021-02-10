@@ -1,5 +1,7 @@
 package com.intellij.completion.ml.util
 
+import com.intellij.completion.ml.sorting.FeatureUtils
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 
@@ -36,7 +38,7 @@ object RelevanceUtil {
         }
         "kotlin.callableWeight" -> relevanceMap.addDataClassValues("kotlin.callableWeight", value.toString())
         "ml_weigh" -> additionalMap.addCompoundValues("ml", value.toString())
-        else -> if (acceptValue(value)) relevanceMap[name] = value
+        else -> if (acceptValue(value) || name == FeatureUtils.ML_RANK) relevanceMap[name] = value
       }
     }
 
@@ -44,7 +46,7 @@ object RelevanceUtil {
   }
 
   private fun acceptValue(value: Any): Boolean {
-    return value !is String
+    return value is Number || value is Boolean || value.javaClass.isEnum || getPluginInfo(value.javaClass).type.isDevelopedByJetBrains()
   }
 
   private fun String.normalized(): String {
