@@ -14,7 +14,16 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
     @Suppress("SpellCheckingInspection")
     return when (moduleName) {
       // force generating "Groovy" inner class to preserve backward compatiblity
-      "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "Jetgroovy", iconDirectory = "icons")
+      "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "JetgroovyIcons", iconDirectory = "icons")
+      "intellij.struts2.ognl" -> IntellijIconClassGeneratorModuleConfig(className = "OgnlIcons", packageName = "com.intellij.lang.ognl",
+                                                                        iconDirectory = "icons")
+      "intellij.struts2.dom" -> IntellijIconClassGeneratorModuleConfig(className = "Struts2Icons", packageName = "com.intellij.struts2",
+                                                                        iconDirectory = "icons")
+      "intellij.css" -> IntellijIconClassGeneratorModuleConfig(className = "CssIcons", packageName = "com.intellij.lang.css",
+                                                                        iconDirectory = "icons/css")
+      "intellij.platform.icons" -> IntellijIconClassGeneratorModuleConfig(className = "AllIcons", packageName = "com.intellij.icons")
+      "intellij.properties.psi" -> IntellijIconClassGeneratorModuleConfig(className = "PropertiesIcons", packageName = "com.intellij.lang.properties",
+                                                                          iconDirectory = "icons")
       else -> super.getConfigForModule(moduleName)
     }
   }

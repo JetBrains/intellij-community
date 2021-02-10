@@ -69,27 +69,6 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     val className: CharSequence
     val outFile: Path
     when (module.name) {
-      "intellij.platform.icons" -> {
-        packageName = "com.intellij.icons"
-        className = "AllIcons"
-
-        val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
-        outFile = Path.of(dir, "$className.java")
-      }
-      "intellij.struts2.dom" -> {
-        packageName = "com.intellij.struts2"
-        className = "Struts2Icons"
-
-        val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + '/' + packageName.replace('.', '/')
-        outFile = Path.of(dir, "$className.java")
-      }
-      "intellij.css" -> {
-        packageName = "com.intellij.lang.css"
-        className = "CssIcons"
-
-        val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + '/' + packageName.replace('.', '/')
-        outFile = Path.of(dir, "$className.java")
-      }
       "intellij.android.artwork" -> {
         packageName = "icons"
 
@@ -139,16 +118,22 @@ internal open class IconsClassGenerator(private val projectHome: Path,
           println("deleting $oldFile from source root which isn't marked as 'generated'")
           Files.delete(oldFile)
         }
-        if (oldClassName == null) {
-          try {
-            oldClassName = findIconClass(targetRoot)
+
+        if (moduleConfig?.className == null) {
+          if (oldClassName == null) {
+            try {
+              oldClassName = findIconClass(targetRoot)
+            }
+            catch (ignored: NoSuchFileException) {
+            }
           }
-          catch (ignored: NoSuchFileException) {
+
+          className = oldClassName ?: directoryName(module).let {
+            if (it.endsWith("Icons")) it else "${it}Icons"
           }
         }
-
-        className = oldClassName ?: moduleConfig?.className ?: directoryName(module).let {
-          if (it.endsWith("Icons")) it else "${it}Icons"
+        else {
+          className = moduleConfig.className
         }
         outFile = targetRoot.resolve("$className.java")
       }
