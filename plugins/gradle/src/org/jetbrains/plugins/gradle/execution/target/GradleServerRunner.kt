@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.*
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
+import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -26,6 +24,7 @@ import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.net.InetAddress
 import java.util.concurrent.Future
 
@@ -58,7 +57,17 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters) {
       consumerOperationParameters.buildProgressListener.onEvent(it)
     }
-    processHandler.addProcessListener(GradleServerProcessListener(targetProgressIndicator, resultHandler, gradleServerEventsListener))
+
+    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true) null
+    else {
+      connection.putUserData(targetPreparationKey, true)
+      val targetTypeId = connection.environmentConfiguration.typeId
+      val targetDisplayName = TargetEnvironmentType.EXTENSION_NAME.findFirstSafe { it.id == targetTypeId }?.displayName
+      targetDisplayName?.run { GradleBundle.message("gradle.target.execution.running", this) + "\n" }
+    }
+    processHandler.addProcessListener(
+      GradleServerProcessListener(appStartedMessage, targetProgressIndicator, resultHandler, gradleServerEventsListener)
+    )
     processHandler.runProcessWithProgressIndicator(EmptyProgressIndicator(), -1, true)
   }
 
@@ -142,7 +151,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
   }
 
-  private class GradleServerProcessListener(private val targetProgressIndicator: TargetProgressIndicator,
+  private class GradleServerProcessListener(private val appStartedMessage: String?,
+                                            private val targetProgressIndicator: TargetProgressIndicator,
                                             private val resultHandler: ResultHandler<Any?>,
                                             private val gradleServerEventsListener: GradleServerEventsListener) : ProcessListener {
     @Volatile
@@ -163,7 +173,10 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       }
     }
 
-    override fun startNotified(event: ProcessEvent) {}
+    override fun startNotified(event: ProcessEvent) {
+      appStartedMessage?.let { targetProgressIndicator.addText(it, ProcessOutputType.STDOUT) }
+    }
+
     override fun processTerminated(event: ProcessEvent) {
       if (!resultReceived) {
         gradleServerEventsListener.waitForResult { resultReceived }
@@ -175,15 +188,24 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
 
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-      targetProgressIndicator.addText(event.text, outputType)
-      if (connectionAddressReceived) return
-      val prefix = "Gradle target server hostName: "
-      if (event.text.startsWith(prefix)) {
+      if (connectionAddressReceived) {
+        targetProgressIndicator.addText(event.text, outputType)
+        return
+      }
+
+      if (event.text.startsWith(connectionConfLinePrefix)) {
         connectionAddressReceived = true
-        val hostName = event.text.substringAfter(prefix).substringBefore(" port: ")
+        val hostName = event.text.substringAfter(connectionConfLinePrefix).substringBefore(" port: ")
         val port = event.text.substringAfter(" port: ").trim().toInt()
         gradleServerEventsListener.start(hostName, port, resultHandlerWrapper)
       }
+      if (log.isDebugEnabled) {
+        targetProgressIndicator.addText(event.text, outputType)
+      }
+    }
+
+    companion object {
+      private const val connectionConfLinePrefix = "Gradle target server hostName: "
     }
   }
 
@@ -205,5 +227,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
   companion object {
     private val log = logger<GradleServerRunner>()
+    private val targetPreparationKey = Key.create<Boolean>("target preparation key")
   }
 }
