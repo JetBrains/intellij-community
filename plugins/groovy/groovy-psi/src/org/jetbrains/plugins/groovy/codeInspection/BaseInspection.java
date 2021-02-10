@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
-public abstract class BaseInspection extends GroovySuppressableInspectionTool {
+public abstract class BaseInspection extends LocalInspectionTool {
   /**
    * @deprecated Use {@link #getProbableBugs()} instead
    */
