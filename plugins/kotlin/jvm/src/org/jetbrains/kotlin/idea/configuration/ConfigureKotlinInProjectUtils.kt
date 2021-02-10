@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Computable
@@ -24,11 +25,10 @@ import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.annotations.CalledInBackground
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.readAction
 import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.idea.versions.SuppressNotificationState
 import org.jetbrains.kotlin.idea.versions.hasKotlinJsKjsmFile
 import org.jetbrains.kotlin.idea.vfilefinder.IDEVirtualFileFinder
 import org.jetbrains.kotlin.resolve.jvm.modules.KOTLIN_STDLIB_MODULE_NAME
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.ifEmpty
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
@@ -121,26 +122,28 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  *
  * DO NOT CALL THIS ON AWT THREAD
  */
-@CalledInBackground
+@RequiresBackgroundThread
 fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
     if (!isUnitTestMode() && ApplicationManager.getApplication().isDispatchThread) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
-    if (!project.runReadActionInSmartMode {
-            !project.isDisposed &&
-                    FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
-        }) {
-        return emptyList()
-    }
-
-    return project.allModules()
-        .filter { module ->
-            project.runReadActionInSmartMode {
-                !project.isDisposed && !module.isDisposed
-                        && FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, module.getModuleScope(true))
+    return project.runReadActionInSmartMode {
+        val time = System.currentTimeMillis()
+        val projectFileIndex = ProjectFileIndex.getInstance(project)
+        val modules = mutableSetOf<Module>()
+        val ktFileProcessor = { ktFile: VirtualFile ->
+            if (projectFileIndex.isInSourceContent(ktFile)) {
+                modules.addIfNotNull(projectFileIndex.getModuleForFile(ktFile))
             }
+            true
         }
+        FileTypeIndex.processFiles(KotlinFileType.INSTANCE, ktFileProcessor, GlobalSearchScope.projectScope(project))
+
+        val time1 = System.currentTimeMillis()
+        println("getModulesWithKotlinFiles took: ${time1 - time} ms")
+        modules
+    }
 }
 
 /**
