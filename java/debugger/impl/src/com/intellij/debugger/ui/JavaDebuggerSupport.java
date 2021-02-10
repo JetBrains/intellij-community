@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.actions.JavaMarkObjectActionHandler;
@@ -6,6 +6,7 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
@@ -100,9 +101,14 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
   public static Project getContextProjectForEditorFieldsInDebuggerConfigurables() {
     //todo[nik] improve
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project != null) {
-      return project;
+    try {
+      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      if (project != null) {
+        return project;
+      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(JavaDebuggerSupport.class).error(e);
     }
     return ProjectManager.getInstance().getDefaultProject();
   }
