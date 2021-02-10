@@ -168,7 +168,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     // Done
 
     myBrowsers = createBrowsers(project, myModuleSelector, myPackage.getComponent(), myPatternTextField, myCategory.getComponent(), () -> getClassName());
-    myModel.setListener(integer -> onTypeChanged(integer));
+    myModel.setListener((oldType, newType) -> onTypeChanged(newType));
 
     myTypeChooser.addActionListener(new ActionListener() {
       @Override

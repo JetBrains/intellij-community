@@ -35,7 +35,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +44,7 @@ import javax.swing.text.PlainDocument;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 // Author: dyoma
 
@@ -76,7 +76,7 @@ public class JUnitConfigurationModel {
   }
 
 
-  private Consumer<Integer> myListener;
+  private BiConsumer<Integer, Integer> myListener;
   private int myType = -1;
   private final Object[] myJUnitDocuments = new Object[6];
   private final Project myProject;
@@ -87,17 +87,18 @@ public class JUnitConfigurationModel {
 
   public boolean setType(int type) {
     if (type == myType) return false;
+    int oldType = myType;
     if (type < 0 || type >= ourTestObjects.size()) type = CLASS;
     myType = type;
-    fireTypeChanged(type);
+    fireTypeChanged(oldType, type);
     return true;
   }
 
-  private void fireTypeChanged(final int newType) {
-    myListener.consume(newType);
+  private void fireTypeChanged(final int oldType, final int newType) {
+    myListener.accept(oldType, newType);
   }
 
-  public void setListener(final Consumer<Integer> listener) {
+  public void setListener(final BiConsumer<Integer, Integer> listener) {
     myListener = listener;
   }
 
