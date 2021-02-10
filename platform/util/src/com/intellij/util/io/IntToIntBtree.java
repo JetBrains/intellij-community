@@ -304,7 +304,7 @@ public final class IntToIntBtree {
     private short myChildrenCount;
     protected int myAddressInBuffer;
     protected ByteBuffer myBuffer;
-    protected ByteBufferWrapper myBufferWrapper;
+    protected DirectBufferWrapper myBufferWrapper;
     protected boolean myHasFullPagesAlongPath;
     protected boolean myIsDirty;
 

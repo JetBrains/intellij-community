@@ -72,12 +72,12 @@ public final class StorageLock {
   public final StorageLockContext myDefaultContext;
   private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
 
-  private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
+  private final LinkedHashMap<Integer, DirectBufferWrapper> mySegments;
 
   private final ReentrantLock mySegmentsAccessLock = new ReentrantLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
   // todo avoid locking for access
   private final ReentrantLock mySegmentsAllocationLock = new ReentrantLock();
-  private final ConcurrentLinkedQueue<ByteBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<DirectBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<>();
 
   private volatile long mySize;
   private volatile long mySizeLimit;
@@ -87,21 +87,21 @@ public final class StorageLock {
     myDefaultContext = new StorageLockContext(this, true, false);
 
     mySizeLimit = UPPER_LIMIT;
-    mySegments = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f, true) {
+    mySegments = new LinkedHashMap<Integer, DirectBufferWrapper>(10, 0.75f, true) {
       @Override
-      protected boolean removeEldestEntry(Map.Entry<Integer, ByteBufferWrapper> eldest) {
+      protected boolean removeEldestEntry(Map.Entry<Integer, DirectBufferWrapper> eldest) {
         return mySize > mySizeLimit;
       }
 
       @Nullable
       @Override
-      public ByteBufferWrapper remove(Object key) {
+      public DirectBufferWrapper remove(Object key) {
         // this method can be called after removeEldestEntry
-        ByteBufferWrapper wrapper = super.remove(key);
+        DirectBufferWrapper wrapper = super.remove(key);
         if (wrapper != null) {
           ++myMappingChangeCount;
           mySegmentsToRemove.offer(wrapper);
-          mySize -= wrapper.myLength;
+          mySize -= wrapper.getLength();
         }
         return wrapper;
       }
@@ -131,8 +131,8 @@ public final class StorageLock {
     return myIndex2Storage.get(index);
   }
 
-  ByteBufferWrapper get(Integer key, boolean read, boolean readOnly) {
-    ByteBufferWrapper wrapper;
+  DirectBufferWrapper get(Integer key, boolean read, boolean readOnly) {
+    DirectBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
       wrapper = mySegments.get(key);
@@ -160,14 +160,14 @@ public final class StorageLock {
         long finished = System.currentTimeMillis();
         if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
           IOStatistics.dump(
-            "Mapping " + wrapper.myLength + " from " + wrapper.myPosition + " file:" + wrapper.myFile + " for " + (finished - started));
+            "Mapping " + wrapper + " for " + (finished - started));
         }
       }
 
       mySegmentsAccessLock.lock();
       try {
         mySegments.put(key, wrapper);
-        mySize += wrapper.myLength;
+        mySize += wrapper.getLength();
       }
       finally {
         mySegmentsAccessLock.unlock();
@@ -186,7 +186,7 @@ public final class StorageLock {
     if (mySegmentsToRemove.isEmpty()) return;
 
     assert mySegmentsAllocationLock.isHeldByCurrentThread();
-    Iterator<ByteBufferWrapper> iterator = mySegmentsToRemove.iterator();
+    Iterator<DirectBufferWrapper> iterator = mySegmentsToRemove.iterator();
     while(iterator.hasNext()) {
       iterator.next().release();
       iterator.remove();
@@ -210,7 +210,7 @@ public final class StorageLock {
   }
 
   @NotNull
-  private ByteBufferWrapper createValue(Integer key, boolean read, boolean readOnly) {
+  private DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly) {
     final int storageIndex = key & FILE_INDEX_MASK;
     PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
     assert owner != null: "No storage for index " + storageIndex;
@@ -222,9 +222,9 @@ public final class StorageLock {
     }
 
     int min = (int)Math.min(ownerLength - off, owner.myPageSize);
-    ByteBufferWrapper wrapper = readOnly
-                                ? ByteBufferWrapper.readOnlyDirect(owner.getFile(), off, min)
-                                : ByteBufferWrapper.readWriteDirect(owner.getFile(), off, min);
+    DirectBufferWrapper wrapper = readOnly
+                                ? DirectBufferWrapper.readOnlyDirect(owner.getFile(), off, min)
+                                : DirectBufferWrapper.readWriteDirect(owner.getFile(), off, min);
     Throwable oome = null;
     while (true) {
       try {
@@ -233,7 +233,7 @@ public final class StorageLock {
         if (oome != null) {
           LOG.info("Successfully recovered OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / PagedFileStorage.MB + "MB " +
                    "new size limit: " + mySizeLimit / PagedFileStorage.MB + "MB " +
-                   "trying to allocate " + wrapper.myLength + " block");
+                   "trying to allocate " + wrapper.getLength() + " block");
         }
         return wrapper;
       }
@@ -268,7 +268,7 @@ public final class StorageLock {
           throw new MappingFailedException(
             "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / PagedFileStorage.MB + "MB " +
             "new size limit: " + mySizeLimit / PagedFileStorage.MB + "MB " +
-            "trying to allocate " + wrapper.myLength + " block", e);
+            "trying to allocate " + wrapper.getLength() + " block", e);
         }
         ensureSize(newSize); // next try
       }
@@ -276,12 +276,12 @@ public final class StorageLock {
   }
 
   @Nullable
-  private Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
+  private Map<Integer, DirectBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
     mySegmentsAccessLock.lock();
     try {
       storageLockContext.checkThreadAccess(false);
-      Map<Integer, ByteBufferWrapper> mineBuffers = null;
-      for (Map.Entry<Integer, ByteBufferWrapper> entry : mySegments.entrySet()) {
+      Map<Integer, DirectBufferWrapper> mineBuffers = null;
+      for (Map.Entry<Integer, DirectBufferWrapper> entry : mySegments.entrySet()) {
         if ((entry.getKey() & FILE_INDEX_MASK) == index) {
           if (mineBuffers == null) {
             mineBuffers = new TreeMap<>(Comparator.comparingInt(o -> o));
@@ -297,7 +297,7 @@ public final class StorageLock {
   }
 
   void unmapBuffersForOwner(int index, StorageLockContext storageLockContext) {
-    final Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
+    final Map<Integer, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
 
     if (buffers != null) {
       mySegmentsAccessLock.lock();
@@ -320,22 +320,21 @@ public final class StorageLock {
   }
 
   void flushBuffersForOwner(int index, StorageLockContext storageLockContext) throws IOException {
-    Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
+    Map<Integer, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
 
     if (buffers != null) {
       List<IOException> exceptions = new SmartList<>();
 
       mySegmentsAllocationLock.lock();
       try {
-        ReadWriteDirectBufferWrapper.FileContext fileContext = null;
+        DirectBufferWrapper.FileContext fileContext = null;
         try {
-          for (ByteBufferWrapper buffer : buffers.values()) {
+          for (DirectBufferWrapper buffer : buffers.values()) {
             if (buffer.isDirty()) {
-              assert buffer instanceof ReadWriteDirectBufferWrapper;
               if (fileContext == null) {
-                fileContext = ((ReadWriteDirectBufferWrapper)buffer).openContext();
+                fileContext = buffer.openContext();
               }
-              ((ReadWriteDirectBufferWrapper)buffer).flushWithContext(fileContext);
+              buffer.flushWithContext(fileContext);
             }
           }
         }
