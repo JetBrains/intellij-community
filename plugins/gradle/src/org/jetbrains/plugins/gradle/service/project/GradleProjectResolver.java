@@ -23,7 +23,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.PathMapper;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -37,6 +40,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
@@ -49,7 +53,6 @@ import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.gradle.util.ReflectionTraverser;
 
 import java.io.File;
@@ -198,7 +201,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
       isCompositeBuildsSupported = gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       resolverCtx.setBuildEnvironment(buildEnvironment);
-      if (!isCompositeBuildsSupported && !GradleUtil.isCustomSerializationEnabled(gradleVersion)) {
+      if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
         useCustomSerialization = false;
       }
     }
@@ -451,6 +454,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
     LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
     return projectDataNode;
+  }
+
+  private static boolean isCustomSerializationSupported(@NotNull DefaultProjectResolverContext resolverCtx,
+                                                        GradleVersion gradleVersion,
+                                                        boolean isCompositeBuildsSupported) {
+    return isCompositeBuildsSupported ||
+           resolverCtx.getConnection().newBuild() instanceof TargetBuildLauncher ||
+           gradleVersion.getBaseVersion().compareTo(GradleVersion.version("3.0")) >= 0;
   }
 
   private static void maybeConvertTargetPaths(GradleExecutionSettings executionSettings, ProjectImportAction.AllModels allModels) {

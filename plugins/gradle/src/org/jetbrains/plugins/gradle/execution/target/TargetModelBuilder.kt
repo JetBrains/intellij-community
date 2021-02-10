@@ -57,6 +57,6 @@ internal class TargetModelBuilder<T>(private val connection: TargetProjectConnec
   }
 
   companion object {
-    private val BUILD_ENVIRONMENT_KEY = Key.create<BuildEnvironment>("buildEnvironmentM")
+    private val BUILD_ENVIRONMENT_KEY = Key.create<BuildEnvironment>("build environment model")
   }
 }

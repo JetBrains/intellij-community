@@ -53,11 +53,11 @@ import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataSer
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -250,11 +250,10 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
     GradleExtensions gradleExtensions = resolverCtx.getExtraProject(gradleModule, GradleExtensions.class);
     if (gradleExtensions != null) {
-      String gradleVersion = resolverCtx.getProjectGradleVersion();
-      boolean useCustomSerialization = gradleVersion == null ||
-                                       GradleUtil.isCustomSerializationEnabled(GradleVersion.version(gradleVersion));
-      DefaultGradleExtensions extensions = useCustomSerialization ? (DefaultGradleExtensions)gradleExtensions
-                                                                  : new DefaultGradleExtensions(gradleExtensions);
+      //noinspection ConditionCoveredByFurtherCondition
+      boolean isGradleProxyClass = gradleExtensions instanceof Proxy || !(gradleExtensions instanceof DefaultGradleExtensions);
+      DefaultGradleExtensions extensions = isGradleProxyClass ? new DefaultGradleExtensions(gradleExtensions)
+                                                              : (DefaultGradleExtensions)gradleExtensions;
       ExternalProject externalProject = getExternalProject(gradleModule, resolverCtx);
       if (externalProject != null) {
         extensions.addTasks(externalProject.getTasks().values());
@@ -1020,9 +1019,9 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     return new LibraryDependencyData(ownerModule.getData(), library, level);
   }
 
-  private String chooseName(File path,
-                            LibraryLevel level,
-                            DataNode<ProjectData> ideProject) {
+  private static String chooseName(File path,
+                                   LibraryLevel level,
+                                   DataNode<ProjectData> ideProject) {
     final String fileName = FileUtilRt.getNameWithoutExtension(path.getName());
     if (level == LibraryLevel.MODULE) {
       return fileName;
