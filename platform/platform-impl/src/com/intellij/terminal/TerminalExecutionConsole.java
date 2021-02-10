@@ -60,6 +60,10 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private boolean myEnterKeyDefaultCodeEnabled = true;
 
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
+    this(project, 200, 24, processHandler);
+  }
+
+  public TerminalExecutionConsole(@NotNull Project project, int columns, int lines, @Nullable ProcessHandler processHandler) {
     myProject = project;
     myOnResizedRunner = new PendingTasksRunner(2000, project);
     JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase() {
@@ -69,11 +73,15 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       }
     };
     myDataStream = new AppendableTerminalDataStream();
-    myTerminalWidget = new ConsoleTerminalWidget(project, provider);
+    myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, provider);
     Disposer.register(myTerminalWidget, provider);
     if (processHandler != null) {
       attachToProcess(processHandler);
     }
+  }
+
+  public @NotNull JBTerminalWidget getTerminalWidget() {
+    return myTerminalWidget;
   }
 
   private void printText(@NotNull String text, @Nullable ConsoleViewContentType contentType) throws IOException {
@@ -300,8 +308,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   private final class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
-    private ConsoleTerminalWidget(@NotNull Project project, @NotNull JBTerminalSystemSettingsProviderBase provider) {
-      super(project, 200, 24, provider, TerminalExecutionConsole.this, TerminalExecutionConsole.this);
+    private ConsoleTerminalWidget(@NotNull Project project, int columns, int lines, @NotNull JBTerminalSystemSettingsProviderBase provider) {
+      super(project, columns, lines, provider, TerminalExecutionConsole.this, TerminalExecutionConsole.this);
     }
 
     @Override
