@@ -355,8 +355,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private @Nullable PtyProcess getPtyProcess() {
     ProcessHandlerTtyConnector phc = ObjectUtils.tryCast(myTerminalWidget.getTtyConnector(), ProcessHandlerTtyConnector.class);
-    BaseProcessHandler<?> processHandler = phc != null ? phc.getProcessHandler() : null;
-    return processHandler != null ? ObjectUtils.tryCast(processHandler.getProcess(), PtyProcess.class) : null;
+    return phc != null ? phc.getPtyProcess() : null;
   }
 
   private final class ClearAction extends DumbAwareAction {
