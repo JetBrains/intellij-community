@@ -6,8 +6,6 @@ class Main {
   native Optional<String> getOptional();
 
   void test() {
-    getOptional().orElseThrow(() -> {
-      throw new IllegalArgumentException();
-    });
+    getOptional().orElseThrow(((IllegalArgumentException::new)));
   }
 }

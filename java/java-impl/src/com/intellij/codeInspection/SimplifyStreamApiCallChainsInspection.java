@@ -2323,14 +2323,26 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public PsiElement simplify(PsiMethodCallExpression orElseGetCall) {
+      final PsiLambdaExpression lambda =
+        tryCast(skipParenthesizedExprDown(orElseGetCall.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
+      if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
+      final PsiCodeBlock body = tryCast(lambda.getBody(), PsiCodeBlock.class);
+      if (body == null) return null;
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length != 1) return null;
+      final PsiThrowStatement statement = tryCast(statements[0], PsiThrowStatement.class);
+      if (statement == null) return null;
+      final PsiExpression expression = statement.getException();
+      if (expression == null) return null;
+      LambdaCanBeMethodReferenceInspection.tryConvertToMethodReference(lambda, expression);
       ExpressionUtils.bindCallTo(orElseGetCall, "orElseThrow");
       return orElseGetCall;
     }
 
     public static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(OPTIONAL_OR_ELSE_GET, call -> {
-        final PsiElement parameter = call.getArgumentList().getExpressions()[0];
-        final PsiLambdaExpression lambda = tryCast(parameter, PsiLambdaExpression.class);
+        final PsiLambdaExpression lambda =
+            tryCast(skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
         if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
         final PsiCodeBlock body = tryCast(lambda.getBody(), PsiCodeBlock.class);
         if (body == null) return null;
