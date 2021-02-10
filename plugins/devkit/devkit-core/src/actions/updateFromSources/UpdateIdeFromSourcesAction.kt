@@ -66,8 +66,16 @@ internal open class UpdateIdeFromSourcesAction
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
+      val oldWorkIdePath = UpdateFromSourcesSettings.getState().actualIdePath
       val ok = UpdateFromSourcesDialog(project, forceShowSettings).showAndGet()
       if (!ok) return
+      val updatedState = UpdateFromSourcesSettings.getState()
+      if (oldWorkIdePath != updatedState.actualIdePath) {
+        updatedState.workIdePathsHistory.remove(oldWorkIdePath)
+        updatedState.workIdePathsHistory.remove(updatedState.actualIdePath)
+        updatedState.workIdePathsHistory.add(0, updatedState.actualIdePath)
+        updatedState.workIdePathsHistory.add(0, oldWorkIdePath)
+      }
     }
 
     fun error(@NlsContexts.DialogMessage message : String) {

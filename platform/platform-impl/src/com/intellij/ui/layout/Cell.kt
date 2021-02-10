@@ -421,16 +421,19 @@ abstract class Cell : BaseBuilder {
   }
 
   fun textFieldWithHistoryWithBrowseButton(
+    getter: () -> String,
+    setter: (String) -> Unit,
     @DialogTitle browseDialogTitle: String,
-    value: String? = null,
     project: Project? = null,
     fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
     historyProvider: (() -> List<String>)? = null,
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null
   ): CellBuilder<TextFieldWithHistoryWithBrowseButton> {
     val textField = textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider, fileChosen)
-    if (value != null) textField.text = value
+    val modelBinding = PropertyBinding(getter, setter)
+    textField.text = modelBinding.get()
     return component(textField)
+      .withBinding(TextFieldWithHistoryWithBrowseButton::getText, TextFieldWithHistoryWithBrowseButton::setText, modelBinding)
   }
 
   fun textFieldWithBrowseButton(

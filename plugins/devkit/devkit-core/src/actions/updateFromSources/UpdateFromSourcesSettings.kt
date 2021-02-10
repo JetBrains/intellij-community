@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
+import com.intellij.util.xmlb.annotations.XCollection
 
 @State(name = "UpdateFromSourcesSettings", storages = [Storage("update.from.sources.xml")])
 internal class UpdateFromSourcesSettings : SimplePersistentStateComponent<UpdateFromSourcesSettingsState>(UpdateFromSourcesSettingsState()) {
@@ -17,6 +18,8 @@ internal class UpdateFromSourcesSettingsState : BaseState() {
   var buildDisabledPlugins by property(false)
   var pluginDirectoriesForDisabledPlugins by list<String>()
   var restartAutomatically by property(false)
+  @get:XCollection(style = XCollection.Style.v2)
+  val workIdePathsHistory: MutableList<String> by list()
 }
 
 internal val UpdateFromSourcesSettingsState.actualIdePath: String
