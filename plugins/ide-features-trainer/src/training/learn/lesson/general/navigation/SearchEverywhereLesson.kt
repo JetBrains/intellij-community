@@ -18,7 +18,6 @@ import training.commands.kotlin.TaskRuntimeContext
 import training.commands.kotlin.TaskTestContext
 import training.learn.LessonsBundle
 import training.learn.interfaces.LessonType
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
@@ -26,8 +25,8 @@ import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
 import java.awt.event.KeyEvent
 import javax.swing.JList
 
-abstract class SearchEverywhereLesson(module: Module, lang: String)
-  : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name"), module, lang) {
+abstract class SearchEverywhereLesson(lang: String)
+  : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name"), lang) {
   abstract override val existedFile: String?
 
   abstract val resultFileName: String

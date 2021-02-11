@@ -4,7 +4,6 @@ package com.intellij.java.ift.lesson.completion
 import com.intellij.java.ift.JavaLangSupport
 import com.intellij.java.ift.JavaLessonsBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
@@ -12,8 +11,8 @@ import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
 import training.learn.lesson.kimpl.parseLessonSample
 
-class JavaBasicCompletionLesson(module: Module)
-  : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name"), module, JavaLangSupport.lang) {
+class JavaBasicCompletionLesson
+  : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name"), JavaLangSupport.lang) {
 
   val sample = parseLessonSample("""
     import java.lang.*;

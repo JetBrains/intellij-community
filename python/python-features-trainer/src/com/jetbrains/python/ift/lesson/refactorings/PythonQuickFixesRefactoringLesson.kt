@@ -16,15 +16,14 @@ import com.jetbrains.python.ift.PythonLessonsBundle
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskTestContext
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import java.util.regex.Pattern
 import javax.swing.JDialog
 import javax.swing.JTable
 
-class PythonQuickFixesRefactoringLesson(module: Module)
-  : KLesson("refactoring.quick.fix", PythonLessonsBundle.message("python.quick.fix.refactoring.lesson.name"), module, "Python") {
+class PythonQuickFixesRefactoringLesson
+  : KLesson("refactoring.quick.fix", PythonLessonsBundle.message("python.quick.fix.refactoring.lesson.name"), "Python") {
   private val sample = parseLessonSample("""
     def foo(x):
         print("Hello ", x)

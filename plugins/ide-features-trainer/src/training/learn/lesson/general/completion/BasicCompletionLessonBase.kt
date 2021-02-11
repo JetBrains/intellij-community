@@ -4,13 +4,12 @@ package training.learn.lesson.general.completion
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import javax.swing.JList
 
-abstract class BasicCompletionLessonBase(module: Module, lang: String)
-  : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name"), module, lang) {
+abstract class BasicCompletionLessonBase(lang: String)
+  : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name"), lang) {
   protected abstract val sample1: LessonSample
   protected abstract val sample2: LessonSample
 

@@ -9,13 +9,12 @@ import com.intellij.ui.components.JBList
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import javax.swing.JList
 
-abstract class RefactoringMenuLessonBase(lessonId: String, module: Module, languageId: String)
-  : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name"), module, languageId) {
+abstract class RefactoringMenuLessonBase(lessonId: String, languageId: String)
+  : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name"), languageId) {
   fun LessonContext.extractParameterTasks() {
     lateinit var showPopupTaskId: TaskContext.TaskId
     actionTask("Refactorings.QuickListPopupAction") {

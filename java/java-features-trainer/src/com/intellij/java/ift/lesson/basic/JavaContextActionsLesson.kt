@@ -3,12 +3,11 @@ package com.intellij.java.ift.lesson.basic
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.siyeh.IntentionPowerPackBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.general.ContextActionsLesson
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.parseLessonSample
 
-class JavaContextActionsLesson(module: Module) : ContextActionsLesson(module, "JAVA") {
+class JavaContextActionsLesson : ContextActionsLesson("JAVA") {
   override val sample: LessonSample = parseLessonSample("""
     class Scratch {
         public static void main(String[] args) {

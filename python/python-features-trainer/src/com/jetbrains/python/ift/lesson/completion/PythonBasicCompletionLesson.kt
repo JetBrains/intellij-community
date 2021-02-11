@@ -1,14 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift.lesson.completion
 
-import training.learn.interfaces.Module
 import training.learn.lesson.general.completion.BasicCompletionLessonBase
 import training.learn.lesson.kimpl.parseLessonSample
 
 private const val keyToComplete1 = "director"
 private const val keyToComplete2 = "distributor"
 
-class PythonBasicCompletionLesson(module: Module) : BasicCompletionLessonBase(module, "Python") {
+class PythonBasicCompletionLesson : BasicCompletionLessonBase("Python") {
   override val sample1 = parseLessonSample("""
     movies_dict = {
         'title': 'Aviator',

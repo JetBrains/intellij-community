@@ -6,13 +6,12 @@ import com.intellij.testGuiFramework.util.Key
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import javax.swing.JList
 
-class PythonTabCompletionLesson(module: Module)
-  : KLesson("Tab completion", PythonLessonsBundle.message("python.tab.completion.lesson.name"), module, "Python") {
+class PythonTabCompletionLesson
+  : KLesson("Tab completion", PythonLessonsBundle.message("python.tab.completion.lesson.name"), "Python") {
   private val template = parseLessonSample("""
     class Calculator:
         def __init__(self):

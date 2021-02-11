@@ -3,18 +3,16 @@ package training.learn
 
 import org.jetbrains.annotations.Nls
 import training.lang.LangSupport
-import training.learn.interfaces.Lesson
 import training.learn.interfaces.LessonType
+import training.learn.lesson.kimpl.KLesson
 
 class LearningModule(@Nls name: String,
                      @Nls description: String,
                      primaryLanguage: LangSupport,
                      moduleType: LessonType,
                      private val sampleFileName: String? = null,
-                     initLessons: (LearningModule) -> List<Lesson>): LearningModuleBase(name, description, primaryLanguage, moduleType) {
+                     initLessons: () -> List<KLesson>): LearningModuleBase(name, description, primaryLanguage, moduleType, initLessons) {
 
   override val sanitizedName: String
     get() = sampleFileName ?: error("Module $name for ${primaryLanguage.primaryLanguage} does not define its default name for samples.")
-
-  override val lessons: List<Lesson> = initLessons(this)
 }

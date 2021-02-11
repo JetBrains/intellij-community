@@ -8,7 +8,6 @@ import com.intellij.testGuiFramework.impl.button
 import com.intellij.ui.UIBundle
 import training.commands.kotlin.TaskTestContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
@@ -16,8 +15,8 @@ import training.learn.lesson.kimpl.dropMnemonic
 import training.learn.lesson.kimpl.parseLessonSample
 import javax.swing.JDialog
 
-class JavaExtractMethodCocktailSortLesson(module: Module)
-  : KLesson("Refactorings.ExtractMethod", LessonsBundle.message("extract.method.lesson.name"), module, "JAVA") {
+class JavaExtractMethodCocktailSortLesson
+  : KLesson("Refactorings.ExtractMethod", LessonsBundle.message("extract.method.lesson.name"), "JAVA") {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(javaSortSample)

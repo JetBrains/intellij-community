@@ -6,13 +6,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 
-class SingleLineCommentLesson(module: Module, lang: String, private val sample: LessonSample)
-  : KLesson("Comment line", LessonsBundle.message("comment.line.lesson.name"), module, lang) {
+class SingleLineCommentLesson(lang: String, private val sample: LessonSample)
+  : KLesson("Comment line", LessonsBundle.message("comment.line.lesson.name"), lang) {
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {

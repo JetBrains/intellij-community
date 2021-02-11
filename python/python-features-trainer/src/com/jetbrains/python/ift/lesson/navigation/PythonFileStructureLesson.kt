@@ -2,10 +2,9 @@
 package com.jetbrains.python.ift.lesson.navigation
 
 import com.intellij.openapi.editor.LogicalPosition
-import training.learn.interfaces.Module
 import training.learn.lesson.general.navigation.FileStructureLesson
 
-class PythonFileStructureLesson(module: Module) : FileStructureLesson(module, "Python") {
+class PythonFileStructureLesson : FileStructureLesson("Python") {
   override val existedFile: String = "src/file_structure_demo.py"
   override val methodToFindPosition: LogicalPosition = LogicalPosition(73, 8)
 }

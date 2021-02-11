@@ -41,7 +41,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
       listOf(
-        PythonOnboardingTour(it),
+        PythonOnboardingTour(),
       )
     },
   )
@@ -53,15 +53,15 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
-        PythonContextActionsLesson(it),
-        GotoActionLesson(it, lang, ls("Actions.py.sample")),
-        PythonSelectLesson(it),
-        SingleLineCommentLesson(it, lang, ls("Comment.py.sample")),
-        DuplicateLesson(it, lang, ls("Duplicate.py.sample")),
-        MoveLesson(it, lang, "accelerate", ls("Move.py.sample")),
-        CollapseLesson(it, lang, ls("Collapse.py.sample")),
-        PythonSurroundAndUnwrapLesson(it),
-        MultipleSelectionHtmlLesson(it),
+        PythonContextActionsLesson(),
+        GotoActionLesson(lang, ls("Actions.py.sample")),
+        PythonSelectLesson(),
+        SingleLineCommentLesson(lang, ls("Comment.py.sample")),
+        DuplicateLesson(lang, ls("Duplicate.py.sample")),
+        MoveLesson(lang, "accelerate", ls("Move.py.sample")),
+        CollapseLesson(lang, ls("Collapse.py.sample")),
+        PythonSurroundAndUnwrapLesson(),
+        MultipleSelectionHtmlLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("code.completion.module.name"),
@@ -69,11 +69,11 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       listOf(
-        PythonBasicCompletionLesson(it),
-        PythonTabCompletionLesson(it),
-        PythonPostfixCompletionLesson(it),
-        PythonSmartCompletionLesson(it),
-        FStringCompletionLesson(it),
+        PythonBasicCompletionLesson(),
+        PythonTabCompletionLesson(),
+        PythonPostfixCompletionLesson(),
+        PythonSmartCompletionLesson(),
+        FStringCompletionLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("refactorings.module.name"),
@@ -82,12 +82,12 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("Refactorings/$sampleName")
       listOf(
-        PythonRefactorMenuLesson(it),
-        PythonRenameLesson(it),
-        ExtractVariableFromBubbleLesson(it, lang, ls("ExtractVariable.py.sample")),
-        ExtractMethodCocktailSortLesson(it, lang, ls("ExtractMethod.py.sample")),
-        PythonQuickFixesRefactoringLesson(it),
-        PythonInPlaceRefactoringLesson(it),
+        PythonRefactorMenuLesson(),
+        PythonRenameLesson(),
+        ExtractVariableFromBubbleLesson(lang, ls("ExtractVariable.py.sample")),
+        ExtractMethodCocktailSortLesson(lang, ls("ExtractMethod.py.sample")),
+        PythonQuickFixesRefactoringLesson(),
+        PythonInPlaceRefactoringLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("code.assistance.module.name"),
@@ -96,10 +96,10 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    moduleType = LessonType.SINGLE_EDITOR) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
-        CodeFormatLesson(it, lang, ls("CodeFormat.py.sample"), true),
-        ParameterInfoLesson(it, lang, ls("ParameterInfo.py.sample")),
-        QuickPopupsLesson(it, lang, ls("QuickPopups.py.sample")),
-        PythonEditorCodingAssistanceLesson(it, lang, ls("EditorCodingAssistance.py.sample")),
+        CodeFormatLesson(lang, ls("CodeFormat.py.sample"), true),
+        ParameterInfoLesson(lang, ls("ParameterInfo.py.sample")),
+        QuickPopupsLesson(lang, ls("QuickPopups.py.sample")),
+        PythonEditorCodingAssistanceLesson(lang, ls("EditorCodingAssistance.py.sample")),
       )
     },
     LearningModule(name = LessonsBundle.message("navigation.module.name"),
@@ -107,11 +107,11 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
       listOf(
-        PythonSearchEverywhereLesson(it),
-        FindInFilesLesson(it, lang, "src/warehouse/find_in_files_sample.py"),
-        PythonDeclarationAndUsagesLesson(it),
-        PythonFileStructureLesson(it),
-        PythonRecentFilesLesson(it),
+        PythonSearchEverywhereLesson(),
+        FindInFilesLesson(lang, "src/warehouse/find_in_files_sample.py"),
+        PythonDeclarationAndUsagesLesson(),
+        PythonFileStructureLesson(),
+        PythonRecentFilesLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("run.debug.module.name"),
@@ -119,8 +119,8 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SINGLE_EDITOR) {
       listOf(
-        PythonRunConfigurationLesson(it),
-        PythonDebugLesson(it),
+        PythonRunConfigurationLesson(),
+        PythonDebugLesson(),
       )
     },
   )

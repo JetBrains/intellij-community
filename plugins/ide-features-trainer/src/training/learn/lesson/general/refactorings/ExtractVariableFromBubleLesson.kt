@@ -4,12 +4,11 @@ package training.learn.lesson.general.refactorings
 import com.intellij.testGuiFramework.impl.jList
 import com.intellij.ui.components.JBList
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
-class ExtractVariableFromBubbleLesson(module: Module, lang: String, private val sample: LessonSample)
-  : KLesson("Extract variable", LessonsBundle.message("extract.variable.lesson.name"), module, lang) {
+class ExtractVariableFromBubbleLesson(lang: String, private val sample: LessonSample)
+  : KLesson("Extract variable", LessonsBundle.message("extract.variable.lesson.name"), lang) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)

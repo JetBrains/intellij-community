@@ -2,13 +2,12 @@
 package com.jetbrains.python.ift.lesson.run
 
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.checkToolWindowState
 
-class PythonRunConfigurationLesson(module: Module) : CommonRunConfigurationLesson(module, "python.run.configuration", "Python") {
+class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.configuration", "Python") {
   override val sample: LessonSample = PythonRunLessonsUtils.demoSample
   override val demoConfigurationName = PythonRunLessonsUtils.demoConfigurationName
 

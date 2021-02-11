@@ -4,13 +4,12 @@ package com.intellij.java.ift.lesson.completion
 import com.intellij.java.ift.JavaLangSupport
 import com.intellij.java.ift.JavaLessonsBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.parseLessonSample
 
-class JavaPostfixCompletionLesson(module: Module)
-  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name"), module, JavaLangSupport.lang) {
+class JavaPostfixCompletionLesson
+  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name"), JavaLangSupport.lang) {
 
   val sample = parseLessonSample("""
     class PostfixCompletionDemo{

@@ -24,14 +24,13 @@ import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.commands.kotlin.TaskTestContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 
-class FindInFilesLesson(module: Module, lang: String, override val existedFile: String)
-  : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name"), module, lang) {
+class FindInFilesLesson(lang: String, override val existedFile: String)
+  : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name"), lang) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     resetFindSettings()

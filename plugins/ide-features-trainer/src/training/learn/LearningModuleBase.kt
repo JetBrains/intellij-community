@@ -6,11 +6,13 @@ import training.lang.LangSupport
 import training.learn.interfaces.Lesson
 import training.learn.interfaces.LessonType
 import training.learn.interfaces.Module
+import training.learn.lesson.kimpl.KLesson
 
 abstract class LearningModuleBase(@Nls override val name: String,
-                              @Nls override val description: String,
-                              override val primaryLanguage: LangSupport,
-                              override val moduleType: LessonType) : Module {
+                                  @Nls override val description: String,
+                                  override val primaryLanguage: LangSupport,
+                                  override val moduleType: LessonType,
+                                  initLessons: () -> List<KLesson>) : Module {
 
   override fun toString(): String {
     return "($name for $primaryLanguage)"
@@ -26,5 +28,13 @@ abstract class LearningModuleBase(@Nls override val name: String,
 
   override fun hasNotPassedLesson(): Boolean {
     return lessons.any { !it.passed }
+  }
+
+  override val lessons: List<KLesson> = initLessons()
+
+  init {
+    for (lesson in lessons) {
+      lesson.module = this
+    }
   }
 }

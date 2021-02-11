@@ -2,12 +2,11 @@
 package com.jetbrains.python.ift.lesson.basic
 
 import org.jetbrains.annotations.Nls
-import training.learn.interfaces.Module
 import training.learn.lesson.general.NewSelectLesson
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.parseLessonSample
 
-class PythonSelectLesson(module: Module) : NewSelectLesson(module, "Python") {
+class PythonSelectLesson : NewSelectLesson("Python") {
   override val selectArgument = "\"$selectString\""
   override val selectCall = """some_method("$firstString", $selectArgument, "$thirdString")"""
 

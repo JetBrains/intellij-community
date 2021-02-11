@@ -3,13 +3,12 @@ package training.learn.lesson.general
 
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkPositionOfEditor
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
-abstract class NewSelectLesson(module: Module, lang: String) :
-  KLesson("Select", LessonsBundle.message("selection.lesson.name"), module, lang) {
+abstract class NewSelectLesson(lang: String) :
+  KLesson("Select", LessonsBundle.message("selection.lesson.name"), lang) {
 
   protected val firstString = "first string"
   protected val thirdString = "third string"

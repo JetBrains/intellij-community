@@ -1,12 +1,11 @@
 package com.jetbrains.python.ift.lesson.basic
 
 import com.jetbrains.python.PyPsiBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.general.ContextActionsLesson
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.parseLessonSample
 
-class PythonContextActionsLesson(module: Module) : ContextActionsLesson(module, "Python") {
+class PythonContextActionsLesson : ContextActionsLesson("Python") {
   override val sample: LessonSample = parseLessonSample("""
     def method_with_unused_parameter(used, <caret>redundant):
         print("It is used parameter: " + str(used))

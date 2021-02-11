@@ -5,7 +5,6 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
 import com.intellij.testGuiFramework.impl.jList
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
@@ -13,8 +12,8 @@ import training.learn.lesson.kimpl.parseLessonSample
 
 private const val completionSuffix = ".ifnn"
 
-class PythonPostfixCompletionLesson(module: Module)
-  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name"), module, "Python") {
+class PythonPostfixCompletionLesson
+  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name"), "Python") {
   private val sample = parseLessonSample("""
     movies_dict = {
         'title': 'Aviator',

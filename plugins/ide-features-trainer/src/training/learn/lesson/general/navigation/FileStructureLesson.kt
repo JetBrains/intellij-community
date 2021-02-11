@@ -10,14 +10,13 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.interfaces.LessonType
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
 import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
 
-abstract class FileStructureLesson(module: Module, lang: String)
-  : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name"), module, lang) {
+abstract class FileStructureLesson(lang: String)
+  : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name"), lang) {
   abstract override val existedFile: String
   abstract val methodToFindPosition: LogicalPosition
 

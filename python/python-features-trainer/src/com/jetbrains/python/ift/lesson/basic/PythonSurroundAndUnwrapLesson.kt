@@ -2,12 +2,11 @@
 package com.jetbrains.python.ift.lesson.basic
 
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.general.SurroundAndUnwrapLesson
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.parseLessonSample
 
-class PythonSurroundAndUnwrapLesson(module: Module) : SurroundAndUnwrapLesson(module, "Python") {
+class PythonSurroundAndUnwrapLesson : SurroundAndUnwrapLesson("Python") {
   override val sample: LessonSample = parseLessonSample("""
     def surround_and_unwrap_demo(debug):
         <select>if debug:

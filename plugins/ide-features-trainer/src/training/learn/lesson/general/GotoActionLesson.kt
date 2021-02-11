@@ -17,13 +17,12 @@ import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
 
-class GotoActionLesson(module: Module, lang: String, private val sample: LessonSample, private val firstLesson: Boolean = false) :
-  KLesson("Actions", LessonsBundle.message("goto.action.lesson.name"), module, lang) {
+class GotoActionLesson(lang: String, private val sample: LessonSample, private val firstLesson: Boolean = false) :
+  KLesson("Actions", LessonsBundle.message("goto.action.lesson.name"), lang) {
 
   companion object {
     private const val FIND_ACTION_WORKAROUND: String = "https://intellij-support.jetbrains.com/hc/en-us/articles/360005137400-Cmd-Shift-A-hotkey-opens-Terminal-with-apropos-search-instead-of-the-Find-Action-dialog"

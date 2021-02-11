@@ -20,7 +20,6 @@ import training.commands.kotlin.TaskRuntimeContext
 import training.commands.kotlin.TaskTestContext
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.LessonManager
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
@@ -32,8 +31,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.random.Random
 
-abstract class RecentFilesLesson(module: Module, lang: String)
-  : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name"), module, lang) {
+abstract class RecentFilesLesson(lang: String)
+  : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name"), lang) {
 
   abstract override val existedFile: String
   abstract val transitionMethodName: String

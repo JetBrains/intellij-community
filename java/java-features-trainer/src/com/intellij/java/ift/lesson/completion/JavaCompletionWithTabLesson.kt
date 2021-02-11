@@ -2,12 +2,11 @@
 package com.intellij.java.ift.lesson.completion
 
 import com.intellij.java.ift.JavaLangSupport
-import training.learn.interfaces.Module
 import training.learn.lesson.general.CompletionWithTabLesson
 import training.learn.lesson.kimpl.parseLessonSample
 
-class JavaCompletionWithTabLesson(module: Module) :
-  CompletionWithTabLesson(module, JavaLangSupport.lang, "DO_NOTHING_ON_CLOSE") {
+class JavaCompletionWithTabLesson :
+  CompletionWithTabLesson(JavaLangSupport.lang, "DO_NOTHING_ON_CLOSE") {
   override val sample = parseLessonSample("""import javax.swing.*;
 
 class FrameDemo {

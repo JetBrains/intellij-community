@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nls
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.general.run.toggleBreakpointTask
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
@@ -53,8 +52,8 @@ import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-class PythonOnboardingTour(module: Module) :
-  KLesson("python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name"), module, PythonLanguage.INSTANCE.id) {
+class PythonOnboardingTour :
+  KLesson("python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name"), PythonLanguage.INSTANCE.id) {
 
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"

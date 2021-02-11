@@ -3,12 +3,11 @@ package com.intellij.java.ift.lesson.assistance
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.siyeh.InspectionGadgetsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
 import training.learn.lesson.kimpl.LessonSample
 
-class JavaEditorCodingAssistanceLesson(module: Module, lang: String, sample: LessonSample) :
-  EditorCodingAssistanceLesson(module, lang, sample) {
+class JavaEditorCodingAssistanceLesson(lang: String, sample: LessonSample) :
+  EditorCodingAssistanceLesson(lang, sample) {
   override val errorIntentionText: String
     get() = QuickFixBundle.message("add.exception.to.throws.text", 1)
   override val warningIntentionText: String

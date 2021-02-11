@@ -2,13 +2,12 @@
 package training.learn.lesson.general
 
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 
-class SelectLesson(module: Module, lang: String, private val sample: LessonSample) :
-  KLesson("Select", LessonsBundle.message("selection.lesson.name"), module, lang) {
+class SelectLesson(lang: String, private val sample: LessonSample) :
+  KLesson("Select", LessonsBundle.message("selection.lesson.name"), lang) {
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)

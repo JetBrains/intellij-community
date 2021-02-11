@@ -33,10 +33,10 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
-        JavaContextActionsLesson(it),
-        GotoActionLesson(it, lang, ls("00.Actions.java.sample"), firstLesson = false),
-        JavaSearchEverywhereLesson(it),
-        JavaBasicCompletionLesson(it),
+        JavaContextActionsLesson(),
+        GotoActionLesson(lang, ls("00.Actions.java.sample"), firstLesson = false),
+        JavaSearchEverywhereLesson(),
+        JavaBasicCompletionLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("editor.basics.module.name"),
@@ -45,13 +45,13 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
-        JavaSelectLesson(it),
-        SingleLineCommentLesson(it, lang, ls("02.Comment.java.sample")),
-        DuplicateLesson(it, lang, ls("04.Duplicate.java.sample")),
-        MoveLesson(it, lang, "run()", ls("05.Move.java.sample")),
-        CollapseLesson(it, lang, ls("06.Collapse.java.sample")),
-        JavaSurroundAndUnwrapLesson(it),
-        MultipleSelectionHtmlLesson(it),
+        JavaSelectLesson(),
+        SingleLineCommentLesson(lang, ls("02.Comment.java.sample")),
+        DuplicateLesson(lang, ls("04.Duplicate.java.sample")),
+        MoveLesson(lang, "run()", ls("05.Move.java.sample")),
+        CollapseLesson(lang, ls("06.Collapse.java.sample")),
+        JavaSurroundAndUnwrapLesson(),
+        MultipleSelectionHtmlLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("code.completion.module.name"),
@@ -59,11 +59,11 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       listOf(
-        JavaBasicCompletionLesson(it),
-        JavaSmartTypeCompletionLesson(it),
-        JavaPostfixCompletionLesson(it),
-        JavaStatementCompletionLesson(it),
-        JavaCompletionWithTabLesson(it),
+        JavaBasicCompletionLesson(),
+        JavaSmartTypeCompletionLesson(),
+        JavaPostfixCompletionLesson(),
+        JavaStatementCompletionLesson(),
+        JavaCompletionWithTabLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("refactorings.module.name"),
@@ -72,10 +72,10 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.SINGLE_EDITOR) {
       fun ls(sampleName: String) = loadSample("Refactorings/$sampleName")
       listOf(
-        JavaRenameLesson(it),
-        ExtractVariableFromBubbleLesson(it, lang, ls("ExtractVariable.java.sample")),
-        JavaExtractMethodCocktailSortLesson(it),
-        JavaRefactoringMenuLesson(it),
+        JavaRenameLesson(),
+        ExtractVariableFromBubbleLesson(lang, ls("ExtractVariable.java.sample")),
+        JavaExtractMethodCocktailSortLesson(),
+        JavaRefactoringMenuLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("code.assistance.module.name"),
@@ -84,10 +84,10 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    moduleType = LessonType.SINGLE_EDITOR) {
       fun ls(sampleName: String) = loadSample("CodeAssistance/$sampleName")
       listOf(
-        CodeFormatLesson(it, lang, ls("CodeFormat.java.sample"), true),
-        ParameterInfoLesson(it, lang, ls("ParameterInfo.java.sample")),
-        QuickPopupsLesson(it, lang, ls("QuickPopups.java.sample")),
-        JavaEditorCodingAssistanceLesson(it, lang, ls("EditorCodingAssistance.java.sample")),
+        CodeFormatLesson(lang, ls("CodeFormat.java.sample"), true),
+        ParameterInfoLesson(lang, ls("ParameterInfo.java.sample")),
+        QuickPopupsLesson(lang, ls("QuickPopups.java.sample")),
+        JavaEditorCodingAssistanceLesson(lang, ls("EditorCodingAssistance.java.sample")),
       )
     },
     LearningModule(name = LessonsBundle.message("navigation.module.name"),
@@ -95,13 +95,13 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
       listOf(
-        JavaSearchEverywhereLesson(it),
-        FindInFilesLesson(it, lang, "src/warehouse/FindInFilesSample.java"),
-        JavaFileStructureLesson(it),
-        JavaDeclarationAndUsagesLesson(it),
-        JavaInheritanceHierarchyLesson(it),
-        JavaRecentFilesLesson(it),
-        JavaOccurrencesLesson(it),
+        JavaSearchEverywhereLesson(),
+        FindInFilesLesson(lang, "src/warehouse/FindInFilesSample.java"),
+        JavaFileStructureLesson(),
+        JavaDeclarationAndUsagesLesson(),
+        JavaInheritanceHierarchyLesson(),
+        JavaRecentFilesLesson(),
+        JavaOccurrencesLesson(),
       )
     },
     LearningModule(name = LessonsBundle.message("run.debug.module.name"),
@@ -109,8 +109,8 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SINGLE_EDITOR) {
       listOf(
-        JavaRunConfigurationLesson(it),
-        JavaDebugLesson(it),
+        JavaRunConfigurationLesson(),
+        JavaDebugLesson(),
       )
     },
   )

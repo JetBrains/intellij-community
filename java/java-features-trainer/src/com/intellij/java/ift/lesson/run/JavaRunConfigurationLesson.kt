@@ -7,7 +7,6 @@ import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
-import training.learn.interfaces.Module
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
@@ -15,7 +14,7 @@ import training.learn.lesson.kimpl.checkToolWindowState
 import training.learn.lesson.kimpl.dropMnemonic
 import java.awt.Rectangle
 
-class JavaRunConfigurationLesson(module: Module) : CommonRunConfigurationLesson(module, "java.run.configuration", "JAVA") {
+class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.configuration", "JAVA") {
   override val sample: LessonSample = JavaRunLessonsUtils.demoSample
   override val demoConfigurationName: String = JavaRunLessonsUtils.demoClassName
 

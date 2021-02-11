@@ -11,13 +11,12 @@ import com.intellij.util.ui.UIUtil
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import javax.swing.JDialog
 
-class JavaRenameLesson(module: Module)
-  : KLesson("Refactorings.Rename", LessonsBundle.message("rename.lesson.name"), module, "JAVA") {
+class JavaRenameLesson
+  : KLesson("Refactorings.Rename", LessonsBundle.message("rename.lesson.name"), "JAVA") {
   private val initialName = "stylus"
 
   private val template = """

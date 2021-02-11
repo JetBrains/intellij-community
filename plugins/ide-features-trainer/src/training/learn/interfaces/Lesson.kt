@@ -10,7 +10,6 @@ import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
 import training.learn.lesson.kimpl.LessonProperties
-import training.util.findLanguageByID
 
 interface Lesson {
 
@@ -20,13 +19,10 @@ interface Lesson {
 
   /** This name will be used for generated file with lesson sample */
   val fileName: String
-    get() {
-      return module.sanitizedName + "." + findLanguageByID(lang)!!.associatedFileType!!.defaultExtension
-    }
 
   val module: Module
 
-  val lessonType: LessonType get() = module.moduleType
+  val lessonType: LessonType
 
   val passed: Boolean
     get() = LessonStateManager.getStateFromBase(id) == LessonState.PASSED

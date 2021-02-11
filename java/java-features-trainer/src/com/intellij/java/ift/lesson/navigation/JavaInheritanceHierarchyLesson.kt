@@ -16,12 +16,11 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.UIBundle
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
-class JavaInheritanceHierarchyLesson(module: Module)
-  : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name"), module, "JAVA") {
+class JavaInheritanceHierarchyLesson
+  : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name"), "JAVA") {
   override val existedFile: String = "src/InheritanceHierarchySample.java"
 
   override val lessonContent: LessonContext.() -> Unit = {

@@ -6,12 +6,11 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
 
-abstract class ContextActionsLesson(module: Module, lang: String) :
-  KLesson("context.actions", LessonsBundle.message("context.actions.lesson.name"), module, lang) {
+abstract class ContextActionsLesson(lang: String) :
+  KLesson("context.actions", LessonsBundle.message("context.actions.lesson.name"), lang) {
 
   abstract val sample: LessonSample
   abstract val warningQuickFix: String

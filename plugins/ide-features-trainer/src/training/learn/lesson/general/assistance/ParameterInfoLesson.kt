@@ -3,15 +3,14 @@ package training.learn.lesson.general.assistance
 
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import kotlin.math.min
 
-class ParameterInfoLesson(module: Module, lang: String, private val sample: LessonSample) :
-  KLesson("CodeAssistance.ParameterInfo", LessonsBundle.message("parameter.info.lesson.name"), module, lang) {
+class ParameterInfoLesson(lang: String, private val sample: LessonSample) :
+  KLesson("CodeAssistance.ParameterInfo", LessonsBundle.message("parameter.info.lesson.name"), lang) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)

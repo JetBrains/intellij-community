@@ -5,15 +5,14 @@ import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
 
-abstract class SurroundAndUnwrapLesson(module: Module, lang: String)
-  : KLesson("Surround and unwrap", LessonsBundle.message("surround.and.unwrap.lesson.name"), module, lang) {
+abstract class SurroundAndUnwrapLesson(lang: String)
+  : KLesson("Surround and unwrap", LessonsBundle.message("surround.and.unwrap.lesson.name"), lang) {
 
   protected abstract val sample: LessonSample
 

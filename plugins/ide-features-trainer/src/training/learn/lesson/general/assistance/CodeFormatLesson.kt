@@ -6,15 +6,14 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.testGuiFramework.impl.button
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
 
-class CodeFormatLesson(module: Module, override val lang: String, private val sample: LessonSample, private val optimizeImports: Boolean) :
-  KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name"), module, lang) {
+class CodeFormatLesson(override val lang: String, private val sample: LessonSample, private val optimizeImports: Boolean) :
+  KLesson("CodeAssistance.CodeFormatting", LessonsBundle.message("code.format.lesson.name"), lang) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)

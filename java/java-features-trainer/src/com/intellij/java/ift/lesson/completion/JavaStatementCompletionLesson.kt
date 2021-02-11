@@ -7,15 +7,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiForStatement
 import com.intellij.psi.util.PsiTreeUtil
 import training.commands.kotlin.TaskRuntimeContext
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.parseLessonSample
 
-class JavaStatementCompletionLesson(module: Module)
-  : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name"), module, JavaLangSupport.lang) {
+class JavaStatementCompletionLesson
+  : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name"), JavaLangSupport.lang) {
 
   val sample = parseLessonSample("""
     class PrimeNumbers {

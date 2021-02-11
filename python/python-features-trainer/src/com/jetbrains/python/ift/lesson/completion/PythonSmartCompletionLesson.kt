@@ -3,15 +3,14 @@ package com.jetbrains.python.ift.lesson.completion
 
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.commands.kotlin.TaskContext
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.lesson.kimpl.parseLessonSample
 
-class PythonSmartCompletionLesson(module: Module)
-  : KLesson("Smart completion", PythonLessonsBundle.message("python.smart.completion.lesson.name"), module, "Python") {
+class PythonSmartCompletionLesson
+  : KLesson("Smart completion", PythonLessonsBundle.message("python.smart.completion.lesson.name"), "Python") {
   private val sample = parseLessonSample("""
     def f(x, file):
       x.append(file)

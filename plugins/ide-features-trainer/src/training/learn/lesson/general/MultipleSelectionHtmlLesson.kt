@@ -6,14 +6,13 @@ import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.PsiTreeUtil
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.parseLessonSample
 
-class MultipleSelectionHtmlLesson(module: Module)
-  : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name"), module, "HTML") {
+class MultipleSelectionHtmlLesson
+  : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name"), "HTML") {
   private val sample = parseLessonSample("""<!doctype html>
 <html lang="en">
     <head>

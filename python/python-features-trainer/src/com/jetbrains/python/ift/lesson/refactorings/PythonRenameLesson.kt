@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable
 import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskTestContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.dropMnemonic
@@ -28,8 +27,8 @@ import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-class PythonRenameLesson(module: Module)
-  : KLesson("Rename", LessonsBundle.message("rename.lesson.name"), module, "Python") {
+class PythonRenameLesson
+  : KLesson("Rename", LessonsBundle.message("rename.lesson.name"), "Python") {
   private val template = """
       class Championship:
           def __init__(self):

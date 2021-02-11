@@ -8,15 +8,14 @@ import com.intellij.testGuiFramework.impl.actionButton
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.usageView.UsageViewBundle
 import training.learn.interfaces.LessonType
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.parseLessonSample
 
-class JavaOccurrencesLesson(module: Module)
-  : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name"), module, "JAVA") {
+class JavaOccurrencesLesson
+  : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name"), "JAVA") {
 
   override val lessonType = LessonType.SINGLE_EDITOR
 

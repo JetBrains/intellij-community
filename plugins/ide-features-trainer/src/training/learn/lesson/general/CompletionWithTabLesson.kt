@@ -2,14 +2,13 @@
 package training.learn.lesson.general
 
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 
-abstract class CompletionWithTabLesson(module: Module, lang: String, private val proposal: String) :
-  KLesson("Completion with tab", LessonsBundle.message("completion.with.tab.lesson.name"), module, lang) {
+abstract class CompletionWithTabLesson(lang: String, private val proposal: String) :
+  KLesson("Completion with tab", LessonsBundle.message("completion.with.tab.lesson.name"), lang) {
 
   abstract val sample: LessonSample
 

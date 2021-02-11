@@ -3,12 +3,11 @@ package com.intellij.java.ift.lesson.basic
 
 import com.intellij.java.ift.JavaLessonsBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.general.SurroundAndUnwrapLesson
 import training.learn.lesson.kimpl.LessonSample
 import training.learn.lesson.kimpl.parseLessonSample
 
-class JavaSurroundAndUnwrapLesson(module: Module) : SurroundAndUnwrapLesson(module, "JAVA") {
+class JavaSurroundAndUnwrapLesson : SurroundAndUnwrapLesson("JAVA") {
   override val sample: LessonSample = parseLessonSample("""
     class SurroundAndUnwrapDemo {
         public static void main(String[] args) {

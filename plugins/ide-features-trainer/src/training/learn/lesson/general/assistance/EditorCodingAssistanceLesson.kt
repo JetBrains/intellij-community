@@ -11,7 +11,6 @@ import training.commands.kotlin.TaskContext
 import training.commands.kotlin.TaskRuntimeContext
 import training.commands.kotlin.TaskTestContext
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonSample
@@ -19,8 +18,8 @@ import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.util.PerformActionUtil
 import javax.swing.JEditorPane
 
-abstract class EditorCodingAssistanceLesson(module: Module, lang: String, private val sample: LessonSample) :
-  KLesson("CodeAssistance.EditorCodingAssistance", LessonsBundle.message("editor.coding.assistance.lesson.name"), module, lang) {
+abstract class EditorCodingAssistanceLesson(lang: String, private val sample: LessonSample) :
+  KLesson("CodeAssistance.EditorCodingAssistance", LessonsBundle.message("editor.coding.assistance.lesson.name"), lang) {
 
   protected abstract val errorIntentionText: String
   protected abstract val warningIntentionText: String

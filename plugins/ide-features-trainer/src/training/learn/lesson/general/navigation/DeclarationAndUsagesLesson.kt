@@ -15,15 +15,14 @@ import com.intellij.ui.table.JBTable
 import training.commands.kotlin.TaskRuntimeContext
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.kimpl.KLesson
 import training.learn.lesson.kimpl.LessonContext
 import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.lesson.kimpl.checkToolWindowState
 import training.learn.lesson.kimpl.closeAllFindTabs
 
-abstract class DeclarationAndUsagesLesson(module: Module, lang: String)
-  : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name"), module, lang) {
+abstract class DeclarationAndUsagesLesson(lang: String)
+  : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name"), lang) {
   abstract fun LessonContext.setInitialPosition()
   abstract override val existedFile: String
 

@@ -2,11 +2,10 @@
 package com.intellij.java.ift.lesson.navigation
 
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.general.navigation.SearchEverywhereLesson
 import training.learn.lesson.kimpl.LessonContext
 
-class JavaSearchEverywhereLesson(module: Module) : SearchEverywhereLesson(module, "JAVA") {
+class JavaSearchEverywhereLesson : SearchEverywhereLesson("JAVA") {
   override val existedFile = "src/RecentFilesDemo.java"
   override val resultFileName: String = "QuadraticEquationsSolver.java"
 

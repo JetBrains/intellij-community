@@ -35,7 +35,6 @@ import training.commands.kotlin.TaskTestContext
 import training.keymap.KeymapUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
-import training.learn.interfaces.Module
 import training.learn.lesson.LessonManager
 import training.learn.lesson.kimpl.*
 import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
@@ -50,8 +49,8 @@ import java.awt.Rectangle
 import javax.swing.JDialog
 import javax.swing.text.JTextComponent
 
-abstract class CommonDebugLesson(module: Module, id: String, languageId: String)
-  : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name"), module, languageId) {
+abstract class CommonDebugLesson(id: String, languageId: String)
+  : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name"), languageId) {
   protected abstract val sample: LessonSample
   protected abstract var logicalPosition: LogicalPosition
   protected abstract val configurationName: String
