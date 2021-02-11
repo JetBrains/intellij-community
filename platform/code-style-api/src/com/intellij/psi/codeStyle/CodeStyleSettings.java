@@ -528,11 +528,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private CodeStyleSettings myParentSettings;
   private boolean myLoadedAdditionalIndentOptions;
 
-  @NotNull
-  Collection<CustomCodeStyleSettings> getCustomSettingsValues() {
-    return myCustomCodeStyleSettingsManager.getAllSettings();
-  }
-
   private static void setVersion(@NotNull Element element, int version) {
     element.setAttribute(VERSION_ATTR, Integer.toString(version));
   }
@@ -1209,4 +1204,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public void registerCustomSettings(@NotNull CustomCodeStyleSettingsFactory factory) {
     myCustomCodeStyleSettingsManager.registerCustomSettings(this, factory);
   }
+
+  CustomCodeStyleSettingsManager getCustomCodeStyleSettingsManager() {
+    return myCustomCodeStyleSettingsManager;
+  }
+
 }

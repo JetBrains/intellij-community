@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,9 @@ class CustomCodeStyleSettingsManager {
           return;
         }
       }
+      synchronized (myCustomSettings) {
+        myCustomSettings.put(customSettings.getClass().getName(), customSettings);
+      }
     }
   }
 
@@ -97,9 +101,13 @@ class CustomCodeStyleSettingsManager {
 
   void copyFrom(@NotNull CodeStyleSettings source) {
     synchronized (myCustomSettings) {
+      Pair<Collection<CustomCodeStyleSettings>,Map<String,Element>> maps = source.getCustomCodeStyleSettingsManager().getMaps();
       myCustomSettings.clear();
-      for (final CustomCodeStyleSettings customSettings : source.getCustomSettingsValues()) {
+      for (CustomCodeStyleSettings customSettings : maps.first) {
         myCustomSettings.put(customSettings.getClass().getName(), customSettings.copyWith(myRootSettings));
+      }
+      for (String tagName : maps.second.keySet()) {
+        myUnknownCustomElements.put(tagName, JDOMUtil.internElement(maps.second.get(tagName).clone()));
       }
     }
   }
@@ -117,6 +125,16 @@ class CustomCodeStyleSettingsManager {
   Collection<CustomCodeStyleSettings> getAllSettings() {
     synchronized (myCustomSettings) {
       return Collections.unmodifiableCollection(myCustomSettings.values());
+    }
+  }
+
+  @NotNull
+  private Pair<Collection<CustomCodeStyleSettings>, Map<String,Element>> getMaps() {
+    synchronized (myCustomSettings) {
+      return Pair.create(
+        new ArrayList<>(myCustomSettings.values()),
+        new HashMap<>(myUnknownCustomElements)
+      );
     }
   }
 
