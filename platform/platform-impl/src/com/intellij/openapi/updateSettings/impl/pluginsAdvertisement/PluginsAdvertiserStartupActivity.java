@@ -17,7 +17,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
   @Override
   public void runActivity(@NotNull Project project) {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !UpdateSettings.getInstance().isCheckNeeded()) {
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !UpdateSettings.getInstance().isPluginsCheckNeeded()) {
       return;
     }
 

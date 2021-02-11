@@ -26,10 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.updateSettings.impl.CheckForUpdateResult;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.PluginUpdateDialog;
-import com.intellij.openapi.updateSettings.impl.UpdateInfoDialog;
+import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -244,6 +241,9 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
       myUpdatesService = PluginUpdatesService.connectWithUpdates(descriptors -> {
         if (ContainerUtil.isEmpty(descriptors)) {
           newPluginsUpdate(null, null);
+          return;
+        }
+        if (!UpdateSettings.getInstance().isPluginsCheckNeeded()) {
           return;
         }
         List<PluginDownloader> downloaders = new ArrayList<>();

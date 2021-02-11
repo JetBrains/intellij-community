@@ -119,7 +119,7 @@ public final class PluginLogo {
     return Default;
   }
 
-  static @NotNull Icon reloadIcon(@NotNull Icon icon, int width, int height, @Nullable Logger logger) {
+  public static @NotNull Icon reloadIcon(@NotNull Icon icon, int width, int height, @Nullable Logger logger) {
     URL url = icon instanceof IconLoader.CachedImageIcon ? ((IconLoader.CachedImageIcon)icon).getURL() : null;
     if (url == null) {
       return icon;

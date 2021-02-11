@@ -17,6 +17,9 @@ class UpdateOptions : BaseState() {
   @get:OptionTag("CHECK_NEEDED")
   var isCheckNeeded by property(true)
 
+  @get:OptionTag("PLUGINS_CHECK_NEEDED")
+  var isPluginsCheckNeeded by property(true)
+
   @get:OptionTag("SHOW_WHATS_NEW_EDITOR")
   var isShowWhatsNewEditor by property(true)
 

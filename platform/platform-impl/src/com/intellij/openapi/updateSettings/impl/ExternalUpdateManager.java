@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ public enum ExternalUpdateManager {
   SNAP("Snap"),
   UNKNOWN(null);
 
-  public final String toolName;
+  public final @NlsSafe String toolName;
 
   ExternalUpdateManager(@Nullable("`null` for unknown (a.k.a. 'other') update manager") String name) {
     if (name != null) {

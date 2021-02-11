@@ -740,7 +740,7 @@ object UpdateChecker {
   fun checkForUpdate(event: IdeaLoggingEvent) {
     if (!ourHasFailedPlugins) {
       val app = ApplicationManager.getApplication()
-      if (app != null && !app.isDisposed && UpdateSettings.getInstance().isCheckNeeded) {
+      if (app != null && !app.isDisposed && UpdateSettings.getInstance().isPluginsCheckNeeded) {
         val pluginDescriptor = PluginManagerCore.getPlugin(
           PluginUtil.getInstance().findPluginId(event.throwable))
         if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
