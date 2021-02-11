@@ -35,6 +35,9 @@ class Group<Settings : FragmentedSettings>(val id: String) {
   var children: FragmentsBuilder<Settings>.() -> Unit = {}
   var visible: (Settings) -> Boolean = { true }
 
+  @Nls
+  var actionHint: String? = null
+
   fun build(): NestedGroupFragment<Settings> {
     return object : NestedGroupFragment<Settings>(id, name, group, visible) {
       override fun createChildren(): MutableList<SettingsEditorFragment<Settings, *>> {
@@ -42,6 +45,8 @@ class Group<Settings : FragmentedSettings>(val id: String) {
       }
 
       override fun getChildrenGroupName(): String? = this@Group.childrenGroupName ?: super.getChildrenGroupName()
+    }.also {
+      it.actionHint = actionHint
     }
   }
 }
