@@ -5,6 +5,7 @@ package com.intellij.ide.impl
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -74,8 +75,10 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
   }
 
   var trustedState: ThreeState
-    get() = state.isTrusted
+    get() = if (isTestMode()) ThreeState.YES else state.isTrusted
     set(value) {
       state.isTrusted = value
     }
+
+  private fun isTestMode() = ApplicationManager.getApplication().isUnitTestMode
 }

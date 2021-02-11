@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.test;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -88,7 +87,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
     setUpFixtures();
     myProject = myTestFixture.getProject();
-    TrustedProjects.setTrusted(myProject, true);
 
     EdtTestUtil.runInEdtAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
