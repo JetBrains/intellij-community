@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeUtils
 
-open class AddModifierFix(
+open class AddModifierFixMpp(
     element: KtModifierListOwner,
     protected val modifier: KtModifierKeywordToken
 ) : KotlinCrossLanguageQuickFixAction<KtModifierListOwner>(element), KotlinUniversalQuickFix {
@@ -91,7 +91,7 @@ open class AddModifierFix(
             }
         }
 
-        fun createIfApplicable(modifierListOwner: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFix? {
+        fun createIfApplicable(modifierListOwner: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFixMpp? {
             when (modifier) {
                 ABSTRACT_KEYWORD, OPEN_KEYWORD -> {
                     if (modifierListOwner is KtObjectDeclaration) return null
@@ -118,7 +118,7 @@ open class AddModifierFix(
                     }
                 }
             }
-            return AddModifierFix(modifierListOwner, modifier)
+            return AddModifierFixMpp(modifierListOwner, modifier)
         }
 
     }
@@ -128,7 +128,7 @@ open class AddModifierFix(
             val typeReference = diagnostic.psiElement as KtTypeReference
             val declaration = typeReference.classForRefactor() ?: return null
             if (declaration.isEnum() || declaration.isData()) return null
-            return AddModifierFix(declaration, OPEN_KEYWORD)
+            return AddModifierFixMpp(declaration, OPEN_KEYWORD)
         }
     }
 
@@ -143,7 +143,7 @@ open class AddModifierFix(
             if (TypeUtils.isNullableType(type)) return null
             if (KotlinBuiltIns.isPrimitiveType(type)) return null
 
-            return AddModifierFix(property, LATEINIT_KEYWORD)
+            return AddModifierFixMpp(property, LATEINIT_KEYWORD)
         }
     }
 }
