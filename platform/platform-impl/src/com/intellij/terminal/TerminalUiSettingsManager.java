@@ -26,7 +26,7 @@ final class TerminalUiSettingsManager implements Disposable {
 
   private final MyColorsSchemeDelegate myColorsScheme;
   private JBTerminalSchemeColorPalette myColorPalette;
-  private final List<TerminalSettingsListener> myListeners = new CopyOnWriteArrayList<>();
+  private final List<JBTerminalPanel> myTerminalPanels = new CopyOnWriteArrayList<>();
 
   TerminalUiSettingsManager() {
     myColorsScheme = new MyColorsSchemeDelegate();
@@ -49,36 +49,31 @@ final class TerminalUiSettingsManager implements Disposable {
     });
   }
 
-  public void setConsoleFontSize(int fontSize) {
+  void setConsoleFontSize(int fontSize) {
     myColorsScheme.setConsoleFontSize(fontSize);
     fireFontChanged();
   }
 
-  public static @NotNull TerminalUiSettingsManager getInstance() {
+  static @NotNull TerminalUiSettingsManager getInstance() {
     return ServiceManager.getService(TerminalUiSettingsManager.class);
   }
 
-  public void addListener(@NotNull JBTerminalPanel terminalPanel) {
-    myListeners.add(terminalPanel);
-    Disposer.register(terminalPanel, new Disposable() {
-      @Override
-      public void dispose() {
-        myListeners.remove(terminalPanel);
-      }
-    });
+  void addListener(@NotNull JBTerminalPanel terminalPanel) {
+    myTerminalPanels.add(terminalPanel);
+    Disposer.register(terminalPanel, () -> myTerminalPanels.remove(terminalPanel));
   }
 
   private void fireFontChanged() {
-    for (TerminalSettingsListener l : myListeners) {
-      l.fontChanged();
+    for (JBTerminalPanel panel : myTerminalPanels) {
+      panel.fontChanged();
     }
   }
 
-  public @NotNull EditorColorsScheme getEditorColorsScheme() {
+  @NotNull EditorColorsScheme getEditorColorsScheme() {
     return myColorsScheme;
   }
 
-  public @NotNull ColorPalette getTerminalColorPalette() {
+  @NotNull ColorPalette getTerminalColorPalette() {
     JBTerminalSchemeColorPalette colorPalette = myColorPalette;
     if (colorPalette == null) {
       colorPalette = new JBTerminalSchemeColorPalette(myColorsScheme);
@@ -90,7 +85,7 @@ final class TerminalUiSettingsManager implements Disposable {
   @Override
   public void dispose() {}
 
-  private final class MyColorsSchemeDelegate implements EditorColorsScheme {
+  private static final class MyColorsSchemeDelegate implements EditorColorsScheme {
 
     private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<>();
@@ -301,7 +296,6 @@ final class TerminalUiSettingsManager implements Disposable {
     public void setConsoleFontSize(int fontSize) {
       myConsoleFontSize = fontSize;
       initFonts();
-      fireFontChanged();
     }
 
     @Override
