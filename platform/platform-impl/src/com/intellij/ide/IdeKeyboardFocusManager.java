@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.application.AccessToken;
+import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
 import java.awt.*;
@@ -24,24 +25,25 @@ import java.beans.PropertyChangeListener;
 import java.util.function.Consumer;
 
 class IdeKeyboardFocusManager extends DefaultKeyboardFocusManager {
+  private Consumer<KeyEvent> onTypeaheadFinished = __ -> {};
 
-  private Consumer<KeyEvent> onTypeaheadFinished = ke -> {};
-
-  public void setTypeaheadHandler(Consumer<KeyEvent> onTypeaheadFinished) {
+  public void setTypeaheadHandler(@NotNull Consumer<KeyEvent> onTypeaheadFinished) {
     this.onTypeaheadFinished = onTypeaheadFinished;
   }
 
+  @NotNull
   protected Consumer<KeyEvent> getOnTypeaheadFinishedHandler () {
     return onTypeaheadFinished;
   }
 
   @Override
   public boolean dispatchEvent(AWTEvent e) {
-    try (AccessToken ignore = (EventQueue.isDispatchThread() ? IdeEventQueue.startActivity(e) : null)) {
+    try (AccessToken ignore = EventQueue.isDispatchThread() ? IdeEventQueue.startActivity(e) : null) {
       return super.dispatchEvent(e);
     }
   }
 
+  @NotNull
   static IdeKeyboardFocusManager replaceDefault() {
     KeyboardFocusManager kfm = getCurrentKeyboardFocusManager();
     IdeKeyboardFocusManager ideKfm = new IdeKeyboardFocusManager();
