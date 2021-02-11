@@ -465,7 +465,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
 
         if (componentNode.isAccessibleNode) {
-          AccessibleContext ac = null;
+          AccessibleContext ac;
           if (component != null) {
             ac = component.getAccessibleContext();
           } else {
@@ -612,9 +612,13 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     public void expandPath() {
+      expandPath(false);
+    }
+
+    public void expandPath(boolean isAccessibleTree) {
       TreeUtil.expandAll(this);
       int count = getRowCount();
-      ComponentNode node = new ComponentNode(myComponent);
+      ComponentNode node = new ComponentNode(myComponent, isAccessibleTree);
 
       for (int i = 0; i < count; i++) {
         TreePath row = getPathForRow(i);
@@ -662,16 +666,16 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       private final Accessible myAccessible;
       private final boolean isAccessibleNode;
 
-      private ComponentNode(@NotNull Component component) {
-         this(component, false);
-      }
-
       private ComponentNode(@NotNull Component component, boolean isAccessibleComponent) {
         super(component);
         myComponent = component;
-        myAccessible = null;
+        if (component instanceof Accessible) {
+          myAccessible = (Accessible)component;
+        } else {
+          myAccessible = null;
+        }
         isAccessibleNode = isAccessibleComponent;
-          children = prepareChildren(myComponent, isAccessibleComponent);
+        children = prepareChildren(myComponent, isAccessibleComponent);
       }
 
       private ComponentNode(@NotNull Accessible a) {
@@ -727,8 +731,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
 
       @SuppressWarnings("UseOfObsoleteCollectionType")
-      private static Vector prepareChildren(Component parent, boolean isAccessibleComponent) {
-        Vector<DefaultMutableTreeNode> result = new Vector<>();
+      private static Vector<TreeNode> prepareChildren(Component parent, boolean isAccessibleComponent) {
+        Vector<TreeNode> result = new Vector<>();
         if (isAccessibleComponent) {
           if (parent instanceof Accessible) {
             for (int i = 0; i < parent.getAccessibleContext().getAccessibleChildrenCount(); i++) {
@@ -753,7 +757,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
         if (parent instanceof Container) {
           for (Component component : ((Container)parent).getComponents()) {
-            result.add(new ComponentNode(component));
+            result.add(new ComponentNode(component, false));
           }
         }
         if (parent instanceof Window) {
