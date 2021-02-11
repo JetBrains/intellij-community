@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
@@ -296,7 +296,12 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
     @Override
     public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
+      AnActionEvent e = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, context);
+      for (AnAction action : mySchemeActions.getActions()) {
+        action.update(e); // ensure that at least action is enabled and visible
+        if (e.getPresentation().isEnabledAndVisible()) return true;
+      }
+      return false;
     }
 
     @Override
