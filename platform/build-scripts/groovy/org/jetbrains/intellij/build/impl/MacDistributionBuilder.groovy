@@ -87,7 +87,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     BuildTasksImpl.generateBuildTxt(buildContext, resourceDir)
     BuildTasksImpl.copyResourceFiles(buildContext, resourceDir)
 
-    customizer.copyAdditionalFiles(buildContext, macDistPath.toString(), null)
+    customizer.copyAdditionalFiles(buildContext, macDistPath.toString())
     if (arch != null) {
       customizer.copyAdditionalFiles(buildContext, macDistPath.toString(), arch)
     }

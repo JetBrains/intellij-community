@@ -116,11 +116,22 @@ abstract class MacDistributionCustomizer {
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries
    *
-   * Method would be invoked twice: with arch == null, then with some specific arch, in second invocation 'targetDirectory' may be different
    * @param context build context that contains information about build directories, product properties and application info
    * @param targetDirectory application bundle directory
-   * @param arch distribution target architecture, `null` for common distribution
    */
-  void copyAdditionalFiles(BuildContext context, String targetDirectory, JvmArchitecture arch = null) {
+  void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+  }
+
+  /**
+   * Additional files to be copied to the distribution with specific architecture, e.g. help bundle or debugger binaries
+   *
+   * Method is invoked after {@link #copyAdditionalFiles(org.jetbrains.intellij.build.BuildContext, java.lang.String)}.
+   * In this method invocation {@code targetDirectory} may be different then in aforementioned method and may contain nothing.
+   *
+   * @param context build context that contains information about build directories, product properties and application info
+   * @param targetDirectory application bundle directory
+   * @param arch distribution target architecture, not null
+   */
+  void copyAdditionalFiles(BuildContext context, String targetDirectory, JvmArchitecture arch) {
   }
 }
