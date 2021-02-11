@@ -71,7 +71,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     };
     myDataStream = new AppendableTerminalDataStream();
     myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, provider);
-    Disposer.register(myTerminalWidget, provider);
     if (processHandler != null) {
       attachToProcess(processHandler);
     }

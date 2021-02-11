@@ -117,7 +117,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     addFocusListener(this);
 
-    mySettingsProvider.addListener(this);
+    mySettingsProvider.getUiSettingsManager().addListener(this);
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
   }
 
@@ -282,7 +282,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   @Override
   public void dispose() {
     super.dispose();
-    mySettingsProvider.removeListener(this);
   }
 
   @Override
@@ -290,8 +289,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
       if (newFontSize >= MIN_FONT_SIZE) {
-        mySettingsProvider.getColorsScheme().setConsoleFontSize(newFontSize);
-        mySettingsProvider.fireFontChanged();
+        mySettingsProvider.getUiSettingsManager().setConsoleFontSize(newFontSize);
       }
       return;
     }
