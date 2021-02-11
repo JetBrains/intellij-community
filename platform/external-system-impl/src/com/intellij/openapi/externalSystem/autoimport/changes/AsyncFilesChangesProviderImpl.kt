@@ -34,7 +34,7 @@ class AsyncFilesChangesProviderImpl(private val filesProvider: AsyncOperation<Se
   }
 
   private fun FilesChangesProvider.subscribeAsAsync(listener: FilesChangesListener, parentDisposable: Disposable) {
-    val asyncFilesChangesProvider = AsyncFilesChangesProviderBase(filesProvider)
+    val asyncFilesChangesProvider = AsyncFilesChangesProviderBase(filesProvider, parentDisposable)
     asyncFilesChangesProvider.subscribe(listener, parentDisposable)
 
     subscribe(asyncFilesChangesProvider, parentDisposable)

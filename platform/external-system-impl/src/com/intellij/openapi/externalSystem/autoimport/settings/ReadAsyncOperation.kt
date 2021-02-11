@@ -2,27 +2,39 @@
 package com.intellij.openapi.externalSystem.autoimport.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import java.util.concurrent.Executor
 
-class ReadAsyncOperation<R>(
-  private val backgroundExecutor: Executor,
-  private val calculate: () -> R,
-  private val parentDisposable: Disposable
-) : AsyncOperation<R> {
-
-  override fun submit(callback: (R) -> Unit) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      callback(calculate())
+abstract class ReadAsyncOperation<R>(private val backgroundExecutor: Executor, private vararg val equality: Any) : AsyncOperation<R> {
+  override fun submit(callback: (R) -> Unit, parentDisposable: Disposable) {
+    if (isBlocking()) {
+      callback(runReadAction(::calculate))
     }
     else {
       ReadAction.nonBlocking<R> { calculate() }
         .expireWith(parentDisposable)
-        .coalesceBy(this)
+        .coalesceBy(*equality)
         .finishOnUiThread(ModalityState.defaultModalityState(), callback)
         .submit(backgroundExecutor)
+    }
+  }
+
+  companion object {
+    fun <R> readAction(action: () -> R, backgroundExecutor: Executor, vararg equality: Any) =
+      readAction(null, action, backgroundExecutor, equality)
+
+    fun <R> readAction(
+      isBlocking: (() -> Boolean)?,
+      action: () -> R,
+      backgroundExecutor: Executor,
+      vararg equality: Any
+    ): ReadAsyncOperation<R> {
+      return object : ReadAsyncOperation<R>(backgroundExecutor, equality) {
+        override fun isBlocking() = isBlocking?.invoke() ?: super.isBlocking()
+        override fun calculate() = action()
+      }
     }
   }
 }

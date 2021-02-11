@@ -39,8 +39,10 @@ class MavenGeneralSettingsWatcher private constructor(
 
   init {
     generalSettings.addListener(::fireSettingsChange, parentDisposable)
-
-    AsyncFilesChangesProviderImpl(ReadAsyncOperation(backgroundExecutor, ::settingsFiles, parentDisposable))
+    val filesProvider = object : ReadAsyncOperation<Set<String>>(backgroundExecutor) {
+      override fun calculate() = settingsFiles
+    }
+    AsyncFilesChangesProviderImpl(filesProvider)
       .subscribeAsAsyncVirtualFilesChangesProvider(false, VirtualFileSettingsListener(), parentDisposable)
   }
 

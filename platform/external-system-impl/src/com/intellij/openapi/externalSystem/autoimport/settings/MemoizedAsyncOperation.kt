@@ -2,35 +2,18 @@
 package com.intellij.openapi.externalSystem.autoimport.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import org.jetbrains.concurrency.AsyncPromise
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class MemoizedAsyncOperation<R>(private val parentDisposable: Disposable) : AsyncOperation<R> {
-
-  protected abstract fun calculate(): R
-
-  protected abstract fun isAsyncAllowed(): Boolean
-
+abstract class MemoizedAsyncOperation<R> : BackgroundAsyncOperation<R>() {
   private val cache = AtomicReference<AsyncPromise<R>>()
 
-  override fun submit(callback: (R) -> Unit) {
+  override fun submit(callback: (R) -> Unit, parentDisposable: Disposable) {
     cache.updateAndGet { promise ->
       promise ?: AsyncPromise<R>().apply {
-        executeOnPooledThread {
-          setResult(calculate())
-        }
+        super.submit(::setResult, parentDisposable)
       }
     }.onSuccess(callback)
-  }
-
-  private fun executeOnPooledThread(action: () -> Unit) {
-    if (isAsyncAllowed()) {
-      BackgroundTaskUtil.executeOnPooledThread(parentDisposable, action)
-    }
-    else {
-      action()
-    }
   }
 
   fun invalidate() {
