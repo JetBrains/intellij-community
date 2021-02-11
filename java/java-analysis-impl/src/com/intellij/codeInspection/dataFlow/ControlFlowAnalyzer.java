@@ -683,7 +683,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaVariableValue loopVar = myFactory.getVarFactory().createVariableValue(counter);
     if(diff >= 0 && diff <= MAX_UNROLL_SIZE) {
       // Unroll small loops
-      statement.getUpdate().accept(this);
+      Objects.requireNonNull(statement.getUpdate()).accept(this);
       addInstruction(new GotoInstruction(startOffset, false));
       return true;
     }
