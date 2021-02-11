@@ -14,11 +14,7 @@ class OnClickPresentation(
 ) : StaticDelegatePresentation(presentation) {
   constructor(presentation: InlayPresentation, listener: (MouseEvent, Point) -> Unit) : this(
     presentation,
-    object : InlayPresentationFactory.ClickListener {
-      override fun onClick(event: MouseEvent, translated: Point) {
-        listener(event, translated)
-      }
-    })
+    InlayPresentationFactory.ClickListener { event, translated -> listener(event, translated) })
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
     super.mouseClicked(event, translated)

@@ -83,11 +83,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     hoverListener: HoverListener?
   ): InlayPresentation {
     val adapter = if (clickListener != null) {
-      object : ClickListener {
-        override fun onClick(event: MouseEvent, translated: Point) {
-          clickListener.invoke(event, translated)
-        }
-      }
+      ClickListener { event, translated -> clickListener.invoke(event, translated) }
     }
     else {
       null
