@@ -15,8 +15,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
-import static com.intellij.ui.RelativeFont.BOLD;
-
 public abstract class GroupedElementsRenderer implements Accessible {
   protected SeparatorWithText mySeparatorComponent = createSeparator();
 
@@ -76,7 +74,7 @@ public abstract class GroupedElementsRenderer implements Accessible {
   }
 
   protected void setSeparatorFont(Font font) {
-    mySeparatorComponent.setFont(BOLD.derive(font));
+    mySeparatorComponent.setFont(font);
   }
 
   protected abstract Color getSelectionBackground();

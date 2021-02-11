@@ -373,6 +373,11 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
 
     @Override
+    protected void setSeparatorFont(Font font) {
+      super.setSeparatorFont(RelativeFont.BOLD.derive(font));
+    }
+
+    @Override
     protected void customizeComponent(JList list, Object value, boolean isSelected) {
       MoreAction more = getSpecificAction(value, MoreAction.class);
       if (more != null) {
