@@ -65,7 +65,7 @@ fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics
 
 fun ProjectIndexingHistory.IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
-    totalUpdatingTime = JsonDuration(Duration.between(updatingStart, updatingEnd).toNanos()),
+    totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
     scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
     pushPropertiesTime = JsonDuration(pushPropertiesDuration.toNanos()),
