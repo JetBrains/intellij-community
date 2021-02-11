@@ -446,7 +446,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
         Component component = componentNode.getComponent();
 
-        if (!selected) {
+        if (component != null && !selected) {
           if (!component.isVisible()) {
             foreground = JBColor.GRAY;
           }
@@ -669,7 +669,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       private ComponentNode(@NotNull Component component, boolean isAccessibleComponent) {
         super(component);
         myComponent = component;
-        myAccessible = (Accessible)component;
+        myAccessible = null;
         isAccessibleNode = isAccessibleComponent;
           children = prepareChildren(myComponent, isAccessibleComponent);
       }
