@@ -65,7 +65,7 @@ public class ConfigurationModuleSelector {
   }
 
   public ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox) {
-    this(project, modulesDescriptionsComboBox, null);
+    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
   }
 
   private ConfigurationModuleSelector(@NotNull Project project, ModulesCombo modulesDescriptionsComboBox, @NlsContexts.ListItem @Nullable String emptySelectionText) {

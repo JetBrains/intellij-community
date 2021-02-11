@@ -70,7 +70,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
     CollectionComboBoxModel<Item> model = new ModelWithOptions();
     model.add(items);
     if (myNoModule != null) {
-      model.add(new Item((Module)null));
+      model.add((Item)null);
     }
     if (myOptionItems.length > 0) {
       model.add(mySeparator);
@@ -174,7 +174,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
-      String name = value == null ? null : value.myModule == null ? myNoModule : value.myModule.getName();
+      String name = value == null || value.myModule == null ? myNoModule : value.myModule.getName();
       if (index == -1 && name != null) {
         //noinspection HardCodedStringLiteral
         append("-cp ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
