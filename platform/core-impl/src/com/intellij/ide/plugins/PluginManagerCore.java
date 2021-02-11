@@ -94,6 +94,7 @@ public final class PluginManagerCore {
   private static final Path distDir = Paths.get(PathManager.getHomePath());
   private static final Path dbFile = (SystemInfoRt.isMac ? distDir.resolve("Resources") : distDir)
     .resolve("brokenPlugins.db");
+  private static final Path updatedBrokenPluginFile = Paths.get(PathManager.getConfigPath()).resolve("updatedBrokenPlugins.db");
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
@@ -221,7 +222,7 @@ public final class PluginManagerCore {
 
   public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins) {
     ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(brokenPlugins);
-    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(dbFile), 32_000))) {
+    try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000))) {
       out.write(1);
       out.writeInt(brokenPlugins.size());
       for (Map.Entry<PluginId, Set<String>> entry : brokenPlugins.entrySet()) {
@@ -253,7 +254,8 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull Map<PluginId, Set<String>> readBrokenPluginFile() {
-    try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(dbFile), 32_000))) {
+    Path brokenPluginsStorage = updatedBrokenPluginFile.toFile().exists() ? updatedBrokenPluginFile : dbFile;
+    try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(brokenPluginsStorage), 32_000))) {
       int version = stream.readUnsignedByte();
       if (version != 1) {
         getLogger().error("Unsupported version of " + dbFile + "(fileVersion=" + version + ", supportedVersion=1)");
