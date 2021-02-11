@@ -142,8 +142,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   private void fetchProjectBuildModels(BuildController controller, final boolean isProjectsLoadedAction, GradleBuild build) {
+    List<Runnable> result = new ArrayList<Runnable>();
     for (final BasicGradleProject gradleProject : build.getProjects()) {
-      addProjectModels(controller, myAllModels, gradleProject, isProjectsLoadedAction);
+      result.addAll(getProjectModels(controller, myAllModels, gradleProject, isProjectsLoadedAction));
+    }
+    for (Runnable runnable : result) {
+      runnable.run();
     }
   }
 
@@ -193,20 +197,30 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  private void addProjectModels(@NotNull BuildController controller,
-                                @NotNull final AllModels allModels,
-                                @NotNull final BasicGradleProject project,
-                                boolean isProjectsLoadedAction) {
+  /**
+   * Gets project level models for a given {@code project} and returns a collection of actions,
+   * which when executed add these models to {@code allModels}.
+   */
+  private List<Runnable> getProjectModels(@NotNull BuildController controller,
+                                          @NotNull final AllModels allModels,
+                                          @NotNull final BasicGradleProject project,
+                                          boolean isProjectsLoadedAction) {
     try {
+      final List<Runnable> result = new ArrayList<Runnable>();
       Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
       for (ProjectImportModelProvider extension : modelProviders) {
         final Set<String> obtainedModels = new HashSet<String>();
         long startTime = System.currentTimeMillis();
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
-          public void consume(@NotNull Object object, @NotNull Class clazz) {
-            object = myModelConverter.convert(object);
-            allModels.addModel(object, clazz, project);
+          public void consume(final @NotNull Object object, final @NotNull Class clazz) {
+            result.add(new Runnable() {
+              @Override
+              public void run() {
+                Object o = myModelConverter.convert(object);
+                allModels.addModel(o, clazz, project);
+              }
+            });
             obtainedModels.add(clazz.getName());
           }
         };
@@ -217,6 +231,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
           " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
           System.currentTimeMillis() - startTime);
       }
+      return result;
     }
     catch (Exception e) {
       // do not fail project import in a preview mode
@@ -224,6 +239,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         throw new ExternalSystemException(e);
       }
     }
+    return Collections.emptyList();
   }
 
   private void addBuildModels(@NotNull BuildController controller,
