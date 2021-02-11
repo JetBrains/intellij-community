@@ -144,7 +144,7 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
 
       String name = size == 1
                     ? IdeBundle.message("settings.entry.point.update.plugin.action", myUpdatedPlugins.iterator().next().getPluginName())
-                    : IdeBundle.message("settings.entry.point.update.plugins.action");
+                    : IdeBundle.message("settings.entry.point.update.plugins.action", size);
       group.add(new DumbAwareAction(name, null, AllIcons.Ide.Notification.PluginUpdate) {
         @Override
         public void update(@NotNull AnActionEvent e) {
@@ -162,37 +162,6 @@ public final class SettingsEntryPointAction extends AnAction implements DumbAwar
           }
         }
       });
-      if (size > 1) {
-        StringBuilder result = new StringBuilder();
-        int count = 0;
-
-        for (PluginDownloader plugin : myUpdatedPlugins) {
-          if (result.length() > 0) {
-            result.append(", ");
-          }
-          result.append(plugin.getPluginName());
-          count++;
-          if (count == 2) {
-            int delta = size - count;
-            if (delta > 0) {
-              result.append(" ").append(IdeBundle.message("settings.entry.point.update.plugins.more.action", delta));
-            }
-            break;
-          }
-        }
-
-        @NlsSafe String actionName = result.toString();
-        group.add(new AnAction(actionName) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-          }
-
-          @Override
-          public void update(@NotNull AnActionEvent e) {
-            e.getPresentation().setEnabled(false);
-          }
-        });
-      }
     }
 
     group.addSeparator();
