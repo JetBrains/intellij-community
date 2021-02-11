@@ -13,10 +13,10 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.view.FontLayoutService
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -41,7 +41,6 @@ class EditorEmbeddedComponentManagerTest {
   private val testName = TestName()
   private val disposableRule = DisposableRule()
   private val temporaryDirectory = TemporaryDirectory()
-  private lateinit var virtualFile: VirtualFile
   private lateinit var editor: EditorEx
 
   private val documentPrinter = object : TestWatcher() {
@@ -64,7 +63,7 @@ class EditorEmbeddedComponentManagerTest {
       }
     }, disposableRule.disposable)
 
-    virtualFile = temporaryDirectory.createVirtualFile("${this::class.java.simpleName}.${testName.methodName}.txt", """
+    val virtualFile = temporaryDirectory.createVirtualFile("${this::class.java.simpleName}.${testName.methodName}.txt", """
       The first line.
       The second line.
       The third line.
@@ -76,6 +75,8 @@ class EditorEmbeddedComponentManagerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       FontLayoutService.setInstance(null)
       invokeAndWaitIfNeeded {
+        editor.component.removeNotify()
+        FileDocumentManager.getInstance().saveDocument(editor.document)
         fileEditorManager.closeFile(virtualFile)
       }
     })
