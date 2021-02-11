@@ -4,7 +4,7 @@ public class RequiredArgsConstructorTest {
 
   private final String someProperty;
 
-  @java.beans.ConstructorProperties("someProperty")
+  @java.beans.ConstructorProperties({"someProperty"})
   public RequiredArgsConstructorTest(String someProperty) {
     this.someProperty = someProperty;
   }

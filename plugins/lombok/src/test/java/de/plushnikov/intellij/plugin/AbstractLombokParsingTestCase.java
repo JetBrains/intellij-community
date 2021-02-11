@@ -10,12 +10,10 @@ import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
@@ -185,6 +183,19 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
                  beforeAnnotations.size() == afterAnnotations.size()
                  && beforeAnnotations.containsAll(afterAnnotations)
                  && afterAnnotations.containsAll(beforeAnnotations));
+
+      // compare annotations parameter list
+      for (PsiAnnotation beforeAnnotation : beforeModifierList.getAnnotations()) {
+        String qualifiedName = beforeAnnotation.getQualifiedName();
+        PsiAnnotation afterAnnotation = afterModifierList.findAnnotation(qualifiedName);
+        if (null != afterAnnotation) {
+          Map<String, String> beforeParameter = Stream.of(beforeAnnotation.getParameterList().getAttributes())
+            .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p->p.getValue().getText()));
+          Map<String, String> afterParameter = Stream.of(afterAnnotation.getParameterList().getAttributes())
+            .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p->p.getValue().getText()));
+          assertEquals("Annotation parameter are not same for " + qualifiedName, afterParameter, beforeParameter);
+        }
+      }
     }
   }
 

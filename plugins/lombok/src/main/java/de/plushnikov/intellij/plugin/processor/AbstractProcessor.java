@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.processor;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -77,7 +79,8 @@ public abstract class AbstractProcessor implements Processor {
     final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, annotationParameter);
     if (null == declaredAnnotationValue) {
       result = configDiscovery.getBooleanLombokConfigProperty(configKey, psiClass);
-    } else {
+    }
+    else {
       result = declaredAnnotationValue;
     }
     return result;
@@ -112,12 +115,15 @@ public abstract class AbstractProcessor implements Processor {
   }
 
   protected static void copyCopyableAnnotations(@NotNull PsiField fromPsiElement,
-                               @NotNull PsiModifierList toModifierList,
-                               List<String> copyableAnnotations) {
+                                                @NotNull PsiModifierList toModifierList,
+                                                List<String> copyableAnnotations) {
     List<String> existingAnnotations = copyableAnnotations(fromPsiElement, copyableAnnotations);
 
-    for (String annotationFQN : existingAnnotations) {
-      toModifierList.addAnnotation(annotationFQN);
+    for (String annotation : existingAnnotations) {
+      PsiAnnotation srcAnnotation = AnnotationUtil.findAnnotation(fromPsiElement, annotation);
+      PsiNameValuePair[] valuePairs =
+        srcAnnotation != null ? srcAnnotation.getParameterList().getAttributes() : PsiNameValuePair.EMPTY_ARRAY;
+      AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, valuePairs, toModifierList);
     }
   }
 
@@ -125,5 +131,4 @@ public abstract class AbstractProcessor implements Processor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     return LombokPsiElementUsage.NONE;
   }
-
 }
