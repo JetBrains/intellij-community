@@ -13,6 +13,7 @@ import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
 import net.jpountz.xxhash.XXHashFactory
+import org.jdom.JDOMException
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -52,10 +53,6 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       deprecatedIconFieldNameMap.put("PhpIcon", "Php_icon")
       deprecatedIconFieldNameMap.put("Emulator02", "Emulator2")
     }
-  }
-
-  private val util: JpsModule by lazy {
-    modules.find { it.name == "intellij.platform.util" } ?: error("Can't load module 'util'")
   }
 
   private val processedClasses = AtomicInteger()
@@ -674,21 +671,22 @@ internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
 
 private fun getPluginPackageIfPossible(module: JpsModule): String? {
   for (resourceRoot in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-    val metaInf = Path.of(JpsPathUtil.urlToPath(resourceRoot.url), "META-INF")
-    if (!Files.isDirectory(metaInf)) {
-      break
-    }
-
-    var pluginXml = metaInf.resolve("plugin.xml")
+    val root = Path.of(JpsPathUtil.urlToPath(resourceRoot.url))
+    var pluginXml = root.resolve("META-INF/plugin.xml")
     if (!Files.exists(pluginXml)) {
       // ok, any xml file
-      pluginXml = Files.newDirectoryStream(metaInf).use { files -> files.find { it.toString().endsWith(".xml") } } ?: break
+      pluginXml = Files.newDirectoryStream(root).use { files -> files.find { it.toString().endsWith(".xml") } } ?: break
     }
 
     try {
       return JDOMUtil.load(pluginXml).getAttributeValue("package") ?: "icons"
     }
     catch (ignore: NoSuchFileException) {
+    }
+    catch (e: JDOMException) {
+      if (e == null) {
+
+      }
     }
   }
   return null

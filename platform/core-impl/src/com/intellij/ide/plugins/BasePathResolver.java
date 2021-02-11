@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -15,9 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 class BasePathResolver implements PathBasedJdomXIncluder.PathResolver<Path> {
-  @NotNull
   @Override
-  public List<Path> createNewStack(@Nullable Path base) {
+  public @NotNull List<Path> createNewStack(@Nullable Path base) {
     List<Path> stack = new ArrayList<>(2);
     if (base != null) {
       stack.add(base);
@@ -25,12 +24,11 @@ class BasePathResolver implements PathBasedJdomXIncluder.PathResolver<Path> {
     return stack;
   }
 
-  @NotNull
   @Override
-  public Element resolvePath(@NotNull List<Path> bases,
-                             @NotNull String relativePath,
-                             @Nullable String base,
-                             @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
+  public @NotNull Element loadXIncludeReference(@NotNull List<Path> bases,
+                                                @NotNull String relativePath,
+                                                @Nullable String base,
+                                                @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
     Path basePath = base == null ? bases.get(bases.size() - 1) : Paths.get(base);
     Path path = basePath == null ? Paths.get(relativePath) : basePath.resolve(relativePath);
     Element element = JDOMUtil.load(path, jdomFactory);
@@ -47,9 +45,8 @@ class BasePathResolver implements PathBasedJdomXIncluder.PathResolver<Path> {
     return element;
   }
 
-  @NotNull
   @Override
-  public Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory)
+  public @NotNull Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory)
     throws IOException, JDOMException {
     return JDOMUtil.load(basePath.resolve(relativePath), jdomFactory);
   }

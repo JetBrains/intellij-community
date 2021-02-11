@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.ProviderNotFoundException;
+import java.nio.file.spi.FileSystemProvider;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -56,6 +58,8 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   private final Map<String, PluginId> optionalConfigNames;
 
+  final FileSystemProvider zipFsProvider;
+
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
   }
@@ -66,6 +70,8 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
     ignoreMissingSubDescriptor = (flags & IGNORE_MISSING_SUB_DESCRIPTOR) == IGNORE_MISSING_SUB_DESCRIPTOR;
     optionalConfigNames = (flags & CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS ? new ConcurrentHashMap<>() : null;
+
+    zipFsProvider = findZipFsProvider();
 
     maxThreads = (flags & IS_PARALLEL) == IS_PARALLEL ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
@@ -87,6 +93,20 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       PluginXmlFactory factory = new PluginXmlFactory();
       xmlFactorySupplier = () -> factory;
     }
+  }
+
+  private @NotNull
+  static FileSystemProvider findZipFsProvider() {
+    for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
+      try {
+        if (provider.getScheme().equals("jar")) {
+          return provider;
+        }
+      }
+      catch (UnsupportedOperationException ignored) {
+      }
+    }
+    throw new ProviderNotFoundException("Provider not found");
   }
 
   boolean isPluginDisabled(@NotNull PluginId id) {
@@ -148,7 +168,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
 
     Map<String, PluginId> configNames = this.optionalConfigNames;
-    if (configNames == null) {
+    if (configNames == null || configFile.startsWith("intellij.")) {
       return false;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.AbstractBundle;
@@ -13,9 +13,11 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jdom.Content;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.*;
@@ -70,8 +72,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   final ContainerDescriptor projectContainerDescriptor = new ContainerDescriptor();
   final ContainerDescriptor moduleContainerDescriptor = new ContainerDescriptor();
 
-  PluginContentDescriptor contentDescriptor;
-  ModuleDependenciesDescriptor dependenciesDescriptor;
+  @NotNull PluginContentDescriptor contentDescriptor = PluginContentDescriptor.EMPTY;
+  @NotNull ModuleDependenciesDescriptor dependencyDescriptor = ModuleDependenciesDescriptor.EMPTY;
 
   private List<PluginId> modules;
   private ClassLoader classLoader;
@@ -134,7 +136,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   boolean readExternal(@NotNull Element element,
                        @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                        @NotNull DescriptorListLoadingContext context,
-                       @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
+                       @NotNull IdeaPluginDescriptorImpl mainDescriptor) throws IOException {
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -184,6 +186,32 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     if (pluginDependencies != null) {
       XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies);
+    }
+
+    // include module file descriptor if not specified as `depends` (old way - xi:include)
+    if (this == mainDescriptor) {
+      moduleLoop: for (PluginContentDescriptor.ModuleItem module : contentDescriptor.modules) {
+        String descriptorFile = module.name + ".xml";
+        if (pluginDependencies != null) {
+          for (PluginDependency dependency : pluginDependencies) {
+            if (descriptorFile.equals(dependency.configFile)) {
+              // ok, it is specified in old way as depends tag - skip it
+              continue moduleLoop;
+            }
+          }
+        }
+
+        // inject as xi:include does
+        try {
+          Element moduleElement = pathResolver.resolvePath(basePath, descriptorFile, context.getXmlFactory());
+          doRead(moduleElement, context, mainDescriptor);
+        }
+        catch (JDOMException e) {
+          throw new RuntimeException(e);
+        }
+
+        module.isInjected = true;
+      }
     }
 
     return true;

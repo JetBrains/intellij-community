@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
-public class ClassLoaderConfigurationData {
+public final class ClassLoaderConfigurationData {
   static final boolean SEPARATE_CLASSLOADER_FOR_SUB = Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "true"));
   static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_ONLY;
   static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE;

@@ -15,7 +15,10 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Writer;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -351,8 +354,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private void logClass(@NotNull String name, @NotNull Writer logStream, @Nullable LinkageError exception) {
     try {
       // must be as one write call since write is performed from multiple threads
-      String specifier = getClass() == PluginClassLoader.class ? "m" : "s = " + ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
-      logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + (packagePrefix == null ? "" : (':' + packagePrefix)) + '\n' + (exception == null ? "" : exception.getMessage()));
+      String descriptorPath = ((IdeaPluginDescriptor)pluginDescriptor).getDescriptorPath();
+      String specifier = descriptorPath == null ? "m" : "sub = " + descriptorPath;
+      logStream.write(name + " [" + specifier + "] " + pluginId.getIdString() + (packagePrefix == null ? "" : (':' + packagePrefix))
+                      + '\n' + (exception == null ? "" : exception.getMessage()));
     }
     catch (IOException ignored) {
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,7 +67,7 @@ final class PathBasedJdomXIncluder<T> {
       LOG.assertTrue(parseAttribute.equals(XML), parseAttribute + " is not a legal value for the parse attribute");
     }
 
-    Element remoteParsed = parseRemote(bases, relativePath, linkElement);
+    Element remoteParsed = loadXIncludeReference(bases, relativePath, linkElement);
     if (remoteParsed != null) {
       String xpointer = linkElement.getAttributeValue(XPOINTER);
       if (xpointer != null) {
@@ -132,7 +132,7 @@ final class PathBasedJdomXIncluder<T> {
     return result;
   }
 
-  private @Nullable Element parseRemote(@NotNull List<T> bases, @NotNull String relativePath, @NotNull Element referrerElement) {
+  private @Nullable Element loadXIncludeReference(@NotNull List<T> bases, @NotNull String relativePath, @NotNull Element referrerElement) {
     int baseStackSize = bases.size();
     try {
       String base = referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE);
@@ -140,7 +140,7 @@ final class PathBasedJdomXIncluder<T> {
         // to simplify implementation, no need to support obscure and not used base attribute
         LOG.error("Do not use xml:base attribute: " + base);
       }
-      Element root = pathResolver.resolvePath(bases, relativePath, base, context.getXmlFactory());
+      Element root = pathResolver.loadXIncludeReference(bases, relativePath, base, context.getXmlFactory());
       if (isIncludeElement(root)) {
         throw new UnsupportedOperationException("root tag of remote cannot be include");
       }
@@ -194,12 +194,17 @@ final class PathBasedJdomXIncluder<T> {
   }
 
   interface PathResolver<T> {
-    @NotNull Element resolvePath(@NotNull List<T> bases,
-                        @NotNull String relativePath,
-                        @Nullable String base,
-                        @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
+    default boolean isFlat() {
+      return false;
+    }
 
-    @NotNull Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
+    @NotNull Element loadXIncludeReference(@NotNull List<T> bases,
+                                           @NotNull String relativePath,
+                                           @Nullable String base,
+                                           @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
+
+    @NotNull Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory)
+      throws IOException, JDOMException;
 
     @NotNull List<T> createNewStack(@Nullable Path base);
   }
