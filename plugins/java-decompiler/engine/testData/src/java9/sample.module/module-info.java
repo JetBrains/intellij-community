@@ -1,15 +1,16 @@
+@Deprecated
 module sample.module {
   requires java.base;
 
   uses java.util.spi.ToolProvider;
 
-  provides test.TestService with test.TestServiceImpl;
+  provides sample.pkg1.TestService with sample.pkg1.TestServiceImpl;
 
-  exports test;
+  exports sample.pkg1;
 
-  exports test2 to java.base;
+  exports sample.pkg2 to java.base;
 
-  opens test;
+  opens sample.pkg1;
 
-  opens test2 to java.base;
+  opens sample.pkg2 to java.base;
 }

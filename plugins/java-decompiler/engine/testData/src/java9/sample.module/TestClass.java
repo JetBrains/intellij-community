@@ -1,3 +1,3 @@
-package test2;
+package sample.pkg2;
 
 public class TestClass {}

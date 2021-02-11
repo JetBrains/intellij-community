@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -33,17 +33,16 @@ public class LambdaProcessor {
     ClassesProcessor clProcessor = DecompilerContext.getClassProcessor();
     StructClass cl = node.classStruct;
 
-    if (cl.getBytecodeVersion() < CodeConstants.BYTECODE_JAVA_8) { // lambda beginning with Java 8
+    if (!cl.isVersion8()) { // lambda beginning with Java 8
       return;
     }
 
-    StructBootstrapMethodsAttribute bootstrap =
-      cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
+    StructBootstrapMethodsAttribute bootstrap = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
     if (bootstrap == null || bootstrap.getMethodsNumber() == 0) {
       return; // no bootstrap constants in pool
     }
 
-    BitSet lambda_methods = new BitSet();
+    BitSet lambdaMethods = new BitSet();
 
     // find lambda bootstrap constants
     for (int i = 0; i < bootstrap.getMethodsNumber(); ++i) {
@@ -52,11 +51,11 @@ public class LambdaProcessor {
       // FIXME: extend for Eclipse etc. at some point
       if (JAVAC_LAMBDA_CLASS.equals(method_ref.classname) &&
           (JAVAC_LAMBDA_METHOD.equals(method_ref.elementname) || JAVAC_LAMBDA_ALT_METHOD.equals(method_ref.elementname))) {
-        lambda_methods.set(i);
+        lambdaMethods.set(i);
       }
     }
 
-    if (lambda_methods.isEmpty()) {
+    if (lambdaMethods.isEmpty()) {
       return; // no lambda bootstrap constant found
     }
 
@@ -64,7 +63,7 @@ public class LambdaProcessor {
 
     // iterate over code and find invocations of bootstrap methods. Replace them with anonymous classes.
     for (StructMethod mt : cl.getMethods()) {
-      mt.expandData();
+      mt.expandData(cl);
 
       InstructionSequence seq = mt.getInstructionSequence();
       if (seq != null && seq.length() > 0) {
@@ -76,7 +75,7 @@ public class LambdaProcessor {
           if (instr.opcode == CodeConstants.opc_invokedynamic) {
             LinkConstant invoke_dynamic = cl.getPool().getLinkConstant(instr.operand(0));
 
-            if (lambda_methods.get(invoke_dynamic.index1)) { // lambda invocation found
+            if (lambdaMethods.get(invoke_dynamic.index1)) { // lambda invocation found
 
               List<PooledConstant> bootstrap_arguments = bootstrap.getMethodArguments(invoke_dynamic.index1);
               MethodDescriptor md = MethodDescriptor.parseDescriptor(invoke_dynamic.descriptor);

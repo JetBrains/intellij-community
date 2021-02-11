@@ -1,10 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
+import java.util.Map;
 
 /*
   field_info {
@@ -16,29 +18,32 @@ import java.io.IOException;
    }
 */
 public class StructField extends StructMember {
+  public static StructField create(DataInputFullStream in, ConstantPool pool, String clQualifiedName) throws IOException {
+    int accessFlags = in.readUnsignedShort();
+    int nameIndex = in.readUnsignedShort();
+    int descriptorIndex = in.readUnsignedShort();
+
+    String[] values = pool.getClassElement(ConstantPool.FIELD, clQualifiedName, nameIndex, descriptorIndex);
+
+    Map<String, StructGeneralAttribute> attributes = readAttributes(in, pool);
+
+    return new StructField(accessFlags, attributes, values[0], values[1]);
+  }
 
   private final String name;
   private final String descriptor;
 
-
-  public StructField(DataInputFullStream in, StructClass clStruct) throws IOException {
-    accessFlags = in.readUnsignedShort();
-    int nameIndex = in.readUnsignedShort();
-    int descriptorIndex = in.readUnsignedShort();
-
-    ConstantPool pool = clStruct.getPool();
-    String[] values = pool.getClassElement(ConstantPool.FIELD, clStruct.qualifiedName, nameIndex, descriptorIndex);
-    name = values[0];
-    descriptor = values[1];
-
-    attributes = readAttributes(in, pool);
+  protected StructField(int accessFlags, Map<String, StructGeneralAttribute> attributes, String name, String descriptor) {
+    super(accessFlags, attributes);
+    this.name = name;
+    this.descriptor = descriptor;
   }
 
-  public String getName() {
+  public final String getName() {
     return name;
   }
 
-  public String getDescriptor() {
+  public final String getDescriptor() {
     return descriptor;
   }
 

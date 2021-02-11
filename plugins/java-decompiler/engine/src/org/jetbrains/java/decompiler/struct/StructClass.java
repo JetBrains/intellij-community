@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -13,6 +13,7 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /*
   class_file {
@@ -35,10 +36,52 @@ import java.util.List;
   }
 */
 public class StructClass extends StructMember {
+  public static StructClass create(DataInputFullStream in, boolean own, LazyLoader loader) throws IOException {
+    in.discard(4);
+    int minorVersion = in.readUnsignedShort();
+    int majorVersion = in.readUnsignedShort();
+    int bytecodeVersion = Math.max(majorVersion, CodeConstants.BYTECODE_JAVA_LE_4);
+
+    ConstantPool pool = new ConstantPool(in);
+
+    int accessFlags = in.readUnsignedShort();
+    int thisClassIdx = in.readUnsignedShort();
+    int superClassIdx = in.readUnsignedShort();
+    String qualifiedName = pool.getPrimitiveConstant(thisClassIdx).getString();
+    PrimitiveConstant superClass = pool.getPrimitiveConstant(superClassIdx);
+
+    int length = in.readUnsignedShort();
+    int[] interfaces = new int[length];
+    String[] interfaceNames = new String[length];
+    for (int i = 0; i < length; i++) {
+      interfaces[i] = in.readUnsignedShort();
+      interfaceNames[i] = pool.getPrimitiveConstant(interfaces[i]).getString();
+    }
+
+    length = in.readUnsignedShort();
+    VBStyleCollection<StructField, String>fields = new VBStyleCollection<>(length);
+    for (int i = 0; i < length; i++) {
+      StructField field = StructField.create(in, pool, qualifiedName);
+      fields.addWithKey(field, InterpreterUtil.makeUniqueKey(field.getName(), field.getDescriptor()));
+    }
+
+    length = in.readUnsignedShort();
+    VBStyleCollection<StructMethod, String>methods = new VBStyleCollection<>(length);
+    for (int i = 0; i < length; i++) {
+      StructMethod method = StructMethod.create(in, pool, qualifiedName, bytecodeVersion, own);
+      methods.addWithKey(method, InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor()));
+    }
+
+    Map<String, StructGeneralAttribute> attributes = readAttributes(in, pool);
+
+    StructClass cl = new StructClass(
+      accessFlags, attributes, qualifiedName, superClass, own, loader, minorVersion, majorVersion, interfaces, interfaceNames, fields, methods);
+    if (loader == null) cl.pool = pool;
+    return cl;
+  }
 
   public final String qualifiedName;
   public final PrimitiveConstant superClass;
-
   private final boolean own;
   private final LazyLoader loader;
   private final int minorVersion;
@@ -50,56 +93,29 @@ public class StructClass extends StructMember {
 
   private ConstantPool pool;
 
-  public StructClass(byte[] bytes, boolean own, LazyLoader loader) throws IOException {
-    this(new DataInputFullStream(bytes), own, loader);
-  }
-
-  public StructClass(DataInputFullStream in, boolean own, LazyLoader loader) throws IOException {
+  private StructClass(int accessFlags,
+                      Map<String, StructGeneralAttribute> attributes,
+                      String qualifiedName,
+                      PrimitiveConstant superClass,
+                      boolean own,
+                      LazyLoader loader,
+                      int minorVersion,
+                      int majorVersion,
+                      int[] interfaces,
+                      String[] interfaceNames,
+                      VBStyleCollection<StructField, String> fields,
+                      VBStyleCollection<StructMethod, String> methods) {
+    super(accessFlags, attributes);
+    this.qualifiedName = qualifiedName;
+    this.superClass = superClass;
     this.own = own;
     this.loader = loader;
-
-    in.discard(4);
-
-    minorVersion = in.readUnsignedShort();
-    majorVersion = in.readUnsignedShort();
-
-    pool = new ConstantPool(in);
-
-    accessFlags = in.readUnsignedShort();
-    int thisClassIdx = in.readUnsignedShort();
-    int superClassIdx = in.readUnsignedShort();
-    qualifiedName = pool.getPrimitiveConstant(thisClassIdx).getString();
-    superClass = pool.getPrimitiveConstant(superClassIdx);
-
-    // interfaces
-    int length = in.readUnsignedShort();
-    interfaces = new int[length];
-    interfaceNames = new String[length];
-    for (int i = 0; i < length; i++) {
-      interfaces[i] = in.readUnsignedShort();
-      interfaceNames[i] = pool.getPrimitiveConstant(interfaces[i]).getString();
-    }
-
-    // fields
-    length = in.readUnsignedShort();
-    fields = new VBStyleCollection<>(length);
-    for (int i = 0; i < length; i++) {
-      StructField field = new StructField(in, this);
-      fields.addWithKey(field, InterpreterUtil.makeUniqueKey(field.getName(), field.getDescriptor()));
-    }
-
-    // methods
-    length = in.readUnsignedShort();
-    methods = new VBStyleCollection<>(length);
-    for (int i = 0; i < length; i++) {
-      StructMethod method = new StructMethod(in, this);
-      methods.addWithKey(method, InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor()));
-    }
-
-    // attributes
-    attributes = readAttributes(in, pool);
-
-    releaseResources();
+    this.minorVersion = minorVersion;
+    this.majorVersion = majorVersion;
+    this.interfaces = interfaces;
+    this.interfaceNames = interfaceNames;
+    this.fields = fields;
+    this.methods = methods;
   }
 
   public boolean hasField(String name, String descriptor) {
@@ -168,17 +184,13 @@ public class StructClass extends StructMember {
     return loader;
   }
 
-  public boolean isVersionGE_1_5() {
+  public boolean isVersion5() {
     return (majorVersion > CodeConstants.BYTECODE_JAVA_LE_4 ||
             (majorVersion == CodeConstants.BYTECODE_JAVA_LE_4 && minorVersion > 0)); // FIXME: check second condition
   }
 
-  public boolean isVersionGE_1_7() {
-    return (majorVersion >= CodeConstants.BYTECODE_JAVA_7);
-  }
-
-  public int getBytecodeVersion() {
-    return Math.max(majorVersion, CodeConstants.BYTECODE_JAVA_LE_4);
+  public boolean isVersion8() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_8;
   }
 
   @Override
