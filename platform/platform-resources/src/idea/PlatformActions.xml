@@ -1099,6 +1099,8 @@
           <abbreviation value="uii"/>
           <mouse-shortcut keymap="$default" keystroke="control alt button1"/>
         </action>
+        <action id="ToggleUiInspectorHierarchyTrace" internal="true"
+                class="com.intellij.internal.inspector.UiInspectorAction$ToggleHierarchyTraceAction"/>
         <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig"/>
         <action id="TextGrayFilterConfig" internal="true" class="com.intellij.internal.TextGrayFilterConfig"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction"/>

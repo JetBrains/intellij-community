@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -118,7 +119,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     private boolean myIsHighlighted = true;
     @NotNull private final HierarchyTree myHierarchyTree;
     @NotNull private final Wrapper myWrapperPanel;
-    private Project myProject;
+    @Nullable private final Project myProject;
 
     private InspectorWindow(@Nullable Project project, @NotNull Component component) throws HeadlessException {
       super(findWindow(component));
@@ -1457,7 +1458,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     void fillTable() {
       addProperties("", myComponent, PROPERTIES);
       Object addedAt = myComponent instanceof JComponent ? ((JComponent)myComponent).getClientProperty("uiInspector.addedAt") : null;
-      myProperties.add(new PropertyBean("added-at", addedAt));
+      myProperties.add(new PropertyBean("added-at", addedAt, addedAt != null));
 
       // Add properties related to Accessibility support. This is useful for manually
       // inspecting what kind (if any) of accessibility support components expose.
@@ -2128,9 +2129,11 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         if (delegate != object) {
           return findActionsFor(delegate);
         }
-      } else if (object instanceof IntentionAction) {
+      }
+      else if (object instanceof IntentionAction) {
         return Collections.singletonList(new PropertyBean("intention action", object.getClass().getName(), true));
-      } else if (object instanceof QuickFix) {
+      }
+      else if (object instanceof QuickFix) {
         return Collections.singletonList(new PropertyBean("quick fix", object.getClass().getName(), true));
       }
 
@@ -2144,7 +2147,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         int first = text.indexOf("at com.intellij", text.indexOf("at java.awt"));
         int last = text.indexOf("at java.awt.EventQueue");
         if (last == -1) last = text.length();
-        String val = last > first && first > 0 ?  text.substring(first, last).trim(): null;
+        String val = last > first && first > 0 ? text.substring(first, last).trim() : null;
         ((JComponent)child).putClientProperty("uiInspector.addedAt", val);
       }
     }
@@ -2253,6 +2256,43 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         return new RowIcon(icon, IconUtil.toSize(kotlinIcon, icon.getIconWidth(), icon.getIconHeight()));
       }
       return icon;
+    }
+  }
+
+  public static class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
+    private boolean myEnabled = false;
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (isSelected(e)) {
+        e.getPresentation().setText(ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.disable"));
+      }
+      else {
+        e.getPresentation().setText(ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.enable"));
+      }
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myEnabled;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      if (state) {
+        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.CONTAINER_EVENT_MASK);
+      }
+      else {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+      }
+      myEnabled = state;
+    }
+
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      if (event instanceof ContainerEvent) {
+        UiInspector.processContainerEvent((ContainerEvent)event);
+      }
     }
   }
 }
