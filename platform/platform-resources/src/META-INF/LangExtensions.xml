@@ -1381,6 +1381,9 @@
                           bundleName="messages.LangBundle"
                           providerClass="com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider"
                           version="0"/>
+
+    <projectIndexingHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

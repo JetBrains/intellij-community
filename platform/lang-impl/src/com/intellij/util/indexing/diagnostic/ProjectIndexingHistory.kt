@@ -9,15 +9,23 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics
 import java.time.Duration
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.util.concurrent.atomic.AtomicLong
 
 typealias TimeMillis = Long
 typealias TimeNano = Long
 typealias BytesNumber = Long
 
 data class ProjectIndexingHistory(val project: Project) {
+
+  private companion object {
+    val indexingSessionIdSequencer = AtomicLong()
+  }
+
+  val indexingSessionId = indexingSessionIdSequencer.getAndIncrement()
+
   private val biggestContributorsPerFileTypeLimit = 10
 
-  val times = IndexingTimes(ZonedDateTime.now(ZoneOffset.UTC))
+  val times = IndexingTimes(updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
@@ -118,6 +126,7 @@ data class ProjectIndexingHistory(val project: Project) {
 
   data class IndexingTimes(
     val updatingStart: ZonedDateTime,
+    var totalUpdatingTime: TimeNano,
     var updatingEnd: ZonedDateTime = updatingStart,
     var indexingDuration: Duration = Duration.ZERO,
     var pushPropertiesDuration: Duration = Duration.ZERO,

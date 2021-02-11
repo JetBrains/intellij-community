@@ -78,10 +78,16 @@ class IndexDiagnosticDumper : Disposable {
       val EP_NAME = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
     }
 
+    fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) = Unit
+
     fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
   }
 
-  fun dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory: ProjectIndexingHistory) {
+  fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistory) {
+    ProjectIndexingHistoryListener.EP_NAME.forEachExtensionSafe { it.onStartedIndexing(projectIndexingHistory) }
+  }
+
+  fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistory) {
     try {
       if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
         return
