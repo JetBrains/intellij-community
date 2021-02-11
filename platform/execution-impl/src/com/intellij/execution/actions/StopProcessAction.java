@@ -20,7 +20,6 @@ import com.intellij.execution.KillableProcess;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -33,7 +32,7 @@ import java.util.function.Supplier;
 /**
  * @author Sergey Simonchik
  */
-public class StopProcessAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+public class StopProcessAction extends DumbAwareAction {
   private ProcessHandler myProcessHandler;
 
   public StopProcessAction(@NotNull String text, @Nullable String description, @Nullable ProcessHandler processHandler) {
