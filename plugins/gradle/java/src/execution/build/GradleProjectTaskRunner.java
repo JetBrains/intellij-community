@@ -32,6 +32,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import org.gradle.api.internal.jvm.ClassDirectoryBinaryNamingScheme;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -373,9 +374,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   @NotNull
   private static String getTaskName(@NotNull String taskPrefix, @NotNull String taskSuffix, @Nullable String sourceSetName) {
-    return isEmpty(sourceSetName) || "main".equals(sourceSetName) ?
-           taskPrefix + (taskPrefix.isEmpty() ? taskSuffix : capitalize(taskSuffix)) :
-           taskPrefix + (taskPrefix.isEmpty() ? sourceSetName : capitalize(sourceSetName)) + capitalize(taskSuffix);
+    return new ClassDirectoryBinaryNamingScheme(sourceSetName).getTaskName(taskPrefix, taskSuffix);
   }
 
   private static boolean addIfContains(@NotNull String taskPathPrefix,

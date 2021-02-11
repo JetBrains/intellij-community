@@ -91,6 +91,52 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     doTestDirtyOutputCollection(true);
   }
 
+  @Test
+  public void testSourceSetsWithNamesContainingSpacesAndHyphens() throws Exception {
+    createProjectSubFile("src/main/java/App.java", "public class App {}");
+    createProjectSubFile("src/main/resources/dir/file.properties");
+
+    createProjectSubFile("src/test/java/Test.java", "public class Test {}");
+    createProjectSubFile("src/test/resources/dir/file-test.properties");
+
+    createProjectSubFile("src/integration-test/java/IntegrationTest.java", "public class IntegrationTest {}");
+    createProjectSubFile("src/integration-test/resources/dir/file-integrationTest.properties");
+
+    createProjectSubFile("src/anotherSourceSet/java/AnotherSourceSet.java", "public class AnotherSourceSet {}");
+    createProjectSubFile("src/anotherSourceSet/resources/dir/file-anotherSourceSet.properties");
+
+    createProjectSubFile("src/another cool name/java/Spaces.java", "public class Spaces {}");
+    createProjectSubFile("src/another cool name/resources/dir/file-Spaces.properties");
+
+    importProject(
+      "apply plugin: 'java'\n" +
+      "\n" +
+      "sourceSets {\n" +
+      "  'integration-test' {}\n" +
+      "  anotherSourceSet {}\n" +
+      "  'another cool name' {}\n" +
+      "}\n"
+    );
+    assertModules("project", "project.main", "project.test",
+                  "project.integration-test",
+                  "project.anotherSourceSet",
+                  "project.another_cool_name");
+    compileModules("project.main", "project.test", "project.integration-test", "project.anotherSourceSet", "project.another_cool_name");
+
+    String langPart = isGradleOlderThan("4.0") ? "build/classes" : "build/classes/java";
+    assertCopied(langPart + "/main/App.class");
+    assertNotCopied(langPart + "/test/AppTest.class");
+    assertCopied(langPart + "/integration-test/IntegrationTest.class");
+    assertCopied(langPart + "/anotherSourceSet/AnotherSourceSet.class");
+    assertCopied(langPart + "/another cool name/Spaces.class");
+
+    assertCopied("build/resources/main/dir/file.properties");
+    assertCopied("build/resources/test/dir/file-test.properties");
+    assertCopied("build/resources/integration-test/dir/file-integrationTest.properties");
+    assertCopied("build/resources/anotherSourceSet/dir/file-anotherSourceSet.properties");
+    assertCopied("build/resources/another cool name/dir/file-Spaces.properties");
+  }
+
   private void doTestDirtyOutputCollection(boolean enableBuildCache) throws IOException {
     createSettingsFile("include 'api', 'impl' ");
     if (enableBuildCache) {
