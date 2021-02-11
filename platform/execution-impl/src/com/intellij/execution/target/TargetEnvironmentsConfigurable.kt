@@ -35,7 +35,7 @@ class TargetEnvironmentsConfigurable(private val project: Project,
 
   override fun createComponent(): JComponent = editor.createComponent()
 
-  override fun getHelpTopic(): String = "reference.remote.targets"
+  override fun getHelpTopic(): String = "reference.run.targets"
 
   override fun apply() {
     editor.apply()
