@@ -143,12 +143,27 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   private void fetchProjectBuildModels(BuildController controller, final boolean isProjectsLoadedAction, GradleBuild build) {
-    List<Runnable> result = new ArrayList<Runnable>();
+    // Prepare nested build actions.
+    List<BuildAction<List<Runnable>>> buildActions = new ArrayList<BuildAction<List<Runnable>>>();
     for (final BasicGradleProject gradleProject : build.getProjects()) {
-      result.addAll(getProjectModels(controller, myAllModels, gradleProject, isProjectsLoadedAction));
+      buildActions.add(
+        new BuildAction<List<Runnable>>() {
+          @Override
+          public List<Runnable> execute(BuildController controller) {
+            return getProjectModels(controller, myAllModels, gradleProject, isProjectsLoadedAction);
+          }
+        }
+      );
     }
-    for (Runnable runnable : result) {
-      runnable.run();
+
+    // Execute nested build actions.
+    List<List<Runnable>> addFetchedModelActions = controller.run(buildActions);
+
+    // Execute returned actions sequentially in one thread to populate myAllModels.
+    for (List<Runnable> actions : addFetchedModelActions) {
+      for (Runnable action : actions) {
+        action.run();
+      }
     }
   }
 
@@ -201,6 +216,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   /**
    * Gets project level models for a given {@code project} and returns a collection of actions,
    * which when executed add these models to {@code allModels}.
+   *
+   * <p>The actions returned by this method are supposed to be executed on a single thread.
    */
   private List<Runnable> getProjectModels(@NotNull BuildController controller,
                                           @NotNull final AllModels allModels,
