@@ -155,6 +155,17 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   public boolean isTypeUseAnnotationLocationRestricted(String name) {
+    AnnotationPackageSupport support = findAnnotationSupport(name);
+    return support != null && support.isTypeUseAnnotationLocationRestricted();
+  }
+
+  @Override
+  public boolean canAnnotateLocals(String name) {
+    AnnotationPackageSupport support = findAnnotationSupport(name);
+    return support == null || support.canAnnotateLocals();
+  }
+
+  private @Nullable AnnotationPackageSupport findAnnotationSupport(String name) {
     AnnotationPackageSupport support = myDefaultUnknowns.get(name);
     if (support == null) {
       support = myDefaultNotNulls.get(name);
@@ -162,7 +173,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
         support = myDefaultNullables.get(name);
       }
     }
-    return support != null && support.isTypeUseAnnotationLocationRestricted();
+    return support;
   }
 
   @Override

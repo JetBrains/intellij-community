@@ -46,6 +46,8 @@ public abstract class NullableNotNullManager {
   public abstract @NotNull Optional<Nullability> getAnnotationNullability(String name);
   
   public abstract boolean isTypeUseAnnotationLocationRestricted(String name);
+  
+  public abstract boolean canAnnotateLocals(String name);
 
   public static NullableNotNullManager getInstance(Project project) {
     return ServiceManager.getService(project, NullableNotNullManager.class);

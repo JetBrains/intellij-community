@@ -157,7 +157,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             if (parent instanceof PsiReferenceList) {
               PsiElement firstChild = parent.getFirstChild();
               if ((PsiUtil.isJavaToken(firstChild, JavaTokenType.EXTENDS_KEYWORD) ||
-                   PsiUtil.isJavaToken(firstChild, JavaTokenType.IMPLEMENTS_KEYWORD)) && !(parent.getParent() instanceof PsiTypeParameter)) {
+                   PsiUtil.isJavaToken(firstChild, JavaTokenType.IMPLEMENTS_KEYWORD)) &&
+                  !(parent.getParent() instanceof PsiTypeParameter)) {
                 reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.reference.list");
               }
             }
@@ -165,6 +166,14 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
         if (listOwner instanceof PsiMethod && ((PsiMethod)listOwner).isConstructor()) {
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.constructor");
+        }
+        if (listOwner instanceof PsiEnumConstant) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.enum.constant");
+        }
+        if ((listOwner instanceof PsiLocalVariable ||
+             listOwner instanceof PsiParameter && ((PsiParameter)listOwner).getDeclarationScope() instanceof PsiCatchSection)
+            && !manager.canAnnotateLocals(qualifiedName)) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.local.variable");
         }
         if (type instanceof PsiWildcardType && manager.isTypeUseAnnotationLocationRestricted(qualifiedName)) {
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.wildcard");

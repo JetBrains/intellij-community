@@ -170,10 +170,12 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         case "inspection.nullable.problems.outer.type":
         case "inspection.nullable.problems.at.reference.list":
         case "inspection.nullable.problems.at.constructor":
+        case "inspection.nullable.problems.at.enum.constant":
           warnings.put(anchor, "jspecify_nullness_intrinsically_not_nullable");
           break;
         case "inspection.nullable.problems.at.wildcard":
         case "inspection.nullable.problems.at.type.parameter":
+        case "inspection.nullable.problems.at.local.variable":
           warnings.put(anchor, "jspecify_unrecognized_location");
           break;
       }

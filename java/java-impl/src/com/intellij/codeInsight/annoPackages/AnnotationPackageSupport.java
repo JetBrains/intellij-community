@@ -45,4 +45,11 @@ public interface AnnotationPackageSupport {
   default boolean isTypeUseAnnotationLocationRestricted() {
     return false;
   }
+
+  /**
+   * @return true if the annotations defined by this support can be used to annotate local variables 
+   */
+  default boolean canAnnotateLocals() {
+    return true;
+  }
 }

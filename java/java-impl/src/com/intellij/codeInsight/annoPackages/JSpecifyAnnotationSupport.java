@@ -68,4 +68,9 @@ public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
   public boolean isTypeUseAnnotationLocationRestricted() {
     return true;
   }
+
+  @Override
+  public boolean canAnnotateLocals() {
+    return false;
+  }
 }
