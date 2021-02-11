@@ -212,7 +212,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             continue
           }
           descriptor.pluginId?.let { pluginId ->
-            if (!ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(PluginId.getId(pluginId), depIdeaPlugin.`package`.value?.qualifiedName)) {
+            if (!ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(PluginId.getId(pluginId), depIdeaPlugin.`package`.rawText)) {
               dependenciesWithoutSeparateClassloaders.add(pluginId)
             }
           }
