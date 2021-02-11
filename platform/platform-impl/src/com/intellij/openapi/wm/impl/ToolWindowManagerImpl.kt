@@ -102,7 +102,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private var layoutToRestoreLater: DesktopLayout? = null
   private var currentState = KeyState.WAITING
   private var waiterForSecondPress: SingleAlarm? = null
-  private val recentToolWindows = LinkedList<String>()
+  private val recentToolWindows: MutableList<String> = LinkedList<String>()
 
   private val pendingSetLayoutTask = AtomicReference<Runnable?>()
 
@@ -203,23 +203,26 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           processor(getInstance(project) as ToolWindowManagerImpl)
         }
       }
-    }
 
-    init {
-      val awtFocusListener = AWTEventListener { event ->
-        if (event is FocusEvent) {
-          handleFocusEvent(event)
-        }
-        else if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-          process { manager ->
-            val frame = event.getSource() as? JFrame
-            if (frame === manager.frame?.frame) {
-              manager.resetHoldState()
+      class MyListener : AWTEventListener {
+        override fun eventDispatched(event: AWTEvent?) {
+          if (event is FocusEvent) {
+            handleFocusEvent(event)
+          }
+          else if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+            process { manager ->
+              val frame = event.getSource() as? JFrame
+              if (frame === manager.frame?.frame) {
+                manager.resetHoldState()
+              }
             }
           }
         }
       }
+    }
 
+    init {
+      val awtFocusListener = MyListener()
       Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK or AWTEvent.WINDOW_FOCUS_EVENT_MASK)
 
       val updateHeadersAlarm = SingleAlarm(Runnable {
@@ -228,11 +231,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }, 50, ApplicationManager.getApplication())
       val focusListener = PropertyChangeListener { updateHeadersAlarm.cancelAndRequest() }
-      val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-      keyboardFocusManager.addPropertyChangeListener("focusOwner", focusListener)
-      Disposer.register(ApplicationManager.getApplication(), Disposable {
-        keyboardFocusManager.removePropertyChangeListener("focusOwner", focusListener)
-      })
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", focusListener)
+      Disposer.register(ApplicationManager.getApplication()) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", focusListener)
+      }
 
       val connection = ApplicationManager.getApplication().messageBus.connect()
       connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
