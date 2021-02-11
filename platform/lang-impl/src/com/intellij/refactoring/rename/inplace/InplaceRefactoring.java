@@ -79,7 +79,6 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.IntSupplier;
 
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance(VariableInplaceRenamer.class);
@@ -409,7 +408,7 @@ public abstract class InplaceRefactoring {
     topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
-    restoreOldCaretPositionAndSelection(myEditor, () -> restoreCaretOffset(offset), this::restoreSelection);
+    restoreOldCaretPositionAndSelection(myEditor, restoreCaretOffset(offset), this::restoreSelection);
     highlightTemplateVariables(template, topLevelEditor);
 
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
@@ -462,16 +461,16 @@ public abstract class InplaceRefactoring {
   }
 
   static void restoreOldCaretPositionAndSelection(@NotNull Editor editor,
-                                                  @NotNull IntSupplier restoreCaretOffset,
+                                                  int restoredCaretOffset,
                                                   @NotNull Runnable restoreSelection) {
     //move to old offset
     Runnable runnable = () -> {
-      editor.getCaretModel().moveToOffset(restoreCaretOffset.getAsInt());
+      editor.getCaretModel().moveToOffset(restoredCaretOffset);
       restoreSelection.run();
     };
 
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup != null && lookup.getLookupStart() <= restoreCaretOffset.getAsInt()) {
+    if (lookup != null && lookup.getLookupStart() <= restoredCaretOffset) {
       lookup.setLookupFocusDegree(LookupFocusDegree.UNFOCUSED);
       lookup.performGuardedChange(runnable);
     }
