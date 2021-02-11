@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
@@ -85,6 +86,14 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       public void breakpointChanged(@NotNull XBreakpoint breakpoint) {
         if (myAllBreakpointsDispatcher != null) {
           myAllBreakpointsDispatcher.getMulticaster().breakpointChanged(breakpoint);
+        }
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public void breakpointPresentationUpdated(@NotNull XBreakpoint breakpoint, @Nullable XDebugSession session) {
+        if (myAllBreakpointsDispatcher != null) {
+          myAllBreakpointsDispatcher.getMulticaster().breakpointPresentationUpdated(breakpoint, session);
         }
       }
     });
@@ -228,6 +237,14 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       myLineBreakpointManager.breakpointChanged((XLineBreakpointImpl)breakpoint);
     }
     sendBreakpointEvent(breakpoint.getType(), listener -> listener.breakpointChanged(breakpoint));
+  }
+  
+  public void fireBreakpointPresentationUpdated(XBreakpoint<?> breakpoint, @Nullable XDebugSession session) {
+    if (!myAllBreakpoints.contains(breakpoint)) {
+      return;
+    }
+    
+    sendBreakpointEvent(breakpoint.getType(), listener -> listener.breakpointPresentationUpdated(breakpoint, session));
   }
 
   @Override
@@ -430,6 +447,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     presentation.setIcon(icon);
     lineBreakpoint.setCustomizedPresentation(presentation);
     myLineBreakpointManager.queueBreakpointUpdate(breakpoint);
+    fireBreakpointPresentationUpdated(breakpoint, null);
   }
 
   @NotNull
