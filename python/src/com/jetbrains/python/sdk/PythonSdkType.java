@@ -349,18 +349,18 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
+    final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
+    final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
+    Ref<Project> projectRef = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final Project project;
-      final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
-      final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
       if (ownerComponent != null) {
-        project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
+        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
       }
       else {
-        project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
       }
-      PythonSdkUpdater.updateOrShowError(sdk, project, ownerComponent);
     });
+    PythonSdkUpdater.updateOrShowError(sdk, projectRef.get(), ownerComponent);
   }
 
   @Override
