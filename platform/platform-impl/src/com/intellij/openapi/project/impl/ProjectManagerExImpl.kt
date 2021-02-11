@@ -181,6 +181,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(projectFile, project, options.isRefreshVfsNeeded, options.preloadServices, template,
                   ProgressManager.getInstance().progressIndicator)
+      project.setTrusted(true)
       return project
     }
     catch (t: Throwable) {
