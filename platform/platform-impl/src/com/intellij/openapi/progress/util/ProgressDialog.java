@@ -267,15 +267,17 @@ final class ProgressDialog implements Disposable {
     }
     myPopup.pack();
 
+    Disposer.register(myPopup.getDisposable(), () -> myProgressWindow.exitModality());
+
+    myPopup.show();
+
+    // 'Light' popup is shown in glass pane, glass pane is 'activating' (becomes visible) in 'invokeLater' call
+    // (see IdeGlassPaneImp.addImpl), requesting focus to cancel button until that time has no effect, as it's not showing.
     SwingUtilities.invokeLater(() -> {
       if (myPopup != null && !myPopup.isDisposed()) {
         myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
       }
     });
-
-    Disposer.register(myPopup.getDisposable(), () -> myProgressWindow.exitModality());
-
-    myPopup.show();
   }
 
   private boolean isWriteActionProgress() {
