@@ -30,6 +30,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,9 +78,9 @@ public final class DfaPsiUtil {
       return Nullability.NOT_NULL;
     }
 
-    Nullability fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
-    if (fromAnnotation != Nullability.UNKNOWN) {
-      return fromAnnotation;
+    NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
+    if (fromAnnotation != null) {
+      return fromAnnotation.getNullability();
     }
 
     if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
@@ -103,18 +104,20 @@ public final class DfaPsiUtil {
     return Nullability.UNKNOWN;
   }
 
-  @NotNull
-  private static Nullability getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
+  private static @Nullable NullabilityAnnotationInfo getNullabilityFromAnnotation(@NotNull PsiModifierListOwner owner,
+                                                                                  boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
     if (info == null || shouldIgnoreAnnotation(info.getAnnotation())) {
-      return Nullability.UNKNOWN;
+      return null;
     }
     if (ignoreParameterNullabilityInference && owner instanceof PsiParameter && info.isInferred()) {
       List<PsiParameter> supers = AnnotationUtil.getSuperAnnotationOwners((PsiParameter)owner);
-      return ContainerUtil.exists(supers, each -> manager.isNullable(each, false)) ? Nullability.NULLABLE :  Nullability.UNKNOWN;
+      return StreamEx.of(supers).map(param -> manager.findEffectiveNullabilityInfo(param))
+        .findFirst(i -> i != null && i.getInheritedFrom() == null && i.getNullability() == Nullability.NULLABLE)
+        .orElse(null);
     }
-    return info.getNullability();
+    return info;
   }
 
   private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {

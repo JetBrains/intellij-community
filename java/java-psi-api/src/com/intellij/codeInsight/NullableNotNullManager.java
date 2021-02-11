@@ -443,10 +443,12 @@ public abstract class NullableNotNullManager {
       if (!(eachType instanceof PsiClassType)) return true;
       PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(eachType);
       if (!(targetClass instanceof PsiTypeParameter)) return false;
-      NullabilityAnnotationInfo info = findNullabilityDefault(targetClass, PsiAnnotation.TargetType.TYPE_PARAMETER);
-      if (info != null) {
-        result.set(info);
-        return false;
+      if (targetClass.getExtendsListTypes().length == 0) {
+        NullabilityAnnotationInfo info = findNullabilityDefault(targetClass, PsiAnnotation.TargetType.TYPE_PARAMETER);
+        if (info != null) {
+          result.set(info);
+          return false;
+        }
       }
       return true;
     });
