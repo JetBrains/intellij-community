@@ -40,11 +40,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     myColorsScheme = myUiSettingsManager.getEditorColorsScheme();
   }
 
-  public @NotNull TerminalUiSettingsManager getUiSettingsManager() {
+  @NotNull TerminalUiSettingsManager getUiSettingsManager() {
     return myUiSettingsManager;
   }
 
-  public @NotNull EditorColorsScheme getColorsScheme() {
+  @NotNull EditorColorsScheme getColorsScheme() {
     return myColorsScheme;
   }
 
