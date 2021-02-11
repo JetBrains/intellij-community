@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -139,11 +140,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   private static boolean testLauncherIsApplicable(@NotNull List<String> taskNames,
                                                   @NotNull GradleExecutionSettings effectiveSettings) {
+    boolean allowedByRegistry = Registry.is("gradle.testLauncherAPI.enabled", true);
     boolean allowedByGradleVersion = isSupportedByGradleVersion(effectiveSettings);
     boolean allowedByTasksList = taskNames.size() < 2;
     return Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST)
       && allowedByGradleVersion
-      && allowedByTasksList;
+      && allowedByTasksList
+      && allowedByRegistry;
   }
 
   private static boolean isSupportedByGradleVersion(GradleExecutionSettings effectiveSettings) {

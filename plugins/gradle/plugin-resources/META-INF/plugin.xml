@@ -134,6 +134,8 @@
                  description="Enable custom serialization of custom tooling objects"/>
     <registryKey key="gradle.tooling.use.external.process" defaultValue="false"
                  description="Enable running gradle tooling api out of IDE process"/>
+    <registryKey key="gradle.testLauncherAPI.enabled" defaultValue="true"
+                 description="Allow to use Test Launcher API to run tests when applicable"/>
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>
