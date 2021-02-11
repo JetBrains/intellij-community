@@ -20,10 +20,10 @@ final class JsonPathSyntaxHighlighter extends SyntaxHighlighterBase {
     createTextAttributesKey("JSONPATH.KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
 
   public static final TextAttributesKey JSONPATH_IDENTIFIER =
-    createTextAttributesKey("JSONPATH.IDENTIFIER", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
+    createTextAttributesKey("JSONPATH.IDENTIFIER", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
 
   public static final TextAttributesKey JSONPATH_CONTEXT =
-    createTextAttributesKey("JSONPATH.CONTEXT", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+    createTextAttributesKey("JSONPATH.CONTEXT", DefaultLanguageHighlighterColors.STATIC_FIELD);
 
   public static final TextAttributesKey JSONPATH_OPERATIONS =
     createTextAttributesKey("JSONPATH.OPERATIONS", DefaultLanguageHighlighterColors.OPERATION_SIGN);
