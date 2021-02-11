@@ -43,6 +43,6 @@ public class WebPreviewFileType extends FakeFileType {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.General.Web;
+    return AllIcons.Nodes.PpWeb;
   }
 }
