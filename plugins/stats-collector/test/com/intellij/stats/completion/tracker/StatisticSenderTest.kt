@@ -81,10 +81,10 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         assertThat(secondFile.exists()).isEqualTo(true)
     }
 
-    fun `test none is removed if all send failed`() {
+    fun `test second is sent and removed even if first failed`() {
         val requestService = mock(RequestService::class.java).apply {
             `when`(postZipped(testUrl, firstFile)).thenReturn(failResponse())
-            `when`(postZipped(testUrl, secondFile)).thenThrow(IllegalStateException("Should not be invoked"))
+            `when`(postZipped(testUrl, secondFile)).thenReturn(okResponse())
         }
 
         val app = ApplicationManager.getApplication()
@@ -95,7 +95,7 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         sender.sendStatsData(testUrl)
 
         assertThat(firstFile.exists()).isEqualTo(true)
-        assertThat(secondFile.exists()).isEqualTo(true)
+        assertThat(secondFile.exists()).isEqualTo(false)
     }
 
 }
