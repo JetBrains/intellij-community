@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.plugins.pipelines.ui
 
 import circlet.pipelines.DefaultDslFileName
 import circlet.pipelines.config.idea.api.*
-import circlet.pipelines.config.idea.api.ScriptStep.*
 import circlet.pipelines.config.idea.api.ProcessExecutable.*
+import circlet.pipelines.config.idea.api.ScriptStep.CompositeStep
+import circlet.pipelines.config.idea.api.ScriptStep.SimpleStep
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
@@ -27,8 +27,8 @@ import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.ui.DumbAwareActionButton
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.Panel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBEmptyBorder
@@ -266,7 +266,7 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
     infoText.alignmentX = Component.CENTER_ALIGNMENT
     panel.add(infoText)
 
-    val createDslLink = LinkLabel.create(SpaceBundle.message("kts.toolwindow.add.automation.script.link")) {
+    val createDslLink = ActionLink(SpaceBundle.message("kts.toolwindow.add.automation.script.link")) {
       val basePath = project.basePath
       if (basePath != null) {
         val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
@@ -291,15 +291,6 @@ class SpaceToolWindowService(val project: Project) : LifetimedDisposable by Life
 
     createDslLink.alignmentX = Component.CENTER_ALIGNMENT
     panel.add(createDslLink)
-
-    panel.add(JLabel(" ")) // just separator
-
-    val showHelpLink = LinkLabel.create(SpaceBundle.message("kts.toolwindow.help.link")) {
-      BrowserUtil.browse("https://jetbrains.team")
-    }
-    showHelpLink.icon = AllIcons.General.ContextHelp
-    showHelpLink.alignmentX = Component.CENTER_ALIGNMENT
-    panel.add(showHelpLink)
 
     val rootPanel = JPanel()
     rootPanel.layout = GridBagLayout()

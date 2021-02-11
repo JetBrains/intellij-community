@@ -10,7 +10,7 @@ import com.intellij.space.chat.ui.SpaceChatItemComponentFactory
 import com.intellij.space.chat.ui.createNewMessageField
 import com.intellij.space.chat.ui.thread.SpaceChatThreadActionsFactory
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getContextHelpForeground
 import com.intellij.util.ui.codereview.SingleValueModel
@@ -34,7 +34,7 @@ internal class SpaceChatDiscussionActionsFactory(
   override fun createActionsComponent(chatVm: M2ChannelVm): JComponent {
     val newMessageStateModel = SingleValueModelImpl(false)
     val actionsPanel = {
-      val replyAction = LinkLabel<Any>(SpaceBundle.message("chat.reply.action"), null) { _, _ ->
+      val replyAction = ActionLink(SpaceBundle.message("chat.reply.action")) {
         newMessageStateModel.value = true
       }
 
@@ -104,7 +104,7 @@ internal class SpaceChatDiscussionActionsFactory(
       }
     }
 
-    val label = LinkLabel<Any>("", null) { _, _ ->
+    val label = ActionLink(SpaceBundle.message("chat.resolve.action")) {
       resolve()
     }
     discussion.forEach(chatVm.lifetime) {

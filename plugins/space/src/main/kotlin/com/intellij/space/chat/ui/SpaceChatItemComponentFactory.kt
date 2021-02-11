@@ -22,7 +22,6 @@ import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.SingleValueModelImpl
@@ -35,10 +34,7 @@ import icons.VcsCodeReviewIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import runtime.Ui
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import javax.swing.*
 
 internal class SpaceChatItemComponentFactory(
   private val project: Project,
@@ -255,7 +251,7 @@ internal class SpaceChatItemComponentFactory(
       add(messagePanel, VerticalLayout.FILL_HORIZONTAL)
     }
 
-    private fun userAvatar(avatar: Icon) = LinkLabel<Any>("", avatar)
+    private fun userAvatar(avatar: Icon) = JLabel(avatar)
 
     override fun hoverStateChanged(isHovered: Boolean) {
       title ?: return

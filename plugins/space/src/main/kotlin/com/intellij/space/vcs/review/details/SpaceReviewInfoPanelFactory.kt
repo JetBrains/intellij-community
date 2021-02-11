@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.ui.SpaceUi
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.utils.formatPrettyDateTime
 import com.intellij.space.vcs.review.HtmlEditorPane
@@ -18,10 +17,7 @@ import com.intellij.space.vcs.review.details.process.SpaceReviewActionsBuilder
 import com.intellij.space.vcs.review.openReviewInEditor
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.AnActionLink
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.tail
@@ -76,12 +72,22 @@ internal object SpaceReviewInfoPanelFactory {
                  JBUI.scale(gap))).apply {
 
       @NlsSafe val projectName = detailsVm.spaceProjectInfo.project.name
-      val projectLink = SpaceUi.linkLabel(projectName, SpaceUrls.project(detailsVm.projectKey))
-      val reviewLinkLabel = SpaceUi.linkLabel(detailsVm.reviewKey ?: "", detailsVm.reviewUrl)
+      val projectLink = BrowserLink(
+        icon = null,
+        text = projectName,
+        tooltip = null,
+        url = SpaceUrls.project(detailsVm.projectKey)
+      )
+      val reviewLink = BrowserLink(
+        icon = null,
+        text = detailsVm.reviewKey ?: "",
+        tooltip = null,
+        url = detailsVm.reviewUrl
+      )
 
       add(projectLink)
       add(JLabel("${FontUtil.spaceAndThinSpace()}/${FontUtil.spaceAndThinSpace()}"))
-      add(reviewLinkLabel)
+      add(reviewLink)
     }
 
     val actionsPanel = NonOpaquePanel()
@@ -118,7 +124,7 @@ internal object SpaceReviewInfoPanelFactory {
       }
     }
 
-    val openTimelineLinkLabel = LinkLabel.create(SpaceBundle.message("review.details.view.chat.link.action")) {
+    val openTimelineActionLink = ActionLink(SpaceBundle.message("review.details.view.chat.link.action")) {
       openReviewInEditor(detailsVm.ideaProject,
                          detailsVm.workspace,
                          detailsVm.spaceProjectInfo,
@@ -138,7 +144,7 @@ internal object SpaceReviewInfoPanelFactory {
       add(titleComponent)
       add(createdByComponent)
       add(usersPanel, VerticalLayout.FILL_HORIZONTAL)
-      add(openTimelineLinkLabel)
+      add(openTimelineActionLink)
       add(actionsPanel)
     }.let { scrollablePanel ->
       ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
