@@ -203,7 +203,7 @@ public class CommonCodeStyleSettings {
 
     if (myArrangementSettings != null) {
       Element container = new Element(ARRANGEMENT_ELEMENT_NAME);
-      ArrangementUtil.writeExternal(container, myArrangementSettings, getLanguage());
+      ArrangementUtil.writeExternal(container, myArrangementSettings, provider.getLanguage());
       if (!container.getChildren().isEmpty()) {
         element.addContent(container);
       }
