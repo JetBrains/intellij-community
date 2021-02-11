@@ -273,6 +273,10 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
+    },
+    plugin("intellij.android.jpsBuildPlugin") {
+      withModule("intellij.android.jpsBuildPlugin.common")
+      withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
     }
   ]
 
@@ -401,7 +405,6 @@ final class CommunityRepositoryModules {
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
       withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
-      withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
       withModule("intellij.android.jps.model")
 
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
