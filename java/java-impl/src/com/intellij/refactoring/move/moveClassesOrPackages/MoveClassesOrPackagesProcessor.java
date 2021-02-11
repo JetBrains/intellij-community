@@ -7,15 +7,13 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.model.BranchableUsageInfo;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -23,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -37,7 +36,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
@@ -61,7 +59,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Jeka,dsl
@@ -674,13 +674,31 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
     if (lastDeletionUsageInfos.isEmpty()) return;
-    PsiJavaModule firstModule = lastDeletionUsageInfos.entrySet().iterator().next().getKey();
-    NotificationGroupManager.getInstance().getNotificationGroup("Remove redundant exports/opens")
-      .createNotification(JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.title"),
-                          null,
-                          JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.content"),
-                          NotificationType.INFORMATION)
-      .addAction(new NotificationAction(RefactoringBundle.message("yes.button")) {
+    Map<String, PsiJavaModule> moduleDescriptorsByPath = lastDeletionUsageInfos.keySet().stream()
+      .collect(Collectors.toMap(md -> md.getContainingFile().getVirtualFile().getPath(), md -> md));
+    HtmlBuilder contentBuilder = new HtmlBuilder();
+    for (var entry : moduleDescriptorsByPath.entrySet()) {
+      String moduleName = entry.getValue().getName();
+      contentBuilder.appendLink(entry.getKey(), moduleName + "/module-info.java").br();
+    }
+    PsiJavaModule firstModule = moduleDescriptorsByPath.values().iterator().next();
+    NotificationGroupManager.getInstance().getNotificationGroup("Remove redundant exports/opens").createNotification(
+      JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.notification.title", moduleDescriptorsByPath.size()),
+      null,
+      contentBuilder.toString(),
+      NotificationType.INFORMATION,
+      new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          String moduleFilePath = event.getDescription();
+          PsiJavaModule psiJavaModule = moduleDescriptorsByPath.get(moduleFilePath);
+          VirtualFile moduleFile = psiJavaModule.getContainingFile().getVirtualFile();
+          if (moduleFile.isValid()) {
+            FileEditorManager.getInstance(firstModule.getProject()).openFile(moduleFile, true);
+          }
+        }
+      })
+      .addAction(new NotificationAction(JavaRefactoringBundle.message("move.classes.or.packages.unused.exports.action.name")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e,
                                     @NotNull Notification notification) {
