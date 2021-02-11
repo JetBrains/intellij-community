@@ -159,6 +159,10 @@ public class TerminalWorkingDirectoryManager {
     content.putUserData(INITIAL_CWD_KEY, dir != null ? FileUtil.toSystemDependentName(dir.getPath()) : null);
   }
 
+  public static void setInitialWorkingDirectory(@NotNull Content content, @Nullable String directory) {
+    content.putUserData(INITIAL_CWD_KEY, directory);
+  }
+
   private static final class Data {
     private final KeyListener myKeyListener;
     private final String myContentName;
