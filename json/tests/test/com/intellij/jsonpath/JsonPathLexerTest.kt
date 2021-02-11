@@ -458,10 +458,48 @@ class JsonPathLexerTest : LexerTestCase() {
   }
 
   fun testNamedOperator() {
-    doTest("\$.x[?(@.a in \$.b)].in.avg()")
+    doTest("\$.x[?(@.a in \$.b)].in.avg()", """
+      $ROOT ('$ROOT')
+      . ('.')
+      IDENTIFIER ('x')
+      [ ('[')
+      ? ('?')
+      ( ('(')
+      @ ('@')
+      . ('.')
+      IDENTIFIER ('a')
+      WHITE_SPACE (' ')
+      NAMED_OP ('in')
+      WHITE_SPACE (' ')
+      $ROOT ('$ROOT')
+      . ('.')
+      IDENTIFIER ('b')
+      ) (')')
+      ] (']')
+      . ('.')
+      IDENTIFIER ('in')
+      . ('.')
+      IDENTIFIER ('avg')
+      ( ('(')
+      ) (')')
+    """.trimIndent())
   }
 
   fun testArrayOnTheLeft() {
-    doTest("@[?([1] contains 1)]")
+    doTest("@[?([1] contains 1)]", """
+      @ ('@')
+      [ ('[')
+      ? ('?')
+      ( ('(')
+      [ ('[')
+      INTEGER_NUMBER ('1')
+      ] (']')
+      WHITE_SPACE (' ')
+      NAMED_OP ('contains')
+      WHITE_SPACE (' ')
+      INTEGER_NUMBER ('1')
+      ) (')')
+      ] (']')
+    """.trimIndent())
   }
 }
