@@ -533,13 +533,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean isNull(DfaValue dfaValue) {
-    return getDfType(dfaValue) == DfTypes.NULL;
+  public boolean isNull(DfaValue value) {
+    return getDfType(value) == DfTypes.NULL;
   }
 
   @Override
-  public boolean isNotNull(DfaValue dfaVar) {
-    return !getDfType(dfaVar).isSuperType(DfTypes.NULL);
+  public boolean isNotNull(DfaValue value) {
+    return !getDfType(value).isSuperType(DfTypes.NULL);
   }
 
   @Override
@@ -1121,12 +1121,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (double1 == 0.0 && double2 == 0.0) return RelationType.EQ;
     int cmp = Double.compare(double1, double2);
     return cmp == 0 ? RelationType.EQ : cmp < 0 ? RelationType.LT : RelationType.GT;
-  }
-
-  @Override
-  public boolean checkNotNullable(@NotNull DfaValue value) {
-    DfaNullability nullability = DfaNullability.fromDfType(getDfType(value));
-    return nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
   }
 
   public @NotNull DfType getBinOpRange(DfaBinOpValue binOp) {

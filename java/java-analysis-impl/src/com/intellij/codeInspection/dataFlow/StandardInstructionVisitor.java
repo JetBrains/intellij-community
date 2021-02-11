@@ -769,7 +769,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   protected boolean checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-    boolean notNullable = state.checkNotNullable(value);
+    DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
+    boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
     if (notNullable && problem != null && problem.thrownException() != null) {
       state.applyCondition(value.cond(RelationType.NE, value.getFactory().getNull()));
     }

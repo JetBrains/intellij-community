@@ -128,17 +128,23 @@ public interface DfaMemoryState {
   @Nullable
   PsiType getPsiType(@NotNull DfaValue value);
 
+  /**
+   * @param value to check
+   * @return true if given value is null within this memory state
+   */
+  boolean isNull(DfaValue value);
+
+  /**
+   * @param value to check
+   * @return true if given value is not-null within this memory state
+   */
+  boolean isNotNull(DfaValue value);
+
   void flushFieldsQualifiedBy(@NotNull Set<DfaValue> qualifiers);
 
   void flushFields();
 
   void flushVariable(@NotNull DfaVariableValue variable);
-
-  boolean isNull(DfaValue dfaVar);
-
-  boolean checkNotNullable(@NotNull DfaValue value);
-
-  boolean isNotNull(DfaValue dfaVar);
 
   /**
    * Mark this state as ephemeral. See {@link #isEphemeral()} for details.
