@@ -23,6 +23,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -333,5 +334,16 @@ public final class GuiUtils {
         }
       }
     });
+  }
+
+  /**
+   * removes all children and parent references to avoid possible memory leaks
+   */
+  public static void removePotentiallyLeakingReferences(@NotNull Container container) {
+    assert SwingUtilities.isEventDispatchThread();
+    AWTAccessor.getComponentAccessor().setParent(container, null);
+    for (int i = container.getComponentCount() - 1; i >= 0; i--) {
+      container.remove(i);
+    }
   }
 }

@@ -315,12 +315,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     synchronized (myOriginals) {
       if (myPopup.isShowing()) return;
       myPopup.show(requestFocus);
-      if (hasProgressIndicators()) {
-        myShouldClosePopupAndOnProcessFinish = true;
-      }
-      else {
-        myShouldClosePopupAndOnProcessFinish = false;
-      }
+      myShouldClosePopupAndOnProcessFinish = hasProgressIndicators();
       myInlinePanel.updateState(true);
     }
   }
@@ -481,15 +476,6 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     ProgressPanelProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
       super(false, task, original);
 
-      ProgressPanelBuilder builder = new ProgressPanelBuilder(myProgress).withTopSeparator();
-      builder.withText2();
-
-      builder.withCancel(this::cancelRequest);
-
-      Runnable suspendRunnable = createSuspendRunnable();
-      builder.withPause(suspendRunnable).withResume(suspendRunnable);
-
-      myComponent = builder.createPanel();
       myProgressPanel = Objects.requireNonNull(ProgressPanel.getProgressPanel(myProgress));
       UIUtil.putClientProperty(myComponent, ProcessPopup.KEY, myProgressPanel);
 
@@ -525,7 +511,16 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     @Override
-    protected void createComponent() {
+    protected @NotNull JPanel createComponent() {
+      ProgressPanelBuilder builder = new ProgressPanelBuilder(myProgress).withTopSeparator();
+      builder.withText2();
+
+      builder.withCancel(this::cancelRequest);
+
+      Runnable suspendRunnable = createSuspendRunnable();
+      builder.withPause(suspendRunnable).withResume(suspendRunnable);
+
+      return builder.createPanel();
     }
 
     @Override
@@ -591,12 +586,12 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     @Override
-    protected void createCompactTextAndProgress() {
+    protected void createCompactTextAndProgress(@NotNull JPanel component) {
       myText.setTextAlignment(Component.RIGHT_ALIGNMENT);
       myText.recomputeSize();
       UIUtil.setCursor(myText, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       UIUtil.setCursor(myProgress, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      super.createCompactTextAndProgress();
+      super.createCompactTextAndProgress(component);
       ((JComponent)myProgress.getParent()).setBorder(JBUI.Borders.empty(0, 8, 0, 4));
     }
 
@@ -612,7 +607,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     @Override
-    protected JBIterable<ProgressButton> createEastButtons() {
+    protected @NotNull JBIterable<ProgressButton> createEastButtons() {
       return JBIterable.of(createSuspendButton()).append(super.createEastButtons());
     }
 
@@ -622,12 +617,14 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       cancel.setVisible(painting || !suspend.isVisible());
     }
 
+    @NotNull
     JBIterable<ProgressButton> createPresentationButtons() {
       ProgressButton suspend = createSuspendButton();
       ProgressButton cancel = createCancelButton();
       return JBIterable.of(suspend).append(new ProgressButton(cancel.button, () -> updateCancelButton(suspend.button, cancel.button)));
     }
 
+    @NotNull
     private ProgressButton createSuspendButton() {
       InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> createSuspendRunnable().run()).setFillBg(false);
       return new ProgressButton(suspendButton, createSuspendUpdateRunnable(suspendButton));
