@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn.lesson.kimpl
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package training.learn.course
 
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import training.learn.interfaces.Lesson
-import training.learn.interfaces.LessonType
-import training.learn.interfaces.Module
+import training.dsl.LessonContext
 import training.learn.lesson.LessonListener
 import training.util.findLanguageByID
 

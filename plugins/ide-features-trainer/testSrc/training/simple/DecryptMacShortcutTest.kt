@@ -3,7 +3,7 @@ package training.simple
 
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import training.keymap.KeymapUtil
+import training.util.KeymapUtil
 
 class DecryptMacShortcutTest : UsefulTestCase() {
   fun testSimpleKey() {

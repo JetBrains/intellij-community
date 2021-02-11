@@ -3,9 +3,13 @@ package training.learn.lesson.general.refactorings
 
 import com.intellij.testGuiFramework.impl.jList
 import com.intellij.ui.components.JBList
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 
 class ExtractVariableFromBubbleLesson(lang: String, private val sample: LessonSample)
   : KLesson("Extract variable", LessonsBundle.message("extract.variable.lesson.name"), lang) {

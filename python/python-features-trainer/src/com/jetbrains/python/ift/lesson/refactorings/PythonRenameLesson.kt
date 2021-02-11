@@ -15,13 +15,9 @@ import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.ift.PythonLessonsBundle
 import org.jetbrains.annotations.Nullable
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.dropMnemonic
-import training.learn.lesson.kimpl.parseLessonSample
+import training.learn.course.KLesson
 import java.util.regex.Pattern
 import javax.swing.JButton
 import javax.swing.JTree

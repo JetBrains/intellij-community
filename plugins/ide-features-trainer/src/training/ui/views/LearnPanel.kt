@@ -14,7 +14,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.interfaces.Lesson
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.ui.*
 import training.util.getNextLessonForCurrent

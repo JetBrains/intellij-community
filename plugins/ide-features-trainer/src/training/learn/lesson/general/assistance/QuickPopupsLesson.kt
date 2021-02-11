@@ -6,12 +6,12 @@ import com.intellij.codeInsight.documentation.QuickDocUtil
 import com.intellij.codeInsight.hint.ImplementationViewComponent
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 
 class QuickPopupsLesson(lang: String, private val sample: LessonSample) :
   KLesson("CodeAssistance.QuickPopups", LessonsBundle.message("quick.popups.lesson.name"), lang) {

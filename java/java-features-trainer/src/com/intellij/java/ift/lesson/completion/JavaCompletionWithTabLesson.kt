@@ -2,8 +2,8 @@
 package com.intellij.java.ift.lesson.completion
 
 import com.intellij.java.ift.JavaLangSupport
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.CompletionWithTabLesson
-import training.learn.lesson.kimpl.parseLessonSample
 
 class JavaCompletionWithTabLesson :
   CompletionWithTabLesson(JavaLangSupport.lang, "DO_NOTHING_ON_CLOSE") {

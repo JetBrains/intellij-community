@@ -5,12 +5,12 @@ import com.intellij.ide.CopyPasteManagerEx
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.LearningBalloonConfig
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.impl.ApplyTaskLessonContext
 import training.learn.CourseManager
-import training.learn.lesson.kimpl.ApplyTaskLessonContext
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LearningBalloonConfig
+import training.learn.course.KLesson
 import java.awt.datatransfer.StringSelection
 
 class DumpFeaturesTrainerText : AnAction() {

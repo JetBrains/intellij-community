@@ -10,8 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import training.lang.LangManager
 import training.lang.LangSupport
-import training.learn.interfaces.Lesson
-import training.learn.interfaces.Module
+import training.learn.course.LearningCourse
+import training.learn.course.Lesson
+import training.learn.course.Module
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator

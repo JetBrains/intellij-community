@@ -6,13 +6,13 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.testGuiFramework.impl.button
 import com.intellij.ui.UIBundle
-import training.commands.kotlin.TaskTestContext
+import training.dsl.LessonContext
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskTestContext
+import training.dsl.dropMnemonic
+import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.dropMnemonic
-import training.learn.lesson.kimpl.parseLessonSample
+import training.learn.course.KLesson
 import javax.swing.JDialog
 
 class JavaExtractMethodCocktailSortLesson

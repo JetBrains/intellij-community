@@ -1,12 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package training.learn.course
 
 import org.jetbrains.annotations.Nls
 import training.lang.LangSupport
-import training.learn.interfaces.Lesson
-import training.learn.interfaces.LessonType
-import training.learn.interfaces.Module
-import training.learn.lesson.kimpl.KLesson
 
 abstract class LearningModuleBase(@Nls override val name: String,
                                   @Nls override val description: String,

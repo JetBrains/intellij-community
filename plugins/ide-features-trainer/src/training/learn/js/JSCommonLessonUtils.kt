@@ -5,7 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.components.fields.ExtendableTextField
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.TaskRuntimeContext
 
 fun TaskRuntimeContext.textBeforeCaret(text: String): Boolean {
   val offset = editor.caretModel.offset

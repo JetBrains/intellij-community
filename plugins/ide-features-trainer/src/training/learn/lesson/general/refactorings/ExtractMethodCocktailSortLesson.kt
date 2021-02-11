@@ -5,11 +5,10 @@ import com.intellij.CommonBundle
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.testGuiFramework.impl.button
 import com.intellij.ui.UIBundle
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 import javax.swing.JButton
 import javax.swing.JDialog
 

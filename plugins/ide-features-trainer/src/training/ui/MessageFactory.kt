@@ -11,8 +11,8 @@ import org.jdom.Element
 import org.jdom.Text
 import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
-import training.keymap.KeymapUtil
 import training.learn.CourseManager
+import training.util.KeymapUtil
 import training.util.openLinkInBrowser
 
 object MessageFactory {

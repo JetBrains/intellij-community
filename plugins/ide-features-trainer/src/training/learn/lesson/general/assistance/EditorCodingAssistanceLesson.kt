@@ -7,14 +7,10 @@ import com.intellij.testGuiFramework.impl.jList
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.Modifier
 import com.intellij.testGuiFramework.util.Shortcut
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 import training.util.PerformActionUtil
 import javax.swing.JEditorPane
 

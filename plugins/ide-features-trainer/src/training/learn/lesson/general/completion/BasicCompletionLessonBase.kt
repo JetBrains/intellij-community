@@ -3,9 +3,13 @@ package training.learn.lesson.general.completion
 
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.course.KLesson
 import javax.swing.JList
 
 abstract class BasicCompletionLessonBase(lang: String)

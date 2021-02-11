@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.commands.kotlin
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package training.dsl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
@@ -19,8 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
+import training.dsl.impl.LessonExecutor
 import training.learn.ActionsRecorder
-import training.learn.lesson.kimpl.*
 import java.awt.Component
 
 @LearningDsl

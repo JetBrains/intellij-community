@@ -3,9 +3,9 @@ package com.intellij.java.ift.lesson.basic
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.siyeh.IntentionPowerPackBundle
+import training.dsl.LessonSample
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.ContextActionsLesson
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.parseLessonSample
 
 class JavaContextActionsLesson : ContextActionsLesson("JAVA") {
   override val sample: LessonSample = parseLessonSample("""

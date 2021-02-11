@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.learn.lesson.kimpl
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package training.dsl.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -15,10 +15,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import org.intellij.lang.annotations.Language
-import training.commands.kotlin.PreviousTaskInfo
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
 import training.learn.ActionsRecorder
+import training.learn.course.KLesson
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase

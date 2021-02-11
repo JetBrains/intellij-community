@@ -6,12 +6,12 @@ import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiForStatement
 import com.intellij.psi.util.PsiTreeUtil
-import training.commands.kotlin.TaskRuntimeContext
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.parseLessonSample
+import training.dsl.LessonContext
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.parseLessonSample
+import training.learn.course.KLesson
 
 class JavaStatementCompletionLesson
   : KLesson("Statement completion", JavaLessonsBundle.message("java.statement.completion.lesson.name"), JavaLangSupport.lang) {

@@ -2,10 +2,10 @@
 package training.project
 
 import com.intellij.idea.ActionsBundle
+import training.dsl.LessonUtil
+import training.dsl.dropMnemonic
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.LessonUtil
-import training.learn.lesson.kimpl.dropMnemonic
 
 open class ReadMeCreator {
   private val learnName get() = LearnBundle.message("toolwindow.stripe.Learn")

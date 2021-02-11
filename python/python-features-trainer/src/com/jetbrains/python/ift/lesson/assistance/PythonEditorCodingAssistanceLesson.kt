@@ -3,9 +3,9 @@ package com.jetbrains.python.ift.lesson.assistance
 
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.commands.kotlin.TaskContext
+import training.dsl.LessonSample
+import training.dsl.TaskContext
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
-import training.learn.lesson.kimpl.LessonSample
 
 class PythonEditorCodingAssistanceLesson(lang: String, sample: LessonSample) :
   EditorCodingAssistanceLesson(lang, sample) {

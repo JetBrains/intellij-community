@@ -4,10 +4,10 @@ package com.jetbrains.python.ift.lesson.run
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.LogicalPosition
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.commands.kotlin.TaskTestContext
+import training.dsl.LessonContext
+import training.dsl.TaskTestContext
+import training.dsl.highlightButtonById
 import training.learn.lesson.general.run.CommonDebugLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.highlightButtonById
 
 class PythonDebugLesson : CommonDebugLesson("python.debug.workflow", "Python") {
   override val configurationName = PythonRunLessonsUtils.demoConfigurationName

@@ -13,17 +13,17 @@ import com.intellij.java.ift.lesson.refactorings.JavaRenameLesson
 import com.intellij.java.ift.lesson.run.JavaDebugLesson
 import com.intellij.java.ift.lesson.run.JavaRunConfigurationLesson
 import com.intellij.lang.java.JavaLanguage
-import training.learn.LearningModule
+import training.dsl.LessonUtil
 import training.learn.LessonsBundle
 import training.learn.course.LearningCourseBase
-import training.learn.interfaces.LessonType
+import training.learn.course.LearningModule
+import training.learn.course.LessonType
 import training.learn.lesson.general.*
 import training.learn.lesson.general.assistance.CodeFormatLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson
 import training.learn.lesson.general.assistance.QuickPopupsLesson
 import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
-import training.learn.lesson.kimpl.LessonUtil
 
 class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
   override fun modules() = listOf(

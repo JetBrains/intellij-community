@@ -3,8 +3,8 @@ package com.intellij.java.ift.lesson.assistance
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.siyeh.InspectionGadgetsBundle
+import training.dsl.LessonSample
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
-import training.learn.lesson.kimpl.LessonSample
 
 class JavaEditorCodingAssistanceLesson(lang: String, sample: LessonSample) :
   EditorCodingAssistanceLesson(lang, sample) {

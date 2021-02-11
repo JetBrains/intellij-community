@@ -7,12 +7,12 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.actionButton
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.usageView.UsageViewBundle
-import training.learn.interfaces.LessonType
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.parseLessonSample
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.parseLessonSample
+import training.learn.course.KLesson
+import training.learn.course.LessonType
 
 class JavaOccurrencesLesson
   : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name"), "JAVA") {

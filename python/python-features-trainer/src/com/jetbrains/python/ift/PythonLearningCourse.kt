@@ -18,10 +18,11 @@ import com.jetbrains.python.ift.lesson.refactorings.PythonRefactorMenuLesson
 import com.jetbrains.python.ift.lesson.refactorings.PythonRenameLesson
 import com.jetbrains.python.ift.lesson.run.PythonDebugLesson
 import com.jetbrains.python.ift.lesson.run.PythonRunConfigurationLesson
-import training.learn.LearningModule
+import training.dsl.LessonUtil
 import training.learn.LessonsBundle
 import training.learn.course.LearningCourseBase
-import training.learn.interfaces.LessonType
+import training.learn.course.LearningModule
+import training.learn.course.LessonType
 import training.learn.lesson.general.*
 import training.learn.lesson.general.assistance.CodeFormatLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson
@@ -29,7 +30,6 @@ import training.learn.lesson.general.assistance.QuickPopupsLesson
 import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractMethodCocktailSortLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
-import training.learn.lesson.kimpl.LessonUtil
 import training.util.switchOnExperimentalLessons
 
 class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {

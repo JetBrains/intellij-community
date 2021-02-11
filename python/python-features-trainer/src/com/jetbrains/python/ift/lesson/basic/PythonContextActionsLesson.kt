@@ -1,9 +1,9 @@
 package com.jetbrains.python.ift.lesson.basic
 
 import com.jetbrains.python.PyPsiBundle
+import training.dsl.LessonSample
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.ContextActionsLesson
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.parseLessonSample
 
 class PythonContextActionsLesson : ContextActionsLesson("Python") {
   override val sample: LessonSample = parseLessonSample("""

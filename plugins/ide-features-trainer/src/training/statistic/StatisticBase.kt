@@ -10,11 +10,10 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl
 import com.intellij.util.TimeoutUtil
-import training.keymap.KeymapUtil
 import training.lang.LangManager
 import training.learn.CourseManager
-import training.learn.interfaces.Lesson
-import training.learn.interfaces.Module
+import training.learn.course.Lesson
+import training.learn.course.Module
 import training.learn.lesson.LessonManager
 import training.statistic.FeatureUsageStatisticConsts.ACTION_ID
 import training.statistic.FeatureUsageStatisticConsts.COMPLETED_COUNT
@@ -32,6 +31,7 @@ import training.statistic.FeatureUsageStatisticConsts.SHORTCUT_CLICKED
 import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
+import training.util.KeymapUtil
 import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane

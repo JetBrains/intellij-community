@@ -29,7 +29,7 @@
     </extensionPoint>
 
     <extensionPoint name="ift.learning.course" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="training.learn.LearningCourse"/>
+      <with attribute="implementationClass" implements="training.learn.course.LearningCourse"/>
     </extensionPoint>
   </extensionPoints>
 

@@ -13,11 +13,10 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.jList
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.util.ui.UIUtil
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.*
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.*
+import training.learn.course.KLesson
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
 

@@ -15,8 +15,8 @@ import icons.FeaturesTrainerIcons
 import org.jetbrains.annotations.NotNull
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.interfaces.Lesson
-import training.learn.interfaces.Module
+import training.learn.course.Lesson
+import training.learn.course.Module
 import training.learn.lesson.LessonManager
 import training.ui.UISettings
 import training.util.createBalloon

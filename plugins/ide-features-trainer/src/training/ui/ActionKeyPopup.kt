@@ -15,9 +15,9 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import training.keymap.KeymapUtil
 import training.learn.LearnBundle
 import training.statistic.StatisticBase
+import training.util.KeymapUtil
 import training.util.invokeActionForFocusContext
 import java.awt.Component
 import java.awt.Insets

@@ -4,12 +4,12 @@ package training.learn.lesson.general
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.PsiTreeUtil
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.LessonContext
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.parseLessonSample
+import training.learn.course.KLesson
 
 class MultipleSelectionHtmlLesson
   : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name"), "HTML") {

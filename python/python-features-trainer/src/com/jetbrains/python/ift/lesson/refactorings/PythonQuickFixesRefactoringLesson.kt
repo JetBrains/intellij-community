@@ -14,10 +14,9 @@ import com.intellij.util.ui.table.JBTableRow
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskTestContext
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.*
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.course.KLesson
 import java.util.regex.Pattern
 import javax.swing.JDialog
 import javax.swing.JTable

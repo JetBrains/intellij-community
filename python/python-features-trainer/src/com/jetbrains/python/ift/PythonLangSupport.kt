@@ -21,10 +21,10 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReady
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
+import training.dsl.LessonUtil
 import training.lang.AbstractLangSupport
 import training.learn.LearnBundle
 import training.learn.exceptons.NoSdkException
-import training.learn.lesson.kimpl.LessonUtil
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
 import training.util.getFeedbackLink

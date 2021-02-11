@@ -12,14 +12,14 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil.shortcut
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.UIBundle
 import com.intellij.ui.table.JBTable
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.LessonContext
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.checkToolWindowState
+import training.dsl.closeAllFindTabs
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.lesson.kimpl.checkToolWindowState
-import training.learn.lesson.kimpl.closeAllFindTabs
+import training.learn.course.KLesson
 
 abstract class DeclarationAndUsagesLesson(lang: String)
   : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name"), lang) {

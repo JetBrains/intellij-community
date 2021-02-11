@@ -7,13 +7,13 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskRuntimeContext
+import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
-import training.learn.interfaces.LessonType
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil
-import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
+import training.learn.course.KLesson
+import training.learn.course.LessonType
 
 abstract class FileStructureLesson(lang: String)
   : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name"), lang) {

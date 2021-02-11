@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package training.commands.kotlin
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package training.dsl
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
@@ -15,7 +15,6 @@ import org.fest.swing.core.Robot
 import org.fest.swing.fixture.ContainerFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Timeout
-import training.learn.lesson.kimpl.LearningDsl
 import training.util.invokeActionForFocusContext
 import java.awt.Component
 import java.awt.Container
@@ -72,7 +71,8 @@ class TaskTestContext(rt: TaskRuntimeContext): TaskRuntimeContext(rt) {
   }
 
 
-  class SimpleComponentFixture(robot: Robot, target: Component): ComponentFixture<SimpleComponentFixture, Component>(SimpleComponentFixture::class.java, robot, target)
+  class SimpleComponentFixture(robot: Robot, target: Component): ComponentFixture<SimpleComponentFixture, Component>(
+    SimpleComponentFixture::class.java, robot, target)
 
   fun IdeFrameFixture.jComponent(target: Component): SimpleComponentFixture {
     return SimpleComponentFixture(robot(), target)

@@ -8,11 +8,10 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.testGuiFramework.impl.button
 import com.intellij.util.ui.UIUtil
-import training.commands.kotlin.TaskContext
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.*
+import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.checkExpectedStateOfEditor
+import training.learn.course.KLesson
 import javax.swing.JDialog
 
 class JavaRenameLesson

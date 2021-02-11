@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import training.commands.kotlin.TaskContext
+import training.dsl.TaskContext
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.ui.LearningUiManager

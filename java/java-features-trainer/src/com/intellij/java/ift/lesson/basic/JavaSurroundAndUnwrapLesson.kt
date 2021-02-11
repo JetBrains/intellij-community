@@ -2,10 +2,10 @@
 package com.intellij.java.ift.lesson.basic
 
 import com.intellij.java.ift.JavaLessonsBundle
+import training.dsl.LessonSample
+import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.lesson.general.SurroundAndUnwrapLesson
-import training.learn.lesson.kimpl.LessonSample
-import training.learn.lesson.kimpl.parseLessonSample
 
 class JavaSurroundAndUnwrapLesson : SurroundAndUnwrapLesson("JAVA") {
   override val sample: LessonSample = parseLessonSample("""

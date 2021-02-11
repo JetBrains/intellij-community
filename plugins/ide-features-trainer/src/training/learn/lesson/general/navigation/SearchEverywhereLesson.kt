@@ -14,14 +14,10 @@ import com.intellij.testGuiFramework.util.Modifier
 import com.intellij.testGuiFramework.util.Shortcut
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.UIUtil
-import training.commands.kotlin.TaskRuntimeContext
-import training.commands.kotlin.TaskTestContext
+import training.dsl.*
 import training.learn.LessonsBundle
-import training.learn.interfaces.LessonType
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonUtil
-import training.learn.lesson.kimpl.restoreAfterStateBecomeFalse
+import training.learn.course.KLesson
+import training.learn.course.LessonType
 import java.awt.event.KeyEvent
 import javax.swing.JList
 

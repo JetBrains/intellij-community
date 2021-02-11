@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general
 
+import training.dsl.LessonContext
+import training.dsl.LessonSample
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.KLesson
-import training.learn.lesson.kimpl.LessonContext
-import training.learn.lesson.kimpl.LessonSample
+import training.learn.course.KLesson
 
 class CollapseLesson(lang: String, private val sample: LessonSample)
   : KLesson("Collapse", LessonsBundle.message("collapse.lesson.name"), lang) {

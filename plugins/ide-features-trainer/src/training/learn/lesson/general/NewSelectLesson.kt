@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general
 
-import training.commands.kotlin.TaskRuntimeContext
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil.checkPositionOfEditor
+import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
-import training.learn.lesson.kimpl.*
-import training.learn.lesson.kimpl.LessonUtil.checkPositionOfEditor
-import training.learn.lesson.kimpl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.course.KLesson
 
 abstract class NewSelectLesson(lang: String) :
   KLesson("Select", LessonsBundle.message("selection.lesson.name"), lang) {

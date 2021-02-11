@@ -16,7 +16,7 @@ import com.intellij.ui.scale.JBUIScale
 import icons.FeaturesTrainerIcons.Img.PluginIcon
 import training.learn.CourseManager
 import training.learn.LearnBundle
-import training.learn.interfaces.Module
+import training.learn.course.Module
 import training.statistic.StatisticBase
 import training.util.rigid
 import java.awt.event.ActionEvent
