@@ -15,6 +15,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -184,9 +185,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (listOwner instanceof PsiReceiverParameter && nullability != Nullability.NOT_NULL) {
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.receiver.annotation");
         }
-        if (nullability != Nullability.UNKNOWN) {
-          checkOppositeAnnotationConflict(annotation, nullability == Nullability.NOT_NULL);
-        }
+        checkOppositeAnnotationConflict(annotation, nullability);
         if (AnnotationUtil.NOT_NULL.equals(qualifiedName)) {
           PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("exception");
           if (value instanceof PsiClassObjectAccessExpression) {
@@ -198,18 +197,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
       }
 
-      private void checkOppositeAnnotationConflict(PsiAnnotation annotation, boolean isNotNull) {
+      private void checkOppositeAnnotationConflict(PsiAnnotation annotation, Nullability nullability) {
         PsiAnnotationOwner owner = annotation.getOwner();
         if (owner == null) return;
-        List<String> opposite = isNotNull ? nullables : notNulls;
         PsiAnnotation oppositeAnno;
         if (owner instanceof PsiModifierList && ((PsiModifierList)owner).getParent() instanceof PsiModifierListOwner) {
           oppositeAnno = manager.findExplicitNullabilityAnnotation((PsiModifierListOwner)((PsiModifierList)owner).getParent(),
-                                                                   isNotNull ? Nullability.NULLABLE : Nullability.NOT_NULL);
+                                                                   ContainerUtil.filter(Nullability.values(), n -> n != nullability));
         }
         else {
-          oppositeAnno = ContainerUtil.find(owner.getAnnotations(), 
-                                            anno -> anno != annotation && opposite.contains(anno.getQualifiedName()));
+          Condition<PsiAnnotation> filter = anno -> 
+            anno != annotation && manager.getAnnotationNullability(anno.getQualifiedName()).filter(n -> n != nullability).isPresent();
+          oppositeAnno = ContainerUtil.find(owner.getAnnotations(), filter);
         }
         if (oppositeAnno != null && 
             Objects.equals(AnnotationUtil.getRelatedType(annotation), AnnotationUtil.getRelatedType(oppositeAnno))) {
@@ -631,8 +630,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
     @NotNull static Annotated from(@NotNull PsiModifierListOwner owner) {
       NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-      return new Annotated(manager.findExplicitNullabilityAnnotation(owner, Nullability.NOT_NULL),
-                           manager.findExplicitNullabilityAnnotation(owner, Nullability.NULLABLE));
+      return new Annotated(manager.findExplicitNullabilityAnnotation(owner, Set.of(Nullability.NOT_NULL)),
+                           manager.findExplicitNullabilityAnnotation(owner, Set.of(Nullability.NULLABLE)));
     }
   }
 

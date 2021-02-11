@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -219,11 +220,11 @@ public abstract class NullableNotNullManager {
    * @return an annotation (if any) with the given nullability semantics on the given declaration or its type. In case of conflicts,
    * type annotations are preferred.
    */
-  public @Nullable PsiAnnotation findExplicitNullabilityAnnotation(@NotNull PsiModifierListOwner owner, @NotNull Nullability nullability) {
-    if (nullability == Nullability.UNKNOWN) return null;
+  public @Nullable PsiAnnotation findExplicitNullabilityAnnotation(@NotNull PsiModifierListOwner owner, 
+                                                                   @NotNull Collection<Nullability> nullabilities) {
     NullabilityAnnotationDataHolder holder = getAllNullabilityAnnotationsWithNickNames();
     Set<String> filteredSet =
-      holder.qualifiedNames().stream().filter(qName -> holder.getNullability(qName) == nullability).collect(Collectors.toSet());
+      holder.qualifiedNames().stream().filter(qName -> nullabilities.contains(holder.getNullability(qName))).collect(Collectors.toSet());
     NullabilityAnnotationDataHolder filtered = new NullabilityAnnotationDataHolder() {
       @Override
       public Set<String> qualifiedNames() {
@@ -233,7 +234,7 @@ public abstract class NullableNotNullManager {
       @Override
       public @Nullable Nullability getNullability(String annotation) {
         Nullability origNullability = holder.getNullability(annotation);
-        return origNullability == nullability ? nullability : null;
+        return nullabilities.contains(origNullability) ? origNullability : null;
       }
     };
     NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, false, filtered);

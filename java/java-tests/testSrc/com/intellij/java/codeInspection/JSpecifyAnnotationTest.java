@@ -186,6 +186,9 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         case "inspection.nullable.problems.parameter.overrides.NotNull":
           warnings.put(anchor, "jspecify_nullness_not_enough_information");
           break;
+        case "inspection.nullable.problems.Nullable.NotNull.conflict":
+          warnings.put(anchor, "jspecify_conflicting_annotations");
+          break;
       }
     }
   }
