@@ -55,31 +55,34 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       }
 
       override fun runActivity(project: Project) {
-        val indicator = ProgressManager.getInstance().progressIndicator
-        ApplicationManager.getApplication().invokeLater(
-          Runnable {
-            val manager = instance
-            val tracker = manager.getPluginTracker(project)
-            val projects = openProjectsExcludingCurrent(project)
+        val manager = instance
+        val tracker = manager.getPluginTracker(project)
+        val projects = openProjectsExcludingCurrent(project)
 
+        val pluginIdsToLoad = tracker.enabledPluginsIds
+          .union(manager.locallyDisabledAndGloballyEnabledPlugins(projects))
+
+        val pluginIdsToUnload = tracker.disabledPluginsIds
+
+        if (pluginIdsToLoad.isNotEmpty() ||
+            pluginIdsToUnload.isNotEmpty()) {
+          val indicator = ProgressManager.getInstance().progressIndicator
+          ApplicationManager.getApplication().invokeAndWait {
             indicator?.let {
               it.text = IdeBundle.message("plugins.progress.loading.plugins.for.current.project.title", project.name)
             }
-            val pluginIdsToLoad = tracker.enabledPluginsIds
-              .union(manager.locallyDisabledAndGloballyEnabledPlugins(projects))
             loadPlugins(pluginIdsToLoad)
 
             indicator?.let {
               it.text = IdeBundle.message("plugins.progress.unloading.plugins.for.current.project.title", project.name)
             }
             manager.unloadPlugins(
-              tracker.disabledPluginsIds,
+              pluginIdsToUnload,
               project,
               projects,
             )
-          },
-          project.disposed,
-        )
+          }
+        }
       }
     }
 
