@@ -533,8 +533,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         LOG.warn(editor.getClass().getName() + ".getFile() shall not return null");
       }
       else {
-        LOG.warn("fileEditor.getFile=" + file + "!= fileEditorManager.getFile=" + virtualFile +
-                 ", fileEditor.class=" + editor.getClass().getName());
+        if (!(file instanceof BackedVirtualFile)) {
+          LOG.warn("fileEditor.getFile=" + file + "!= fileEditorManager.getFile=" + virtualFile +
+                   ", fileEditor.class=" + editor.getClass().getName());
+        }
       }
     }
     return virtualFile;
