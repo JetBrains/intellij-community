@@ -1,6 +1,6 @@
 // "Iterate" "true"
 class Test {
   void foo() {
-    getClass().getAnnotatio<caret>ns()
+    getClass().getAnnotatio<caret>ns();
   }
 }
