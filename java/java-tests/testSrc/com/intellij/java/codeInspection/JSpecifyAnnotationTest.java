@@ -178,6 +178,14 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         case "inspection.nullable.problems.at.local.variable":
           warnings.put(anchor, "jspecify_unrecognized_location");
           break;
+        case "inspection.nullable.problems.Nullable.method.overrides.NotNull":
+        case "inspection.nullable.problems.NotNull.parameter.overrides.Nullable":
+          warnings.put(anchor, "jspecify_nullness_mismatch");
+          break;
+        case "inspection.nullable.problems.method.overrides.NotNull":
+        case "inspection.nullable.problems.parameter.overrides.NotNull":
+          warnings.put(anchor, "jspecify_nullness_not_enough_information");
+          break;
       }
     }
   }
