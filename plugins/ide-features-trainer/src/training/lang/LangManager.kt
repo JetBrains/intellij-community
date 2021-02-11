@@ -3,6 +3,7 @@ package training.lang
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -36,7 +37,11 @@ class LangManager : PersistentStateComponent<LangManager.State> {
     val onlyLang =
       languages.singleOrNull() ?:
       languages.singleOrNull { it.instance.defaultProductName == productName } ?:
-      languages.firstOrNull()?.also { logger<LangManager>().error("No default language for $productName. Selected ${it.language}.") }
+      languages.firstOrNull()?.also {
+        if (!ApplicationManager.getApplication().isUnitTestMode) {
+          logger<LangManager>().warn("No default language for $productName. Selected ${it.language}.")
+        }
+      }
 
     if (onlyLang != null) {
       myLangSupport = onlyLang.instance
