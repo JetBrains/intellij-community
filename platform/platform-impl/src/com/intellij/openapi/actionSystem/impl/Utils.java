@@ -78,7 +78,7 @@ public final class Utils {
                                                  @NotNull DataContext context,
                                                  String place, ActionGroupVisitor visitor,
                                                  boolean isContextMenuAction) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, false, false, visitor)
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, false, visitor)
       .expandActionGroup(group, group instanceof CompactActionGroup);
   }
 
@@ -90,7 +90,7 @@ public final class Utils {
     if (!(context instanceof PreCachedDataContext)) {
       context = new PreCachedDataContext(context);
     }
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, visitor)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
 
@@ -100,7 +100,7 @@ public final class Utils {
                                                  @NotNull DataContext context,
                                                  String place, ActionGroupVisitor visitor,
                                                  int timeoutMs) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, visitor)
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
   }
 
@@ -117,7 +117,7 @@ public final class Utils {
                        boolean useDarkIcons) {
     final boolean checked = group instanceof CheckedActionGroup;
 
-    ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false, false);
+    ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false);
     List<AnAction> list = DO_FULL_EXPAND ?
                           updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
                           updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
@@ -179,7 +179,6 @@ public final class Utils {
     }
 
     if (fixMacScreenMenu) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         for (Component each : children) {
           if (each.getParent() != null && each instanceof ActionMenuItem) {

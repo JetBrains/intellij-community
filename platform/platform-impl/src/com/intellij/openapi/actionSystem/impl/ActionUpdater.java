@@ -54,7 +54,6 @@ final class ActionUpdater {
   private final String myPlace;
   private final boolean myContextMenuAction;
   private final boolean myToolbarAction;
-  private final boolean myTransparentOnly;
 
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
   private final Map<ActionGroup, List<AnAction>> myGroupChildren = new ConcurrentHashMap<>();
@@ -69,15 +68,15 @@ final class ActionUpdater {
                 PresentationFactory presentationFactory,
                 DataContext dataContext,
                 String place,
-                boolean isContextMenuAction, boolean isToolbarAction, boolean transparentOnly) {
-    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, transparentOnly, null);
+                boolean isContextMenuAction, boolean isToolbarAction) {
+    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, null);
   }
 
   ActionUpdater(boolean isInModalContext,
                 PresentationFactory presentationFactory,
                 DataContext dataContext,
                 String place,
-                boolean isContextMenuAction, boolean isToolbarAction, boolean transparentOnly,
+                boolean isContextMenuAction, boolean isToolbarAction,
                 Utils.ActionGroupVisitor visitor) {
     myModalContext = isInModalContext;
     myFactory = presentationFactory;
@@ -86,7 +85,6 @@ final class ActionUpdater {
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
-    myTransparentOnly = transparentOnly;
     myRealUpdateStrategy = new UpdateStrategy(
       action -> {
         // clone the presentation to avoid partially changing the cached one if update is interrupted
@@ -303,10 +301,10 @@ final class ActionUpdater {
   }
 
   private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabled, UpdateStrategy strategy) {
-    if (!myTransparentOnly || child.isTransparentUpdate()) {
-      if (update(child, strategy) == null) return Collections.emptyList();
+    Presentation presentation = update(child, strategy);
+    if (presentation == null) {
+      return Collections.emptyList();
     }
-    Presentation presentation = orDefault(child, myUpdatedPresentations.get(child));
 
     if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
       return Collections.emptyList();

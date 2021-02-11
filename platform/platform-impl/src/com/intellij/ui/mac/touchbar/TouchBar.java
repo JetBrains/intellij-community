@@ -42,7 +42,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
   private final TBItemButton myCustomEsc;
   private final ActionGroup myActionGroup;
   private final @Nullable String mySkipSubgroupsPrefix;
-  private final @NotNull Updater myUpdateTimer = new Updater(500);
+  private final @NotNull Updater myUpdateTimer = new Updater();
   private CancellablePromise<List<AnAction>> myLastUpdate;
   private String[] myVisibleIds;
   private long myStartShowNs = 0;
@@ -151,7 +151,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
 
   @Override
   public String toString() {
-    return myItems.toString() + "_" + myNativePeer;
+    return myItems + "_" + myNativePeer;
   }
 
   @Override
@@ -509,17 +509,14 @@ final class TouchBar implements NSTLibrary.ItemCreator {
 
   private void _closeSelf() {
     if (myBarContainer == null) {
-      LOG.error("can't perform _closeSelf for touchbar '" + toString() + "' because parent container wasn't set");
+      LOG.error("can't perform _closeSelf for touchbar '" + this + "' because parent container wasn't set");
       return;
     }
     TouchBarsManager.hideContainer(myBarContainer);
   }
 
   private final class Updater {
-    private final int myDelay;
     private @Nullable TimerListener myTimerImpl;
-
-    Updater(int delay) { myDelay = delay; }
 
     void start() {
       if (myTimerImpl != null) {
@@ -537,7 +534,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
           updateActionItems();
         }
       };
-      ActionManager.getInstance().addTransparentTimerListener(myDelay/*delay param doesn't affect anything*/, myTimerImpl);
+      ActionManager.getInstance().addTimerListener(-1, myTimerImpl);
     }
 
     void stop() {
@@ -545,7 +542,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
         return;
       }
 
-      ActionManager.getInstance().removeTransparentTimerListener(myTimerImpl);
+      ActionManager.getInstance().removeTimerListener(myTimerImpl);
       myTimerImpl = null;
     }
 

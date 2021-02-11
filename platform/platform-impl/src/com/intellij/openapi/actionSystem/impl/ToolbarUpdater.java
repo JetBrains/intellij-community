@@ -46,8 +46,7 @@ public abstract class ToolbarUpdater implements Activatable {
 
     myListenersArmed = true;
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.addTimerListener(500, myWeakTimerListener);
-    actionManager.addTransparentTimerListener(500, myWeakTimerListener);
+    actionManager.addTimerListener(-1, myWeakTimerListener);
     KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener);
     updateActionTooltips();
   }
@@ -61,16 +60,11 @@ public abstract class ToolbarUpdater implements Activatable {
     myListenersArmed = false;
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     actionManager.removeTimerListener(myWeakTimerListener);
-    actionManager.removeTransparentTimerListener(myWeakTimerListener);
     KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener);
   }
 
   public void updateActions(boolean now, boolean forced, boolean includeInvisible) {
-    updateActions(now, false, forced, includeInvisible);
-  }
-
-  private void updateActions(boolean now, boolean transparentOnly, boolean forced, boolean includeInvisible) {
-    Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced, includeInvisible);
+    Runnable updateRunnable = new MyUpdateRunnable(this, forced, includeInvisible);
     Application app = ApplicationManager.getApplication();
     if (now || (app.isUnitTestMode() && app.isDispatchThread())) {
       updateRunnable.run();
@@ -86,7 +80,7 @@ public abstract class ToolbarUpdater implements Activatable {
     }
   }
 
-  protected abstract void updateActionsImpl(boolean transparentOnly, boolean forced);
+  protected abstract void updateActionsImpl(boolean forced);
 
   protected void updateActionTooltips() {
     for (ActionButton actionButton : UIUtil.uiTraverser(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
@@ -127,12 +121,11 @@ public abstract class ToolbarUpdater implements Activatable {
         return;
       }
 
-      updateActions(false, ActionManagerEx.getInstanceEx().isTransparentOnlyActionsUpdateNow(), false);
+      updateActions(false, false, false);
     }
   }
 
   private static final class MyUpdateRunnable implements Runnable {
-    private final boolean myTransparentOnly;
     private final boolean myForced;
 
     @NotNull
@@ -140,8 +133,7 @@ public abstract class ToolbarUpdater implements Activatable {
     private final boolean myIncludeInvisible;
     private final int myHash;
 
-    MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean transparentOnly, boolean forced, boolean includeInvisible) {
-      myTransparentOnly = transparentOnly;
+    MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean forced, boolean includeInvisible) {
       myForced = forced;
       myIncludeInvisible = includeInvisible;
       myHash = updater.hashCode();
@@ -156,7 +148,7 @@ public abstract class ToolbarUpdater implements Activatable {
         return;
       }
 
-      updater.updateActionsImpl(myTransparentOnly, myForced);
+      updater.updateActionsImpl(myForced);
     }
 
     @Override

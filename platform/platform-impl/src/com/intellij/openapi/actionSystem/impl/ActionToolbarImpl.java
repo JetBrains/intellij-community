@@ -169,9 +169,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myDecorateButtons = decorateButtons;
     myUpdater = new ToolbarUpdater(this) {
       @Override
-      protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
+      protected void updateActionsImpl(boolean forced) {
         if (!ApplicationManager.getApplication().isDisposed()) {
-          ActionToolbarImpl.this.updateActionsImpl(transparentOnly, forced);
+          ActionToolbarImpl.this.updateActionsImpl(forced);
         }
       }
     };
@@ -1103,10 +1103,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     updateActionsImmediately();
   }
 
-  private void updateActionsImpl(boolean transparentOnly, boolean forced) {
+  private void updateActionsImpl(boolean forced) {
     DataContext dataContext = Utils.wrapDataContext(getDataContext());
     ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
-                                              dataContext, myPlace, false, true, transparentOnly);
+                                              dataContext, myPlace, false, true);
     if (Utils.isAsyncDataContext(dataContext)) {
       if (myLastUpdate != null) myLastUpdate.cancel();
 
