@@ -117,7 +117,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
   @Contract("null, _ -> null")
   @Nullable
   public final NullabilityProblem<T> problem(@Nullable T anchor, @Nullable PsiExpression expression) {
-    return anchor == null || this == noProblem ? null : new NullabilityProblem<>(this, anchor, expression);
+    return anchor == null || this == noProblem ? null : new NullabilityProblem<>(this, anchor, expression, false);
   }
 
   /**
@@ -430,7 +430,12 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       if (innerClassNPE == kind || callNPE == kind || arrayAccessNPE == kind || fieldAccessNPE == kind) {
         // Qualifier-problems are reported on top-expression level for now as it's rare case to have
         // something complex in qualifier and we highlight not the qualifier itself, but something else (e.g. called method name)
-        unchanged.add(problem.withExpression(findTopExpression(expression)));
+        boolean unknown = problem.hasUnknownNullability();
+        problem = problem.withExpression(findTopExpression(expression));
+        if (unknown) {
+          problem = problem.makeUnknown();
+        }
+        unchanged.add(problem);
         continue;
       }
       // Merge ternary problems reported for both branches into single problem
@@ -450,7 +455,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
             NullabilityProblem<?> otherBranchProblem = expressionToProblem.remove(otherBranch);
             if (otherBranchProblem != null) {
               expression = ternary;
+              boolean unknown = problem.hasUnknownNullability() && otherBranchProblem.hasUnknownNullability();
               problem = problem.withExpression(ternary);
+              if (unknown) {
+                problem = problem.makeUnknown();
+              }
               continue;
             }
           }
@@ -499,11 +508,16 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     private final @NotNull NullabilityProblemKind<T> myKind;
     private final @NotNull T myAnchor;
     private final @Nullable PsiExpression myDereferencedExpression;
+    private final boolean myFromUnknown;
 
-    NullabilityProblem(@NotNull NullabilityProblemKind<T> kind, @NotNull T anchor, @Nullable PsiExpression dereferencedExpression) {
+    NullabilityProblem(@NotNull NullabilityProblemKind<T> kind,
+                       @NotNull T anchor,
+                       @Nullable PsiExpression dereferencedExpression,
+                       boolean unknown) {
       myKind = kind;
       myAnchor = anchor;
       myDereferencedExpression = dereferencedExpression;
+      myFromUnknown = unknown;
     }
 
     @NotNull
@@ -528,18 +542,27 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       return myDereferencedExpression;
     }
 
+    /**
+     * @return true if dereferenced expression has unknown nullability 
+     * (reported in {@link DataFlowInspectionBase#TREAT_UNKNOWN_MEMBERS_AS_NULLABLE} mode).
+     */
+    public boolean hasUnknownNullability() {
+      return myFromUnknown;
+    }
+    
     @NotNull
     public @InspectionMessage String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
         throw new IllegalStateException("This problem kind has no message associated: " + myKind);
       }
+      String suffix = myFromUnknown ? JavaAnalysisBundle.message("dataflow.message.unknown.nullability") : "";
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
       if (expression != null) {
         if (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInspectionBase.ConstantResult.NULL) {
-          return myKind.myAlwaysNullMessage.get();
+          return myKind.myAlwaysNullMessage.get() + suffix;
         }
       }
-      return myKind.myNormalMessage.get();
+      return myKind.myNormalMessage.get() + suffix;
     }
 
     @NotNull
@@ -567,7 +590,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
 
     public NullabilityProblem<T> withExpression(PsiExpression expression) {
-      return expression == myDereferencedExpression ? this : new NullabilityProblem<>(myKind, myAnchor, expression);
+      return expression == myDereferencedExpression ? this : new NullabilityProblem<>(myKind, myAnchor, expression, false);
+    }
+
+    public NullabilityProblem<T> makeUnknown() {
+      return new NullabilityProblem<>(myKind, myAnchor, myDereferencedExpression, true);
     }
   }
 }

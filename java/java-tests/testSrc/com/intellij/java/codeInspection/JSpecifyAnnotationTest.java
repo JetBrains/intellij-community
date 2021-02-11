@@ -130,6 +130,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
 
       Map<PsiElement, String> actual = new LinkedHashMap<>();
       var dfaInspection = new JSpecifyDataFlowInspection(actual);
+      dfaInspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
       List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
@@ -208,23 +209,24 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
                                              List<NullabilityProblemKind.NullabilityProblem<?>> problems,
                                              Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
       for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
-        PsiExpression expression = problem.getDereferencedExpression();
-        if (expression != null) {
-          if (problem.getKind() == NullabilityProblemKind.nullableReturn) {
-            PsiType returnType = PsiTypesUtil.getMethodReturnType(expression);
-            Nullability nullability = DfaPsiUtil.getTypeNullability(returnType);
-            if (nullability == Nullability.UNKNOWN) {
-              warnings.put(expression, "jspecify_nullness_not_enough_information");
-            }
-            if (nullability == Nullability.NOT_NULL) {
-              warnings.put(expression, "jspecify_nullness_mismatch");
-            }
-            continue;
-          }
-          else if (problem.getKind() == NullabilityProblemKind.passingToNonAnnotatedParameter) continue;
-          warnings.put(expression, "jspecify_nullness_mismatch");
+        String warning = getJSpecifyWarning(problem);
+        if (warning != null) {
+          warnings.put(problem.getDereferencedExpression(), warning);
         }
       }
+    }
+    
+    private static @Nullable String getJSpecifyWarning(NullabilityProblemKind.NullabilityProblem<?> problem) {
+      PsiExpression expression = problem.getDereferencedExpression();
+      if (expression == null) return null;
+      if (problem.getKind() == NullabilityProblemKind.passingToNonAnnotatedParameter) return null;
+      if (problem.getKind() == NullabilityProblemKind.nullableReturn) {
+        PsiType returnType = PsiTypesUtil.getMethodReturnType(expression);
+        Nullability nullability = DfaPsiUtil.getTypeNullability(returnType);
+        if (nullability == Nullability.NULLABLE) return null;
+        if (nullability == Nullability.UNKNOWN) return "jspecify_nullness_not_enough_information";
+      }
+      return problem.hasUnknownNullability() ? "jspecify_nullness_not_enough_information" : "jspecify_nullness_mismatch";
     }
   }
   
@@ -236,7 +238,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
       .grouping(TreeMap::new, Collectors.toList());
     for (String str : stripped.split("\n", -1)) {
       int endPos = pos + str.length() + 1;
-      String warnings = StreamEx.of(map.subMap(pos, endPos).values()).flatMap(List::stream).joining(" & ");
+      String warnings = StreamEx.of(map.subMap(pos, endPos).values()).flatMap(List::stream).distinct().joining(" & ");
       if (!warnings.isEmpty()) {
         sb.append("// ").append(warnings);
       }

@@ -153,7 +153,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   StreamEx<NullabilityProblemKind.NullabilityProblem<?>> problems() {
-    return StreamEx.ofKeys(myStateInfos, StateInfo::shouldReport);
+    return EntryStream.of(myStateInfos).filterValues(StateInfo::shouldReport).mapKeyValue((np, si) -> si.unknown ? np.makeUnknown() : np);
   }
 
   public Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> getArrayStoreProblems() {
