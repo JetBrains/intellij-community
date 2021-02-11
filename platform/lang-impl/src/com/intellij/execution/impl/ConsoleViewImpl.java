@@ -177,21 +177,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myUsePredefinedMessageFilter = usePredefinedMessageFilter;
     mySearchScope = searchScope;
 
-    List<ConsoleInputFilterProvider> inputFilters = ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getExtensionList();
-    if (!inputFilters.isEmpty()) {
-      CompositeInputFilter compositeInputFilter = new CompositeInputFilter(project);
-      myInputMessageFilter = compositeInputFilter;
-      for (ConsoleInputFilterProvider eachProvider : inputFilters) {
-        InputFilter[] filters = eachProvider.getDefaultFilters(project);
-        for (InputFilter filter : filters) {
-          compositeInputFilter.addFilter(filter);
-        }
-      }
-    }
-    else {
-      myInputMessageFilter = (text, contentType) -> null;
-    }
-
+    myInputMessageFilter = ConsoleViewUtil.computeInputFilter(this, project, searchScope);
     project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       private long myLastStamp;
 

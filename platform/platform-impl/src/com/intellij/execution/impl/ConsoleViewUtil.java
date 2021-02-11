@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
-import com.intellij.execution.filters.ConsoleDependentFilterProvider;
-import com.intellij.execution.filters.ConsoleFilterProvider;
-import com.intellij.execution.filters.ConsoleFilterProviderEx;
-import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.ui.LafManager;
@@ -254,5 +251,28 @@ public final class ConsoleViewUtil {
       ContainerUtil.addAll(result, filters);
     }
     return result;
+  }
+
+  public static @NotNull InputFilter computeInputFilter(@NotNull ConsoleView consoleView,
+                                                        @NotNull Project project,
+                                                        @NotNull GlobalSearchScope searchScope) {
+    List<ConsoleInputFilterProvider> inputFilters = ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getExtensionList();
+    if (inputFilters.isEmpty()) {
+      return (text, contentType) -> null;
+    }
+    CompositeInputFilter compositeInputFilter = new CompositeInputFilter(project);
+    for (ConsoleInputFilterProvider eachProvider : inputFilters) {
+      List<InputFilter> filters;
+      if (eachProvider instanceof ConsoleDependentInputFilterProvider) {
+        filters = ((ConsoleDependentInputFilterProvider)eachProvider).getDefaultFilters(consoleView, project, searchScope);
+      }
+      else {
+        filters = Arrays.asList(eachProvider.getDefaultFilters(project));
+      }
+      for (InputFilter filter : filters) {
+        compositeInputFilter.addFilter(filter);
+      }
+    }
+    return compositeInputFilter;
   }
 }
