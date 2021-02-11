@@ -262,7 +262,7 @@ public final class ProjectUtil {
                                                    @NotNull VirtualFile projectFile,
                                                    @Nullable Project projectToClose,
                                                    boolean forceOpenInNewFrame) {
-    if (processor.executesUnverifiedCode()) {
+    if (processor.executesUnverifiedCode() && !TrustedProjects.isTrustedCheckDisabled()) {
       OpenUntrustedProjectChoice choice = TrustedProjects.confirmOpeningUntrustedProject(processor.getName());
       switch (choice) {
         case IMPORT:
