@@ -20,15 +20,6 @@ import org.jspecify.annotations.NullnessUnspecified;
 
 @DefaultNonNull
 class NullCheckTypeVariable<T> {
-  Object x0(T o) {
-    if (o != null) {
-      return o;
-    } else {
-      // jspecify_nullness_mismatch
-      return o;
-    }
-  }
-
   Object x1(@NullnessUnspecified T o) {
     if (o != null) {
       return o;
@@ -43,15 +34,6 @@ class NullCheckTypeVariable<T> {
       return o;
     } else {
       // jspecify_nullness_mismatch
-      return o;
-    }
-  }
-
-  Object x3(T o) {
-    if (o == null) {
-      // jspecify_nullness_mismatch
-      return o;
-    } else {
       return o;
     }
   }

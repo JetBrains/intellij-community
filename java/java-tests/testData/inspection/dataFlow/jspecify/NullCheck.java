@@ -21,15 +21,6 @@ import org.jspecify.annotations.NullnessUnspecified;
 @DefaultNonNull
 class NullCheck {
   // TODO(cpovirk): Soften README to permit flow-sensitive samples in moderation.
-  Object x0(Object o) {
-    if (o != null) {
-      return o;
-    } else {
-      // jspecify_nullness_mismatch
-      return o;
-    }
-  }
-
   Object x1(@NullnessUnspecified Object o) {
     if (o != null) {
       return o;
@@ -44,15 +35,6 @@ class NullCheck {
       return o;
     } else {
       // jspecify_nullness_mismatch
-      return o;
-    }
-  }
-
-  Object x3(Object o) {
-    if (o == null) {
-      // jspecify_nullness_mismatch
-      return o;
-    } else {
       return o;
     }
   }

@@ -20,6 +20,7 @@ import org.jspecify.annotations.DefaultNonNull;
 class Catch {
   void x() {
     try {
+      throw new Exception();
     } catch (Exception e) {
       e.printStackTrace();
       // TODO(cpovirk): Edit README to permit referencing java.lang.Exception. Or remove this.
