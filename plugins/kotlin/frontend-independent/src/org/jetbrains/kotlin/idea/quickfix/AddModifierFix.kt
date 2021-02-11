@@ -102,7 +102,11 @@ open class AddModifierFix(
     }
 
     companion object : Factory<AddModifierFix> {
-        val modifiersWithWarning = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
+        val addAbstractModifier: QuickFixesPsiBasedFactory<PsiElement> = AddModifierFix.createFactory(KtTokens.ABSTRACT_KEYWORD)
+        val addAbstractToContainingClass: QuickFixesPsiBasedFactory<PsiElement> =
+            AddModifierFix.createFactory(KtTokens.ABSTRACT_KEYWORD, KtClassOrObject::class.java)
+
+        val modifiersWithWarning: Set<KtModifierKeywordToken> = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
         private val modalityModifiers = modifiersWithWarning + KtTokens.OPEN_KEYWORD
 
         override fun createModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFix =
