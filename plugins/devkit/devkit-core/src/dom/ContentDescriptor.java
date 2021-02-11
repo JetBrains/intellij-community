@@ -15,13 +15,14 @@ public interface ContentDescriptor extends DomElement {
   @NotNull
   @Stubbed
   @SubTagList("module")
-  List<DependencyDescriptor.ModuleDescriptor> getModuleEntry();
+  List<ModuleDescriptor> getModuleEntry();
 
   @SubTagList("module")
-  DependencyDescriptor.ModuleDescriptor addModuleEntry();
+  ModuleDescriptor addModuleEntry();
 
   @Presentation(icon = "AllIcons.Nodes.Module")
   interface ModuleDescriptor extends DomElement {
+
     @NotNull
     @Required
     @Stubbed
