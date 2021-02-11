@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -19,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-/**
- * @author Bas Leijdekkers
- */
-public class ArrayEqualsHashCodeInspection extends BaseInspection {
+public class ArrayObjectsEqualsInspection extends BaseInspection {
   enum Kind {
     TO_EQUALS("equals", "array.equals.problem.descriptor"),
     TO_DEEP_EQUALS("deepEquals", "array.equals.problem.descriptor"),
@@ -38,7 +33,7 @@ public class ArrayEqualsHashCodeInspection extends BaseInspection {
 
     @Override
     public @InspectionMessage String toString() {
-      return InspectionGadgetsBundle.message(myMessage);
+      return InspectionGadgetsBundle.message(myMessage, "Arrays." + myNewMethodName + "()");
     }
 
     public String getNewMethodName() {

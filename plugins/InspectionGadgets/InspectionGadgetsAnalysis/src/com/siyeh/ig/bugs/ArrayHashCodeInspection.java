@@ -44,7 +44,9 @@ public class ArrayHashCodeInspection extends BaseInspection {
         return InspectionGadgetsBundle.message("array.hash.code.problem.descriptor");
       case OBJECTS_HASH:
           return InspectionGadgetsBundle.message("objects.hash.problem.descriptor");
-      default: return null;
+      default:
+        assert false;
+        return null;
     }
   }
 
