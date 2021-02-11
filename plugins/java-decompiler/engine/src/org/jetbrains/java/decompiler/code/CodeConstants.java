@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
 @SuppressWarnings({"unused", "SpellCheckingInspection"})
@@ -64,6 +64,7 @@ public interface CodeConstants {
   int ACC_STATIC = 0x0008;
   int ACC_FINAL = 0x0010;
   int ACC_SYNCHRONIZED = 0x0020;
+  int ACC_OPEN = 0x0020;
   int ACC_NATIVE = 0x0100;
   int ACC_ABSTRACT = 0x0400;
   int ACC_STRICT = 0x0800;
@@ -75,6 +76,7 @@ public interface CodeConstants {
   int ACC_ANNOTATION = 0x2000;
   int ACC_ENUM = 0x4000;
   int ACC_MANDATED = 0x8000;
+  int ACC_MODULE = 0x8000;
 
   // ----------------------------------------------------------------------
   // CLASS FLAGS
@@ -112,6 +114,8 @@ public interface CodeConstants {
   int CONSTANT_MethodHandle = 15;
   int CONSTANT_MethodType = 16;
   int CONSTANT_InvokeDynamic = 18;
+  int CONSTANT_Module = 19;
+  int CONSTANT_Package = 20;
 
   // ----------------------------------------------------------------------
   // MethodHandle reference_kind values

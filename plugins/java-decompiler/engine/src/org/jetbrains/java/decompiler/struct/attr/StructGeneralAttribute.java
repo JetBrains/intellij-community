@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -34,6 +34,7 @@ public class StructGeneralAttribute {
   public static final Key<StructGeneralAttribute> ATTRIBUTE_DEPRECATED = new Key<>("Deprecated");
   public static final Key<StructLineNumberTableAttribute> ATTRIBUTE_LINE_NUMBER_TABLE = new Key<>("LineNumberTable");
   public static final Key<StructMethodParametersAttribute> ATTRIBUTE_METHOD_PARAMETERS = new Key<>("MethodParameters");
+  public static final Key<StructModuleAttribute> ATTRIBUTE_MODULE = new Key<>("Module");
   public static final Key<StructRecordAttribute> ATTRIBUTE_RECORD = new Key<>("Record");
 
   public static class Key<T extends StructGeneralAttribute> {
@@ -97,6 +98,9 @@ public class StructGeneralAttribute {
     }
     else if (ATTRIBUTE_METHOD_PARAMETERS.getName().equals(name)) {
       attr = new StructMethodParametersAttribute();
+    }
+    else if (ATTRIBUTE_MODULE.getName().equals(name)) {
+      attr = new StructModuleAttribute();
     }
     else if (ATTRIBUTE_RECORD.getName().equals(name)) {
       attr = new StructRecordAttribute();
