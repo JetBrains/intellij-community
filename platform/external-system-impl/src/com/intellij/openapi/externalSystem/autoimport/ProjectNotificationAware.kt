@@ -2,32 +2,33 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ProjectNotificationAware(private val project: Project) : Disposable {
-  private var isHidden = false
-  private val projectsWithNotification = HashSet<ExternalSystemProjectId>()
+  private val isHidden = AtomicBoolean(false)
+  private val projectsWithNotification = ContainerUtil.newConcurrentSet<ExternalSystemProjectId>()
 
-  fun notificationNotify(projectAware: ExternalSystemProjectAware) = runInEdt {
+  fun notificationNotify(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
     LOG.debug("${projectId.readableName}: Notify notification")
     projectsWithNotification.add(projectId)
     revealNotification()
   }
 
-  fun notificationExpire(projectId: ExternalSystemProjectId) = runInEdt {
+  fun notificationExpire(projectId: ExternalSystemProjectId) {
     LOG.debug("${projectId.readableName}: Expire notification")
     projectsWithNotification.remove(projectId)
     revealNotification()
   }
 
-  fun notificationExpire() = runInEdt {
+  fun notificationExpire() {
     LOG.debug("Expire notification")
     projectsWithNotification.clear()
     revealNotification()
@@ -37,9 +38,8 @@ class ProjectNotificationAware(private val project: Project) : Disposable {
     notificationExpire()
   }
 
-  private fun setHideStatus(isHidden: Boolean) = runInEdt {
-    this.isHidden = isHidden
-    ApplicationManager.getApplication().assertIsDispatchThread()
+  private fun setHideStatus(isHidden: Boolean) {
+    this.isHidden.set(isHidden)
     ProjectRefreshFloatingProvider.updateToolbarComponents(project)
   }
 
@@ -48,18 +48,15 @@ class ProjectNotificationAware(private val project: Project) : Disposable {
   fun hideNotification() = setHideStatus(true)
 
   fun isNotificationVisible(): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return !isHidden && projectsWithNotification.isNotEmpty()
+    return !isHidden.get() && projectsWithNotification.isNotEmpty()
   }
 
   fun getSystemIds(): Set<ProjectSystemId> {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     return projectsWithNotification.map { it.systemId }.toSet()
   }
 
   @TestOnly
   fun getProjectsWithNotification(): Set<ExternalSystemProjectId> {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     return projectsWithNotification.toSet()
   }
 
