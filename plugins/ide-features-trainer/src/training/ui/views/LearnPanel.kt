@@ -38,7 +38,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonNameLabel = JLabel() //Name of the current lesson
   val lessonMessagePane = LessonMessagePane()
   private val buttonPanel = JPanel()
-  private val nextButton = JButton(LearnBundle.message("learn.ui.button.skip"))
+  private val nextButton = JButton()
   private val prevButton = JButton()
 
   private val footer = JPanel()

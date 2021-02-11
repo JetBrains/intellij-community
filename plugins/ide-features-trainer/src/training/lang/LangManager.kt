@@ -8,6 +8,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
@@ -23,14 +24,20 @@ class LangManager : PersistentStateComponent<LangManager.State> {
       .filter { courseCanBeUsed(it.language) }
       .toList()
 
+  val languages: List<LanguageExtensionPoint<LangSupport>>
+    get() = supportedLanguagesExtensions.filter { Language.findLanguageByID(it.language) != null }
+
   private var myState = State(null)
 
   private var myLangSupport: LangSupport? by WeakReferenceDelegator()
 
   init {
-    val languages = supportedLanguagesExtensions.filter { Language.findLanguageByID(it.language) != null }
     val productName = ApplicationNamesInfo.getInstance().productName
-    val onlyLang = languages.singleOrNull() ?: languages.singleOrNull { it.instance.defaultProductName == productName }
+    val onlyLang =
+      languages.singleOrNull() ?:
+      languages.singleOrNull { it.instance.defaultProductName == productName } ?:
+      languages.firstOrNull()?.also { logger<LangManager>().error("No default language for $productName. Selected ${it.language}.") }
+
     if (onlyLang != null) {
       myLangSupport = onlyLang.instance
       myState.languageName = onlyLang.language
