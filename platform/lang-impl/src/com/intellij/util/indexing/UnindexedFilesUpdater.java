@@ -450,6 +450,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(myProject);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject);
+    IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     try {
       updateUnindexedFiles(projectIndexingHistory, indicator);
     }
@@ -463,7 +464,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     finally {
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
-      IndexDiagnosticDumper.getInstance().dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
+      projectIndexingHistory.getTimes().setTotalUpdatingTime(System.nanoTime() - projectIndexingHistory.getTimes().getTotalUpdatingTime());
+      IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
     }
   }
 
