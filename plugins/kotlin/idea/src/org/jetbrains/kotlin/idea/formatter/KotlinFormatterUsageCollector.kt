@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,31 +7,41 @@ package org.jetbrains.kotlin.idea.formatter
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
 
 class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
-    override fun getGroupId() = "kotlin.ide.formatter"
-    override fun getVersion(): Int = 2
+    override fun getGroup(): EventLogGroup = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
         if (PlatformVersion.isAndroidStudio()) {
             return emptySet()
         }
-        val usedFormatter = getKotlinFormatterKind(project)
 
-        val data = FeatureUsageData().addData("kind", usedFormatter.name)
-
-        return setOf(newMetric("settings", data))
+        return setOf(
+            settingsEvent.metric(
+                value1 = getKotlinFormatterKind(project),
+                value2 = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID),
+            )
+        )
     }
 
     companion object {
+        private val GROUP = EventLogGroup("kotlin.ide.formatter", 3)
+        private val settingsEvent = GROUP.registerEvent(
+            eventId = "settings",
+            eventField1 = EventFields.Enum("kind", KotlinFormatterKind::class.java),
+            eventField2 = EventFields.PluginInfo,
+        )
+
         private val KOTLIN_OFFICIAL_CODE_STYLE: CodeStyleSettings by lazy {
             CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinStyleGuideCodeStyle::apply)
         }
