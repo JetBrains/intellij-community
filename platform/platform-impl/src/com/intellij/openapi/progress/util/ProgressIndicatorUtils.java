@@ -358,10 +358,6 @@ public final class ProgressIndicatorUtils {
       catch (InterruptedException e) {
         throw new ProcessCanceledException(e);
       }
-      catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        ExceptionUtil.rethrow(Objects.requireNonNullElse(cause, e));
-      }
       catch (Throwable e) {
         Throwable cause = e.getCause();
         if (cause instanceof ProcessCanceledException) {
