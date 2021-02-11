@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.BrowserUtil;
@@ -6,8 +6,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.FeatureImpl;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,8 +33,9 @@ import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,7 +44,13 @@ public final class PluginsAdvertiser {
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
   public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
-  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Plugins Suggestion", NotificationDisplayType.STICKY_BALLOON, true);
+
+  /**
+   * @deprecated Use {@link #getNotificationGroup()}
+   */
+  @Deprecated
+  public static final NotificationGroup NOTIFICATION_GROUP = getNotificationGroup();
+
   public static final String FUS_GROUP_ID = "plugins.advertiser";
 
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
@@ -64,6 +71,10 @@ public final class PluginsAdvertiser {
     );
   }
 
+  public static @NotNull NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion");
+  }
+
   static void loadAllExtensions(Set<String> customPluginIds) throws IOException {
     @SuppressWarnings("deprecation")
     Map<String, String> params = Collections.singletonMap("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName());
@@ -80,7 +91,7 @@ public final class PluginsAdvertiser {
     saveExtensions(setExtensions);
   }
 
-  static void ensureDeleted() {
+  static void ensureDeleted() throws IOException {
     FileUtil.delete(getExtensionsFile());
   }
 
@@ -89,8 +100,8 @@ public final class PluginsAdvertiser {
     KnownExtensions knownExtensions = ourKnownExtensions.get();
     if (knownExtensions != null) return knownExtensions;
     try {
-      File file = getExtensionsFile();
-      if (file.isFile()) {
+      Path file = getExtensionsFile();
+      if (Files.isRegularFile(file)) {
         knownExtensions = XmlSerializer.deserialize(JDOMUtil.load(file), KnownExtensions.class);
         ourKnownExtensions = new SoftReference<>(knownExtensions);
         return knownExtensions;
@@ -102,14 +113,14 @@ public final class PluginsAdvertiser {
     return null;
   }
 
-  private static File getExtensionsFile() {
-    return new File(PathManager.getPluginsPath(), CASHED_EXTENSIONS);
+  private static @NotNull Path getExtensionsFile() {
+    return Path.of(PathManager.getPluginsPath(), CASHED_EXTENSIONS);
   }
 
   static void saveExtensions(Map<String, Set<Plugin>> extensions) throws IOException {
-    File plugins = getExtensionsFile();
-    if (!plugins.isFile()) {
-      FileUtil.ensureCanCreateFile(plugins);
+    Path plugins = getExtensionsFile();
+    if (!Files.exists(plugins)) {
+      FileUtil.ensureCanCreateFile(plugins.toFile());
     }
     JDOMUtil.write(XmlSerializer.serialize(new KnownExtensions(extensions)), plugins);
     extensionsHaveBeenUpdated = true;
