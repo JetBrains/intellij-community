@@ -75,10 +75,12 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
   }
 
   var trustedState: ThreeState
-    get() = if (isTestMode()) ThreeState.YES else state.isTrusted
+    get() = if (isTrustedCheckDisabled()) ThreeState.YES else state.isTrusted
     set(value) {
       state.isTrusted = value
     }
 
-  private fun isTestMode() = ApplicationManager.getApplication().isUnitTestMode
+  private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
+                                         ApplicationManager.getApplication().isHeadlessEnvironment ||
+                                         java.lang.Boolean.getBoolean("idea.is.integration.test")
 }
