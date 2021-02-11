@@ -281,13 +281,6 @@ private fun highlightTemplateVariables(
 private fun moveCaretForTemplate(editor: Editor): Runnable {
   val caretModel: CaretModel = editor.caretModel
   val offset: Int = caretModel.offset
-
-  val caretRangeMarker: RangeMarker = editor.document.createRangeMarker(offset, offset).also {
-    it.isGreedyToLeft = true
-    it.isGreedyToRight = true
-  }
-
-  // TODO range marker ?
   val selectedRange: TextRange? = editor.selectionModel.let { selectionModel ->
     if (selectionModel.hasSelection()) {
       TextRange(selectionModel.selectionStart, selectionModel.selectionEnd)
@@ -300,15 +293,11 @@ private fun moveCaretForTemplate(editor: Editor): Runnable {
   caretModel.moveToOffset(0)
 
   return Runnable {
-    val restoreCaretOffset = {
-      VariableInplaceRenamer.restoreCaretOffset(caretRangeMarker, offset)
-    }
-    val restoreSelection = {
+    InplaceRefactoring.restoreOldCaretPositionAndSelection(editor, offset) {
       if (selectedRange != null) {
         VariableInplaceRenamer.restoreSelection(editor, selectedRange)
       }
     }
-    InplaceRefactoring.restoreOldCaretPositionAndSelection(editor, restoreCaretOffset, restoreSelection)
   }
 }
 
