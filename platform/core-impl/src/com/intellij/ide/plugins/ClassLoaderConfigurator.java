@@ -31,10 +31,6 @@ import java.util.function.Predicate;
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalAssignedToNull"})
 @ApiStatus.Internal
 final class ClassLoaderConfigurator {
-  static final boolean SEPARATE_CLASSLOADER_FOR_SUB = Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "true"));
-  private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_ONLY;
-  private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE;
-
   // this list doesn't duplicate of PluginXmlFactory.CLASS_NAMES - interface related must be not here
   private static final @NonNls Set<String> IMPL_CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
     "implementation", "implementationClass", "builderClass",
@@ -63,48 +59,6 @@ final class ClassLoaderConfigurator {
   private final Set<String> pluginPackagePrefixUniqueGuard = new HashSet<>();
 
   private final ClassPath.ResourceFileFactory resourceFileFactory;
-
-  static {
-    String value = System.getProperty("idea.classloader.per.descriptor.only");
-    if (value == null) {
-       SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>(new PluginId[]{
-        PluginId.getId("org.jetbrains.plugins.ruby"),
-        PluginId.getId("com.jetbrains.rubymine.customization"),
-        PluginId.getId("JavaScript"),
-        PluginId.getId("Docker"),
-        PluginId.getId("com.intellij.diagram"),
-        PluginId.getId("org.jetbrains.plugins.github")
-      });
-    }
-    else if (value.isEmpty()) {
-      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = Collections.emptySet();
-    }
-    else {
-      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>();
-      for (String id : value.split(",")) {
-        SEPARATE_CLASSLOADER_FOR_SUB_ONLY.add(PluginId.getId(id));
-      }
-    }
-
-    SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE = new ReferenceOpenHashSet<>(new PluginId[]{
-      PluginId.getId("org.jetbrains.kotlin"),
-      PluginId.getId("com.intellij.java"),
-      PluginId.getId("com.intellij.spring.batch"),
-      PluginId.getId("com.intellij.spring.integration"),
-      PluginId.getId("com.intellij.spring.messaging"),
-      PluginId.getId("com.intellij.spring.ws"),
-      PluginId.getId("com.intellij.spring.websocket"),
-      PluginId.getId("com.intellij.spring.webflow"),
-      PluginId.getId("com.intellij.spring.security"),
-      PluginId.getId("com.intellij.spring.osgi"),
-      PluginId.getId("com.intellij.spring.mvc"),
-      PluginId.getId("com.intellij.spring.data"),
-      PluginId.getId("com.intellij.spring.boot.run.tests"),
-      PluginId.getId("com.intellij.spring.boot"),
-      PluginId.getId("com.jetbrains.space"),
-      PluginId.getId("com.intellij.spring"),
-    });
-  }
 
   ClassLoaderConfigurator(boolean usePluginClassLoader,
                           @NotNull ClassLoader coreLoader,
@@ -408,13 +362,8 @@ final class ClassLoaderConfigurator {
     };
   }
 
-  private static boolean isClassloaderPerDescriptorEnabled(@NotNull IdeaPluginDescriptorImpl mainDependent) {
-    if (!SEPARATE_CLASSLOADER_FOR_SUB || SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE.contains(mainDependent.getPluginId())) {
-      return false;
-    }
-    return mainDependent.packagePrefix != null ||
-           SEPARATE_CLASSLOADER_FOR_SUB_ONLY.isEmpty() ||
-           SEPARATE_CLASSLOADER_FOR_SUB_ONLY.contains(mainDependent.getPluginId());
+  private static boolean isClassloaderPerDescriptorEnabled(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    return ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(descriptor.id, descriptor.packagePrefix);
   }
 
   private void configureSubPlugin(@NotNull PluginDependency dependencyInfo,
@@ -508,7 +457,7 @@ final class ClassLoaderConfigurator {
 
     // must be first to ensure that it is used first to search classes (very important if main plugin descriptor doesn't have package prefix)
     // check dependencies between optional descriptors (aka modules in a new model) from different plugins
-    if (SEPARATE_CLASSLOADER_FOR_SUB &&
+    if (ClassLoaderConfigurationData.SEPARATE_CLASSLOADER_FOR_SUB &&
         dependency.contentDescriptor != null && dependent.dependenciesDescriptor != null && dependency.pluginDependencies != null) {
       for (ModuleDependenciesDescriptor.ModuleItem dependentModuleDependency : dependent.dependenciesDescriptor.modules) {
         PluginContentDescriptor.ModuleItem dependencyContentModule = dependency.contentDescriptor.findModuleByName(dependentModuleDependency.name);

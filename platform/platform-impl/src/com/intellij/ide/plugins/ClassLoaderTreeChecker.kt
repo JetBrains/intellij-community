@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -10,7 +10,7 @@ private val LOG = logger<ClassLoaderTreeChecker>()
 internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPluginDescriptorImpl,
                                       private val classLoaders: WeakList<PluginClassLoader>) {
   fun checkThatClassLoaderNotReferencedByPluginClassLoader() {
-    if (!ClassLoaderConfigurator.SEPARATE_CLASSLOADER_FOR_SUB || unloadedMainDescriptor.classLoader !is PluginClassLoader) {
+    if (!ClassLoaderConfigurationData.SEPARATE_CLASSLOADER_FOR_SUB || unloadedMainDescriptor.classLoader !is PluginClassLoader) {
       return
     }
 
