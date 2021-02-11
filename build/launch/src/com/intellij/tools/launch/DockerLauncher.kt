@@ -2,7 +2,6 @@ package com.intellij.tools.launch
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.Launcher.affixIO
-import com.intellij.util.execution.ParametersListUtil
 import com.sun.security.auth.module.UnixSystem
 import org.apache.log4j.Logger
 import java.io.File
@@ -111,7 +110,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     dockerCmd.addReadonly(paths.launcherFolder)
 
     // ~/.m2
-    dockerCmd.addReadonly(paths.mavenHomeFolder)
+    dockerCmd.addReadonly(paths.mavenRepositoryFolder)
     
     // quiche
     dockerCmd.addReadonly(paths.ultimateRootFolder.resolve(".idea"))

@@ -34,7 +34,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
 
   private val model = JpsElementFactory.getInstance().createModel() ?: throw Exception("Couldn't create JpsModel")
 
-  fun build(): File {
+  fun build(logClasspath: Boolean): File {
     val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
 
     val m2HomePath = File(SystemProperties.getUserHome())
@@ -68,10 +68,10 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
     modulesList.addAll(modules.additionalModules)
     modulesList.add("intellij.configurationScript")
 
-    return createClassPathArgFileForModules(modulesList)
+    return createClassPathArgFileForModules(modulesList, logClasspath)
   }
 
-  private fun createClassPathArgFileForModules(modulesList: List<String>): File {
+  private fun createClassPathArgFileForModules(modulesList: List<String>, logClasspath: Boolean): File {
     val classpath = mutableListOf<String>()
     for (moduleName in modulesList) {
       val module = model.project.modules.singleOrNull { it.name == moduleName }
@@ -83,11 +83,13 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
 
     // Uncomment for big debug output
     // seeing as client classpath gets logged anyway, there's no need to comment this out
-    logger.info("Created classpath:")
-    for (path in classpath.distinct().sorted()) {
-      logger.info("  $path")
+    if (logClasspath) {
+      logger.info("Created classpath:")
+      for (path in classpath.distinct().sorted()) {
+        logger.info("  $path")
+      }
+      logger.info("-- END")
     }
-    logger.info("-- END")
 
     return createClassPathArgFile(paths, classpath)
   }
