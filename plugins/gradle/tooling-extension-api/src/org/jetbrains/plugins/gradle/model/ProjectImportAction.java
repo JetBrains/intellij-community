@@ -101,9 +101,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     assert myGradleBuild != null;
     assert myModelConverter != null;
     final MyBuildController wrappedController = new MyBuildController(controller, myGradleBuild);
-    for (BasicGradleProject gradleProject : myGradleBuild.getProjects()) {
-      addProjectModels(wrappedController, myAllModels, gradleProject, isProjectsLoadedAction);
-    }
+    fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, myGradleBuild);
     addBuildModels(wrappedController, myAllModels, myGradleBuild, isProjectsLoadedAction);
 
     if (myIsCompositeBuildsSupported) {
@@ -113,9 +111,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
           if (!isProjectsLoadedAction) {
             myAllModels.getIncludedBuilds().add(convert(includedBuild));
           }
-          for (BasicGradleProject project : includedBuild.getProjects()) {
-            addProjectModels(wrappedController, myAllModels, project, isProjectsLoadedAction);
-          }
+          fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, includedBuild);
           addBuildModels(wrappedController, myAllModels, includedBuild, isProjectsLoadedAction);
         }
       });
@@ -142,6 +138,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         buildConsumer.accept(includedBuild);
         queue.addAll(includedBuild.getIncludedBuilds());
       }
+    }
+  }
+
+  private void fetchProjectBuildModels(BuildController controller, final boolean isProjectsLoadedAction, GradleBuild build) {
+    for (final BasicGradleProject gradleProject : build.getProjects()) {
+      addProjectModels(controller, myAllModels, gradleProject, isProjectsLoadedAction);
     }
   }
 
