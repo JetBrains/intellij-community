@@ -65,6 +65,10 @@ fun Project.setTrusted(value: Boolean) {
   this.service<TrustedProjectSettings>().trustedState = ThreeState.fromBoolean(value)
 }
 
+internal fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
+                                        ApplicationManager.getApplication().isHeadlessEnvironment ||
+                                        java.lang.Boolean.getBoolean("idea.is.integration.test")
+
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
@@ -79,8 +83,4 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
     set(value) {
       state.isTrusted = value
     }
-
-  private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
-                                         ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                         java.lang.Boolean.getBoolean("idea.is.integration.test")
 }
