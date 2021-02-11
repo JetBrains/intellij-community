@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
 
@@ -188,8 +188,8 @@ class DynamicPluginsTest {
     val beforeList = PluginManagerCore.getLoadedPlugins()
     val plugin2Builder = PluginBuilder().randomId("bar")
     val plugin1Disposable = loadPluginWithOptionalDependency(
-      PluginBuilder().randomId("foo"),
-      PluginBuilder().actions("""<group id="FooBarGroup"></group>"""),
+      PluginBuilder().randomId("foo").packagePrefix("org.foo"),
+      PluginBuilder().actions("""<group id="FooBarGroup"></group>""").packagePrefix("org.foo.bar"),
       plugin2Builder
     )
     try {
@@ -231,11 +231,12 @@ class DynamicPluginsTest {
   fun loadOptionalDependencyExtension() {
     val pluginTwoBuilder = PluginBuilder()
       .randomId("optionalDependencyExtension-two")
+      .packagePrefix("org.foo.two")
       .extensionPoints("""<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
 
     val plugin1Disposable = loadPluginWithOptionalDependency(
-      PluginBuilder().randomId("optionalDependencyExtension-one"),
-      PluginBuilder().extensions("""<barExtension key="foo" implementationClass="y"/>""", "bar"),
+      PluginBuilder().randomId("optionalDependencyExtension-one").packagePrefix("org.foo.one"),
+      PluginBuilder().extensions("""<barExtension key="foo" implementationClass="y"/>""", "bar").packagePrefix("org.foo"),
       pluginTwoBuilder
     )
     try {
@@ -260,12 +261,12 @@ class DynamicPluginsTest {
 
   @Test
   fun loadOptionalDependencyOwnExtension() {
-    val barBuilder = PluginBuilder().randomId("bar")
-    val fooBuilder = PluginBuilder().randomId("foo")
+    val barBuilder = PluginBuilder().randomId("bar").packagePrefix("bar")
+    val fooBuilder = PluginBuilder().randomId("foo").packagePrefix("foo")
       .extensionPoints("""<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
     val plugin1Disposable = loadPluginWithOptionalDependency(
       fooBuilder,
-      PluginBuilder().extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo"),
+      PluginBuilder().extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo").packagePrefix("foo1"),
       barBuilder
     )
     try {
@@ -321,8 +322,12 @@ class DynamicPluginsTest {
 
     val pluginTwoBuilder = PluginBuilder().randomId("optionalDependencyListener-two")
     val pluginOneDisposable = loadPluginWithOptionalDependency(
-      PluginBuilder().randomId("optionalDependencyListener-one").applicationListeners("""<listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>"""),
-      PluginBuilder().applicationListeners("""<listener class="${MyUISettingsListener2::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>"""),
+      PluginBuilder().randomId("optionalDependencyListener-one")
+        .applicationListeners("""<listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>""")
+        .packagePrefix("org.foo.one"),
+      PluginBuilder()
+        .applicationListeners("""<listener class="${MyUISettingsListener2::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>""")
+        .packagePrefix("org.foo"),
       pluginTwoBuilder
     )
 
@@ -601,10 +606,12 @@ class DynamicPluginsTest {
     val barBuilder = PluginBuilder().randomId("bar")
     val quuxBuilder = PluginBuilder().randomId("quux")
 
-    val quuxDependencyDescriptor = PluginBuilder().extensions(
-      """<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>""")
+    val quuxDependencyDescriptor = PluginBuilder()
+      .extensions("""<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>""")
+      .packagePrefix("org.foo.quux")
     val barDependencyDescriptor = PluginBuilder().depends(quuxBuilder.id, quuxDependencyDescriptor)
-    val mainDescriptor = PluginBuilder().depends(barBuilder.id, barDependencyDescriptor)
+      .packagePrefix("org.foo.bar")
+    val mainDescriptor = PluginBuilder().depends(barBuilder.id, barDependencyDescriptor).packagePrefix("org.foo")
 
     val barDisposable = loadPluginWithText(barBuilder)
     try {
