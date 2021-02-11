@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -176,7 +176,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         if (kToken == null) return emptyList()
 
         val action = if (shouldPresentMapped)
-            AddModifierFix.createIfApplicable(kModifierOwner, kToken)
+            AddModifierFixMpp.createIfApplicable(kModifierOwner, kToken)
         else
             RemoveModifierFix(kModifierOwner, kToken, false)
         return listOfNotNull(action)
