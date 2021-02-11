@@ -69,8 +69,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util-rt/211.4009/util-rt-211.4009.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/java/java-gui-forms-jps/211.4009/java-gui-forms-jps-211.4009.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util/211.4009/util-211.4009.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna-platform/5.6.2.17/jna-platform-5.6.2.17.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna/5.6.2.17/jna-5.6.2.17.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna-platform/5.7.0.23/jna-platform-5.7.0.23.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jna/jna/5.7.0.23/jna-5.7.0.23.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/oro/oro/2.0.8/oro-2.0.8.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/lz4/lz4-java/1.7.1/lz4-java-1.7.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.20/commons-compress-1.20.jar!/" />
