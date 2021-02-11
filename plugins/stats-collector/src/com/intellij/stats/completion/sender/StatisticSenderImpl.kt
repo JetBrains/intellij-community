@@ -26,9 +26,6 @@ class StatisticSenderImpl: StatisticSender {
                 if (isSentSuccessfully) {
                     it.delete()
                 }
-                else {
-                    return
-                }
             }
         }
     }
