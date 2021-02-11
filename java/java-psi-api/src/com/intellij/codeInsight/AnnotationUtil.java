@@ -3,7 +3,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
@@ -93,7 +92,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  private static List<PsiAnnotation> findOwnAnnotations(@NotNull final PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
+  private static List<PsiAnnotation> findOwnAnnotations(@NotNull final PsiModifierListOwner listOwner, @NotNull Iterable<String> annotationNames) {
     final PsiModifierList list = listOwner.getModifierList();
     if (list == null) {
       return null;
@@ -294,28 +293,6 @@ public class AnnotationUtil {
   public static final int CHECK_EXTERNAL = 0x02;
   public static final int CHECK_INFERRED = 0x04;
   public static final int CHECK_TYPE = 0x08;
-
-  /**
-   * @param type type to check
-   * @param qualifiedNames annotation qualified names of TYPE_USE annotations to look for
-   * @return found type annotation, or null if not found. For type parameter types upper bound annotations are also checked
-   */
-  @Contract("null, _ -> null")
-  public static @Nullable PsiAnnotation findAnnotationInTypeHierarchy(@Nullable PsiType type, @NotNull Set<String> qualifiedNames) {
-    if (type == null) return null;
-    Ref<PsiAnnotation> result = Ref.create(null);
-    InheritanceUtil.processSuperTypes(type, true, eachType -> {
-      for (PsiAnnotation annotation : eachType.getAnnotations()) {
-        String qualifiedName = annotation.getQualifiedName();
-        if (qualifiedNames.contains(qualifiedName)) {
-          result.set(annotation);
-          return false;
-        }
-      }
-      return !(eachType instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(eachType) instanceof PsiTypeParameter;
-    });
-    return result.get();
-  }
 
   @MagicConstant(flags = {CHECK_HIERARCHY, CHECK_EXTERNAL, CHECK_INFERRED, CHECK_TYPE})
   @Target({ElementType.PARAMETER, ElementType.METHOD})

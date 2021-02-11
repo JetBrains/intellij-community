@@ -20,6 +20,7 @@ public class Jsr305Support implements AnnotationPackageSupport {
   @Nullable
   @Override
   public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation annotation,
+                                                                       @NotNull PsiElement context,
                                                                        PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
                                                                        boolean superPackage) {
     if (superPackage) return null;

@@ -28,6 +28,7 @@ class EclipseAnnotationSupport implements AnnotationPackageSupport {
 
   @Override
   public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                                 @NotNull PsiElement context,
                                                                                  PsiAnnotation.TargetType @NotNull [] types,
                                                                                  boolean superPackage) {
     if (superPackage) return null;

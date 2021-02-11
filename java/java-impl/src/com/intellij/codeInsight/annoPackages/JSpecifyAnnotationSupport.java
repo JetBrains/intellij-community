@@ -4,7 +4,8 @@ package com.intellij.codeInsight.annoPackages;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
   @Nullable
   @Override
   public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                       @NotNull PsiElement context,
                                                                        PsiAnnotation.TargetType @NotNull [] types,
                                                                        boolean superPackage) {
     if (!isAvailable()) return null;
@@ -45,6 +47,14 @@ public class JSpecifyAnnotationSupport implements AnnotationPackageSupport {
       default:
         return null;
     }
+    PsiType targetType = null;
+    if (context instanceof PsiMethod) {
+      targetType = ((PsiMethod)context).getReturnType();
+    }
+    else if (context instanceof PsiVariable) {
+      targetType = ((PsiVariable)context).getType();
+    }
+    if (PsiUtil.resolveClassInClassTypeOnly(targetType) instanceof PsiTypeParameter) return null;
     return new NullabilityAnnotationInfo(anno, nullability, true);
   }
   
