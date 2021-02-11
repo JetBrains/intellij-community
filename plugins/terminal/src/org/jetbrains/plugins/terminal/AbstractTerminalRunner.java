@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 public abstract class AbstractTerminalRunner<T extends Process> {
   private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class);
@@ -119,13 +121,30 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                                                   @Nullable VirtualFile currentWorkingDirectory,
                                                   boolean deferSessionUntilFirstShown) {
 
+    return createTerminalWidget(parent,
+                                (terminalWidget) -> openSessionForFile(terminalWidget, currentWorkingDirectory),
+                                true);
+  }
+
+  @NotNull
+  protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
+                                                  @Nullable String currentWorkingDirectory,
+                                                  boolean deferSessionUntilFirstShown) {
+
+    return createTerminalWidget(parent,
+                                (terminalWidget) -> openSessionInDirectory(terminalWidget, currentWorkingDirectory),
+                                true);
+  }
+
+  private JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
+                                                @NotNull Consumer<JBTerminalWidget> openSession,
+                                                boolean deferSessionUntilFirstShown) {
     JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
-    Runnable openSession = () -> openSessionForFile(terminalWidget, currentWorkingDirectory);
     if (deferSessionUntilFirstShown) {
-      UiNotifyConnector.doWhenFirstShown(terminalWidget, openSession);
+      UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSession.accept(terminalWidget));
     }
     else {
-      openSession.run();
+      openSession.accept(terminalWidget);
     }
     return terminalWidget;
   }
@@ -165,6 +184,12 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public void openSession(@NotNull JBTerminalWidget terminal) {
     openSessionInDirectory(terminal, null);
+  }
+
+  public @Nullable String getCurrentWorkingDir(@Nullable TerminalTabState state) {
+    String dir = state != null ? state.myWorkingDirectory : null;
+    VirtualFile result = dir == null ? null : LocalFileSystem.getInstance().findFileByPath(dir);
+    return result == null ? null : result.getPath();
   }
 
   private static void createAndStartSession(@NotNull JBTerminalWidget terminal, @NotNull TtyConnector ttyConnector) {

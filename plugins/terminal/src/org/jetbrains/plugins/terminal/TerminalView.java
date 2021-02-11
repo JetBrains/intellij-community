@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -237,8 +236,8 @@ public final class TerminalView implements Disposable {
     Content content = ContentFactory.SERVICE.getInstance().createContent(panel, tabName, false);
 
     if (terminalWidget == null) {
-      VirtualFile currentWorkingDir = getCurrentWorkingDir(tabState);
-      terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir);
+      String currentWorkingDir = terminalRunner.getCurrentWorkingDir(tabState);
+      terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir, true);
       TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
@@ -412,16 +411,6 @@ public final class TerminalView implements Disposable {
 
   public @NotNull TerminalContainer getContainer(@NotNull JBTerminalWidget terminalWidget) {
     return Objects.requireNonNull(myContainerByWidgetMap.get(terminalWidget));
-  }
-
-  @Nullable
-  private static VirtualFile getCurrentWorkingDir(@Nullable TerminalTabState tabState) {
-    String dir = tabState != null ? tabState.myWorkingDirectory : null;
-    VirtualFile result = null;
-    if (dir != null) {
-      result = LocalFileSystem.getInstance().findFileByPath(dir);
-    }
-    return result;
   }
 
   public void closeTab(@NotNull Content content) {
