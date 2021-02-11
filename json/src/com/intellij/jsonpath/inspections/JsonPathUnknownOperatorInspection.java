@@ -6,34 +6,36 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.json.JsonBundle;
 import com.intellij.jsonpath.JsonPathConstants;
-import com.intellij.jsonpath.psi.JsonPathFunctionCall;
-import com.intellij.jsonpath.psi.JsonPathId;
+import com.intellij.jsonpath.psi.JsonPathBinaryConditionalOperator;
+import com.intellij.jsonpath.psi.JsonPathTypes;
 import com.intellij.jsonpath.psi.JsonPathVisitor;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.jsonpath.ui.JsonPathEvaluateManager.JSON_PATH_EVALUATE_EXPRESSION_KEY;
 
-final class JsonPathUnknownFunctionInspection extends LocalInspectionTool {
+final class JsonPathUnknownOperatorInspection extends LocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JsonPathVisitor() {
       @Override
-      public void visitFunctionCall(@NotNull JsonPathFunctionCall call) {
-        super.visitFunctionCall(call);
+      public void visitBinaryConditionalOperator(@NotNull JsonPathBinaryConditionalOperator operator) {
+        super.visitBinaryConditionalOperator(operator);
 
-        JsonPathId functionId = call.getId();
-        String functionName = functionId.getText();
+        ASTNode namedOp = operator.getNode().findChildByType(JsonPathTypes.NAMED_OP);
+        if (namedOp == null) return;
 
-        if (!JsonPathConstants.STANDARD_FUNCTIONS.containsKey(functionName)) {
+        String operatorName = namedOp.getText();
+
+        if (!JsonPathConstants.STANDARD_NAMED_OPERATORS.contains(operatorName)) {
           boolean isEvaluateExpr = Boolean.TRUE.equals(holder.getFile().getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY));
           if (isEvaluateExpr) {
-            holder.registerProblem(functionId, JsonBundle.message("inspection.message.jsonpath.unsupported.jayway.function", functionName),
+            holder.registerProblem(operator, JsonBundle.message("inspection.message.jsonpath.unsupported.jayway.operator", operatorName),
                                    ProblemHighlightType.ERROR);
           }
           else {
-            holder.registerProblem(functionId, null, JsonBundle.message("inspection.message.jsonpath.unknown.function.name", functionName));
-            // todo Suppress for name quick fix
+            holder.registerProblem(operator, null, JsonBundle.message("inspection.message.jsonpath.unknown.operator.name", operatorName));
           }
         }
       }

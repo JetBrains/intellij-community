@@ -48,14 +48,12 @@ public interface JsonPathTypes {
   IElementType WILDCARD_SEGMENT = new JsonPathElementType("WILDCARD_SEGMENT");
 
   IElementType AND_OP = new JsonPathTokenType("AND_OP");
-  IElementType ANYOF_OP = new JsonPathTokenType("ANYOF_OP");
   IElementType COLON = new JsonPathTokenType(":");
   IElementType COMMA = new JsonPathTokenType(",");
   IElementType DIVIDE_OP = new JsonPathTokenType("DIVIDE_OP");
   IElementType DOT = new JsonPathTokenType(".");
   IElementType DOUBLE_NUMBER = new JsonPathTokenType("DOUBLE_NUMBER");
   IElementType DOUBLE_QUOTED_STRING = new JsonPathTokenType("DOUBLE_QUOTED_STRING");
-  IElementType EMPTY_OP = new JsonPathTokenType("EMPTY_OP");
   IElementType EQ_OP = new JsonPathTokenType("EQ_OP");
   IElementType EVAL_CONTEXT = new JsonPathTokenType("@");
   IElementType FALSE = new JsonPathTokenType("false");
@@ -64,7 +62,6 @@ public interface JsonPathTypes {
   IElementType GT_OP = new JsonPathTokenType("GT_OP");
   IElementType IDENTIFIER = new JsonPathTokenType("IDENTIFIER");
   IElementType INTEGER_NUMBER = new JsonPathTokenType("INTEGER_NUMBER");
-  IElementType IN_OP = new JsonPathTokenType("IN_OP");
   IElementType LBRACE = new JsonPathTokenType("{");
   IElementType LBRACKET = new JsonPathTokenType("[");
   IElementType LE_OP = new JsonPathTokenType("LE_OP");
@@ -72,9 +69,8 @@ public interface JsonPathTypes {
   IElementType LT_OP = new JsonPathTokenType("LT_OP");
   IElementType MINUS_OP = new JsonPathTokenType("MINUS_OP");
   IElementType MULTIPLY_OP = new JsonPathTokenType("MULTIPLY_OP");
+  IElementType NAMED_OP = new JsonPathTokenType("NAMED_OP");
   IElementType NE_OP = new JsonPathTokenType("NE_OP");
-  IElementType NIN_OP = new JsonPathTokenType("NIN_OP");
-  IElementType NONEOF_OP = new JsonPathTokenType("NONEOF_OP");
   IElementType NOT_OP = new JsonPathTokenType("NOT_OP");
   IElementType NULL = new JsonPathTokenType("null");
   IElementType OR_OP = new JsonPathTokenType("OR_OP");
@@ -87,8 +83,6 @@ public interface JsonPathTypes {
   IElementType ROOT_CONTEXT = new JsonPathTokenType("$");
   IElementType RPARENTH = new JsonPathTokenType(")");
   IElementType SINGLE_QUOTED_STRING = new JsonPathTokenType("SINGLE_QUOTED_STRING");
-  IElementType SIZE_OP = new JsonPathTokenType("SIZE_OP");
-  IElementType SUBSETOF_OP = new JsonPathTokenType("SUBSETOF_OP");
   IElementType TRUE = new JsonPathTokenType("true");
   IElementType WILDCARD = new JsonPathTokenType("*");
 

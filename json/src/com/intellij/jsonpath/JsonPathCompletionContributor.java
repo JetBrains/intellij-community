@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.jsonpath.JsonPathConstants.STANDARD_FUNCTIONS;
+import static com.intellij.jsonpath.JsonPathConstants.STANDARD_NAMED_OPERATORS;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_DOT_NAVIGATION_SET;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_EQUALITY_OPERATOR_SET;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -96,13 +97,11 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
   }
 
   private static class OperatorCompletionProvider extends CompletionProvider<CompletionParameters> {
-    private static final String[] OPERATORS = new String[]{"in", "nin", "subsetof", "anyof", "noneof", "size", "empty"};
-
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-      for (String keyword : OPERATORS) {
+      for (String keyword : STANDARD_NAMED_OPERATORS) {
         result.addElement(LookupElementBuilder.create(keyword).bold());
       }
     }

@@ -64,10 +64,7 @@ final class JsonPathSyntaxHighlighter extends SyntaxHighlighterBase {
     ourMap = new HashMap<>();
 
     fillMap(ourMap, JSONPATH_KEYWORD,
-            JsonPathTypes.WILDCARD, JsonPathTypes.FILTER_OPERATOR, JsonPathTypes.NULL,
-            JsonPathTypes.IN_OP, JsonPathTypes.NIN_OP, JsonPathTypes.SUBSETOF_OP,
-            JsonPathTypes.ANYOF_OP, JsonPathTypes.NONEOF_OP, JsonPathTypes.SIZE_OP, JsonPathTypes.EMPTY_OP);
-
+            JsonPathTypes.WILDCARD, JsonPathTypes.FILTER_OPERATOR, JsonPathTypes.NULL, JsonPathTypes.NAMED_OP);
     fillMap(ourMap, JSONPATH_IDENTIFIER,
             JsonPathTypes.IDENTIFIER);
     fillMap(ourMap, JSONPATH_CONTEXT,

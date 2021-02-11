@@ -85,6 +85,7 @@ EMPTY_OP=[eE][mM][pP][tT][yY]
   "."                                  { pushState(WILDCARD_EXPECTED); return JsonPathTypes.DOT; }
   ".."                                 { pushState(WILDCARD_EXPECTED); return JsonPathTypes.RECURSIVE_DESCENT; }
   "["                                  { pushState(SEGMENT_EXPRESSION); return JsonPathTypes.LBRACKET; }
+  ")"                                  { yypushback(1); popState(); }
   {ROOT_CONTEXT}                       { return JsonPathTypes.ROOT_CONTEXT; }
   {EVAL_CONTEXT}                       { return JsonPathTypes.EVAL_CONTEXT; }
   {IDENTIFIER}                         { return JsonPathTypes.IDENTIFIER; }
@@ -104,19 +105,24 @@ EMPTY_OP=[eE][mM][pP][tT][yY]
 <SEGMENT_EXPRESSION> {
   "*"                                  { return JsonPathTypes.WILDCARD; }
   {INDEX_LITERAL}                      { return JsonPathTypes.INTEGER_NUMBER; }
+  "["                                  { return JsonPathTypes.LBRACKET; }
   "]"                                  { popState(); return JsonPathTypes.RBRACKET; }
 }
 
 <SCRIPT_EXPRESSION> {
   {ROOT_CONTEXT}                       { pushState(YYINITIAL); return JsonPathTypes.ROOT_CONTEXT; }
   {EVAL_CONTEXT}                       { pushState(YYINITIAL); return JsonPathTypes.EVAL_CONTEXT; }
+  "["                                  { return JsonPathTypes.LBRACKET; }
+  "]"                                  { return JsonPathTypes.RBRACKET; }
+  "null"                               { return JsonPathTypes.NULL; }
+  "true"                               { return JsonPathTypes.TRUE; }
+  "false"                              { return JsonPathTypes.FALSE; }
+  {IDENTIFIER}                         { return JsonPathTypes.NAMED_OP; }
 }
 
 <YYINITIAL, SEGMENT_EXPRESSION, SCRIPT_EXPRESSION> {
   "."                                  { return JsonPathTypes.DOT; }
   ".."                                 { return JsonPathTypes.RECURSIVE_DESCENT; }
-  "["                                  { return JsonPathTypes.LBRACKET; }
-  "]"                                  { return JsonPathTypes.RBRACKET; }
   "{"                                  { return JsonPathTypes.LBRACE; }
   "}"                                  { return JsonPathTypes.RBRACE; }
   "("                                  { pushState(SCRIPT_EXPRESSION); return JsonPathTypes.LPARENTH; }
@@ -127,14 +133,6 @@ EMPTY_OP=[eE][mM][pP][tT][yY]
   "=="                                 { return JsonPathTypes.EQ_OP; }
   "!="                                 { return JsonPathTypes.NE_OP; }
   "=~"                                 { pushState(REGEX_EXPECTED); return JsonPathTypes.RE_OP; }
-
-  {IN_OP}                              { return JsonPathTypes.IN_OP; }
-  {NIN_OP}                             { return JsonPathTypes.NIN_OP; }
-  {SUBSETOF_OP}                        { return JsonPathTypes.SUBSETOF_OP; }
-  {ANYOF_OP}                           { return JsonPathTypes.ANYOF_OP; }
-  {NONEOF_OP}                          { return JsonPathTypes.NONEOF_OP; }
-  {SIZE_OP}                            { return JsonPathTypes.SIZE_OP; }
-  {EMPTY_OP}                           { return JsonPathTypes.EMPTY_OP; }
 
   ">"                                  { return JsonPathTypes.GT_OP; }
   "<"                                  { return JsonPathTypes.LT_OP; }
@@ -154,6 +152,7 @@ EMPTY_OP=[eE][mM][pP][tT][yY]
   "null"                               { return JsonPathTypes.NULL; }
   "true"                               { return JsonPathTypes.TRUE; }
   "false"                              { return JsonPathTypes.FALSE; }
+
   {INTEGER_LITERAL}                    { return JsonPathTypes.INTEGER_NUMBER; }
   {DOUBLE_LITERAL}                     { return JsonPathTypes.DOUBLE_NUMBER; }
   {SINGLE_QUOTED_STRING}               { return JsonPathTypes.SINGLE_QUOTED_STRING; }

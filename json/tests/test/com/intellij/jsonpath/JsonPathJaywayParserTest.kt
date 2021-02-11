@@ -115,6 +115,10 @@ class JsonPathJaywayParserTest : JsonPathParsingTestCase("jayway") {
     doCodeTest("\$.store.bicycle[?(@.gears == [23, 50])]")
   }
 
+  fun testArrayLiteralsFromBothSides() {
+    doCodeTest("\$.bicycle[?([1, 2] contains [1])]")
+  }
+
   fun testObjectLiterals() {
     doCodeTest("\$.store.bicycle[?(@.extra == {\"x\":0})]")
   }

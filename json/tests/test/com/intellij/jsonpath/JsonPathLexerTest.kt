@@ -233,7 +233,7 @@ class JsonPathLexerTest : LexerTestCase() {
       ( ('(')
       SINGLE_QUOTED_STRING (''a'')
       WHITE_SPACE (' ')
-      IN_OP ('in')
+      NAMED_OP ('in')
       WHITE_SPACE (' ')
       @ ('@')
       . ('.')
@@ -399,7 +399,7 @@ class JsonPathLexerTest : LexerTestCase() {
       . ('.')
       IDENTIFIER ('attr')
       WHITE_SPACE (' ')
-      IN_OP ('in')
+      NAMED_OP ('in')
       WHITE_SPACE (' ')
       [ ('[')
       INTEGER_NUMBER ('1')
@@ -425,7 +425,7 @@ class JsonPathLexerTest : LexerTestCase() {
       . ('.')
       IDENTIFIER ('attr')
       WHITE_SPACE (' ')
-      IN_OP ('in')
+      NAMED_OP ('in')
       WHITE_SPACE (' ')
       { ('{')
       SINGLE_QUOTED_STRING (''a'')
@@ -455,5 +455,13 @@ class JsonPathLexerTest : LexerTestCase() {
       ) (')')
       ] (']')
     """.trimIndent())
+  }
+
+  fun testNamedOperator() {
+    doTest("\$.x[?(@.a in \$.b)].in.avg()")
+  }
+
+  fun testArrayOnTheLeft() {
+    doTest("@[?([1] contains 1)]")
   }
 }
