@@ -26,7 +26,8 @@ internal class HLRedundantUnitReturnTypeInspection :
             val function = callable as? KtNamedFunction ?: return@isApplicableByPsi false
             function.hasBlockBody() && function.typeReference != null
         }
-        familyAndActionName(KotlinBundle.lazyMessage("remove.explicit.type.specification"))
+        familyName(KotlinBundle.lazyMessage("remove.explicit.type.specification"))
+        actionName(KotlinBundle.lazyMessage("redundant.unit.return.type"))
     }
 
     override val inputProvider = inputProvider<KtNamedFunction, CallableReturnTypeUpdaterApplicator.Type> { function ->
@@ -37,7 +38,6 @@ internal class HLRedundantUnitReturnTypeInspection :
     }
 
     override val presentation = presentation<KtNamedFunction> {
-        inspectionText(KotlinBundle.message("redundant.unit.return.type"))
         highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
     }
 }
