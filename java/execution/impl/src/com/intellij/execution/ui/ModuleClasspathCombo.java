@@ -103,7 +103,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   @Override
   public void setSelectedModule(Module module) {
     List<Item> items = ((CollectionComboBoxModel<Item>)super.getModel()).getItems();
-    setSelectedItem(ContainerUtil.find(items, item -> module == item.myModule));
+    setSelectedItem(ContainerUtil.find(items, item -> item != null && module == item.myModule));
   }
 
   @Override
