@@ -177,7 +177,6 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     removeProjectConfigurationAndCaches(projectFile)
 
     val project = instantiateProject(projectFile, options)
-    project.setTrusted(true)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(projectFile, project, options.isRefreshVfsNeeded, options.preloadServices, template,
