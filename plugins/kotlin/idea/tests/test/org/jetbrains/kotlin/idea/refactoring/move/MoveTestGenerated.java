@@ -638,6 +638,16 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/sealedClassWithAllSubclasses/sealedClassWithAllSubclasses.test");
     }
 
+    @TestMetadata("kotlin/moveTopLevelDeclarations/misc/sealedClassWithSkippedSubclasses/sealedClassWithSkippedSubclasses.test")
+    public void testKotlin_moveTopLevelDeclarations_misc_sealedClassWithSkippedSubclasses_SealedClassWithSkippedSubclasses() throws Exception {
+        runTest("idea/testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/sealedClassWithSkippedSubclasses/sealedClassWithSkippedSubclasses.test");
+    }
+
+    @TestMetadata("kotlin/moveTopLevelDeclarations/misc/sealedSubclassWithSkippedRoot/sealedSubclassWithSkippedRoot.test")
+    public void testKotlin_moveTopLevelDeclarations_misc_sealedSubclassWithSkippedRoot_SealedSubclassWithSkippedRoot() throws Exception {
+        runTest("idea/testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/sealedSubclassWithSkippedRoot/sealedSubclassWithSkippedRoot.test");
+    }
+
     @TestMetadata("kotlin/moveTopLevelDeclarations/misc/selfReferences/selfReferences.test")
     public void testKotlin_moveTopLevelDeclarations_misc_selfReferences_SelfReferences() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/selfReferences/selfReferences.test");
@@ -766,6 +776,11 @@ public class MoveTestGenerated extends AbstractMoveTest {
     @TestMetadata("kotlin/moveTopLevelDeclarations/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test")
     public void testKotlin_moveTopLevelDeclarations_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithImplsToAnotherPackage() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test");
+    }
+
+    @TestMetadata("kotlin/moveTopLevelDeclarations/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test")
+    public void testKotlin_moveTopLevelDeclarations_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithNestedImplsToAnotherPackage() throws Exception {
+        runTest("idea/testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test");
     }
 
     @TestMetadata("kotlin/moveTopLevelDeclarations/moveSealedClassWithNestedImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test")
