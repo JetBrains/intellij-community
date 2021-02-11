@@ -39,13 +39,14 @@ public final class NullabilityUtil {
     if (value.getType() instanceof PsiPrimitiveType) {
       return DfaNullability.UNKNOWN;
     }
+    if (var instanceof PsiField && DfaUtil.hasInitializationHacks((PsiField)var)) {
+      return DfaNullability.FLUSHED;
+    }
     Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getType(), var);
     if (nullability != Nullability.UNKNOWN) {
       return DfaNullability.fromNullability(nullability);
     }
     if (var == null) return DfaNullability.UNKNOWN;
-
-    Nullability defaultNullability = value.getFactory().suggestNullabilityForNonAnnotatedMember(var);
 
     if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
       PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
@@ -58,13 +59,13 @@ public final class NullabilityUtil {
     }
 
     if (var instanceof PsiField && value.getFactory().canTrustFieldInitializer((PsiField)var)) {
-      return DfaNullability.fromNullability(getNullabilityFromFieldInitializers((PsiField)var, defaultNullability).second);
+      return DfaNullability.fromNullability(getNullabilityFromFieldInitializers((PsiField)var).second);
     }
 
-    return DfaNullability.fromNullability(defaultNullability);
+    return DfaNullability.fromNullability(Nullability.UNKNOWN);
   }
 
-  static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field, Nullability defaultNullability) {
+  static Pair<PsiExpression, Nullability> getNullabilityFromFieldInitializers(PsiField field) {
     if (DfaPsiUtil.isFinalField(field)) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null) {
@@ -73,7 +74,7 @@ public final class NullabilityUtil {
 
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
       if (initializers.isEmpty()) {
-        return Pair.create(null, defaultNullability);
+        return Pair.create(null, Nullability.UNKNOWN);
       }
 
       for (PsiExpression expression : initializers) {
@@ -90,7 +91,7 @@ public final class NullabilityUtil {
     else if (isOnlyImplicitlyInitialized(field)) {
       return Pair.create(null, Nullability.NOT_NULL);
     }
-    return Pair.create(null, defaultNullability);
+    return Pair.create(null, Nullability.UNKNOWN);
   }
 
   private static boolean isOnlyImplicitlyInitialized(PsiField field) {

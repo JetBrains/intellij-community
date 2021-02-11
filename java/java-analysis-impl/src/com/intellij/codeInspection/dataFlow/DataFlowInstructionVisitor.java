@@ -50,6 +50,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Map<PsiExpression, ThreeState> mySwitchLabelsReachability = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
+  private final boolean myStrictMode;
 
   private static final CallMatcher USELESS_SAME_ARGUMENTS = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min", "max").parameterCount(2),
@@ -59,6 +60,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "min", "max").parameterCount(2),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "replace").parameterCount(2)
   );
+
+  DataFlowInstructionVisitor(boolean strictMode) {
+    myStrictMode = strictMode;
+  }
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -144,7 +149,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   @Override
   protected void onTypeCast(PsiTypeCastExpression castExpression, DfaMemoryState state, boolean castPossible) {
-    myClassCastProblems.computeIfAbsent(castExpression, e -> new StateInfo()).update(state, castPossible);
+    myClassCastProblems.computeIfAbsent(castExpression, e -> new StateInfo()).update(state, ThreeState.fromBoolean(castPossible));
   }
 
   StreamEx<NullabilityProblemKind.NullabilityProblem<?>> problems() {
@@ -316,12 +321,15 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected boolean checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+  protected ThreeState checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     if (problem != null && problem.getKind() == NullabilityProblemKind.nullableReturn && !state.isNotNull(value)) {
       myAlwaysReturnsNotNull = false;
     }
 
-    boolean ok = super.checkNotNullable(state, value, problem);
+    ThreeState ok = super.checkNotNullable(state, value, problem);
+    if (!myStrictMode && ok == ThreeState.UNSURE) {
+      ok = ThreeState.YES;
+    }
     if (problem == null) return ok;
     StateInfo info = myStateInfos.computeIfAbsent(problem, k -> new StateInfo());
     info.update(state, ok);
@@ -349,14 +357,19 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     boolean ephemeralException;
     boolean normalException;
     boolean normalOk;
+    boolean unknown = true;
 
-    void update(DfaMemoryState state, boolean ok) {
+    void update(DfaMemoryState state, ThreeState ok) {
       if (state.isEphemeral()) {
-        if (!ok) ephemeralException = true;
+        if (ok != ThreeState.YES) ephemeralException = true;
+        if (ok != ThreeState.UNSURE) unknown = false;
       }
       else {
-        if (ok) normalOk = true;
-        else normalException = true;
+        if (ok == ThreeState.YES) normalOk = true;
+        else {
+          normalException = true;
+          if (ok != ThreeState.UNSURE) unknown = false;
+        }
       }
     }
 

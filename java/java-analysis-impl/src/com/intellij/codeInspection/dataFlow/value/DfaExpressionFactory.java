@@ -368,7 +368,8 @@ public class DfaExpressionFactory {
 
     @Override
     public boolean isStable() {
-      return PsiUtil.isJvmLocalVariable(myVariable) || myVariable.hasModifierProperty(PsiModifier.FINAL);
+      return PsiUtil.isJvmLocalVariable(myVariable) || 
+             (myVariable.hasModifierProperty(PsiModifier.FINAL) && !DfaUtil.hasInitializationHacks(myVariable));
     }
 
     @NotNull
@@ -379,8 +380,7 @@ public class DfaExpressionFactory {
         return factory.getObjectType(type, DfaPsiUtil.getElementNullability(type, myVariable));
       }
       if (PsiUtil.isJvmLocalVariable(myVariable) ||
-          (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC) &&
-           (!myVariable.hasModifierProperty(PsiModifier.FINAL) || !DfaUtil.hasInitializationHacks((PsiField)myVariable)))) {
+          (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
         return factory.getVarFactory().createVariableValue(this);
       }
       return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);

@@ -60,9 +60,8 @@ public final class TrackingRunner extends DataFlowRunner {
 
   private TrackingRunner(@NotNull PsiElement context,
                          PsiExpression expression,
-                         boolean unknownMembersAreNullable,
                          boolean ignoreAssertions) {
-    super(context.getProject(), context, unknownMembersAreNullable, ThreeState.fromBoolean(ignoreAssertions));
+    super(context.getProject(), context, ThreeState.fromBoolean(ignoreAssertions));
     myExpression = expression;
   }
 
@@ -121,13 +120,12 @@ public final class TrackingRunner extends DataFlowRunner {
   }
 
   @Nullable
-  public static CauseItem findProblemCause(boolean unknownAreNullables,
-                                           boolean ignoreAssertions,
+  public static CauseItem findProblemCause(boolean ignoreAssertions,
                                            PsiExpression expression,
                                            DfaProblemType type) {
     PsiElement body = DfaUtil.getDataflowContext(expression);
     if (body == null) return null;
-    TrackingRunner runner = new TrackingRunner(body, expression, unknownAreNullables, ignoreAssertions);
+    TrackingRunner runner = new TrackingRunner(body, expression, ignoreAssertions);
     if (!runner.analyze(expression, body)) return null;
     return runner.findProblemCause(expression, type);
   }
@@ -1230,7 +1228,7 @@ public final class TrackingRunner extends DataFlowRunner {
       }
       if (owner instanceof PsiField && getFactory().canTrustFieldInitializer((PsiField)owner)) {
         Pair<PsiExpression, Nullability> fieldNullability =
-          NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)owner, Nullability.UNKNOWN);
+          NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)owner);
         if (fieldNullability.second == DfaNullability.toNullability(nullability)) {
           PsiExpression initializer = fieldNullability.first;
           if (initializer != null) {

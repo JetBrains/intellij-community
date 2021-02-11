@@ -293,8 +293,9 @@ public final class DfaUtil {
     return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
   }
 
-  public static boolean hasInitializationHacks(@NotNull PsiField field) {
-    PsiClass containingClass = field.getContainingClass();
+  public static boolean hasInitializationHacks(@NotNull PsiVariable var) {
+    if (!(var instanceof PsiField)) return false;
+    PsiClass containingClass = ((PsiField)var).getContainingClass();
     return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
   }
 

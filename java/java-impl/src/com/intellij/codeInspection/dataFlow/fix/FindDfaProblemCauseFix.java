@@ -73,7 +73,7 @@ public final class FindDfaProblemCauseFix implements OnTheFlyLocalFix, LowPriori
     ThrowableComputable<TrackingRunner.CauseItem, RuntimeException> causeFinder = () -> {
       PsiExpression element = myAnchor.getElement();
       if (element == null) return null;
-      return TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
+      return TrackingRunner.findProblemCause(myIgnoreAssertStatements, element, myProblemType);
     };
     TrackingRunner.CauseItem item = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.compute(causeFinder), JavaBundle.message("progress.title.finding.cause"), true, project);

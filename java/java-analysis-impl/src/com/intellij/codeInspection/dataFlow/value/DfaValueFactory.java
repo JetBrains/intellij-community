@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -10,7 +9,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.*;
@@ -25,13 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiMember;
-import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
-import static com.intellij.patterns.StandardPatterns.or;
-
 public class DfaValueFactory {
   private final @NotNull List<DfaValue> myValues = new ArrayList<>();
-  private final boolean myUnknownMembersAreNullable;
   private final @NotNull FieldChecker myFieldChecker;
   private final @NotNull Project myProject;
   private @Nullable DfaVariableValue myAssertionDisabled;
@@ -39,12 +32,10 @@ public class DfaValueFactory {
   /**
    * @param project a project in which context the analysis is performed
    * @param context an item to analyze (code-block, expression, class)
-   * @param unknownMembersAreNullable if true, unknown (non-annotated members) are assumed to be nullable
    */
-  public DfaValueFactory(@NotNull Project project, @Nullable PsiElement context, boolean unknownMembersAreNullable) {
+  public DfaValueFactory(@NotNull Project project, @Nullable PsiElement context) {
     myProject = project;
     myFieldChecker = new FieldChecker(context);
-    myUnknownMembersAreNullable = unknownMembersAreNullable;
     myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
@@ -55,21 +46,6 @@ public class DfaValueFactory {
 
   public boolean canTrustFieldInitializer(PsiField field) {
     return myFieldChecker.canTrustFieldInitializer(field);
-  }
-
-  private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
-    or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
-
-
-  @NotNull
-  public Nullability suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
-    if (myUnknownMembersAreNullable &&
-        MEMBER_OR_METHOD_PARAMETER.accepts(member) &&
-        AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
-      return Nullability.NULLABLE;
-    }
-
-    return Nullability.UNKNOWN;
   }
 
   @NotNull

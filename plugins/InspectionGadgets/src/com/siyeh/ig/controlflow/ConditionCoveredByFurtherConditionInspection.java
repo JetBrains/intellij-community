@@ -166,7 +166,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     Map<PsiExpression, ThreeState> values = new HashMap<>();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
       @Override
-      protected boolean checkNotNullable(DfaMemoryState state,
+      protected ThreeState checkNotNullable(DfaMemoryState state,
                                          @NotNull DfaValue value,
                                          @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
         if (value instanceof DfaVariableValue) {
@@ -175,7 +175,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
             state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
           }
         }
-        return true;
+        return ThreeState.YES;
       }
 
       @Override

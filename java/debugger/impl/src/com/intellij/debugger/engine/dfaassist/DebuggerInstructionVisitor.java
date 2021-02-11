@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,9 +79,9 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected boolean checkNotNullable(DfaMemoryState state,
-                                     @NotNull DfaValue value,
-                                     @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+  protected ThreeState checkNotNullable(DfaMemoryState state,
+                                        @NotNull DfaValue value,
+                                        @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     if (problem != null) {
       PsiExpression expression = problem.getDereferencedExpression();
       if (expression != null && problem.thrownException() != null) {

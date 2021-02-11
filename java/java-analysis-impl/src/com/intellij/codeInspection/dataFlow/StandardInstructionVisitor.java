@@ -618,12 +618,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private <T extends PsiElement> DfaValue dereference(DfaMemoryState memState,
                                                       DfaValue value,
                                                       @Nullable NullabilityProblemKind.NullabilityProblem<T> problem) {
-    boolean ok = checkNotNullable(memState, value, problem);
+    ThreeState ok = checkNotNullable(memState, value, problem);
     if (value instanceof DfaTypeValue) {
       DfType dfType = value.getDfType().meet(NOT_NULL_OBJECT);
       return value.getFactory().fromDfType(dfType == BOTTOM ? NOT_NULL_OBJECT : dfType);
     }
-    if (ok) return value;
+    if (ok != ThreeState.NO) return value;
     if (memState.isNull(value) && problem != null && problem.getKind() == NullabilityProblemKind.nullableFunctionReturn) {
       return value.getFactory().fromDfType(NOT_NULL_OBJECT);
     }
@@ -700,9 +700,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           mutable = Mutability.getMutability(realMethod);
         }
         type = narrowReturnType(type, qualifierType, realMethod);
-        if (nullability == Nullability.UNKNOWN) {
-          nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
-        }
       }
       DfType dfType = instruction.getContext() instanceof PsiNewExpression ?
                       TypeConstraints.exact(type).asDfType().meet(NOT_NULL_OBJECT) :
@@ -768,13 +765,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return precalculated;
   }
 
-  protected boolean checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+  protected ThreeState checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
     boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
     if (notNullable && problem != null && problem.thrownException() != null) {
       state.applyCondition(value.cond(RelationType.NE, value.getFactory().getNull()));
     }
-    return notNullable;
+    boolean unknown = nullability == DfaNullability.UNKNOWN;
+    return notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
   }
 
   @Override

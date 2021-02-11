@@ -91,8 +91,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         if (aClass instanceof PsiTypeParameter) return;
         if (PsiUtil.isLocalOrAnonymousClass(aClass) && !(aClass instanceof PsiEnumConstantInitializer)) return;
 
-        final DataFlowRunner runner = new DataFlowRunner(holder.getProject(), aClass, TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, 
-                                                         ThreeState.fromBoolean(IGNORE_ASSERT_STATEMENTS));
+        final DataFlowRunner runner = new DataFlowRunner(holder.getProject(), aClass, ThreeState.fromBoolean(IGNORE_ASSERT_STATEMENTS));
         DataFlowInstructionVisitor visitor =
           analyzeDfaWithNestedClosures(aClass, holder, runner, Collections.singletonList(runner.createMemoryState()));
         List<DfaMemoryState> states = visitor.getEndOfInitializerStates();
@@ -117,7 +116,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       public void visitMethod(PsiMethod method) {
         if (method.isConstructor()) return;
         final DataFlowRunner runner = new DataFlowRunner(
-          holder.getProject(), method.getBody(), TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, ThreeState.fromBoolean(IGNORE_ASSERT_STATEMENTS));
+          holder.getProject(), method.getBody(), ThreeState.fromBoolean(IGNORE_ASSERT_STATEMENTS));
         analyzeMethod(method, runner, Collections.singletonList(runner.createMemoryState()));
       }
 
@@ -201,7 +200,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                                                   ProblemsHolder holder,
                                                                   DataFlowRunner dfaRunner,
                                                                   Collection<? extends DfaMemoryState> initialStates) {
-    final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor();
+    final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE);
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, initialStates);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.wasForciblyMerged() &&
