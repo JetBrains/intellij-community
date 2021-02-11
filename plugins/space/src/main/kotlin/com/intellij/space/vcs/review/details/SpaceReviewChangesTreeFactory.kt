@@ -65,7 +65,7 @@ internal object SpaceReviewChangesTreeFactory {
               val commits = changesVm.allCommits.value
               val repositories = it.value.toList()
               val singleRepoChanges = repositories.singleOrNull()
-              if (singleRepoChanges != null) {
+              if (singleRepoChanges != null && singleRepoChanges.second.spaceRepoInfo != null) {
                 // don't show repo node for single repo review
                 val changesWithDiscussion = singleRepoChanges.second
                 val changes = changesWithDiscussion.changesInReview
