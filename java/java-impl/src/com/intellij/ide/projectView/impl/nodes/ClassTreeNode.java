@@ -1,11 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -39,12 +42,15 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
     List<AbstractTreeNode<?>> treeNodes = new ArrayList<>(myMandatoryChildren);
     if (parent != null) {
       try {
-        for (PsiClass psi : parent.getInnerClasses()) {
-          if (psi.isPhysical()) {
-            treeNodes.add(new ClassTreeNode(getProject(), psi, getSettings()));
+        boolean showMembers = getSettings().isShowMembers();
+        if (showMembers || isShowInnerClasses()) {
+          for (PsiClass psi : parent.getInnerClasses()) {
+            if (psi.isPhysical()) {
+              treeNodes.add(new ClassTreeNode(getProject(), psi, getSettings()));
+            }
           }
         }
-        if (getSettings().isShowMembers()) {
+        if (showMembers) {
           for (PsiMethod psi : parent.getMethods()) {
             if (psi.isPhysical()) {
               treeNodes.add(new PsiMethodNode(getProject(), psi, getSettings()));
@@ -61,6 +67,13 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
       }
     }
     return treeNodes;
+  }
+
+  private boolean isShowInnerClasses() {
+    boolean showInnerClasses = Registry.is("projectView.always.show.inner.classes", false);
+    if (showInnerClasses) return true;
+    VirtualFile file = getVirtualFile();
+    return file != null && JavaClassFileType.INSTANCE == file.getFileType();
   }
 
   @Override
