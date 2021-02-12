@@ -4,10 +4,12 @@ package com.intellij.application.options.schemes;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -278,7 +280,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     Disposer.register(ApplicationManager.getApplication(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends DefaultActionGroup {
+  private static class ShowSchemesActionsListAction extends NonTrivialActionGroup implements DumbAware {
     private final AbstractSchemeActions<?> mySchemeActions;
 
     ShowSchemesActionsListAction(AbstractSchemeActions<?> schemeActions) {
@@ -290,26 +292,19 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
 
     @Override
-    public boolean isDumbAware() {
-      return true;
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      return mySchemeActions.getActions().toArray(EMPTY_ARRAY);
     }
 
     @Override
     public boolean canBePerformed(@NotNull DataContext context) {
-      AnActionEvent e = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, context);
-      for (AnAction action : mySchemeActions.getActions()) {
-        action.update(e); // ensure that at least action is enabled and visible
-        if (e.getPresentation().isEnabledAndVisible()) return true;
-      }
-      return false;
+      return true;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      DefaultActionGroup group = new DefaultActionGroup();
-      group.addAll(mySchemeActions.getActions());
       ListPopup popup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, group, e.getDataContext(), true, null, Integer.MAX_VALUE);
+        createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
       HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
       Component component = e.getInputEvent().getComponent();
