@@ -435,15 +435,17 @@ public class MavenProjectImporter {
 
     setMavenizedModules(obsoleteModules, false);
 
-    final int[] result = new int[1];
-    MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
-                            () -> result[0] = Messages.showYesNoDialog(myProject,
-                                                                       MavenProjectBundle.message("maven.import.message.delete.obsolete",
-                                                                                                  formatModules(obsoleteModules)),
-                                                                       MavenProjectBundle.message("maven.project.import.title"),
-                                                                       Messages.getQuestionIcon()));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      final int[] result = new int[1];
+      MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
+                              () -> result[0] = Messages.showYesNoDialog(myProject,
+                                                                         MavenProjectBundle.message("maven.import.message.delete.obsolete",
+                                                                                                    formatModules(obsoleteModules)),
+                                                                         MavenProjectBundle.message("maven.project.import.title"),
+                                                                         Messages.getQuestionIcon()));
 
-    if (result[0] == Messages.NO) return false;// NO
+      if (result[0] == Messages.NO) return false;// NO
+    }
 
     for (Module each : obsoleteModules) {
       if (!each.isDisposed()) {
