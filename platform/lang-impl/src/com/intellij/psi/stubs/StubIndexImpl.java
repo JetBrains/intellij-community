@@ -690,7 +690,7 @@ public final class StubIndexImpl extends StubIndexEx {
     private final IndexVersionRegistrationSink indicesRegistrationSink = new IndexVersionRegistrationSink();
 
     @Override
-    protected AsyncState finish() {
+    protected @NotNull AsyncState finish() {
       indicesRegistrationSink.logChangedAndFullyBuiltIndices(LOG, "Following stub indices will be updated:",
                                                              "Following stub indices will be built:");
 
@@ -729,6 +729,12 @@ public final class StubIndexImpl extends StubIndexEx {
         tasks.add(() -> registerIndexer(extension, forceClean, state, indicesRegistrationSink));
       }
       return tasks;
+    }
+
+    @NotNull
+    @Override
+    protected String getInitializationFinishedMessage(AsyncState initializationResult) {
+      return "Initialized stub indexes: " + initializationResult.myIndices.keySet() + ".";
     }
   }
 

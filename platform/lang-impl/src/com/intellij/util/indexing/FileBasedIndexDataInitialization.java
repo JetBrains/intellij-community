@@ -130,7 +130,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   }
 
   @Override
-  protected IndexConfiguration finish() {
+  protected @NotNull IndexConfiguration finish() {
     try {
       myState.finalizeFileTypeMappingForIndices();
 
@@ -185,6 +185,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     NotificationGroupManager.getInstance().getNotificationGroup("Indexing")
       .createNotification(IndexingBundle.message("index.rebuild.notification.title"), rebuildNotification, NotificationType.INFORMATION, null)
       .notify(null);
+  }
+
+  @NotNull
+  @Override
+  protected String getInitializationFinishedMessage(@NotNull IndexConfiguration initializationResult) {
+    return "Initialized indexes: " + initializationResult.getIndexIDs() + ".";
   }
 
   private static void saveRegisteredIndicesAndDropUnregisteredOnes(@NotNull Collection<? extends ID<?, ?>> ids) {

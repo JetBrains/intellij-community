@@ -7,28 +7,32 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
-import java.lang.InterruptedException
-import java.lang.Exception
 import java.time.Duration
 import java.time.Instant
-import java.util.ArrayList
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 
 abstract class IndexDataInitializer<T> : Callable<T?> {
   override fun call(): T? {
+    val log = Logger.getInstance(javaClass.name)
     val started = Instant.now()
     return try {
       val tasks = prepareTasks()
       runParallelTasks(tasks)
-      finish()
+      val result = finish()
+      val message = getInitializationFinishedMessage(result)
+      log.info("Index data initialization done: ${Duration.between(started, Instant.now()).toMillis()} ms. " + message)
+      result
     }
-    finally {
-      Logger.getInstance(javaClass.name).info("Index data initialization done: ${Duration.between(started, Instant.now()).toMillis()} ms")
+    catch (t: Throwable) {
+      log.error("Index data initialization failed", t)
+      throw t
     }
   }
 
-  protected abstract fun finish(): T?
+  protected abstract fun getInitializationFinishedMessage(initializationResult: T): String
+
+  protected abstract fun finish(): T
 
   protected abstract fun prepareTasks(): Collection<ThrowableRunnable<*>>
 
@@ -42,7 +46,7 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
         UnindexedFilesUpdater.getNumberOfIndexingThreads())
 
       tasks
-        .map<ThrowableRunnable<*>, Future<*>?> { taskExecutor.submit { executeTask(it)} }
+        .map<ThrowableRunnable<*>, Future<*>?> { taskExecutor.submit { executeTask(it) } }
         .forEach {
           try {
             it!!.get()
@@ -79,6 +83,7 @@ abstract class IndexDataInitializer<T> : Callable<T?> {
     private val LOG = Logger.getInstance(IndexDataInitializer::class.java)
     private val ourDoParallelIndicesInitialization = SystemProperties
       .getBooleanProperty("idea.parallel.indices.initialization", true)
+
     @JvmField
     val ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true)
     private val ourGenesisExecutor = SequentialTaskExecutor
