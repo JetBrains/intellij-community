@@ -594,12 +594,8 @@ final class FileTypeDetectionService implements Disposable {
                ? readFirstBytesFromFile(file, bufferLength)
                : myReadFirstBytesFromFileRelay.accessDiskWithCheckCanceled(Pair.create(file, bufferLength));
       }
-      catch (RuntimeException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof IOException) {
-          throw (IOException)cause;
-        }
-        throw e;
+      catch (Exception e) {
+        return ByteArraySequence.EMPTY;
       }
     }
     else {
