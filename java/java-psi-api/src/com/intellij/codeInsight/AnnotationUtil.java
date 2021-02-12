@@ -802,7 +802,8 @@ public class AnnotationUtil {
         PsiClass annoClass = annotation.resolveAnnotationType();
         if (annoClass != null) {
           Set<PsiAnnotation.TargetType> targets = AnnotationTargetUtil.getAnnotationTargets(annoClass);
-          if (targets != null && targets.contains(PsiAnnotation.TargetType.TYPE_USE)) {
+          if (targets != null && targets.contains(PsiAnnotation.TargetType.TYPE_USE) &&
+              PsiUtil.isLanguageLevel8OrHigher(parent)) {
             if (typeElement != null && targets.size() == 1) {
               // For ambiguous annotations, we assume that annotation on the outer type relates to the inner type
               // E.g. @Nullable Outer.Inner is equivalent to Outer.@Nullable Inner (if @Nullable is not type-use only)
