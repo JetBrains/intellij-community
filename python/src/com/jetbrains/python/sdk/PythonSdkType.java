@@ -60,6 +60,7 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
@@ -351,7 +352,7 @@ public final class PythonSdkType extends SdkType {
   public void setupSdkPaths(@NotNull Sdk sdk) {
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
-    Ref<Project> projectRef = new Ref<>();
+    AtomicReference<Project> projectRef = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (ownerComponent != null) {
         projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
