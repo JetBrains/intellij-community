@@ -221,7 +221,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                           private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
 
     private val listComponent = GHPRListComponent.create(project, dataContext, parentDisposable)
-    private val createComponent = GHPRCreateComponentFactory(project, this, parentDisposable).create()
+    private val createComponent = GHPRCreateComponentFactory(project, dataContext, this, parentDisposable).create()
     private var currentDisposable: Disposable? = null
 
     private var currentPullRequest: GHPRIdentifier? = null

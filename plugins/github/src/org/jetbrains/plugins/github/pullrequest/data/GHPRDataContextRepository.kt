@@ -84,7 +84,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
     indicator.checkCanceled()
 
     indicator.text = GithubBundle.message("pull.request.loading.repo.info")
-    val repoWithPermissions =
+    val repositoryInfo =
       requestExecutor.execute(indicator, GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server,
                                                                                          parsedRepositoryCoordinates.repositoryPath)))
       ?: throw IllegalArgumentException(
@@ -94,7 +94,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
                              accountDetails.name)
 
     indicator.text = GithubBundle.message("pull.request.loading.user.teams.info")
-    val repoOwner = repoWithPermissions.owner
+    val repoOwner = repositoryInfo.owner
     val currentUserTeams = if (repoOwner is GHRepositoryOwnerName.Organization)
       SimpleGHGQLPagesLoader(requestExecutor, {
         GHGQLRequests.Organization.Team.findByUserLogins(account.server, repoOwner.login, listOf(currentUser.login), it)
@@ -103,12 +103,12 @@ internal class GHPRDataContextRepository(private val project: Project) {
     indicator.checkCanceled()
 
     // repository might have been renamed/moved
-    val apiRepositoryPath = repoWithPermissions.path
+    val apiRepositoryPath = repositoryInfo.path
     val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
 
     val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
                                                   account, currentUser, currentUserTeams,
-                                                  repoWithPermissions)
+                                                  repositoryInfo)
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
     val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), securityService,
                                             requestExecutor, account.server, apiRepositoryPath)
@@ -137,16 +137,19 @@ internal class GHPRDataContextRepository(private val project: Project) {
                            }, true))
     }
 
-    val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor, account.server,
-                                                        apiRepositoryPath, repoOwner)
+    val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor,
+                                                        remoteCoordinates, apiRepositoryCoordinates,
+                                                        repoOwner,
+                                                        repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
 
     val avatarIconsProvider = GHAvatarIconsProvider(CachingGHUserAvatarLoader.getInstance(), requestExecutor)
 
     val filesManager = GHPRFilesManagerImpl(project, parsedRepositoryCoordinates)
 
     indicator.checkCanceled()
-    return GHPRDataContext(remoteCoordinates, searchHolder, listLoader, listUpdatesChecker, dataProviderRepository,
-                           securityService, repoDataService, avatarIconsProvider, filesManager)
+    val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
+    return GHPRDataContext(searchHolder, listLoader, listUpdatesChecker, dataProviderRepository,
+                           securityService, repoDataService, creationService, avatarIconsProvider, filesManager)
   }
 
   @RequiresEdt

@@ -15,12 +15,25 @@ class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer(
                                                     AllIcons.General.Add) {
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null &&
-                                         e.project?.service<GHPRToolWindowController>()?.getTabController()?.componentController != null
+    with(e) {
+      val tabController = project?.service<GHPRToolWindowController>()?.getTabController()
+      val twActive = project != null && tabController != null
+      val twInitialized = project != null && tabController?.componentController != null
+
+      if (isFromActionToolbar) {
+        presentation.isEnabledAndVisible = twInitialized
+        presentation.icon = AllIcons.General.Add
+      }
+      else {
+        presentation.isEnabledAndVisible = twActive
+        presentation.icon = AllIcons.Vcs.Vendors.Github
+      }
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowController>()
-      .getTabController()?.componentController?.createPullRequest()
+    e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowController>().show {
+      it.componentController?.createPullRequest()
+    }
   }
 }

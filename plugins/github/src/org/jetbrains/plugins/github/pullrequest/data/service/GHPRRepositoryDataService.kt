@@ -8,10 +8,19 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import java.util.concurrent.CompletableFuture
 
 interface GHPRRepositoryDataService : Disposable {
+  val remoteCoordinates: GitRemoteUrlCoordinates
   val repositoryCoordinates: GHRepositoryCoordinates
+  val repositoryMapping: GHGitRepositoryMapping
+    get() = GHGitRepositoryMapping(repositoryCoordinates, remoteCoordinates)
+
+  val repositoryId: String
+  val defaultBranchName: String
+  val isFork: Boolean
 
   val collaborators: CompletableFuture<List<GHUser>>
   val teams: CompletableFuture<List<GHTeam>>

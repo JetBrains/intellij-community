@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 object GHGQLQueries {
@@ -9,6 +9,7 @@ object GHGQLQueries {
   const val updateIssueComment = "updateIssueComment"
   const val deleteIssueComment = "deleteIssueComment"
   const val issueSearch = "issueSearch"
+  const val createPullRequest = "createPullRequest"
   const val findPullRequest = "findPullRequest"
   const val updatePullRequest = "updatePullRequest"
   const val markPullRequestReadyForReview = "markPullRequestReadyForReview"

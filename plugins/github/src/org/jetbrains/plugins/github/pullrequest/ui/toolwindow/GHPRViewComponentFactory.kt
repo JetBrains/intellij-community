@@ -131,7 +131,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }.apply {
       setDataProvider { dataId ->
         when {
-          GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.gitRemoteCoordinates.repository
+          GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.repositoryDataService.remoteCoordinates.repository
           GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
           GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
           else -> null
@@ -216,7 +216,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     detailsLoadingErrorHandler).createWithUpdatesStripe(uiDisposable) { _, model ->
       val branchesModel = GHPRBranchesModelImpl(model,
                                                 dataProvider.detailsData,
-                                                dataContext.gitRemoteCoordinates.repository,
+                                                dataContext.repositoryDataService.repositoryMapping.gitRemote.repository,
                                                 disposable)
 
       val detailsModel = GHPRDetailsModelImpl(model)

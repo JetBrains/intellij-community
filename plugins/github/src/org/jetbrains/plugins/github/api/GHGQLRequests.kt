@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.intellij.diff.util.Side
@@ -89,6 +89,26 @@ object GHGQLRequests {
   }
 
   object PullRequest {
+    fun create(repository: GHRepositoryCoordinates,
+               repositoryId: String,
+               baseRefName: String,
+               headRefName: String,
+               title: String,
+               body: String? = null,
+               draft: Boolean? = false): GQLQuery<GHPullRequestShort> {
+      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.createPullRequest,
+                                      mapOf("repositoryId" to repositoryId,
+                                            "baseRefName" to baseRefName,
+                                            "headRefName" to headRefName,
+                                            "title" to title,
+                                            "body" to body,
+                                            "draft" to draft),
+                                      GHPullRequestShort::class.java,
+                                      "createPullRequest", "pullRequest").apply {
+        acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
+      }
+    }
+
     fun findOne(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequest?> {
       return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findPullRequest,
                                               mapOf("repoOwner" to repository.repositoryPath.owner,

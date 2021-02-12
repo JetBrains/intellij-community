@@ -1,12 +1,17 @@
 fragment repositoryInfo on Repository {
-    ...nodeInfo
-    owner {
-        ...repositoryOwnerName
-    }
-    nameWithOwner
-    viewerPermission
+  ...nodeInfo
+  owner {
+    ...repositoryOwnerName
+  }
+  nameWithOwner
+  viewerPermission
 
-    mergeCommitAllowed
-    squashMergeAllowed
-    rebaseMergeAllowed
+  mergeCommitAllowed
+  squashMergeAllowed
+  rebaseMergeAllowed
+
+  defaultBranchRef {
+    ...gitRefName
+  }
+  isFork
 }
