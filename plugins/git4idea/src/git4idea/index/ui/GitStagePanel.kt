@@ -3,6 +3,7 @@ package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.ide.DataManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -65,6 +66,7 @@ import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.stream.Collectors
 import javax.swing.JPanel
+import org.jetbrains.annotations.NonNls
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
                              isVertical: Boolean,
@@ -339,6 +341,19 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       val nodePath = node.path?.takeIf { it.isNotEmpty() } ?: return false
       return (nodePath.find { it is MyKindNode } as? MyKindNode)?.kind == nodeKind
     }
+
+    override fun installGroupingSupport(): ChangesGroupingSupport {
+      val result = ChangesGroupingSupport(project, this, false)
+
+      if (PropertiesComponent.getInstance(project).getValues(GROUPING_PROPERTY_NAME) == null) {
+        val oldGroupingKeys = (PropertiesComponent.getInstance(project).getValues(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
+        oldGroupingKeys.add(REPOSITORY_GROUPING)
+        PropertiesComponent.getInstance(project).setValues(GROUPING_PROPERTY_NAME, *oldGroupingKeys.toTypedArray())
+      }
+
+      installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
+      return result
+    }
   }
 
   interface IncludedRootsListener: EventListener {
@@ -375,6 +390,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         updateChangesStatusPanel()
       }
     }
+  }
+
+  companion object {
+    @NonNls
+    private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
   }
 }
 
