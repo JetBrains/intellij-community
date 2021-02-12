@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtParameter
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val modifiers = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -34,6 +35,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFix<PsiElement, KtFirDiagnostic.VarOverriddenByVal>(ChangeVariableMutabilityFix.VAR_OVERRIDDEN_BY_VAL_FACTORY)
+        registerPsiQuickFix<KtParameter, KtFirDiagnostic.VarAnnotationParameter>(ChangeVariableMutabilityFix.VAR_ANNOTATION_PARAMETER_FACTORY)
         registerPsiQuickFix<KtModifierListOwner, KtFirDiagnostic.InapplicableLateinitModifier>(ChangeVariableMutabilityFix.LATEINIT_VAL_FACTORY)
     }
 
