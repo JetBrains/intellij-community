@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema
 
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
@@ -21,6 +22,9 @@ class YamlMultilineInjectionText : BasePlatformTestCase() {
         "properties": {
           "X": {
             "x-intellij-language-injection": "XML"
+          },
+          "myyaml": {
+            "x-intellij-language-injection": "yaml"
           }
         }
       }
@@ -68,9 +72,25 @@ class YamlMultilineInjectionText : BasePlatformTestCase() {
     assertInjectedAndLiteralValue("""
       |<html>
       |     <body>boo</body>
-      |</html>
-      |""".trimMargin())
+      |</html>""".trimMargin())
 
+  }
+
+  fun testYamlToYamlInjection() {
+    myFixture.configureByText("test.yaml", """
+        myyaml: |
+          ro<caret>ot:
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("yaml")
+    assertInjectedAndLiteralValue("root:")
+    myFixture.openFileInEditor(myInjectionFixture.topLevelFile.virtualFile)
+    myFixture.editor.caretModel.run { moveToOffset(offset + 3) }
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      |myyaml: |
+      |  root:
+      |  """.trimMargin())
   }
 
   private fun assertInjectedAndLiteralValue(expectedText: String) {

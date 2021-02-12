@@ -7,7 +7,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
@@ -34,6 +36,8 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
     final TextRange leftRange = contentRanges.get(indexBefore);
     final TextRange rightRange = contentRanges.get(indexBefore + 1);
     if (leftRange.isEmpty()) {
+      if (rightRange.getLength() == 1 && text.charAt(rightRange.getStartOffset()) == '\n' && getChompingIndicator() != ChompingIndicator.KEEP)
+        return "";
       return "\n";
     }
     if (startsWithWhitespace(text, leftRange) || startsWithWhitespace(text, rightRange)) {
@@ -58,6 +62,16 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
       return "";
     }
     return " ";
+  }
+
+  @NotNull
+  @Override
+  public String getTextValue(@Nullable TextRange rangeInHost) {
+    String value = super.getTextValue(rangeInHost);
+    if (!StringUtil.isEmptyOrSpaces(value)  && getChompingIndicator() != ChompingIndicator.STRIP && isEnding(rangeInHost)) {
+      value += "\n";
+    }
+    return value;
   }
 
   private static boolean startsWithWhitespace(@NotNull CharSequence text, @NotNull TextRange range) {
