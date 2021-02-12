@@ -221,6 +221,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
    * @deprecated Use {@link #setRootDirectory(Project, Path)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean setRootDirectory(@Nullable Project projectToUpdate, @NotNull String root) {
     return setRootDirectory(projectToUpdate, Paths.get(root));
   }
@@ -261,7 +262,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
     return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
@@ -366,6 +367,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
    * @deprecated Use {@link #getRootPath()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public @Nullable VirtualFile getRootDirectory() {
     Path rootPath = getRootPath();
     return rootPath == null ? null : VfsUtil.findFile(rootPath, false);

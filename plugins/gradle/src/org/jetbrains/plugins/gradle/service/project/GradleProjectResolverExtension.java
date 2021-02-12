@@ -132,6 +132,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * @deprecated not required anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default boolean requiresTaskRunning() {
     return false;
   }

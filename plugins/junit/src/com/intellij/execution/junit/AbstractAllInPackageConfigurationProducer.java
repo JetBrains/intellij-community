@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractAllInPackageConfigurationProducer extends JUnitConfigurationProducer {
@@ -17,6 +18,7 @@ public abstract class AbstractAllInPackageConfigurationProducer extends JUnitCon
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected AbstractAllInPackageConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }

@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -433,6 +434,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
    * @deprecated use {@link MavenArtifact#getLibraryName()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static String makeLibraryName(@NotNull MavenArtifact artifact) {
     return artifact.getLibraryName();
   }

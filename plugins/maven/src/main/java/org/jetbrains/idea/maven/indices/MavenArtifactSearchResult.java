@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.indices;
 
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
@@ -16,6 +17,7 @@ public class MavenArtifactSearchResult {
    *  @deprecated use getSearchResults instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public List<MavenArtifactInfo> versions;
 
   private  MavenRepositoryArtifactInfo myInfo;
@@ -25,6 +27,7 @@ public class MavenArtifactSearchResult {
    * @deprecated use {@link #MavenArtifactSearchResult(MavenRepositoryArtifactInfo)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public MavenArtifactSearchResult() {
     this(new MavenRepositoryArtifactInfo("", "", new MavenDependencyCompletionItem[0]));
   }

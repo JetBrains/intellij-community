@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,8 @@ public abstract class BaseInspection extends LocalInspectionTool {
   /**
    * @deprecated Use {@link #getProbableBugs()} instead
    */
-  @Deprecated public static final String PROBABLE_BUGS = getProbableBugs();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final String PROBABLE_BUGS = getProbableBugs();
 
   @Nullable
   @InspectionMessage

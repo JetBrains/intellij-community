@@ -7,6 +7,7 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import javax.swing.*;
  * @deprecated This file type is no longer registered
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public final class JsonSchemaFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
   public static final JsonSchemaFileType INSTANCE = new JsonSchemaFileType();
 

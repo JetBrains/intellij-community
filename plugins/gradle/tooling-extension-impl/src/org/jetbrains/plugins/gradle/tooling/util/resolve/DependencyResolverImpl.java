@@ -68,6 +68,7 @@ public class DependencyResolverImpl implements DependencyResolver {
    */
   @SuppressWarnings("unused")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public DependencyResolverImpl(@NotNull Project project,
                                 boolean isPreview,
                                 boolean downloadJavadoc,

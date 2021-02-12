@@ -43,6 +43,7 @@ public class ExternalProjectDataCache {
    */
   @Deprecated
   @Nullable
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ExternalProject getRootExternalProject(@NotNull ProjectSystemId systemId, @NotNull File projectRootDir) {
     if (GradleConstants.SYSTEM_ID != systemId) {
       throw new IllegalStateException("Attempt to use Gradle-specific cache with illegal system id [" + systemId.getReadableName() + "]");

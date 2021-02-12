@@ -252,6 +252,7 @@ public final class MavenServerManager implements Disposable {
    */
   @Nullable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getCurrentMavenVersion() {
     return null;
   }
@@ -469,6 +470,7 @@ public final class MavenServerManager implements Disposable {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getMavenEmbedderVMOptions() {
     return "";
   }
@@ -478,6 +480,7 @@ public final class MavenServerManager implements Disposable {
    * @deprecated use MavenImportingSettings.setVmOptionsForImporter
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
   }
 
