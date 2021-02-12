@@ -310,7 +310,6 @@ final class CommunityRepositoryModules {
 
       withModule("intellij.android.common", "android-common.jar", null)
       withModule("intellij.android.buildCommon", "build-common.jar", null)
-      withModule("intellij.android.rt", "android-rt.jar", null)
 
       withModule("intellij.android.core", "android.jar", null)
       withModule("intellij.android.adb", "android.jar")

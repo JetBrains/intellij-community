@@ -201,7 +201,6 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
       "android-jps-plugin" to "intellij.android.jps",
       "android-jps-model" to "intellij.android.jps.model",
       "build-common" to "intellij.android.buildCommon",
-      "android-rt" to "intellij.android.rt",
       "sdk-common" to "android.sdktools.sdk-common",
       "sdklib" to "android.sdktools.sdklib",
       "layoutlib-api" to "android.sdktools.layoutlib-api",
