@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
@@ -214,26 +215,28 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       return;
     }
     if (editor instanceof EditorEx) {
-      ((EditorEx)editor).addFocusListener(editor1 -> {
-        Component comp = editor1.getComponent();
-        while (comp != getMainSplitters() && comp != null) {
-          Component parent = comp.getParent();
-          if (parent instanceof Splitter) {
-            Splitter splitter = (Splitter)parent;
-            if ((splitter.getFirstComponent() == comp
-                 && (splitter.getProportion() == splitter.getMinProportion(true) ||
-                     splitter.getProportion() == splitter.getMinimumProportion())) ||
-                splitter.getProportion() == splitter.getMinProportion(false)
-                || splitter.getProportion() == splitter.getMaximumProportion()) {
-              Set<kotlin.Pair<Splitter, Boolean>> pairs = HideAllToolWindowsAction.Companion.getSplittersToMaximize(project, editor1);
-              for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
-                Splitter s = pair.getFirst();
-                s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
+      ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
+        @Override
+        public void focusGained(@NotNull Editor editor) {
+          if (!Registry.is("editor.maximize.on.focus.gained.if.collapsed.in.split")) return;
+          Component comp = editor.getComponent();
+          while (comp != getMainSplitters() && comp != null) {
+            Component parent = comp.getParent();
+            if (parent instanceof Splitter) {
+              Splitter splitter = (Splitter)parent;
+              if ((splitter.getFirstComponent() == comp
+                   && (splitter.getProportion() == splitter.getMinProportion(true) || splitter.getProportion() == splitter.getMinimumProportion())) ||
+                  (splitter.getProportion() == splitter.getMinProportion(false) || splitter.getProportion() == splitter.getMaximumProportion())) {
+                Set<kotlin.Pair<Splitter, Boolean>> pairs = HideAllToolWindowsAction.Companion.getSplittersToMaximize(project, editor);
+                for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
+                  Splitter s = pair.getFirst();
+                  s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
+                }
+                break;
               }
-              break;
             }
+            comp = parent;
           }
-          comp = parent;
         }
       });
     }
