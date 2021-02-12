@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * Parameters annotated with {@code RequiresBackgroundThread} must be callables and are guaranteed to be called from some thread
  * that is not the Event Dispatch Thread.
  *
- * <p/>Aside from a documentation purpose, the annotation is processed by the <a href="">Threading Model Helper</a> plugin.
+ * <p/>Aside from a documentation purpose, the annotation is processed by the {@link org.jetbrains.jps.devkit.threadingModelHelper}.
  * The plugin instruments annotated elements with {@link Application#assertIsNonDispatchThread()} calls
  * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
  * by setting {@link RequiresBackgroundThread#generateAssertion()} to {@code false}.
