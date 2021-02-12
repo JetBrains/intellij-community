@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import java.io.IOException
@@ -124,6 +125,7 @@ object GithubUtil {
   @JvmStatic
   @Deprecated("{@link GithubGitHelper}", ReplaceWith("GithubGitHelper.findGitRepository(project, file)",
                                                      "org.jetbrains.plugins.github.util.GithubGitHelper"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun getGitRepository(project: Project, file: VirtualFile?): GitRepository? {
     return GithubGitHelper.findGitRepository(project, file)
   }
@@ -163,6 +165,7 @@ object GithubUtil {
   @Suppress("DeprecatedCallableAddReplaceWith")
   @JvmStatic
   @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun isRepositoryOnGitHub(repository: GitRepository): Boolean {
     return findGithubRemoteUrl(repository) != null
   }

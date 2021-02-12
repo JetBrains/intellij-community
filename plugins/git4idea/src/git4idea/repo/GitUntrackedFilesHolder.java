@@ -32,6 +32,7 @@ import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.GitLocalBranch;
 import git4idea.commands.Git;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,6 +172,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    * @deprecated use {@link #retrieveUntrackedFilePaths} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public Collection<VirtualFile> retrieveUntrackedFiles() throws VcsException {
    return ContainerUtil.mapNotNull(retrieveUntrackedFilePaths(), FilePath::getVirtualFile);

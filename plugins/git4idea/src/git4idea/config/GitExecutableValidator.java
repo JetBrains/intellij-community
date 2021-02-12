@@ -18,6 +18,7 @@ package git4idea.config;
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.openapi.project.Project;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated in favor of {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class GitExecutableValidator extends ExecutableValidator {
   public GitExecutableValidator(@NotNull Project project) {
     super(project, GitBundle.message("git.executable.notification.title"), GitBundle.message("git.executable.notification.description"));

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.awt.event.ActionListener;
  * @deprecated Use {@link GitPushOptionsPanel}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class GitPushTagPanel extends VcsPushOptionsPanel {
 
   private final ComboBox<GitPushTagMode> myCombobox;

@@ -13,6 +13,7 @@ import git4idea.push.GitPushParams;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,6 +168,7 @@ public interface Git {
    * @deprecated Use {@link #cherryPick(GitRepository, String, boolean, boolean, GitLineHandlerListener...)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
                               GitLineHandlerListener @NotNull ... listeners);

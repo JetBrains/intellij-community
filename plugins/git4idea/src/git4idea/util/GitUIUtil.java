@@ -12,6 +12,7 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,7 @@ public final class GitUIUtil {
    * @deprecated use {@link VcsNotifier} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void notifyError(Project project,
                                  @Nls @NotNull String title,
                                  @Nls @Nullable String description,

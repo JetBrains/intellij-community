@@ -302,6 +302,7 @@ public final class GitVcs extends AbstractVcs {
    * @deprecated Use {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public GitExecutableValidator getExecutableValidator() {
     return new GitExecutableValidator(myProject);

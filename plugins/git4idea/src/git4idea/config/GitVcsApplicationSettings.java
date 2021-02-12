@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getPathToGit() {
     return GitExecutableManager.getInstance().getPathToGit();
   }

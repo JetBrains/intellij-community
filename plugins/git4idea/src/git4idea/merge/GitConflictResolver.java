@@ -1,12 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
-import static com.intellij.openapi.util.NlsContexts.NotificationContent;
-import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
-import static git4idea.GitNotificationIdsHolder.CANNOT_RESOLVE_CONFLICT;
-import static git4idea.GitNotificationIdsHolder.CONFLICT_RESOLVING_ERROR;
-
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -38,13 +32,17 @@ import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.NotificationContent;
+import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
+import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static git4idea.GitNotificationIdsHolder.CANNOT_RESOLVE_CONFLICT;
+import static git4idea.GitNotificationIdsHolder.CONFLICT_RESOLVING_ERROR;
 
 /**
  * The class is highly customizable, since the procedure of resolving conflicts is very common in Git operations.
@@ -121,7 +119,11 @@ public class GitConflictResolver {
     }
   }
 
+  /**
+   * @deprecated use {@link #GitConflictResolver(Project, Collection, Params)} instead
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<? extends VirtualFile> roots, @NotNull Params params) {
     this(project, roots, params);
   }

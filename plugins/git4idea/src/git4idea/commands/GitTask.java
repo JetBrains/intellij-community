@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @deprecated To remove in IDEA 2017.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2017")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 @Deprecated
 public class GitTask {
 

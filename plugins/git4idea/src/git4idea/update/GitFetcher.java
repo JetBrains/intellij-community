@@ -26,6 +26,7 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +76,7 @@ public class GitFetcher {
    * @deprecated Use {@link GitFetchSupport}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
@@ -87,6 +89,7 @@ public class GitFetcher {
    * @deprecated Use {@link GitFetchSupport}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public GitFetchResult fetch(@NotNull VirtualFile root, @NotNull String remoteName, @Nullable String branch) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
@@ -263,6 +266,7 @@ public class GitFetcher {
    * @deprecated Use {@link GitFetchSupport}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean fetchRootsAndNotify(@NotNull Collection<? extends GitRepository> roots,
                                      @Nullable @NlsContexts.NotificationTitle String errorNotificationTitle,
                                      boolean notifySuccess) {
