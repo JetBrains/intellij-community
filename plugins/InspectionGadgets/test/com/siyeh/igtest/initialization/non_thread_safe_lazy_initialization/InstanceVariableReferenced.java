@@ -5,9 +5,9 @@ public class InstanceVariableReferenced {
 
   public Object getInstance() {
     if (example == null) {
-      example<caret> = getString(s);
+      <warning descr="Lazy initialization of 'static' field 'example' is not thread-safe"><caret>example</warning> = getString(s);
     }
-    return example
+    return example;
   }
 
   private static String getString(String s) {

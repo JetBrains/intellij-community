@@ -4,10 +4,8 @@ public class NonThreadSafeLazyInitialization {
     private static Object foo1;
     private static Object foo2;
     private static Object foo3;
-    private static Object foo4;
     private static Object foo5;
     private static Object foo6;
-    private static Object foo7;
     private Object instance;
 
     public Object getInstance() {
@@ -27,21 +25,22 @@ public class NonThreadSafeLazyInitialization {
 
     {
         if (foo2 == null) {
-            <warning descr="Lazy initialization of 'static' field 'foo2' is not thread-safe"><caret>foo2</warning> = new Object();
+            foo2 = new Object();
         }
 
     }
 
     public void instMethod() {
         if (foo3 == null) {
-            (<warning descr="Lazy initialization of 'static' field 'foo3' is not thread-safe">foo3</warning>) = new Object();
+            (foo3) = new Object();
         }
     }
 
+    private static final class Foo4Holder {
+        private static final Object foo4 = new Object();
+    }
+
     public static void staticMethod() {
-        if (foo4 == null) {
-            <warning descr="Lazy initialization of 'static' field 'foo4' is not thread-safe">foo4</warning> = new Object();
-        }
     }
 
     public void lockedInstMethod() {
@@ -63,8 +62,11 @@ public class NonThreadSafeLazyInitialization {
         return foo6;
     }
 
+    private static final class Foo7Holder {
+        private static final Object foo7 = "";
+    }
+
     public Object getInstance3() {
-        if (foo7 == null) <warning descr="Lazy initialization of 'static' field 'foo7' is not thread-safe">foo7</warning> = "";
-        return foo7;
+        return Foo7Holder.foo7;
     }
 }

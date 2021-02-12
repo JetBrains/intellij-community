@@ -4,7 +4,7 @@ public class LocalVariableReferenced {
 
   public static Object getInstance(int i) {
     if (o == null) {
-      o<caret> = "" + i;
+      <warning descr="Lazy initialization of 'static' field 'o' is not thread-safe">o<caret></warning> = "" + i;
     }
     return o;
   }

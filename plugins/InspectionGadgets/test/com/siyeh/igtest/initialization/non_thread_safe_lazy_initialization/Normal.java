@@ -4,8 +4,8 @@ public class Normal {
     public static Object getInstance() {
         // 5
         if (example == null) { //6
-            example<caret> = new Object(); //7
+            <warning descr="Lazy initialization of 'static' field 'example' is not thread-safe">example<caret></warning> = new Object(); //7
         } //8
-        return example
+        return example;
     }
 }
