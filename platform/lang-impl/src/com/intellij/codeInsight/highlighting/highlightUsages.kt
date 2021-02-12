@@ -92,10 +92,10 @@ private fun getPsiUsageRanges(file: PsiFile, psiTarget: PsiElement): UsageRanges
   if (declRange != null) {
     val write = detector != null && detector.isDeclarationWriteAccess(psiTarget)
     if (write) {
-      writeRanges.add(declRange)
+      writeDeclarationRanges.add(declRange)
     }
     else {
-      readRanges.add(declRange)
+      readDeclarationRanges.add(declRange)
     }
   }
 
