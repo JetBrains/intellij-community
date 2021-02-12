@@ -308,39 +308,45 @@ public class ClassWriter {
     List<StructModuleAttribute.RequiresEntry> requiresEntries = moduleAttribute.requires;
     if (!requiresEntries.isEmpty()) {
       for (StructModuleAttribute.RequiresEntry requires : requiresEntries) {
-        buffer.appendIndent(1).append("requires ").append(requires.moduleName.replace('/', '.')).append(';').appendLineSeparator();
+        if (!isGenerated(requires.flags)) {
+          buffer.appendIndent(1).append("requires ").append(requires.moduleName.replace('/', '.')).append(';').appendLineSeparator();
+          newLineNeeded = true;
+        }
       }
-      newLineNeeded = true;
     }
 
     List<StructModuleAttribute.ExportsEntry> exportsEntries = moduleAttribute.exports;
     if (!exportsEntries.isEmpty()) {
       if (newLineNeeded) buffer.appendLineSeparator();
       for (StructModuleAttribute.ExportsEntry exports : exportsEntries) {
-        buffer.appendIndent(1).append("exports ").append(exports.packageName.replace('/', '.'));
-        List<String> exportToModules = exports.exportToModules;
-        if (exportToModules.size() > 0) {
-          buffer.append(" to").appendLineSeparator();
-          appendFQClassNames(buffer, exportToModules);
+        if (!isGenerated(exports.flags)) {
+          buffer.appendIndent(1).append("exports ").append(exports.packageName.replace('/', '.'));
+          List<String> exportToModules = exports.exportToModules;
+          if (exportToModules.size() > 0) {
+            buffer.append(" to").appendLineSeparator();
+            appendFQClassNames(buffer, exportToModules);
+          }
+          buffer.append(';').appendLineSeparator();
+          newLineNeeded = true;
         }
-        buffer.append(';').appendLineSeparator();
       }
-      newLineNeeded = true;
     }
 
     List<StructModuleAttribute.OpensEntry> opensEntries = moduleAttribute.opens;
     if (!opensEntries.isEmpty()) {
       if (newLineNeeded) buffer.appendLineSeparator();
       for (StructModuleAttribute.OpensEntry opens : opensEntries) {
-        buffer.appendIndent(1).append("opens ").append(opens.packageName.replace('/', '.'));
-        List<String> opensToModules = opens.opensToModules;
-        if (opensToModules.size() > 0) {
-          buffer.append(" to").appendLineSeparator();
-          appendFQClassNames(buffer, opensToModules);
+        if (!isGenerated(opens.flags)) {
+          buffer.appendIndent(1).append("opens ").append(opens.packageName.replace('/', '.'));
+          List<String> opensToModules = opens.opensToModules;
+          if (opensToModules.size() > 0) {
+            buffer.append(" to").appendLineSeparator();
+            appendFQClassNames(buffer, opensToModules);
+          }
+          buffer.append(';').appendLineSeparator();
+          newLineNeeded = true;
         }
-        buffer.append(';').appendLineSeparator();
       }
-      newLineNeeded = true;
     }
 
     List<String> usesEntries = moduleAttribute.uses;
@@ -361,6 +367,10 @@ public class ClassWriter {
         buffer.append(';').appendLineSeparator();
       }
     }
+  }
+
+  private static boolean isGenerated(int flags) {
+    return (flags & (CodeConstants.ACC_SYNTHETIC | CodeConstants.ACC_MANDATED)) != 0;
   }
 
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {

@@ -1,4 +1,4 @@
-package pkg.test1;
+package sample.pkg1;
 
 import java.lang.annotation.*;
 

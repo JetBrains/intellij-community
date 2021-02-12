@@ -45,11 +45,11 @@ public class StructModuleAttribute extends StructGeneralAttribute {
     List<RequiresEntry> requires = new ArrayList<>(requiresCount);
     for (int i = 0; i < requiresCount; i++) {
       int moduleNameIndex = data.readUnsignedShort();
-      int moduleFlags = data.readUnsignedShort();
+      int requiresFlags = data.readUnsignedShort();
       int versionIndex = data.readUnsignedShort();
       String moduleName = pool.getPrimitiveConstant(moduleNameIndex).getString();
       String version = versionIndex == 0 ? null : pool.getPrimitiveConstant(versionIndex).getString();
-      requires.add(new RequiresEntry(moduleName, moduleFlags, version));
+      requires.add(new RequiresEntry(moduleName, requiresFlags, version));
     }
     return requires;
   }
@@ -119,36 +119,36 @@ public class StructModuleAttribute extends StructGeneralAttribute {
 
   public static final class RequiresEntry {
     public final String moduleName;
-    public final int moduleFlags;
+    public final int flags;
     public final String moduleVersion;
 
-    public RequiresEntry(String moduleName, int moduleFlags, String moduleVersion) {
+    public RequiresEntry(String moduleName, int flags, String moduleVersion) {
       this.moduleName = moduleName;
-      this.moduleFlags = moduleFlags;
+      this.flags = flags;
       this.moduleVersion = moduleVersion;
     }
   }
 
   public static final class ExportsEntry {
     public final String packageName;
-    public final int exportsFlags;
+    public final int flags;
     public final List<String> exportToModules;
 
-    public ExportsEntry(String packageName, int exportsFlags, List<String> exportToModules) {
+    public ExportsEntry(String packageName, int flags, List<String> exportToModules) {
       this.packageName = packageName;
-      this.exportsFlags = exportsFlags;
+      this.flags = flags;
       this.exportToModules = exportToModules;
     }
   }
 
   public static final class OpensEntry {
     public final String packageName;
-    public final int opensFlags;
+    public final int flags;
     public final List<String> opensToModules;
 
-    public OpensEntry(String packageName, int exportsFlags, List<String> exportToModules) {
+    public OpensEntry(String packageName, int flags, List<String> exportToModules) {
       this.packageName = packageName;
-      this.opensFlags = exportsFlags;
+      this.flags = flags;
       this.opensToModules = exportToModules;
     }
   }
