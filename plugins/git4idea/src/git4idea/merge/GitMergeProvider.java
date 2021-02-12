@@ -319,7 +319,6 @@ public class GitMergeProvider implements MergeProvider2 {
       public String valueOf(VirtualFile file) {
         GitConflict c = myConflicts.get(file);
         if (c == null) {
-          LOG.error("No conflict for the file " + file);
           return "";
         }
         boolean isReversed = myReverseRoots.contains(c.getRoot());
