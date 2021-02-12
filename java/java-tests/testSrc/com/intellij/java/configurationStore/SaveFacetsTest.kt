@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.configurationStore
 
+import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
@@ -15,9 +16,7 @@ import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.junit.Assume.assumeTrue
@@ -74,17 +73,37 @@ class SaveFacetsTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         val moduleEntity = it.addModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source, null)
-        it.addModuleCustomImlDataEntity(null, mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to "custom"), moduleEntity,
+        it.addModuleCustomImlDataEntity(null, mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID), moduleEntity,
                                         source)
         moduleEntity
       }
     }
     val module = projectModel.moduleManager.findModuleByName("foo")!!
-    runWithRegisteredFacetTypes(MockFacetType()) {
-      projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("my-data"))
-    }
+    registerFacetType(MockFacetType(), disposable.disposable)
+    projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("my-data"))
     projectModel.saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("facet-in-module-with-custom-storage")))
+
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        val moduleEntity = it.entities(ModuleEntity::class.java).single()
+        it.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+          dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency)
+        }
+      }
+    }
+
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("facet-in-module-with-custom-storage")))
+
+    runWriteActionAndWait {
+      val facet = FacetManager.getInstance(module).getFacetByType(MockFacetType.ID)!!
+      facet.configuration.data = "changed"
+      FacetManager.getInstance(module).facetConfigurationChanged(facet)
+    }
+
+    projectModel.saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("facet-in-module-with-custom-storage-changed")))
   }
 
   @Test
