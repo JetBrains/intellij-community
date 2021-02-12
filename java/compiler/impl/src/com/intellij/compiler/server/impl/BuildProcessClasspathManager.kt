@@ -44,6 +44,11 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
       if (rawClasspath != lastRawClasspath) {
         lastRawClasspath = rawClasspath
         lastFilteredClasspath = filterOutOlderVersions(rawClasspath)
+        if (LOG.isDebugEnabled && lastRawClasspath != lastFilteredClasspath) {
+          LOG.debug("older versions of libraries were removed from classpath:")
+          LOG.debug("original classpath: $lastRawClasspath")
+          LOG.debug("actual classpath: $lastFilteredClasspath")
+        }
       }
       return lastFilteredClasspath!!
     }
