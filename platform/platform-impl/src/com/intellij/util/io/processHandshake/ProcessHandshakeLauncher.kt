@@ -19,6 +19,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.selects.select
+import java.io.EOFException
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
 
@@ -51,19 +52,17 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
         val handshake = try {
           select<H?> {
             handshakeAsync.onAwait { it }
-            finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
+            finishedAsync.onAwait { null }
           }
-          // premature EOF; give the launcher a chance to exit cleanly and collect the whole output
-          ?: select<Nothing> {
-            finishedAsync.onAwait { handshakeFailed(transport, this@processHandler, launcherOutput) }
-            onTimeout(1000) {
-              launcherOutput.setTimeout()
-              handshakeFailed(transport, this@processHandler, launcherOutput)
-            }
-          }
+          ?: throw EOFException()
         }
         catch (e: IOException) {
-          handshakeFailed(transport, this, launcherOutput, e)
+          // give the launcher a chance to exit cleanly (in case it hasn't yet) to collect the whole output
+          select<Unit> {
+            finishedAsync.onAwait { }
+            onTimeout(1000) { launcherOutput.setTimeout() }
+          }
+          handshakeFailed(transport, this@processHandler, launcherOutput, e.takeUnless { it is EOFException })
         }
 
         handshakeSucceeded(handshake, transport, this)
