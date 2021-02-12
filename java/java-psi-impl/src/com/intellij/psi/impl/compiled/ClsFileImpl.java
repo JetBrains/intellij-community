@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
@@ -256,7 +256,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     throw ClsElementImpl.cannotModifyException(this);
   }
 
-  private void appendMirrorText(@NotNull StringBuilder buffer) {
+  private void appendMirrorText(StringBuilder buffer) {
     buffer.append(BANNER);
 
     PsiJavaModule module = getModuleDeclaration();
@@ -264,16 +264,25 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       ClsElementImpl.appendText(module, 0, buffer);
     }
     else {
-      ClsElementImpl.appendText(getPackageStatement(), 0, buffer, "\n\n");
-
       PsiClass[] classes = getClasses();
       if (classes.length > 0) {
-        ClsElementImpl.appendText(classes[0], 0, buffer);
+        PsiClass topClass = classes[0];
+        if (PsiPackage.PACKAGE_INFO_CLASS.equals(topClass.getName())) {
+          PsiAnnotation[] annotations = topClass.getAnnotations();
+          for (PsiAnnotation annotation : annotations) {
+            ClsElementImpl.appendText(annotation, 0, buffer, ClsElementImpl.NEXT_LINE);
+          }
+          ClsElementImpl.appendText(getPackageStatement(), 0, buffer, "\n");
+        }
+        else {
+          ClsElementImpl.appendText(getPackageStatement(), 0, buffer, "\n\n");
+          ClsElementImpl.appendText(topClass, 0, buffer);
+        }
       }
     }
   }
 
-  private void setFileMirror(@NotNull TreeElement element) {
+  private void setFileMirror(TreeElement element) {
     PsiElement mirrorElement = SourceTreeToPsiMap.treeToPsiNotNull(element);
     if (!(mirrorElement instanceof PsiJavaFile)) {
       throw new InvalidMirrorException("Unexpected mirror file: " + mirrorElement);
@@ -285,8 +294,16 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       ClsElementImpl.setMirror(module, mirrorFile.getModuleDeclaration());
     }
     else {
-      ClsElementImpl.setMirrorIfPresent(getPackageStatement(), mirrorFile.getPackageStatement());
-      ClsElementImpl.setMirrors(getClasses(), mirrorFile.getClasses());
+      PsiClass[] classes = getClasses(), mirrors = mirrorFile.getClasses();
+      if (classes.length == 1 && mirrors.length == 0 && PsiPackage.PACKAGE_INFO_CLASS.equals(classes[0].getName())) {
+        PsiPackageStatement pkg = getPackageStatement(), mirrorPkg = mirrorFile.getPackageStatement();
+        ClsElementImpl.setMirror(pkg, mirrorPkg);
+        ClsElementImpl.setMirrorIfPresent(classes[0].getModifierList(), mirrorPkg.getAnnotationList());
+      }
+      else {
+        ClsElementImpl.setMirrorIfPresent(getPackageStatement(), mirrorFile.getPackageStatement());
+        ClsElementImpl.setMirrors(classes, mirrors);
+      }
     }
   }
 
